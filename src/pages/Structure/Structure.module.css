@@ -168,11 +168,9 @@ body {
 
 /* ---------------------------------- Główny węzeł (root) ---------------------------------- */
 .nodeRoot {
-	background: linear-gradient(
-		135deg,
-		var(--purple-700, #4c2cc7),
-		var(--purple-900, #2e1a6b)
-	) !important;
+	background: linear-gradient(135deg,
+			var(--purple-700, #4c2cc7),
+			var(--purple-900, #2e1a6b)) !important;
 	color: #fff !important;
 	border: none !important;
 	max-width: 340px;
@@ -239,6 +237,13 @@ body {
 	max-width: 280px;
 	position: relative;
 	user-select: none;
+}
+
+.nodeCard {
+	padding: 24px 28px;
+	width: 320px;
+	max-width: 320px;
+	min-height: 150px;
 }
 
 .nodeCard:hover {
@@ -318,11 +323,13 @@ body {
 }
 
 @keyframes pulse {
+
 	0%,
 	100% {
 		opacity: 1;
 		transform: scale(1);
 	}
+
 	50% {
 		opacity: 0.6;
 		transform: scale(0.8);
@@ -394,12 +401,14 @@ body {
 }
 
 @keyframes highlightPulse {
+
 	0%,
 	100% {
 		box-shadow:
 			0 0 0 4px rgba(92, 58, 232, 0.2),
 			var(--shadow-card);
 	}
+
 	50% {
 		box-shadow:
 			0 0 0 8px rgba(92, 58, 232, 0.15),
@@ -411,7 +420,7 @@ body {
 .peopleList {
 	margin-top: 12px;
 	width: 100%;
-	max-width: 280px;
+	max-width: 400px;
 	display: flex;
 	flex-direction: column;
 	gap: 6px;
@@ -419,23 +428,12 @@ body {
 	position: relative;
 }
 
-.peopleList::before {
-	content: "👥 Osoby kluczowe";
-	position: absolute;
-	top: -20px;
-	left: 4px;
-	font-size: 10px;
-	font-weight: 600;
-	color: var(--text-muted, #6b5e8e);
-	letter-spacing: 0.5px;
-	text-transform: uppercase;
-}
-
 @keyframes slideDown {
 	from {
 		opacity: 0;
 		transform: translateY(-12px);
 	}
+
 	to {
 		opacity: 1;
 		transform: translateY(0);
@@ -463,11 +461,9 @@ body {
 	width: 32px;
 	height: 32px;
 	border-radius: 50%;
-	background: linear-gradient(
-		135deg,
-		var(--purple-600, #5c3ae8),
-		var(--purple-800, #3b2196)
-	);
+	background: linear-gradient(135deg,
+			var(--purple-600, #5c3ae8),
+			var(--purple-800, #3b2196));
 	color: #fff;
 	display: flex;
 	align-items: center;
@@ -548,11 +544,9 @@ body {
 	transform: translateX(-50%);
 	width: 2px;
 	height: 32px;
-	background: linear-gradient(
-		to bottom,
-		var(--purple-300, #b8a5e8),
-		var(--purple-400, #9a85d8)
-	);
+	background: linear-gradient(to bottom,
+			var(--purple-300, #b8a5e8),
+			var(--purple-400, #9a85d8));
 }
 
 /* Linia pozioma łącząca dzieci */
@@ -595,29 +589,16 @@ body {
 	padding: 12px 14px;
 }
 
-.childrenContainer
-	.childrenContainer
-	.childrenContainer
-	.nodeCard
-	.nodeCard__name {
+.childrenContainer .childrenContainer .childrenContainer .nodeCard .nodeCard__name {
 	font-size: 14px;
 }
 
-.childrenContainer
-	.childrenContainer
-	.childrenContainer
-	.nodeCard
-	.nodeCard__icon {
+.childrenContainer .childrenContainer .childrenContainer .nodeCard .nodeCard__icon {
 	width: 36px;
 	height: 36px;
 }
 
-.childrenContainer
-	.childrenContainer
-	.childrenContainer
-	.nodeCard
-	.nodeCard__icon
-	svg {
+.childrenContainer .childrenContainer .childrenContainer .nodeCard .nodeCard__icon svg {
 	width: 18px;
 	height: 18px;
 }
@@ -893,10 +874,28 @@ body {
 	background: var(--purple-400, #9a85d8);
 }
 
-/* Firefox */
 * {
 	scrollbar-width: thin;
 	scrollbar-color: var(--purple-300, #b8a5e8) var(--bg-app, #f1f1f7);
+}
+
+/* Chrome, Edge, Safari, iOS Safari */
+::-webkit-scrollbar {
+	width: 8px;
+	height: 8px;
+}
+
+::-webkit-scrollbar-track {
+	background: var(--bg-app, #f1f1f7);
+}
+
+::-webkit-scrollbar-thumb {
+	background-color: var(--purple-300, #b8a5e8);
+	border-radius: 999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+	background-color: var(--purple-400, #9b7de0);
 }
 
 /* ---------------------------------- Drag Hint ---------------------------------- */
@@ -923,13 +922,16 @@ body {
 }
 
 @keyframes dragShake {
+
 	0%,
 	100% {
 		transform: translateX(0);
 	}
+
 	25% {
 		transform: translateX(-4px);
 	}
+
 	75% {
 		transform: translateX(4px);
 	}
@@ -940,6 +942,7 @@ body {
 		opacity: 0;
 		transform: translateY(10px);
 	}
+
 	to {
 		opacity: 1;
 		transform: translateY(0);
@@ -1110,13 +1113,16 @@ body {
 }
 
 @keyframes dragShake {
+
 	0%,
 	100% {
 		transform: translateX(0);
 	}
+
 	25% {
 		transform: translateX(-4px);
 	}
+
 	75% {
 		transform: translateX(4px);
 	}
@@ -1127,6 +1133,7 @@ body {
 		opacity: 0;
 		transform: translateY(10px);
 	}
+
 	to {
 		opacity: 1;
 		transform: translateY(0);
@@ -1199,4 +1206,54 @@ body {
 	.dragHint {
 		display: flex;
 	}
+}
+
+.nodeCard__icon {
+	width: 56px;
+	height: 56px;
+	border-radius: 18px;
+}
+
+.nodeCard__icon svg {
+	width: 28px;
+	height: 28px;
+}
+
+.nodeCard__name {
+	font-size: 20px;
+}
+
+.nodeCard__role {
+	font-size: 15px;
+}
+
+.nodeCard__description {
+	font-size: 14px;
+	line-height: 1.5;
+}
+
+.peopleList {
+	width: 360px;
+	max-width: 360px;
+	gap: 12px;
+}
+
+.personCard {
+	padding: 14px 18px;
+	border-radius: 18px;
+}
+
+.personCard__avatar {
+	width: 42px;
+	height: 42px;
+	font-size: 14px;
+}
+
+.childrenContainer {
+	gap: 50px;
+	margin-top: 40px;
+}
+
+.mapContainer {
+	height: 850px;
 }
