@@ -1,0 +1,93 @@
+/* ==========================================================================
+   Dashboard Layout - Główny szablon
+   ========================================================================== */
+
+.layout {
+	display: flex;
+	min-height: 100vh;
+	background: var(--bg-app, #f1f1f7);
+	font-family:
+		"Inter",
+		"Segoe UI",
+		-apple-system,
+		BlinkMacSystemFont,
+		sans-serif;
+	color: var(--text-dark, #201a3b);
+}
+
+.main {
+	flex: 1;
+	padding: 26px 34px 50px;
+	min-width: 0;
+	display: flex;
+	flex-direction: column;
+}
+
+/* Responsywność */
+@media (max-width: 980px) {
+	.main {
+		padding: 20px;
+	}
+}
+
+@media (max-width: 768px) {
+	.main {
+		padding: 16px;
+	}
+}
+
+@media (max-width: 480px) {
+	.main {
+		padding: 12px;
+	}
+}
+/* ==========================================================================
+   Dashboard Layout - Główny szablon
+   ========================================================================== */
+
+.layout {
+	display: flex;
+	min-height: 100vh;
+	background: var(--bg-app, #f1f1f7);
+	font-family:
+		"Inter",
+		"Segoe UI",
+		-apple-system,
+		BlinkMacSystemFont,
+		sans-serif;
+	color: var(--text-dark, #201a3b);
+	transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ⬇️ DOSTOSOWANIE DO ZWIJANIA */
+.layoutCollapsed .main {
+	margin-left: 0;
+}
+
+.main {
+	flex: 1;
+	padding: 26px 34px 50px;
+	min-width: 0;
+	display: flex;
+	flex-direction: column;
+	transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Responsywność */
+@media (max-width: 980px) {
+	.main {
+		padding: 20px;
+	}
+}
+
+@media (max-width: 768px) {
+	.main {
+		padding: 16px;
+	}
+}
+
+@media (max-width: 480px) {
+	.main {
+		padding: 12px;
+	}
+}

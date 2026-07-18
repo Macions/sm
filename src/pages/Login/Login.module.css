@@ -1,388 +1,456 @@
 * {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
+	margin: 0;
+	padding: 0;
+	box-sizing: border-box;
 }
 
 html,
 body {
-    height: 100%;
-    overflow: hidden;
+	height: 100%;
+	overflow: hidden;
 }
 
 .loginContainer {
-    height: 100vh;
-    width: 100vw;
-    background: linear-gradient(to bottom right, rgba(69, 22, 156, 0.406) 0%, rgba(87, 29, 119, 0.406) 100%);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    position: relative;
-    overflow: hidden;
+	height: 100vh;
+	width: 100vw;
+	background: linear-gradient(
+		to bottom right,
+		rgba(69, 22, 156, 0.406) 0%,
+		rgba(87, 29, 119, 0.406) 100%
+	);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+	position: relative;
+	overflow: hidden;
 }
 
 .loginContainer::before {
-    content: '';
-    position: absolute;
-    top: -100px;
-    right: -100px;
-    width: 300px;
-    height: 300px;
-    background-size: contain;
-    opacity: 0.15;
-    z-index: 0;
+	content: "";
+	position: absolute;
+	top: -100px;
+	right: -100px;
+	width: 300px;
+	height: 300px;
+	background-size: contain;
+	opacity: 0.15;
+	z-index: 0;
 }
 
 .loginCard {
-    display: flex;
-    max-width: 90vw;
-    max-height: 90vh;
-    width: 1100px;
-    height: 620px;
-    background: white;
-    border-radius: 20px;
-    overflow: hidden;
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
-    z-index: 1;
+	display: flex;
+	max-width: 90vw;
+	max-height: 90vh;
+	width: 1100px;
+	height: 620px;
+	background: white;
+	border-radius: 20px;
+	overflow: hidden;
+	box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+	z-index: 1;
 }
 
-/* Lewa strona */
 .leftPanel {
-    background: #0078d4;
-    color: white;
-    padding: 40px 45px;
-    width: 50%;
-    height: 100%;
-    position: relative;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
+	background: #0078d4;
+	color: white;
+	padding: 40px 45px;
+	width: 50%;
+	height: 100%;
+	position: relative;
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
 }
 
 .logo {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    margin-bottom: 20px;
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	margin-bottom: 20px;
 }
 
 .logoIcon {
-    background: white;
-    color: #0078d4;
-    width: 32px;
-    height: 32px;
-    border-radius: 8px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: bold;
-    font-size: 20px;
+	background: white;
+	color: #0078d4;
+	width: 32px;
+	height: 32px;
+	border-radius: 8px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-weight: bold;
+	font-size: 20px;
 }
 
 .logoText {
-    font-size: 24px;
-    font-weight: 600;
+	font-size: 24px;
+	font-weight: 600;
 }
 
 .illustration {
-    margin: 10px 0;
-    text-align: center;
+	margin: 10px 0;
+	text-align: center;
 }
 
 .clipboardImg {
-    width: 160px;
-    filter: drop-shadow(0 10px 20px rgba(0, 0, 0, 0.2));
+	width: 260px;
+	filter: drop-shadow(0 10px 20px rgba(0, 0, 0, 0.2));
 }
 
 .welcomeText h1 {
-    font-size: 30px;
-    margin: 10px 0 8px;
-    font-weight: 700;
+	font-size: 30px;
+	margin: 10px 0 8px;
+	font-weight: 700;
 }
 
 .welcomeText p {
-    font-size: 14px;
-    line-height: 1.4;
-    opacity: 0.95;
+	font-size: 14px;
+	line-height: 1.4;
+	opacity: 0.95;
 }
 
 .dots {
-    margin-top: 25px;
-    display: flex;
-    gap: 10px;
+	margin-top: 25px;
+	display: flex;
+	gap: 10px;
 }
 
 .dot {
-    width: 10px;
-    height: 10px;
-    background: rgba(255, 255, 255, 0.4);
-    border-radius: 50%;
+	width: 10px;
+	height: 10px;
+	background: rgba(255, 255, 255, 0.4);
+	border-radius: 50%;
 }
 
 .active {
-    background: white;
-    width: 28px;
-    border-radius: 20px;
+	background: white;
+	width: 28px;
+	border-radius: 20px;
 }
 
-/* Prawa strona */
 .rightPanel {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    padding: 40px 45px;
-    width: 50%;
-    height: 100%;
-    background: white;
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	padding: 40px 45px;
+	width: 50%;
+	height: 100%;
+	background: white;
 }
 
 .formContainer h2 {
-    font-size: 28px;
-    margin-bottom: 4px;
-    color: #1f2937;
+	font-size: 28px;
+	margin-bottom: 4px;
+	color: #1f2937;
 }
 
 .createAccount {
-    margin: 4px 0;
-    color: #4b5563;
-    font-size: 14px;
+	margin: 4px 0;
+	color: #4b5563;
+	font-size: 14px;
 }
 
 .link {
-    color: #0078d4;
-    text-decoration: none;
-    font-weight: 500;
+	color: #0078d4;
+	text-decoration: none;
+	font-weight: 500;
 }
 
 .subtitle {
-    color: #6b7280;
-    margin-bottom: 20px;
-    font-size: 13px;
+	color: #6b7280;
+	margin-bottom: 20px;
+	font-size: 13px;
 }
 
 .inputGroup {
-    position: relative;
-    margin-top: 16px;
-    margin-bottom: 16px;
-    overflow: visible;
-    max-width: 100%;
+	position: relative;
+	margin-top: 16px;
+	margin-bottom: 16px;
+	overflow: visible;
+	max-width: 100%;
 }
 
 .inputGroup input {
-    width: 100%;
-    padding: 10px 40px 10px 10px;
-    border: none;
-    border-bottom: 1px solid #d1d5db;
-    outline: none;
-    font-size: 15px;
-    transition: all 0.2s;
+	width: 100%;
+	padding: 10px 40px 10px 10px;
+	border: none;
+	border-bottom: 1px solid #d1d5db;
+	outline: none;
+	font-size: 15px;
+	transition: all 0.2s;
 }
 
 .inputGroup:nth-of-type(1)::after,
 .inputGroup:nth-of-type(2)::after {
-    font-family: "Font Awesome 7 Free";
-    font-weight: 900;
-    position: absolute;
-    right: 10px;
-    top: 50%;
-    opacity: 0.2;
-    transform: translateY(-50%);
-    transition: all .3s;
+	font-family: "Font Awesome 7 Free";
+	font-weight: 900;
+	position: absolute;
+	right: 10px;
+	top: 50%;
+	opacity: 0.2;
+	transform: translateY(-50%);
+	transition: all 0.3s;
 }
 
 .inputGroup:nth-of-type(1):focus-within::after,
 .inputGroup:nth-of-type(2):focus-within::after {
-    opacity: 0.8;
+	opacity: 0.8;
 }
 
 .inputGroup:nth-of-type(1)::after {
-    content: "\f007";
+	content: "\f007";
 }
 
 .inputGroup:nth-of-type(2)::after {
-    content: "\f023";
+	content: "\f023";
 }
 
 .inputGroup input:-webkit-autofill,
 .inputGroup input:-webkit-autofill:hover,
 .inputGroup input:-webkit-autofill:focus,
 .inputGroup input:-webkit-autofill:active {
-    -webkit-box-shadow: 0 0 0 1000px white inset !important;
-    box-shadow: 0 0 0 1000px white inset !important;
-    -webkit-text-fill-color: #000 !important;
-    transition: background-color 9999s ease-in-out 0s;
+	-webkit-box-shadow: 0 0 0 1000px white inset !important;
+	box-shadow: 0 0 0 1000px white inset !important;
+	-webkit-text-fill-color: #000 !important;
+	transition: background-color 9999s ease-in-out 0s;
 }
 
 .formOptions {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 20px;
-    font-size: 13px;
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	margin-bottom: 20px;
+	font-size: 13px;
 }
 
-
 .remember input {
-    width: 14px;
-    height: 14px;
+	width: 14px;
+	height: 14px;
 }
 
 .forgot {
-    color: #0078d4;
-    text-decoration: none;
-    font-size: 13px;
+	color: #0078d4;
+	text-decoration: none;
+	font-size: 13px;
 }
 
 .forgot:hover {
-    text-decoration: underline;
+	text-decoration: underline;
 }
 
 .signInBtn {
-    width: 100%;
-    padding: 12px;
-    background: #0078d4;
-    color: white;
-    border: none;
-    border-radius: 8px;
-    font-size: 16px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: background 0.2s;
+	width: 100%;
+	padding: 12px;
+	background: #0078d4;
+	color: white;
+	border: none;
+	border-radius: 8px;
+	font-size: 16px;
+	font-weight: 600;
+	cursor: pointer;
+	transition: background 0.2s;
 }
 
 .signInBtn:hover {
-    background: #106ebe;
+	background: #106ebe;
 }
 
-/* Responsywność dla mniejszych ekranów */
+/* TABLETY */
 @media (max-width: 1024px) {
-    .loginCard {
-        width: 95vw;
-        height: 580px;
-    }
+	.loginCard {
+		width: 92vw;
+		height: 560px;
+	}
 
-    .leftPanel {
-        padding: 30px 35px;
-    }
+	.leftPanel,
+	.rightPanel {
+		padding: 32px;
+	}
 
-    .rightPanel {
-        padding: 30px 35px;
-    }
+	.welcomeText h1 {
+		font-size: 26px;
+	}
 
-    .welcomeText h1 {
-        font-size: 26px;
-    }
+	.clipboardImg {
+		width: 190px;
+	}
 
-    .clipboardImg {
-        width: 130px;
-    }
+	.formContainer h2 {
+		font-size: 24px;
+	}
 }
 
+/* MOBILE */
 @media (max-width: 768px) {
-    .loginCard {
-        flex-direction: column;
-        width: 95vw;
-        height: auto;
-        max-height: 95vh;
-        overflow-y: auto;
-    }
+	html,
+	body {
+		overflow: auto;
+	}
 
-    .leftPanel {
-        width: 100%;
-        height: auto;
-        padding: 25px 30px;
-        min-height: 200px;
-    }
+	.loginContainer {
+		min-height: 100vh;
+		height: auto;
+		padding: 20px;
+	}
 
-    .rightPanel {
-        width: 100%;
-        height: auto;
-        padding: 25px 30px;
-    }
+	.loginCard {
+		flex-direction: column;
+		width: 100%;
+		max-width: 420px;
+		height: auto;
+		max-height: none;
+		border-radius: 18px;
+	}
 
-    .welcomeText h1 {
-        font-size: 22px;
-    }
+	.leftPanel {
+		width: 100%;
+		height: auto;
+		padding: 32px 24px;
+		border-radius: 18px 18px 0 0;
+		text-align: center;
+	}
 
-    .clipboardImg {
-        width: 100px;
-    }
+	.rightPanel {
+		width: 100%;
+		height: auto;
+		padding: 32px 24px;
+	}
 
-    .formContainer h2 {
-        font-size: 24px;
-    }
+	.logo {
+		justify-content: center;
+		margin-bottom: 15px;
+	}
 
-    .illustration {
-        margin: 5px 0;
-    }
+	.logoText {
+		font-size: 22px;
+	}
 
-    .logoText {
-        font-size: 20px;
-    }
+	.logoIcon {
+		width: 30px;
+		height: 30px;
+		font-size: 18px;
+	}
 
-    .dots {
-        margin-top: 15px;
-    }
+	.clipboardImg {
+		width: 160px;
+	}
+
+	.welcomeText h1 {
+		font-size: 24px;
+	}
+
+	.welcomeText p {
+		font-size: 14px;
+	}
+
+	.dots {
+		justify-content: center;
+		margin-top: 18px;
+	}
+
+	.formContainer h2 {
+		font-size: 24px;
+	}
+
+	.createAccount {
+		font-size: 14px;
+	}
+
+	.subtitle {
+		font-size: 13px;
+		margin-bottom: 18px;
+	}
+
+	.inputGroup {
+		margin: 18px 0;
+	}
+
+	.inputGroup input {
+		font-size: 16px;
+		padding: 12px 40px 12px 10px;
+	}
+
+	.formOptions {
+		font-size: 13px;
+		margin-bottom: 20px;
+	}
+
+	.signInBtn {
+		padding: 13px;
+		font-size: 16px;
+	}
 }
 
-@media (max-width: 480px) {
-    .loginCard {
-        width: 98vw;
-        border-radius: 12px;
-    }
+/* MAŁE TELEFONY */
+@media (max-width: 420px) {
+	.loginContainer {
+		padding: 12px;
+	}
 
-    .leftPanel {
-        padding: 18px 20px;
-        min-height: 160px;
-    }
+	.leftPanel,
+	.rightPanel {
+		padding: 24px 18px;
+	}
 
-    .rightPanel {
-        padding: 18px 20px;
-    }
+	.logoText {
+		font-size: 20px;
+	}
 
-    .welcomeText h1 {
-        font-size: 18px;
-        margin: 5px 0;
-    }
+	.clipboardImg {
+		width: 135px;
+	}
 
-    .welcomeText p {
-        font-size: 12px;
-    }
+	.welcomeText h1 {
+		font-size: 21px;
+	}
 
-    .clipboardImg {
-        width: 70px;
-    }
+	.welcomeText p {
+		font-size: 13px;
+	}
 
-    .logo {
-        margin-bottom: 10px;
-    }
+	.formContainer h2 {
+		font-size: 22px;
+	}
 
-    .logoText {
-        font-size: 16px;
-    }
+	.inputGroup input {
+		font-size: 15px;
+	}
 
-    .formContainer h2 {
-        font-size: 20px;
-    }
+	.formOptions {
+		flex-direction: column;
+		align-items: flex-start;
+		gap: 10px;
+	}
+}
 
-    .inputGroup input {
-        font-size: 14px;
-        padding: 8px 35px 8px 8px;
-    }
+/* BARDZO NISKIE EKRANY */
+@media (max-height: 650px) and (max-width: 768px) {
+	.loginContainer {
+		padding: 10px;
+	}
 
-    .formOptions {
-        font-size: 12px;
-        flex-wrap: wrap;
-        gap: 8px;
-    }
+	.leftPanel {
+		padding: 20px;
+	}
 
-    .signInBtn {
-        padding: 10px;
-        font-size: 14px;
-    }
+	.rightPanel {
+		padding: 20px;
+	}
 
-    .dots {
-        display: none;
-    }
+	.clipboardImg {
+		width: 70px;
+	}
+
+	.welcomeText h1 {
+		font-size: 19px;
+	}
+
+	.welcomeText p {
+		display: none;
+	}
+
+	.dots {
+		display: none;
+	}
 }

@@ -10,4 +10,10 @@ export default defineConfig({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+
+  server: {
+    allowedHosts: [
+      "turbine-protector-aluminum.ngrok-free.dev"
+    ],
+  },
 });

@@ -1,0 +1,708 @@
+/* ==========================================================================
+   Dashboard - Centrum Dowodzenia
+   Motyw: fiolet, jasne tło, karty
+   ========================================================================== */
+
+/* ---------------------------------- Powitanie ---------------------------------- */
+
+.welcome {
+	margin-bottom: 32px;
+	padding: 0 4px;
+}
+
+.welcome__title {
+	font-size: 32px;
+	font-weight: 700;
+	color: var(--text-dark, #201a3b);
+	margin: 0 0 10px 0;
+	letter-spacing: -0.5px;
+}
+
+.welcome__info {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	font-size: 15px;
+	color: var(--text-muted, #928fa3);
+	flex-wrap: wrap;
+}
+
+.welcome__role {
+	color: var(--purple-700, #4c2cc7);
+	font-weight: 600;
+	font-size: 15px;
+	padding: 4px 14px;
+	background: var(--purple-50, #f6f4fe);
+	border-radius: 999px;
+}
+
+.welcome__divider {
+	color: var(--border-soft, #eceaf4);
+	font-size: 18px;
+}
+
+.welcome__team {
+	color: var(--text-muted, #928fa3);
+	font-weight: 500;
+}
+
+.welcome__status {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	font-weight: 600;
+	font-size: 15px;
+	padding: 4px 14px 4px 10px;
+	background: rgba(46, 204, 113, 0.1);
+	border-radius: 999px;
+}
+
+.welcome__statusDot {
+	width: 10px;
+	height: 10px;
+	border-radius: 50%;
+	display: inline-block;
+	animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+	0%,
+	100% {
+		opacity: 1;
+	}
+	50% {
+		opacity: 0.5;
+	}
+}
+
+/* ---------------------------------- Karty statystyk ---------------------------------- */
+
+.stats {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+	gap: 20px;
+	margin-bottom: 36px;
+}
+
+.statCard {
+	background: var(--card-bg, #ffffff);
+	border-radius: var(--radius-lg, 22px);
+	padding: 24px 22px;
+	display: flex;
+	align-items: center;
+	gap: 18px;
+	box-shadow: var(--shadow-card, 0 10px 30px -12px rgba(46, 26, 107, 0.14));
+	border: 1px solid var(--border-soft, #eceaf4);
+	transition: all 0.25s ease;
+	cursor: default;
+}
+
+.statCard:hover {
+	transform: translateY(-4px);
+	box-shadow: 0 20px 40px -14px rgba(46, 26, 107, 0.25);
+	border-color: var(--purple-100, #efebfd);
+}
+
+.statCard__icon {
+	width: 56px;
+	height: 56px;
+	border-radius: var(--radius-md, 16px);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	flex-shrink: 0;
+	font-size: 28px;
+}
+
+.statCard__content {
+	flex: 1;
+	min-width: 0;
+}
+
+.statCard__label {
+	font-size: 14px;
+	color: var(--text-muted, #928fa3);
+	margin: 0 0 6px 0;
+	font-weight: 500;
+}
+
+.statCard__valueWrapper {
+	display: flex;
+	align-items: baseline;
+	gap: 8px;
+}
+
+.statCard__value {
+	font-size: 30px;
+	font-weight: 800;
+	color: var(--text-dark, #201a3b);
+	letter-spacing: -0.5px;
+}
+
+.statCard__subtext {
+	font-size: 13px;
+	color: var(--text-faint, #b7b4c6);
+	font-weight: 500;
+}
+
+/* ---------------------------------- Sekcja dolna ---------------------------------- */
+
+.bottomSection {
+	display: grid;
+	grid-template-columns: 2fr 1fr;
+	gap: 28px;
+}
+
+/* ---------------------------------- Powiadomienia ---------------------------------- */
+
+.notifications {
+	background: var(--card-bg, #ffffff);
+	border-radius: var(--radius-lg, 22px);
+	padding: 28px 26px;
+	border: 1px solid var(--border-soft, #eceaf4);
+	box-shadow: var(--shadow-card, 0 10px 30px -12px rgba(46, 26, 107, 0.14));
+}
+
+.sectionTitle {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	font-size: 20px;
+	font-weight: 700;
+	color: var(--text-dark, #201a3b);
+	margin: 0 0 20px 0;
+}
+
+.notifications__list {
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+}
+
+.notification {
+	display: flex;
+	gap: 14px;
+	padding: 16px 18px;
+	border-radius: var(--radius-sm, 12px);
+	background: var(--bg-app, #f1f1f7);
+	transition: all 0.2s ease;
+	border: 1px solid transparent;
+}
+
+.notification:hover {
+	background: var(--purple-50, #f6f4fe);
+	border-color: var(--purple-100, #efebfd);
+	transform: translateX(4px);
+}
+
+.notification__icon {
+	flex-shrink: 0;
+	margin-top: 2px;
+}
+
+.notification__content {
+	flex: 1;
+	min-width: 0;
+}
+
+.notification__message {
+	font-size: 14.5px;
+	color: var(--text-dark, #201a3b);
+	margin: 0 0 6px 0;
+	line-height: 1.5;
+}
+
+.notification__time {
+	font-size: 12.5px;
+	color: var(--text-faint, #b7b4c6);
+	font-weight: 500;
+}
+
+/* ---------------------------------- Szybkie akcje ---------------------------------- */
+
+.quickActions {
+	background: var(--card-bg, #ffffff);
+	border-radius: var(--radius-lg, 22px);
+	padding: 28px 26px;
+	border: 1px solid var(--border-soft, #eceaf4);
+	box-shadow: var(--shadow-card, 0 10px 30px -12px rgba(46, 26, 107, 0.14));
+}
+
+.quickActions__grid {
+	min-height: 90%;
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	align-items: center;
+	justify-content: space-around;
+	gap: 14px;
+}
+
+.quickAction {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 10px;
+	padding: 20px 16px;
+	border: 1px solid var(--border-soft, #eceaf4);
+	border-radius: var(--radius-md, 16px);
+	background: var(--card-bg, #ffffff);
+	cursor: pointer;
+	transition: all 0.25s ease;
+	font-family: inherit;
+	text-decoration: none;
+	position: relative;
+	overflow: hidden;
+}
+
+.quickAction::before {
+	content: "";
+	position: absolute;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	opacity: 0;
+	transition: opacity 0.25s ease;
+	background: linear-gradient(
+		135deg,
+		var(--purple-50, #f6f4fe) 0%,
+		transparent 100%
+	);
+}
+
+.quickAction:hover::before {
+	opacity: 1;
+}
+
+.quickAction:hover {
+	border-color: var(--purple-100, #efebfd);
+	transform: translateY(-3px);
+	box-shadow: 0 12px 28px -10px rgba(46, 26, 107, 0.18);
+}
+
+.quickAction:active {
+	transform: translateY(0px);
+}
+
+.quickAction__icon {
+	width: 48px;
+	height: 48px;
+	border-radius: var(--radius-sm, 12px);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	position: relative;
+	z-index: 1;
+	font-size: 20px;
+	transition: transform 0.2s ease;
+}
+
+.quickAction:hover .quickAction__icon {
+	transform: scale(1.08);
+}
+
+.quickAction__label {
+	font-size: 13.5px;
+	font-weight: 600;
+	color: var(--text-dark, #201a3b);
+	text-align: center;
+	position: relative;
+	z-index: 1;
+}
+
+/* ---------------------------------- Responsywność ---------------------------------- */
+
+@media (max-width: 1200px) {
+	.stats {
+		grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+	}
+}
+
+@media (max-width: 1024px) {
+	.bottomSection {
+		grid-template-columns: 1fr;
+		gap: 24px;
+	}
+
+	.welcome__title {
+		font-size: 28px;
+	}
+}
+
+@media (max-width: 768px) {
+	.stats {
+		grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+		gap: 16px;
+	}
+
+	.welcome__title {
+		font-size: 24px;
+	}
+
+	.welcome__info {
+		font-size: 13.5px;
+		gap: 8px;
+	}
+
+	.welcome__role {
+		font-size: 13px;
+		padding: 3px 12px;
+	}
+
+	.welcome__status {
+		font-size: 13px;
+		padding: 3px 12px 3px 8px;
+	}
+
+	.statCard {
+		padding: 18px 16px;
+		gap: 14px;
+	}
+
+	.statCard__icon {
+		width: 48px;
+		height: 48px;
+		font-size: 22px;
+	}
+
+	.statCard__value {
+		font-size: 26px;
+	}
+
+	.quickActions {
+		padding: 22px 18px;
+	}
+
+	.quickActions__grid {
+		gap: 12px;
+	}
+
+	.quickAction {
+		padding: 16px 12px;
+	}
+
+	.quickAction__icon {
+		width: 42px;
+		height: 42px;
+	}
+
+	.quickAction__label {
+		font-size: 12.5px;
+	}
+
+	.notifications {
+		padding: 22px 18px;
+	}
+
+	.notification {
+		padding: 14px 16px;
+	}
+
+	.notification__message {
+		font-size: 13.5px;
+	}
+}
+
+@media (max-width: 480px) {
+	.stats {
+		grid-template-columns: 1fr 1fr;
+		gap: 12px;
+	}
+
+	.statCard {
+		padding: 16px 14px;
+		gap: 12px;
+		border-radius: var(--radius-sm, 12px);
+	}
+
+	.statCard__icon {
+		width: 40px;
+		height: 40px;
+		font-size: 18px;
+		border-radius: var(--radius-sm, 12px);
+	}
+
+	.statCard__value {
+		font-size: 22px;
+	}
+
+	.statCard__label {
+		font-size: 12px;
+	}
+
+	.statCard__subtext {
+		font-size: 11px;
+	}
+
+	.welcome__title {
+		font-size: 22px;
+	}
+
+	.welcome__info {
+		font-size: 12px;
+		gap: 6px;
+	}
+
+	.welcome__role {
+		font-size: 12px;
+		padding: 2px 10px;
+	}
+
+	.welcome__status {
+		font-size: 12px;
+		padding: 2px 10px 2px 6px;
+	}
+
+	.welcome__statusDot {
+		width: 8px;
+		height: 8px;
+	}
+
+	.bottomSection {
+		gap: 16px;
+	}
+
+	.quickActions {
+		padding: 18px 14px;
+		border-radius: var(--radius-md, 16px);
+	}
+
+	.quickActions__grid {
+		grid-template-columns: 1fr 1fr;
+		gap: 8px;
+	}
+
+	.quickAction {
+		padding: 14px 10px;
+		border-radius: var(--radius-sm, 12px);
+	}
+
+	.quickAction__icon {
+		width: 36px;
+		height: 36px;
+		font-size: 16px;
+	}
+
+	.quickAction__label {
+		font-size: 11.5px;
+	}
+
+	.notifications {
+		padding: 18px 14px;
+		border-radius: var(--radius-md, 16px);
+	}
+
+	.sectionTitle {
+		font-size: 17px;
+		gap: 10px;
+		margin-bottom: 16px;
+	}
+
+	.notification {
+		padding: 12px 14px;
+		gap: 10px;
+	}
+
+	.notification__message {
+		font-size: 13px;
+	}
+
+	.notification__time {
+		font-size: 11px;
+	}
+}
+
+@media (max-width: 380px) {
+	.stats {
+		grid-template-columns: 1fr;
+		gap: 10px;
+	}
+
+	.welcome__info {
+		flex-direction: column;
+		align-items: flex-start;
+		gap: 6px;
+	}
+
+	.welcome__divider {
+		display: none;
+	}
+}
+/* ---------------------------------- Karta powitalna z logo ---------------------------------- */
+
+.welcomeCard {
+	background: var(--card-bg, #ffffff);
+	border-radius: var(--radius-lg, 22px);
+	padding: 28px 32px;
+	margin-bottom: 32px;
+	box-shadow: var(--shadow-card, 0 10px 30px -12px rgba(46, 26, 107, 0.14));
+	border: 1px solid var(--border-soft, #eceaf4);
+}
+
+.welcomeCard__content {
+	display: flex;
+	align-items: center;
+	gap: 24px;
+}
+
+.welcomeCard__logo {
+	width: 100px;
+	height: 100px;
+	object-fit: contain;
+	border-radius: 16px;
+	background: white;
+	padding: 10px;
+	flex-shrink: 0;
+	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+	border: 1px solid var(--border-soft, #eceaf4);
+}
+
+.welcomeCard__text {
+	flex: 1;
+}
+
+.welcomeCard__title {
+	font-size: 28px;
+	font-weight: 700;
+	color: var(--text-dark, #201a3b);
+	margin: 0 0 8px 0;
+	letter-spacing: -0.5px;
+}
+
+.welcomeCard__info {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	font-size: 14px;
+	color: var(--text-muted, #928fa3);
+	flex-wrap: wrap;
+}
+
+.welcomeCard__role {
+	color: var(--purple-700, #4c2cc7);
+	font-weight: 600;
+	padding: 4px 14px;
+	background: var(--purple-50, #f6f4fe);
+	border-radius: 999px;
+}
+
+.welcomeCard__divider {
+	color: var(--border-soft, #eceaf4);
+}
+
+.welcomeCard__team {
+	color: var(--text-muted, #928fa3);
+	font-weight: 500;
+}
+
+.welcomeCard__status {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	font-weight: 600;
+	font-size: 14px;
+	padding: 4px 14px 4px 10px;
+	background: rgba(46, 204, 113, 0.1);
+	border-radius: 999px;
+}
+
+.welcomeCard__statusDot {
+	width: 10px;
+	height: 10px;
+	border-radius: 50%;
+	display: inline-block;
+	animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+	0%,
+	100% {
+		opacity: 1;
+	}
+	50% {
+		opacity: 0.5;
+	}
+}
+
+/* ---------------------------------- Responsywność dla karty powitalnej ---------------------------------- */
+
+@media (max-width: 768px) {
+	.welcomeCard {
+		padding: 20px 24px;
+		margin-bottom: 24px;
+	}
+
+	.welcomeCard__content {
+		flex-direction: column;
+		align-items: flex-start;
+		gap: 16px;
+	}
+
+	.welcomeCard__logo {
+		width: 64px;
+		height: 64px;
+		padding: 8px;
+	}
+
+	.welcomeCard__title {
+		font-size: 24px;
+	}
+
+	.welcomeCard__info {
+		font-size: 13px;
+		gap: 8px;
+	}
+
+	.welcomeCard__role {
+		font-size: 13px;
+		padding: 3px 12px;
+	}
+
+	.welcomeCard__status {
+		font-size: 13px;
+		padding: 3px 12px 3px 8px;
+	}
+}
+
+@media (max-width: 480px) {
+	.welcomeCard {
+		padding: 16px 18px;
+		margin-bottom: 20px;
+		border-radius: var(--radius-md, 16px);
+	}
+
+	.welcomeCard__content {
+		gap: 12px;
+	}
+
+	.welcomeCard__logo {
+		width: 52px;
+		height: 52px;
+		padding: 6px;
+		border-radius: 12px;
+	}
+
+	.welcomeCard__title {
+		font-size: 20px;
+	}
+
+	.welcomeCard__info {
+		font-size: 12px;
+		gap: 6px;
+	}
+
+	.welcomeCard__role {
+		font-size: 12px;
+		padding: 2px 10px;
+	}
+
+	.welcomeCard__status {
+		font-size: 12px;
+		padding: 2px 10px 2px 6px;
+	}
+
+	.welcomeCard__statusDot {
+		width: 8px;
+		height: 8px;
+	}
+}
