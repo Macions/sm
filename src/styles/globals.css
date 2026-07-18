@@ -1,0 +1,5 @@
+@import url(https://fonts.googleapis.com/css?family=Ubuntu:300,300italic,regular,italic,500,500italic,700,700italic);
+
+* {
+  font-family: 'Ubuntu', sans-serif !important;
+}
