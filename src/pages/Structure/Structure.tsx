@@ -3,7 +3,6 @@ import {
 	Users,
 	UserCog,
 	Megaphone,
-	Video,
 	Briefcase,
 	GraduationCap,
 	ChevronDown,
@@ -12,8 +11,6 @@ import {
 	Phone,
 	MapPin,
 	Building2,
-	Users2,
-	UserCheck,
 	Search,
 	X,
 	ZoomIn,
@@ -26,7 +23,6 @@ import styles from "./Structure.module.css";
 // ---------------------------------------------------------------------------
 // TYPY
 // ---------------------------------------------------------------------------
-
 type Person = {
 	id: string;
 	firstName: string;
@@ -44,310 +40,348 @@ type Node = {
 	role: string;
 	icon: React.ReactNode;
 	description: string;
-	personCount: number;
 	status: "active" | "inactive";
 	children: Node[];
 	people?: Person[];
 };
 
+
+// ---------------------------------------------------------------------------
+// FUNKCJE POMOCNICZE
+// ---------------------------------------------------------------------------
+const countAllPeople = (node: Node): number => {
+	let count = node.people?.length || 0;
+
+	for (const child of node.children) {
+		count += countAllPeople(child);
+	}
+
+	return count;
+};
+
 // ---------------------------------------------------------------------------
 // DANE - ORGANIZATION_DATA
 // ---------------------------------------------------------------------------
-
 const ORGANIZATION_DATA: Node = {
-	id: "board",
-	name: "Zarząd",
-	role: "Główne kierownictwo",
-	icon: <UserCog size={24} />,
+	id: "organization",
+	name: "Siła Młodych",
+	role: "Struktura organizacyjna",
+	icon: <Users size={24} />,
 	description:
-		"Kierowanie organizacją, podejmowanie kluczowych decyzji strategicznych",
-	personCount: 5,
+		"Organizacja młodzieżowa działająca w obszarze projektów, debat, rzecznictwa oraz rozwoju młodych osób.",
 	status: "active",
-	people: [
-		{
-			id: "1",
-			firstName: "Anna",
-			lastName: "Kowalska",
-			role: "Prezes Zarządu",
-			email: "anna.kowalska@sm.pl",
-			phone: "+48 123 456 789",
-			province: "Mazowieckie",
-		},
-		{
-			id: "2",
-			firstName: "Piotr",
-			lastName: "Nowak",
-			role: "Wiceprezes",
-			email: "piotr.nowak@sm.pl",
-			phone: "+48 123 456 788",
-			province: "Małopolskie",
-		},
-	],
+
+	people: [],
+
 	children: [
+
+		// =========================
+		// ZARZĄD
+		// =========================
+
 		{
-			id: "project",
-			name: "Filar Projektowy",
-			role: "Koordynacja projektów",
-			icon: <Briefcase size={22} />,
-			description: "Zarządzanie projektami i inicjatywami",
-			personCount: 8,
+			id: "board",
+			name: "Zarząd",
+			role: "Najwyższy organ zarządzający",
+			icon: <UserCog size={22} />,
+			description:
+				"Kierowanie organizacją, podejmowanie decyzji strategicznych i nadzór nad działaniami.",
 			status: "active",
+
+			children: [],
+
 			people: [
 				{
-					id: "3",
-					firstName: "Michał",
-					lastName: "Lewandowski",
-					role: "Koordynator",
-					email: "michal.lewandowski@sm.pl",
-					phone: "+48 123 456 787",
-					province: "Pomorskie",
+					id: "1",
+					firstName: "Maksym",
+					lastName: "Marczak",
+					role: "Prezes",
+					email: "maksym.marczak@silamlodych.pl",
 				},
-			],
-			children: [
 				{
-					id: "project-members",
-					name: "Członkowie Filaru Projektowego",
-					role: "Zespół projektowy",
-					icon: <Users2 size={20} />,
-					description: "Osoby realizujące projekty",
-					personCount: 12,
-					status: "active",
-					people: [
-						{
-							id: "4",
-							firstName: "Katarzyna",
-							lastName: "Kamińska",
-							role: "Specjalista ds. projektów",
-							email: "katarzyna.kaminska@sm.pl",
-							province: "Wielkopolskie",
-						},
-					],
-					children: [],
+					id: "2",
+					firstName: "Krzysztof",
+					lastName: "Korbut",
+					role: "Wiceprezes - odpowiedzialny za rekrutację",
+					email: "krzysztof.korbut@silamlodych.pl",
+				},
+				{
+					id: "3",
+					firstName: "Kasper",
+					lastName: "Brudniewicz",
+					role: "Wiceprezes - dokumenty i składki",
+					email: "kasper.brudniewicz@silamlodych.pl",
+				},
+				{
+					id: "4",
+					firstName: "Mai Lan",
+					lastName: "Nguyen",
+					role: "Członek Zarządu - media",
+					email: "mailan.nguyen@silamlodych.pl",
 				},
 			],
 		},
+
+
+		// =========================
+		// DYREKCJA
+		// =========================
+
 		{
-			id: "conference",
-			name: "Filar Konferencji i Debat",
-			role: "Organizacja wydarzeń",
-			icon: <Users size={22} />,
-			description: "Organizacja konferencji i debat",
-			personCount: 6,
+			id: "directors",
+			name: "Dyrekcja",
+			role: "Zarządzanie operacyjne",
+			icon: <Building2 size={22} />,
+			description:
+				"Nadzór nad bieżącym funkcjonowaniem organizacji.",
 			status: "active",
+
+			children: [],
+
 			people: [
 				{
 					id: "5",
-					firstName: "Tomasz",
-					lastName: "Adamski",
-					role: "Koordynator",
-					email: "tomasz.adamski@sm.pl",
-					phone: "+48 123 456 786",
-					province: "Dolnośląskie",
+					firstName: "Jakub",
+					lastName: "Patrowicz",
+					role: "Główny Dyrektor Operacyjny",
+					email: "jakub.patrowicz@silamlodych.pl",
 				},
-			],
-			children: [
-				{
-					id: "conference-members",
-					name: "Członkowie Filaru Konferencji",
-					role: "Zespół organizacyjny",
-					icon: <Users2 size={20} />,
-					description: "Osoby odpowiedzialne za organizację wydarzeń",
-					personCount: 8,
-					status: "active",
-					people: [],
-					children: [],
-				},
-			],
-		},
-		{
-			id: "advocacy",
-			name: "Filar Rzeczniczy",
-			role: "Rzecznictwo i komunikacja",
-			icon: <Megaphone size={22} />,
-			description: "Reprezentowanie interesów organizacji",
-			personCount: 4,
-			status: "active",
-			people: [
 				{
 					id: "6",
-					firstName: "Natalia",
-					lastName: "Szymańska",
-					role: "Koordynator",
-					email: "natalia.szymanska@sm.pl",
-					phone: "+48 123 456 785",
-					province: "Śląskie",
+					firstName: "Oliwier",
+					lastName: "Szulejko",
+					role: "Rzecznik - odpowiedzialny za frekwencję",
+					email: "oliwier.szulejko@silamlodych.pl",
 				},
 			],
-			children: [],
 		},
+
+
+		// =========================
+		// ORGANY KONTROLNE
+		// =========================
+
 		{
-			id: "simulation",
-			name: "Filar Symulacyjny",
-			role: "Symulacje i szkolenia",
-			icon: <GraduationCap size={22} />,
-			description: "Przygotowanie symulacji i szkoleń",
-			personCount: 5,
+			id: "control",
+			name: "Organy kontrolne",
+			role: "Niezależny nadzór",
+			icon: <Building2 size={22} />,
+			description:
+				"Organy odpowiedzialne za kontrolę oraz rozwiązywanie sporów.",
 			status: "active",
-			people: [
-				{
-					id: "7",
-					firstName: "Krzysztof",
-					lastName: "Zieliński",
-					role: "Koordynator",
-					email: "krzysztof.zielinski@sm.pl",
-					phone: "+48 123 456 784",
-					province: "Łódzkie",
-				},
-			],
-			children: [],
-		},
-		{
-			id: "social-media",
-			name: "Social Media",
-			role: "Media społecznościowe",
-			icon: <Megaphone size={22} />,
-			description: "Prowadzenie kanałów społecznościowych",
-			personCount: 6,
-			status: "active",
-			people: [
-				{
-					id: "8",
-					firstName: "Monika",
-					lastName: "Woźniak",
-					role: "Social Media Manager",
-					email: "monika.wozniak@sm.pl",
-					phone: "+48 123 456 783",
-					province: "Mazowieckie",
-				},
-			],
+
+			people: [],
+
 			children: [
+
 				{
-					id: "tiktok",
-					name: "Opiekun TikToka",
-					role: "Content creator",
-					icon: <Video size={20} />,
-					description: "Tworzenie treści na TikToka",
-					personCount: 2,
+					id: "audit",
+					name: "Komisja Rewizyjna",
+					role: "Kontrola działalności organizacji",
+					icon: <Building2 size={20} />,
+					description:
+						"Sprawowanie kontroli nad działaniami organizacji.",
 					status: "active",
+
+					children: [],
+
 					people: [
 						{
+							id: "7",
+							firstName: "Adam",
+							lastName: "Kowalczyk",
+							role: "Członek Komisji Rewizyjnej",
+							email: "adam.kowalczyk@silamlodych.pl",
+						},
+						{
+							id: "8",
+							firstName: "Wiktoria",
+							lastName: "Bryś",
+							role: "Członek Komisji Rewizyjnej",
+							email: "wiktoria.brys@silamlodych.pl",
+						},
+						{
 							id: "9",
-							firstName: "Karolina",
-							lastName: "Kwiatkowska",
-							role: "Opiekun TikToka",
-							email: "karolina.kwiatkowska@sm.pl",
-							province: "Pomorskie",
+							firstName: "Iga",
+							lastName: "Drzewiecka",
+							role: "Członek Komisji Rewizyjnej",
+							email: "iga.drzewiecka@silamlodych.pl",
 						},
 					],
-					children: [],
 				},
+
+
 				{
-					id: "instagram",
-					name: "Opiekun Instagrama",
-					role: "Content creator",
-					icon: <Video size={20} />,
-					description: "Tworzenie treści na Instagrama",
-					personCount: 2,
+					id: "court",
+					name: "Sąd Koleżeński",
+					role: "Rozwiązywanie sporów",
+					icon: <Building2 size={20} />,
+					description:
+						"Organ zajmujący się sprawami członkowskimi.",
 					status: "active",
+
+					children: [],
+
 					people: [
 						{
 							id: "10",
-							firstName: "Olga",
-							lastName: "Dąbrowska",
-							role: "Opiekun Instagrama",
-							email: "olga.dabrowska@sm.pl",
-							province: "Małopolskie",
+							firstName: "Adrian",
+							lastName: "Wróblewski",
+							role: "Członek Sądu Koleżeńskiego",
+							email: "adrian.wroblewski@silamlodych.pl",
+						},
+						{
+							id: "11",
+							firstName: "Jan",
+							lastName: "Augustyniak",
+							role: "Członek Sądu Koleżeńskiego",
+							email: "jan.augustyniak@silamlodych.pl",
+						},
+						{
+							id: "12",
+							firstName: "Oliwier",
+							lastName: "Szulejko",
+							role: "Członek Sądu Koleżeńskiego",
+							email: "oliwier.szulejko@silamlodych.pl",
 						},
 					],
+				},
+			],
+		},
+
+
+		// =========================
+		// FILARY
+		// =========================
+
+		{
+			id: "pillars",
+			name: "Filary organizacji",
+			role: "Główne obszary działalności",
+			icon: <Briefcase size={22} />,
+			description:
+				"Najważniejsze obszary realizacji działań organizacji.",
+			status: "active",
+
+			people: [],
+
+			children: [
+
+				{
+					id: "projects",
+					name: "Filar Projektowy",
+					role: "Projekty i inicjatywy",
+					icon: <Briefcase size={20} />,
+					description:
+						"Tworzenie i prowadzenie projektów.",
+					status: "active",
 					children: [],
+
+					people: [
+						{
+							id: "13",
+							firstName: "Zosia",
+							lastName: "Wartacz",
+							role: "Koordynator Filaru Projektowego",
+							email: "zosia.wartacz@silamlodych.pl"
+						},
+						{
+							id: "14",
+							firstName: "Zuzanna",
+							lastName: "Wojtusiak",
+							role: "Koordynator Filaru Projektowego",
+							email: "zuzanna.wojtusiak@silamlodych.pl"
+						}
+					]
 				},
-			],
-		},
-		{
-			id: "video",
-			name: "Montażyści",
-			role: "Produkcja wideo",
-			icon: <Video size={22} />,
-			description: "Montaż i produkcja materiałów wideo",
-			personCount: 3,
-			status: "active",
-			people: [
+
+
 				{
-					id: "11",
-					firstName: "Marcin",
-					lastName: "Kowalski",
-					role: "Montażysta",
-					email: "marcin.kowalski@sm.pl",
-					phone: "+48 123 456 782",
-					province: "Wielkopolskie",
+					id: "conference",
+					name: "Filar Konferencyjny",
+					role: "Konferencje i debaty",
+					icon: <Users size={20} />,
+					description: "Organizacja debat i wydarzeń.",
+					status: "active",
+					children: [],
+
+					people: [
+						{
+							id: "15",
+							firstName: "Adrian",
+							lastName: "Wróblewski",
+							role: "Koordynator Filaru Konferencyjnego",
+							email: "adrian.wroblewski@silamlodych.pl"
+						},
+						{
+							id: "16",
+							firstName: "Wojciech",
+							lastName: "Podolski",
+							role: "Koordynator Filaru Konferencyjnego",
+							email: "wojciech.podolski@silamlodych.pl"
+						}
+					]
 				},
-			],
-			children: [],
-		},
-		{
-			id: "audit",
-			name: "Komisja Rewizyjna",
-			role: "Kontrola finansowa",
-			icon: <Building2 size={22} />,
-			description: "Kontrola działań finansowych i zgodności",
-			personCount: 3,
-			status: "active",
-			people: [
+
+
 				{
-					id: "12",
-					firstName: "Andrzej",
-					lastName: "Nowicki",
-					role: "Przewodniczący",
-					email: "andrzej.nowicki@sm.pl",
-					phone: "+48 123 456 781",
-					province: "Śląskie",
+					id: "advocacy",
+					name: "Filar Rzeczniczy",
+					role: "Rzecznictwo",
+					icon: <Megaphone size={20} />,
+					description: "Komunikacja i reprezentowanie organizacji.",
+					status: "active",
+					children: [],
+
+					people: [
+						{
+							id: "17",
+							firstName: "Jan",
+							lastName: "Augustyniak",
+							role: "Koordynator Filaru Rzeczniczego",
+							email: "jan.augustyniak@silamlodych.pl"
+						},
+						{
+							id: "18",
+							firstName: "Nikola",
+							lastName: "Socha",
+							role: "Koordynator Filaru Rzeczniczego",
+							email: "nikola.socha@silamlodych.pl"
+						}
+					]
 				},
-			],
-			children: [],
-		},
-		{
-			id: "court",
-			name: "Sąd Koleżeński",
-			role: "Rozstrzyganie sporów",
-			icon: <Building2 size={22} />,
-			description: "Rozstrzyganie sporów członkowskich",
-			personCount: 3,
-			status: "active",
-			people: [
+
+
 				{
-					id: "13",
-					firstName: "Ewa",
-					lastName: "Malinowska",
-					role: "Przewodnicząca",
-					email: "ewa.malinowska@sm.pl",
-					phone: "+48 123 456 780",
-					province: "Pomorskie",
-				},
-			],
-			children: [],
-		},
-		{
-			id: "plenipotentiaries",
-			name: "Pełnomocnicy",
-			role: "Przedstawiciele lokalni",
-			icon: <UserCheck size={22} />,
-			description: "Przedstawiciele w poszczególnych regionach",
-			personCount: 4,
-			status: "active",
-			people: [
-				{
-					id: "14",
-					firstName: "Grzegorz",
-					lastName: "Wiśniewski",
-					role: "Pełnomocnik",
-					email: "grzegorz.wisniewski@sm.pl",
-					phone: "+48 123 456 779",
-					province: "Dolnośląskie",
-				},
-			],
-			children: [],
-		},
-	],
+					id: "simulation",
+					name: "Filar Symulacyjny",
+					role: "Symulacje",
+					icon: <GraduationCap size={20} />,
+					description: "Symulacje edukacyjne.",
+					status: "active",
+					children: [],
+
+					people: [
+						{
+							id: "19",
+							firstName: "Igor",
+							lastName: "Piskórz",
+							role: "Członek Filaru Symulacyjnego",
+							email: "igor.piskorz@silamlodych.pl"
+						},
+						{
+							id: "20",
+							firstName: "Maksym",
+							lastName: "Marczak",
+							role: "Członek Filaru Symulacyjnego",
+							email: "maksym.marczak@silamlodych.pl"
+						}
+					]
+				}
+
+			]
+		}
+	]
 };
 
 // ---------------------------------------------------------------------------
@@ -367,8 +401,14 @@ function TreeNode({
 	searchTerm = "",
 	scale = 1,
 }: TreeNodeProps) {
-	const [isExpanded, setIsExpanded] = useState(isRoot || false);
-	const hasChildren = node.children && node.children.length > 0;
+	const [isExpanded, setIsExpanded] = useState(false);
+	const hasExpandableContent =
+		node.children.length > 0 || (node.people && node.people.length > 0);
+
+	// Liczy TYLKO osoby bezpośrednio w tym węźle (nie z dzieci)
+	const directPeople = useMemo(() => node.people || [], [node]);
+	const totalPeopleInNode = useMemo(() => countAllPeople(node), [node]);
+
 	const isHighlighted = useMemo(() => {
 		if (!searchTerm) return false;
 		const search = searchTerm.toLowerCase();
@@ -387,18 +427,15 @@ function TreeNode({
 	}, [searchTerm, node]);
 
 	const toggleExpand = () => {
-		if (hasChildren) {
-			setIsExpanded(!isExpanded);
+		if (hasExpandableContent) {
+			setIsExpanded((prev) => !prev);
 		}
 	};
 
-	const cardScale = isRoot ? 1 : Math.max(0.85, scale * 0.9);
+	const cardScale = 1;
 
 	return (
-		<div
-			className={styles.treeNode}
-			style={{ transform: `scale(${cardScale})` }}
-		>
+		<div className={styles.treeNode}>
 			<div
 				className={`${styles.nodeCard} ${isRoot ? styles.nodeRoot : ""} ${isHighlighted ? styles.nodeHighlighted : ""}`}
 				onClick={toggleExpand}
@@ -425,9 +462,9 @@ function TreeNode({
 				<div className={styles.nodeCard__footer}>
 					<span className={styles.nodeCard__count}>
 						<Users size={14} />
-						{node.personCount} osób
+						{totalPeopleInNode} osób
 					</span>
-					{hasChildren && (
+					{hasExpandableContent && (
 						<button className={styles.nodeCard__toggle}>
 							{isExpanded ? (
 								<ChevronDown size={18} />
@@ -439,12 +476,13 @@ function TreeNode({
 				</div>
 			</div>
 
-			{isExpanded && node.people && node.people.length > 0 && (
+			{/* Wyświetlanie bezpośrednich osób w węźle */}
+			{isExpanded && directPeople.length > 0 && (
 				<div
 					className={styles.peopleList}
 					style={{ transform: `scale(${Math.min(1, cardScale * 1.1)})` }}
 				>
-					{node.people.map((person) => (
+					{directPeople.map((person) => (
 						<div key={person.id} className={styles.personCard}>
 							<div className={styles.personCard__avatar}>
 								{person.avatar || person.firstName[0] + person.lastName[0]}
@@ -484,7 +522,8 @@ function TreeNode({
 				</div>
 			)}
 
-			{isExpanded && hasChildren && (
+			{/* Dzieci - rozwijane pod spodem */}
+			{isExpanded && node.children.length > 0 && (
 				<div className={styles.childrenContainer}>
 					{node.children.map((child) => (
 						<TreeNode
@@ -509,8 +548,8 @@ export default function Structure() {
 	const containerRef = useRef<HTMLDivElement>(null);
 	const contentRef = useRef<HTMLDivElement>(null);
 
-	const [pan, setPan] = useState({ x: 0, y: 0 });
-	const [zoom, setZoom] = useState(1);
+	const [pan, setPan] = useState({ x: -410, y: -300 });
+	const [zoom, setZoom] = useState(1.2);
 	const [isDragging, setIsDragging] = useState(false);
 	const [startPan, setStartPan] = useState({ x: 0, y: 0 });
 	const [startMouse, setStartMouse] = useState({ x: 0, y: 0 });
@@ -518,16 +557,11 @@ export default function Structure() {
 
 	const MIN_ZOOM = 0.3;
 	const MAX_ZOOM = 2.5;
+	const PAN_BOUNDARY = 10000;
 
+	// Statystyki
 	const totalMembers = useMemo(() => {
-		const countPeople = (node: Node): number => {
-			let count = node.people?.length || 0;
-			for (const child of node.children) {
-				count += countPeople(child);
-			}
-			return count;
-		};
-		return countPeople(ORGANIZATION_DATA);
+		return countAllPeople(ORGANIZATION_DATA);
 	}, []);
 
 	const totalTeams = useMemo(() => {
@@ -545,9 +579,10 @@ export default function Structure() {
 		return ORGANIZATION_DATA.children.length;
 	}, []);
 
+	// Reset widoku (przycisk Home)
 	const resetView = () => {
-		setPan({ x: 0, y: 0 });
-		setZoom(1);
+		setPan({ x: -410, y: -300 });
+		setZoom(1.2);
 	};
 
 	const handleZoomIn = () => {
@@ -556,6 +591,12 @@ export default function Structure() {
 
 	const handleZoomOut = () => {
 		setZoom((prev) => Math.max(prev - 0.1, MIN_ZOOM));
+	};
+
+	const handlePan = (newX: number, newY: number) => {
+		const boundedX = Math.max(-PAN_BOUNDARY, Math.min(PAN_BOUNDARY, newX));
+		const boundedY = Math.max(-PAN_BOUNDARY, Math.min(PAN_BOUNDARY, newY));
+		setPan({ x: boundedX, y: boundedY });
 	};
 
 	const handleWheel = (e: React.WheelEvent<HTMLDivElement>) => {
@@ -572,16 +613,10 @@ export default function Structure() {
 				const centerY = rect.height / 2;
 				const scale = newZoom / zoom;
 
-				setPan((prev) => ({
-					x:
-						mouseX -
-						(mouseX - prev.x) * scale -
-						(mouseX - centerX) * (1 - scale),
-					y:
-						mouseY -
-						(mouseY - prev.y) * scale -
-						(mouseY - centerY) * (1 - scale),
-				}));
+				const newX = mouseX - (mouseX - pan.x) * scale - (mouseX - centerX) * (1 - scale);
+				const newY = mouseY - (mouseY - pan.y) * scale - (mouseY - centerY) * (1 - scale);
+
+				handlePan(newX, newY);
 			}
 			setZoom(newZoom);
 		}
@@ -605,10 +640,7 @@ export default function Structure() {
 		if (!isDragging) return;
 		const dx = e.clientX - startMouse.x;
 		const dy = e.clientY - startMouse.y;
-		setPan({
-			x: startPan.x + dx,
-			y: startPan.y + dy,
-		});
+		handlePan(startPan.x + dx, startPan.y + dy);
 	};
 
 	const handleMouseUp = () => {
@@ -642,10 +674,7 @@ export default function Structure() {
 		e.preventDefault();
 		const dx = e.touches[0].clientX - startMouse.x;
 		const dy = e.touches[0].clientY - startMouse.y;
-		setPan({
-			x: startPan.x + dx,
-			y: startPan.y + dy,
-		});
+		handlePan(startPan.x + dx, startPan.y + dy);
 	};
 
 	const handleTouchEnd = () => {
@@ -714,10 +743,6 @@ export default function Structure() {
 					<div className={styles.header__stat}>
 						<span className={styles.header__statValue}>{totalTeams}</span>
 						<span className={styles.header__statLabel}>Zespołów</span>
-					</div>
-					<div className={styles.header__stat}>
-						<span className={styles.header__statValue}>4</span>
-						<span className={styles.header__statLabel}>Funkcyjnych</span>
 					</div>
 				</div>
 			</div>
