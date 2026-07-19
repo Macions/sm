@@ -7,6 +7,9 @@ import Projects from "../pages/Projects/Projects";
 import Tutorials from "../pages/Tutorials/Tutorials";
 import Members from "../pages/Members/Members";
 import Vacancies from "../pages/Vacancies/Vacancies";
+import Leave from "../pages/Leave/Leave";
+import SocialMedia from "../pages/SocialMedia/SocialMedia";
+import Admin from "../pages/Admin/Admin";
 
 // Placeholder dla brakujących stron
 const PlaceholderPage = ({ title }: { title: string }) => {
@@ -47,15 +50,14 @@ function AppRoutes() {
 					path="/profile"
 					element={<PlaceholderPage title="Mój profil" />}
 				/>
-				<Route path="/guides" element={<PlaceholderPage title="Poradniki" />} />
-				<Route path="/leave" element={<PlaceholderPage title="Urlop" />} />
+				<Route path="/leave" element={<Leave title="Urlop" />} />
 				<Route
 					path="/social"
-					element={<PlaceholderPage title="Social Media" />}
+					element={<SocialMedia title="Social Media" />}
 				/>
 				<Route
 					path="/admin"
-					element={<PlaceholderPage title="Administracja" />}
+					element={<Admin title="Administracja" />}
 				/>
 			</Route>
 		</Routes>
