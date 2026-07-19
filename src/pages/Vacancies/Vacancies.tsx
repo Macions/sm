@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import {
 	Briefcase,
 	Search,
@@ -17,12 +17,12 @@ import {
 	Users,
 	Calendar,
 	Mail,
-	Phone,
 	Sparkles,
 	Video,
 	Camera,
 	Megaphone,
 	Globe,
+	Link2,
 	Award,
 	Target,
 	TrendingUp,
@@ -52,10 +52,27 @@ import styles from "./Vacancies.module.css";
 
 type VacancyStatus = "active" | "recruiting" | "filled";
 
+type User = {
+	id: string;
+	name: string;
+	role: "admin" | "coordinator" | "member";
+	teamId?: string;
+};
+
+type RecruitmentType = "form" | "messenger" | "internal";
+
+type FormQuestion = {
+	id: string;
+	question: string;
+	type: "text" | "number" | "textarea" | "select" | "checkbox";
+	required: boolean;
+	options?: string[]; // dla typu select
+};
+
 type Vacancy = {
 	id: string;
 	title: string;
-	icon: string; // nazwa ikony z lucide-react
+	icon: string;
 	description: string;
 	responsibilities: string[];
 	requirements: string[];
@@ -70,10 +87,9 @@ type Vacancy = {
 	};
 	createdAt: string;
 	status: VacancyStatus;
-	applicants?: string[]; // ID użytkowników, którzy się zgłosili
-	filledBy?: string; // ID użytkownika, który obsadził stanowisko
+	applicants?: string[];
+	filledBy?: string;
 	attachments?: {
-		// <-- DODAJ
 		id: string;
 		name: string;
 		size: number;
@@ -81,13 +97,14 @@ type Vacancy = {
 		url: string;
 		uploadedAt: string;
 	}[];
-};
-
-type User = {
-	id: string;
-	name: string;
-	role: "admin" | "coordinator" | "member";
-	teamId?: string;
+	// NOWE POLA DLA REKRUTACJI
+	recruitment: {
+		type: RecruitmentType;
+		formUrl?: string; // dla typu "form"
+		messengerContact?: string; // dla typu "messenger"
+		questions?: FormQuestion[]; // dla typu "internal"
+		deadline: string; // data i godzina zakończenia rekrutacji
+	};
 };
 
 type Application = {
@@ -99,6 +116,7 @@ type Application = {
 	message?: string;
 	appliedAt: string;
 	status: "pending" | "reviewed" | "accepted" | "rejected";
+	answers?: Record<string, string>; // odpowiedzi na pytania
 };
 
 // ---------------------------------------------------------------------------
@@ -177,6 +195,12 @@ const MOCK_VACANCIES: Vacancy[] = [
 		createdAt: "2024-12-01",
 		status: "active",
 		applicants: ["2", "3"],
+		recruitment: {
+			// <-- DODAJ TO
+			type: "internal",
+			deadline: "2026-12-31T23:59",
+			questions: [],
+		},
 	},
 	{
 		id: "2",
@@ -210,6 +234,36 @@ const MOCK_VACANCIES: Vacancy[] = [
 		createdAt: "2024-12-05",
 		status: "recruiting",
 		applicants: ["4", "5", "6"],
+		recruitment: {
+			type: "internal",
+			deadline: "2026-12-31T23:59",
+			questions: [
+				// <-- DODAJ PYTANIA
+				{
+					id: "q1",
+					question: "Jakie masz doświadczenie w zarządzaniu projektami?",
+					type: "textarea",
+					required: true,
+				},
+				{
+					id: "q2",
+					question: "Czy masz certyfikat zarządzania projektami?",
+					type: "select",
+					required: false,
+					options: [
+						"Tak, mam",
+						"Nie, ale chcę zdobyć",
+						"Nie interesuje mnie to",
+					],
+				},
+				{
+					id: "q3",
+					question: "Ile godzin tygodniowo możesz poświęcić?",
+					type: "number",
+					required: true,
+				},
+			],
+		},
 	},
 	{
 		id: "3",
@@ -244,6 +298,12 @@ const MOCK_VACANCIES: Vacancy[] = [
 		createdAt: "2024-12-10",
 		status: "active",
 		applicants: ["7"],
+		recruitment: {
+			// <-- DODAJ TO
+			type: "internal",
+			deadline: "2026-12-31T23:59",
+			questions: [],
+		},
 	},
 	{
 		id: "4",
@@ -277,6 +337,12 @@ const MOCK_VACANCIES: Vacancy[] = [
 		createdAt: "2024-12-15",
 		status: "active",
 		applicants: [],
+		recruitment: {
+			// <-- DODAJ TO
+			type: "internal",
+			deadline: "2026-12-31T23:59",
+			questions: [],
+		},
 	},
 	{
 		id: "5",
@@ -311,6 +377,12 @@ const MOCK_VACANCIES: Vacancy[] = [
 		createdAt: "2024-12-20",
 		status: "active",
 		applicants: ["8"],
+		recruitment: {
+			// <-- DODAJ TO
+			type: "internal",
+			deadline: "2026-12-31T23:59",
+			questions: [],
+		},
 	},
 	{
 		id: "6",
@@ -345,6 +417,12 @@ const MOCK_VACANCIES: Vacancy[] = [
 		createdAt: "2025-01-05",
 		status: "active",
 		applicants: ["9"],
+		recruitment: {
+			// <-- DODAJ TO
+			type: "internal",
+			deadline: "2026-12-31T23:59",
+			questions: [],
+		},
 	},
 	{
 		id: "7",
@@ -377,6 +455,12 @@ const MOCK_VACANCIES: Vacancy[] = [
 		createdAt: "2025-01-10",
 		status: "recruiting",
 		applicants: ["10"],
+		recruitment: {
+			// <-- DODAJ TO
+			type: "internal",
+			deadline: "2026-12-31T23:59",
+			questions: [],
+		},
 	},
 	{
 		id: "8",
@@ -411,6 +495,12 @@ const MOCK_VACANCIES: Vacancy[] = [
 		createdAt: "2025-01-15",
 		status: "active",
 		applicants: [],
+		recruitment: {
+			// <-- DODAJ TO
+			type: "internal",
+			deadline: "2026-12-31T23:59",
+			questions: [],
+		},
 	},
 	{
 		id: "9",
@@ -446,6 +536,12 @@ const MOCK_VACANCIES: Vacancy[] = [
 		status: "filled",
 		applicants: ["11"],
 		filledBy: "11",
+		recruitment: {
+			// <-- DODAJ TO
+			type: "internal",
+			deadline: "2026-12-31T23:59",
+			questions: [],
+		},
 	},
 	{
 		id: "10",
@@ -480,6 +576,12 @@ const MOCK_VACANCIES: Vacancy[] = [
 		createdAt: "2025-02-01",
 		status: "active",
 		applicants: [],
+		recruitment: {
+			// <-- DODAJ TO
+			type: "internal",
+			deadline: "2026-12-31T23:59",
+			questions: [],
+		},
 	},
 ];
 
@@ -693,6 +795,25 @@ function VacancyCard({
 							{vacancy.applicants?.length || 0} zgłoszeń
 						</span>
 					</div>
+					{/* Informacja o rekrutacji */}
+					{vacancy.recruitment && (
+						<div className={styles.vacancyCard__recruitment}>
+							{vacancy.recruitment.deadline && (
+								<span className={styles.vacancyCard__deadline}>
+									<Clock size={14} />
+									Zgłoszenia do:{" "}
+									{new Date(vacancy.recruitment.deadline).toLocaleString(
+										"pl-PL",
+									)}
+								</span>
+							)}
+							<span className={styles.vacancyCard__recruitmentType}>
+								{vacancy.recruitment.type === "form" && "📋 Formularz"}
+								{vacancy.recruitment.type === "messenger" && "💬 Messenger"}
+								{vacancy.recruitment.type === "internal" && "📝 Formularz"}
+							</span>
+						</div>
+					)}
 				</div>
 				<div className={styles.vacancyCard__actions}>
 					<button
@@ -723,7 +844,7 @@ function VacancyCard({
 					{!isFilled && !hasApplied && (
 						<button
 							className={styles.vacancyCard__applyBtn}
-							onClick={() => onApply(vacancy)}
+							onClick={() => onApply(vacancy)} // <-- ZMIEŃ na onApply
 							disabled={isRecruiting}
 						>
 							<Send size={14} />
@@ -775,6 +896,23 @@ function VacancyCard({
 						{vacancy.applicants?.length || 0} zgłoszeń
 					</span>
 				</div>
+				{/* Informacja o rekrutacji */}
+				{vacancy.recruitment && (
+					<div className={styles.vacancyCard__recruitment}>
+						{vacancy.recruitment.deadline && (
+							<span className={styles.vacancyCard__deadline}>
+								<Clock size={14} />
+								Zgłoszenia do:{" "}
+								{new Date(vacancy.recruitment.deadline).toLocaleString("pl-PL")}
+							</span>
+						)}
+						<span className={styles.vacancyCard__recruitmentType}>
+							{vacancy.recruitment.type === "form" && "📋 Formularz"}
+							{vacancy.recruitment.type === "messenger" && "💬 Messenger"}
+							{vacancy.recruitment.type === "internal" && "📝 Formularz"}
+						</span>
+					</div>
+				)}
 				<div className={styles.vacancyCard__footer}>
 					<span className={styles.vacancyCard__date}>
 						<Calendar size={14} />
@@ -828,7 +966,348 @@ function VacancyCard({
 		</div>
 	);
 }
+// ---------------------------------------------------------------------------
+// MODAL ZGŁOSZENIA KANDYDATURY
+// ---------------------------------------------------------------------------
 
+interface ApplyModalProps {
+	isOpen: boolean;
+	vacancy: Vacancy | null;
+	currentUser: User;
+	onClose: () => void;
+	onSubmit: (
+		vacancy: Vacancy,
+		answers: Record<string, string>,
+		message: string,
+	) => void;
+}
+
+function ApplyModal({
+	isOpen,
+	vacancy,
+	currentUser,
+	onClose,
+	onSubmit,
+}: ApplyModalProps) {
+	const [answers, setAnswers] = useState<Record<string, string>>({});
+	const [message, setMessage] = useState("");
+	const [errors, setErrors] = useState<Record<string, string>>({});
+
+	if (!isOpen || !vacancy) return null;
+
+	const isInternal = vacancy.recruitment?.type === "internal";
+	const questions = vacancy.recruitment?.questions || [];
+
+	const validateForm = () => {
+		const newErrors: Record<string, string> = {};
+
+		if (isInternal) {
+			questions.forEach((q) => {
+				if (q.required && !answers[q.id]?.trim()) {
+					newErrors[q.id] = "To pytanie jest wymagane";
+				}
+			});
+		}
+
+		setErrors(newErrors);
+		return Object.keys(newErrors).length === 0;
+	};
+
+	const handleSubmit = (e: React.FormEvent) => {
+		e.preventDefault();
+
+		if (!validateForm()) {
+			// Przewiń do pierwszego błędu
+			const firstError = document.querySelector(".apply-error");
+			if (firstError) {
+				firstError.scrollIntoView({ behavior: "smooth", block: "center" });
+			}
+			return;
+		}
+
+		if (
+			window.confirm(
+				`Czy chcesz zgłosić swoją kandydaturę na stanowisko "${vacancy.title}"?`,
+			)
+		) {
+			onSubmit(vacancy, answers, message);
+			onClose();
+		}
+	};
+
+	return (
+		<div className={styles.modalOverlay} onClick={onClose}>
+			<div
+				className={`${styles.modal} ${styles.modalForm}`}
+				onClick={(e) => e.stopPropagation()}
+			>
+				<div className={styles.modal__header}>
+					<div className={styles.modal__headerLeft}>
+						<Briefcase size={24} className={styles.modal__icon} />
+						<h2 className={styles.modal__title}>
+							Zgłoszenie na stanowisko: {vacancy.title}
+						</h2>
+					</div>
+					<button className={styles.modal__close} onClick={onClose}>
+						<X size={20} />
+					</button>
+				</div>
+
+				<form onSubmit={handleSubmit} className={styles.modal__form}>
+					<div className={styles.modal__body}>
+						{/* Informacje o rekrutacji */}
+						<div className={styles.modal__section}>
+							<div className={styles.modal__infoGrid}>
+								<div className={styles.modal__infoItem}>
+									<Clock size={16} />
+									<span>
+										Zgłoszenia do:{" "}
+										<strong>
+											{new Date(vacancy.recruitment.deadline).toLocaleString(
+												"pl-PL",
+											)}
+										</strong>
+									</span>
+								</div>
+								<div className={styles.modal__infoItem}>
+									<Briefcase size={16} />
+									<span>
+										Typ rekrutacji:{" "}
+										<strong>
+											{vacancy.recruitment.type === "form" &&
+												"Formularz zewnętrzny"}
+											{vacancy.recruitment.type === "messenger" &&
+												"Wiadomość na Messengerze"}
+											{vacancy.recruitment.type === "internal" &&
+												"Formularz na stronie"}
+										</strong>
+									</span>
+								</div>
+							</div>
+						</div>
+
+						{/* Dla typu "form" - przekierowanie */}
+						{vacancy.recruitment.type === "form" &&
+							vacancy.recruitment.formUrl && (
+								<div className={styles.modal__section}>
+									<div className={styles.applyInfoBox}>
+										<p>
+											Rekrutacja odbywa się przez zewnętrzny formularz. Kliknij
+											poniższy link, aby przejść do formularza.
+										</p>
+										<a
+											href={vacancy.recruitment.formUrl}
+											target="_blank"
+											rel="noopener noreferrer"
+											className={styles.applyExternalLink}
+										>
+											<Link2 size={16} />
+											Przejdź do formularza
+										</a>
+										<button
+											type="button"
+											className={styles.modal__btnCancel}
+											onClick={onClose}
+											style={{ marginTop: "12px" }}
+										>
+											Zamknij
+										</button>
+									</div>
+								</div>
+							)}
+
+						{/* Dla typu "messenger" - kontakt */}
+						{vacancy.recruitment.type === "messenger" &&
+							vacancy.recruitment.messengerContact && (
+								<div className={styles.modal__section}>
+									<div className={styles.applyInfoBox}>
+										<p>
+											Rekrutacja odbywa się przez Messenger. Skontaktuj się z
+											osobą odpowiedzialną:
+										</p>
+										<div className={styles.applyContactInfo}>
+											<UserIcon size={20} />
+											<strong>{vacancy.recruitment.messengerContact}</strong>
+										</div>
+										<button
+											type="button"
+											className={styles.modal__btnCancel}
+											onClick={onClose}
+											style={{ marginTop: "12px" }}
+										>
+											Zamknij
+										</button>
+									</div>
+								</div>
+							)}
+
+						{/* Dla typu "internal" - formularz z pytaniami */}
+						{vacancy.recruitment.type === "internal" && (
+							<>
+								{/* Pytania */}
+								{questions.length > 0 && (
+									<div className={styles.modal__section}>
+										<h3 className={styles.modal__sectionTitle}>
+											Pytania do kandydata
+										</h3>
+										{questions.map((q) => (
+											<div key={q.id} className={styles.applyQuestion}>
+												<label className={styles.modal__label}>
+													{q.question}
+													{q.required && (
+														<span className={styles.requiredStar}>*</span>
+													)}
+												</label>
+
+												{q.type === "text" && (
+													<input
+														type="text"
+														className={`${styles.modal__input} ${errors[q.id] ? styles.modal__inputError : ""}`}
+														value={answers[q.id] || ""}
+														onChange={(e) => {
+															setAnswers({
+																...answers,
+																[q.id]: e.target.value,
+															});
+															if (errors[q.id])
+																setErrors({ ...errors, [q.id]: "" });
+														}}
+														placeholder="Twoja odpowiedź..."
+													/>
+												)}
+
+												{q.type === "number" && (
+													<input
+														type="number"
+														className={`${styles.modal__input} ${errors[q.id] ? styles.modal__inputError : ""}`}
+														value={answers[q.id] || ""}
+														onChange={(e) => {
+															setAnswers({
+																...answers,
+																[q.id]: e.target.value,
+															});
+															if (errors[q.id])
+																setErrors({ ...errors, [q.id]: "" });
+														}}
+														placeholder="Twoja odpowiedź..."
+													/>
+												)}
+
+												{q.type === "textarea" && (
+													<textarea
+														className={`${styles.modal__input} ${styles.modal__textarea} ${errors[q.id] ? styles.modal__inputError : ""}`}
+														value={answers[q.id] || ""}
+														onChange={(e) => {
+															setAnswers({
+																...answers,
+																[q.id]: e.target.value,
+															});
+															if (errors[q.id])
+																setErrors({ ...errors, [q.id]: "" });
+														}}
+														rows={3}
+														placeholder="Twoja odpowiedź..."
+													/>
+												)}
+
+												{q.type === "select" && q.options && (
+													<select
+														className={`${styles.modal__select} ${errors[q.id] ? styles.modal__inputError : ""}`}
+														value={answers[q.id] || ""}
+														onChange={(e) => {
+															setAnswers({
+																...answers,
+																[q.id]: e.target.value,
+															});
+															if (errors[q.id])
+																setErrors({ ...errors, [q.id]: "" });
+														}}
+													>
+														<option value="">Wybierz...</option>
+														{q.options.map((opt) => (
+															<option key={opt} value={opt}>
+																{opt}
+															</option>
+														))}
+													</select>
+												)}
+
+												{q.type === "checkbox" && (
+													<div className={styles.applyCheckbox}>
+														<input
+															type="checkbox"
+															checked={answers[q.id] === "true"}
+															onChange={(e) => {
+																setAnswers({
+																	...answers,
+																	[q.id]: e.target.checked ? "true" : "false",
+																});
+																if (errors[q.id])
+																	setErrors({ ...errors, [q.id]: "" });
+															}}
+															id={`checkbox-${q.id}`}
+														/>
+														<label htmlFor={`checkbox-${q.id}`}>
+															Tak, zgadzam się
+														</label>
+													</div>
+												)}
+
+												{errors[q.id] && (
+													<span
+														className={`${styles.modal__error} apply-error`}
+													>
+														{errors[q.id]}
+													</span>
+												)}
+											</div>
+										))}
+									</div>
+								)}
+
+								{/* Wiadomość */}
+								<div className={styles.modal__section}>
+									<h3 className={styles.modal__sectionTitle}>Wiadomość</h3>
+									<div className={styles.modal__field}>
+										<label className={styles.modal__label}>
+											Dodatkowa wiadomość (opcjonalnie)
+										</label>
+										<textarea
+											className={styles.modal__input}
+											value={message}
+											onChange={(e) => setMessage(e.target.value)}
+											rows={3}
+											placeholder="Napisz coś o sobie, dlaczego chcesz dołączyć..."
+										/>
+									</div>
+								</div>
+							</>
+						)}
+					</div>
+
+					{/* Przyciski - tylko dla typu "internal" */}
+					{vacancy.recruitment.type === "internal" && (
+						<div className={styles.modal__actions}>
+							<div className={styles.modal__actionsRight}>
+								<button
+									type="button"
+									className={styles.modal__btnCancel}
+									onClick={onClose}
+								>
+									Anuluj
+								</button>
+								<button type="submit" className={styles.modal__btnSave}>
+									<Send size={16} />
+									Wyślij zgłoszenie
+								</button>
+							</div>
+						</div>
+					)}
+				</form>
+			</div>
+		</div>
+	);
+}
 // ---------------------------------------------------------------------------
 // MODAL SZCZEGÓŁÓW WAKATU
 // ---------------------------------------------------------------------------
@@ -839,7 +1318,9 @@ interface VacancyDetailModalProps {
 	currentUser: User;
 	onClose: () => void;
 	onApply: (vacancy: Vacancy) => void;
+	onOpenApply?: (vacancy: Vacancy) => void;
 	hasApplied?: boolean;
+	applications?: Application[]; // <-- DODAJ
 }
 
 function VacancyDetailModal({
@@ -848,7 +1329,9 @@ function VacancyDetailModal({
 	currentUser,
 	onClose,
 	onApply,
+	onOpenApply,
 	hasApplied = false,
+	applications = [],
 }: VacancyDetailModalProps) {
 	if (!isOpen || !vacancy) return null;
 
@@ -863,7 +1346,11 @@ function VacancyDetailModal({
 			day: "numeric",
 		});
 	};
-
+	const formatFileSize = (bytes: number): string => {
+		if (bytes < 1024) return bytes + " B";
+		if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + " KB";
+		return (bytes / (1024 * 1024)).toFixed(1) + " MB";
+	};
 	return (
 		<div className={styles.modalOverlay} onClick={onClose}>
 			<div className={styles.modal} onClick={(e) => e.stopPropagation()}>
@@ -890,12 +1377,10 @@ function VacancyDetailModal({
 							Dodano: {formatDate(vacancy.createdAt)}
 						</span>
 					</div>
-
 					<div className={styles.modal__section}>
 						<h3 className={styles.modal__sectionTitle}>Opis stanowiska</h3>
 						<p className={styles.modal__description}>{vacancy.description}</p>
 					</div>
-
 					<div className={styles.modal__section}>
 						<h3 className={styles.modal__sectionTitle}>Zakres obowiązków</h3>
 						<ul className={styles.modal__list}>
@@ -907,7 +1392,6 @@ function VacancyDetailModal({
 							))}
 						</ul>
 					</div>
-
 					<div className={styles.modal__section}>
 						<h3 className={styles.modal__sectionTitle}>Wymagania</h3>
 						<ul className={styles.modal__list}>
@@ -919,7 +1403,6 @@ function VacancyDetailModal({
 							))}
 						</ul>
 					</div>
-
 					{vacancy.niceToHave && vacancy.niceToHave.length > 0 && (
 						<div className={styles.modal__section}>
 							<h3 className={styles.modal__sectionTitle}>Mile widziane</h3>
@@ -933,7 +1416,6 @@ function VacancyDetailModal({
 							</ul>
 						</div>
 					)}
-
 					<div className={styles.modal__section}>
 						<h3 className={styles.modal__sectionTitle}>
 							Informacje organizacyjne
@@ -967,7 +1449,143 @@ function VacancyDetailModal({
 							</div>
 						</div>
 					</div>
+					{/* Informacje o rekrutacji */}
+					{vacancy.recruitment && (
+						<div className={styles.modal__section}>
+							<h3 className={styles.modal__sectionTitle}>Rekrutacja</h3>
+							<div className={styles.modal__infoGrid}>
+								<div className={styles.modal__infoItem}>
+									<Clock size={16} />
+									<span>
+										Termin zgłoszeń:{" "}
+										<strong>
+											{new Date(vacancy.recruitment.deadline).toLocaleString(
+												"pl-PL",
+											)}
+										</strong>
+									</span>
+								</div>
+								<div className={styles.modal__infoItem}>
+									<Briefcase size={16} />
+									<span>
+										Typ:{" "}
+										<strong>
+											{vacancy.recruitment.type === "form" &&
+												"Formularz zewnętrzny"}
+											{vacancy.recruitment.type === "messenger" &&
+												"Wiadomość na Messengerze"}
+											{vacancy.recruitment.type === "internal" &&
+												"Formularz na stronie"}
+										</strong>
+									</span>
+								</div>
+							</div>
 
+							{vacancy.recruitment.type === "form" &&
+								vacancy.recruitment.formUrl && (
+									<div
+										className={styles.modal__infoItem}
+										style={{ marginTop: "8px" }}
+									>
+										<Link2 size={16} />
+										<span>
+											Link:{" "}
+											<a
+												href={vacancy.recruitment.formUrl}
+												target="_blank"
+												rel="noopener noreferrer"
+											>
+												{vacancy.recruitment.formUrl}
+											</a>
+										</span>
+									</div>
+								)}
+
+							{vacancy.recruitment.type === "messenger" &&
+								vacancy.recruitment.messengerContact && (
+									<div
+										className={styles.modal__infoItem}
+										style={{ marginTop: "8px" }}
+									>
+										<UserIcon size={16} />
+										<span>
+											Kontakt na Messengerze:{" "}
+											<strong>{vacancy.recruitment.messengerContact}</strong>
+										</span>
+									</div>
+								)}
+
+							{vacancy.recruitment.type === "internal" &&
+								vacancy.recruitment.questions &&
+								vacancy.recruitment.questions.length > 0 && (
+									<div style={{ marginTop: "12px" }}>
+										<h4
+											className={styles.modal__sectionTitle}
+											style={{ fontSize: "14px" }}
+										>
+											Pytania do kandydatów
+										</h4>
+										<ul className={styles.modal__list}>
+											{vacancy.recruitment.questions.map((q) => (
+												<li
+													key={q.id}
+													className={`${styles.modal__listItem} ${styles.q}`}
+												>
+													<ChevronRight size={16} />
+													{q.question}
+													{q.required && (
+														<span style={{ color: "#ef4444" }}>*</span>
+													)}
+													<span
+														style={{
+															fontSize: "12px",
+															color: "#94a3b8",
+															marginLeft: "8px",
+														}}
+													>
+														({q.type === "text" && "Tekst"}
+														{q.type === "number" && "Liczba"}
+														{q.type === "textarea" && "Dłuższy tekst"}
+														{q.type === "select" && "Wybór"}
+														{q.type === "checkbox" && "Checkbox"})
+													</span>
+												</li>
+											))}
+										</ul>
+									</div>
+								)}
+						</div>
+					)}
+					{/* Załączniki */}
+					{vacancy.attachments && vacancy.attachments.length > 0 && (
+						<div className={styles.modal__section}>
+							<h3 className={styles.modal__sectionTitle}>
+								Załączniki ({vacancy.attachments.length})
+							</h3>
+							<div className={styles.modal__attachments}>
+								{vacancy.attachments.map((file) => (
+									<a
+										key={file.id}
+										href={file.url}
+										target="_blank"
+										rel="noopener noreferrer"
+										className={styles.modal__attachment}
+									>
+										<FileText size={18} />
+										<span className={styles.modal__attachmentName}>
+											{file.name}
+										</span>
+										<span className={styles.modal__attachmentSize}>
+											{formatFileSize(file.size)}
+										</span>
+										<span className={styles.modal__attachmentDate}>
+											{formatDate(file.uploadedAt)}
+										</span>
+									</a>
+								))}
+							</div>
+						</div>
+					)}
 					{vacancy.filledBy && (
 						<div className={styles.modal__section}>
 							<h3 className={styles.modal__sectionTitle}>
@@ -979,35 +1597,152 @@ function VacancyDetailModal({
 							</div>
 						</div>
 					)}
-
 					{vacancy.applicants && vacancy.applicants.length > 0 && canManage && (
 						<div className={styles.modal__section}>
 							<h3 className={styles.modal__sectionTitle}>
 								Zgłoszenia ({vacancy.applicants.length})
 							</h3>
 							<div className={styles.modal__applicants}>
-								{MOCK_APPLICATIONS.filter(
-									(a) => a.vacancyId === vacancy.id,
-								).map((app) => (
-									<div key={app.id} className={styles.modal__applicant}>
-										<div className={styles.modal__applicantInfo}>
-											<span className={styles.modal__applicantName}>
-												{app.userName}
-											</span>
-											<span className={styles.modal__applicantEmail}>
-												{app.userEmail}
-											</span>
+								{(applications || [])
+									.filter((app) => app.vacancyId === vacancy.id)
+									.map((app) => (
+										<div key={app.id} className={styles.modal__applicant}>
+											{/* Nagłówek zgłoszenia */}
+											<div className={styles.modal__applicantHeader}>
+												<div className={styles.modal__applicantInfo}>
+													<span className={styles.modal__applicantName}>
+														{app.userName}
+													</span>
+													<span className={styles.modal__applicantEmail}>
+														<Mail size={14} />
+														{app.userEmail}
+													</span>
+													<span
+														className={`${styles.modal__applicantStatus} ${styles[`applicantStatus${app.status.charAt(0).toUpperCase() + app.status.slice(1)}`]}`}
+													>
+														{app.status === "pending" && "⏳ Oczekuje"}
+														{app.status === "reviewed" && "👀 Przejrzane"}
+														{app.status === "accepted" && "✅ Zaakceptowane"}
+														{app.status === "rejected" && "❌ Odrzucone"}
+													</span>
+												</div>
+												<button
+													className={styles.modal__applicantToggle}
+													onClick={() => {
+														const details = document.getElementById(
+															`applicant-${app.id}`,
+														);
+														if (details) {
+															const isHidden = details.style.display === "none";
+															details.style.display = isHidden
+																? "block"
+																: "none";
+															// Obróć strzałkę
+															const toggleBtn =
+																details.parentElement?.querySelector(
+																	".modal__applicantToggle",
+																);
+															if (toggleBtn) {
+																toggleBtn.classList.toggle("active");
+															}
+														}
+													}}
+												>
+													<ChevronRight size={16} />
+													Szczegóły
+												</button>
+											</div>
+
+											{/* Rozwijane szczegóły - cała szerokość, pod spodem */}
+											<div
+												id={`applicant-${app.id}`}
+												className={styles.modal__applicantDetails}
+												style={{ display: "none" }}
+											>
+												{/* Wiadomość */}
+												{app.message && (
+													<div className={styles.modal__applicantMessage}>
+														<strong>📝 Wiadomość:</strong>
+														<p>{app.message}</p>
+													</div>
+												)}
+
+												{/* Odpowiedzi na pytania */}
+												{app.answers && Object.keys(app.answers).length > 0 && (
+													<div className={styles.modal__applicantAnswers}>
+														<strong>📋 Odpowiedzi:</strong>
+														<div className={styles.modal__applicantAnswersList}>
+															{vacancy.recruitment?.questions?.map((q) => {
+																const answer = app.answers?.[q.id];
+																if (!answer) return null;
+																return (
+																	<div
+																		key={q.id}
+																		className={`${styles.modal__applicantAnswer} ${styles[`type-${q.type}`]}`}
+																	>
+																		<div
+																			className={
+																				styles.modal__applicantQuestion
+																			}
+																		>
+																			{q.question}
+																			{q.required && (
+																				<span className={styles.requiredStar}>
+																					*
+																				</span>
+																			)}
+																			<span
+																				className={styles.modal__answerType}
+																			>
+																				({q.type === "text" && "Tekst"}
+																				{q.type === "number" && "Liczba"}
+																				{q.type === "textarea" &&
+																					"Dłuższy tekst"}
+																				{q.type === "select" && "Wybór"}
+																				{q.type === "checkbox" && "Checkbox"})
+																			</span>
+																		</div>
+																		<div
+																			className={
+																				styles.modal__applicantAnswerText
+																			}
+																		>
+																			{q.type === "checkbox"
+																				? answer === "true"
+																					? "✅ Tak"
+																					: "❌ Nie"
+																				: answer}
+																		</div>
+																	</div>
+																);
+															})}
+														</div>
+													</div>
+												)}
+
+												{/* Data zgłoszenia */}
+												<div className={styles.modal__applicantDate}>
+													<Clock size={14} />
+													Zgłoszono:{" "}
+													{new Date(app.appliedAt).toLocaleString("pl-PL")}
+												</div>
+
+												{/* Przyciski akcji dla admina */}
+												<div className={styles.modal__applicantActions}>
+													<button className={styles.modal__applicantActionBtn}>
+														<Check size={14} />
+														Zaakceptuj
+													</button>
+													<button
+														className={`${styles.modal__applicantActionBtn} ${styles.modal__applicantActionBtnDanger}`}
+													>
+														<X size={14} />
+														Odrzuć
+													</button>
+												</div>
+											</div>
 										</div>
-										<span
-											className={`${styles.modal__applicantStatus} ${styles[`applicantStatus${app.status.charAt(0).toUpperCase() + app.status.slice(1)}`]}`}
-										>
-											{app.status === "pending" && "Oczekuje"}
-											{app.status === "reviewed" && "Przejrzane"}
-											{app.status === "accepted" && "Zaakceptowane"}
-											{app.status === "rejected" && "Odrzucone"}
-										</span>
-									</div>
-								))}
+									))}
 							</div>
 						</div>
 					)}
@@ -1020,7 +1755,12 @@ function VacancyDetailModal({
 					{!isFilled && !hasApplied && (
 						<button
 							className={styles.modal__btnApply}
-							onClick={() => onApply(vacancy)}
+							onClick={() => {
+								onClose();
+								if (onOpenApply) {
+									onOpenApply(vacancy);
+								}
+							}}
 						>
 							<Send size={16} />
 							Zgłoś swoją kandydaturę
@@ -1074,11 +1814,17 @@ function VacancyFormModal({
 			teamId: "",
 			pillar: "",
 			contactPerson: {
-				name: currentUser.name || "", // <-- ZABEZPIECZ
-				email: "", // <-- PUSTY STRING
-				phone: "", // <-- PUSTY STRING
+				name: currentUser.name || "",
+				email: "",
+				phone: "",
 			},
 			status: "active",
+			recruitment: {
+				// <-- DODAJ
+				type: "internal",
+				deadline: "",
+				questions: [],
+			},
 		},
 	);
 
@@ -1284,7 +2030,15 @@ function VacancyFormModal({
 			status: (formData.status as VacancyStatus) || "active",
 			applicants: vacancy?.applicants || [],
 			filledBy: vacancy?.filledBy,
-			attachments: attachments, // <-- DODAJ
+			attachments: attachments,
+			recruitment: {
+				// <-- DODAJ
+				type: formData.recruitment?.type || "internal",
+				formUrl: formData.recruitment?.formUrl,
+				messengerContact: formData.recruitment?.messengerContact,
+				questions: formData.recruitment?.questions || [],
+				deadline: formData.recruitment?.deadline || "",
+			},
 		};
 		onSave(saveData);
 		onClose();
@@ -2057,6 +2811,171 @@ function VacancyFormModal({
 								)}
 							</div>
 						</div>
+						{/* Informacje o rekrutacji */}
+						<div className={styles.modal__section}>
+							<h3 className={styles.modal__sectionTitle}>
+								Informacje o rekrutacji
+							</h3>
+
+							<div className={styles.modal__formGrid}>
+								<div className={styles.modal__field}>
+									<label className={styles.modal__label}>
+										Typ rekrutacji{" "}
+										<span className={styles.modal__required}>*</span>
+									</label>
+									<select
+										className={styles.modal__select}
+										value={formData.recruitment?.type || "internal"}
+										onChange={(e) => {
+											const type = e.target.value as RecruitmentType;
+											setFormData({
+												...formData,
+												recruitment: {
+													...formData.recruitment,
+													type,
+													questions: type === "internal" ? [] : undefined,
+													formUrl: undefined,
+													messengerContact: undefined,
+													deadline: formData.recruitment?.deadline || "",
+												},
+											});
+										}}
+										required
+									>
+										<option value="form">Link do formularza</option>
+										<option value="messenger">Wiadomość na Messengerze</option>
+										<option value="internal">Formularz na stronie</option>
+									</select>
+								</div>
+
+								<div className={styles.modal__field}>
+									<label className={styles.modal__label}>
+										Termin zgłoszeń{" "}
+										<span className={styles.modal__required}>*</span>
+									</label>
+									<input
+										type="datetime-local"
+										className={styles.modal__input}
+										value={formData.recruitment?.deadline || ""}
+										onChange={(e) => {
+											setFormData({
+												...formData,
+												recruitment: {
+													...formData.recruitment,
+													deadline: e.target.value,
+													type: formData.recruitment?.type || "internal",
+												},
+											});
+										}}
+										required
+									/>
+									<span className={styles.modal__helper}>
+										Data i godzina, do której można zgłaszać kandydatury
+									</span>
+								</div>
+							</div>
+
+							{/* Opcje dla typu "form" */}
+							{formData.recruitment?.type === "form" && (
+								<div className={styles.modal__field}>
+									<label className={styles.modal__label}>
+										Link do formularza{" "}
+										<span className={styles.modal__required}>*</span>
+									</label>
+									<input
+										type="url"
+										className={styles.modal__input}
+										value={formData.recruitment?.formUrl || ""}
+										onChange={(e) => {
+											setFormData({
+												...formData,
+												recruitment: {
+													...formData.recruitment,
+													formUrl: e.target.value,
+													type: "form",
+													deadline: formData.recruitment?.deadline || "",
+												},
+											});
+										}}
+										placeholder="https://forms.google.com/..."
+										required
+									/>
+								</div>
+							)}
+
+							{/* Opcje dla typu "messenger" */}
+							{formData.recruitment?.type === "messenger" && (
+								<div className={styles.modal__field}>
+									<label className={styles.modal__label}>
+										Osoba kontaktowa na Messengerze{" "}
+										<span className={styles.modal__required}>*</span>
+									</label>
+									<input
+										type="text"
+										className={styles.modal__input}
+										value={formData.recruitment?.messengerContact || ""}
+										onChange={(e) => {
+											setFormData({
+												...formData,
+												recruitment: {
+													...formData.recruitment,
+													messengerContact: e.target.value,
+													type: "messenger",
+													deadline: formData.recruitment?.deadline || "",
+												},
+											});
+										}}
+										placeholder="np. Jan Kowalski"
+										required
+									/>
+									<span className={styles.modal__helper}>
+										Podaj imię i nazwisko osoby, do której można napisać na
+										Messengerze
+									</span>
+								</div>
+							)}
+
+							{/* Opcje dla typu "internal" */}
+							{formData.recruitment?.type === "internal" && (
+								<div className={styles.modal__field}>
+									<label className={styles.modal__label}>
+										Pytania do kandydatów
+									</label>
+									<QuestionManager
+										questions={formData.recruitment?.questions || []}
+										onAdd={(q) => {
+											setFormData({
+												...formData,
+												recruitment: {
+													...formData.recruitment,
+													questions: [
+														...(formData.recruitment?.questions || []),
+														q,
+													],
+													type: "internal",
+													deadline: formData.recruitment?.deadline || "",
+												},
+											});
+										}}
+										onRemove={(id) => {
+											setFormData({
+												...formData,
+												recruitment: {
+													...formData.recruitment,
+													questions: (
+														formData.recruitment?.questions || []
+													).filter((q) => q.id !== id),
+													type: "internal",
+													deadline: formData.recruitment?.deadline || "",
+												},
+											});
+										}}
+										onUpdate={() => {}}
+									/>
+								</div>
+							)}
+						</div>
+
 						{/* Podgląd */}
 						<div className={styles.modal__section}>
 							<h3 className={styles.modal__sectionTitle}>Podgląd wakatu</h3>
@@ -2139,6 +3058,183 @@ function VacancyFormModal({
 		</div>
 	);
 }
+
+// ---------------------------------------------------------------------------
+// KOMPONENT ZARZĄDZANIA PYTANIAMI
+// ---------------------------------------------------------------------------
+
+interface QuestionManagerProps {
+	questions: FormQuestion[];
+	onAdd: (question: FormQuestion) => void;
+	onRemove: (id: string) => void;
+	onUpdate: (id: string, updates: Partial<FormQuestion>) => void;
+	disabled?: boolean;
+}
+
+function QuestionManager({
+	questions,
+	onAdd,
+	onRemove,
+	onUpdate,
+	disabled = false,
+}: QuestionManagerProps) {
+	const [newQuestion, setNewQuestion] = useState("");
+	const [newType, setNewType] = useState<FormQuestion["type"]>("text");
+	const [newRequired, setNewRequired] = useState(false);
+	const [newOptions, setNewOptions] = useState("");
+	const [showAddForm, setShowAddForm] = useState(false);
+
+	const handleAdd = () => {
+		if (!newQuestion.trim()) return;
+
+		const question: FormQuestion = {
+			id: `q-${Date.now()}`,
+			question: newQuestion.trim(),
+			type: newType,
+			required: newRequired,
+			options:
+				newType === "select"
+					? newOptions.split(",").map((s) => s.trim())
+					: undefined,
+		};
+
+		onAdd(question);
+		setNewQuestion("");
+		setNewOptions("");
+		setShowAddForm(false);
+	};
+
+	return (
+		<div className={styles.questionManager}>
+			{/* Lista pytań */}
+			{questions.length > 0 && (
+				<div className={styles.questionsList}>
+					{questions.map((q) => (
+						<div key={q.id} className={styles.questionItem}>
+							<div className={styles.questionInfo}>
+								<span className={styles.questionText}>
+									{q.question}
+									{q.required && <span className={styles.requiredStar}>*</span>}
+								</span>
+								<span className={styles.questionType}>
+									{q.type === "text" && "📝 Tekst"}
+									{q.type === "number" && "🔢 Liczba"}
+									{q.type === "textarea" && "📄 Dłuższy tekst"}
+									{q.type === "select" && "📋 Wybór"}
+									{q.type === "checkbox" && "☑️ Checkbox"}
+								</span>
+								{q.options && q.options.length > 0 && (
+									<span className={styles.questionOptions}>
+										({q.options.join(", ")})
+									</span>
+								)}
+							</div>
+							{!disabled && (
+								<button
+									type="button"
+									className={styles.questionRemove}
+									onClick={() => onRemove(q.id)}
+								>
+									<X size={16} />
+								</button>
+							)}
+						</div>
+					))}
+				</div>
+			)}
+
+			{/* Przycisk dodawania */}
+			{!disabled && (
+				<button
+					type="button"
+					className={styles.addQuestionBtn}
+					onClick={() => setShowAddForm(!showAddForm)}
+				>
+					<Plus size={16} />
+					{showAddForm ? "Anuluj" : "Dodaj pytanie"}
+				</button>
+			)}
+
+			{/* Formularz dodawania pytania */}
+			{showAddForm && !disabled && (
+				<div className={styles.addQuestionForm}>
+					<div className={styles.formField}>
+						<label className={styles.modal__label}>Treść pytania</label>
+						<input
+							type="text"
+							className={styles.modal__input}
+							value={newQuestion}
+							onChange={(e) => setNewQuestion(e.target.value)}
+							placeholder="np. Jakie masz doświadczenie?"
+						/>
+					</div>
+
+					<div className={styles.formRow}>
+						<div className={styles.formField}>
+							<label className={styles.modal__label}>Typ odpowiedzi</label>
+							<select
+								className={styles.modal__select}
+								value={newType}
+								onChange={(e) =>
+									setNewType(e.target.value as FormQuestion["type"])
+								}
+							>
+								<option value="text">Tekst</option>
+								<option value="number">Liczba</option>
+								<option value="textarea">Dłuższy tekst</option>
+								<option value="select">Wybór z listy</option>
+								<option value="checkbox">Checkbox</option>
+							</select>
+						</div>
+
+						<div className={styles.formField}>
+							<label className={styles.modal__label}>
+								<input
+									type="checkbox"
+									checked={newRequired}
+									onChange={(e) => setNewRequired(e.target.checked)}
+								/>
+								Wymagane
+							</label>
+						</div>
+					</div>
+
+					{newType === "select" && (
+						<div className={styles.formField}>
+							<label className={styles.modal__label}>
+								Opcje (oddzielone przecinkami)
+							</label>
+							<input
+								type="text"
+								className={styles.modal__input}
+								value={newOptions}
+								onChange={(e) => setNewOptions(e.target.value)}
+								placeholder="np. Tak, Nie, Może"
+							/>
+						</div>
+					)}
+
+					<div className={styles.formActions}>
+						<button
+							type="button"
+							className={styles.modal__btnCancel}
+							onClick={() => setShowAddForm(false)}
+						>
+							Anuluj
+						</button>
+						<button
+							type="button"
+							className={styles.modal__btnSave}
+							onClick={handleAdd}
+						>
+							Dodaj pytanie
+						</button>
+					</div>
+				</div>
+			)}
+		</div>
+	);
+}
 // ---------------------------------------------------------------------------
 // GŁÓWNY KOMPONENT
 // ---------------------------------------------------------------------------
@@ -2156,6 +3252,9 @@ export default function Vacancies({ title }: { title?: string }) {
 	const [isFormOpen, setIsFormOpen] = useState(false);
 	const [selectedVacancy, setSelectedVacancy] = useState<Vacancy | null>(null);
 	const [editingVacancy, setEditingVacancy] = useState<Vacancy | null>(null);
+	const [isApplyOpen, setIsApplyOpen] = useState(false);
+	const [applyingVacancy, setApplyingVacancy] = useState<Vacancy | null>(null);
+	const [applicationMessage, setApplicationMessage] = useState("");
 
 	const currentUser = MOCK_USER;
 	const canManage = currentUser.role === "admin";
@@ -2170,7 +3269,40 @@ export default function Vacancies({ title }: { title?: string }) {
 	const pillars = useMemo(() => {
 		return [...DEFAULT_PILLARS].sort();
 	}, []);
+	// W głównym komponencie Vacancies
+	useEffect(() => {
+		const checkDeadlines = () => {
+			const now = new Date();
+			const updated = vacancies.map((v) => {
+				if (v.recruitment?.deadline) {
+					const deadline = new Date(v.recruitment.deadline);
+					if (deadline < now && v.status === "active") {
+						return { ...v, status: "recruiting" as VacancyStatus };
+					}
+					if (deadline >= now && v.status === "recruiting") {
+						return { ...v, status: "active" as VacancyStatus };
+					}
+				}
+				return v;
+			});
 
+			// Sprawdź czy coś się zmieniło
+			const hasChanges = updated.some(
+				(v, i) => v.status !== vacancies[i].status,
+			);
+			if (hasChanges) {
+				setVacancies(updated);
+			}
+		};
+
+		// Sprawdź od razu
+		checkDeadlines();
+
+		// Sprawdzaj co minutę
+		const interval = setInterval(checkDeadlines, 60000);
+
+		return () => clearInterval(interval);
+	}, [vacancies]);
 	const filteredVacancies = useMemo(() => {
 		return vacancies
 			.filter((vacancy) => {
@@ -2219,6 +3351,65 @@ export default function Vacancies({ title }: { title?: string }) {
 	const handleAddVacancy = () => {
 		setEditingVacancy(null);
 		setIsFormOpen(true);
+	};
+
+	const handleOpenApply = (vacancy: Vacancy) => {
+		setApplyingVacancy(vacancy);
+		setIsApplyOpen(true);
+	};
+	const handleSubmitApplication = (
+		vacancy: Vacancy,
+		answers: Record<string, string>,
+		message: string,
+	) => {
+		// Sprawdź czy już się zgłoszono
+		const existingApplication = applications.find(
+			(a) => a.vacancyId === vacancy.id && a.userId === currentUser.id,
+		);
+		if (existingApplication) {
+			alert("Już zgłosiłeś się na to stanowisko!");
+			return;
+		}
+
+		const newApplication: Application = {
+			id: `app-${Date.now()}`,
+			vacancyId: vacancy.id,
+			userId: currentUser.id,
+			userName: currentUser.name,
+			userEmail: "jan.kowalski@silamlodych.pl", // Pobierz z danych użytkownika
+			message: message || "Jestem zainteresowany/a tą funkcją.",
+			appliedAt: new Date().toISOString().split("T")[0],
+			status: "pending",
+			answers: answers, // <-- ZAPISZ ODPOWIEDZI
+		};
+
+		setApplications([...applications, newApplication]);
+
+		// Aktualizuj listę zgłoszeń w wakacie
+		const updatedVacancies = vacancies.map((v) => {
+			if (v.id === vacancy.id) {
+				return {
+					...v,
+					applicants: [...(v.applicants || []), currentUser.id],
+				};
+			}
+			return v;
+		});
+		setVacancies(updatedVacancies);
+
+		console.log(
+			`📧 Powiadomienie wysłane do ${vacancy.contactPerson.name} (${vacancy.contactPerson.email})`,
+		);
+		console.log(
+			`📧 Treść: Nowe zgłoszenie od ${currentUser.name} na stanowisko ${vacancy.title}`,
+		);
+		if (answers && Object.keys(answers).length > 0) {
+			console.log("📧 Odpowiedzi:", answers);
+		}
+
+		alert(
+			`Zgłoszenie zostało wysłane! ${vacancy.contactPerson.name} otrzymał/a powiadomienie.`,
+		);
 	};
 
 	const handleEditVacancy = (vacancy: Vacancy) => {
@@ -2470,7 +3661,7 @@ export default function Vacancies({ title }: { title?: string }) {
 							onView={handleViewVacancy}
 							onEdit={canManage ? handleEditVacancy : undefined}
 							onDelete={canManage ? handleDeleteVacancy : undefined}
-							onApply={handleApply}
+							onApply={handleOpenApply} // <-- OTWIERA MODAL ZGŁOSZENIOWY
 							viewMode={viewMode}
 							hasApplied={hasApplied(vacancy.id)}
 						/>
@@ -2488,7 +3679,9 @@ export default function Vacancies({ title }: { title?: string }) {
 					setSelectedVacancy(null);
 				}}
 				onApply={handleApply}
+				onOpenApply={handleOpenApply}
 				hasApplied={selectedVacancy ? hasApplied(selectedVacancy.id) : false}
+				applications={applications}
 			/>
 
 			{/* Modal dodawania/edycji */}
@@ -2504,6 +3697,17 @@ export default function Vacancies({ title }: { title?: string }) {
 				}}
 				onSave={handleSaveVacancy}
 				onDelete={canManage ? handleDeleteVacancy : undefined}
+			/>
+			{/* Modal zgłoszeniowy - DODAJ TUTAJ */}
+			<ApplyModal
+				isOpen={isApplyOpen}
+				vacancy={applyingVacancy}
+				currentUser={currentUser}
+				onClose={() => {
+					setIsApplyOpen(false);
+					setApplyingVacancy(null);
+				}}
+				onSubmit={handleSubmitApplication}
 			/>
 		</div>
 	);
