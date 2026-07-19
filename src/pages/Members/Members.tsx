@@ -90,7 +90,7 @@ type User = {
 const MOCK_USER: User = {
 	id: "1",
 	name: "Jan Kowalski",
-	role: "coordinator",
+	role: "admin",
 	teamId: "project",
 };
 
@@ -551,16 +551,46 @@ function ProfileModal({
 	const [newOtherContact, setNewOtherContact] = useState("");
 	const [newTrainingArea, setNewTrainingArea] = useState("");
 
-	if (!isOpen || !member) return null;
+	if (!isOpen) return null;
 
-	const canEdit =
-		isEdit && (currentUser.id === member.id || currentUser.role === "admin");
+	// Sprawdzenie czy mamy member (dla podglądu) lub jesteśmy w trybie edycji/dodawania
+	if (!member && !isEdit) return null;
+
+	// Dla dodawania nowego (member null, isEdit true) - używamy domyślnych wartości
+	const currentMember = member || {
+		id: '',
+		firstName: '',
+		lastName: '',
+		function: '',
+		team: '',
+		teamId: '',
+		province: '',
+		status: 'trial' as MemberStatus,
+		interests: [],
+		skills: [],
+		smAreas: [],
+		email: '',
+		phone: '',
+		joinDate: '',
+		contacts: {
+			salaContacts: [],
+			mpContacts: [],
+			otherContacts: [],
+		},
+		trainingAreas: [],
+		contributionInfo: {
+			status: 'paid' as const,
+			arrears: 0,
+		},
+	};
+
+	const canEdit = isEdit && (currentUser.id === currentMember.id || currentUser.role === "admin");
+
 	const canViewSensitive =
 		currentUser.role === "admin" ||
 		(currentUser.role === "coordinator" &&
-			currentUser.teamId === member.teamId) ||
-		currentUser.id === member.id;
-
+			currentUser.teamId === currentMember.teamId) ||
+		currentUser.id === currentMember.id;
 	const addItem = (
 		list: string[],
 		setList: (list: string[]) => void,
@@ -584,32 +614,32 @@ function ProfileModal({
 		if (onSave && canEdit) {
 			// const now = new Date().toISOString().split("T")[0];
 			const saveData: Member = {
-				id: member.id,
-				firstName: formData.firstName || member.firstName,
-				lastName: formData.lastName || member.lastName,
-				function: formData.function || member.function,
-				team: formData.team || member.team,
-				teamId: formData.teamId || member.teamId,
-				province: formData.province || member.province,
-				status: (formData.status as MemberStatus) || member.status,
-				interests: formData.interests || member.interests,
-				skills: formData.skills || member.skills,
-				smAreas: formData.smAreas || member.smAreas,
-				email: formData.email || member.email,
-				phone: formData.phone || member.phone,
-				joinDate: formData.joinDate || member.joinDate,
-				vacation: member.vacation,
+				id: currentMember.id,
+				firstName: formData.firstName || currentMember.firstName,
+				lastName: formData.lastName || currentMember.lastName,
+				function: formData.function || currentMember.function,
+				team: formData.team || currentMember.team,
+				teamId: formData.teamId || currentMember.teamId,
+				province: formData.province || currentMember.province,
+				status: (formData.status as MemberStatus) || currentMember.status,
+				interests: formData.interests || currentMember.interests,
+				skills: formData.skills || currentMember.skills,
+				smAreas: formData.smAreas || currentMember.smAreas,
+				email: formData.email || currentMember.email,
+				phone: formData.phone || currentMember.phone,
+				joinDate: formData.joinDate || currentMember.joinDate,
+				vacation: currentMember.vacation,
 				contacts: canViewSensitive
-					? formData.contacts || member.contacts
+					? formData.contacts || currentMember.contacts
 					: undefined,
 				trainingAreas: canViewSensitive
-					? formData.trainingAreas || member.trainingAreas
+					? formData.trainingAreas || currentMember.trainingAreas
 					: undefined,
 				contributionInfo: canViewSensitive
-					? formData.contributionInfo || member.contributionInfo
+					? formData.contributionInfo || currentMember.contributionInfo
 					: undefined,
 				formData: canViewSensitive
-					? formData.formData || member.formData
+					? formData.formData || currentMember.formData
 					: undefined,
 			};
 			onSave(saveData);
@@ -633,9 +663,10 @@ function ProfileModal({
 			>
 				<div className={styles.modal__header}>
 					<h2 className={styles.modal__title}>
-						{isEdit
-							? "Edytuj profil"
-							: `Profil: ${member.firstName} ${member.lastName}`}
+						{!currentMember?.id ? "Dodaj nowego członka" :
+							isEdit ? "Edytuj profil" :
+								`Profil: ${currentMember.firstName} ${currentMember.lastName}`
+						}
 					</h2>
 					<button className={styles.modal__close} onClick={onClose}>
 						<X size={20} />
@@ -654,7 +685,7 @@ function ProfileModal({
 								<input
 									type="text"
 									className={styles.modal__input}
-									value={formData.firstName || member.firstName}
+									value={formData.firstName || currentMember.firstName}
 									onChange={(e) =>
 										setFormData({ ...formData, firstName: e.target.value })
 									}
@@ -666,7 +697,7 @@ function ProfileModal({
 								<input
 									type="text"
 									className={styles.modal__input}
-									value={formData.lastName || member.lastName}
+									value={formData.lastName || currentMember.lastName}
 									onChange={(e) =>
 										setFormData({ ...formData, lastName: e.target.value })
 									}
@@ -681,7 +712,7 @@ function ProfileModal({
 								<input
 									type="text"
 									className={styles.modal__input}
-									value={formData.function || member.function}
+									value={formData.function || currentMember.function}
 									onChange={(e) =>
 										setFormData({ ...formData, function: e.target.value })
 									}
@@ -693,7 +724,7 @@ function ProfileModal({
 								<input
 									type="text"
 									className={styles.modal__input}
-									value={formData.team || member.team}
+									value={formData.team || currentMember.team}
 									onChange={(e) =>
 										setFormData({ ...formData, team: e.target.value })
 									}
@@ -708,7 +739,7 @@ function ProfileModal({
 								<input
 									type="text"
 									className={styles.modal__input}
-									value={formData.province || member.province}
+									value={formData.province || currentMember.province}
 									onChange={(e) =>
 										setFormData({ ...formData, province: e.target.value })
 									}
@@ -719,7 +750,7 @@ function ProfileModal({
 								<label className={styles.modal__label}>Status</label>
 								<select
 									className={styles.modal__select}
-									value={formData.status || member.status}
+									value={formData.status || currentMember.status}
 									onChange={(e) =>
 										setFormData({
 											...formData,
@@ -740,7 +771,7 @@ function ProfileModal({
 							<input
 								type="date"
 								className={styles.modal__input}
-								value={formData.joinDate || member.joinDate}
+								value={formData.joinDate || currentMember.joinDate}
 								onChange={(e) =>
 									setFormData({ ...formData, joinDate: e.target.value })
 								}
@@ -750,17 +781,17 @@ function ProfileModal({
 					</div>
 
 					{/* Urlopy */}
-					{member.vacation && (
+					{currentMember.vacation && (
 						<div className={styles.modal__section}>
 							<h3 className={styles.modal__sectionTitle}>Aktualny urlop</h3>
 							<div className={styles.modal__vacationInfo}>
 								<Umbrella size={18} />
 								<span>
-									{formatDate(member.vacation.startDate)} -{" "}
-									{formatDate(member.vacation.endDate)}
+									{formatDate(currentMember.vacation.startDate)} -{" "}
+									{formatDate(currentMember.vacation.endDate)}
 								</span>
 								<span className={styles.modal__vacationType}>
-									{member.vacation.type === "team"
+									{currentMember.vacation.type === "team"
 										? "Urlop zespołowy"
 										: "Urlop organizacyjny"}
 								</span>
@@ -815,7 +846,7 @@ function ProfileModal({
 										</button>
 									</div>
 									<div className={styles.modal__tags}>
-										{(formData.interests || member.interests).map((item) => (
+										{(formData.interests || currentMember.interests).map((item) => (
 											<span key={item} className={styles.modal__tag}>
 												{item}
 												<button
@@ -838,7 +869,7 @@ function ProfileModal({
 								</>
 							) : (
 								<div className={styles.modal__tags}>
-									{member.interests.map((item) => (
+									{currentMember.interests.map((item) => (
 										<span key={item} className={styles.modal__tag}>
 											{item}
 										</span>
@@ -887,7 +918,7 @@ function ProfileModal({
 										</button>
 									</div>
 									<div className={styles.modal__tags}>
-										{(formData.skills || member.skills).map((item) => (
+										{(formData.skills || currentMember.skills).map((item) => (
 											<span key={item} className={styles.modal__tag}>
 												{item}
 												<button
@@ -910,7 +941,7 @@ function ProfileModal({
 								</>
 							) : (
 								<div className={styles.modal__tags}>
-									{member.skills.map((item) => (
+									{currentMember.skills.map((item) => (
 										<span key={item} className={styles.modal__tag}>
 											{item}
 										</span>
@@ -961,7 +992,7 @@ function ProfileModal({
 										</button>
 									</div>
 									<div className={styles.modal__tags}>
-										{(formData.smAreas || member.smAreas).map((item) => (
+										{(formData.smAreas || currentMember.smAreas).map((item) => (
 											<span key={item} className={styles.modal__tag}>
 												{item}
 												<button
@@ -984,7 +1015,7 @@ function ProfileModal({
 								</>
 							) : (
 								<div className={styles.modal__tags}>
-									{member.smAreas.map((item) => (
+									{currentMember.smAreas.map((item) => (
 										<span key={item} className={styles.modal__tag}>
 											{item}
 										</span>
@@ -1005,7 +1036,7 @@ function ProfileModal({
 										<input
 											type="email"
 											className={styles.modal__input}
-											value={formData.email || member.email}
+											value={formData.email || currentMember.email}
 											onChange={(e) =>
 												setFormData({ ...formData, email: e.target.value })
 											}
@@ -1078,7 +1109,7 @@ function ProfileModal({
 											<div className={styles.modal__tags}>
 												{(
 													formData.contacts?.salaContacts ||
-													member.contacts?.salaContacts ||
+													currentMember.contacts?.salaContacts ||
 													[]
 												).map((item) => (
 													<span key={item} className={styles.modal__tag}>
@@ -1109,7 +1140,7 @@ function ProfileModal({
 										</>
 									) : (
 										<div className={styles.modal__tags}>
-											{(member.contacts?.salaContacts || []).map((item) => (
+											{(currentMember.contacts?.salaContacts || []).map((item) => (
 												<span key={item} className={styles.modal__tag}>
 													{item}
 												</span>
@@ -1175,7 +1206,7 @@ function ProfileModal({
 											<div className={styles.modal__tags}>
 												{(
 													formData.contacts?.mpContacts ||
-													member.contacts?.mpContacts ||
+													currentMember.contacts?.mpContacts ||
 													[]
 												).map((item) => (
 													<span key={item} className={styles.modal__tag}>
@@ -1206,7 +1237,7 @@ function ProfileModal({
 										</>
 									) : (
 										<div className={styles.modal__tags}>
-											{(member.contacts?.mpContacts || []).map((item) => (
+											{(currentMember.contacts?.mpContacts || []).map((item) => (
 												<span key={item} className={styles.modal__tag}>
 													{item}
 												</span>
@@ -1272,7 +1303,7 @@ function ProfileModal({
 											<div className={styles.modal__tags}>
 												{(
 													formData.contacts?.otherContacts ||
-													member.contacts?.otherContacts ||
+													currentMember.contacts?.otherContacts ||
 													[]
 												).map((item) => (
 													<span key={item} className={styles.modal__tag}>
@@ -1303,7 +1334,7 @@ function ProfileModal({
 										</>
 									) : (
 										<div className={styles.modal__tags}>
-											{(member.contacts?.otherContacts || []).map((item) => (
+											{(currentMember.contacts?.otherContacts || []).map((item) => (
 												<span key={item} className={styles.modal__tag}>
 													{item}
 												</span>
@@ -1363,7 +1394,7 @@ function ProfileModal({
 											<div className={styles.modal__tags}>
 												{(
 													formData.trainingAreas ||
-													member.trainingAreas ||
+													currentMember.trainingAreas ||
 													[]
 												).map((item) => (
 													<span key={item} className={styles.modal__tag}>
@@ -1391,7 +1422,7 @@ function ProfileModal({
 										</>
 									) : (
 										<div className={styles.modal__tags}>
-											{(member.trainingAreas || []).map((item) => (
+											{(currentMember.trainingAreas || []).map((item) => (
 												<span key={item} className={styles.modal__tag}>
 													{item}
 												</span>
@@ -1413,7 +1444,7 @@ function ProfileModal({
 											className={styles.modal__select}
 											value={
 												formData.contributionInfo?.status ||
-												member.contributionInfo?.status ||
+												currentMember.contributionInfo?.status ||
 												"paid"
 											}
 											onChange={(e) =>
@@ -1444,7 +1475,7 @@ function ProfileModal({
 											className={styles.modal__input}
 											value={
 												formData.contributionInfo?.arrears ||
-												member.contributionInfo?.arrears ||
+												currentMember.contributionInfo?.arrears ||
 												0
 											}
 											onChange={(e) =>
@@ -1497,12 +1528,51 @@ export default function Members({ title }: { title?: string }) {
 	const [isProfileOpen, setIsProfileOpen] = useState(false);
 	const [isEditOpen, setIsEditOpen] = useState(false);
 	const [selectedMember, setSelectedMember] = useState<Member | null>(null);
+	const [isAddMemberOpen, setIsAddMemberOpen] = useState(false);
+	const [newMemberData, setNewMemberData] = useState<Partial<Member> | null>(null);
 	const [sortBy, setSortBy] = useState<
 		"name" | "function" | "province" | "status"
 	>("name");
 	const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
 
 	const currentUser = MOCK_USER;
+	// ===== DODANE FUNKCJE DLA NOWEGO CZŁONKA =====
+	const handleAddMember = () => {
+		const newMember: Partial<Member> = {
+			id: `member-${Date.now()}`,
+			firstName: "",
+			lastName: "",
+			function: "",
+			team: "",
+			teamId: "",
+			province: "",
+			status: "trial",
+			interests: [],
+			skills: [],
+			smAreas: [],
+			email: "",
+			phone: "",
+			joinDate: new Date().toISOString().split("T")[0],
+			contacts: {
+				salaContacts: [],
+				mpContacts: [],
+				otherContacts: [],
+			},
+			trainingAreas: [],
+			contributionInfo: {
+				status: "paid",
+				arrears: 0,
+			},
+		};
+		setNewMemberData(newMember);
+		setIsAddMemberOpen(true);
+	};
+
+	const handleAddNewMember = (member: Member) => {
+		setMembers([member, ...members]);
+		setIsAddMemberOpen(false);
+		setNewMemberData(null);
+	};
 
 	// Unikalne województwa i zespoły dla filtrów
 	const provinces = useMemo(() => {
@@ -1606,6 +1676,13 @@ export default function Members({ title }: { title?: string }) {
 						{members.length} członków w organizacji
 					</p>
 				</div>
+				{/* DODAJ TEN PRZYCISK */}
+				{currentUser.role === "admin" && (
+					<button className={styles.header__addBtn} onClick={handleAddMember}>
+						<Plus size={18} />
+						Dodaj członka
+					</button>
+				)}
 			</div>
 
 			{/* Filtry i wyszukiwarka */}
@@ -1677,10 +1754,10 @@ export default function Members({ title }: { title?: string }) {
 					{(selectedProvince !== "all" ||
 						selectedTeam !== "all" ||
 						searchTerm) && (
-						<button className={styles.filters__reset} onClick={clearFilters}>
-							Wyczyść filtry
-						</button>
-					)}
+							<button className={styles.filters__reset} onClick={clearFilters}>
+								Wyczyść filtry
+							</button>
+						)}
 				</div>
 			</div>
 
@@ -1755,8 +1832,8 @@ export default function Members({ title }: { title?: string }) {
 						<h3 className={styles.emptyState__title}>Brak członków</h3>
 						<p className={styles.emptyState__description}>
 							{searchTerm ||
-							selectedProvince !== "all" ||
-							selectedTeam !== "all"
+								selectedProvince !== "all" ||
+								selectedTeam !== "all"
 								? "Nie znaleziono członków spełniających kryteria wyszukiwania."
 								: "Nie ma jeszcze żadnych członków w organizacji."}
 						</p>
@@ -1774,6 +1851,18 @@ export default function Members({ title }: { title?: string }) {
 					))
 				)}
 			</div>
+			{/* ===== MODAL DODAWANIA NOWEGO CZŁONKA ===== */}
+			<ProfileModal
+				isOpen={isAddMemberOpen}
+				member={newMemberData as Member}
+				currentUser={currentUser}
+				isEdit={true}
+				onClose={() => {
+					setIsAddMemberOpen(false);
+					setNewMemberData(null);
+				}}
+				onSave={handleAddNewMember}
+			/>
 
 			{/* Modal podglądu profilu */}
 			<ProfileModal

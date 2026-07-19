@@ -17,6 +17,7 @@ import {
 	ZoomOut,
 	Move,
 	Home,
+	ArrowDown,
 } from "lucide-react";
 import styles from "./Structure.module.css";
 
@@ -43,6 +44,7 @@ type Node = {
 	status: "active" | "inactive";
 	children: Node[];
 	people?: Person[];
+	email?: string;
 };
 
 
@@ -87,7 +89,7 @@ const ORGANIZATION_DATA: Node = {
 			description:
 				"Kierowanie organizacją, podejmowanie decyzji strategicznych i nadzór nad działaniami.",
 			status: "active",
-
+			email: "zarzad@silamlodych.pl",
 			children: [],
 
 			people: [
@@ -182,7 +184,7 @@ const ORGANIZATION_DATA: Node = {
 					description:
 						"Sprawowanie kontroli nad działaniami organizacji.",
 					status: "active",
-
+					email: "kr@silamlodych.pl",
 					children: [],
 
 					people: [
@@ -219,7 +221,7 @@ const ORGANIZATION_DATA: Node = {
 					description:
 						"Organ zajmujący się sprawami członkowskimi.",
 					status: "active",
-
+					email: "sk@silamlodych.pl",
 					children: [],
 
 					people: [
@@ -402,6 +404,7 @@ function TreeNode({
 	scale = 1,
 }: TreeNodeProps) {
 	const [isExpanded, setIsExpanded] = useState(false);
+	const [showPrompt, setShowPrompt] = useState(true);
 	const hasExpandableContent =
 		node.children.length > 0 || (node.people && node.people.length > 0);
 
@@ -431,15 +434,39 @@ function TreeNode({
 			setIsExpanded((prev) => !prev);
 		}
 	};
+	const getPeopleText = (count: number) => {
+		if (count === 1) return "osoba";
 
+		if (count % 10 >= 2 && count % 10 <= 4 && (count % 100 < 10 || count % 100 >= 20)) {
+			return "osoby";
+		}
+
+		return "osób";
+	};
 	const cardScale = 1;
 
 	return (
 		<div className={styles.treeNode}>
+			{isRoot && showPrompt && (
+				<div className={styles.promptWrapper}>
+					<div className={styles.promptContainer}>
+						<span className={styles.promptText}>
+							Kliknij w blok, żeby go rozwinąć i poznać strukturę Siły Młodych
+						</span>
+						<div className={styles.promptArrowLine}>
+							<div className={styles.promptLine}></div>
+							<ArrowDown size={24} className={styles.promptArrowHead} />
+						</div>
+					</div>
+				</div>
+			)}
+
 			<div
 				className={`${styles.nodeCard} ${isRoot ? styles.nodeRoot : ""} ${isHighlighted ? styles.nodeHighlighted : ""}`}
-				onClick={toggleExpand}
-			>
+				onClick={() => {
+					toggleExpand();
+					if (isRoot) setShowPrompt(false);
+				}}			>
 				<div className={styles.nodeCard__header}>
 					<div
 						className={styles.nodeCard__icon}
@@ -460,17 +487,26 @@ function TreeNode({
 					</div>
 				</div>
 				<div className={styles.nodeCard__footer}>
-					<span className={styles.nodeCard__count}>
-						<Users size={14} />
-						{totalPeopleInNode} osób
-					</span>
+					<div className={styles.nodeCard__footerLeft}>
+						<span className={styles.nodeCard__count}>
+							<Users size={14} />
+							{totalPeopleInNode} {getPeopleText(totalPeopleInNode)}
+						</span>
+						{node.email && (
+							<a
+								href={`mailto:${node.email}`}
+								className={styles.nodeCard__email}
+								onClick={(e) => e.stopPropagation()} // <-- ZAPOBIEGA ROZWIJANIU
+								title={`Wyślij email do ${node.name}`}
+							>
+								<Mail size={14} />
+								<span>{node.email}</span>
+							</a>
+						)}
+					</div>
 					{hasExpandableContent && (
 						<button className={styles.nodeCard__toggle}>
-							{isExpanded ? (
-								<ChevronDown size={18} />
-							) : (
-								<ChevronRight size={18} />
-							)}
+							{isExpanded ? <ChevronDown size={18} /> : <ChevronRight size={18} />}
 						</button>
 					)}
 				</div>

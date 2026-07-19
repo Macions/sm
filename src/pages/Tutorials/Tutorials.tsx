@@ -7,7 +7,6 @@ import {
     Plus,
     Edit,
     Trash2,
-    Eye,
     Download,
     FileText,
     Users,
@@ -71,7 +70,7 @@ type User = {
 const MOCK_USER: User = {
     id: "1",
     name: "Jan Kowalski",
-    role: "coordinator",
+    role: "admin",
     functionalRole: "Koordynator Filaru Projektowego",
 };
 
@@ -263,7 +262,6 @@ const ACCESS_COLORS: Record<TutorialAccess, string> = {
 
 interface TutorialCardProps {
     tutorial: Tutorial;
-    onView: (tutorial: Tutorial) => void;
     onEdit: (tutorial: Tutorial) => void;
     onDelete: (id: string) => void;
     canEdit: boolean;
@@ -272,7 +270,6 @@ interface TutorialCardProps {
 
 function TutorialCard({
     tutorial,
-    onView,
     onEdit,
     onDelete,
     canEdit,
@@ -395,13 +392,6 @@ function TutorialCard({
                     </button>
 
                     <div className={styles.tutorialCard__actionButtons}>
-                        <button
-                            className={styles.tutorialCard__actionBtn}
-                            onClick={() => onView(tutorial)}
-                            title="Podgląd"
-                        >
-                            <Eye size={16} />
-                        </button>
                         {canEdit && (
                             <>
                                 <button
@@ -757,9 +747,7 @@ export default function Tutorials() {
     const [selectedCategory, setSelectedCategory] = useState<TutorialCategory | "all">("all");
     const [selectedAccess, setSelectedAccess] = useState<TutorialAccess | "all">("all");
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [isViewModalOpen, setIsViewModalOpen] = useState(false);
     const [editingTutorial, setEditingTutorial] = useState<Tutorial | null>(null);
-    const [viewingTutorial, setViewingTutorial] = useState<Tutorial | null>(null);
 
     // W rzeczywistej aplikacji pobieramy z kontekstu/auth
     const currentUser = MOCK_USER;
@@ -801,11 +789,6 @@ export default function Tutorials() {
     const handleEditTutorial = (tutorial: Tutorial) => {
         setEditingTutorial(tutorial);
         setIsModalOpen(true);
-    };
-
-    const handleViewTutorial = (tutorial: Tutorial) => {
-        setViewingTutorial(tutorial);
-        setIsViewModalOpen(true);
     };
 
     const handleDeleteTutorial = (id: string) => {
@@ -943,7 +926,6 @@ export default function Tutorials() {
                         <TutorialCard
                             key={tutorial.id}
                             tutorial={tutorial}
-                            onView={handleViewTutorial}
                             onEdit={handleEditTutorial}
                             onDelete={handleDeleteTutorial}
                             canEdit={canManageTutorials}
@@ -963,17 +945,6 @@ export default function Tutorials() {
                     setEditingTutorial(null);
                 }}
                 onSave={handleSaveTutorial}
-            />
-
-            {/* Modal podglądu */}
-            <TutorialModal
-                isOpen={isViewModalOpen}
-                tutorial={viewingTutorial}
-                isViewOnly={true}
-                onClose={() => {
-                    setIsViewModalOpen(false);
-                    setViewingTutorial(null);
-                }}
             />
         </div>
     );
