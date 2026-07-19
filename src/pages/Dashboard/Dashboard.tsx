@@ -76,8 +76,8 @@ export default function Dashboard() {
 	// Symulowane dane użytkownika (później z context/auth)
 	const user = {
 		name: "Maciej",
-		role: "Główny administrator",
-		team: "Zarząd",
+		role: "Członek",
+		team: "IT",
 		status: "Aktywny", // "Aktywny" | "Urlop" | "Okres próbny"
 	};
 

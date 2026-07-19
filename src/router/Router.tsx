@@ -6,7 +6,7 @@ import Structure from "../pages/Structure/Structure";
 import Projects from "../pages/Projects/Projects";
 import Tutorials from "../pages/Tutorials/Tutorials";
 import Members from "../pages/Members/Members";
-
+import Vacancies from "../pages/Vacancies/Vacancies";
 
 // Placeholder dla brakujących stron
 const PlaceholderPage = ({ title }: { title: string }) => {
@@ -38,24 +38,16 @@ function AppRoutes() {
 				<Route path="/structure" element={<Structure />} />
 
 				{/* Placeholdery dla innych stron */}
-				<Route
-					path="/projects"
-					element={<Projects />}
-				/>
-				<Route
-					path="/guides"
-					element={<Tutorials />}
-				/>
-				<Route
-					path="/members"
-					element={<PlaceholderPage title="Członkowie" />}
-				/>
+				<Route path="/projects" element={<Projects />} />
+				<Route path="/guides" element={<Tutorials />} />
+				<Route path="/members" element={<Members title="Członkowie" />} />
+				<Route path="/vacancies" element={<Vacancies title="Wakaty" />} />
+
 				<Route
 					path="/profile"
-					element={<Members title="Mój profil" />}
+					element={<PlaceholderPage title="Mój profil" />}
 				/>
 				<Route path="/guides" element={<PlaceholderPage title="Poradniki" />} />
-				<Route path="/vacancies" element={<PlaceholderPage title="Wakaty" />} />
 				<Route path="/leave" element={<PlaceholderPage title="Urlop" />} />
 				<Route
 					path="/social"
