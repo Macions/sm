@@ -1,4 +1,5 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react"; // <-- ZMIEŃ IMPORT
+import { useNavigate } from "react-router-dom"; // <-- DODAJ
 import {
     Users,
     Search,
@@ -11,37 +12,19 @@ import {
     Briefcase,
     Clock,
     CheckCircle,
-    AlertCircle,
     Calendar,
     Tag,
     ChevronDown,
     ChevronRight,
-    FileText,
-    MessageSquare,
-    TrendingUp,
-    Star,
-    Calendar as CalendarIcon,
-    Filter,
     X,
     Download,
-    Link,
     Mail,
-    Phone,
-    Camera,
     Shield,
-    Settings,
     FolderTree,
-    File,
     Projector,
     Briefcase as BriefcaseIcon,
-    Activity,
-    History,
-    UserPlus,
     UserCheck,
     UserX,
-    Award,
-    BookOpen,
-    Save, // <-- DODAJ TO
 } from "lucide-react";
 import styles from "./Admin.module.css";
 
@@ -149,16 +132,6 @@ interface SystemLog {
     details: string;
 }
 
-interface SystemSettings {
-    organizationName: string;
-    logo?: string;
-    primaryColor: string;
-    secondaryColor: string;
-    teams: string[];
-    roles: string[];
-    notifications: boolean;
-    integrations: string[];
-}
 
 // ---------------------------------------------------------------------------
 // DANE PRZYKŁADOWE
@@ -167,7 +140,7 @@ interface SystemSettings {
 const MOCK_ADMIN = {
     id: "1",
     name: "Jan Kowalski",
-    role: "admin",
+    role: "member",
 };
 
 const MOCK_USERS: AdminUser[] = [
@@ -439,15 +412,6 @@ const MOCK_LOGS: SystemLog[] = [
     },
 ];
 
-const MOCK_SETTINGS: SystemSettings = {
-    organizationName: "Stowarzyszenie Siła Młodych",
-    primaryColor: "#7c3aed",
-    secondaryColor: "#6d28d9",
-    teams: ["Zarząd", "Filar Projektowy", "Filar Konferencji i Debat", "Filar Rzeczniczy", "Filar Symulacyjny", "Social Media", "Sąd Koleżeński", "Komisja Rewizyjna"],
-    roles: ["admin", "board", "coordinator", "member", "mentor"],
-    notifications: true,
-    integrations: ["Google Calendar", "Slack"],
-};
 
 // ---------------------------------------------------------------------------
 // MAPOWANIA
@@ -1014,7 +978,7 @@ function VacanciesManagement({ vacancies, canManage }: { vacancies: Vacancy[]; c
     );
 }
 
-function ActivityMonitoring({ users, projects, leaves }: { users: AdminUser[]; projects: Project[]; leaves: any[] }) {
+function ActivityMonitoring({ users, projects }: { users: AdminUser[]; projects: Project[]; leaves: any[] }) {
     const activeUsers = users.filter(u => u.active).length;
     const activeProjects = projects.filter(p => p.status !== "completed").length;
 
@@ -1119,89 +1083,30 @@ function SystemLogs({ logs }: { logs: SystemLog[] }) {
     );
 }
 
-function SystemSettingsPanel({ settings, canManage }: { settings: SystemSettings; canManage: boolean }) {
-    return (
-        <section className={styles.section}>
-            <div className={styles.section__header}>
-                <div className={styles.section__headerLeft}>
-                    <h2 className={styles.section__title}>Ustawienia systemu</h2>
-                    <p className={styles.section__subtitle}>
-                        Konfiguracja aplikacji.
-                    </p>
-                </div>
-                {canManage && (
-                    <button className={styles.section__addBtn}>
-                        <Save size={18} />
-                        Zapisz zmiany
-                    </button>
-                )}
-            </div>
-
-            <div className={styles.settingsGrid}>
-                <div className={styles.settingCard}>
-                    <label className={styles.settingCard__label}>Nazwa organizacji</label>
-                    <input
-                        type="text"
-                        className={styles.settingCard__input}
-                        value={settings.organizationName}
-                        disabled={!canManage}
-                    />
-                </div>
-                <div className={styles.settingCard}>
-                    <label className={styles.settingCard__label}>Kolor główny</label>
-                    <div className={styles.settingCard__colorInput}>
-                        <input
-                            type="color"
-                            className={styles.settingCard__colorPicker}
-                            value={settings.primaryColor}
-                            disabled={!canManage}
-                        />
-                        <input
-                            type="text"
-                            className={styles.settingCard__input}
-                            value={settings.primaryColor}
-                            disabled={!canManage}
-                        />
-                    </div>
-                </div>
-                <div className={styles.settingCard}>
-                    <label className={styles.settingCard__label}>Powiadomienia</label>
-                    <div className={styles.settingCard__toggle}>
-                        <input
-                            type="checkbox"
-                            checked={settings.notifications}
-                            disabled={!canManage}
-                        />
-                        <span>Włączone</span>
-                    </div>
-                </div>
-                <div className={styles.settingCard}>
-                    <label className={styles.settingCard__label}>Integracje</label>
-                    <div className={styles.settingCard__tags}>
-                        {settings.integrations.map((integration) => (
-                            <span key={integration} className={styles.settingCard__tag}>
-                                {integration}
-                            </span>
-                        ))}
-                        {canManage && (
-                            <button className={styles.settingCard__addTag}>
-                                <Plus size={14} />
-                            </button>
-                        )}
-                    </div>
-                </div>
-            </div>
-        </section>
-    );
-}
-
 // ---------------------------------------------------------------------------
 // GŁÓWNY KOMPONENT
 // ---------------------------------------------------------------------------
 
 export default function Admin({ title }: { title?: string }) {
+    const navigate = useNavigate();
+
     const currentUser = MOCK_ADMIN;
     const canManage = currentUser.role === "admin";
+
+
+    // ===== DODAJ ZABEZPIECZENIE =====
+    useEffect(() => {
+        // Sprawdź czy użytkownik ma uprawnienia admina
+        // W rzeczywistej aplikacji pobierasz dane z kontekstu/auth
+        if (currentUser.role !== "admin") {
+            navigate("/dashboard", { replace: true });
+        }
+    }, [currentUser.role, navigate]);
+
+    // Jeśli nie jest adminem, nie renderuj strony (zabezpieczenie przed błyskiem)
+    if (currentUser.role !== "admin") {
+        return null;
+    }
 
     return (
         <div className={styles.admin}>
@@ -1224,7 +1129,6 @@ export default function Admin({ title }: { title?: string }) {
             <VacanciesManagement vacancies={MOCK_VACANCIES} canManage={canManage} />
             <ActivityMonitoring users={MOCK_USERS} projects={MOCK_PROJECTS} leaves={[]} />
             <SystemLogs logs={MOCK_LOGS} />
-            <SystemSettingsPanel settings={MOCK_SETTINGS} canManage={canManage} />
         </div>
     );
 }

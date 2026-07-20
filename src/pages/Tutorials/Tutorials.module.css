@@ -2098,3 +2098,285 @@
         width: 100%;
     }
 }
+
+/* ===== ZAŁĄCZNIKI - NOWE STYLE ===== */
+
+.modal__attachmentToggle {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.modal__toggleBtn {
+    flex: 1;
+    padding: 16px 16px;
+    background: #f1f5f9;
+    border: 2px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    color: #64748b;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.modal__toggleBtn:hover {
+    background: #e2e8f0;
+}
+
+.modal__toggleBtnActive {
+    background: #ede9fe;
+    border-color: #7c3aed;
+    color: #7c3aed;
+}
+
+.modal__toggleBtnActive:hover {
+    background: #e0e7ff;
+}
+
+/* Dropzone */
+.modal__dropzone {
+    border: 2px dashed #e2e8f0;
+    border-radius: 12px;
+    padding: 32px 20px;
+    text-align: center;
+    transition: all 0.2s;
+    position: relative;
+    cursor: pointer;
+}
+
+.modal__dropzone:hover {
+    border-color: #94a3b8;
+}
+
+.modal__dropzoneDragging {
+    border-color: #7c3aed;
+    background: #f5f3ff;
+}
+
+.modal__fileInput {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
+}
+
+.modal__dropzoneLabel {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+}
+
+.modal__dropzoneIcon {
+    font-size: 32px;
+}
+
+.modal__dropzoneLabel span {
+    font-size: 14px;
+    color: #64748b;
+}
+
+.modal__dropzoneHint {
+    font-size: 12px;
+    color: #94a3b8;
+}
+
+/* Podgląd pliku przed dodaniem */
+.modal__filePreview {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 12px;
+    background: #f8fafc;
+    border-radius: 8px;
+    margin-top: 12px;
+    border: 1px solid #e2e8f0;
+}
+
+.modal__filePreviewName {
+    flex: 1;
+    font-size: 14px;
+    color: #0f172a;
+}
+
+.modal__filePreviewSize {
+    font-size: 13px;
+    color: #94a3b8;
+}
+
+.modal__filePreviewRemove {
+    background: none;
+    border: none;
+    padding: 4px;
+    cursor: pointer;
+    color: #94a3b8;
+    border-radius: 4px;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+}
+
+.modal__filePreviewRemove:hover {
+    color: #dc2626;
+    background: #fee2e2;
+}
+
+/* Input dla linków */
+.modal__linkInput {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.modal__linkInput .modal__addBtn {
+    align-self: flex-end;
+    min-width: 120px;
+}
+
+/* Lista załączników */
+.modal__fileList {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-top: 12px;
+}
+
+.modal__fileItem {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 12px;
+    background: #f8fafc;
+    border-radius: 8px;
+    font-size: 13px;
+}
+
+.modal__fileItem .modal__fileSize {
+    margin-left: auto;
+    color: #94a3b8;
+    font-size: 12px;
+}
+
+.modal__removeFile {
+    background: none;
+    border: none;
+    padding: 4px;
+    cursor: pointer;
+    color: #94a3b8;
+    border-radius: 4px;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+}
+
+.modal__removeFile:hover {
+    color: #dc2626;
+    background: #fee2e2;
+}
+
+/* ===== PRZYCISK "DODAJ LINK" - wersja z inputami ===== */
+.modal__linkInput {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.modal__linkInput .modal__input {
+    flex: 1;
+    min-width: 150px;
+}
+
+.modal__linkInput .modal__addBtn {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 10px 20px;
+    background: linear-gradient(135deg, #7c3aed, #6d28d9);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+    height: 42px;
+    box-shadow: 0 2px 8px rgba(124, 58, 237, 0.2);
+}
+
+.modal__linkInput .modal__addBtn:hover:not(:disabled) {
+    background: linear-gradient(135deg, #6d28d9, #5b21b6);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(124, 58, 237, 0.35);
+}
+
+.modal__linkInput .modal__addBtn:active:not(:disabled) {
+    transform: translateY(0);
+}
+
+.modal__linkInput .modal__addBtn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+/* ===== PRZYCISK "DODAJ PLIK" - podobny do dodawania linku ===== */
+.modal__dropzone .modal__addBtn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 10px 20px;
+    background: linear-gradient(135deg, #7c3aed, #6d28d9);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+    height: 42px;
+    box-shadow: 0 2px 8px rgba(124, 58, 237, 0.2);
+    width: 100%;
+    margin-top: 8px;
+}
+
+.modal__dropzone .modal__addBtn:hover:not(:disabled) {
+    background: linear-gradient(135deg, #6d28d9, #5b21b6);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(124, 58, 237, 0.35);
+}
+
+.modal__dropzone .modal__addBtn:active:not(:disabled) {
+    transform: translateY(0);
+}
+
+.modal__dropzone .modal__addBtn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+/* ===== RESPONSYWNOŚĆ dla obu przycisków ===== */
+@media (max-width: 768px) {
+    .modal__linkInput {
+        flex-direction: column;
+    }
+
+    .modal__linkInput .modal__input {
+        width: 100%;
+        min-width: unset;
+    }
+
+    .modal__linkInput .modal__addBtn {
+        width: 100%;
+    }
+}

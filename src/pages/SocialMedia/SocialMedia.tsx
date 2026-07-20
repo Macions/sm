@@ -11,9 +11,6 @@ import {
     AlertCircle,
     Calendar,
     Tag,
-    InstagramIcon,
-    FacebookIcon,
-    YoutubeIcon,
     Image as ImageIcon,
     Video as VideoIcon,
     FileText,
@@ -149,7 +146,6 @@ const MOCK_TEAM_MEMBERS: TeamMember[] = [
         lastName: "Melerska",
         role: "manager",
         email: "maja.melerska@silamlodych.pl",
-        phone: "+48 123 456 780",
         province: "Mazowieckie",
         team: "Social Media",
         joinDate: "2024-05-15",
@@ -1036,7 +1032,7 @@ function ContactsSection({ contacts, canManage }: { contacts: MediaContact[]; ca
 // GŁÓWNY KOMPONENT
 // ---------------------------------------------------------------------------
 
-export default function SocialMedia() {
+export default function SocialMedia({ title }: { title?: string }) {
     const currentUser = MOCK_USER;
     const canManage = currentUser.role === "admin" || currentUser.role === "coordinator";
 
@@ -1045,8 +1041,10 @@ export default function SocialMedia() {
             {/* Nagłówek */}
             <div className={styles.header}>
                 <div className={styles.header__left}>
-                    <h1 className={styles.header__title}>Social Media</h1>
-                    <p className={styles.header__subtitle}>
+                   <h1 className={styles.header__title}>
+                        {title ?? "Social Media"}
+                    </h1>
+                                        <p className={styles.header__subtitle}>
                         Centrum zarządzania działaniami komunikacyjnymi, tworzeniem treści oraz zespołem
                         odpowiedzialnym za media społecznościowe Stowarzyszenia Siła Młodych.
                     </p>
