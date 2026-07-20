@@ -4,17 +4,24 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 
 export const login = async (req: Request, res: Response) => {
-	const { username, password } = req.body;
+	const { email, password } = req.body;
 
 	try {
 		const [rows]: any = await db.execute(
-			"SELECT * FROM users WHERE username = ?",
-			[username],
+			`
+			SELECT 
+				users.*,
+				roles.name AS role
+			FROM users
+			JOIN roles ON users.role_id = roles.id
+			WHERE users.email = ?
+			`,
+			[email],
 		);
 
 		if (rows.length === 0) {
 			return res.status(401).json({
-				message: "Nieprawidłowy login lub hasło",
+				message: "Nieprawidłowy email lub hasło",
 			});
 		}
 
@@ -26,18 +33,21 @@ export const login = async (req: Request, res: Response) => {
 			});
 		}
 
-		const passwordCorrect = await bcrypt.compare(password, user.password);
+		const passwordCorrect = await bcrypt.compare(
+			password,
+			user.password_hash
+		);
 
 		if (!passwordCorrect) {
 			return res.status(401).json({
-				message: "Nieprawidłowy login lub hasło",
+				message: "Nieprawidłowy email lub hasło",
 			});
 		}
 
 		const token = jwt.sign(
 			{
 				id: user.id,
-				username: user.username,
+				email: user.email,
 				role: user.role,
 			},
 			process.env.JWT_SECRET!,
@@ -51,7 +61,7 @@ export const login = async (req: Request, res: Response) => {
 			token,
 			user: {
 				id: user.id,
-				username: user.username,
+				email: user.email,
 				first_name: user.first_name,
 				last_name: user.last_name,
 				role: user.role,

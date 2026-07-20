@@ -3,7 +3,7 @@ import styles from "./Login.module.css";
 import { useNavigate } from "react-router-dom";
 
 const Login: React.FC = () => {
-	const [username, setUsername] = useState("");
+	const [email, setEmail] = useState("");
 	const [password, setPassword] = useState("");
 	const navigate = useNavigate();
 	// const [remember, setRemember] = useState(false);
@@ -25,7 +25,7 @@ const Login: React.FC = () => {
 					"Content-Type": "application/json",
 				},
 				body: JSON.stringify({
-					username,
+					email,
 					password,
 				}),
 			});
@@ -97,10 +97,10 @@ const Login: React.FC = () => {
 						<form onSubmit={handleSubmit}>
 							<div className={styles.inputGroup}>
 								<input
-									type="text"
-									placeholder="Nazwa użytkownika"
-									value={username}
-									onChange={(e) => setUsername(e.target.value)}
+									type="email"
+									placeholder="Email"
+									value={email}
+									onChange={(e) => setEmail(e.target.value)}
 									required
 								/>
 							</div>

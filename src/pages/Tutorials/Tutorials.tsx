@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
     BookOpen,
     Search,
@@ -44,6 +44,7 @@ type Tutorial = {
     category: TutorialCategory;
     access: TutorialAccess;
     author: string;
+    createdAt: string;
     updatedAt: string;
     content: string;
     attachments?: {
@@ -63,6 +64,22 @@ type User = {
     functionalRole?: string; // np. "Prezes", "Wiceprezes", "Koordynator Filaru Projektowego"
 };
 
+
+const isNewTutorial = (updatedAt: string): boolean => {
+    const now = new Date();
+    const updateDate = new Date(updatedAt);
+    const diffTime = Math.abs(now.getTime() - updateDate.getTime());
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays <= 7;
+};
+
+const isUpdatedTutorial = (createdAt: string | undefined, updatedAt: string): boolean => {
+    // Jeśli nie ma createdAt, używamy updatedAt
+    if (!createdAt) return false;
+    const createDate = new Date(createdAt);
+    const updateDate = new Date(updatedAt);
+    return updateDate > createDate;
+};
 // ---------------------------------------------------------------------------
 // DANE PRZYKŁADOWE
 // ---------------------------------------------------------------------------
@@ -82,8 +99,9 @@ const MOCK_TUTORIALS: Tutorial[] = [
         category: "new_member",
         access: "all",
         author: "Zarząd Siły Młodych",
+        createdAt: "2026-07-01",
         updatedAt: "2026-07-15",
-        content: "Witaj w Siły Młodych! Ten poradnik pomoże Ci rozpocząć przygodę z naszą organizacją...",
+        content: "Witaj w Sile Młodych! Ten poradnik pomoże Ci rozpocząć przygodę z naszą organizacją...",
         attachments: [
             { name: "Przewodnik_nowego_członka.pdf", url: "#", size: "2.4 MB" },
         ],
@@ -97,6 +115,7 @@ const MOCK_TUTORIALS: Tutorial[] = [
         category: "project_guidelines",
         access: "all",
         author: "Dział Projektów",
+        createdAt: "2026-07-01",
         updatedAt: "2026-07-10",
         content: "Proces tworzenia projektu w Siły Młodych składa się z kilku etapów...",
         attachments: [
@@ -113,6 +132,7 @@ const MOCK_TUTORIALS: Tutorial[] = [
         category: "contributions",
         access: "all",
         author: "Komisja Rewizyjna",
+        createdAt: "2026-07-01",
         updatedAt: "2026-07-01",
         content: "Składki członkowskie są podstawą funkcjonowania organizacji...",
         attachments: [
@@ -128,6 +148,7 @@ const MOCK_TUTORIALS: Tutorial[] = [
         category: "statute",
         access: "all",
         author: "Zarząd Siły Młodych",
+        createdAt: "2026-07-01",
         updatedAt: "2026-06-20",
         content: "Statut Siły Młodych został uchwalony w dniu...",
         attachments: [
@@ -143,6 +164,7 @@ const MOCK_TUTORIALS: Tutorial[] = [
         category: "regulations",
         access: "all",
         author: "Zarząd Siły Młodych",
+        createdAt: "2026-07-01",
         updatedAt: "2026-06-15",
         content: "Regulamin określa prawa i obowiązki członków...",
         attachments: [
@@ -158,6 +180,7 @@ const MOCK_TUTORIALS: Tutorial[] = [
         category: "distinctions",
         access: "all",
         author: "Zarząd Siły Młodych",
+        createdAt: "2026-07-01",
         updatedAt: "2026-07-18",
         content: "Wyróżnienia są przyznawane za szczególne osiągnięcia...",
         attachments: [
@@ -173,6 +196,7 @@ const MOCK_TUTORIALS: Tutorial[] = [
         category: "coordinator",
         access: "coordinator",
         author: "Zarząd Siły Młodych",
+        createdAt: "2026-07-01",
         updatedAt: "2026-07-12",
         content: "Jako koordynator jesteś odpowiedzialny za...",
         attachments: [
@@ -189,6 +213,7 @@ const MOCK_TUTORIALS: Tutorial[] = [
         category: "functional",
         access: "functional",
         author: "Dział HR",
+        createdAt: "2026-07-01",
         updatedAt: "2026-07-08",
         content: "Procedura zgłaszania problemów z frekwencją...",
         functionalRoles: ["Koordynator Filaru Projektowego", "Koordynator Filaru Konferencyjnego"],
@@ -205,6 +230,7 @@ const MOCK_TUTORIALS: Tutorial[] = [
         category: "functional",
         access: "functional",
         author: "Zarząd Siły Młodych",
+        createdAt: "2026-07-01",
         updatedAt: "2026-07-05",
         content: "Każda funkcja w organizacji ma określony zakres odpowiedzialności...",
         functionalRoles: ["Prezes", "Wiceprezes", "Koordynator Filaru Projektowego", "Koordynator Filaru Konferencyjnego"],
@@ -285,6 +311,10 @@ function TutorialCard({
         });
     };
 
+    // TERAZ DZIAŁA - funkcje są zdefiniowane na górze pliku
+    const isNew = isNewTutorial(tutorial.updatedAt);
+    const isUpdated = isUpdatedTutorial(tutorial.createdAt, tutorial.updatedAt);
+
     const getAccessLabel = () => {
         if (tutorial.access === "all") return "Dla wszystkich";
         if (tutorial.access === "coordinator") return "🔒 Dla koordynatorów";
@@ -305,10 +335,10 @@ function TutorialCard({
                         <h3 className={styles.tutorialCard__title}>{tutorial.title}</h3>
                     </div>
                     <div className={styles.tutorialCard__badges}>
-                        {tutorial.isNew && (
+                        {isNew && (
                             <span className={styles.tutorialCard__badgeNew}>Nowy</span>
                         )}
-                        {tutorial.isUpdated && !tutorial.isNew && (
+                        {!isNew && isUpdated && (
                             <span className={styles.tutorialCard__badgeUpdated}>Aktualizacja</span>
                         )}
                         <span className={`${styles.tutorialCard__access} ${ACCESS_COLORS[tutorial.access]}`}>
@@ -450,7 +480,37 @@ function TutorialModal({
     );
     const [newAttachment, setNewAttachment] = useState({ name: "", url: "", size: "" });
     const [newRole, setNewRole] = useState("");
-
+    const [attachmentType, setAttachmentType] = useState<"file" | "link">("file"); // <-- DODAJ
+    const [isDragging, setIsDragging] = useState(false); // <-- DODAJ (opcjonalnie dla drag&drop)
+    
+    const canEdit = !isViewOnly && !!tutorial; // Można edytować jeśli to nie jest podgląd i mamy tutorial
+    // ===== DODAJ TEN useEffect =====
+    useEffect(() => {
+        if (tutorial) {
+            setFormData({
+                title: tutorial.title || "",
+                description: tutorial.description || "",
+                category: tutorial.category || "new_member",
+                access: tutorial.access || "all",
+                author: tutorial.author || "",
+                content: tutorial.content || "",
+                attachments: tutorial.attachments || [],
+                functionalRoles: tutorial.functionalRoles || [],
+            });
+        } else {
+            // Reset dla nowego poradnika
+            setFormData({
+                title: "",
+                description: "",
+                category: "new_member",
+                access: "all",
+                author: "",
+                content: "",
+                attachments: [],
+                functionalRoles: [],
+            });
+        }
+    }, [tutorial, isOpen]);
     if (!isOpen) return null;
 
     const handleSubmit = (e: React.FormEvent) => {
@@ -464,6 +524,7 @@ function TutorialModal({
                 category: formData.category as TutorialCategory || "new_member",
                 access: formData.access as TutorialAccess || "all",
                 author: formData.author || "",
+                createdAt: tutorial?.createdAt || now, // <-- DODAJ
                 updatedAt: now,
                 content: formData.content || "",
                 attachments: formData.attachments || [],
@@ -480,12 +541,48 @@ function TutorialModal({
         if (newAttachment.name.trim() && newAttachment.url.trim()) {
             setFormData({
                 ...formData,
-                attachments: [...(formData.attachments || []), { ...newAttachment }],
+                attachments: [...(formData.attachments || []), {
+                    name: newAttachment.name,
+                    url: newAttachment.url,
+                    size: newAttachment.size || "0 MB"
+                }],
             });
             setNewAttachment({ name: "", url: "", size: "" });
         }
     };
 
+    // Funkcja do obsługi wyboru pliku
+    const handleFileUpload = (file: File) => {
+        // Oblicz rozmiar w MB
+        const sizeInMB = (file.size / (1024 * 1024)).toFixed(1);
+        const sizeStr = sizeInMB + " MB";
+
+        setNewAttachment({
+            name: file.name,
+            url: URL.createObjectURL(file), // Tymczasowy URL
+            size: sizeStr,
+        });
+    };
+
+    // Funkcja do obsługi przeciągania (opcjonalnie)
+    const handleDrop = (e: React.DragEvent) => {
+        e.preventDefault();
+        setIsDragging(false);
+        const file = e.dataTransfer.files[0];
+        if (file) {
+            handleFileUpload(file);
+        }
+    };
+
+    const handleDragOver = (e: React.DragEvent) => {
+        e.preventDefault();
+        setIsDragging(true);
+    };
+
+    const handleDragLeave = (e: React.DragEvent) => {
+        e.preventDefault();
+        setIsDragging(false);
+    };
     const removeAttachment = (index: number) => {
         setFormData({
             ...formData,
@@ -652,50 +749,120 @@ function TutorialModal({
                     {!isViewOnly && (
                         <div className={styles.modal__field}>
                             <label className={styles.modal__label}>Załączniki</label>
-                            <div className={styles.modal__teamInput}>
-                                <input
-                                    type="text"
-                                    className={styles.modal__input}
-                                    value={newAttachment.name}
-                                    onChange={(e) => setNewAttachment({ ...newAttachment, name: e.target.value })}
-                                    placeholder="Nazwa pliku"
-                                />
-                                <input
-                                    type="text"
-                                    className={styles.modal__input}
-                                    value={newAttachment.url}
-                                    onChange={(e) => setNewAttachment({ ...newAttachment, url: e.target.value })}
-                                    placeholder="URL pliku"
-                                />
-                                <input
-                                    type="text"
-                                    className={styles.modal__input}
-                                    value={newAttachment.size}
-                                    onChange={(e) => setNewAttachment({ ...newAttachment, size: e.target.value })}
-                                    placeholder="Rozmiar (np. 2.4 MB)"
-                                />
+
+                            {/* Przełącznik typu */}
+                            <div className={styles.modal__attachmentToggle}>
                                 <button
                                     type="button"
-                                    className={styles.modal__addMember}
-                                    onClick={addAttachment}
+                                    className={`${styles.modal__toggleBtn} ${attachmentType === "file" ? styles.modal__toggleBtnActive : ""}`}
+                                    onClick={() => setAttachmentType("file")}
                                 >
-                                    <Plus size={16} />
+                                    Dodaj plik
+                                </button>
+                                <button
+                                    type="button"
+                                    className={`${styles.modal__toggleBtn} ${attachmentType === "link" ? styles.modal__toggleBtnActive : ""}`}
+                                    onClick={() => setAttachmentType("link")}
+                                >
+                                    Dodaj link
                                 </button>
                             </div>
+
+                            {attachmentType === "file" ? (
+                                // Obsługa plików
+                                <div
+                                    className={`${styles.modal__dropzone} ${isDragging ? styles.modal__dropzoneDragging : ""}`}
+                                    onDrop={handleDrop}
+                                    onDragOver={handleDragOver}
+                                    onDragLeave={handleDragLeave}
+                                >
+                                    <input
+                                        type="file"
+                                        id="fileInput"
+                                        className={styles.modal__fileInput}
+                                        onChange={(e) => {
+                                            const file = e.target.files?.[0];
+                                            if (file) handleFileUpload(file);
+                                        }}
+                                    />
+                                    <label htmlFor="fileInput" className={styles.modal__dropzoneLabel}>
+                                        <span>Przeciągnij plik/pliki tutaj lub kliknij aby wybrać</span>
+                                        <span className={styles.modal__dropzoneHint}>Maksymalny rozmiar: 10 MB</span>
+                                    </label>
+
+                                    {newAttachment.name && (
+                                        <div className={styles.modal__filePreview}>
+                                            <File size={16} />
+                                            <span className={styles.modal__filePreviewName}>{newAttachment.name}</span>
+                                            <span className={styles.modal__filePreviewSize}>{newAttachment.size}</span>
+                                            <button
+                                                type="button"
+                                                className={styles.modal__filePreviewRemove}
+                                                onClick={() => setNewAttachment({ name: "", url: "", size: "" })}
+                                            >
+                                                <X size={14} />
+                                            </button>
+                                        </div>
+                                    )}
+
+                                    {newAttachment.name && (
+                                        <button
+                                            type="button"
+                                            className={styles.modal__addBtn}
+                                            onClick={addAttachment}
+                                            style={{ marginTop: "8px", width: "100%" }}
+                                        >
+                                            <Plus size={16} />
+                                            Dodaj plik
+                                        </button>
+                                    )}
+                                </div>
+                            ) : (
+                                // Obsługa linków
+                                <div className={styles.modal__linkInput}>
+                                    <input
+                                        type="text"
+                                        className={styles.modal__input}
+                                        value={newAttachment.name}
+                                        onChange={(e) => setNewAttachment({ ...newAttachment, name: e.target.value })}
+                                        placeholder="Nazwa pliku (np. Dokument.pdf)"
+                                    />
+                                    <input
+                                        type="text"
+                                        className={styles.modal__input}
+                                        value={newAttachment.url}
+                                        onChange={(e) => setNewAttachment({ ...newAttachment, url: e.target.value })}
+                                        placeholder="URL pliku (np. https://...)"
+                                    />
+                                    <button
+                                        type="button"
+                                        className={styles.modal__addBtn}
+                                        onClick={addAttachment}
+                                        disabled={!newAttachment.name.trim() || !newAttachment.url.trim()}
+                                    >
+                                        <Plus size={16} />
+                                        Dodaj link
+                                    </button>
+                                </div>
+                            )}
+
+                            {/* Lista załączników */}
                             {formData.attachments && formData.attachments.length > 0 && (
                                 <div className={styles.modal__fileList}>
                                     {formData.attachments.map((file, index) => (
                                         <div key={index} className={styles.modal__fileItem}>
                                             <File size={14} />
                                             <span>{file.name}</span>
-                                            <span className={styles.modal__fileSize}>{file.size}</span>
-                                            <button
-                                                type="button"
-                                                className={styles.modal__removeFile}
-                                                onClick={() => removeAttachment(index)}
-                                            >
-                                                <X size={14} />
-                                            </button>
+                                            <span className={styles.modal__fileSize}>{file.size || "0 MB"}</span>
+                                            {canEdit && (
+                                                <button
+                                                    type="button"
+                                                    className={styles.modal__removeFile}
+                                                    onClick={() => removeAttachment(index)}
+                                                >
+                                                    <X size={14} />
+                                                </button>
+                                            )}
                                         </div>
                                     ))}
                                 </div>

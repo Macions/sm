@@ -985,7 +985,6 @@ interface ApplyModalProps {
 function ApplyModal({
 	isOpen,
 	vacancy,
-	currentUser,
 	onClose,
 	onSubmit,
 }: ApplyModalProps) {
