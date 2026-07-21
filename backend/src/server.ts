@@ -1,8 +1,10 @@
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
-import { db } from "./config/db";
+import db from "./config/db";
 import authRoutes from "./routes/auth.routes";
+import onboardingRoutes from "./routes/onboarding.routes";
+import dashboardRoutes from "./routes/dashboard.routes";
 
 dotenv.config();
 
@@ -10,6 +12,9 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 app.use("/api/auth", authRoutes);
+app.use("/api/onboarding", onboardingRoutes);
+app.use("/api/dashboard", dashboardRoutes);
+
 app.get("/test-db", async (req, res) => {
 	try {
 		const [rows] = await db.query("SELECT 1");
