@@ -1,0 +1,25 @@
+// backend/prisma/schema.prisma
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model Project {
+  id              String   @id @default(cuid())
+  name            String
+  description     String
+  pillar          String
+  coordinator_id  Int      // Dopasuj do istniejącej bazy
+  team            String   // Przechowuj jako JSON string
+  status          String
+  estimated_end   DateTime // Dopasuj do istniejącej bazy
+  created_at      DateTime @default(now())
+  updated_at      DateTime @updatedAt
+
+  // Mapuj nazwy pól na istniejące kolumny w bazie
+  @@map("projects")
+}

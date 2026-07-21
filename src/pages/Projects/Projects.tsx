@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import {
     Plus,
     Edit,
@@ -487,6 +487,39 @@ export default function Projects() {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingProject, setEditingProject] = useState<Project | null>(null);
 
+    // W Projects.tsx, dodaj useEffect do pobierania danych
+    useEffect(() => {
+        const fetchProjects = async () => {
+            try {
+                const token = localStorage.getItem("accessToken");
+                const response = await fetch("/api/projects", {
+                    headers: {
+                        "Authorization": `Bearer ${token}`,
+                        "Content-Type": "application/json"
+                    }
+                });
+
+                if (response.status === 401) {
+                    // Brak autoryzacji - przekieruj do logowania
+                    window.location.href = '/login';
+                    return;
+                }
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                setProjects(data);
+            } catch (error) {
+                console.error("Błąd ładowania projektów:", error);
+                // Użyj mockowych danych jako fallback
+                setProjects(MOCK_PROJECTS);
+            }
+        };
+
+        fetchProjects();
+    }, []);
     // W rzeczywistej aplikacji pobieramy z kontekstu/auth
     const currentUser = MOCK_USER;
     const canManageProjects = currentUser.role === "admin" || currentUser.role === "coordinator";
@@ -520,14 +553,37 @@ export default function Projects() {
         }
     };
 
-    const handleSaveProject = (project: Project) => {
-        const existingIndex = projects.findIndex((p) => p.id === project.id);
-        if (existingIndex >= 0) {
-            const updated = [...projects];
-            updated[existingIndex] = project;
-            setProjects(updated);
-        } else {
-            setProjects([project, ...projects]);
+    // W Projects.tsx, zaktualizuj handleSaveProject
+    const handleSaveProject = async (project: Project) => {
+        try {
+            const token = localStorage.getItem("accessToken");
+            const isEdit = projects.some(p => p.id === project.id);
+            const url = isEdit ? `/api/projects/${project.id}` : '/api/projects';
+            const method = isEdit ? 'PUT' : 'POST';
+
+            const response = await fetch(url, {
+                method,
+                headers: {
+                    "Authorization": `Bearer ${token}`,
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(project)
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const savedProject = await response.json();
+
+            if (isEdit) {
+                setProjects(projects.map(p => p.id === savedProject.id ? savedProject : p));
+            } else {
+                setProjects([savedProject, ...projects]);
+            }
+        } catch (error) {
+            console.error("Błąd zapisywania projektu:", error);
+            alert("Nie udało się zapisać projektu. Spróbuj ponownie.");
         }
     };
 
