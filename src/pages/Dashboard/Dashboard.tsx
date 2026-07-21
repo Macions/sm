@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import {
 	Users,
 	FolderKanban,
@@ -32,7 +33,8 @@ type QuickAction = {
 	label: string;
 	icon: React.ReactNode;
 	color: string;
-	onClick: () => void;
+	link?: string;
+	roles?: string[];
 };
 
 type DashboardStats = {
@@ -45,10 +47,15 @@ type DashboardStats = {
 
 type User = {
 	id: string;
-	name: string;
+	firstName: string; // <-- DODAJ
+	lastName?: string; // <-- OPCJONALNIE
+	name?: string; // <-- MOŻE ZOSTAĆ
 	role: string;
 	team: string;
 	status: string;
+	createdAt?: string;
+	joinDate?: string; // <-- DODAJ
+	isTrial?: boolean;
 };
 
 // ---------------------------------------------------------------------------
@@ -56,6 +63,8 @@ type User = {
 // ---------------------------------------------------------------------------
 
 export default function Dashboard() {
+	const navigate = useNavigate();
+
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState<string | null>(null);
 	const [user, setUser] = useState<User | null>(null);
@@ -63,30 +72,62 @@ export default function Dashboard() {
 	const [notifications, setNotifications] = useState<Notification[]>([]);
 
 	// ===== POBIERANIE DANYCH Z BACKENDU =====
+	// ===== POBIERANIE DANYCH Z BACKENDU =====
 	useEffect(() => {
 		const fetchDashboardData = async () => {
 			try {
 				setLoading(true);
 				setError(null);
 
+				// Pobierz token
+				const token = localStorage.getItem("accessToken");
+				console.log("🔑 Token:", token ? "Jest" : "Brak");
+
 				// Pobierz dane użytkownika
-				const userRes = await fetch("/api/user/profile");
-				if (!userRes.ok) throw new Error("Nie udało się pobrać danych użytkownika");
+				const userRes = await fetch("/api/dashboard/profile", {
+					headers: {
+						Authorization: `Bearer ${token}`,
+						"Content-Type": "application/json",
+					},
+				});
+				if (!userRes.ok) {
+					console.error("❌ Błąd profile:", userRes.status, userRes.statusText);
+					throw new Error("Nie udało się pobrać danych użytkownika");
+				}
 				const userData = await userRes.json();
 				setUser(userData);
 
 				// Pobierz statystyki
-				const statsRes = await fetch("/api/dashboard/stats");
-				if (!statsRes.ok) throw new Error("Nie udało się pobrać statystyk");
+				const statsRes = await fetch("/api/dashboard/stats", {
+					headers: {
+						Authorization: `Bearer ${token}`,
+						"Content-Type": "application/json",
+					},
+				});
+				if (!statsRes.ok) {
+					console.error("❌ Błąd stats:", statsRes.status, statsRes.statusText);
+					throw new Error("Nie udało się pobrać statystyk");
+				}
 				const statsData = await statsRes.json();
 				setStats(statsData);
 
 				// Pobierz powiadomienia
-				const notifRes = await fetch("/api/notifications/recent?limit=4");
-				if (!notifRes.ok) throw new Error("Nie udało się pobrać powiadomień");
+				const notifRes = await fetch("/api/dashboard/notifications?limit=4", {
+					headers: {
+						Authorization: `Bearer ${token}`,
+						"Content-Type": "application/json",
+					},
+				});
+				if (!notifRes.ok) {
+					console.error(
+						"❌ Błąd notifications:",
+						notifRes.status,
+						notifRes.statusText,
+					);
+					throw new Error("Nie udało się pobrać powiadomień");
+				}
 				const notifData = await notifRes.json();
 				setNotifications(notifData);
-
 			} catch (err) {
 				console.error("Błąd ładowania dashboardu:", err);
 				setError(err instanceof Error ? err.message : "Wystąpił błąd");
@@ -98,58 +139,131 @@ export default function Dashboard() {
 		fetchDashboardData();
 	}, []);
 
-	// ===== SZYBKIE AKCJE =====
 	const quickActions: QuickAction[] = [
+		{
+			id: "projects",
+			label: "Projekty",
+			icon: <FolderKanban size={18} />,
+			color: "#4A6FE8",
+			link: "/projects",
+			roles: ["member"],
+		},
 		{
 			id: "add-project",
 			label: "Dodaj projekt",
 			icon: <Plus size={18} />,
 			color: "#4A6FE8",
-			onClick: () => console.log("Dodaj projekt"),
+			link: "/projects/new",
+			roles: ["admin", "coordinator"],
 		},
 		{
 			id: "leave-request",
 			label: "Zgłoś urlop",
 			icon: <CalendarPlus size={18} />,
 			color: "#2ECC71",
-			onClick: () => console.log("Zgłoś urlop"),
+			link: "/leave/",
+			roles: ["admin", "coordinator", "member"],
 		},
 		{
 			id: "search-member",
 			label: "Wyszukaj członka",
 			icon: <Search size={18} />,
 			color: "#F5A623",
-			onClick: () => console.log("Wyszukaj członka"),
+			link: "/members",
+			roles: ["admin", "coordinator", "member"],
 		},
 		{
 			id: "browse-guides",
 			label: "Przeglądaj poradniki",
 			icon: <BookMarked size={18} />,
 			color: "#E84AA9",
-			onClick: () => console.log("Przeglądaj poradniki"),
+			link: "/guides",
+			roles: ["admin", "coordinator", "member"],
 		},
 	];
 
 	// ===== FUNKCJE POMOCNICZE =====
 	const getGreeting = () => {
 		const hour = new Date().getHours();
-		if (hour >= 4 && hour < 18) return "Dzień dobry";
+		if (hour >= 4 && hour < 21) return "Dzień dobry";
 		return "Dobry wieczór";
+	};
+	// ===== OBLICZANIE STAŻU =====
+	const getMembershipDuration = (
+		joinDate: string | null | undefined,
+		isTrial: boolean,
+	): string | null => {
+		if (!joinDate || isTrial) return null;
+
+		const start = new Date(joinDate);
+		const now = new Date();
+
+		let years = now.getFullYear() - start.getFullYear();
+		let months = now.getMonth() - start.getMonth();
+
+		if (months < 0) {
+			years--;
+			months += 12;
+		}
+
+		const days = Math.floor(
+			(now.getTime() - start.getTime()) / (1000 * 60 * 60 * 24),
+		);
+
+		if (years > 0) {
+			const yearText = years === 1 ? "rok" : years < 5 ? "lata" : "lat";
+			if (months > 0) {
+				const monthText = months === 1 ? "miesiąc" : "miesięcy";
+				return `${years} ${yearText}, ${months} ${monthText}`;
+			}
+			return `${years} ${yearText}`;
+		}
+		if (months > 0) {
+			const monthText = months === 1 ? "miesiąc" : "miesięcy";
+			return `${months} ${monthText}`;
+		}
+		if (days > 0) {
+			const dayText = days === 1 ? "dzień" : "dni";
+			return `${days} ${dayText}`;
+		}
+		return "Dziś dołączyłeś! 🎉";
+	};
+
+	// ===== TŁUMACZENIE STATUSU =====
+	const translateStatus = (status: string): string => {
+		const statusMap: Record<string, string> = {
+			active: "Aktywny",
+			trial: "Okres próbny",
+			mentor: "Mentor",
+			vacation: "Urlop",
+		};
+		return statusMap[status?.toLowerCase()] || status || "—";
 	};
 
 	const getStatusColor = (status: string) => {
-		switch (status) {
+		const translated = translateStatus(status);
+		switch (translated) {
 			case "Aktywny":
 				return "#2ECC71";
 			case "Urlop":
 				return "#F5A623";
 			case "Okres próbny":
-				return "#E84AA9";
+				return "#ff8989";
 			default:
 				return "#6B7280";
 		}
 	};
-
+	// ===== TŁUMACZENIE ROLI =====
+	const translateRole = (role: string): string => {
+		const roleMap: Record<string, string> = {
+			admin: "Administrator",
+			board: "Zarząd",
+			coordinator: "Koordynator",
+			member: "Członek",
+			mentor: "Mentor",
+		};
+		return roleMap[role?.toLowerCase()] || role || "—";
+	};
 	const getNotificationIcon = (type: string) => {
 		switch (type) {
 			case "success":
@@ -188,52 +302,63 @@ export default function Dashboard() {
 			</div>
 		);
 	}
+	const membershipDuration = getMembershipDuration(
+		user?.joinDate || null,
+		user?.isTrial || false,
+	);
 
 	// ===== STATYSTYKI =====
-	const statsData = stats ? [
-		{
-			id: "members",
-			label: "Członkowie SM",
-			value: stats.members.toString(),
-			icon: <Users size={24} />,
-			color: "#4A6FE8",
-			bgColor: "#EFEBFD",
-		},
-		{
-			id: "projects",
-			label: "Aktywne projekty",
-			value: stats.projects.toString(),
-			icon: <FolderKanban size={24} />,
-			color: "#2ECC71",
-			bgColor: "#ECFDF5",
-		},
-		{
-			id: "attendance",
-			label: "Twoja frekwencja",
-			value: stats.attendance,
-			icon: <CalendarCheck size={24} />,
-			color: "#10B981",
-			bgColor: "#ECFDF5",
-		},
-		{
-			id: "announcements",
-			label: "Ogłoszenia",
-			value: stats.announcements.toString(),
-			subtext: "nowe",
-			icon: <Megaphone size={24} />,
-			color: "#E84AA9",
-			bgColor: "#FDF2F8",
-		},
-		{
-			id: "guides",
-			label: "Nowe poradniki",
-			value: stats.newGuides.toString(),
-			subtext: "aktualizacje",
-			icon: <BookOpen size={24} />,
-			color: "#17C3B2",
-			bgColor: "#F0FDFA",
-		},
-	] : [];
+	// ===== STATYSTYKI =====
+	const statsData = stats
+		? [
+				{
+					id: "members",
+					label: "Członkowie SM",
+					value: stats.members.toString(),
+					icon: <Users size={24} />,
+					color: "#4A6FE8",
+					bgColor: "#EFEBFD",
+				},
+				{
+					id: "projects",
+					label: "Aktywne projekty",
+					value: stats.projects.toString(),
+					icon: <FolderKanban size={24} />,
+					color: "#2ECC71",
+					bgColor: "#ECFDF5",
+				},
+				{
+					id: "attendance",
+					label: "Twoja frekwencja",
+					value: stats.attendance,
+					icon: <CalendarCheck size={24} />,
+					color: "#10B981",
+					bgColor: "#ECFDF5",
+				},
+				// ===== ZAMIAST OGŁOSZEŃ - "JESTEŚ Z NAMI" =====
+				...(membershipDuration
+					? [
+							{
+								id: "membership",
+								label: "Jesteś z nami",
+								value: membershipDuration,
+								icon: <CalendarCheck size={24} />,
+								color: "#4A6FE8",
+								bgColor: "#EFEBFD",
+							},
+						]
+					: []),
+				{
+					id: "guides",
+					label: "Nowe poradniki",
+					value: stats.newGuides.toString(),
+					subtext: "aktualizacje",
+					icon: <BookOpen size={24} />,
+					color: "#17C3B2",
+					bgColor: "#F0FDFA",
+				},
+			]
+		: [];
 
 	return (
 		<>
@@ -247,12 +372,16 @@ export default function Dashboard() {
 					/>
 					<div className={styles.welcomeCard__text}>
 						<h1 className={styles.welcomeCard__title}>
-							{getGreeting()}, {user?.name || "Użytkowniku"}!
+							{getGreeting()}, {user?.firstName || "Użytkowniku"}!
 						</h1>
 						<div className={styles.welcomeCard__info}>
-							<span className={styles.welcomeCard__role}>{user?.role || "—"}</span>
+							<span className={styles.welcomeCard__role}>
+								{translateRole(user?.role || "—")}{" "}
+							</span>
 							<span className={styles.welcomeCard__divider}>•</span>
-							<span className={styles.welcomeCard__team}>{user?.team || "—"}</span>
+							<span className={styles.welcomeCard__team}>
+								{user?.team || "—"}
+							</span>
 							<span className={styles.welcomeCard__divider}>•</span>
 							<span
 								className={styles.welcomeCard__status}
@@ -262,7 +391,7 @@ export default function Dashboard() {
 									className={styles.welcomeCard__statusDot}
 									style={{ background: getStatusColor(user?.status || "") }}
 								/>
-								{user?.status || "—"}
+								{translateStatus(user?.status || "—")}
 							</span>
 						</div>
 					</div>
@@ -334,26 +463,37 @@ export default function Dashboard() {
 				<div className={styles.quickActions}>
 					<h2 className={styles.sectionTitle}>Szybkie akcje</h2>
 					<div className={styles.quickActions__grid}>
-						{quickActions.map((action) => (
-							<button
-								key={action.id}
-								className={styles.quickAction}
-								onClick={action.onClick}
-							>
-								<span
-									className={styles.quickAction__icon}
-									style={{
-										background: `${action.color}15`,
-										color: action.color,
+						{quickActions
+							.filter((action) => {
+								if (!user?.role || !action.roles) return true;
+								return action.roles.includes(user.role);
+							})
+							.map((action) => (
+								<button
+									key={action.id}
+									className={styles.quickAction}
+									onClick={() => {
+										if (action.link) {
+											navigate(action.link);
+										} else {
+											console.log(`Akcja: ${action.label}`);
+										}
 									}}
 								>
-									{action.icon}
-								</span>
-								<span className={styles.quickAction__label}>
-									{action.label}
-								</span>
-							</button>
-						))}
+									<span
+										className={styles.quickAction__icon}
+										style={{
+											background: `${action.color}15`,
+											color: action.color,
+										}}
+									>
+										{action.icon}
+									</span>
+									<span className={styles.quickAction__label}>
+										{action.label}
+									</span>
+								</button>
+							))}
 					</div>
 				</div>
 			</div>

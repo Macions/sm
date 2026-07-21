@@ -11,8 +11,18 @@ interface SidebarProps {
 export default function Sidebar({
 	activeKey,
 	onSelect,
-	collapsed = false, // ⬅️ DOMYŚLNIE ROZWINIĘTE
+	collapsed = false,
 }: SidebarProps) {
+	const handleLogout = () => {
+
+		localStorage.removeItem("accessToken");
+		localStorage.removeItem("refreshToken");
+		localStorage.removeItem("user");
+		localStorage.removeItem("onboardingCompleted");
+		localStorage.removeItem("onboardingData");
+
+		window.location.replace("/login");
+	};
 	return (
 		<aside
 			className={`${styles.sidebar} ${collapsed ? styles.sidebarCollapsed : ""}`}
@@ -49,9 +59,7 @@ export default function Sidebar({
 			<div className={styles.logout}>
 				<button
 					className={`${styles.nav__item} ${collapsed ? styles.nav__itemCollapsed : ""}`}
-					onClick={() => {
-						console.log("Wylogowanie");
-					}}
+					onClick={handleLogout}
 					title={collapsed ? "Wyloguj" : ""}
 				>
 					<LogOut size={18} />
@@ -77,7 +85,9 @@ export default function Sidebar({
 				) : (
 					<>
 						<span className={styles.footer__line}>Siła Młodych</span>
-						<span className={styles.footer__line}>© 2026 Wszelkie prawa zastrzeżone</span>
+						<span className={styles.footer__line}>
+							© 2026 Wszelkie prawa zastrzeżone
+						</span>
 					</>
 				)}
 			</div>

@@ -1,5 +1,4 @@
 import { Routes, Route, Navigate } from "react-router-dom";
-import { useState } from "react";
 import DashboardLayout from "../layouts/DashboardLayout";
 import Login from "../pages/Login/Login";
 import Dashboard from "../pages/Dashboard/Dashboard";
@@ -15,20 +14,34 @@ import Onboarding from "../pages/Onboarding/Onboarding";
 import Profile from "../pages/Profile/Profile";
 
 function AppRoutes() {
-	const [onboardingCompleted, setOnboardingCompleted] = useState(() => {
-		return localStorage.getItem("onboardingCompleted") === "true";
-	});
+	console.log("PATH:", window.location.pathname);
+	console.log("🌍 ORIGIN:", window.location.origin);
+console.log("📦 STORAGE:", Object.keys(localStorage));
+console.log("🔑 TOKEN RAW:", localStorage.getItem("accessToken"));
+const onboardingCompleted =
+	localStorage.getItem("onboardingCompleted") === "true";
 
 	const handleOnboardingComplete = (data: any) => {
 		// Zapisz dane onboarding w localStorage
 		localStorage.setItem("onboardingData", JSON.stringify(data));
 		localStorage.setItem("onboardingCompleted", "true");
-		setOnboardingCompleted(true);
 	};
 
 	// Sprawdź czy użytkownik jest zalogowany (dla przykładu - w rzeczywistej apce użyj AuthContext)
-	const isLoggedIn = true; // ZMIEŃ NA PRAWDZIWĄ LOGIKĘ
+	const isLoggedIn = !!localStorage.getItem("accessToken");
+	console.log("🔐 Token w routerze:", localStorage.getItem("accessToken"));
 
+	console.log("👤 User w routerze:", localStorage.getItem("user"));
+
+	console.log("✅ Czy zalogowany:", isLoggedIn);
+	if (!isLoggedIn) {
+		return (
+			<Routes>
+				<Route path="/login" element={<Login />} />
+				<Route path="*" element={<Navigate to="/login" replace />} />
+			</Routes>
+		);
+	}
 	// Jeśli użytkownik jest zalogowany i onboarding nie jest ukończony
 	if (isLoggedIn && !onboardingCompleted) {
 		return (
@@ -44,7 +57,7 @@ function AppRoutes() {
 
 	return (
 		<Routes>
-			<Route path="/login" element={<Login />} />
+			<Route path="/login" element={<Navigate to="/dashboard" replace />} />
 
 			<Route element={<DashboardLayout />}>
 				<Route path="/" element={<Dashboard />} />

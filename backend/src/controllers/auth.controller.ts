@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { db } from "../config/db";
+import db from "../config/db";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 
@@ -33,10 +33,7 @@ export const login = async (req: Request, res: Response) => {
 			});
 		}
 
-		const passwordCorrect = await bcrypt.compare(
-			password,
-			user.password_hash
-		);
+		const passwordCorrect = await bcrypt.compare(password, user.password_hash);
 
 		if (!passwordCorrect) {
 			return res.status(401).json({
@@ -44,7 +41,7 @@ export const login = async (req: Request, res: Response) => {
 			});
 		}
 
-		const token = jwt.sign(
+		const accessToken = jwt.sign(
 			{
 				id: user.id,
 				email: user.email,
@@ -52,13 +49,33 @@ export const login = async (req: Request, res: Response) => {
 			},
 			process.env.JWT_SECRET!,
 			{
-				expiresIn: "7d",
+				expiresIn: "24h",
 			},
 		);
 
+		const refreshToken = jwt.sign(
+			{
+				id: user.id,
+			},
+			process.env.JWT_REFRESH_SECRET!,
+			{
+				expiresIn: "14d",
+			},
+		);
+		await db.execute(
+			`
+	INSERT INTO refresh_tokens
+	(user_id, token, expires_at)
+	VALUES (?, ?, DATE_ADD(NOW(), INTERVAL 14 DAY))
+	`,
+			[user.id, refreshToken],
+		);
 		res.json({
 			message: "Zalogowano",
-			token,
+
+			accessToken,
+			refreshToken,
+
 			user: {
 				id: user.id,
 				email: user.email,
