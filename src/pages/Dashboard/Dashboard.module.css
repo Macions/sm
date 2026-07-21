@@ -81,7 +81,7 @@
 
 .stats {
 	display: grid;
-	grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+	grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
 	gap: 20px;
 	margin-bottom: 36px;
 }
@@ -183,6 +183,7 @@
 
 .notification {
 	display: flex;
+	align-items: center !important;
 	gap: 14px;
 	padding: 16px 18px;
 	border-radius: var(--radius-sm, 12px);
@@ -199,10 +200,13 @@
 
 .notification__icon {
 	flex-shrink: 0;
-	margin-top: 2px;
+	display: flex;
+	align-items: center !important;
 }
 
 .notification__content {
+	display: flex;
+	align-items: center !important;
 	flex: 1;
 	min-width: 0;
 }
@@ -210,7 +214,6 @@
 .notification__message {
 	font-size: 14.5px;
 	color: var(--text-dark, #201a3b);
-	margin: 0 0 6px 0;
 	line-height: 1.5;
 }
 
@@ -314,7 +317,7 @@
 
 @media (max-width: 1200px) {
 	.stats {
-		grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+		grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
 	}
 }
 
@@ -331,7 +334,7 @@
 
 @media (max-width: 768px) {
 	.stats {
-		grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+		grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
 		gap: 16px;
 	}
 

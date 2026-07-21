@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef, useEffect } from "react";
+import React, { useState, useMemo, useRef, useEffect } from "react";
 import {
 	Users,
 	UserCog,
@@ -47,349 +47,34 @@ type Node = {
 	email?: string;
 };
 
-
 // ---------------------------------------------------------------------------
-// FUNKCJE POMOCNICZE
-// ---------------------------------------------------------------------------
-const countAllPeople = (node: Node): number => {
-	let count = node.people?.length || 0;
-
-	for (const child of node.children) {
-		count += countAllPeople(child);
-	}
-
-	return count;
-};
-
-// ---------------------------------------------------------------------------
-// DANE - ORGANIZATION_DATA
+// DANE FALLBACK (gdy fetch nie działa)
 // ---------------------------------------------------------------------------
 const ORGANIZATION_DATA: Node = {
 	id: "organization",
 	name: "Siła Młodych",
 	role: "Struktura organizacyjna",
 	icon: <Users size={24} />,
-	description:
-		"Organizacja młodzieżowa działająca w obszarze projektów, debat, rzecznictwa oraz rozwoju młodych osób.",
+	description: "Organizacja młodzieżowa",
 	status: "active",
-
 	people: [],
+	children: [],
+};
 
-	children: [
-
-		// =========================
-		// ZARZĄD
-		// =========================
-
-		{
-			id: "board",
-			name: "Zarząd",
-			role: "Najwyższy organ zarządzający",
-			icon: <UserCog size={22} />,
-			description:
-				"Kierowanie organizacją, podejmowanie decyzji strategicznych i nadzór nad działaniami.",
-			status: "active",
-			email: "zarzad@silamlodych.pl",
-			children: [],
-
-			people: [
-				{
-					id: "1",
-					firstName: "Maksym",
-					lastName: "Marczak",
-					role: "Prezes",
-					email: "maksym.marczak@silamlodych.pl",
-				},
-				{
-					id: "2",
-					firstName: "Krzysztof",
-					lastName: "Korbut",
-					role: "Wiceprezes - odpowiedzialny za rekrutację",
-					email: "krzysztof.korbut@silamlodych.pl",
-				},
-				{
-					id: "3",
-					firstName: "Kasper",
-					lastName: "Brudniewicz",
-					role: "Wiceprezes - dokumenty i składki",
-					email: "kasper.brudniewicz@silamlodych.pl",
-				},
-				{
-					id: "4",
-					firstName: "Mai Lan",
-					lastName: "Nguyen",
-					role: "Członek Zarządu - media",
-					email: "mailan.nguyen@silamlodych.pl",
-				},
-			],
-		},
-
-
-		// =========================
-		// DYREKCJA
-		// =========================
-
-		{
-			id: "directors",
-			name: "Dyrekcja",
-			role: "Zarządzanie operacyjne",
-			icon: <Building2 size={22} />,
-			description:
-				"Nadzór nad bieżącym funkcjonowaniem organizacji.",
-			status: "active",
-
-			children: [],
-
-			people: [
-				{
-					id: "5",
-					firstName: "Jakub",
-					lastName: "Patrowicz",
-					role: "Główny Dyrektor Operacyjny",
-					email: "jakub.patrowicz@silamlodych.pl",
-				},
-				{
-					id: "6",
-					firstName: "Oliwier",
-					lastName: "Szulejko",
-					role: "Rzecznik - odpowiedzialny za frekwencję",
-					email: "oliwier.szulejko@silamlodych.pl",
-				},
-			],
-		},
-
-
-		// =========================
-		// ORGANY KONTROLNE
-		// =========================
-
-		{
-			id: "control",
-			name: "Organy kontrolne",
-			role: "Niezależny nadzór",
-			icon: <Building2 size={22} />,
-			description:
-				"Organy odpowiedzialne za kontrolę oraz rozwiązywanie sporów.",
-			status: "active",
-
-			people: [],
-
-			children: [
-
-				{
-					id: "audit",
-					name: "Komisja Rewizyjna",
-					role: "Kontrola działalności organizacji",
-					icon: <Building2 size={20} />,
-					description:
-						"Sprawowanie kontroli nad działaniami organizacji.",
-					status: "active",
-					email: "kr@silamlodych.pl",
-					children: [],
-
-					people: [
-						{
-							id: "7",
-							firstName: "Adam",
-							lastName: "Kowalczyk",
-							role: "Członek Komisji Rewizyjnej",
-							email: "adam.kowalczyk@silamlodych.pl",
-						},
-						{
-							id: "8",
-							firstName: "Wiktoria",
-							lastName: "Bryś",
-							role: "Członek Komisji Rewizyjnej",
-							email: "wiktoria.brys@silamlodych.pl",
-						},
-						{
-							id: "9",
-							firstName: "Iga",
-							lastName: "Drzewiecka",
-							role: "Członek Komisji Rewizyjnej",
-							email: "iga.drzewiecka@silamlodych.pl",
-						},
-					],
-				},
-
-
-				{
-					id: "court",
-					name: "Sąd Koleżeński",
-					role: "Rozwiązywanie sporów",
-					icon: <Building2 size={20} />,
-					description:
-						"Organ zajmujący się sprawami członkowskimi.",
-					status: "active",
-					email: "sk@silamlodych.pl",
-					children: [],
-
-					people: [
-						{
-							id: "10",
-							firstName: "Adrian",
-							lastName: "Wróblewski",
-							role: "Członek Sądu Koleżeńskiego",
-							email: "adrian.wroblewski@silamlodych.pl",
-						},
-						{
-							id: "11",
-							firstName: "Jan",
-							lastName: "Augustyniak",
-							role: "Członek Sądu Koleżeńskiego",
-							email: "jan.augustyniak@silamlodych.pl",
-						},
-						{
-							id: "12",
-							firstName: "Oliwier",
-							lastName: "Szulejko",
-							role: "Członek Sądu Koleżeńskiego",
-							email: "oliwier.szulejko@silamlodych.pl",
-						},
-					],
-				},
-			],
-		},
-
-
-		// =========================
-		// FILARY
-		// =========================
-
-		{
-			id: "pillars",
-			name: "Filary organizacji",
-			role: "Główne obszary działalności",
-			icon: <Briefcase size={22} />,
-			description:
-				"Najważniejsze obszary realizacji działań organizacji.",
-			status: "active",
-
-			people: [],
-
-			children: [
-
-				{
-					id: "projects",
-					name: "Filar Projektowy",
-					role: "Projekty i inicjatywy",
-					icon: <Briefcase size={20} />,
-					description:
-						"Tworzenie i prowadzenie projektów.",
-					status: "active",
-					children: [],
-
-					people: [
-						{
-							id: "13",
-							firstName: "Zosia",
-							lastName: "Wartacz",
-							role: "Koordynator Filaru Projektowego",
-							email: "zosia.wartacz@silamlodych.pl"
-						},
-						{
-							id: "14",
-							firstName: "Zuzanna",
-							lastName: "Wojtusiak",
-							role: "Koordynator Filaru Projektowego",
-							email: "zuzanna.wojtusiak@silamlodych.pl"
-						}
-					]
-				},
-
-
-				{
-					id: "conference",
-					name: "Filar Konferencyjny",
-					role: "Konferencje i debaty",
-					icon: <Users size={20} />,
-					description: "Organizacja debat i wydarzeń.",
-					status: "active",
-					children: [],
-
-					people: [
-						{
-							id: "15",
-							firstName: "Adrian",
-							lastName: "Wróblewski",
-							role: "Koordynator Filaru Konferencyjnego",
-							email: "adrian.wroblewski@silamlodych.pl"
-						},
-						{
-							id: "16",
-							firstName: "Wojciech",
-							lastName: "Podolski",
-							role: "Koordynator Filaru Konferencyjnego",
-							email: "wojciech.podolski@silamlodych.pl"
-						}
-					]
-				},
-
-
-				{
-					id: "advocacy",
-					name: "Filar Rzeczniczy",
-					role: "Rzecznictwo",
-					icon: <Megaphone size={20} />,
-					description: "Komunikacja i reprezentowanie organizacji.",
-					status: "active",
-					children: [],
-
-					people: [
-						{
-							id: "17",
-							firstName: "Jan",
-							lastName: "Augustyniak",
-							role: "Koordynator Filaru Rzeczniczego",
-							email: "jan.augustyniak@silamlodych.pl"
-						},
-						{
-							id: "18",
-							firstName: "Nikola",
-							lastName: "Socha",
-							role: "Koordynator Filaru Rzeczniczego",
-							email: "nikola.socha@silamlodych.pl"
-						}
-					]
-				},
-
-
-				{
-					id: "simulation",
-					name: "Filar Symulacyjny",
-					role: "Symulacje",
-					icon: <GraduationCap size={20} />,
-					description: "Symulacje edukacyjne.",
-					status: "active",
-					children: [],
-
-					people: [
-						{
-							id: "19",
-							firstName: "Igor",
-							lastName: "Piskórz",
-							role: "Członek Filaru Symulacyjnego",
-							email: "igor.piskorz@silamlodych.pl"
-						},
-						{
-							id: "20",
-							firstName: "Maksym",
-							lastName: "Marczak",
-							role: "Członek Filaru Symulacyjnego",
-							email: "maksym.marczak@silamlodych.pl"
-						}
-					]
-				}
-
-			]
-		}
-	]
+// ---------------------------------------------------------------------------
+// FUNKCJE POMOCNICZE
+// ---------------------------------------------------------------------------
+const countAllPeople = (node: Node): number => {
+	let count = node.people?.length || 0;
+	for (const child of node.children) {
+		count += countAllPeople(child);
+	}
+	return count;
 };
 
 // ---------------------------------------------------------------------------
 // Komponent węzła
 // ---------------------------------------------------------------------------
-
 interface TreeNodeProps {
 	node: Node;
 	isRoot?: boolean;
@@ -408,7 +93,6 @@ function TreeNode({
 	const hasExpandableContent =
 		node.children.length > 0 || (node.people && node.people.length > 0);
 
-	// Liczy TYLKO osoby bezpośrednio w tym węźle (nie z dzieci)
 	const directPeople = useMemo(() => node.people || [], [node]);
 	const totalPeopleInNode = useMemo(() => countAllPeople(node), [node]);
 
@@ -434,16 +118,14 @@ function TreeNode({
 			setIsExpanded((prev) => !prev);
 		}
 	};
+
 	const getPeopleText = (count: number) => {
 		if (count === 1) return "osoba";
-
 		if (count % 10 >= 2 && count % 10 <= 4 && (count % 100 < 10 || count % 100 >= 20)) {
 			return "osoby";
 		}
-
 		return "osób";
 	};
-	const cardScale = 1;
 
 	return (
 		<div className={styles.treeNode}>
@@ -466,7 +148,8 @@ function TreeNode({
 				onClick={() => {
 					toggleExpand();
 					if (isRoot) setShowPrompt(false);
-				}}			>
+				}}
+			>
 				<div className={styles.nodeCard__header}>
 					<div
 						className={styles.nodeCard__icon}
@@ -496,7 +179,7 @@ function TreeNode({
 							<a
 								href={`mailto:${node.email}`}
 								className={styles.nodeCard__email}
-								onClick={(e) => e.stopPropagation()} // <-- ZAPOBIEGA ROZWIJANIU
+								onClick={(e) => e.stopPropagation()}
 								title={`Wyślij email do ${node.name}`}
 							>
 								<Mail size={14} />
@@ -512,11 +195,10 @@ function TreeNode({
 				</div>
 			</div>
 
-			{/* Wyświetlanie bezpośrednich osób w węźle */}
 			{isExpanded && directPeople.length > 0 && (
 				<div
 					className={styles.peopleList}
-					style={{ transform: `scale(${Math.min(1, cardScale * 1.1)})` }}
+					style={{ transform: `scale(${Math.min(1, scale * 1.1)})` }}
 				>
 					{directPeople.map((person) => (
 						<div key={person.id} className={styles.personCard}>
@@ -531,18 +213,12 @@ function TreeNode({
 							</div>
 							<div className={styles.personCard__details}>
 								{person.email && (
-									<a
-										href={`mailto:${person.email}`}
-										className={styles.personCard__link}
-									>
+									<a href={`mailto:${person.email}`} className={styles.personCard__link}>
 										<Mail size={14} />
 									</a>
 								)}
 								{person.phone && (
-									<a
-										href={`tel:${person.phone}`}
-										className={styles.personCard__link}
-									>
+									<a href={`tel:${person.phone}`} className={styles.personCard__link}>
 										<Phone size={14} />
 									</a>
 								)}
@@ -558,7 +234,6 @@ function TreeNode({
 				</div>
 			)}
 
-			{/* Dzieci - rozwijane pod spodem */}
 			{isExpanded && node.children.length > 0 && (
 				<div className={styles.childrenContainer}>
 					{node.children.map((child) => (
@@ -580,10 +255,12 @@ function TreeNode({
 // ---------------------------------------------------------------------------
 
 export default function Structure() {
+	// ===== WSZYSTKIE HOOKI NA POCZĄTKU (ZAWSZE PRZED WARUNKAMI) =====
 	const [searchTerm, setSearchTerm] = useState("");
+	const [structureData, setStructureData] = useState<Node | null>(null);
+	const [loading, setLoading] = useState(true);
 	const containerRef = useRef<HTMLDivElement>(null);
 	const contentRef = useRef<HTMLDivElement>(null);
-
 	const [pan, setPan] = useState({ x: -410, y: -300 });
 	const [zoom, setZoom] = useState(1.2);
 	const [isDragging, setIsDragging] = useState(false);
@@ -595,12 +272,61 @@ export default function Structure() {
 	const MAX_ZOOM = 2.5;
 	const PAN_BOUNDARY = 10000;
 
-	// Statystyki
-	const totalMembers = useMemo(() => {
-		return countAllPeople(ORGANIZATION_DATA);
+	// ===== FETCH - HOOK 1 =====
+	useEffect(() => {
+		const fetchStructure = async () => {
+			try {
+				setLoading(true);
+				const token = localStorage.getItem("accessToken");
+				const response = await fetch("/api/structure", {
+					headers: {
+						"Authorization": `Bearer ${token}`,
+						"Content-Type": "application/json"
+					}
+				});
+
+				if (!response.ok) {
+					throw new Error("Błąd pobierania struktury");
+				}
+
+				const data = await response.json();
+				const iconMap: Record<string, any> = {
+					Users: Users,
+					UserCog: UserCog,
+					Building2: Building2,
+					Briefcase: Briefcase,
+					Megaphone: Megaphone,
+					GraduationCap: GraduationCap,
+				};
+
+				const convertNode = (node: any): Node => ({
+					...node,
+					icon: iconMap[node.icon] ?
+						React.createElement(iconMap[node.icon], { size: node.icon === 'Users' ? 24 : 22 }) :
+						<Users size={24} />,
+					children: node.children?.map(convertNode) || []
+				});
+
+				setStructureData(convertNode(data));
+			} catch (error) {
+				console.error("Błąd pobierania struktury:", error);
+				setStructureData(ORGANIZATION_DATA);
+			} finally {
+				setLoading(false);
+			}
+		};
+
+		fetchStructure();
 	}, []);
 
+	// ===== STATYSTYKI - HOOKI useMemo =====
+	const totalMembers = useMemo(() => {
+		if (!structureData) return 0;
+		return countAllPeople(structureData);
+	}, [structureData]);
+
 	const totalTeams = useMemo(() => {
+		if (!structureData) return 0;
 		const countTeams = (node: Node): number => {
 			let count = 1;
 			for (const child of node.children) {
@@ -608,14 +334,78 @@ export default function Structure() {
 			}
 			return count;
 		};
-		return countTeams(ORGANIZATION_DATA);
-	}, []);
+		return countTeams(structureData);
+	}, [structureData]);
 
 	const totalFilars = useMemo(() => {
-		return ORGANIZATION_DATA.children.length;
-	}, []);
+		if (!structureData) return 0;
+		return structureData.children.length;
+	}, [structureData]);
 
-	// Reset widoku (przycisk Home)
+	// ===== PINCH-TO-ZOOM - HOOK 2 (TYLKO JEDEN!) =====
+	useEffect(() => {
+		const handleTouchMovePinch = (e: TouchEvent) => {
+			if (e.touches.length === 2) {
+				e.preventDefault();
+				const touch1 = e.touches[0];
+				const touch2 = e.touches[1];
+				const dx = touch1.clientX - touch2.clientX;
+				const dy = touch1.clientY - touch2.clientY;
+				const distance = Math.sqrt(dx * dx + dy * dy);
+
+				if (lastTouchDistance > 0) {
+					const delta = (distance - lastTouchDistance) / 100;
+					const newZoom = Math.min(Math.max(zoom + delta, MIN_ZOOM), MAX_ZOOM);
+					setZoom(newZoom);
+				}
+				setLastTouchDistance(distance);
+			}
+		};
+
+		const handleTouchEndPinch = () => {
+			setLastTouchDistance(0);
+		};
+
+		const container = containerRef.current;
+		if (container) {
+			container.addEventListener("touchmove", handleTouchMovePinch, { passive: false });
+			container.addEventListener("touchend", handleTouchEndPinch);
+		}
+
+		return () => {
+			if (container) {
+				container.removeEventListener("touchmove", handleTouchMovePinch);
+				container.removeEventListener("touchend", handleTouchEndPinch);
+			}
+		};
+	}, [zoom, lastTouchDistance]); // Zależności
+
+	// ===== TERAZ MOGĄ BYĆ WARUNKI =====
+	if (loading) {
+		return (
+			<div className={styles.structure}>
+				<div className={styles.loading}>
+					<div className={styles.loading__spinner}></div>
+					<p>Ładowanie struktury...</p>
+				</div>
+			</div>
+		);
+	}
+
+	if (!structureData) {
+		return (
+			<div className={styles.structure}>
+				<div className={styles.error}>
+					<p>Nie udało się załadować struktury.</p>
+					<button onClick={() => window.location.reload()}>
+						Spróbuj ponownie
+					</button>
+				</div>
+			</div>
+		);
+	}
+
+	// ===== FUNKCJE (po warunkach) =====
 	const resetView = () => {
 		setPan({ x: -410, y: -300 });
 		setZoom(1.2);
@@ -660,10 +450,7 @@ export default function Structure() {
 
 	const handleMouseDown = (e: React.MouseEvent) => {
 		if (e.button !== 0) return;
-		if (
-			e.target instanceof HTMLElement &&
-			e.target.closest("." + styles.nodeCard)
-		) {
+		if (e.target instanceof HTMLElement && e.target.closest("." + styles.nodeCard)) {
 			return;
 		}
 		setIsDragging(true);
@@ -692,10 +479,7 @@ export default function Structure() {
 	};
 
 	const handleTouchStart = (e: React.TouchEvent) => {
-		if (
-			e.target instanceof HTMLElement &&
-			e.target.closest("." + styles.nodeCard)
-		) {
+		if (e.target instanceof HTMLElement && e.target.closest("." + styles.nodeCard)) {
 			return;
 		}
 		if (e.touches.length === 1) {
@@ -717,45 +501,7 @@ export default function Structure() {
 		setIsDragging(false);
 	};
 
-	useEffect(() => {
-		const handleTouchMovePinch = (e: TouchEvent) => {
-			if (e.touches.length === 2) {
-				e.preventDefault();
-				const touch1 = e.touches[0];
-				const touch2 = e.touches[1];
-				const dx = touch1.clientX - touch2.clientX;
-				const dy = touch1.clientY - touch2.clientY;
-				const distance = Math.sqrt(dx * dx + dy * dy);
-
-				if (lastTouchDistance > 0) {
-					const delta = (distance - lastTouchDistance) / 100;
-					const newZoom = Math.min(Math.max(zoom + delta, MIN_ZOOM), MAX_ZOOM);
-					setZoom(newZoom);
-				}
-				setLastTouchDistance(distance);
-			}
-		};
-
-		const handleTouchEndPinch = () => {
-			setLastTouchDistance(0);
-		};
-
-		const container = containerRef.current;
-		if (container) {
-			container.addEventListener("touchmove", handleTouchMovePinch, {
-				passive: false,
-			});
-			container.addEventListener("touchend", handleTouchEndPinch);
-		}
-
-		return () => {
-			if (container) {
-				container.removeEventListener("touchmove", handleTouchMovePinch);
-				container.removeEventListener("touchend", handleTouchEndPinch);
-			}
-		};
-	}, [zoom, lastTouchDistance]);
-
+	// ===== RENDER =====
 	return (
 		<div className={styles.structure}>
 			{/* Nagłówek */}
@@ -763,8 +509,7 @@ export default function Structure() {
 				<div className={styles.header__left}>
 					<h1 className={styles.header__title}>Struktura Siły Młodych</h1>
 					<p className={styles.header__subtitle}>
-						Poznaj strukturę organizacyjną oraz osoby odpowiedzialne za
-						poszczególne obszary działalności.
+						Poznaj strukturę organizacyjną oraz osoby odpowiedzialne za poszczególne obszary działalności.
 					</p>
 				</div>
 				<div className={styles.header__stats}>
@@ -795,10 +540,7 @@ export default function Structure() {
 						onChange={(e) => setSearchTerm(e.target.value)}
 					/>
 					{searchTerm && (
-						<button
-							className={styles.searchBox__clear}
-							onClick={() => setSearchTerm("")}
-						>
+						<button className={styles.searchBox__clear} onClick={() => setSearchTerm("")}>
 							<X size={16} />
 						</button>
 					)}
@@ -807,30 +549,16 @@ export default function Structure() {
 
 			{/* Sterowanie mapą */}
 			<div className={styles.mapControls}>
-				<button
-					onClick={resetView}
-					className={styles.mapControls__btn}
-					title="Reset widoku"
-				>
+				<button onClick={resetView} className={styles.mapControls__btn} title="Reset widoku">
 					<Home size={18} />
 				</button>
-				<button
-					onClick={handleZoomIn}
-					className={styles.mapControls__btn}
-					title="Przybliż"
-				>
+				<button onClick={handleZoomIn} className={styles.mapControls__btn} title="Przybliż">
 					<ZoomIn size={18} />
 				</button>
-				<button
-					onClick={handleZoomOut}
-					className={styles.mapControls__btn}
-					title="Oddal"
-				>
+				<button onClick={handleZoomOut} className={styles.mapControls__btn} title="Oddal">
 					<ZoomOut size={18} />
 				</button>
-				<div className={styles.mapControls__zoom}>
-					{Math.round(zoom * 100)}%
-				</div>
+				<div className={styles.mapControls__zoom}>{Math.round(zoom * 100)}%</div>
 				<div className={styles.mapControls__hint}>
 					<Move size={14} />
 					<span>Przeciągnij + Ctrl</span>
@@ -858,13 +586,11 @@ export default function Structure() {
 					style={{
 						transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
 						transformOrigin: "center center",
-						transition: isDragging
-							? "none"
-							: "transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+						transition: isDragging ? "none" : "transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
 					}}
 				>
 					<TreeNode
-						node={ORGANIZATION_DATA}
+						node={structureData}
 						isRoot
 						searchTerm={searchTerm}
 						scale={1}

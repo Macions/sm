@@ -5,6 +5,10 @@ import db from "./config/db";
 import authRoutes from "./routes/auth.routes";
 import onboardingRoutes from "./routes/onboarding.routes";
 import dashboardRoutes from "./routes/dashboard.routes";
+import structureRoutes from './routes/structure.routes';
+import projectRoutes from "./routes/project.routes";
+
+
 
 dotenv.config();
 
@@ -14,6 +18,10 @@ app.use(express.json());
 app.use("/api/auth", authRoutes);
 app.use("/api/onboarding", onboardingRoutes);
 app.use("/api/dashboard", dashboardRoutes);
+app.use('/api/structure', structureRoutes);
+app.use("/api/projects", projectRoutes);
+
+
 
 app.get("/test-db", async (req, res) => {
 	try {

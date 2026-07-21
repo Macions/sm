@@ -4,7 +4,6 @@ import {
 	Users,
 	FolderKanban,
 	CalendarCheck,
-	Megaphone,
 	BookOpen,
 	Plus,
 	CalendarPlus,
