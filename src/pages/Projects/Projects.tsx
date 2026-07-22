@@ -480,7 +480,8 @@ function ProjectModal({ isOpen, project, onClose, onSave }: ProjectModalProps) {
 // ---------------------------------------------------------------------------
 
 export default function Projects() {
-    const [projects, setProjects] = useState<Project[]>(MOCK_PROJECTS);
+    const [projects, setProjects] = useState<Project[]>([]);
+    const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState("");
     const [selectedPillar, setSelectedPillar] = useState<ProjectPillar | "all">("all");
     const [selectedStatus, setSelectedStatus] = useState<ProjectStatus | "all">("all");
@@ -491,7 +492,13 @@ export default function Projects() {
     useEffect(() => {
         const fetchProjects = async () => {
             try {
+                setLoading(true); // ✅ DODAJ
+
+                console.log('🔍 Pobieranie projektów z API...');
+
                 const token = localStorage.getItem("accessToken");
+                console.log('Token:', token ? 'Istnieje' : 'Brak');
+
                 const response = await fetch("/api/projects", {
                     headers: {
                         "Authorization": `Bearer ${token}`,
@@ -499,8 +506,10 @@ export default function Projects() {
                     }
                 });
 
+                console.log('📡 Status odpowiedzi:', response.status);
+
                 if (response.status === 401) {
-                    // Brak autoryzacji - przekieruj do logowania
+                    console.warn('⚠️ Brak autoryzacji - przekierowanie do login');
                     window.location.href = '/login';
                     return;
                 }
@@ -510,11 +519,17 @@ export default function Projects() {
                 }
 
                 const data = await response.json();
-                setProjects(data);
+                console.log('✅ Otrzymane dane:', data);
+
+                setProjects(data); // Ustaw dane z API
+                setLoading(false); // Jeśli masz stan ładowania
+
             } catch (error) {
-                console.error("Błąd ładowania projektów:", error);
-                // Użyj mockowych danych jako fallback
+                console.error("❌ Błąd ładowania projektów:", error);
+                // TYLKO w przypadku błędu używaj MOCK
                 setProjects(MOCK_PROJECTS);
+            } finally {
+                setLoading(false); // ✅ DODAJ
             }
         };
 

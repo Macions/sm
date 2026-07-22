@@ -16,12 +16,10 @@
 		"allowSyntheticDefaultImports": true
 	},
 	"include": [
-		"src/**/*"
+		"src/**/*" // ✅ TYLKO src
 	],
 	"exclude": [
 		"node_modules",
-		"dist",
-		"prisma.config.ts",
-		"prisma/**/*"
+		"dist"
 	]
 }
