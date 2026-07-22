@@ -121,7 +121,11 @@ function TreeNode({
 
 	const getPeopleText = (count: number) => {
 		if (count === 1) return "osoba";
-		if (count % 10 >= 2 && count % 10 <= 4 && (count % 100 < 10 || count % 100 >= 20)) {
+		if (
+			count % 10 >= 2 &&
+			count % 10 <= 4 &&
+			(count % 100 < 10 || count % 100 >= 20)
+		) {
 			return "osoby";
 		}
 		return "osób";
@@ -189,7 +193,11 @@ function TreeNode({
 					</div>
 					{hasExpandableContent && (
 						<button className={styles.nodeCard__toggle}>
-							{isExpanded ? <ChevronDown size={18} /> : <ChevronRight size={18} />}
+							{isExpanded ? (
+								<ChevronDown size={18} />
+							) : (
+								<ChevronRight size={18} />
+							)}
 						</button>
 					)}
 				</div>
@@ -213,12 +221,18 @@ function TreeNode({
 							</div>
 							<div className={styles.personCard__details}>
 								{person.email && (
-									<a href={`mailto:${person.email}`} className={styles.personCard__link}>
+									<a
+										href={`mailto:${person.email}`}
+										className={styles.personCard__link}
+									>
 										<Mail size={14} />
 									</a>
 								)}
 								{person.phone && (
-									<a href={`tel:${person.phone}`} className={styles.personCard__link}>
+									<a
+										href={`tel:${person.phone}`}
+										className={styles.personCard__link}
+									>
 										<Phone size={14} />
 									</a>
 								)}
@@ -280,9 +294,9 @@ export default function Structure() {
 				const token = localStorage.getItem("accessToken");
 				const response = await fetch("/api/structure", {
 					headers: {
-						"Authorization": `Bearer ${token}`,
-						"Content-Type": "application/json"
-					}
+						Authorization: `Bearer ${token}`,
+						"Content-Type": "application/json",
+					},
 				});
 
 				if (!response.ok) {
@@ -301,10 +315,14 @@ export default function Structure() {
 
 				const convertNode = (node: any): Node => ({
 					...node,
-					icon: iconMap[node.icon] ?
-						React.createElement(iconMap[node.icon], { size: node.icon === 'Users' ? 24 : 22 }) :
-						<Users size={24} />,
-					children: node.children?.map(convertNode) || []
+					icon: iconMap[node.icon] ? (
+						React.createElement(iconMap[node.icon], {
+							size: node.icon === "Users" ? 24 : 22,
+						})
+					) : (
+						<Users size={24} />
+					),
+					children: node.children?.map(convertNode) || [],
 				});
 
 				setStructureData(convertNode(data));
@@ -324,7 +342,20 @@ export default function Structure() {
 		if (!structureData) return 0;
 		return countAllPeople(structureData);
 	}, [structureData]);
+	const getPolishPlural = (
+		count: number,
+		singular: string,
+		plural: string,
+		genitive: string,
+	) => {
+		const lastDigit = count % 10;
+		const lastTwoDigits = count % 100;
 
+		if (count === 1) return singular;
+		if (lastTwoDigits >= 12 && lastTwoDigits <= 14) return genitive;
+		if (lastDigit >= 2 && lastDigit <= 4) return plural;
+		return genitive;
+	};
 	const totalTeams = useMemo(() => {
 		if (!structureData) return 0;
 		const countTeams = (node: Node): number => {
@@ -368,7 +399,9 @@ export default function Structure() {
 
 		const container = containerRef.current;
 		if (container) {
-			container.addEventListener("touchmove", handleTouchMovePinch, { passive: false });
+			container.addEventListener("touchmove", handleTouchMovePinch, {
+				passive: false,
+			});
 			container.addEventListener("touchend", handleTouchEndPinch);
 		}
 
@@ -439,8 +472,10 @@ export default function Structure() {
 				const centerY = rect.height / 2;
 				const scale = newZoom / zoom;
 
-				const newX = mouseX - (mouseX - pan.x) * scale - (mouseX - centerX) * (1 - scale);
-				const newY = mouseY - (mouseY - pan.y) * scale - (mouseY - centerY) * (1 - scale);
+				const newX =
+					mouseX - (mouseX - pan.x) * scale - (mouseX - centerX) * (1 - scale);
+				const newY =
+					mouseY - (mouseY - pan.y) * scale - (mouseY - centerY) * (1 - scale);
 
 				handlePan(newX, newY);
 			}
@@ -450,7 +485,10 @@ export default function Structure() {
 
 	const handleMouseDown = (e: React.MouseEvent) => {
 		if (e.button !== 0) return;
-		if (e.target instanceof HTMLElement && e.target.closest("." + styles.nodeCard)) {
+		if (
+			e.target instanceof HTMLElement &&
+			e.target.closest("." + styles.nodeCard)
+		) {
 			return;
 		}
 		setIsDragging(true);
@@ -479,7 +517,10 @@ export default function Structure() {
 	};
 
 	const handleTouchStart = (e: React.TouchEvent) => {
-		if (e.target instanceof HTMLElement && e.target.closest("." + styles.nodeCard)) {
+		if (
+			e.target instanceof HTMLElement &&
+			e.target.closest("." + styles.nodeCard)
+		) {
 			return;
 		}
 		if (e.touches.length === 1) {
@@ -509,21 +550,28 @@ export default function Structure() {
 				<div className={styles.header__left}>
 					<h1 className={styles.header__title}>Struktura Siły Młodych</h1>
 					<p className={styles.header__subtitle}>
-						Poznaj strukturę organizacyjną oraz osoby odpowiedzialne za poszczególne obszary działalności.
+						Poznaj strukturę organizacyjną oraz osoby odpowiedzialne za
+						poszczególne obszary działalności.
 					</p>
 				</div>
 				<div className={styles.header__stats}>
 					<div className={styles.header__stat}>
 						<span className={styles.header__statValue}>{totalMembers}</span>
-						<span className={styles.header__statLabel}>Członków</span>
+						<span className={styles.header__statLabel}>
+							Człon{getPolishPlural(totalMembers, "ek", "ków", "ków")}
+						</span>
 					</div>
 					<div className={styles.header__stat}>
 						<span className={styles.header__statValue}>{totalFilars}</span>
-						<span className={styles.header__statLabel}>Filarów</span>
+						<span className={styles.header__statLabel}>
+							Fil{getPolishPlural(totalFilars, "ar", "ary", "arów")}
+						</span>
 					</div>
 					<div className={styles.header__stat}>
 						<span className={styles.header__statValue}>{totalTeams}</span>
-						<span className={styles.header__statLabel}>Zespołów</span>
+						<span className={styles.header__statLabel}>
+							Zesp{getPolishPlural(totalTeams, "ół", "oły", "ołów")}
+						</span>
 					</div>
 				</div>
 			</div>
@@ -540,7 +588,10 @@ export default function Structure() {
 						onChange={(e) => setSearchTerm(e.target.value)}
 					/>
 					{searchTerm && (
-						<button className={styles.searchBox__clear} onClick={() => setSearchTerm("")}>
+						<button
+							className={styles.searchBox__clear}
+							onClick={() => setSearchTerm("")}
+						>
 							<X size={16} />
 						</button>
 					)}
@@ -549,16 +600,30 @@ export default function Structure() {
 
 			{/* Sterowanie mapą */}
 			<div className={styles.mapControls}>
-				<button onClick={resetView} className={styles.mapControls__btn} title="Reset widoku">
+				<button
+					onClick={resetView}
+					className={styles.mapControls__btn}
+					title="Reset widoku"
+				>
 					<Home size={18} />
 				</button>
-				<button onClick={handleZoomIn} className={styles.mapControls__btn} title="Przybliż">
+				<button
+					onClick={handleZoomIn}
+					className={styles.mapControls__btn}
+					title="Przybliż"
+				>
 					<ZoomIn size={18} />
 				</button>
-				<button onClick={handleZoomOut} className={styles.mapControls__btn} title="Oddal">
+				<button
+					onClick={handleZoomOut}
+					className={styles.mapControls__btn}
+					title="Oddal"
+				>
 					<ZoomOut size={18} />
 				</button>
-				<div className={styles.mapControls__zoom}>{Math.round(zoom * 100)}%</div>
+				<div className={styles.mapControls__zoom}>
+					{Math.round(zoom * 100)}%
+				</div>
 				<div className={styles.mapControls__hint}>
 					<Move size={14} />
 					<span>Przeciągnij + Ctrl</span>
@@ -586,7 +651,9 @@ export default function Structure() {
 					style={{
 						transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
 						transformOrigin: "center center",
-						transition: isDragging ? "none" : "transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+						transition: isDragging
+							? "none"
+							: "transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
 					}}
 				>
 					<TreeNode
