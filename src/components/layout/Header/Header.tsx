@@ -36,6 +36,7 @@ interface Notification {
 	read: boolean;
 	link?: string;
 	createdAt: Date;
+	time?: string;
 }
 
 // ---------------------------------------------------------------------------
@@ -61,6 +62,7 @@ export default function Header({
 			setLoading(true);
 			const token = localStorage.getItem("accessToken");
 
+			// ✅ Użyj tego samego endpointu
 			const response = await fetch("/api/dashboard/notifications?limit=20", {
 				headers: {
 					Authorization: `Bearer ${token}`,
@@ -73,6 +75,9 @@ export default function Header({
 			}
 
 			const data = await response.json();
+			console.log("📊 Powiadomienia w Header:", data); // ✅ Debug
+
+			// ✅ Upewnij się że dane mają pole 'time'
 			setNotifications(data);
 		} catch (error) {
 			console.error("Błąd ładowania powiadomień:", error);
@@ -148,6 +153,8 @@ export default function Header({
 
 	// ===== RESZTA KODU (formatTime, filtrowanie, itd.) =====
 	// ===== RESZTA KODU (formatTime, filtrowanie, itd.) =====
+	// Header.tsx - znajdź funkcję formatTime i zaktualizuj:
+
 	const formatTime = (createdAt: Date | string | undefined): string => {
 		if (!createdAt) return "przed chwilą";
 
@@ -163,7 +170,8 @@ export default function Header({
 		const diffHour = Math.floor(diffMin / 60);
 		const diffDay = Math.floor(diffHour / 24);
 
-		if (diffSec < 60) return "przed chwilą";
+		// ✅ POPRAWIONE WARUNKI
+		if (diffMin < 1) return "przed chwilą";
 		if (diffMin < 60) return `${diffMin} min temu`;
 		if (diffHour < 24) return `${diffHour} godz. temu`;
 		if (diffDay === 1) return "1 dzień temu";
@@ -327,7 +335,9 @@ export default function Header({
 													<div className={styles.notification__footer}>
 														<span className={styles.notification__time}>
 															<Clock size={12} />
-															{formatTime(notification.createdAt)}
+															{notification.time ||
+																formatTime(notification.createdAt)}
+															{/* ✅ Użyj time z API, a jeśli go nie ma - oblicz */}
 														</span>
 														{!notification.read && (
 															<span className={styles.notification__unreadDot}>

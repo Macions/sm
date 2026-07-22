@@ -45,16 +45,19 @@ type DashboardStats = {
 };
 
 type User = {
-	id: string;
-	firstName: string; // <-- DODAJ
-	lastName?: string; // <-- OPCJONALNIE
-	name?: string; // <-- MOŻE ZOSTAĆ
-	role: string;
-	team: string;
-	status: string;
-	createdAt?: string;
-	joinDate?: string; // <-- DODAJ
-	isTrial?: boolean;
+    id: string | number;
+    firstName: string;
+    lastName?: string;
+    first_name?: string;    // ✅ DODANE
+    last_name?: string;     // ✅ DODANE
+    role: string;
+    team: string;
+    status: string;
+    username?: string;
+    email?: string;
+    joinDate?: string;
+    isTrial?: boolean;
+    createdAt?: string;
 };
 
 // ---------------------------------------------------------------------------
@@ -83,7 +86,7 @@ export default function Dashboard() {
 				console.log("🔑 Token:", token ? "Jest" : "Brak");
 
 				// Pobierz dane użytkownika
-				const userRes = await fetch("/api/dashboard/profile", {
+				const userRes = await fetch("/api/profile", {
 					headers: {
 						Authorization: `Bearer ${token}`,
 						"Content-Type": "application/json",
@@ -94,7 +97,28 @@ export default function Dashboard() {
 					throw new Error("Nie udało się pobrać danych użytkownika");
 				}
 				const userData = await userRes.json();
-				setUser(userData);
+				console.log("📊 Profil z API:", userData);
+
+				// ✅ PRAWIDŁOWE MAPOWANIE - używamy pól z API
+				setUser({
+					id: userData.id,
+					firstName: userData.first_name || "Użytkowniku", // ✅ first_name z API
+					lastName: userData.last_name || "",
+					first_name: userData.first_name,
+					last_name: userData.last_name,
+					role: userData.role || "member",
+					team: userData.team || "—", // ✅ team z API
+					status: userData.status || "active", // ✅ Jeśli API zwraca status
+					username: userData.username,
+					email: userData.email,
+					// ✅ Jeśli nie masz joinDate w API, użyj created_at lub dzisiejszej daty
+					joinDate:
+						userData.joinDate ||
+						userData.created_at ||
+						new Date().toISOString(),
+					isTrial: userData.isTrial || false,
+					createdAt: userData.created_at,
+				});
 
 				// Pobierz statystyki
 				const statsRes = await fetch("/api/dashboard/stats", {
@@ -152,7 +176,7 @@ export default function Dashboard() {
 			label: "Dodaj projekt",
 			icon: <Plus size={18} />,
 			color: "#4A6FE8",
-			link: "/projects/new",
+			link: "/projects",
 			roles: ["admin", "coordinator"],
 		},
 		{

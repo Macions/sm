@@ -1,5 +1,4 @@
-// A:\sm system\sm\backend\src\middleware\auth.middleware.ts
-
+// backend/src/middleware/auth.middleware.ts
 import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 
@@ -13,6 +12,7 @@ export interface AuthRequest extends Request {
 	};
 }
 
+// ✅ DODAJ 'export' przed funkcją
 export const authMiddleware = (
 	req: AuthRequest,
 	res: Response,
@@ -36,3 +36,6 @@ export const authMiddleware = (
 		return res.status(401).json({ error: "Nieprawidłowy token" });
 	}
 };
+
+// ✅ Opcjonalnie - dodaj alias dla kompatybilności
+export const authenticateToken = authMiddleware;
