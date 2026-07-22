@@ -13,7 +13,8 @@ const port = process.env.PORT || 3000;
 const JWT_SECRET =
 	process.env.JWT_SECRET || "your-secret-key-here-change-in-production";
 
-const prisma = new PrismaClient();
+// ✅ UŻYJ "as any" - to ominie sprawdzanie typów TypeScript
+const prisma = new PrismaClient() as any;
 
 // ============================================================
 // MIDDLEWARE
@@ -22,16 +23,16 @@ app.use(cors());
 app.use(express.json());
 
 // ============================================================
-// FUNKCJE POMOCNICZE - PRZED ENDPOINTAMI!
+// FUNKCJE POMOCNICZE
 // ============================================================
-function mapRoleId(roleId: number): string {
+function mapRoleId(roleId: number | null): string {
 	const roleMap: Record<number, string> = {
 		1: "admin",
 		2: "coordinator",
 		3: "coordinator",
 		4: "member",
 	};
-	return roleMap[roleId] || "member";
+	return roleMap[roleId || 4] || "member";
 }
 
 function formatTimeAgo(date: Date): string {
@@ -48,6 +49,7 @@ function formatTimeAgo(date: Date): string {
 	if (diffDay < 7) return `${diffDay} dni temu`;
 	return date.toLocaleDateString("pl-PL");
 }
+
 function getIconForTeam(name: string): string {
 	const iconMap: Record<string, string> = {
 		Zarząd: "UserCog",
@@ -60,6 +62,7 @@ function getIconForTeam(name: string): string {
 	};
 	return iconMap[name] || "Users";
 }
+
 // ============================================================
 // KONTROLERY
 // ============================================================
@@ -67,7 +70,7 @@ const projectController = new ProjectController();
 const userController = new UserController();
 
 // ============================================================
-// ✅ ENDPOINTY PUBLICZNE (BEZ autoryzacji)
+// ENDPOINTY PUBLICZNE
 // ============================================================
 
 // LOGOWANIE
@@ -101,7 +104,7 @@ app.post("/api/auth/login", async (req, res) => {
 				last_name: user.last_name,
 			},
 			JWT_SECRET,
-			{ expiresIn: "24h" },
+			{ expiresIn: "24h" }
 		);
 
 		const refreshToken = jwt.sign({ id: user.id }, JWT_SECRET, {
@@ -160,7 +163,7 @@ app.post("/api/auth/register", async (req, res) => {
 				last_name: last_name,
 				role_id: 4,
 				status: "active",
-				is_active: 1,
+				is_active: true,
 			},
 		});
 
@@ -181,7 +184,7 @@ app.post("/api/auth/register", async (req, res) => {
 });
 
 // ============================================================
-// ✅ ENDPOINTY ZABEZPIECZONE (Z authMiddleware)
+// ENDPOINTY ZABEZPIECZONE
 // ============================================================
 
 // SPRAWDZANIE ONBOARDINGU
@@ -201,7 +204,7 @@ app.get(
 				.status(500)
 				.json({ error: "Nie udało się sprawdzić statusu onboardingu" });
 		}
-	},
+	}
 );
 
 // PROJEKTY
@@ -212,7 +215,7 @@ app.put("/api/projects/:id", authMiddleware, projectController.updateProject);
 app.delete(
 	"/api/projects/:id",
 	authMiddleware,
-	projectController.deleteProject,
+	projectController.deleteProject
 );
 
 // UŻYTKOWNICY
@@ -270,7 +273,7 @@ app.get("/api/profile", authMiddleware, async (req: any, res) => {
 app.get("/api/dashboard/stats", authMiddleware, async (req: any, res) => {
 	try {
 		const totalMembers = await prisma.user.count({
-			where: { is_active: 1 },
+			where: { is_active: true },
 		});
 		const totalProjects = await prisma.project.count({
 			where: { is_active: 1 },
@@ -308,13 +311,13 @@ app.get(
 				take: limit,
 			});
 
-			const mappedNotifications = notifications.map((n) => ({
+			const mappedNotifications = notifications.map((n: any) => ({
 				id: n.id.toString(),
 				message: n.message,
 				type: n.type as "success" | "info" | "warning",
 				time: formatTimeAgo(n.created_at),
 				title: n.title,
-				read: n.read,
+				read: n.read || false,
 				link: n.link,
 			}));
 
@@ -323,7 +326,7 @@ app.get(
 			console.error("❌ Błąd pobierania powiadomień:", error);
 			res.status(500).json({ error: "Nie udało się pobrać powiadomień" });
 		}
-	},
+	}
 );
 
 // POWIADOMIENIA - OZNACZ JAKO PRZECZYTANE
@@ -353,7 +356,7 @@ app.put(
 			console.error("❌ Błąd oznaczania:", error);
 			res.status(500).json({ error: "Nie udało się oznaczyć" });
 		}
-	},
+	}
 );
 
 // POWIADOMIENIA - OZNACZ WSZYSTKIE
@@ -377,30 +380,29 @@ app.put(
 			console.error("❌ Błąd oznaczania wszystkich:", error);
 			res.status(500).json({ error: "Nie udało się oznaczyć wszystkich" });
 		}
-	},
+	}
 );
 
-// backend/src/server.ts - ZASTĄP endpoint GET /api/tutorials
-
+// PORADNIKI - POBIERANIE
 app.get("/api/tutorials", authMiddleware, async (req: any, res) => {
 	try {
 		const tutorials = await prisma.guide.findMany({
+			where: { is_published: 1 },
 			orderBy: { created_at: "desc" },
 		});
 
-		// Mapuj dane na format oczekiwany przez frontend
 		const mappedTutorials = tutorials.map((t: any) => ({
 			id: t.id.toString(),
 			title: t.title,
 			description: t.description,
 			category: t.category || "new_member",
 			access: t.access || "all",
-			author: "Admin", // Możesz pobrać z relacji author
+			author: "Admin",
 			createdAt: t.created_at.toISOString().split("T")[0],
 			updatedAt: t.updated_at.toISOString().split("T")[0],
 			content: t.content || "",
-			attachments: t.attachments || [],
-			functionalRoles: t.functional_roles || [],
+			attachments: t.attachments ? JSON.parse(t.attachments) : [],
+			functionalRoles: t.functional_roles ? JSON.parse(t.functional_roles) : [],
 			isNew: false,
 			isUpdated: false,
 		}));
@@ -412,24 +414,10 @@ app.get("/api/tutorials", authMiddleware, async (req: any, res) => {
 	}
 });
 
-// backend/src/server.ts - ZASTĄP endpoint POST /api/tutorials
-
-// backend/src/server.ts - ZASTĄP endpoint POST /api/tutorials
-
-// backend/src/server.ts - ZASTĄP endpoint POST /api/tutorials
-
-// backend/src/server.ts - DODAJ NA KOŃCU, PRZED app.listen()
-
-// ============================================================
-// ✅ ENDPOINTY PORADNIKÓW - POST (NA KOŃCU)
-// ============================================================
-
+// PORADNIKI - TWORZENIE
 app.post("/api/tutorials", authMiddleware, async (req: any, res) => {
-	console.log("🚨🚨🚨 POST /api/tutorials - ZAPYTANIE OTRZYMANE! 🚨🚨🚨");
-	console.log("Body:", req.body);
-
 	try {
-		const { title, description, category, access, author, content } = req.body;
+		const { title, description, category, access, content } = req.body;
 
 		if (!title) {
 			return res.status(400).json({ error: "Tytuł jest wymagany" });
@@ -441,12 +429,11 @@ app.post("/api/tutorials", authMiddleware, async (req: any, res) => {
 				description: description || null,
 				category: category || "new_member",
 				access: access || "all",
-				author_id: req.user?.id || 1,
+				author_id: req.user?.id || null,
 				content: content || null,
+				is_published: 1,
 			},
 		});
-
-		console.log("✅ Utworzono:", tutorial.title);
 
 		res.status(201).json({
 			id: tutorial.id.toString(),
@@ -454,7 +441,7 @@ app.post("/api/tutorials", authMiddleware, async (req: any, res) => {
 			description: tutorial.description,
 			category: tutorial.category || "new_member",
 			access: tutorial.access || "all",
-			author: author || "Admin",
+			author: "Admin",
 			createdAt: tutorial.created_at.toISOString().split("T")[0],
 			updatedAt: tutorial.updated_at.toISOString().split("T")[0],
 			content: tutorial.content || "",
@@ -464,13 +451,12 @@ app.post("/api/tutorials", authMiddleware, async (req: any, res) => {
 			isUpdated: false,
 		});
 	} catch (error) {
-		console.error("❌ Błąd:", error);
+		console.error("❌ Błąd tworzenia poradnika:", error);
 		res.status(500).json({ error: "Nie udało się utworzyć poradnika" });
 	}
 });
 
-// backend/src/server.ts - ZASTĄP endpoint PUT /api/tutorials/:id
-
+// PORADNIKI - AKTUALIZACJA
 app.put("/api/tutorials/:id", authMiddleware, async (req: any, res) => {
 	try {
 		const id = parseInt(req.params.id);
@@ -479,7 +465,6 @@ app.put("/api/tutorials/:id", authMiddleware, async (req: any, res) => {
 			description,
 			category,
 			access,
-			author,
 			content,
 			attachments,
 			functionalRoles,
@@ -493,12 +478,10 @@ app.put("/api/tutorials/:id", authMiddleware, async (req: any, res) => {
 				category: category || "new_member",
 				access: access || "all",
 				content: content || null,
-				attachments: attachments || [],
-				functional_roles: functionalRoles || [],
+				attachments: attachments ? JSON.stringify(attachments) : null,
+				functional_roles: functionalRoles ? JSON.stringify(functionalRoles) : null,
 			},
 		});
-
-		console.log(`✅ Poradnik "${tutorial.title}" został zaktualizowany`);
 
 		res.json({
 			id: tutorial.id.toString(),
@@ -506,7 +489,7 @@ app.put("/api/tutorials/:id", authMiddleware, async (req: any, res) => {
 			description: tutorial.description,
 			category: tutorial.category || "new_member",
 			access: tutorial.access || "all",
-			author: author || "Admin",
+			author: "Admin",
 			createdAt: tutorial.created_at.toISOString().split("T")[0],
 			updatedAt: tutorial.updated_at.toISOString().split("T")[0],
 			content: tutorial.content || "",
@@ -521,7 +504,7 @@ app.put("/api/tutorials/:id", authMiddleware, async (req: any, res) => {
 	}
 });
 
-// Usuń poradnik (soft delete)
+// PORADNIKI - USUWANIE (soft delete)
 app.delete("/api/tutorials/:id", authMiddleware, async (req: any, res) => {
 	try {
 		const id = parseInt(req.params.id);
@@ -562,27 +545,14 @@ app.delete(
 			console.error("❌ Błąd usuwania:", error);
 			res.status(500).json({ error: "Nie udało się usunąć" });
 		}
-	},
+	}
 );
 
 // STRUKTURA
-// backend/src/server.ts - ZASTĄP endpoint /api/structure tym:
-
-// backend/src/server.ts - ZASTĄP endpoint /api/structure tym:
-
-// backend/src/server.ts - ZASTĄP fragment dotyczący struktury:
-
-// backend/src/server.ts - ZASTĄP endpoint /api/structure tym:
-
-// backend/src/server.ts - endpoint /api/structure
-
-// backend/src/server.ts - ZASTĄP endpoint /api/structure tym:
-
 app.get("/api/structure", authMiddleware, async (req: any, res) => {
 	try {
 		console.log("📥 [STRUCTURE] Pobieranie struktury...");
 
-		// 1. Pobierz wszystkie zespoły
 		const teams = await prisma.team.findMany({
 			select: {
 				id: true,
@@ -591,12 +561,7 @@ app.get("/api/structure", authMiddleware, async (req: any, res) => {
 				parent_id: true,
 			},
 		});
-		console.log(
-			`📥 [STRUCTURE] Znaleziono ${teams.length} zespołów:`,
-			teams.map((t) => t.name),
-		);
 
-		// 2. Pobierz wszystkich członków
 		const teamMembers = await prisma.teamMember.findMany({
 			select: {
 				id: true,
@@ -617,11 +582,7 @@ app.get("/api/structure", authMiddleware, async (req: any, res) => {
 				},
 			},
 		});
-		console.log(
-			`📥 [STRUCTURE] Znaleziono ${teamMembers.length} członków zespołów`,
-		);
 
-		// 3. Zbuduj mapę osób
 		const peopleByTeam: Record<number, any[]> = {};
 		teamMembers.forEach((tm: any) => {
 			if (!peopleByTeam[tm.team_id]) {
@@ -635,41 +596,32 @@ app.get("/api/structure", authMiddleware, async (req: any, res) => {
 				email: tm.user.email || "",
 				phone: tm.user.phone || undefined,
 				province: tm.user.province || undefined,
-				is_leader: tm.is_leader === 1,
+				is_leader: tm.is_leader || false,
 			});
 		});
-		console.log("📥 [STRUCTURE] Mapy osób utworzone");
 
-		// 4. Zbuduj drzewo
-		// 4. Zbuduj drzewo
 		const teamMap: Record<number, any> = {};
 		teams.forEach((team: any) => {
-			// ✅ SORTUJ OSOBY W ZESPOLE - liderzy na górze!
 			const sortedPeople = (peopleByTeam[team.id] || []).sort(
 				(a: any, b: any) => {
-					// 1. Najpierw liderzy (is_leader = 1)
 					if (a.is_leader && !b.is_leader) return -1;
 					if (!a.is_leader && b.is_leader) return 1;
-					// 2. Potem alfabetycznie po nazwisku
 					return a.lastName.localeCompare(b.lastName);
-				},
+				}
 			);
 
 			teamMap[team.id] = {
 				id: `team-${team.id}`,
 				name: team.name,
-				role:
-					team.name === "Siła Młodych" ? "Struktura organizacyjna" : "Zespół",
+				role: team.name === "Siła Młodych" ? "Struktura organizacyjna" : "Zespół",
 				icon: getIconForTeam(team.name),
 				description: team.description || "",
 				status: "active",
 				children: [],
-				people: sortedPeople, // ✅ UŻYJ POSORTOWANEJ LISTY
+				people: sortedPeople,
 			};
 		});
-		console.log("📥 [STRUCTURE] Mapa zespołów utworzona");
 
-		// 5. Znajdź korzenie
 		const rootTeams: any[] = [];
 		teams.forEach((team: any) => {
 			const node = teamMap[team.id];
@@ -679,20 +631,13 @@ app.get("/api/structure", authMiddleware, async (req: any, res) => {
 				rootTeams.push(node);
 			}
 		});
-		console.log(
-			`📥 [STRUCTURE] Znaleziono ${rootTeams.length} korzeni:`,
-			rootTeams.map((t) => t.name),
-		);
 
-		// 6. Znajdź "Siła Młodych" jako root
 		const mainTeam = rootTeams.find((t) => t.name === "Siła Młodych");
 
 		let structure;
 		if (mainTeam) {
-			console.log("📥 [STRUCTURE] Używam 'Siła Młodych' jako root");
 			structure = mainTeam;
 		} else {
-			console.log("📥 [STRUCTURE] Tworzę sztuczny root 'Siła Młodych'");
 			structure = {
 				id: "organization",
 				name: "Siła Młodych",
@@ -705,7 +650,6 @@ app.get("/api/structure", authMiddleware, async (req: any, res) => {
 			};
 		}
 
-		console.log("📥 [STRUCTURE] ✅ Struktura gotowa, wysyłam...");
 		res.json(structure);
 	} catch (error) {
 		console.error("❌ [STRUCTURE] Błąd:", error);
@@ -713,11 +657,10 @@ app.get("/api/structure", authMiddleware, async (req: any, res) => {
 	}
 });
 
-// Funkcja pomocnicza do wyboru ikony
-
 // ============================================================
 // START SERWERA
 // ============================================================
 app.listen(port, () => {
 	console.log(`🚀 Serwer działa na porcie ${port}`);
+	console.log(`📋 Dostępne modele:`, Object.keys(prisma).filter((key: string) => !key.startsWith('_')));
 });

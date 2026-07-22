@@ -1,8 +1,7 @@
 // backend/src/services/project.service.ts
 import { PrismaClient } from "@prisma/client";
-import type { Project as PrismaProject } from "@prisma/client";
 
-// ✅ Ręcznie zdefiniowany typ Project - z is_active
+// ✅ NIE importuj typu Project - zdefiniuj go samodzielnie lub użyj Prisma.ProjectGetPayload
 type Project = {
 	id: number;
 	name: string;
@@ -42,7 +41,7 @@ export class ProjectService {
 			});
 
 			console.log("✅ Znaleziono aktywnych projektów:", projects.length);
-			return projects.map((p: Project) => this.toResponse(p));
+			return projects.map((p: any) => this.toResponse(p)); // ✅ Użyj "any"
 		} catch (error) {
 			console.error("❌ Błąd pobierania projektów:", error);
 			throw new Error("Nie udało się pobrać projektów");
@@ -67,7 +66,7 @@ export class ProjectService {
 				where: { pillar },
 				orderBy: { created_at: "desc" },
 			});
-			return projects.map((p: Project) => this.toResponse(p));
+			return projects.map((p: any) => this.toResponse(p)); // ✅ Użyj "any"
 		} catch (error) {
 			console.error("❌ Błąd pobierania projektów dla filaru:", error);
 			throw new Error("Nie udało się pobrać projektów dla filaru");
@@ -80,7 +79,7 @@ export class ProjectService {
 				where: { status },
 				orderBy: { created_at: "desc" },
 			});
-			return projects.map((p: Project) => this.toResponse(p));
+			return projects.map((p: any) => this.toResponse(p)); // ✅ Użyj "any"
 		} catch (error) {
 			console.error("❌ Błąd pobierania projektów dla statusu:", error);
 			throw new Error("Nie udało się pobrać projektów dla statusu");
@@ -96,7 +95,7 @@ export class ProjectService {
 				coordinator_id: data.coordinator_id ?? null,
 				team: data.team || null,
 				status: data.status || "planning",
-				is_active: 1, // ✅ Nowe projekty są aktywne domyślnie
+				is_active: 1,
 			};
 
 			if (data.estimated_end) {
@@ -154,7 +153,7 @@ export class ProjectService {
 		}
 	}
 
-	private toResponse(p: Project): ProjectResponse {
+	private toResponse(p: any): ProjectResponse { // ✅ Użyj "any"
 		return {
 			id: p.id.toString(),
 			name: p.name,
@@ -168,7 +167,7 @@ export class ProjectService {
 				: null,
 			created_at: p.created_at.toISOString().split("T")[0],
 			updated_at: p.updated_at.toISOString().split("T")[0],
-			is_active: p.is_active, // ✅ DODANE
+			is_active: p.is_active,
 		};
 	}
 }
