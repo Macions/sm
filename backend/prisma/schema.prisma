@@ -1,25 +1,24 @@
-// backend/prisma/schema.prisma
+// prisma/schema.prisma
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "sqlite"
-  url      = "file:./dev.db"
+  provider = "mysql"
+  url      = env("DATABASE_URL")
 }
 
 model Project {
-  id              String   @id @default(cuid())
-  name            String
-  description     String
-  pillar          String
-  coordinator_id  Int      // Dopasuj do istniejącej bazy
-  team            String   // Przechowuj jako JSON string
-  status          String
-  estimated_end   DateTime // Dopasuj do istniejącej bazy
-  created_at      DateTime @default(now())
-  updated_at      DateTime @updatedAt
+  id             Int      @id @default(autoincrement())
+  name           String   @db.VarChar(255)
+  description    String?  @db.Text
+  pillar         String?  @db.VarChar(100)
+  coordinator_id Int?     @db.Int
+  team           String?  @db.VarChar(100)
+  status         String?  @db.VarChar(50) @default("planning")
+  estimated_end  DateTime? @db.Date
+  created_at     DateTime @default(now()) @db.Timestamp(0)
+  updated_at     DateTime @default(now()) @updatedAt @db.Timestamp(0)
 
-  // Mapuj nazwy pól na istniejące kolumny w bazie
   @@map("projects")
 }
