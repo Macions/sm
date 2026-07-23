@@ -51,6 +51,8 @@ type Tutorial = {
 		name: string;
 		url: string;
 		size: string;
+		file?: File; // DODANE - dla nowych plików
+		id?: string; // DODANE - ID pliku z backendu
 	}[];
 	isNew?: boolean;
 	isUpdated?: boolean;
@@ -298,7 +300,47 @@ const ACCESS_COLORS: Record<TutorialAccess, string> = {
 	functional: styles.accessFunctional,
 	board: styles.accessBoard,
 };
+// ---------------------------------------------------------------------------
+// FUNKCJA POBIERANIA PLIKÓW
+// ---------------------------------------------------------------------------
 
+const downloadFile = async (url: string, fileName: string) => {
+	try {
+		// ⭐ DODAJ /api przed URL (to jest kluczowe!)
+		const fullUrl = url.startsWith('/uploads') ? `/api${url}` : url;
+
+		console.log('📥 Pobieranie:', fullUrl); // Debug - zobaczysz w konsoli
+
+		const token = localStorage.getItem("accessToken");
+		const response = await fetch(fullUrl, {
+			headers: {
+				'Authorization': `Bearer ${token}`,
+			}
+		});
+
+		if (!response.ok) {
+			throw new Error(`Błąd pobierania: ${response.status}`);
+		}
+
+		const blob = await response.blob();
+		console.log('📦 Rozmiar pliku:', blob.size, 'Typ:', blob.type); // Debug
+
+		const downloadUrl = window.URL.createObjectURL(blob);
+		const link = document.createElement('a');
+		link.href = downloadUrl;
+		link.download = fileName;
+		document.body.appendChild(link);
+		link.click();
+		document.body.removeChild(link);
+
+		setTimeout(() => {
+			window.URL.revokeObjectURL(downloadUrl);
+		}, 1000);
+	} catch (error) {
+		console.error('❌ Błąd pobierania:', error);
+		alert('Nie udało się pobrać pliku');
+	}
+};
 // ---------------------------------------------------------------------------
 // KOMPONENT KARTY PORADNIKA
 // ---------------------------------------------------------------------------
@@ -430,7 +472,10 @@ function TutorialCard({
 									<span className={styles.tutorialCard__attachmentSize}>
 										{file.size}
 									</span>
-									<button className={styles.tutorialCard__downloadBtn}>
+									<button
+										className={styles.tutorialCard__downloadBtn}
+										onClick={() => downloadFile(file.url, file.name)}
+									>
 										<Download size={14} />
 									</button>
 								</li>
@@ -440,22 +485,6 @@ function TutorialCard({
 				)}
 
 				<div className={styles.tutorialCard__actions}>
-					<button
-						className={styles.tutorialCard__expandBtn}
-						onClick={() => setIsExpanded(!isExpanded)}
-					>
-						{isExpanded ? (
-							<>
-								<ChevronDown size={16} />
-								Zwiń
-							</>
-						) : (
-							<>
-								<ChevronRight size={16} />
-								Pokaż więcej
-							</>
-						)}
-					</button>
 
 					<div className={styles.tutorialCard__actionButtons}>
 						{canEdit && (
@@ -514,19 +543,23 @@ function TutorialModal({
 			functionalRoles: [],
 		},
 	);
-	const [loading, setLoading] = useState(true);
-
-	const [newAttachment, setNewAttachment] = useState({
+	const [loading, setLoading] = useState(false);
+	const [newAttachment, setNewAttachment] = useState<{
+		name: string;
+		url: string;
+		size: string;
+		file?: File;
+	}>({
 		name: "",
 		url: "",
 		size: "",
 	});
-
 	const [newRole, setNewRole] = useState("");
-	const [attachmentType, setAttachmentType] = useState<"file" | "link">("file"); // <-- DODAJ
-	const [isDragging, setIsDragging] = useState(false); // <-- DODAJ (opcjonalnie dla drag&drop)
-	const canEdit = !isViewOnly && !!tutorial; // Można edytować jeśli to nie jest podgląd i mamy tutorial
-	// ===== DODAJ TEN useEffect =====
+	const [attachmentType, setAttachmentType] = useState<"file" | "link">("file");
+	const [isDragging, setIsDragging] = useState(false);
+	const [isUploading, setIsUploading] = useState(false);
+	const canEdit = !isViewOnly && !!tutorial;
+
 	useEffect(() => {
 		if (tutorial) {
 			setFormData({
@@ -540,7 +573,6 @@ function TutorialModal({
 				functionalRoles: tutorial.functionalRoles || [],
 			});
 		} else {
-			// Reset dla nowego poradnika
 			setFormData({
 				title: "",
 				description: "",
@@ -553,32 +585,146 @@ function TutorialModal({
 			});
 		}
 	}, [tutorial, isOpen]);
+
 	if (!isOpen) return null;
 
-	const handleSubmit = (e: React.FormEvent) => {
+	// ⭐ POPRAWIONA FUNKCJA - wysyła pliki jako FormData
+	// ⭐ POPRAWIONA FUNKCJA - wysyła pliki jako FormData
+	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
-		if (onSave && !isViewOnly) {
+		if (!onSave || isViewOnly) return;
+
+		setIsUploading(true);
+		setLoading(true);
+
+		try {
 			const now = new Date().toISOString().split("T")[0];
-			const saveData: Tutorial = {
+			const token = localStorage.getItem("accessToken");
+
+			const tutorialData = {
 				id: tutorial?.id || `tutorial-${Date.now()}`,
 				title: formData.title || "",
 				description: formData.description || "",
-				category: (formData.category as TutorialCategory) || "new_member",
-				access: (formData.access as TutorialAccess) || "all",
+				category: formData.category as TutorialCategory,
+				access: formData.access as TutorialAccess,
 				author: formData.author || "",
-				createdAt: tutorial?.createdAt || now, // <-- DODAJ
+				createdAt: tutorial?.createdAt || now,
 				updatedAt: now,
 				content: formData.content || "",
-				attachments: formData.attachments || [],
 				functionalRoles: formData.functionalRoles || [],
-				isNew: tutorial?.isNew || false,
-				isUpdated: true,
+				attachments: (formData.attachments || [])
+					.filter(att => att.id)
+					.map(att => ({
+						id: att.id,
+						name: att.name,
+						url: att.url,
+						size: att.size,
+					}))
 			};
-			onSave(saveData);
+
+			const formDataToSend = new FormData();
+			formDataToSend.append('data', JSON.stringify(tutorialData));
+
+			// ⭐ DODAJEMY NOWE PLIKI - POPRAWNIE
+			(formData.attachments || [])
+				.filter(att => att.file && typeof att.file === 'object' && 'name' in att.file) // Sprawdzamy czy to File
+				.forEach(attachment => {
+					if (attachment.file) {
+						formDataToSend.append('files', attachment.file);
+					}
+				});
+
+			const url = tutorial?.id
+				? `/api/tutorials/${tutorial.id}`
+				: '/api/tutorials';
+
+			const response = await fetch(url, {
+				method: tutorial?.id ? 'PUT' : 'POST',
+				headers: {
+					'Authorization': `Bearer ${token}`,
+				},
+				body: formDataToSend
+			});
+
+			if (!response.ok) {
+				const error = await response.text();
+				throw new Error(`Błąd zapisu: ${error}`);
+			}
+
+			const savedTutorial = await response.json();
+			onSave(savedTutorial);
+			onClose();
+
+		} catch (error) {
+			console.error('❌ Błąd zapisu:', error);
+			alert('Nie udało się zapisać: ' + (error as Error).message);
+		} finally {
+			setIsUploading(false);
+			setLoading(false);
 		}
-		onClose();
+	};
+	// ⭐ POPRAWIONA FUNKCJA - dodaje plik do formData
+	const handleFileUpload = (file: File) => {
+		// Sprawdź rozmiar (max 10MB)
+		if (file.size > 10 * 1024 * 1024) {
+			alert('Plik jest za duży. Maksymalny rozmiar: 10MB');
+			return;
+		}
+
+		const sizeInMB = (file.size / (1024 * 1024)).toFixed(1);
+
+		// Dodaj plik bezpośrednio do formData
+		const newAttachmentObj = {
+			name: file.name,
+			url: URL.createObjectURL(file), // Tymczasowy URL do podglądu
+			size: sizeInMB + " MB",
+			file: file, // ⭐ Przechowaj referencję do pliku
+		};
+
+		setFormData(prev => ({
+			...prev,
+			attachments: [
+				...(prev.attachments || []),
+				newAttachmentObj
+			]
+		}));
+
+		setNewAttachment({ name: "", url: "", size: "" });
 	};
 
+	// ⭐ POPRAWIONA FUNKCJA - usuwa załącznik
+	const removeAttachment = async (index: number) => {
+		const attachment = formData.attachments?.[index];
+
+		// Jeśli ma ID - usuń z backendu
+		if (attachment?.id) {
+			try {
+				const token = localStorage.getItem("accessToken");
+				const response = await fetch(`/api/tutorials/attachments/${attachment.id}`, {
+					method: 'DELETE',
+					headers: {
+						'Authorization': `Bearer ${token}`,
+					}
+				});
+
+				if (!response.ok) {
+					throw new Error('Nie udało się usunąć pliku');
+				}
+			} catch (error) {
+				console.error('❌ Błąd usuwania pliku:', error);
+				alert('Nie udało się usunąć pliku');
+				return;
+			}
+		}
+
+		// Usuń z listy
+		setFormData({
+			...formData,
+			attachments: formData.attachments?.filter((_, i) => i !== index) || [],
+		});
+	};
+
+	// ⭐ POPRAWIONA FUNKCJA - dodaje link
 	const addAttachment = () => {
 		if (newAttachment.name.trim() && newAttachment.url.trim()) {
 			setFormData({
@@ -596,20 +742,6 @@ function TutorialModal({
 		}
 	};
 
-	// Funkcja do obsługi wyboru pliku
-	const handleFileUpload = (file: File) => {
-		// Oblicz rozmiar w MB
-		const sizeInMB = (file.size / (1024 * 1024)).toFixed(1);
-		const sizeStr = sizeInMB + " MB";
-
-		setNewAttachment({
-			name: file.name,
-			url: URL.createObjectURL(file), // Tymczasowy URL
-			size: sizeStr,
-		});
-	};
-
-	// Funkcja do obsługi przeciągania (opcjonalnie)
 	const handleDrop = (e: React.DragEvent) => {
 		e.preventDefault();
 		setIsDragging(false);
@@ -627,12 +759,6 @@ function TutorialModal({
 	const handleDragLeave = (e: React.DragEvent) => {
 		e.preventDefault();
 		setIsDragging(false);
-	};
-	const removeAttachment = (index: number) => {
-		setFormData({
-			...formData,
-			attachments: formData.attachments?.filter((_, i) => i !== index) || [],
-		});
 	};
 
 	const addRole = () => {
@@ -653,6 +779,7 @@ function TutorialModal({
 		});
 	};
 
+	// Reszta JSX pozostaje taka sama, ale z drobnymi zmianami:
 	return (
 		<div className={styles.modalOverlay} onClick={onClose}>
 			<div
@@ -683,7 +810,7 @@ function TutorialModal({
 								setFormData({ ...formData, title: e.target.value })
 							}
 							required
-							disabled={isViewOnly}
+							disabled={isViewOnly || isUploading}
 						/>
 					</div>
 
@@ -696,7 +823,7 @@ function TutorialModal({
 								setFormData({ ...formData, description: e.target.value })
 							}
 							required
-							disabled={isViewOnly}
+							disabled={isViewOnly || isUploading}
 						/>
 					</div>
 
@@ -712,7 +839,7 @@ function TutorialModal({
 										category: e.target.value as TutorialCategory,
 									})
 								}
-								disabled={isViewOnly}
+								disabled={isViewOnly || isUploading}
 							>
 								{Object.entries(CATEGORY_LABELS).map(([key, label]) => (
 									<option key={key} value={key}>
@@ -733,7 +860,7 @@ function TutorialModal({
 										access: e.target.value as TutorialAccess,
 									})
 								}
-								disabled={isViewOnly}
+								disabled={isViewOnly || isUploading}
 							>
 								<option value="all">Dla wszystkich</option>
 								<option value="coordinator">Dla koordynatorów</option>
@@ -753,7 +880,7 @@ function TutorialModal({
 								setFormData({ ...formData, author: e.target.value })
 							}
 							required
-							disabled={isViewOnly}
+							disabled={isViewOnly || isUploading}
 						/>
 					</div>
 
@@ -775,13 +902,13 @@ function TutorialModal({
 											addRole();
 										}
 									}}
-									disabled={isViewOnly}
+									disabled={isViewOnly || isUploading}
 								/>
 								<button
 									type="button"
 									className={styles.modal__addMember}
 									onClick={addRole}
-									disabled={isViewOnly}
+									disabled={isViewOnly || isUploading}
 								>
 									<Plus size={16} />
 								</button>
@@ -797,6 +924,7 @@ function TutorialModal({
 														type="button"
 														className={styles.modal__removeMember}
 														onClick={() => removeRole(role)}
+														disabled={isUploading}
 													>
 														<X size={12} />
 													</button>
@@ -818,7 +946,7 @@ function TutorialModal({
 							}
 							placeholder="Pełna treść poradnika..."
 							rows={6}
-							disabled={isViewOnly}
+							disabled={isViewOnly || isUploading}
 						/>
 					</div>
 
@@ -826,12 +954,20 @@ function TutorialModal({
 						<div className={styles.modal__field}>
 							<label className={styles.modal__label}>Załączniki</label>
 
-							{/* Przełącznik typu */}
+							{/* Wskaźnik uploadu */}
+							{isUploading && (
+								<div className={styles.modal__progress}>
+									<div className={styles.modal__progressBar} style={{ width: '100%' }} />
+									<span>Przesyłanie...</span>
+								</div>
+							)}
+
 							<div className={styles.modal__attachmentToggle}>
 								<button
 									type="button"
 									className={`${styles.modal__toggleBtn} ${attachmentType === "file" ? styles.modal__toggleBtnActive : ""}`}
 									onClick={() => setAttachmentType("file")}
+									disabled={isUploading}
 								>
 									Dodaj plik
 								</button>
@@ -839,13 +975,13 @@ function TutorialModal({
 									type="button"
 									className={`${styles.modal__toggleBtn} ${attachmentType === "link" ? styles.modal__toggleBtnActive : ""}`}
 									onClick={() => setAttachmentType("link")}
+									disabled={isUploading}
 								>
 									Dodaj link
 								</button>
 							</div>
 
 							{attachmentType === "file" ? (
-								// Obsługa plików
 								<div
 									className={`${styles.modal__dropzone} ${isDragging ? styles.modal__dropzoneDragging : ""}`}
 									onDrop={handleDrop}
@@ -860,54 +996,21 @@ function TutorialModal({
 											const file = e.target.files?.[0];
 											if (file) handleFileUpload(file);
 										}}
+										disabled={isUploading}
 									/>
 									<label
 										htmlFor="fileInput"
 										className={styles.modal__dropzoneLabel}
 									>
 										<span>
-											Przeciągnij plik/pliki tutaj lub kliknij aby wybrać
+											Przeciągnij plik tutaj lub kliknij aby wybrać
 										</span>
 										<span className={styles.modal__dropzoneHint}>
 											Maksymalny rozmiar: 10 MB
 										</span>
 									</label>
-
-									{newAttachment.name && (
-										<div className={styles.modal__filePreview}>
-											<File size={16} />
-											<span className={styles.modal__filePreviewName}>
-												{newAttachment.name}
-											</span>
-											<span className={styles.modal__filePreviewSize}>
-												{newAttachment.size}
-											</span>
-											<button
-												type="button"
-												className={styles.modal__filePreviewRemove}
-												onClick={() =>
-													setNewAttachment({ name: "", url: "", size: "" })
-												}
-											>
-												<X size={14} />
-											</button>
-										</div>
-									)}
-
-									{newAttachment.name && (
-										<button
-											type="button"
-											className={styles.modal__addBtn}
-											onClick={addAttachment}
-											style={{ marginTop: "8px", width: "100%" }}
-										>
-											<Plus size={16} />
-											Dodaj plik
-										</button>
-									)}
 								</div>
 							) : (
-								// Obsługa linków
 								<div className={styles.modal__linkInput}>
 									<input
 										type="text"
@@ -920,6 +1023,7 @@ function TutorialModal({
 											})
 										}
 										placeholder="Nazwa pliku (np. Dokument.pdf)"
+										disabled={isUploading}
 									/>
 									<input
 										type="text"
@@ -932,14 +1036,13 @@ function TutorialModal({
 											})
 										}
 										placeholder="URL pliku (np. https://...)"
+										disabled={isUploading}
 									/>
 									<button
 										type="button"
 										className={styles.modal__addBtn}
 										onClick={addAttachment}
-										disabled={
-											!newAttachment.name.trim() || !newAttachment.url.trim()
-										}
+										disabled={!newAttachment.name.trim() || !newAttachment.url.trim() || isUploading}
 									>
 										<Plus size={16} />
 										Dodaj link
@@ -957,7 +1060,7 @@ function TutorialModal({
 											<span className={styles.modal__fileSize}>
 												{file.size || "0 MB"}
 											</span>
-											{canEdit && (
+											{!isViewOnly && !isUploading && (
 												<button
 													type="button"
 													className={styles.modal__removeFile}
@@ -986,7 +1089,10 @@ function TutorialModal({
 											<span className={styles.modal__fileSize}>
 												{file.size}
 											</span>
-											<button className={styles.modal__downloadBtn}>
+											<button
+												className={styles.modal__downloadBtn}
+												onClick={() => downloadFile(file.url, file.name)}
+											>
 												<Download size={14} />
 											</button>
 										</div>
@@ -1000,12 +1106,17 @@ function TutorialModal({
 							type="button"
 							className={styles.modal__btnCancel}
 							onClick={onClose}
+							disabled={isUploading}
 						>
 							{isViewOnly ? "Zamknij" : "Anuluj"}
 						</button>
 						{!isViewOnly && (
-							<button type="submit" className={styles.modal__btnSave}>
-								{tutorial ? "Zapisz zmiany" : "Dodaj poradnik"}
+							<button
+								type="submit"
+								className={styles.modal__btnSave}
+								disabled={isUploading}
+							>
+								{isUploading ? "Zapisywanie..." : (tutorial ? "Zapisz zmiany" : "Dodaj poradnik")}
 							</button>
 						)}
 					</div>
@@ -1055,7 +1166,7 @@ export default function Tutorials() {
 	useEffect(() => {
 		const fetchTutorials = async () => {
 			try {
-				setLoading(true); // ✅ TERAZ DZIAŁA
+				setLoading(true);
 				const token = localStorage.getItem("accessToken");
 
 				const response = await fetch("/api/tutorials", {
@@ -1073,9 +1184,9 @@ export default function Tutorials() {
 				setTutorials(data);
 			} catch (error) {
 				console.error("❌ Błąd pobierania poradników:", error);
-				setTutorials(MOCK_TUTORIALS);
+				setTutorials([]); // ⭐ ZMIEŃ: pusta tablica zamiast MOCK_TUTORIALS
 			} finally {
-				setLoading(false); // ✅ TERAZ DZIAŁA
+				setLoading(false);
 			}
 		};
 
@@ -1110,56 +1221,25 @@ export default function Tutorials() {
 		setIsModalOpen(true);
 	};
 
-	const handleDeleteTutorial = (id: string) => {
-		if (window.confirm("Czy na pewno chcesz usunąć ten poradnik?")) {
-			setTutorials(tutorials.filter((t) => t.id !== id));
-		}
-	};
-
-	// Tutorials.tsx - ZASTĄP funkcję handleSaveTutorial
-
-	const handleSaveTutorial = async (tutorial: Tutorial) => {
-		console.log("📝 Zapisywanie poradnika:", tutorial);
+	// ⭐ ZMIEŃ tę funkcję - dodaj obsługę błędów i odświeżanie
+	const handleDeleteTutorial = async (id: string) => {
+		if (!window.confirm("Czy na pewno chcesz usunąć ten poradnik?")) return;
 
 		try {
 			const token = localStorage.getItem("accessToken");
-			const isEdit = tutorials.some((t) => t.id === tutorial.id);
-			const url = isEdit ? `/api/tutorials/${tutorial.id}` : "/api/tutorials";
-			const method = isEdit ? "PUT" : "POST";
 
-			// Przygotuj dane do wysłania
-			const payload = {
-				title: tutorial.title,
-				description: tutorial.description,
-				category: tutorial.category,
-				access: tutorial.access,
-				author: tutorial.author,
-				content: tutorial.content || "",
-				attachments: tutorial.attachments || [],
-				functionalRoles: tutorial.functionalRoles || [],
-			};
-
-			console.log(`📤 Wysyłanie ${method} do ${url}`, payload);
-
-			const response = await fetch(url, {
-				method,
+			const response = await fetch(`/api/tutorials/${id}`, {
+				method: 'DELETE',
 				headers: {
-					Authorization: `Bearer ${token}`,
-					"Content-Type": "application/json",
-				},
-				body: JSON.stringify(payload),
+					'Authorization': `Bearer ${token}`,
+				}
 			});
 
 			if (!response.ok) {
-				const errorData = await response.text();
-				console.error("❌ Błąd odpowiedzi:", response.status, errorData);
-				throw new Error(`Błąd zapisu poradnika: ${response.status}`);
+				throw new Error('Błąd usuwania');
 			}
 
-			const savedTutorial = await response.json();
-			console.log("✅ Zapisano:", savedTutorial);
-
-			// ✅ Odśwież listę
+			// ✅ Odśwież listę po usunięciu
 			const fetchResponse = await fetch("/api/tutorials", {
 				headers: {
 					Authorization: `Bearer ${token}`,
@@ -1169,11 +1249,50 @@ export default function Tutorials() {
 			const allTutorials = await fetchResponse.json();
 			setTutorials(allTutorials);
 
-			setIsModalOpen(false);
-			setEditingTutorial(null);
 		} catch (error) {
-			console.error("❌ Błąd zapisu:", error);
-			alert("Nie udało się zapisać poradnika: " + (error as Error).message);
+			console.error('❌ Błąd usuwania:', error);
+			alert('Nie udało się usunąć poradnika');
+		}
+	};
+
+	// Tutorials.tsx - ZASTĄP funkcję handleSaveTutorial
+
+	// ⭐ ZMIEŃ tę funkcję w głównym komponencie Tutorials
+	const handleSaveTutorial = async (savedTutorial: Tutorial) => {
+		console.log("✅ Otrzymano zapisany poradnik:", savedTutorial);
+
+		try {
+			const token = localStorage.getItem("accessToken");
+
+			// ✅ Odśwież listę poradników z backendu
+			const response = await fetch("/api/tutorials", {
+				headers: {
+					'Authorization': `Bearer ${token}`,
+					'Content-Type': 'application/json',
+				}
+			});
+
+			if (!response.ok) {
+				throw new Error('Błąd pobierania poradników');
+			}
+
+			const allTutorials = await response.json();
+			setTutorials(allTutorials);
+
+			console.log("✅ Odświeżono listę poradników");
+
+		} catch (error) {
+			console.error('❌ Błąd odświeżania:', error);
+
+			// ⭐ Na wypadek błędu - dodaj/zaktualizuj lokalnie
+			setTutorials(prev => {
+				const exists = prev.some(t => t.id === savedTutorial.id);
+				if (exists) {
+					return prev.map(t => t.id === savedTutorial.id ? savedTutorial : t);
+				} else {
+					return [savedTutorial, ...prev];
+				}
+			});
 		}
 	};
 
@@ -1278,23 +1397,29 @@ export default function Tutorials() {
 					{(selectedCategory !== "all" ||
 						selectedAccess !== "all" ||
 						searchTerm) && (
-						<button className={styles.filters__reset} onClick={clearFilters}>
-							Wyczyść filtry
-						</button>
-					)}
+							<button className={styles.filters__reset} onClick={clearFilters}>
+								Wyczyść filtry
+							</button>
+						)}
 				</div>
 			</div>
 
 			{/* Lista poradników */}
+			{/* Lista poradników */}
 			<div className={styles.tutorialsGrid}>
-				{filteredTutorials.length === 0 ? (
+				{loading ? (
+					// ⭐ POKAŻ ŁADOWANIE
+					<div className={styles.loadingState}>
+						<div className={styles.loadingSpinner}></div>
+						<p>Ładowanie poradników...</p>
+					</div>
+				) : filteredTutorials.length === 0 ? (
+					// ⭐ POKAŻ BRAK PORADNIKÓW
 					<div className={styles.emptyState}>
 						<BookOpen size={48} className={styles.emptyState__icon} />
 						<h3 className={styles.emptyState__title}>Brak poradników</h3>
 						<p className={styles.emptyState__description}>
-							{searchTerm ||
-							selectedCategory !== "all" ||
-							selectedAccess !== "all"
+							{searchTerm || selectedCategory !== "all" || selectedAccess !== "all"
 								? "Nie znaleziono poradników spełniających kryteria wyszukiwania."
 								: "Nie ma jeszcze żadnych poradników."}
 						</p>
@@ -1302,16 +1427,14 @@ export default function Tutorials() {
 							!searchTerm &&
 							selectedCategory === "all" &&
 							selectedAccess === "all" && (
-								<button
-									className={styles.emptyState__btn}
-									onClick={handleAddTutorial}
-								>
+								<button className={styles.emptyState__btn} onClick={handleAddTutorial}>
 									<Plus size={18} />
 									Dodaj pierwszy poradnik
 								</button>
 							)}
 					</div>
 				) : (
+					// ⭐ POKAŻ LISTĘ
 					filteredTutorials.map((tutorial) => (
 						<TutorialCard
 							key={tutorial.id}

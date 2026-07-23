@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
 	Users,
 	Search,
@@ -93,220 +93,6 @@ const MOCK_USER: User = {
 	role: "admin",
 	teamId: "project",
 };
-
-const MOCK_MEMBERS: Member[] = [
-	{
-		id: "1",
-		firstName: "Maksym",
-		lastName: "Marczak",
-		function: "Prezes",
-		team: "Zarząd",
-		teamId: "board",
-		province: "Mazowieckie",
-		status: "full",
-		interests: ["Polityka", "Prawo", "Media"],
-		skills: ["Liderowanie", "Negocjacje", "Wystąpienia publiczne"],
-		smAreas: ["Zarządzanie", "Media", "Rzecznictwo"],
-		email: "maksym.marczak@silamlodych.pl",
-		phone: "+48 123 456 789",
-		joinDate: "2024-01-15",
-		contacts: {
-			salaContacts: ["Anna Kowalska - sala konferencyjna"],
-			mpContacts: ["Poseł Jan Nowak"],
-		},
-		trainingAreas: ["Zarządzanie zespołem", "Media relations"],
-		contributionInfo: {
-			status: "paid",
-		},
-	},
-	{
-		id: "2",
-		firstName: "Krzysztof",
-		lastName: "Korbut",
-		function: "Wiceprezes ds. Rekrutacji",
-		team: "Zarząd",
-		teamId: "board",
-		province: "Małopolskie",
-		status: "full",
-		interests: ["Rekrutacja", "HR", "Zarządzanie"],
-		skills: ["Rekrutacja", "HR", "Zarządzanie projektami"],
-		smAreas: ["Rekrutacja", "Zarządzanie"],
-		email: "krzysztof.korbut@silamlodych.pl",
-		phone: "+48 123 456 788",
-		joinDate: "2024-02-01",
-		contributionInfo: {
-			status: "paid",
-		},
-	},
-	{
-		id: "3",
-		firstName: "Zosia",
-		lastName: "Wartacz",
-		function: "Koordynator Filaru Projektowego",
-		team: "Filar Projektowy",
-		teamId: "project",
-		province: "Pomorskie",
-		status: "full",
-		interests: ["Projektowanie", "Innowacje", "Technologia"],
-		skills: ["Project management", "Agile", "Scrum"],
-		smAreas: ["Projekty", "Innowacje"],
-		email: "zosia.wartacz@silamlodych.pl",
-		phone: "+48 123 456 785",
-		joinDate: "2024-03-15",
-		contacts: {
-			salaContacts: ["Sala nr 3 - centrum konferencyjne"],
-		},
-		trainingAreas: ["Scrum", "Agile"],
-		contributionInfo: {
-			status: "paid",
-		},
-	},
-	{
-		id: "4",
-		firstName: "Adrian",
-		lastName: "Wróblewski",
-		function: "Koordynator Filaru Konferencyjnego",
-		team: "Filar Konferencyjny",
-		teamId: "conference",
-		province: "Dolnośląskie",
-		status: "full",
-		interests: ["Organizacja wydarzeń", "Logistyka", "Networking"],
-		skills: ["Event management", "Logistyka", "Komunikacja"],
-		smAreas: ["Konferencje", "Wydarzenia"],
-		email: "adrian.wroblewski@silamlodych.pl",
-		phone: "+48 123 456 784",
-		joinDate: "2024-04-01",
-		vacation: {
-			startDate: "2026-08-01",
-			endDate: "2026-08-14",
-			type: "team",
-			teamId: "conference",
-		},
-		contributionInfo: {
-			status: "paid",
-		},
-	},
-	{
-		id: "5",
-		firstName: "Jan",
-		lastName: "Augustynak",
-		function: "Koordynator Filaru Rzeczniczego",
-		team: "Filar Rzeczniczy",
-		teamId: "advocacy",
-		province: "Łódzkie",
-		status: "mentor",
-		interests: ["Rzecznictwo", "Komunikacja", "Media"],
-		skills: ["Media relations", "Komunikacja kryzysowa", "Public speaking"],
-		smAreas: ["Rzecznictwo", "Media"],
-		email: "jan.augustynak@silamlodych.pl",
-		phone: "+48 123 456 782",
-		joinDate: "2023-11-01",
-		contacts: {
-			mpContacts: ["Poseł Anna Kowalska"],
-			otherContacts: ["Redaktor naczelny Gazety Młodych"],
-		},
-		trainingAreas: ["Media relations", "Komunikacja"],
-		contributionInfo: {
-			status: "paid",
-		},
-	},
-	{
-		id: "6",
-		firstName: "Igor",
-		lastName: "Piskórz",
-		function: "Członek Filaru Symulacyjnego",
-		team: "Filar Symulacyjny",
-		teamId: "simulation",
-		province: "Pomorskie",
-		status: "trial",
-		interests: ["Symulacje", "Gry polityczne", "Edukacja"],
-		skills: ["Symulacje", "Scenariusze", "Edukacja"],
-		smAreas: ["Symulacje", "Szkolenia"],
-		email: "igor.piskorz@silamlodych.pl",
-		phone: "+48 123 456 781",
-		joinDate: "2025-06-01",
-		contributionInfo: {
-			status: "unpaid",
-			arrears: 150,
-		},
-	},
-	{
-		id: "7",
-		firstName: "Maja",
-		lastName: "Melerska",
-		function: "Pełnomocnik ds. Onboardingu",
-		team: "Social Media",
-		teamId: "social-media",
-		province: "Mazowieckie",
-		status: "full",
-		interests: ["Onboarding", "Rozwój członków", "Szkolenia"],
-		skills: ["Onboarding", "Mentoring", "Szkolenia"],
-		smAreas: ["Onboarding", "Rozwój"],
-		email: "maja.melerska@silamlodych.pl",
-		phone: "+48 123 456 780",
-		joinDate: "2024-05-15",
-		contributionInfo: {
-			status: "partial",
-			arrears: 50,
-		},
-	},
-	{
-		id: "8",
-		firstName: "Maja",
-		lastName: "Kądziela",
-		function: "Opiekun TikToka",
-		team: "Zespół TikToka",
-		teamId: "tiktok",
-		province: "Pomorskie",
-		status: "full",
-		interests: ["Social media", "Video content", "Kreatywność"],
-		skills: ["TikTok", "Content creation", "Video editing"],
-		smAreas: ["Social media", "Content"],
-		email: "maja.kadziela@silamlodych.pl",
-		joinDate: "2024-06-01",
-		contributionInfo: {
-			status: "paid",
-		},
-	},
-	{
-		id: "9",
-		firstName: "Emilia",
-		lastName: "Dobias",
-		function: "Pełnomocnik ds. Szkoleń",
-		team: "Pełnomocnicy",
-		teamId: "plenipotentiaries",
-		province: "Mazowieckie",
-		status: "full",
-		interests: ["Szkolenia", "Edukacja", "Rozwój"],
-		skills: ["Szkolenia", "Prezentacje", "Edukacja"],
-		smAreas: ["Szkolenia", "Rozwój"],
-		email: "emilia.dobias@silamlodych.pl",
-		phone: "+48 123 456 770",
-		joinDate: "2024-07-01",
-		contributionInfo: {
-			status: "paid",
-		},
-	},
-	{
-		id: "10",
-		firstName: "Jakub",
-		lastName: "Patrowicz",
-		function: "Główny Dyrektor Operacyjny",
-		team: "Dyrektorzy",
-		teamId: "directors",
-		province: "Mazowieckie",
-		status: "full",
-		interests: ["Operacje", "Zarządzanie", "Strategia"],
-		skills: ["Operations", "Strategic planning", "Leadership"],
-		smAreas: ["Operacje", "Zarządzanie"],
-		email: "jakub.patrowicz@silamlodych.pl",
-		phone: "+48 123 456 779",
-		joinDate: "2024-01-01",
-		contributionInfo: {
-			status: "paid",
-		},
-	},
-];
 
 // ---------------------------------------------------------------------------
 // MAPOWANIE NA TEKSTY
@@ -516,33 +302,32 @@ function ProfileModal({
 	onClose,
 	onSave,
 }: ProfileModalProps) {
-	const [formData, setFormData] = useState<Partial<Member>>(
-		member || {
-			firstName: "",
-			lastName: "",
-			function: "",
-			team: "",
-			teamId: "",
-			province: "",
-			status: "trial",
-			interests: [],
-			skills: [],
-			smAreas: [],
-			email: "",
-			phone: "",
-			joinDate: "",
-			contacts: {
-				salaContacts: [],
-				mpContacts: [],
-				otherContacts: [],
-			},
-			trainingAreas: [],
-			contributionInfo: {
-				status: "paid",
-				arrears: 0,
-			},
+	const [formData, setFormData] = useState<Partial<Member>>({
+		firstName: "",
+		lastName: "",
+		function: "",
+		team: "",
+		teamId: "",
+		province: "",
+		status: "active",
+		interests: [],
+		skills: [],
+		smAreas: [],
+		email: "",
+		phone: "",
+		joinDate: "",
+		contacts: {
+			salaContacts: [],
+			mpContacts: [],
+			otherContacts: [],
 		},
-	);
+		trainingAreas: [],
+		contributionInfo: {
+			status: "paid",
+			arrears: 0,
+		},
+	});
+
 	const [newInterest, setNewInterest] = useState("");
 	const [newSkill, setNewSkill] = useState("");
 	const [newArea, setNewArea] = useState("");
@@ -550,6 +335,76 @@ function ProfileModal({
 	const [newMpContact, setNewMpContact] = useState("");
 	const [newOtherContact, setNewOtherContact] = useState("");
 	const [newTrainingArea, setNewTrainingArea] = useState("");
+
+	// ⭐ useEffect do aktualizacji formData gdy member się zmienia
+	useEffect(() => {
+		if (member) {
+			console.log('📝 Member status:', member.status);
+			console.log('📝 Member status type:', typeof member.status);
+
+			const newFormData = {
+				id: member.id,
+				firstName: member.firstName || "",
+				lastName: member.lastName || "",
+				function: member.function || "",
+				team: member.team || "",
+				teamId: member.teamId || "",
+				province: member.province || "",
+				status: member.status || "active",  // <-- TO POWINNO DZIAŁAĆ
+				interests: member.interests || [],
+				skills: member.skills || [],
+				smAreas: member.smAreas || [],
+				email: member.email || "",
+				phone: member.phone || "",
+				joinDate: member.joinDate || "",
+				contacts: member.contacts || {
+					salaContacts: [],
+					mpContacts: [],
+					otherContacts: [],
+				},
+				trainingAreas: member.trainingAreas || [],
+				contributionInfo: member.contributionInfo || {
+					status: "paid",
+					arrears: 0,
+				},
+				formData: member.formData || {},
+			};
+
+			console.log('📝 Nowy formData.status:', newFormData.status);
+			setFormData(newFormData);
+
+			// ⭐ Sprawdź czy formData się ustawiło po chwili
+			setTimeout(() => {
+				console.log('📝 formData.status po setTimeout:', formData.status);
+			}, 100);
+		} else {
+			setFormData({
+				firstName: "",
+				lastName: "",
+				function: "",
+				team: "",
+				teamId: "",
+				province: "",
+				status: "active",
+				interests: [],
+				skills: [],
+				smAreas: [],
+				email: "",
+				phone: "",
+				joinDate: "",
+				contacts: {
+					salaContacts: [],
+					mpContacts: [],
+					otherContacts: [],
+				},
+				trainingAreas: [],
+				contributionInfo: {
+					status: "paid",
+					arrears: 0,
+				},
+			});
+		}
+	}, [member, isOpen]);
 
 	if (!isOpen) return null;
 
@@ -591,6 +446,7 @@ function ProfileModal({
 		(currentUser.role === "coordinator" &&
 			currentUser.teamId === currentMember.teamId) ||
 		currentUser.id === currentMember.id;
+
 	const addItem = (
 		list: string[],
 		setList: (list: string[]) => void,
@@ -612,7 +468,8 @@ function ProfileModal({
 	const handleSubmit = (e: React.FormEvent) => {
 		e.preventDefault();
 		if (onSave && canEdit) {
-			// const now = new Date().toISOString().split("T")[0];
+			        console.log('📝 formData w handleSubmit:', formData); // ⭐ DODAJ
+
 			const saveData: Member = {
 				id: currentMember.id,
 				firstName: formData.firstName || currentMember.firstName,
@@ -621,7 +478,7 @@ function ProfileModal({
 				team: formData.team || currentMember.team,
 				teamId: formData.teamId || currentMember.teamId,
 				province: formData.province || currentMember.province,
-				status: (formData.status as MemberStatus) || currentMember.status,
+				status: (formData.status as MemberStatus) || "active",
 				interests: formData.interests || currentMember.interests,
 				skills: formData.skills || currentMember.skills,
 				smAreas: formData.smAreas || currentMember.smAreas,
@@ -642,6 +499,8 @@ function ProfileModal({
 					? formData.formData || currentMember.formData
 					: undefined,
 			};
+			        console.log('📤 saveData:', saveData); // ⭐ DODAJ
+
 			onSave(saveData);
 		}
 		onClose();
@@ -685,10 +544,9 @@ function ProfileModal({
 								<input
 									type="text"
 									className={styles.modal__input}
-									value={formData.firstName || currentMember.firstName}
-									onChange={(e) =>
-										setFormData({ ...formData, firstName: e.target.value })
-									}
+									value={formData.firstName || ""}
+									onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
+
 									disabled={!canEdit}
 								/>
 							</div>
@@ -697,7 +555,7 @@ function ProfileModal({
 								<input
 									type="text"
 									className={styles.modal__input}
-									value={formData.lastName || currentMember.lastName}
+									value={formData.lastName || ""}
 									onChange={(e) =>
 										setFormData({ ...formData, lastName: e.target.value })
 									}
@@ -750,7 +608,7 @@ function ProfileModal({
 								<label className={styles.modal__label}>Status</label>
 								<select
 									className={styles.modal__select}
-									value={formData.status || currentMember.status}
+									value={formData.status || "active"}
 									onChange={(e) =>
 										setFormData({
 											...formData,
@@ -760,7 +618,7 @@ function ProfileModal({
 									disabled={!canEdit}
 								>
 									<option value="trial">Okres próbny</option>
-									<option value="full">Pełnoprawny członek</option>
+									<option value="active">Pełnoprawny członek</option>
 									<option value="mentor">Mentor</option>
 								</select>
 							</div>
@@ -1520,7 +1378,8 @@ function ProfileModal({
 // ---------------------------------------------------------------------------
 
 export default function Members({ title }: { title?: string }) {
-	const [members, setMembers] = useState<Member[]>(MOCK_MEMBERS);
+	const [loading, setLoading] = useState(true);
+	const [members, setMembers] = useState<Member[]>([]);
 	const [searchTerm, setSearchTerm] = useState("");
 	const [selectedProvince, setSelectedProvince] = useState<string>("all");
 	const [selectedTeam, setSelectedTeam] = useState<string>("all");
@@ -1534,7 +1393,37 @@ export default function Members({ title }: { title?: string }) {
 		"name" | "function" | "province" | "status"
 	>("name");
 	const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
+	// ⭐ POBIERANIE CZŁONKÓW Z BACKENDU
+	// ⭐ DODAJ TO
+	useEffect(() => {
+		const fetchMembers = async () => {
+			try {
+				setLoading(true);
+				const token = localStorage.getItem("accessToken");
 
+				const response = await fetch("/api/members", {
+					headers: {
+						Authorization: `Bearer ${token}`,
+						"Content-Type": "application/json",
+					},
+				});
+
+				if (!response.ok) {
+					throw new Error("Błąd pobierania członków");
+				}
+
+				const data = await response.json();
+				setMembers(data);
+			} catch (error) {
+				console.error("❌ Błąd pobierania członków:", error);
+				setMembers([]);
+			} finally {
+				setLoading(false);
+			}
+		};
+
+		fetchMembers();
+	}, []);
 	const currentUser = MOCK_USER;
 	// ===== DODANE FUNKCJE DLA NOWEGO CZŁONKA =====
 	const handleAddMember = () => {
@@ -1568,10 +1457,36 @@ export default function Members({ title }: { title?: string }) {
 		setIsAddMemberOpen(true);
 	};
 
-	const handleAddNewMember = (member: Member) => {
-		setMembers([member, ...members]);
-		setIsAddMemberOpen(false);
-		setNewMemberData(null);
+	const handleAddNewMember = async (member: Member) => {
+		try {
+			console.log('📤 Wysyłanie danych:', JSON.stringify(member, null, 2)); // ⭐ DODAJ
+
+			const token = localStorage.getItem("accessToken");
+
+			const response = await fetch("/api/members", {
+				method: 'POST',
+				headers: {
+					'Authorization': `Bearer ${token}`,
+					'Content-Type': 'application/json',
+				},
+				body: JSON.stringify(member),
+			});
+
+			// ⭐ DODAJ WIĘCEJ INFO O BŁĘDZIE
+			if (!response.ok) {
+				const errorText = await response.text();
+				console.error('❌ Odpowiedź błędu:', errorText);
+				throw new Error(`Błąd dodawania członka: ${response.status} - ${errorText}`);
+			}
+
+			const savedMember = await response.json();
+			setMembers([savedMember, ...members]);
+			setIsAddMemberOpen(false);
+			setNewMemberData(null);
+		} catch (error) {
+			console.error('❌ Błąd dodawania członka:', error);
+			alert('Nie udało się dodać członka: ' + (error as Error).message);
+		}
 	};
 
 	// Unikalne województwa i zespoły dla filtrów
@@ -1637,16 +1552,62 @@ export default function Members({ title }: { title?: string }) {
 		setSelectedMember(member);
 		setIsProfileOpen(true);
 	};
+	// ⭐ USUWANIE CZŁONKA
+	const handleDeleteMember = async (id: string) => {
+		if (!window.confirm("Czy na pewno chcesz usunąć tego członka?")) return;
 
+		try {
+			const token = localStorage.getItem("accessToken");
+
+			const response = await fetch(`/api/members/${id}`, {
+				method: 'DELETE',
+				headers: {
+					'Authorization': `Bearer ${token}`,
+				},
+			});
+
+			if (!response.ok) {
+				throw new Error('Błąd usuwania członka');
+			}
+
+			setMembers(members.filter((m) => m.id !== id));
+		} catch (error) {
+			console.error('❌ Błąd usuwania członka:', error);
+			alert('Nie udało się usunąć członka');
+		}
+	};
 	const handleEditMember = (member: Member) => {
 		setSelectedMember(member);
 		setIsEditOpen(true);
 	};
 
-	const handleSaveMember = (updatedMember: Member) => {
-		setMembers(
-			members.map((m) => (m.id === updatedMember.id ? updatedMember : m)),
-		);
+	const handleSaveMember = async (updatedMember: Member) => {
+		try {
+			const token = localStorage.getItem("accessToken");
+
+			const response = await fetch(`/api/members/${updatedMember.id}`, {
+				method: 'PUT',
+				headers: {
+					'Authorization': `Bearer ${token}`,
+					'Content-Type': 'application/json',
+				},
+				body: JSON.stringify(updatedMember),
+			});
+
+			if (!response.ok) {
+				throw new Error('Błąd aktualizacji członka');
+			}
+
+			const savedMember = await response.json();
+			setMembers(
+				members.map((m) => (m.id === savedMember.id ? savedMember : m)),
+			);
+			setIsEditOpen(false);
+			setSelectedMember(null);
+		} catch (error) {
+			console.error('❌ Błąd aktualizacji członka:', error);
+			alert('Nie udało się zaktualizować członka');
+		}
 	};
 
 	const clearFilters = () => {
@@ -1826,7 +1787,12 @@ export default function Members({ title }: { title?: string }) {
 			<div
 				className={`${styles.membersGrid} ${viewMode === "list" ? styles.membersGridList : ""}`}
 			>
-				{filteredMembers.length === 0 ? (
+				{loading ? (
+					<div className={styles.loadingState}>
+						<div className={styles.loadingSpinner}></div>
+						<p>Ładowanie członków...</p>
+					</div>
+				) : filteredMembers.length === 0 ? (
 					<div className={styles.emptyState}>
 						<User size={48} className={styles.emptyState__icon} />
 						<h3 className={styles.emptyState__title}>Brak członków</h3>
