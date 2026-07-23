@@ -286,53 +286,7 @@ app.delete(
 // UŻYTKOWNICY
 app.get("/api/users", authMiddleware, userController.getAllUsers);
 
-// PROFIL
-app.get("/api/profile", authMiddleware, async (req: any, res) => {
-	try {
-		const userId = req.user?.id;
-		if (!userId) {
-			return res.status(401).json({ error: "Brak autoryzacji" });
-		}
 
-		const user = await prisma.user.findUnique({
-			where: { id: userId },
-			select: {
-				id: true,
-				email: true,
-				first_name: true,
-				last_name: true,
-				role_id: true,
-				team: true,
-				username: true,
-				status: true,
-				join_date: true,
-				is_trial: true,
-				created_at: true,
-			},
-		});
-
-		if (!user) {
-			return res.status(404).json({ error: "Użytkownik nie znaleziony" });
-		}
-
-		res.json({
-			id: user.id,
-			email: user.email,
-			first_name: user.first_name,
-			last_name: user.last_name,
-			role: mapRoleId(user.role_id),
-			team: user.team,
-			username: user.username,
-			status: user.status || "active",
-			joinDate: user.join_date,
-			isTrial: user.is_trial || false,
-			createdAt: user.created_at,
-		});
-	} catch (error) {
-		console.error("❌ Błąd profilu:", error);
-		res.status(500).json({ error: "Nie udało się pobrać profilu" });
-	}
-});
 // 📥 GET - pobierz wszystkie zespoły
 app.get("/api/teams", authMiddleware, async (req: any, res) => {
 	try {
@@ -748,7 +702,7 @@ app.get("/api/applications", authMiddleware, async (req: any, res) => {
 				userId: app.user_id.toString(),
 				userName: app.user
 					? `${app.user.first_name || ""} ${app.user.last_name || ""}`.trim() ||
-						"Nieznany"
+					"Nieznany"
 					: "Nieznany",
 				userEmail: app.user?.email || "",
 				message: app.message || "",
@@ -888,7 +842,7 @@ app.get(
 					userId: app.user_id.toString(),
 					userName: app.user
 						? `${app.user.first_name || ""} ${app.user.last_name || ""}`.trim() ||
-							"Nieznany"
+						"Nieznany"
 						: "Nieznany",
 					userEmail: app.user?.email || "",
 					message: app.message || "",
@@ -1484,7 +1438,7 @@ app.get("/api/structure", authMiddleware, async (req: any, res) => {
 				id: true,
 				team_id: true,
 				user_id: true,
-				role: true,
+				roles: true,
 				is_leader: true,
 				user: {
 					select: {
@@ -1576,6 +1530,451 @@ app.get("/api/structure", authMiddleware, async (req: any, res) => {
 	}
 });
 app.use("/api", memberRoutes);
+// ============================================================
+// PROFIL UŻYTKOWNIKA
+// ============================================================
+
+// 📥 GET - pobierz profil użytkownika (swój lub innego)
+app.get("/api/profile", authMiddleware, async (req: any, res) => {
+	try {
+		const userId = req.user?.id;
+		if (!userId) return res.status(401).json({ error: "Brak autoryzacji" });
+
+		const user = await prisma.user.findUnique({
+			where: { id: parseInt(userId) },
+			include: { roles: true, team_members: { include: { team: true } }, onboarding_data: { orderBy: { created_at: "desc" }, take: 1 } },
+		});
+
+		if (!user) return res.status(404).json({ error: "Użytkownik nie znaleziony" });
+
+		// Mapowanie danych
+		const teams = user.team_members.map((tm: any) => tm.team?.name).filter(Boolean);
+		const onboarding = user.onboarding_data?.[0] || {};
+
+		const profile = {
+			id: user.id.toString(),
+			firstName: user.first_name,
+			lastName: user.last_name,
+			function: user.functional_role || "Członek",
+			team: teams.length > 0 ? teams.join(", ") : (user.team || "Brak zespołu"),
+			province: user.province || "Brak danych",
+			status: user.status || "active",
+			email: user.email || "",
+			phone: user.phone || undefined,
+			joinDate: user.join_date?.toISOString().split("T")[0] || user.created_at.toISOString().split("T")[0],
+			currentTasks: [],
+			projects: [],
+			developmentAreas: onboarding.development_areas ? JSON.parse(onboarding.development_areas) : [],
+			skills: onboarding.skills ? JSON.parse(onboarding.skills) : [],
+			availability: onboarding.availability || "Uzgodnij z koordynatorem",
+			description: onboarding.description || "",
+			contacts: {
+				salaContacts: onboarding.sala_contacts ? JSON.parse(onboarding.sala_contacts) : [],
+				mpContacts: onboarding.mp_contacts ? JSON.parse(onboarding.mp_contacts) : [],
+				institutionContacts: onboarding.institution_contacts ? JSON.parse(onboarding.institution_contacts) : [],
+				otherContacts: onboarding.other_contacts ? JSON.parse(onboarding.other_contacts) : [],
+			},
+			contributionInfo: { arrears: 0, status: "paid" },
+			leave: { isOnLeave: false, history: [] },
+		};
+
+		res.json(profile);
+	} catch (error) {
+		console.error("❌ Błąd profilu:", error);
+		res.status(500).json({ error: "Nie udało się pobrać profilu" });
+	}
+});
+// ============================================================
+// URLOPY (LEAVE)
+// ============================================================
+
+// 📥 GET - pobierz wszystkie urlopy
+app.get("/api/leaves", authMiddleware, async (req: any, res) => {
+	try {
+		const userId = req.user?.id;
+		const userRole = req.user?.role;
+		const userTeam = req.user?.team;
+
+		// Pobierz urlopy z bazy
+		const leaves = await prisma.leave.findMany({
+			include: {
+				user: {
+					select: {
+						id: true,
+						first_name: true,
+						last_name: true,
+						email: true,
+						team: true,
+					},
+				},
+				comments: {
+					include: {
+						author: {
+							select: {
+								id: true,
+								first_name: true,
+								last_name: true,
+							},
+						},
+					},
+				},
+			},
+			orderBy: {
+				created_at: "desc",
+			},
+		});
+
+		// Mapuj dane
+		const mappedLeaves = leaves.map((leave: any) => {
+			const user = leave.user;
+			const userName = user ? `${user.first_name || ''} ${user.last_name || ''}`.trim() : 'Nieznany';
+
+			// Sprawdź czy użytkownik może zobaczyć ten urlop
+			let canView = false;
+			if (userRole === 'admin') {
+				canView = true;
+			} else if (userRole === 'coordinator') {
+				// Koordynator widzi urlopy swojego zespołu
+				canView = user?.team === userTeam || leave.affected_teams?.includes(userTeam) || userId === leave.user_id;
+			} else {
+				canView = userId === leave.user_id;
+			}
+
+			if (!canView) return null;
+
+			return {
+				id: leave.id.toString(),
+				userId: leave.user_id.toString(),
+				userName: userName,
+				userTeam: user?.team || "Brak zespołu",
+				type: leave.type || "vacation",
+				scope: leave.scope || "all",
+				affectedTeams: leave.affected_teams ? JSON.parse(leave.affected_teams) : [],
+				startDate: leave.start_date.toISOString().split("T")[0],
+				endDate: leave.end_date.toISOString().split("T")[0],
+				reason: leave.reason || "",
+				reasonVisibility: leave.reason_visibility || "private",
+				status: leave.status || "pending",
+				createdAt: leave.created_at.toISOString(),
+				approvedBy: leave.approved_by || undefined,
+				approvedAt: leave.approved_at?.toISOString(),
+				attachments: leave.attachments ? JSON.parse(leave.attachments) : [],
+				comments: leave.comments?.map((c: any) => ({
+					id: c.id.toString(),
+					author: c.author ? `${c.author.first_name || ''} ${c.author.last_name || ''}`.trim() : 'Nieznany',
+					content: c.content,
+					createdAt: c.created_at.toISOString(),
+				})) || [],
+			};
+		}).filter(Boolean); // Usuń null-e (urlopy, których nie może zobaczyć)
+
+		res.json(mappedLeaves);
+	} catch (error) {
+		console.error("❌ Błąd pobierania urlopów:", error);
+		res.status(500).json({ error: "Nie udało się pobrać urlopów" });
+	}
+});
+
+// 📤 POST - utwórz nowy wniosek urlopowy
+// 📤 POST - utwórz nowy wniosek urlopowy
+app.post("/api/leaves", authMiddleware, async (req: any, res) => {
+	try {
+		const userId = req.user?.id;
+		if (!userId) return res.status(401).json({ error: "Brak autoryzacji" });
+
+		console.log("📥 OTRZYMANE DANE:", req.body); // ⭐ LOG
+
+		const {
+			type,
+			scope,
+			affectedTeams,
+			startDate,
+			endDate,
+			reason,
+			reasonVisibility,
+			attachments,
+		} = req.body;
+
+		if (!startDate || !endDate) {
+			return res.status(400).json({ error: "Data rozpoczęcia i zakończenia są wymagane" });
+		}
+
+		const leave = await prisma.leave.create({
+			data: {
+				user_id: userId,
+				type: type || "vacation",
+				scope: scope || "all",
+				affected_teams: affectedTeams ? JSON.stringify(affectedTeams) : null,
+				start_date: new Date(startDate),
+				end_date: new Date(endDate),
+				reason: reason || "",
+				reason_visibility: reasonVisibility || "private",
+				status: "pending",
+				attachments: attachments ? JSON.stringify(attachments) : null,
+			},
+		});
+
+		console.log("✅ UTOWORZONO URLOP:", leave); // ⭐ LOG
+
+		// ⭐ ZWRÓĆ DANE W FORMACIE OCZEKIWANYM PRZEZ FRONTEND
+		const userName = req.user ? `${req.user.first_name || ''} ${req.user.last_name || ''}`.trim() || 'Nieznany' : 'Nieznany';
+		const userTeam = req.user?.team || "Brak zespołu";
+
+		res.status(201).json({
+			id: leave.id.toString(),
+			userId: leave.user_id.toString(),
+			userName: userName,
+			userTeam: userTeam,
+			type: leave.type,
+			scope: leave.scope,
+			affectedTeams: leave.affected_teams ? JSON.parse(leave.affected_teams) : [],
+			startDate: leave.start_date.toISOString().split("T")[0],
+			endDate: leave.end_date.toISOString().split("T")[0],
+			reason: leave.reason || "",
+			reasonVisibility: leave.reason_visibility,
+			status: leave.status,
+			createdAt: leave.created_at.toISOString(),
+			approvedBy: leave.approved_by || undefined,
+			approvedAt: leave.approved_at?.toISOString(),
+			attachments: leave.attachments ? JSON.parse(leave.attachments) : [],
+			comments: [],
+		});
+	} catch (error) {
+		console.error("❌ Błąd tworzenia wniosku:", error);
+		res.status(500).json({ error: "Nie udało się utworzyć wniosku" });
+	}
+});
+
+// 📝 PUT - aktualizuj wniosek urlopowy
+app.put("/api/leaves/:id", authMiddleware, async (req: any, res) => {
+	try {
+		const userId = req.user?.id;
+		const userRole = req.user?.role;
+		const leaveId = parseInt(req.params.id);
+
+		if (!userId) return res.status(401).json({ error: "Brak autoryzacji" });
+
+		const existingLeave = await prisma.leave.findUnique({
+			where: { id: leaveId },
+		});
+
+		if (!existingLeave) {
+			return res.status(404).json({ error: "Nie znaleziono wniosku" });
+		}
+
+		// Sprawdź uprawnienia - tylko admin, koordynator lub autor wniosku
+		if (userRole !== "admin" && userRole !== "coordinator" && existingLeave.user_id !== userId) {
+			return res.status(403).json({ error: "Brak uprawnień" });
+		}
+
+		// Nie można edytować zatwierdzonego lub odrzuconego wniosku (chyba że admin)
+		if (existingLeave.status !== "pending" && userRole !== "admin") {
+			return res.status(400).json({ error: "Nie można edytować już rozpatrzonego wniosku" });
+		}
+
+		const {
+			type,
+			scope,
+			affectedTeams,
+			startDate,
+			endDate,
+			reason,
+			reasonVisibility,
+			attachments,
+			status,
+		} = req.body;
+
+		const leave = await prisma.leave.update({
+			where: { id: leaveId },
+			data: {
+				type: type || existingLeave.type,
+				scope: scope || existingLeave.scope,
+				affected_teams: affectedTeams ? JSON.stringify(affectedTeams) : existingLeave.affected_teams,
+				start_date: startDate ? new Date(startDate) : existingLeave.start_date,
+				end_date: endDate ? new Date(endDate) : existingLeave.end_date,
+				reason: reason !== undefined ? reason : existingLeave.reason,
+				reason_visibility: reasonVisibility || existingLeave.reason_visibility,
+				attachments: attachments ? JSON.stringify(attachments) : existingLeave.attachments,
+				status: status || existingLeave.status,
+				...(status === "approved" || status === "rejected" ? {
+					approved_by: req.user.first_name + " " + req.user.last_name,
+					approved_at: new Date(),
+				} : {}),
+			},
+		});
+
+		res.json(leave);
+	} catch (error) {
+		console.error("❌ Błąd aktualizacji wniosku:", error);
+		res.status(500).json({ error: "Nie udało się zaktualizować wniosku" });
+	}
+});
+
+// 🗑️ DELETE - usuń wniosek urlopowy
+app.delete("/api/leaves/:id", authMiddleware, async (req: any, res) => {
+	try {
+		const userId = req.user?.id;
+		const userRole = req.user?.role;
+		const leaveId = parseInt(req.params.id);
+
+		const existingLeave = await prisma.leave.findUnique({
+			where: { id: leaveId },
+		});
+
+		if (!existingLeave) {
+			return res.status(404).json({ error: "Nie znaleziono wniosku" });
+		}
+
+		// Sprawdź uprawnienia
+		if (userRole !== "admin" && existingLeave.user_id !== userId) {
+			return res.status(403).json({ error: "Brak uprawnień" });
+		}
+
+		await prisma.leave.delete({
+			where: { id: leaveId },
+		});
+
+		res.status(204).send();
+	} catch (error) {
+		console.error("❌ Błąd usuwania wniosku:", error);
+		res.status(500).json({ error: "Nie udało się usunąć wniosku" });
+	}
+});
+
+// 📥 GET - pobierz status urlopu dla danego użytkownika (czy jest na urlopie)
+// 1. GET - sprawdź swój status urlopu (bez parametru)
+app.get("/api/leaves/status", authMiddleware, async (req: any, res) => {
+	try {
+		const userId = req.user?.id;
+		if (!userId) return res.status(401).json({ error: "Brak autoryzacji" });
+
+		const today = new Date();
+		today.setHours(0, 0, 0, 0);
+
+		const activeLeave = await prisma.leave.findFirst({
+			where: {
+				user_id: userId,
+				status: "approved",
+				start_date: { lte: today },
+				end_date: { gte: today },
+			},
+		});
+
+		res.json({
+			onLeave: !!activeLeave,
+			endDate: activeLeave?.end_date?.toISOString().split("T")[0],
+		});
+	} catch (error) {
+		console.error("❌ Błąd sprawdzania statusu urlopu:", error);
+		res.status(500).json({ error: "Nie udało się sprawdzić statusu urlopu" });
+	}
+});
+
+// 2. GET - sprawdź status urlopu innego użytkownika (z parametrem)
+app.get("/api/leaves/status/:userId", authMiddleware, async (req: any, res) => {
+	try {
+		const userId = parseInt(req.params.userId);
+		if (!userId) return res.status(400).json({ error: "Brak ID użytkownika" });
+
+		// Sprawdź czy użytkownik ma prawo widzieć status innego użytkownika
+		const currentUserRole = req.user?.role;
+		if (currentUserRole !== "admin" && currentUserRole !== "coordinator") {
+			return res.status(403).json({ error: "Brak uprawnień" });
+		}
+
+		const today = new Date();
+		today.setHours(0, 0, 0, 0);
+
+		const activeLeave = await prisma.leave.findFirst({
+			where: {
+				user_id: userId,
+				status: "approved",
+				start_date: { lte: today },
+				end_date: { gte: today },
+			},
+		});
+
+		res.json({
+			onLeave: !!activeLeave,
+			endDate: activeLeave?.end_date?.toISOString().split("T")[0],
+		});
+	} catch (error) {
+		console.error("❌ Błąd sprawdzania statusu urlopu:", error);
+		res.status(500).json({ error: "Nie udało się sprawdzić statusu urlopu" });
+	}
+});
+// 📝 PUT - aktualizuj profil
+app.put("/api/profile", authMiddleware, async (req: any, res) => {
+	try {
+		const userId = req.user?.id;
+		if (!userId) return res.status(401).json({ error: "Brak autoryzacji" });
+
+		const { firstName, lastName, province, description, skills, developmentAreas, availability, phone } = req.body;
+
+		await prisma.user.update({
+			where: { id: userId },
+			data: { first_name: firstName, last_name: lastName, province, phone },
+		});
+
+		const existing = await prisma.onboarding_data.findFirst({ where: { user_id: userId }, orderBy: { created_at: "desc" } });
+
+		if (existing) {
+			await prisma.onboarding_data.update({
+				where: { id: existing.id },
+				data: { description, skills: JSON.stringify(skills), development_areas: JSON.stringify(developmentAreas), availability },
+			});
+		}
+
+		res.json({ success: true, message: "Profil zaktualizowany" });
+	} catch (error) {
+		console.error("❌ Błąd aktualizacji:", error);
+		res.status(500).json({ error: "Nie udało się zaktualizować profilu" });
+	}
+});
+
+// 📤 POST - dodaj umiejętność
+app.post("/api/profile/skills", authMiddleware, async (req: any, res) => {
+	try {
+		const userId = req.user?.id;
+		const { skill } = req.body;
+
+		const onboarding = await prisma.onboarding_data.findFirst({ where: { user_id: userId }, orderBy: { created_at: "desc" } });
+		let skills = onboarding?.skills ? JSON.parse(onboarding.skills) : [];
+		if (!skills.includes(skill)) skills.push(skill);
+
+		await prisma.onboarding_data.update({
+			where: { id: onboarding!.id },
+			data: { skills: JSON.stringify(skills) },
+		});
+
+		res.json({ success: true, skills });
+	} catch (error) {
+		console.error("❌ Błąd:", error);
+		res.status(500).json({ error: "Nie udało się dodać umiejętności" });
+	}
+});
+
+// 🗑️ DELETE - usuń umiejętność
+app.delete("/api/profile/skills/:skill", authMiddleware, async (req: any, res) => {
+	try {
+		const userId = req.user?.id;
+		const skillToRemove = decodeURIComponent(req.params.skill);
+
+		const onboarding = await prisma.onboarding_data.findFirst({ where: { user_id: userId }, orderBy: { created_at: "desc" } });
+		let skills = onboarding?.skills ? JSON.parse(onboarding.skills) : [];
+		skills = skills.filter((s: string) => s !== skillToRemove);
+
+		await prisma.onboarding_data.update({
+			where: { id: onboarding!.id },
+			data: { skills: JSON.stringify(skills) },
+		});
+
+		res.json({ success: true, skills });
+	} catch (error) {
+		console.error("❌ Błąd:", error);
+		res.status(500).json({ error: "Nie udało się usunąć umiejętności" });
+	}
+});
 // ============================================================
 // ⭐ OBSŁUGA BŁĘDÓW MULTER
 // ============================================================
