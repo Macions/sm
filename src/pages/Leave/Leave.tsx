@@ -1,3 +1,5 @@
+import { useEffect } from "react";
+import toast from "react-hot-toast";
 import { useState, useMemo } from "react";
 import {
     Calendar,
@@ -366,7 +368,7 @@ function LeaveCard({
             <div className={styles.leaveCard__header}>
                 <div className={styles.leaveCard__user}>
                     <div className={styles.leaveCard__avatar}>
-                        {leave.userAvatar || leave.userName[0]}
+                        {leave.userAvatar || (leave.userName && leave.userName[0]) || '?'}
                     </div>
                     <div className={styles.leaveCard__userInfo}>
                         <h3 className={styles.leaveCard__userName}>{leave.userName}</h3>
@@ -424,10 +426,10 @@ function LeaveCard({
 
                 {leave.approvedBy && (
                     <div className={`${styles.leaveCard__approval} ${leave.status === "approved"
-                            ? styles.leaveCard__approvalApproved
-                            : leave.status === "rejected"
-                                ? styles.leaveCard__approvalRejected
-                                : ""
+                        ? styles.leaveCard__approvalApproved
+                        : leave.status === "rejected"
+                            ? styles.leaveCard__approvalRejected
+                            : ""
                         }`}>
                         {leave.status === "approved" ? (
                             <CheckCircle size={14} />
@@ -479,22 +481,28 @@ function LeaveCard({
                 )}
 
                 <div className={styles.leaveCard__actions}>
-                    <button
-                        className={styles.leaveCard__expandBtn}
-                        onClick={() => setIsExpanded(!isExpanded)}
-                    >
-                        {isExpanded ? (
-                            <>
-                                <ChevronDown size={16} />
-                                Zwiń szczegóły
-                            </>
-                        ) : (
-                            <>
-                                <ChevronRight size={16} />
-                                Pokaż szczegóły
-                            </>
-                        )}
-                    </button>
+                    {/* Pokaż szczegóły TYLKO jeśli są komentarze lub załączniki */}
+                    {(leave.comments && leave.comments.length > 0) || (leave.attachments && leave.attachments.length > 0) ? (
+                        <button
+                            className={styles.leaveCard__expandBtn}
+                            onClick={() => setIsExpanded(!isExpanded)}
+                        >
+                            {isExpanded ? (
+                                <>
+                                    <ChevronDown size={16} />
+                                    Zwiń szczegóły
+                                </>
+                            ) : (
+                                <>
+                                    <ChevronRight size={16} />
+                                    Pokaż szczegóły
+                                </>
+                            )}
+                        </button>
+                    ) : (
+                        // ⭐ JEŚLI NIC NIE MA - NIE WYŚWIETLAJ PRZYCISKU
+                        <div style={{ height: '32px' }} /> // albo po prostu null
+                    )}
 
                     <div className={styles.leaveCard__actionButtons}>
                         <button
@@ -1027,10 +1035,10 @@ function LeaveModal({
 
                     {leave?.approvedBy && (
                         <div className={`${styles.modal__approval} ${leave.status === "approved"
-                                ? styles.modal__approvalApproved
-                                : leave.status === "rejected"
-                                    ? styles.modal__approvalRejected
-                                    : ""
+                            ? styles.modal__approvalApproved
+                            : leave.status === "rejected"
+                                ? styles.modal__approvalRejected
+                                : ""
                             }`}>
                             {leave.status === "approved" ? (
                                 <CheckCircle size={16} />
@@ -1095,7 +1103,8 @@ function LeaveModal({
 // ---------------------------------------------------------------------------
 
 export default function Leave({ title }: { title?: string }) {
-    const [leaves, setLeaves] = useState<LeaveRequest[]>(MOCK_LEAVES);
+    const [leaves, setLeaves] = useState<LeaveRequest[]>([]);
+    const [loading, setLoading] = useState(true);
     const [notifications, setNotifications] = useState<Notification[]>([
         {
             id: "n1",
@@ -1128,13 +1137,35 @@ export default function Leave({ title }: { title?: string }) {
     const canManage = currentUser.role === "admin" || currentUser.role === "coordinator";
 
     const unreadCount = notifications.filter((n) => !n.read).length;
+    useEffect(() => {
+        const fetchLeaves = async () => {
+            try {
+                setLoading(true);
+                const token = localStorage.getItem("accessToken");
+                const response = await fetch("/api/leaves", {
+                    headers: { Authorization: `Bearer ${token}` },
+                });
+
+                if (!response.ok) throw new Error("Błąd pobierania urlopów");
+
+                const data = await response.json();
+                setLeaves(data);
+            } catch (error) {
+                console.error("❌ Błąd:", error);
+                toast.error("Nie udało się pobrać urlopów");
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchLeaves();
+    }, []);
 
     const filteredLeaves = useMemo(() => {
         return leaves.filter((leave) => {
             const matchesSearch =
-                leave.userName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                leave.userTeam.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                (leave.reason && leave.reason.toLowerCase().includes(searchTerm.toLowerCase()));
+                (leave.userName || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+                (leave.userTeam || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+                (leave.reason || '').toLowerCase().includes(searchTerm.toLowerCase());
 
             const matchesStatus = selectedStatus === "all" || leave.status === selectedStatus;
             const matchesType = selectedType === "all" || leave.type === selectedType;
@@ -1206,24 +1237,70 @@ export default function Leave({ title }: { title?: string }) {
         }
     };
 
-    const handleSaveLeave = (leave: LeaveRequest) => {
-        const existingIndex = leaves.findIndex((l) => l.id === leave.id);
-        if (existingIndex >= 0) {
-            const updated = [...leaves];
-            updated[existingIndex] = leave;
-            setLeaves(updated);
-        } else {
-            setLeaves([leave, ...leaves]);
-            // Dodaj powiadomienie o nowym wniosku
-            const notification: Notification = {
-                id: `n${Date.now()}`,
-                title: "Nowy wniosek urlopowy",
-                message: `${leave.userName} zgłosił urlop od ${new Date(leave.startDate).toLocaleDateString("pl-PL")} do ${new Date(leave.endDate).toLocaleDateString("pl-PL")}`,
-                createdAt: new Date().toISOString(),
-                read: false,
-                type: "leave",
+    const handleSaveLeave = async (leave: LeaveRequest) => {
+        try {
+            const token = localStorage.getItem("accessToken");
+            const isEdit = leaves.some(l => l.id === leave.id);
+            const url = isEdit ? `/api/leaves/${leave.id}` : "/api/leaves";
+            const method = isEdit ? "PUT" : "POST";
+
+            // ⭐ PRZYGOTUJ DANE DO WYSŁANIA - TYLKO TE POLA KTÓRE MA BACKEND
+            const payload = {
+                type: leave.type || "vacation",
+                scope: leave.scope || "all",
+                affectedTeams: leave.affectedTeams || [],
+                startDate: leave.startDate,
+                endDate: leave.endDate,
+                reason: leave.reason || "",
+                reasonVisibility: leave.reasonVisibility || "private",
+                attachments: leave.attachments || [],
+                status: leave.status || "pending",
             };
-            setNotifications([notification, ...notifications]);
+
+            console.log("📤 Wysyłam dane do API:", { url, method, payload });
+
+            const response = await fetch(url, {
+                method,
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify(payload),
+            });
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error("❌ Błąd odpowiedzi:", response.status, errorText);
+                throw new Error(`Błąd zapisu: ${response.status} ${errorText}`);
+            }
+
+            const data = await response.json();
+            console.log("✅ Otrzymane dane z API:", data);
+
+            // ⭐ DODAJ BRAKUJĄCE POLA DO OBIEKTU (jeśli backend nie zwraca wszystkiego)
+            const savedLeave = {
+                ...leave,
+                id: data.id || leave.id,
+                userId: data.userId || leave.userId || currentUser.id,
+                userName: data.userName || leave.userName || currentUser.name,
+                userTeam: data.userTeam || leave.userTeam || currentUser.team || "Brak zespołu",
+                createdAt: data.createdAt || new Date().toISOString(),
+                approvedBy: data.approvedBy || leave.approvedBy,
+                approvedAt: data.approvedAt || leave.approvedAt,
+                comments: data.comments || leave.comments || [],
+                attachments: data.attachments || leave.attachments || [],
+            };
+
+            if (isEdit) {
+                setLeaves(leaves.map(l => l.id === leave.id ? savedLeave : l));
+                toast.success("Wniosek zaktualizowany!");
+            } else {
+                setLeaves([savedLeave, ...leaves]);
+                toast.success("Wniosek wysłany!");
+            }
+        } catch (error) {
+            console.error("❌ Błąd:", error);
+            toast.error("Nie udało się zapisać wniosku");
         }
     };
 
@@ -1267,46 +1344,7 @@ export default function Leave({ title }: { title?: string }) {
                     </p>
                 </div>
                 <div className={styles.header__right}>
-                    <div className={styles.header__notifications}>
-                        <button
-                            className={styles.header__notifBtn}
-                            onClick={() => setShowNotifications(!showNotifications)}
-                        >
-                            <Bell size={20} />
-                            {unreadCount > 0 && (
-                                <span className={styles.header__notifBadge}>{unreadCount}</span>
-                            )}
-                        </button>
-                        {showNotifications && (
-                            <div className={styles.header__notifDropdown}>
-                                <div className={styles.header__notifHeader}>
-                                    <span>Powiadomienia</span>
-                                    {unreadCount > 0 && (
-                                        <button onClick={markAllAsRead} className={styles.header__notifMarkAll}>
-                                            Oznacz wszystkie jako przeczytane
-                                        </button>
-                                    )}
-                                </div>
-                                {notifications.length === 0 ? (
-                                    <div className={styles.header__notifEmpty}>Brak powiadomień</div>
-                                ) : (
-                                    notifications.map((n) => (
-                                        <div
-                                            key={n.id}
-                                            className={`${styles.header__notifItem} ${!n.read ? styles.header__notifItemUnread : ""}`}
-                                            onClick={() => markNotificationAsRead(n.id)}
-                                        >
-                                            <div className={styles.header__notifTitle}>{n.title}</div>
-                                            <div className={styles.header__notifMessage}>{n.message}</div>
-                                            <div className={styles.header__notifTime}>
-                                                {new Date(n.createdAt).toLocaleString("pl-PL")}
-                                            </div>
-                                        </div>
-                                    ))
-                                )}
-                            </div>
-                        )}
-                    </div>
+                    
                     <button className={styles.header__addBtn} onClick={handleAddLeave}>
                         <Plus size={18} />
                         Nowy wniosek

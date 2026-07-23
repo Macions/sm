@@ -1,4 +1,7 @@
+import { useNavigate } from 'react-router-dom';
 import React from "react";
+import toast from "react-hot-toast";
+import { useEffect } from "react";
 import { useState } from "react";
 import {
     User,
@@ -92,79 +95,21 @@ interface Member {
 // DANE PRZYKŁADOWE
 // ---------------------------------------------------------------------------
 
-const MOCK_USER: Member = {
-    id: "1",
-    firstName: "Jan",
-    lastName: "Kowalski",
-    function: "Koordynator Filaru Projektowego",
-    team: "Filar Projektowy",
-    province: "Łódzkie",
-    status: "mentor",
-    email: "jan.kowalski@silamlodych.pl",
-    joinDate: "2023-11-01",
-    mentor: "Maksym Marczak",
-    mentee: ["Anna Nowak", "Piotr Kowalski"],
-    currentTasks: [
-        "Przygotowanie raportu z projektu",
-        "Koordynacja spotkania zespołu",
-        "Aktualizacja dokumentacji"
-    ],
-    projects: [
-        "Letnia Akademia Liderów",
-        "Debata Młodych 2026"
-    ],
-    developmentAreas: [
-        "projects",
-        "conferences",
-        "advocacy"
-    ],
-    skills: [
-        "Project Management",
-        "Agile",
-        "Scrum",
-        "Public Speaking",
-        "Negocjacje"
-    ],
-    availability: "Poniedziałek-Piątek 16:00-20:00, Weekendy",
-    description: "Doświadczony koordynator z 3-letnim stażem w organizacji. Pasjonat zarządzania projektami i rozwoju młodych liderów.",
-    contacts: {
-        salaContacts: [
-            "Sala nr 3 - Centrum Konferencyjne (kontakt: 501-234-567)",
-            "Sala warsztatowa - Budynek A"
-        ],
-        mpContacts: [
-            "Poseł Anna Kowalska (anna.kowalska@sejm.gov.pl)",
-            "Poseł Jan Nowak - kontak w sprawie edukacji"
-        ],
-        institutionContacts: [
-            "Fundacja Rozwoju Młodzieży",
-            "Centrum Inicjatyw Obywatelskich"
-        ],
-        otherContacts: [
-            "Redaktor naczelny Gazety Młodych"
-        ]
-    },
-    contributionInfo: {
-        arrears: 50,
-        status: "partial"
-    },
-    leave: {
-        isOnLeave: false,
-        history: [
-            {
-                id: "1",
-                startDate: "2025-07-15",
-                endDate: "2025-07-20",
-                status: "approved"
-            },
-            {
-                id: "2",
-                startDate: "2025-08-01",
-                endDate: "2025-08-07",
-                status: "pending"
-            }
-        ]
-    }
+const EMPTY_USER: Member = {
+    id: "",
+    firstName: "",
+    lastName: "",
+    function: "",
+    team: "",
+    province: "",
+    status: "active",
+    email: "",
+    joinDate: "",
+    currentTasks: [],
+    projects: [],
+    developmentAreas: [],
+    skills: [],
+    availability: "",
 };
 
 // ---------------------------------------------------------------------------
@@ -228,25 +173,85 @@ const CONTRIBUTION_STATUS_COLORS: Record<ContributionStatus, string> = {
 // KOMPONENT
 // ---------------------------------------------------------------------------
 
-export default function Profile({ title }: { title?: string }) {
-    const [user, setUser] = useState<Member>(MOCK_USER);
+export default function Profile({ title, userId }: { title?: string; userId?: string }) {
+    const [user, setUser] = useState<Member>(EMPTY_USER);
+    const [loading, setLoading] = useState(true);
     const [isEditing, setIsEditing] = useState(false);
     // const [showPrivateData, setShowPrivateData] = useState(false);
     const [editData, setEditData] = useState<Partial<Member>>({});
     const [selectedTab, setSelectedTab] = useState<string>("profile");
+    const navigate = useNavigate();
+    useEffect(() => {
+        const fetchProfile = async () => {
+            try {
+                setLoading(true);
+                const token = localStorage.getItem("accessToken");
+                const url = userId ? `/api/profile/${userId}` : "/api/profile";
 
+                const response = await fetch(url, {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                        "Content-Type": "application/json",
+                    },
+                });
+
+                if (!response.ok) {
+                    throw new Error("Nie udało się pobrać profilu");
+                }
+
+                const data = await response.json();
+                setUser(data);
+            } catch (error) {
+                console.error("❌ Błąd pobierania profilu:", error);
+                toast.error("Nie udało się pobrać profilu");
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchProfile();
+    }, [userId]);
 
     // Funkcje do edycji
-    const handleEditToggle = () => {
+    const handleEditToggle = async () => {
         if (isEditing) {
             // Zapisz zmiany
-            setUser({
-                ...user,
-                ...editData,
-            });
-            setEditData({});
+            try {
+                const token = localStorage.getItem("accessToken");
+                const response = await fetch("/api/profile", {
+                    method: "PUT",
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                        firstName: editData.firstName || user.firstName,
+                        lastName: editData.lastName || user.lastName,
+                        province: editData.province || user.province,
+                        description: editData.description || user.description,
+                        skills: editData.skills || user.skills,
+                        developmentAreas: editData.developmentAreas || user.developmentAreas,
+                        availability: editData.availability || user.availability,
+                        phone: editData.phone || user.phone,
+                    }),
+                });
+
+                if (!response.ok) {
+                    throw new Error("Nie udało się zapisać zmian");
+                }
+
+                setUser({
+                    ...user,
+                    ...editData,
+                });
+                setEditData({});
+                toast.success("Profil zaktualizowany!");
+            } catch (error) {
+                console.error("❌ Błąd zapisu:", error);
+                toast.error("Nie udało się zapisać zmian");
+                return;
+            }
         } else {
-            // Rozpocznij edycję
             setEditData({
                 firstName: user.firstName,
                 lastName: user.lastName,
@@ -255,10 +260,12 @@ export default function Profile({ title }: { title?: string }) {
                 skills: user.skills,
                 developmentAreas: user.developmentAreas,
                 availability: user.availability,
+                phone: user.phone,
             });
         }
         setIsEditing(!isEditing);
     };
+
 
     const handleCancelEdit = () => {
         setIsEditing(false);
@@ -284,20 +291,68 @@ export default function Profile({ title }: { title?: string }) {
         }
     };
 
-    const addSkill = () => {
+    const addSkill = async () => {
         const newSkill = prompt("Podaj nazwę umiejętności:");
         if (newSkill && newSkill.trim()) {
-            const current = editData.skills || user.skills;
-            handleInputChange("skills", [...current, newSkill.trim()]);
+            try {
+                const token = localStorage.getItem("accessToken");
+                const response = await fetch("/api/profile/skills", {
+                    method: "POST",
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({ skill: newSkill.trim() }),
+                });
+
+                if (!response.ok) {
+                    throw new Error("Nie udało się dodać umiejętności");
+                }
+
+                const data = await response.json();
+                if (isEditing) {
+                    handleInputChange("skills", data.skills);
+                } else {
+                    setUser({ ...user, skills: data.skills });
+                }
+                toast.success("Umiejętność dodana!");
+            } catch (error) {
+                console.error("❌ Błąd:", error);
+                toast.error("Nie udało się dodać umiejętności");
+            }
         }
     };
 
-    const removeSkill = (skill: string) => {
-        const current = editData.skills || user.skills;
-        handleInputChange("skills", current.filter((s) => s !== skill));
+    const removeSkill = async (skill: string) => {
+        try {
+            const token = localStorage.getItem("accessToken");
+            const response = await fetch(`/api/profile/skills/${encodeURIComponent(skill)}`, {
+                method: "DELETE",
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            });
+
+            if (!response.ok) {
+                throw new Error("Nie udało się usunąć umiejętności");
+            }
+
+            const data = await response.json();
+            if (isEditing) {
+                handleInputChange("skills", data.skills);
+            } else {
+                setUser({ ...user, skills: data.skills });
+            }
+            toast.success("Umiejętność usunięta!");
+        } catch (error) {
+            console.error("❌ Błąd:", error);
+            toast.error("Nie udało się usunąć umiejętności");
+        }
     };
 
+    // DODAJ zabezpieczenie:
     const formatDate = (date: string) => {
+        if (!date) return "Brak danych";
         return new Date(date).toLocaleDateString("pl-PL", {
             year: "numeric",
             month: "long",
@@ -310,6 +365,28 @@ export default function Profile({ title }: { title?: string }) {
     const displayUser = isEditing
         ? { ...user, ...editData }
         : user;
+    if (loading) {
+        return (
+            <div className={styles.profile}>
+                <div className={styles.loading}>
+                    <div className={styles.loading__spinner}></div>
+                    <p>Ładowanie profilu...</p>
+                </div>
+            </div>
+        );
+    }
+
+    if (!user || !user.id) {
+        return (
+            <div className={styles.profile}>
+                <div className={styles.error}>
+                    <AlertCircle size={48} />
+                    <h2>Nie znaleziono profilu</h2>
+                    <p>Użytkownik o podanym ID nie istnieje.</p>
+                </div>
+            </div>
+        );
+    }
     return (
         <div className={styles.profile}>
             {/* Nagłówek */}
@@ -374,7 +451,8 @@ export default function Profile({ title }: { title?: string }) {
                     <div className={styles.profileCard__header}>
                         <div className={styles.profileCard__avatarSection}>
                             <div className={styles.profileCard__avatar}>
-                                {displayUser.avatar || displayUser.firstName[0] + displayUser.lastName[0]}
+                                {displayUser.avatar || (displayUser.firstName?.[0] || "") + (displayUser.lastName?.[0] || "")}
+
                             </div>
                             <div className={styles.profileCard__userInfo}>
                                 <h2 className={styles.profileCard__name}>
@@ -521,7 +599,7 @@ export default function Profile({ title }: { title?: string }) {
                                         <div className={styles.section__areas}>
                                             {Object.entries(DEVELOPMENT_AREA_LABELS).map(([key, label]) => {
                                                 const area = key as DevelopmentArea;
-                                                const isSelected = (editData.developmentAreas || user.developmentAreas).includes(area);
+                                                const isSelected = (editData.developmentAreas || user.developmentAreas || []).includes(area);
                                                 return (
                                                     <button
                                                         key={key}
@@ -541,7 +619,8 @@ export default function Profile({ title }: { title?: string }) {
                                     <div className={styles.section__field}>
                                         <label className={styles.section__label}>Umiejętności</label>
                                         <div className={styles.section__skills}>
-                                            {(editData.skills || user.skills).map((skill) => (
+                                            {(editData.skills || user.skills || []).map((skill) => (
+
                                                 <span key={skill} className={styles.section__skill}>
                                                     {skill}
                                                     {isEditing && (
@@ -597,9 +676,9 @@ export default function Profile({ title }: { title?: string }) {
                                                 <div className={styles.section__item}>
                                                     <span className={styles.section__label}>Kontakty do sal</span>
                                                     <ul className={styles.section__list}>
-                                                        {displayUser.contacts.salaContacts.map((contact) => (
+                                                        {displayUser.contacts?.salaContacts?.map((contact) => (
                                                             <li key={contact}>{contact}</li>
-                                                        ))}
+                                                        )) || <li>Brak kontaktów</li>}
                                                     </ul>
                                                 </div>
                                             )}
@@ -695,7 +774,10 @@ export default function Profile({ title }: { title?: string }) {
                                                 </div>
                                             ))}
                                         </div>
-                                        <button className={styles.section__leaveBtn}>
+                                        <button
+                                            className={styles.section__leaveBtn}
+                                            onClick={() => navigate('/leave')}
+                                        >
                                             <Plus size={16} />
                                             Zgłoś urlop
                                         </button>
@@ -793,9 +875,9 @@ export default function Profile({ title }: { title?: string }) {
                                             <div className={styles.section__item}>
                                                 <span className={styles.section__label}>Kontakty do sal</span>
                                                 <ul className={styles.section__list}>
-                                                    {displayUser.contacts.salaContacts.map((contact) => (
+                                                    {displayUser.contacts?.salaContacts?.map((contact) => (
                                                         <li key={contact}>{contact}</li>
-                                                    ))}
+                                                    )) || <li>Brak kontaktów</li>}
                                                 </ul>
                                             </div>
                                         )}
@@ -889,7 +971,10 @@ export default function Profile({ title }: { title?: string }) {
                                             </div>
                                         ))}
                                     </div>
-                                    <button className={styles.section__leaveBtn}>
+                                    <button
+                                        className={styles.section__leaveBtn}
+                                        onClick={() => navigate('/leave')}
+                                    >
                                         <Plus size={16} />
                                         Zgłoś urlop
                                     </button>

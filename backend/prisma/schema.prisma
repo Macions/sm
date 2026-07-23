@@ -14,6 +14,9 @@ model User {
   password_hash         String               @db.VarChar(255)
   first_name            String               @db.VarChar(50)
   last_name             String               @db.VarChar(50)
+    tasks                 Task[]
+  leaves                Leave[]
+  leaveComments         LeaveComment[]
   is_active             Boolean?             @default(true)
   created_at            DateTime             @default(now()) @db.Timestamp(0)
   team                  String?              @db.VarChar(100)
@@ -280,4 +283,50 @@ model VacancyAttachment {
 
   @@index([vacancy_id], map: "vacancy_attachments_vacancy_id_fkey")
   @@map("vacancy_attachments")
+}
+
+model Task {
+  id          Int      @id @default(autoincrement())
+  title       String   @db.VarChar(255)
+  description String?  @db.Text
+  assigned_to Int?
+  status      String   @default("pending") @db.VarChar(50)
+  created_at  DateTime @default(now()) @db.Timestamp(0)
+  updated_at  DateTime @default(now()) @updatedAt @db.Timestamp(0)
+  
+  user        User?    @relation(fields: [assigned_to], references: [id])
+}
+
+model Leave {
+  id                Int       @id @default(autoincrement())
+  user_id           Int
+  type              String    @default("vacation") @db.VarChar(50)
+  scope             String    @default("all") @db.VarChar(50)
+  affected_teams    String?   @db.LongText // JSON array
+  start_date        DateTime  @db.Date
+  end_date          DateTime  @db.Date
+  reason            String?   @db.Text
+  reason_visibility String    @default("private") @db.VarChar(50)
+  status            String    @default("pending") @db.VarChar(50)
+  attachments       String?   @db.LongText // JSON
+  approved_by       String?   @db.VarChar(255)
+  approved_at       DateTime?
+  created_at        DateTime  @default(now()) @db.Timestamp(0)
+  updated_at        DateTime  @default(now()) @updatedAt @db.Timestamp(0)
+  
+  user              User      @relation(fields: [user_id], references: [id])
+  comments          LeaveComment[]
+  @@map("leaves") 
+}
+
+model LeaveComment {
+  id          Int      @id @default(autoincrement())
+  leave_id    Int
+  author_id   Int
+  content     String   @db.Text
+  created_at  DateTime @default(now()) @db.Timestamp(0)
+  
+  leave       Leave    @relation(fields: [leave_id], references: [id])
+  author      User     @relation(fields: [author_id], references: [id])
+  @@map("leave_comments")
 }
