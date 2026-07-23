@@ -5,22 +5,88 @@ import { PrismaClient } from "@prisma/client";
 import { ProjectController } from "./controllers/project.controller";
 import { UserController } from "./controllers/user.controller";
 import { authMiddleware } from "./middleware/auth.middleware";
+import memberRoutes from './routes/member.routes';
+
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
+import path from "path";
+import fs from "fs";
+import multer from "multer";
+
+// ⭐ ZASTĄP UUID PROSTSZYM GENERATOREM
+function generateId(): string {
+	return Date.now().toString(36) + Math.random().toString(36).substring(2, 9);
+}
 
 const app = express();
 const port = process.env.PORT || 3000;
-const JWT_SECRET =
-	process.env.JWT_SECRET || "your-secret-key-here-change-in-production";
+const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key-here-change-in-production";
 
-// ✅ UŻYJ "as any" - to ominie sprawdzanie typów TypeScript
 const prisma = new PrismaClient() as any;
+
+// ============================================================
+// ⭐ KONFIGURACJA MULTER DO OBSŁUGI PLIKÓW
+// ============================================================
+
+const uploadDir = path.join(__dirname, 'uploads/tutorials');
+if (!fs.existsSync(uploadDir)) {
+	fs.mkdirSync(uploadDir, { recursive: true });
+}
+
+const storage = multer.diskStorage({
+	destination: (req, file, cb) => {
+		cb(null, uploadDir);
+	},
+	filename: (req, file, cb) => {
+		const ext = path.extname(file.originalname);
+		const uniqueName = `${generateId()}${ext}`;
+		cb(null, uniqueName);
+	}
+});
+
+const fileFilter = (req: any, file: any, cb: any) => {
+	const allowedTypes = [
+		'application/pdf',
+		'application/msword',
+		'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+		'application/vnd.ms-excel',
+		'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+		'application/vnd.ms-powerpoint',
+		'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+		'image/jpeg',
+		'image/png',
+		'image/gif',
+		'image/webp',
+		'text/plain',
+		'text/csv',
+		'application/zip'
+	];
+
+	if (allowedTypes.includes(file.mimetype)) {
+		cb(null, true);
+	} else {
+		cb(new Error(`Niedozwolony typ pliku: ${file.mimetype}`), false);
+	}
+};
+
+const upload = multer({
+	storage: storage,
+	limits: {
+		fileSize: 10 * 1024 * 1024, // 10MB
+		files: 5
+	},
+	fileFilter: fileFilter
+});
 
 // ============================================================
 // MIDDLEWARE
 // ============================================================
 app.use(cors());
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+// ⭐ STATYCZNE PLIKI (do pobierania załączników)
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // ============================================================
 // FUNKCJE POMOCNICZE
@@ -70,10 +136,8 @@ const projectController = new ProjectController();
 const userController = new UserController();
 
 // ============================================================
-// ENDPOINTY PUBLICZNE
-// ============================================================
-
 // LOGOWANIE
+// ============================================================
 app.post("/api/auth/login", async (req, res) => {
 	try {
 		const { email, password } = req.body;
@@ -188,35 +252,25 @@ app.post("/api/auth/register", async (req, res) => {
 // ============================================================
 
 // SPRAWDZANIE ONBOARDINGU
-app.get(
-	"/api/auth/onboarding-status",
-	authMiddleware,
-	async (req: any, res) => {
-		try {
-			const userId = req.user?.id;
-			if (!userId) {
-				return res.status(401).json({ error: "Brak autoryzacji" });
-			}
-			res.json({ completed: true });
-		} catch (error) {
-			console.error("❌ Błąd sprawdzania onboardingu:", error);
-			res
-				.status(500)
-				.json({ error: "Nie udało się sprawdzić statusu onboardingu" });
+app.get("/api/auth/onboarding-status", authMiddleware, async (req: any, res) => {
+	try {
+		const userId = req.user?.id;
+		if (!userId) {
+			return res.status(401).json({ error: "Brak autoryzacji" });
 		}
+		res.json({ completed: true });
+	} catch (error) {
+		console.error("❌ Błąd sprawdzania onboardingu:", error);
+		res.status(500).json({ error: "Nie udało się sprawdzić statusu onboardingu" });
 	}
-);
+});
 
 // PROJEKTY
 app.get("/api/projects", authMiddleware, projectController.getAllProjects);
 app.get("/api/projects/:id", authMiddleware, projectController.getProjectById);
 app.post("/api/projects", authMiddleware, projectController.createProject);
 app.put("/api/projects/:id", authMiddleware, projectController.updateProject);
-app.delete(
-	"/api/projects/:id",
-	authMiddleware,
-	projectController.deleteProject
-);
+app.delete("/api/projects/:id", authMiddleware, projectController.deleteProject);
 
 // UŻYTKOWNICY
 app.get("/api/users", authMiddleware, userController.getAllUsers);
@@ -293,97 +347,89 @@ app.get("/api/dashboard/stats", authMiddleware, async (req: any, res) => {
 });
 
 // POWIADOMIENIA - POBIERANIE
-app.get(
-	"/api/dashboard/notifications",
-	authMiddleware,
-	async (req: any, res) => {
-		try {
-			const userId = req.user?.id;
-			if (!userId) {
-				return res.status(401).json({ error: "Brak autoryzacji" });
-			}
-
-			const limit = parseInt(req.query.limit as string) || 4;
-
-			const notifications = await prisma.notification.findMany({
-				where: { user_id: userId },
-				orderBy: { created_at: "desc" },
-				take: limit,
-			});
-
-			const mappedNotifications = notifications.map((n: any) => ({
-				id: n.id.toString(),
-				message: n.message,
-				type: n.type as "success" | "info" | "warning",
-				time: formatTimeAgo(n.created_at),
-				title: n.title,
-				read: n.read || false,
-				link: n.link,
-			}));
-
-			res.json(mappedNotifications);
-		} catch (error) {
-			console.error("❌ Błąd pobierania powiadomień:", error);
-			res.status(500).json({ error: "Nie udało się pobrać powiadomień" });
+app.get("/api/dashboard/notifications", authMiddleware, async (req: any, res) => {
+	try {
+		const userId = req.user?.id;
+		if (!userId) {
+			return res.status(401).json({ error: "Brak autoryzacji" });
 		}
+
+		const limit = parseInt(req.query.limit as string) || 4;
+
+		const notifications = await prisma.notification.findMany({
+			where: { user_id: userId },
+			orderBy: { created_at: "desc" },
+			take: limit,
+		});
+
+		const mappedNotifications = notifications.map((n: any) => ({
+			id: n.id.toString(),
+			message: n.message,
+			type: n.type as "success" | "info" | "warning",
+			time: formatTimeAgo(n.created_at),
+			title: n.title,
+			read: n.read || false,
+			link: n.link,
+		}));
+
+		res.json(mappedNotifications);
+	} catch (error) {
+		console.error("❌ Błąd pobierania powiadomień:", error);
+		res.status(500).json({ error: "Nie udało się pobrać powiadomień" });
 	}
-);
+});
 
 // POWIADOMIENIA - OZNACZ JAKO PRZECZYTANE
-app.put(
-	"/api/dashboard/notifications/:id/read",
-	authMiddleware,
-	async (req: any, res) => {
-		try {
-			const userId = req.user?.id;
-			const id = parseInt(req.params.id);
+app.put("/api/dashboard/notifications/:id/read", authMiddleware, async (req: any, res) => {
+	try {
+		const userId = req.user?.id;
+		const id = parseInt(req.params.id);
 
-			if (!userId) {
-				return res.status(401).json({ error: "Brak autoryzacji" });
-			}
-
-			const result = await prisma.notification.updateMany({
-				where: { id: id, user_id: userId },
-				data: { read: true },
-			});
-
-			if (result.count === 0) {
-				return res.status(404).json({ error: "Nie znaleziono powiadomienia" });
-			}
-
-			res.status(200).json({ message: "Oznaczono jako przeczytane" });
-		} catch (error) {
-			console.error("❌ Błąd oznaczania:", error);
-			res.status(500).json({ error: "Nie udało się oznaczyć" });
+		if (!userId) {
+			return res.status(401).json({ error: "Brak autoryzacji" });
 		}
+
+		const result = await prisma.notification.updateMany({
+			where: { id: id, user_id: userId },
+			data: { read: true },
+		});
+
+		if (result.count === 0) {
+			return res.status(404).json({ error: "Nie znaleziono powiadomienia" });
+		}
+
+		res.status(200).json({ message: "Oznaczono jako przeczytane" });
+	} catch (error) {
+		console.error("❌ Błąd oznaczania:", error);
+		res.status(500).json({ error: "Nie udało się oznaczyć" });
 	}
-);
+});
 
 // POWIADOMIENIA - OZNACZ WSZYSTKIE
-app.put(
-	"/api/dashboard/notifications/read-all",
-	authMiddleware,
-	async (req: any, res) => {
-		try {
-			const userId = req.user?.id;
-			if (!userId) {
-				return res.status(401).json({ error: "Brak autoryzacji" });
-			}
-
-			await prisma.notification.updateMany({
-				where: { user_id: userId, read: false },
-				data: { read: true },
-			});
-
-			res.status(200).json({ message: "Wszystkie oznaczone jako przeczytane" });
-		} catch (error) {
-			console.error("❌ Błąd oznaczania wszystkich:", error);
-			res.status(500).json({ error: "Nie udało się oznaczyć wszystkich" });
+app.put("/api/dashboard/notifications/read-all", authMiddleware, async (req: any, res) => {
+	try {
+		const userId = req.user?.id;
+		if (!userId) {
+			return res.status(401).json({ error: "Brak autoryzacji" });
 		}
-	}
-);
 
-// PORADNIKI - POBIERANIE
+		await prisma.notification.updateMany({
+			where: { user_id: userId, read: false },
+			data: { read: true },
+		});
+
+		res.status(200).json({ message: "Wszystkie oznaczone jako przeczytane" });
+	} catch (error) {
+		console.error("❌ Błąd oznaczania wszystkich:", error);
+		res.status(500).json({ error: "Nie udało się oznaczyć wszystkich" });
+	}
+});
+
+// ============================================================
+// ⭐ PORADNIKI - Z OBSŁUGĄ PLIKÓW
+// ============================================================
+
+// 📥 GET - pobierz wszystkie poradniki
 app.get("/api/tutorials", authMiddleware, async (req: any, res) => {
 	try {
 		const tutorials = await prisma.guide.findMany({
@@ -414,13 +460,38 @@ app.get("/api/tutorials", authMiddleware, async (req: any, res) => {
 	}
 });
 
-// PORADNIKI - TWORZENIE
-app.post("/api/tutorials", authMiddleware, async (req: any, res) => {
+// 📤 POST - utwórz poradnik z plikami
+app.post("/api/tutorials", authMiddleware, upload.array('files', 5), async (req: any, res) => {
 	try {
-		const { title, description, category, access, content } = req.body;
+		console.log('📥 POST /tutorials');
+		console.log('📁 Pliki:', req.files?.length || 0);
+
+		let tutorialData;
+		try {
+			tutorialData = JSON.parse(req.body.data);
+		} catch (e) {
+			tutorialData = req.body;
+		}
+
+		const { title, description, category, access, content, functionalRoles } = tutorialData;
 
 		if (!title) {
 			return res.status(400).json({ error: "Tytuł jest wymagany" });
+		}
+
+		// Zapisz załączniki
+		const attachments: any[] = [];
+		const files = req.files as Express.Multer.File[];
+		if (files && files.length > 0) {
+			for (const file of files) {
+				attachments.push({
+					id: generateId(),
+					name: Buffer.from(file.originalname, 'latin1').toString('utf8'), // <-- POPRAWKA
+					url: `/uploads/tutorials/${file.filename}`,
+					size: `${(file.size / (1024 * 1024)).toFixed(1)} MB`,
+					mimeType: file.mimetype
+				});
+			}
 		}
 
 		const tutorial = await prisma.guide.create({
@@ -429,8 +500,10 @@ app.post("/api/tutorials", authMiddleware, async (req: any, res) => {
 				description: description || null,
 				category: category || "new_member",
 				access: access || "all",
-				author_id: req.user?.id || null,
+				author_id: req.user?.id ? parseInt(req.user.id) : null,
 				content: content || null,
+				attachments: attachments.length > 0 ? JSON.stringify(attachments) : null,
+				functional_roles: functionalRoles ? JSON.stringify(functionalRoles) : null,
 				is_published: 1,
 			},
 		});
@@ -445,30 +518,60 @@ app.post("/api/tutorials", authMiddleware, async (req: any, res) => {
 			createdAt: tutorial.created_at.toISOString().split("T")[0],
 			updatedAt: tutorial.updated_at.toISOString().split("T")[0],
 			content: tutorial.content || "",
-			attachments: [],
-			functionalRoles: [],
+			attachments: attachments,
+			functionalRoles: functionalRoles || [],
 			isNew: true,
 			isUpdated: false,
 		});
 	} catch (error) {
 		console.error("❌ Błąd tworzenia poradnika:", error);
+
+		const files = req.files as Express.Multer.File[];
+		if (files) {
+			for (const file of files) {
+				const filePath = path.join(uploadDir, file.filename);
+				if (fs.existsSync(filePath)) {
+					fs.unlinkSync(filePath);
+				}
+			}
+		}
+
 		res.status(500).json({ error: "Nie udało się utworzyć poradnika" });
 	}
 });
 
-// PORADNIKI - AKTUALIZACJA
-app.put("/api/tutorials/:id", authMiddleware, async (req: any, res) => {
+// 📝 PUT - aktualizuj poradnik z plikami
+app.put("/api/tutorials/:id", authMiddleware, upload.array('files', 5), async (req: any, res) => {
 	try {
 		const id = parseInt(req.params.id);
-		const {
-			title,
-			description,
-			category,
-			access,
-			content,
-			attachments,
-			functionalRoles,
-		} = req.body;
+		console.log(`📥 PUT /tutorials/${id}`);
+		console.log('📁 Pliki:', req.files?.length || 0);
+
+		let tutorialData;
+		try {
+			tutorialData = JSON.parse(req.body.data);
+		} catch (e) {
+			tutorialData = req.body;
+		}
+
+		const { title, description, category, access, content, attachments: existingAttachments, functionalRoles } = tutorialData;
+
+		// Zapisz nowe pliki
+		const newAttachments: any[] = [];
+		const files = req.files as Express.Multer.File[];
+		if (files && files.length > 0) {
+			for (const file of files) {
+				newAttachments.push({
+					id: generateId(),
+					name: Buffer.from(file.originalname, 'latin1').toString('utf8'), // <-- POPRAWKA
+					url: `/uploads/tutorials/${file.filename}`,
+					size: `${(file.size / (1024 * 1024)).toFixed(1)} MB`,
+					mimeType: file.mimetype
+				});
+			}
+		}
+
+		const allAttachments = [...(existingAttachments || []), ...newAttachments];
 
 		const tutorial = await prisma.guide.update({
 			where: { id },
@@ -478,8 +581,9 @@ app.put("/api/tutorials/:id", authMiddleware, async (req: any, res) => {
 				category: category || "new_member",
 				access: access || "all",
 				content: content || null,
-				attachments: attachments ? JSON.stringify(attachments) : null,
+				attachments: allAttachments.length > 0 ? JSON.stringify(allAttachments) : null,
 				functional_roles: functionalRoles ? JSON.stringify(functionalRoles) : null,
+				updated_at: new Date(),
 			},
 		});
 
@@ -493,25 +597,52 @@ app.put("/api/tutorials/:id", authMiddleware, async (req: any, res) => {
 			createdAt: tutorial.created_at.toISOString().split("T")[0],
 			updatedAt: tutorial.updated_at.toISOString().split("T")[0],
 			content: tutorial.content || "",
-			attachments: attachments || [],
+			attachments: allAttachments,
 			functionalRoles: functionalRoles || [],
 			isNew: false,
 			isUpdated: true,
 		});
 	} catch (error) {
 		console.error("❌ Błąd aktualizacji poradnika:", error);
+
+		const files = req.files as Express.Multer.File[];
+		if (files) {
+			for (const file of files) {
+				const filePath = path.join(uploadDir, file.filename);
+				if (fs.existsSync(filePath)) {
+					fs.unlinkSync(filePath);
+				}
+			}
+		}
+
 		res.status(500).json({ error: "Nie udało się zaktualizować poradnika" });
 	}
 });
 
-// PORADNIKI - USUWANIE (soft delete)
+// 🗑️ DELETE - usuń poradnik (razem z plikami)
 app.delete("/api/tutorials/:id", authMiddleware, async (req: any, res) => {
 	try {
 		const id = parseInt(req.params.id);
+
+		const tutorial = await prisma.guide.findUnique({
+			where: { id }
+		});
+
+		if (tutorial && tutorial.attachments) {
+			const attachments = JSON.parse(tutorial.attachments);
+			for (const att of attachments) {
+				const filePath = path.join(__dirname, att.url);
+				if (fs.existsSync(filePath)) {
+					fs.unlinkSync(filePath);
+				}
+			}
+		}
+
 		await prisma.guide.update({
 			where: { id },
 			data: { is_published: 0 },
 		});
+
 		res.status(204).send();
 	} catch (error) {
 		console.error("❌ Błąd usuwania poradnika:", error);
@@ -519,34 +650,119 @@ app.delete("/api/tutorials/:id", authMiddleware, async (req: any, res) => {
 	}
 });
 
-// POWIADOMIENIA - USUŃ
-app.delete(
-	"/api/dashboard/notifications/:id",
-	authMiddleware,
-	async (req: any, res) => {
-		try {
-			const userId = req.user?.id;
-			const id = parseInt(req.params.id);
+// 🗑️ DELETE - usuń pojedynczy załącznik
+app.delete("/api/tutorials/attachments/:id", authMiddleware, async (req: any, res) => {
+	try {
+		const { id } = req.params;
+		const tutorialId = parseInt(req.query.tutorialId as string);
 
-			if (!userId) {
-				return res.status(401).json({ error: "Brak autoryzacji" });
-			}
+		console.log(`🗑️ Usuwanie załącznika: ${id} z poradnika: ${tutorialId}`);
 
-			const result = await prisma.notification.deleteMany({
-				where: { id: id, user_id: userId },
-			});
+		const tutorial = await prisma.guide.findUnique({
+			where: { id: tutorialId }
+		});
 
-			if (result.count === 0) {
-				return res.status(404).json({ error: "Nie znaleziono powiadomienia" });
-			}
-
-			res.status(200).json({ message: "Usunięto powiadomienie" });
-		} catch (error) {
-			console.error("❌ Błąd usuwania:", error);
-			res.status(500).json({ error: "Nie udało się usunąć" });
+		if (!tutorial || !tutorial.attachments) {
+			return res.status(404).json({ error: "Nie znaleziono poradnika lub załączników" });
 		}
+
+		let attachments = JSON.parse(tutorial.attachments);
+		const attachmentToRemove = attachments.find((a: any) => a.id === id);
+
+		if (attachmentToRemove) {
+			const filePath = path.join(__dirname, attachmentToRemove.url);
+			if (fs.existsSync(filePath)) {
+				fs.unlinkSync(filePath);
+			}
+
+			attachments = attachments.filter((a: any) => a.id !== id);
+
+			await prisma.guide.update({
+				where: { id: tutorialId },
+				data: {
+					attachments: attachments.length > 0 ? JSON.stringify(attachments) : null
+				},
+			});
+		}
+
+		res.json({ success: true });
+	} catch (error) {
+		console.error("❌ Błąd usuwania załącznika:", error);
+		res.status(500).json({ error: "Nie udało się usunąć załącznika" });
 	}
-);
+});
+
+// 📥 GET - pobierz plik
+// 📥 GET - pobierz plik
+app.get("/api/uploads/tutorials/:filename", async (req: any, res) => {
+	try {
+		const { filename } = req.params;
+		const filePath = path.join(uploadDir, filename);
+
+		if (!fs.existsSync(filePath)) {
+			return res.status(404).json({ error: 'Nie znaleziono pliku' });
+		}
+
+		// ⭐ DODAJ POPRAWNE NAGŁÓWKI
+		const mimeType = getMimeType(filename);
+		res.setHeader('Content-Type', mimeType);
+		const encodedFileName = encodeURIComponent(filename);
+		res.setHeader('Content-Disposition', `attachment; filename*=UTF-8''${encodedFileName}`);
+		res.sendFile(filePath);
+	} catch (error) {
+		console.error("❌ Błąd pobierania pliku:", error);
+		res.status(500).json({ error: "Nie udało się pobrać pliku" });
+	}
+});
+
+// ⭐ DODAJ FUNKCJĘ DO OKREŚLANIA TYPU MIME
+function getMimeType(filename: string): string {
+	const ext = path.extname(filename).toLowerCase();
+	const mimeTypes: Record<string, string> = {
+		'.pdf': 'application/pdf',
+		'.doc': 'application/msword',
+		'.docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+		'.xls': 'application/vnd.ms-excel',
+		'.xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+		'.ppt': 'application/vnd.ms-powerpoint',
+		'.pptx': 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+		'.jpg': 'image/jpeg',
+		'.jpeg': 'image/jpeg',
+		'.png': 'image/png',
+		'.gif': 'image/gif',
+		'.webp': 'image/webp',
+		'.txt': 'text/plain',
+		'.csv': 'text/csv',
+		'.zip': 'application/zip',
+		'.rar': 'application/x-rar-compressed',
+	};
+	return mimeTypes[ext] || 'application/octet-stream';
+}
+
+// POWIADOMIENIA - USUŃ
+app.delete("/api/dashboard/notifications/:id", authMiddleware, async (req: any, res) => {
+	try {
+		const userId = req.user?.id;
+		const id = parseInt(req.params.id);
+
+		if (!userId) {
+			return res.status(401).json({ error: "Brak autoryzacji" });
+		}
+
+		const result = await prisma.notification.deleteMany({
+			where: { id: id, user_id: userId },
+		});
+
+		if (result.count === 0) {
+			return res.status(404).json({ error: "Nie znaleziono powiadomienia" });
+		}
+
+		res.status(200).json({ message: "Usunięto powiadomienie" });
+	} catch (error) {
+		console.error("❌ Błąd usuwania:", error);
+		res.status(500).json({ error: "Nie udało się usunąć" });
+	}
+});
 
 // STRUKTURA
 app.get("/api/structure", authMiddleware, async (req: any, res) => {
@@ -656,11 +872,39 @@ app.get("/api/structure", authMiddleware, async (req: any, res) => {
 		res.status(500).json({ error: "Nie udało się pobrać struktury" });
 	}
 });
+app.use('/api', memberRoutes);
+// ============================================================
+// ⭐ OBSŁUGA BŁĘDÓW MULTER
+// ============================================================
+app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
+	console.error('❌ Błąd:', err);
+
+	if (err instanceof multer.MulterError) {
+		// Użyj err.message zamiast err.code
+		if (err.message.includes('File too large')) {
+			return res.status(400).json({ error: 'Plik jest za duży. Maksymalny rozmiar: 10MB' });
+		}
+		if (err.message.includes('too many files')) {
+			return res.status(400).json({ error: 'Maksymalnie 5 plików na raz' });
+		}
+		if (err.message.includes('Unexpected field')) {
+			return res.status(400).json({ error: 'Nieoczekiwany plik. Sprawdź nazwę pola (files)' });
+		}
+		return res.status(400).json({ error: err.message });
+	}
+
+	if (err.message && err.message.includes('Niedozwolony typ pliku')) {
+		return res.status(400).json({ error: err.message });
+	}
+
+	res.status(500).json({ error: err.message || 'Wewnętrzny błąd serwera' });
+});
 
 // ============================================================
 // START SERWERA
 // ============================================================
 app.listen(port, () => {
 	console.log(`🚀 Serwer działa na porcie ${port}`);
+	console.log(`📁 Katalog uploadów: ${uploadDir}`);
 	console.log(`📋 Dostępne modele:`, Object.keys(prisma).filter((key: string) => !key.startsWith('_')));
 });

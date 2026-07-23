@@ -26,6 +26,20 @@ model User {
   join_date             DateTime?            @db.Date
   is_trial              Boolean?             @default(false)
   attendance_percentage Decimal?             @default(92.00) @db.Decimal(5, 2)
+  
+  // ⭐ DODAJ TE POLA:
+  form_data             String?              @db.LongText   // JSON z dodatkowymi danymi (zainteresowania, umiejętności, kontakty itp.)
+  // ⭐ LUB jeśli chcesz osobne pola:
+  // interests            String?              @db.LongText   // JSON array
+  // skills               String?              @db.LongText   // JSON array
+  // sm_areas             String?              @db.LongText   // JSON array
+  // training_areas       String?              @db.LongText   // JSON array
+  // contribution_status  String?              @default("paid") @db.VarChar(50)
+  // arrears              Decimal?             @default(0) @db.Decimal(10, 2)
+  // sala_contacts        String?              @db.LongText   // JSON array
+  // mp_contacts          String?              @db.LongText   // JSON array
+  // other_contacts       String?              @db.LongText   // JSON array
+
   guides                Guide[]
   notifications         Notification[]
   onboarding_data       onboarding_data[]
