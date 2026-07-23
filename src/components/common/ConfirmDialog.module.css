@@ -1,0 +1,95 @@
+.overlay {
+	position: fixed;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	background: rgba(0, 0, 0, 0.5);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	z-index: 10000;
+	animation: fadeIn 0.2s ease;
+}
+
+.dialog {
+	background: white;
+	border-radius: 12px;
+	padding: 24px;
+	max-width: 400px;
+	width: 90%;
+	box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+	animation: slideUp 0.2s ease;
+}
+
+.title {
+	font-size: 18px;
+	font-weight: 600;
+	color: #1a1a2e;
+	margin: 0 0 8px 0;
+}
+
+.message {
+	font-size: 14px;
+	color: #4b5563;
+	margin: 0 0 24px 0;
+	line-height: 1.5;
+}
+
+.actions {
+	display: flex;
+	gap: 12px;
+	justify-content: flex-end;
+}
+
+.cancelBtn {
+	padding: 10px 20px;
+	border: none;
+	border-radius: 8px;
+	font-size: 14px;
+	font-weight: 500;
+	cursor: pointer;
+	background: #f3f4f6;
+	color: #4b5563;
+	transition: background 0.2s;
+}
+
+.cancelBtn:hover {
+	background: #e5e7eb;
+}
+
+.confirmBtn {
+	padding: 10px 20px;
+	border: none;
+	border-radius: 8px;
+	font-size: 14px;
+	font-weight: 500;
+	cursor: pointer;
+	background: #ef4444;
+	color: white;
+	transition: background 0.2s;
+}
+
+.confirmBtn:hover {
+	background: #dc2626;
+}
+
+@keyframes fadeIn {
+	from {
+		opacity: 0;
+	}
+	to {
+		opacity: 1;
+	}
+}
+
+@keyframes slideUp {
+	from {
+		transform: translateY(20px);
+		opacity: 0;
+	}
+	to {
+		transform: translateY(0);
+		opacity: 1;
+	}
+}

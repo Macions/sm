@@ -32,7 +32,7 @@ import styles from "./Profile.module.css";
 // TYPY
 // ---------------------------------------------------------------------------
 
-type MemberStatus = "trial" | "full" | "mentor";
+type MemberStatus = "active" | "trial" | "mentor";  // ✅ TYLKO 3
 type DevelopmentArea =
     | "projects"
     | "conferences"
@@ -172,23 +172,22 @@ const MOCK_USER: Member = {
 // ---------------------------------------------------------------------------
 
 const STATUS_LABELS: Record<MemberStatus, string> = {
+    active: "Pełnoprawny członek",  // ✅ zamiast "full"
     trial: "Okres próbny",
-    full: "Aktywny członek",
     mentor: "Mentor",
 };
 
 const STATUS_COLORS: Record<MemberStatus, string> = {
     trial: styles.statusTrial,
-    full: styles.statusFull,
+    active: styles.statusFull,  // ✅ "active" zamiast "full"
     mentor: styles.statusMentor,
 };
 
 const STATUS_ICONS: Record<MemberStatus, React.ReactNode> = {
     trial: <Clock size={16} />,
-    full: <CheckCircle size={16} />,
+    active: <CheckCircle size={16} />,  // ✅ "active" zamiast "full"
     mentor: <Star size={16} />,
 };
-
 const DEVELOPMENT_AREA_LABELS: Record<DevelopmentArea, string> = {
     projects: "Projekty",
     conferences: "Konferencje i debaty",

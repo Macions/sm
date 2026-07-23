@@ -167,7 +167,7 @@ export class UserController {
 
 			await prisma.user.update({
 				where: { id },
-				data: { is_active: false },
+				data: { is_active: 0 },
 			});
 
 			res.json({ message: "Użytkownik został dezaktywowany" });

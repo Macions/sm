@@ -26,20 +26,7 @@ model User {
   join_date             DateTime?            @db.Date
   is_trial              Boolean?             @default(false)
   attendance_percentage Decimal?             @default(92.00) @db.Decimal(5, 2)
-  
-  // ⭐ DODAJ TE POLA:
-  form_data             String?              @db.LongText   // JSON z dodatkowymi danymi (zainteresowania, umiejętności, kontakty itp.)
-  // ⭐ LUB jeśli chcesz osobne pola:
-  // interests            String?              @db.LongText   // JSON array
-  // skills               String?              @db.LongText   // JSON array
-  // sm_areas             String?              @db.LongText   // JSON array
-  // training_areas       String?              @db.LongText   // JSON array
-  // contribution_status  String?              @default("paid") @db.VarChar(50)
-  // arrears              Decimal?             @default(0) @db.Decimal(10, 2)
-  // sala_contacts        String?              @db.LongText   // JSON array
-  // mp_contacts          String?              @db.LongText   // JSON array
-  // other_contacts       String?              @db.LongText   // JSON array
-
+  form_data             String?              @db.LongText
   guides                Guide[]
   notifications         Notification[]
   onboarding_data       onboarding_data[]
@@ -48,6 +35,8 @@ model User {
   team_members          TeamMember[]
   user_notifications    user_notifications[]
   roles                 roles?               @relation(fields: [role_id], references: [id], onUpdate: Restrict, map: "users_ibfk_1")
+  vacancies             Vacancy[]
+  vacancyApplications   VacancyApplication[]
 
   @@index([role_id], map: "idx_users_role_id")
   @@index([status], map: "idx_users_status")
@@ -204,4 +193,91 @@ model user_notifications {
   @@unique([user_id, notification_id], map: "unique_user_notification")
   @@index([user_id, read], map: "idx_user_notifications_user_read")
   @@index([notification_id], map: "notification_id")
+}
+
+model Vacancy {
+  id                            Int                  @id @default(autoincrement())
+  title                         String               @db.VarChar(255)
+  icon                          String?              @default("Briefcase") @db.VarChar(50)
+  description                   String               @db.Text
+  responsibilities              String?              @db.LongText
+  requirements                  String?              @db.LongText
+  nice_to_have                  String?              @db.LongText
+  team                          String?              @db.VarChar(100)
+  team_id                       String?              @db.VarChar(100)
+  pillar                        String?              @db.VarChar(100)
+  contact_person_id             Int?
+  status                        String?              @default("active") @db.VarChar(50)
+  recruitment_type              String?              @default("internal") @db.VarChar(50)
+  recruitment_deadline          DateTime?
+  recruitment_form_url          String?              @db.VarChar(500)
+  recruitment_messenger_contact String?              @db.VarChar(255)
+  is_active                     Boolean?             @default(true)
+  created_at                    DateTime             @default(now()) @db.Timestamp(0)
+  updated_at                    DateTime             @default(now()) @updatedAt @db.Timestamp(0)
+  contact_person                User?                @relation(fields: [contact_person_id], references: [id])
+  applications                  VacancyApplication[]
+  attachments                   VacancyAttachment[]
+  questions                     VacancyQuestion[]
+
+  @@index([contact_person_id], map: "vacancies_contact_person_id_fkey")
+  @@map("vacancies")
+}
+
+model VacancyQuestion {
+  id         Int             @id @default(autoincrement())
+  vacancy_id Int
+  question   String          @db.Text
+  type       String          @default("text") @db.VarChar(50)
+  required   Boolean?        @default(false)
+  options    String?         @db.LongText
+  order      Int?            @default(0)
+  answers    VacancyAnswer[]
+  vacancy    Vacancy         @relation(fields: [vacancy_id], references: [id], onDelete: Cascade)
+
+  @@index([vacancy_id], map: "vacancy_questions_vacancy_id_fkey")
+  @@map("vacancy_questions")
+}
+
+model VacancyApplication {
+  id         Int             @id @default(autoincrement())
+  vacancy_id Int
+  user_id    Int
+  message    String?         @db.Text
+  status     String?         @default("pending") @db.VarChar(50)
+  created_at DateTime        @default(now()) @db.Timestamp(0)
+  answers    VacancyAnswer[]
+  user       User            @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  vacancy    Vacancy         @relation(fields: [vacancy_id], references: [id], onDelete: Cascade)
+
+  @@index([user_id], map: "vacancy_applications_user_id_fkey")
+  @@index([vacancy_id], map: "vacancy_applications_vacancy_id_fkey")
+  @@map("vacancy_applications")
+}
+
+model VacancyAnswer {
+  id             Int                @id @default(autoincrement())
+  application_id Int
+  question_id    Int
+  answer         String             @db.Text
+  application    VacancyApplication @relation(fields: [application_id], references: [id], onDelete: Cascade)
+  question       VacancyQuestion    @relation(fields: [question_id], references: [id], onDelete: Cascade)
+
+  @@index([application_id], map: "vacancy_answers_application_id_fkey")
+  @@index([question_id], map: "vacancy_answers_question_id_fkey")
+  @@map("vacancy_answers")
+}
+
+model VacancyAttachment {
+  id          Int      @id @default(autoincrement())
+  vacancy_id  Int
+  name        String   @db.VarChar(255)
+  url         String   @db.VarChar(500)
+  size        Int
+  type        String?  @db.VarChar(100)
+  uploaded_at DateTime @default(now()) @db.Timestamp(0)
+  vacancy     Vacancy  @relation(fields: [vacancy_id], references: [id], onDelete: Cascade)
+
+  @@index([vacancy_id], map: "vacancy_attachments_vacancy_id_fkey")
+  @@map("vacancy_attachments")
 }
