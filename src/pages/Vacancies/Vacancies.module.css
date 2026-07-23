@@ -703,14 +703,14 @@
 }
 
 .modal__listItem {
-    display: flex;
+	display: flex;
 	align-items: flex-start;
 	gap: 10px;
 	padding: 6px 0;
 	font-size: 15px;
 	color: #334155;
 	line-height: 1.5;
-    align-items: center;
+	align-items: center;
 }
 
 .modal__listItem svg {
@@ -3530,4 +3530,1091 @@
 	padding: 2px 10px;
 	border-radius: 12px;
 	margin-left: 8px;
+}
+
+.loading {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	padding: 60px 20px;
+	gap: 16px;
+}
+
+.loading__spinner {
+	width: 40px;
+	height: 40px;
+	border: 4px solid #f3f4f6;
+	border-top-color: #6366f1;
+	border-radius: 50%;
+	animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+	to {
+		transform: rotate(360deg);
+	}
+}
+/* Informacja o rekrutacji */
+.vacancyCard__recruitment {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	margin-top: 8px;
+	padding: 6px 12px;
+	background: #f8fafc;
+	border-radius: 6px;
+	font-size: 12px;
+	color: #64748b;
+	flex-wrap: wrap;
+}
+
+.vacancyCard__deadline {
+	display: flex;
+	align-items: center;
+	gap: 4px;
+}
+
+.vacancyCard__recruitmentType {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+	padding: 2px 8px;
+	background: #e2e8f0;
+	border-radius: 4px;
+	font-size: 11px;
+	color: #475569;
+	font-weight: 500;
+	white-space: nowrap;
+}
+
+/* W widoku listy */
+.vacancyCardList .vacancyCard__recruitment {
+	padding: 4px 0;
+	background: transparent;
+}
+
+.vacancyCardList .vacancyCard__recruitmentType {
+	background: #e2e8f0;
+	padding: 2px 8px;
+}
+/* Dodaj te klasy jeśli brakuje */
+.modal__warning {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	padding: 12px 16px;
+	background-color: #fef2f2;
+	border: 1px solid #fecaca;
+	border-radius: 8px;
+	color: #dc2626;
+	margin-bottom: 16px;
+}
+
+.contactSuggestions {
+	position: absolute;
+	top: 100%;
+	left: 0;
+	right: 0;
+	background: white;
+	border: 1px solid #e2e8f0;
+	border-radius: 8px;
+	margin-top: 4px;
+	max-height: 200px;
+	overflow-y: auto;
+	z-index: 1000;
+	list-style: none;
+	padding: 0;
+}
+
+.contactSuggestionItem {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	padding: 8px 12px;
+	cursor: pointer;
+	transition: background-color 0.2s;
+}
+
+.contactSuggestionItem:hover {
+	background-color: #f1f5f9;
+}
+
+.contactSuggestionName {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
+
+.contactSuggestionEmail {
+	display: flex;
+	align-items: center;
+	gap: 4px;
+	font-size: 12px;
+	color: #64748b;
+}
+
+.contactInputWrapper {
+	position: relative;
+}
+
+.vacancyCard__recruitment {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 12px;
+	margin-top: 8px;
+	padding-top: 8px;
+	border-top: 1px solid #e2e8f0;
+}
+
+.vacancyCard__deadline {
+	display: flex;
+	align-items: center;
+	gap: 4px;
+	font-size: 12px;
+	color: #64748b;
+}
+
+.vacancyCard__recruitmentType {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+	font-size: 12px;
+	padding: 2px 8px;
+	border-radius: 12px;
+	background-color: #f1f5f9;
+}
+
+.vacancyCard__recruitmentType--form {
+	background-color: #dbeafe;
+	color: #1d4ed8;
+}
+
+.vacancyCard__recruitmentType--messenger {
+	background-color: #d1fae5;
+	color: #059669;
+}
+
+.vacancyCard__recruitmentType--internal {
+	background-color: #fef3c7;
+	color: #d97706;
+}
+
+.questionActions {
+	display: flex;
+	gap: 4px;
+}
+
+.questionEdit {
+	background: none;
+	border: none;
+	color: #64748b;
+	cursor: pointer;
+	padding: 4px;
+	border-radius: 4px;
+	transition: all 0.2s;
+}
+
+.questionEdit:hover {
+	background-color: #f1f5f9;
+	color: #3b82f6;
+}
+
+.editQuestionForm {
+	margin-top: 8px;
+	padding: 12px;
+	background-color: #f8fafc;
+	border-radius: 8px;
+	border: 1px solid #e2e8f0;
+}
+
+/* ---------------------------------------------------------------------------
+   ZGŁOSZENIA - NOWOCZESNY WIDOK
+   --------------------------------------------------------------------------- */
+
+/* Kontener zgłoszeń */
+.modal__applicants {
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+	margin-top: 8px;
+	width: 100%;
+}
+
+/* Pojedyncze zgłoszenie - karta */
+.modal__applicant {
+	background: #ffffff;
+	border: 1px solid #e2e8f0;
+	border-radius: 12px;
+	padding: 16px 20px;
+	transition: all 0.25s ease;
+	box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+	width: 100%;
+}
+
+.modal__applicant:hover {
+	border-color: #cbd5e1;
+	box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+	transform: translateY(-2px);
+}
+
+/* Nagłówek zgłoszenia - pierwszy wiersz */
+.modal__applicantHeader {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: 12px;
+	width: 100%;
+}
+
+/* Lewa część nagłówka - dane kandydata */
+.modal__applicantInfo {
+	display: flex;
+	align-items: center;
+	gap: 14px;
+	flex-wrap: wrap;
+	flex: 1;
+	min-width: 200px;
+}
+
+/* Imię i nazwisko kandydata */
+.modal__applicantName {
+	font-size: 15px;
+	font-weight: 600;
+	color: #0f172a;
+	letter-spacing: -0.01em;
+}
+
+/* Email kandydata */
+.modal__applicantEmail {
+	display: flex;
+	align-items: center;
+	gap: 5px;
+	font-size: 13px;
+	color: #64748b;
+	background: #f8fafc;
+	padding: 3px 12px 3px 8px;
+	border-radius: 6px;
+	border: 1px solid #f1f5f9;
+}
+
+.modal__applicantEmail svg {
+	color: #94a3b8;
+	flex-shrink: 0;
+}
+
+/* Status zgłoszenia - odznaka */
+.modal__applicantStatus {
+	font-size: 12px;
+	font-weight: 600;
+	padding: 4px 14px;
+	border-radius: 20px;
+	white-space: nowrap;
+	letter-spacing: 0.01em;
+}
+
+/* Statusy - kolory */
+.applicantStatusPending {
+	background: #fef3c7;
+	color: #92400e;
+	border: 1px solid #fcd34d;
+}
+
+.applicantStatusReviewed {
+	background: #dbeafe;
+	color: #1e40af;
+	border: 1px solid #93c5fd;
+}
+
+.applicantStatusAccepted {
+	background: #dcfce7;
+	color: #166534;
+	border: 1px solid #86efac;
+}
+
+.applicantStatusRejected {
+	background: #fee2e2;
+	color: #991b1b;
+	border: 1px solid #fca5a5;
+}
+
+/* Przycisk "Szczegóły" */
+.modal__applicantToggle {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	padding: 6px 18px;
+	background: #f1f5f9;
+	border: 1px solid #e2e8f0;
+	border-radius: 8px;
+	font-size: 13px;
+	font-weight: 500;
+	color: #475569;
+	cursor: pointer;
+	transition: all 0.2s ease;
+	flex-shrink: 0;
+}
+
+.modal__applicantToggle:hover {
+	background: #e2e8f0;
+	color: #0f172a;
+	border-color: #cbd5e1;
+}
+
+.modal__applicantToggle:active {
+	transform: scale(0.97);
+}
+
+.modal__applicantToggle svg {
+	transition: transform 0.25s ease;
+}
+
+/* Strzałka obrócona gdy rozwinięte */
+.modal__applicantToggle.active svg {
+	transform: rotate(90deg);
+}
+
+/* ============================================================
+   ROZWIJANE SZCZEGÓŁY - PEŁNA SZEROKOŚĆ POD SPODEM
+   ============================================================ */
+
+/* Rozwijane szczegóły - kontener */
+.modal__applicantDetails {
+	margin-top: 16px;
+	padding-top: 16px;
+	border-top: 2px solid #f1f5f9;
+	display: flex;
+	flex-direction: column;
+	gap: 14px;
+	width: 100%;
+	animation: slideDown 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Animacja rozwijania */
+@keyframes slideDown {
+	from {
+		opacity: 0;
+		transform: translateY(-10px);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+
+/* Wiadomość kandydata - karta */
+.modal__applicantMessage {
+	padding: 14px 18px;
+	background: #f8fafc;
+	border-radius: 10px;
+	border: 1px solid #e2e8f0;
+	width: 100%;
+}
+
+.modal__applicantMessage strong {
+	display: block;
+	font-size: 13px;
+	font-weight: 600;
+	color: #0f172a;
+	margin-bottom: 6px;
+}
+
+.modal__applicantMessage p {
+	margin: 0;
+	font-size: 14px;
+	color: #334155;
+	line-height: 1.7;
+	word-wrap: break-word;
+	white-space: pre-wrap;
+}
+
+/* Odpowiedzi na pytania - kontener */
+.modal__applicantAnswers {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	width: 100%;
+}
+
+.modal__applicantAnswers > strong {
+	font-size: 13px;
+	font-weight: 600;
+	color: #0f172a;
+	margin-bottom: 2px;
+	display: block;
+}
+
+/* Lista odpowiedzi */
+.modal__applicantAnswersList {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	width: 100%;
+}
+
+/* Pojedyncza odpowiedź - karta */
+.modal__applicantAnswer {
+	padding: 12px 16px;
+	background: #f8fafc;
+	border-radius: 10px;
+	border: 1px solid #e2e8f0;
+	transition: all 0.2s ease;
+	width: 100%;
+}
+
+.modal__applicantAnswer:hover {
+	background: #f1f5f9;
+	border-color: #cbd5e1;
+}
+
+/* Kolorowy pasek po lewej dla typu pytania */
+.modal__applicantAnswer.type-text {
+	border-left: 4px solid #6366f1;
+}
+.modal__applicantAnswer.type-number {
+	border-left: 4px solid #22c55e;
+}
+.modal__applicantAnswer.type-textarea {
+	border-left: 4px solid #f59e0b;
+}
+.modal__applicantAnswer.type-select {
+	border-left: 4px solid #8b5cf6;
+}
+.modal__applicantAnswer.type-checkbox {
+	border-left: 4px solid #ec4899;
+}
+
+/* Treść pytania */
+.modal__applicantQuestion {
+	font-size: 13px;
+	font-weight: 500;
+	color: #0f172a;
+	margin-bottom: 6px;
+}
+
+.modal__applicantQuestion .requiredStar {
+	color: #ef4444;
+	margin-left: 3px;
+	font-weight: 700;
+}
+
+.modal__answerType {
+	font-size: 11px;
+	color: #94a3b8;
+	margin-left: 8px;
+	font-weight: 400;
+}
+
+/* Treść odpowiedzi */
+.modal__applicantAnswerText {
+	font-size: 14px;
+	color: #1e293b;
+	padding: 8px 14px;
+	background: #ffffff;
+	border-radius: 8px;
+	border: 1px solid #e2e8f0;
+	word-break: break-word;
+	line-height: 1.6;
+	transition: all 0.2s ease;
+	width: 100%;
+}
+
+.modal__applicantAnswerText:hover {
+	border-color: #cbd5e1;
+}
+
+/* Data zgłoszenia */
+.modal__applicantDate {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	font-size: 13px;
+	color: #94a3b8;
+	padding: 6px 0 2px 0;
+	width: 100%;
+}
+
+.modal__applicantDate svg {
+	color: #94a3b8;
+	flex-shrink: 0;
+}
+
+/* Przyciski akcji dla admina - kontener */
+.modal__applicantActions {
+	display: flex;
+	gap: 10px;
+	margin-top: 6px;
+	flex-wrap: wrap;
+	padding-top: 4px;
+	width: 100%;
+}
+
+/* Przyciski akcji */
+.modal__applicantActionBtn {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	padding: 8px 20px;
+	background: #6366f1;
+	color: white;
+	border: none;
+	border-radius: 8px;
+	font-size: 13px;
+	font-weight: 500;
+	cursor: pointer;
+	transition: all 0.2s ease;
+	box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.modal__applicantActionBtn:hover {
+	background: #4f46e5;
+	transform: translateY(-2px);
+	box-shadow: 0 4px 12px rgba(99, 102, 241, 0.35);
+}
+
+.modal__applicantActionBtn:active {
+	transform: translateY(0);
+	box-shadow: none;
+}
+
+/* Przycisk "Odrzuć" - czerwony */
+.modal__applicantActionBtnDanger {
+	background: #ef4444;
+}
+
+.modal__applicantActionBtnDanger:hover {
+	background: #dc2626;
+	box-shadow: 0 4px 12px rgba(239, 68, 68, 0.35);
+}
+
+/* Przycisk "Szczegóły" - aktywny stan */
+.modal__applicantToggle.active {
+	background: #6366f1;
+	color: white;
+	border-color: #6366f1;
+}
+
+.modal__applicantToggle.active:hover {
+	background: #4f46e5;
+	border-color: #4f46e5;
+}
+
+/* ============================================================
+   RESPONSYWNOŚĆ
+   ============================================================ */
+
+@media (max-width: 768px) {
+	.modal__applicantHeader {
+		flex-direction: column;
+		align-items: stretch;
+		gap: 10px;
+	}
+
+	.modal__applicantInfo {
+		flex-direction: column;
+		align-items: flex-start;
+		gap: 8px;
+		min-width: unset;
+		width: 100%;
+	}
+
+	.modal__applicantToggle {
+		width: 100%;
+		justify-content: center;
+		padding: 8px 16px;
+	}
+
+	.modal__applicantActions {
+		flex-direction: column;
+		gap: 8px;
+		width: 100%;
+	}
+
+	.modal__applicantActionBtn {
+		width: 100%;
+		justify-content: center;
+		padding: 10px 18px;
+	}
+
+	.modal__applicantEmail {
+		font-size: 12px;
+		padding: 2px 10px 2px 6px;
+	}
+
+	.modal__applicantAnswer {
+		padding: 10px 14px;
+	}
+
+	.modal__applicantAnswerText {
+		font-size: 13px;
+		padding: 6px 12px;
+	}
+}
+
+@media (max-width: 480px) {
+	.modal__applicant {
+		padding: 12px 14px;
+	}
+
+	.modal__applicantName {
+		font-size: 14px;
+	}
+
+	.modal__applicantStatus {
+		font-size: 11px;
+		padding: 3px 10px;
+	}
+
+	.modal__applicantMessage p {
+		font-size: 13px;
+	}
+
+	.modal__applicantDetails {
+		gap: 10px;
+		padding-top: 12px;
+		margin-top: 12px;
+	}
+
+	.modal__applicantAnswersList {
+		gap: 6px;
+	}
+}
+/* ============================================================
+   NOWA SEKCJA ZGŁOSZEŃ - KOMPLETNIE OD NOWA
+   ============================================================ */
+
+.applicationsSection {
+	margin-top: 16px;
+	background: #f8fafc;
+	border-radius: 16px;
+	padding: 20px 24px;
+	border: 1px solid #e2e8f0;
+}
+
+.applicationsHeader {
+	margin-bottom: 16px;
+}
+
+.applicationsTitle {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	font-size: 16px;
+	font-weight: 600;
+	color: #0f172a;
+	margin: 0;
+}
+
+.applicationsTitle svg {
+	color: #6366f1;
+}
+
+.applicationsBadge {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	background: #6366f1;
+	color: white;
+	font-size: 12px;
+	font-weight: 600;
+	padding: 2px 10px;
+	border-radius: 20px;
+	min-width: 24px;
+	height: 24px;
+}
+
+.applicationsList {
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+}
+
+/* ============================================================
+   KARTA ZGŁOSZENIA
+   ============================================================ */
+
+.applicationCard {
+	background: white;
+	border-radius: 12px;
+	border: 1px solid #e2e8f0;
+	overflow: hidden;
+	transition: all 0.2s ease;
+	box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.applicationCard:hover {
+	border-color: #cbd5e1;
+	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+}
+
+/* ============================================================
+   GŁÓWNY WIERSZ
+   ============================================================ */
+
+.applicationRow {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	padding: 14px 18px;
+	gap: 16px;
+	flex-wrap: wrap;
+}
+
+/* Lewa strona - użytkownik */
+.applicationUser {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	flex: 1;
+	min-width: 180px;
+}
+
+.applicationAvatar {
+	width: 40px;
+	height: 40px;
+	border-radius: 50%;
+	background: #eef2ff;
+	color: #4f46e5;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-weight: 700;
+	font-size: 16px;
+	flex-shrink: 0;
+}
+
+.applicationUserInfo {
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+	min-width: 0;
+}
+
+.applicationUserName {
+	font-size: 14px;
+	font-weight: 600;
+	color: #0f172a;
+	line-height: 1.3;
+}
+
+.applicationUserEmail {
+	display: flex;
+	align-items: center;
+	gap: 4px;
+	font-size: 12px;
+	color: #64748b;
+}
+
+.applicationUserEmail svg {
+	color: #94a3b8;
+	flex-shrink: 0;
+}
+
+/* Prawa strona - meta informacje */
+.applicationMeta {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	flex-wrap: wrap;
+	flex-shrink: 0;
+}
+
+.applicationStatus {
+	font-size: 12px;
+	font-weight: 600;
+	padding: 4px 14px;
+	border-radius: 20px;
+	white-space: nowrap;
+}
+
+.statusPending {
+	background: #fef3c7;
+	color: #92400e;
+	border: 1px solid #fcd34d;
+}
+
+.statusReviewed {
+	background: #dbeafe;
+	color: #1e40af;
+	border: 1px solid #93c5fd;
+}
+
+.statusAccepted {
+	background: #dcfce7;
+	color: #166534;
+	border: 1px solid #86efac;
+}
+
+.statusRejected {
+	background: #fee2e2;
+	color: #991b1b;
+	border: 1px solid #fca5a5;
+}
+
+.applicationDate {
+	display: flex;
+	align-items: center;
+	gap: 4px;
+	font-size: 12px;
+	color: #94a3b8;
+	white-space: nowrap;
+}
+
+.applicationDate svg {
+	color: #94a3b8;
+}
+
+.applicationToggle {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	padding: 6px 16px;
+	background: #f1f5f9;
+	border: 1px solid #e2e8f0;
+	border-radius: 8px;
+	font-size: 13px;
+	font-weight: 500;
+	color: #475569;
+	cursor: pointer;
+	transition: all 0.2s ease;
+	white-space: nowrap;
+}
+
+.applicationToggle:hover {
+	background: #e2e8f0;
+	color: #0f172a;
+}
+
+.applicationToggle svg {
+	transition: transform 0.25s ease;
+}
+
+.applicationToggle.open svg {
+	transform: rotate(90deg);
+}
+
+/* ============================================================
+   ROZWIJANE SZCZEGÓŁY
+   ============================================================ */
+
+.applicationDetails {
+	padding: 16px 18px 18px;
+	border-top: 1px solid #f1f5f9;
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+	animation: appSlideDown 0.3s ease;
+}
+
+@keyframes appSlideDown {
+	from {
+		opacity: 0;
+		transform: translateY(-8px);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+
+/* Wiadomość */
+.applicationMessage {
+	background: #f8fafc;
+	border-radius: 10px;
+	padding: 14px 18px;
+	border: 1px solid #e2e8f0;
+}
+
+.applicationMessageLabel {
+	font-size: 13px;
+	font-weight: 600;
+	color: #0f172a;
+	margin-bottom: 6px;
+}
+
+.applicationMessage p {
+	margin: 0;
+	font-size: 14px;
+	color: #334155;
+	line-height: 1.7;
+	white-space: pre-wrap;
+	word-wrap: break-word;
+}
+
+/* Odpowiedzi */
+.applicationAnswers {
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+}
+
+.applicationAnswersLabel {
+	font-size: 13px;
+	font-weight: 600;
+	color: #0f172a;
+}
+
+.applicationAnswersGrid {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 8px;
+}
+
+.applicationAnswerItem {
+	background: #f8fafc;
+	border-radius: 8px;
+	padding: 10px 14px;
+	border: 1px solid #e2e8f0;
+}
+
+.applicationAnswerQuestion {
+	font-size: 12px;
+	font-weight: 500;
+	color: #0f172a;
+	margin-bottom: 4px;
+}
+
+.applicationAnswerQuestion .requiredStar {
+	color: #ef4444;
+	margin-left: 2px;
+}
+
+.applicationAnswerValue {
+	font-size: 14px;
+	color: #1e293b;
+	padding: 4px 10px;
+	background: white;
+	border-radius: 6px;
+	border: 1px solid #f1f5f9;
+	word-break: break-word;
+}
+
+/* Przyciski akcji */
+.applicationActions {
+	display: flex;
+	gap: 10px;
+	flex-wrap: wrap;
+	padding-top: 4px;
+}
+
+.applicationActionAccept,
+.applicationActionReject {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	padding: 8px 20px;
+	border: none;
+	border-radius: 8px;
+	font-size: 13px;
+	font-weight: 500;
+	cursor: pointer;
+	transition: all 0.2s ease;
+}
+
+.applicationActionAccept {
+	background: #6366f1;
+	color: white;
+}
+
+.applicationActionAccept:hover {
+	background: #4f46e5;
+	transform: translateY(-2px);
+	box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+}
+
+.applicationActionReject {
+	background: #fee2e2;
+	color: #dc2626;
+}
+
+.applicationActionReject:hover {
+	background: #fecaca;
+	transform: translateY(-2px);
+}
+
+/* ============================================================
+   RESPONSYWNOŚĆ
+   ============================================================ */
+
+@media (max-width: 768px) {
+	.applicationsSection {
+		padding: 16px;
+	}
+
+	.applicationRow {
+		flex-direction: column;
+		align-items: stretch;
+		gap: 12px;
+	}
+
+	.applicationUser {
+		min-width: unset;
+	}
+
+	.applicationMeta {
+		flex-wrap: wrap;
+		gap: 8px;
+	}
+
+	.applicationToggle {
+		width: 100%;
+		justify-content: center;
+		padding: 8px;
+	}
+
+	.applicationAnswersGrid {
+		grid-template-columns: 1fr;
+	}
+
+	.applicationActions {
+		flex-direction: column;
+	}
+
+	.applicationActionAccept,
+	.applicationActionReject {
+		width: 100%;
+		justify-content: center;
+	}
+}
+
+@media (max-width: 480px) {
+	.applicationsSection {
+		padding: 12px;
+	}
+
+	.applicationCard {
+		border-radius: 10px;
+	}
+
+	.applicationRow {
+		padding: 12px 14px;
+	}
+
+	.applicationDetails {
+		padding: 12px 14px 14px;
+	}
+
+	.applicationUser {
+		gap: 10px;
+	}
+
+	.applicationAvatar {
+		width: 34px;
+		height: 34px;
+		font-size: 14px;
+	}
+
+	.applicationUserName {
+		font-size: 13px;
+	}
+
+	.applicationStatus {
+		font-size: 11px;
+		padding: 3px 10px;
+	}
+
+	.applicationAnswerItem {
+		padding: 8px 12px;
+	}
 }

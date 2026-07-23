@@ -74,7 +74,7 @@ export class StructureService {
                     icon: team.icon || 'Users',
                     description: team.description || '',
                     status: team.status || 'active',
-                    email: team.email || undefined,
+                    email: team.email || null,
                     children: [],
                     people: []
                 };

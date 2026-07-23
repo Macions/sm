@@ -1,3 +1,5 @@
+import toast from "react-hot-toast";
+import { ConfirmDialog } from "../../components/common/ConfirmDialog";
 import { useState, useMemo, useEffect } from "react";
 import {
 	Briefcase,
@@ -33,6 +35,8 @@ import {
 	Code,
 	Music,
 	Palette,
+	FileWarning,
+	AlertCircle,
 	Smartphone,
 	Zap,
 	Star,
@@ -43,6 +47,9 @@ import {
 	Settings,
 	Tag,
 	FileText,
+	FormInput, // DODAJ
+	MessageSquare, // DODAJ
+	FileCheck,
 } from "lucide-react";
 import styles from "./Vacancies.module.css";
 
@@ -116,7 +123,7 @@ type Application = {
 	message?: string;
 	appliedAt: string;
 	status: "pending" | "reviewed" | "accepted" | "rejected";
-	answers?: Record<string, string>; // odpowiedzi na pytania
+	answers?: Record<string, string>;
 };
 
 // ---------------------------------------------------------------------------
@@ -807,10 +814,27 @@ function VacancyCard({
 									)}
 								</span>
 							)}
-							<span className={styles.vacancyCard__recruitmentType}>
-								{vacancy.recruitment.type === "form" && "📋 Formularz"}
-								{vacancy.recruitment.type === "messenger" && "💬 Messenger"}
-								{vacancy.recruitment.type === "internal" && "📝 Formularz"}
+							<span
+								className={`${styles.vacancyCard__recruitmentType} ${styles[`vacancyCard__recruitmentType--${vacancy.recruitment.type}`]}`}
+							>
+								{vacancy.recruitment.type === "form" && (
+									<>
+										<FormInput size={14} />
+										Formularz
+									</>
+								)}
+								{vacancy.recruitment.type === "messenger" && (
+									<>
+										<MessageSquare size={14} />
+										Messenger
+									</>
+								)}
+								{vacancy.recruitment.type === "internal" && (
+									<>
+										<FileCheck size={14} />
+										Formularz
+									</>
+								)}
 							</span>
 						</div>
 					)}
@@ -841,11 +865,13 @@ function VacancyCard({
 							</button>
 						</>
 					)}
+					{/* ⭐ POPRAWA: Warunek wyświetlania */}
 					{!isFilled && !hasApplied && (
 						<button
 							className={styles.vacancyCard__applyBtn}
-							onClick={() => onApply(vacancy)} // <-- ZMIEŃ na onApply
-							disabled={isRecruiting}
+							onClick={() => onApply(vacancy)}
+							// ⭐ POPRAWA: disabled tylko jeśli nie rekrutuje
+							disabled={isFilled}
 						>
 							<Send size={14} />
 							Zgłoś się
@@ -906,10 +932,27 @@ function VacancyCard({
 								{new Date(vacancy.recruitment.deadline).toLocaleString("pl-PL")}
 							</span>
 						)}
-						<span className={styles.vacancyCard__recruitmentType}>
-							{vacancy.recruitment.type === "form" && "📋 Formularz"}
-							{vacancy.recruitment.type === "messenger" && "💬 Messenger"}
-							{vacancy.recruitment.type === "internal" && "📝 Formularz"}
+						<span
+							className={`${styles.vacancyCard__recruitmentType} ${styles[`vacancyCard__recruitmentType--${vacancy.recruitment.type}`]}`}
+						>
+							{vacancy.recruitment.type === "form" && (
+								<>
+									<FormInput size={14} />
+									Formularz
+								</>
+							)}
+							{vacancy.recruitment.type === "messenger" && (
+								<>
+									<MessageSquare size={14} />
+									Messenger
+								</>
+							)}
+							{vacancy.recruitment.type === "internal" && (
+								<>
+									<FileCheck size={14} />
+									Formularz
+								</>
+							)}
 						</span>
 					</div>
 				)}
@@ -944,11 +987,13 @@ function VacancyCard({
 								</button>
 							</>
 						)}
+						{/* ⭐ POPRAWA: Warunek wyświetlania */}
 						{!isFilled && !hasApplied && (
 							<button
 								className={styles.vacancyCard__applyBtn}
 								onClick={() => onApply(vacancy)}
-								disabled={isRecruiting}
+								// ⭐ POPRAWA: disabled tylko jeśli nie rekrutuje
+								disabled={isFilled}
 							>
 								<Send size={14} />
 								Zgłoś się
@@ -982,12 +1027,7 @@ interface ApplyModalProps {
 	) => void;
 }
 
-function ApplyModal({
-	isOpen,
-	vacancy,
-	onClose,
-	onSubmit,
-}: ApplyModalProps) {
+function ApplyModal({ isOpen, vacancy, onClose, onSubmit }: ApplyModalProps) {
 	const [answers, setAnswers] = useState<Record<string, string>>({});
 	const [message, setMessage] = useState("");
 	const [errors, setErrors] = useState<Record<string, string>>({});
@@ -1011,12 +1051,13 @@ function ApplyModal({
 		setErrors(newErrors);
 		return Object.keys(newErrors).length === 0;
 	};
-
+	const isDeadlinePassed = vacancy.recruitment?.deadline
+		? new Date(vacancy.recruitment.deadline) < new Date()
+		: false;
 	const handleSubmit = (e: React.FormEvent) => {
 		e.preventDefault();
 
 		if (!validateForm()) {
-			// Przewiń do pierwszego błędu
 			const firstError = document.querySelector(".apply-error");
 			if (firstError) {
 				firstError.scrollIntoView({ behavior: "smooth", block: "center" });
@@ -1024,14 +1065,9 @@ function ApplyModal({
 			return;
 		}
 
-		if (
-			window.confirm(
-				`Czy chcesz zgłosić swoją kandydaturę na stanowisko "${vacancy.title}"?`,
-			)
-		) {
-			onSubmit(vacancy, answers, message);
-			onClose();
-		}
+		// USUŃ window.confirm
+		onSubmit(vacancy, answers, message);
+		onClose();
 	};
 
 	return (
@@ -1051,7 +1087,12 @@ function ApplyModal({
 						<X size={20} />
 					</button>
 				</div>
-
+				{isDeadlinePassed && (
+					<div className={styles.modal__warning}>
+						<AlertCircle size={20} />
+						<span>Termin zgłoszeń już minął!</span>
+					</div>
+				)}
 				<form onSubmit={handleSubmit} className={styles.modal__form}>
 					<div className={styles.modal__body}>
 						{/* Informacje o rekrutacji */}
@@ -1333,7 +1374,16 @@ function VacancyDetailModal({
 	applications = [],
 }: VacancyDetailModalProps) {
 	if (!isOpen || !vacancy) return null;
-
+	// ⭐ DODAJ TE ZABEZPIECZENIA
+	const responsibilities = Array.isArray(vacancy.responsibilities)
+		? vacancy.responsibilities
+		: [];
+	const requirements = Array.isArray(vacancy.requirements)
+		? vacancy.requirements
+		: [];
+	const niceToHave = Array.isArray(vacancy.niceToHave)
+		? vacancy.niceToHave
+		: [];
 	const IconComponent = ICON_MAP[vacancy.icon] || Briefcase;
 	const isFilled = vacancy.status === "filled";
 	const canManage = currentUser.role === "admin";
@@ -1383,30 +1433,38 @@ function VacancyDetailModal({
 					<div className={styles.modal__section}>
 						<h3 className={styles.modal__sectionTitle}>Zakres obowiązków</h3>
 						<ul className={styles.modal__list}>
-							{vacancy.responsibilities.map((item, index) => (
-								<li key={index} className={styles.modal__listItem}>
-									<ChevronRight size={16} />
-									{item}
-								</li>
-							))}
+							{responsibilities.length > 0 ? (
+								responsibilities.map((item, index) => (
+									<li key={index} className={styles.modal__listItem}>
+										<ChevronRight size={16} />
+										{item}
+									</li>
+								))
+							) : (
+								<li className={styles.modal__listItem}>Brak obowiązków</li>
+							)}
 						</ul>
 					</div>
 					<div className={styles.modal__section}>
 						<h3 className={styles.modal__sectionTitle}>Wymagania</h3>
 						<ul className={styles.modal__list}>
-							{vacancy.requirements.map((item, index) => (
-								<li key={index} className={styles.modal__listItem}>
-									<Check size={16} />
-									{item}
-								</li>
-							))}
+							{requirements.length > 0 ? (
+								requirements.map((item, index) => (
+									<li key={index} className={styles.modal__listItem}>
+										<Check size={16} />
+										{item}
+									</li>
+								))
+							) : (
+								<li className={styles.modal__listItem}>Brak wymagań</li>
+							)}
 						</ul>
 					</div>
-					{vacancy.niceToHave && vacancy.niceToHave.length > 0 && (
+					{niceToHave.length > 0 && (
 						<div className={styles.modal__section}>
 							<h3 className={styles.modal__sectionTitle}>Mile widziane</h3>
 							<ul className={styles.modal__list}>
-								{vacancy.niceToHave.map((item, index) => (
+								{niceToHave.map((item, index) => (
 									<li key={index} className={styles.modal__listItem}>
 										<Star size={16} />
 										{item}
@@ -1597,91 +1655,109 @@ function VacancyDetailModal({
 						</div>
 					)}
 					{vacancy.applicants && vacancy.applicants.length > 0 && canManage && (
-						<div className={styles.modal__section}>
-							<h3 className={styles.modal__sectionTitle}>
-								Zgłoszenia ({vacancy.applicants.length})
-							</h3>
-							<div className={styles.modal__applicants}>
+						<div className={styles.applicationsSection}>
+							<div className={styles.applicationsHeader}>
+								<h3 className={styles.applicationsTitle}>
+									<Users size={18} />
+									Zgłoszenia
+									<span className={styles.applicationsBadge}>
+										{vacancy.applicants.length}
+									</span>
+								</h3>
+							</div>
+
+							<div className={styles.applicationsList}>
 								{(applications || [])
 									.filter((app) => app.vacancyId === vacancy.id)
 									.map((app) => (
-										<div key={app.id} className={styles.modal__applicant}>
-											{/* Nagłówek zgłoszenia */}
-											<div className={styles.modal__applicantHeader}>
-												<div className={styles.modal__applicantInfo}>
-													<span className={styles.modal__applicantName}>
-														{app.userName}
-													</span>
-													<span className={styles.modal__applicantEmail}>
-														<Mail size={14} />
-														{app.userEmail}
-													</span>
-													<span
-														className={`${styles.modal__applicantStatus} ${styles[`applicantStatus${app.status.charAt(0).toUpperCase() + app.status.slice(1)}`]}`}
-													>
-														{app.status === "pending" && "⏳ Oczekuje"}
-														{app.status === "reviewed" && "👀 Przejrzane"}
-														{app.status === "accepted" && "✅ Zaakceptowane"}
-														{app.status === "rejected" && "❌ Odrzucone"}
-													</span>
+										<div key={app.id} className={styles.applicationCard}>
+											{/* Główny wiersz z danymi */}
+											<div className={styles.applicationRow}>
+												<div className={styles.applicationUser}>
+													<div className={styles.applicationAvatar}>
+														{app.userName.charAt(0).toUpperCase()}
+													</div>
+													<div className={styles.applicationUserInfo}>
+														<div className={styles.applicationUserName}>
+															{app.userName}
+														</div>
+														<div className={styles.applicationUserEmail}>
+															<Mail size={12} />
+															{app.userEmail}
+														</div>
+													</div>
 												</div>
-												<button
-													className={styles.modal__applicantToggle}
-													onClick={() => {
-														const details = document.getElementById(
-															`applicant-${app.id}`,
-														);
-														if (details) {
-															const isHidden = details.style.display === "none";
-															details.style.display = isHidden
-																? "block"
-																: "none";
-															// Obróć strzałkę
-															const toggleBtn =
-																details.parentElement?.querySelector(
-																	".modal__applicantToggle",
-																);
-															if (toggleBtn) {
-																toggleBtn.classList.toggle("active");
+
+												<div className={styles.applicationMeta}>
+													<span
+														className={`${styles.applicationStatus} ${styles[`status${app.status.charAt(0).toUpperCase() + app.status.slice(1)}`]}`}
+													>
+														{app.status === "pending" && "Oczekuje"}
+														{app.status === "reviewed" && "Przejrzane"}
+														{app.status === "accepted" && "Zaakceptowane"}
+														{app.status === "rejected" && "Odrzucone"}
+													</span>
+													<span className={styles.applicationDate}>
+														<Clock size={12} />
+														{new Date(app.appliedAt).toLocaleDateString(
+															"pl-PL",
+														)}
+													</span>
+													<button
+														className={styles.applicationToggle}
+														onClick={() => {
+															const details = document.getElementById(
+																`app-details-${app.id}`,
+															);
+															if (details) {
+																const isOpen =
+																	details.style.display === "block";
+																details.style.display = isOpen
+																	? "none"
+																	: "block";
 															}
-														}
-													}}
-												>
-													<ChevronRight size={16} />
-													Szczegóły
-												</button>
+														}}
+													>
+														<ChevronRight size={16} />
+														Szczegóły
+													</button>
+												</div>
 											</div>
 
-											{/* Rozwijane szczegóły - cała szerokość, pod spodem */}
+											{/* Rozwijane szczegóły */}
 											<div
-												id={`applicant-${app.id}`}
-												className={styles.modal__applicantDetails}
+												id={`app-details-${app.id}`}
+												className={styles.applicationDetails}
 												style={{ display: "none" }}
 											>
 												{/* Wiadomość */}
 												{app.message && (
-													<div className={styles.modal__applicantMessage}>
-														<strong>📝 Wiadomość:</strong>
+													<div className={styles.applicationMessage}>
+														<div className={styles.applicationMessageLabel}>
+															Wiadomość od kandydata
+														</div>
 														<p>{app.message}</p>
 													</div>
 												)}
 
 												{/* Odpowiedzi na pytania */}
 												{app.answers && Object.keys(app.answers).length > 0 && (
-													<div className={styles.modal__applicantAnswers}>
-														<strong>📋 Odpowiedzi:</strong>
-														<div className={styles.modal__applicantAnswersList}>
+													<div className={styles.applicationAnswers}>
+														<div className={styles.applicationAnswersLabel}>
+															Odpowiedzi na pytania
+														</div>
+														<div className={styles.applicationAnswersGrid}>
 															{vacancy.recruitment?.questions?.map((q) => {
 																const answer = app.answers?.[q.id];
 																if (!answer) return null;
 																return (
 																	<div
 																		key={q.id}
-																		className={`${styles.modal__applicantAnswer} ${styles[`type-${q.type}`]}`}
+																		className={styles.applicationAnswerItem}
 																	>
 																		<div
 																			className={
-																				styles.modal__applicantQuestion
+																				styles.applicationAnswerQuestion
 																			}
 																		>
 																			{q.question}
@@ -1690,26 +1766,14 @@ function VacancyDetailModal({
 																					*
 																				</span>
 																			)}
-																			<span
-																				className={styles.modal__answerType}
-																			>
-																				({q.type === "text" && "Tekst"}
-																				{q.type === "number" && "Liczba"}
-																				{q.type === "textarea" &&
-																					"Dłuższy tekst"}
-																				{q.type === "select" && "Wybór"}
-																				{q.type === "checkbox" && "Checkbox"})
-																			</span>
 																		</div>
 																		<div
-																			className={
-																				styles.modal__applicantAnswerText
-																			}
+																			className={styles.applicationAnswerValue}
 																		>
 																			{q.type === "checkbox"
 																				? answer === "true"
-																					? "✅ Tak"
-																					: "❌ Nie"
+																					? "Tak"
+																					: "Nie"
 																				: answer}
 																		</div>
 																	</div>
@@ -1719,22 +1783,13 @@ function VacancyDetailModal({
 													</div>
 												)}
 
-												{/* Data zgłoszenia */}
-												<div className={styles.modal__applicantDate}>
-													<Clock size={14} />
-													Zgłoszono:{" "}
-													{new Date(app.appliedAt).toLocaleString("pl-PL")}
-												</div>
-
-												{/* Przyciski akcji dla admina */}
-												<div className={styles.modal__applicantActions}>
-													<button className={styles.modal__applicantActionBtn}>
+												{/* Przyciski akcji */}
+												<div className={styles.applicationActions}>
+													<button className={styles.applicationActionAccept}>
 														<Check size={14} />
 														Zaakceptuj
 													</button>
-													<button
-														className={`${styles.modal__applicantActionBtn} ${styles.modal__applicantActionBtnDanger}`}
-													>
+													<button className={styles.applicationActionReject}>
 														<X size={14} />
 														Odrzuć
 													</button>
@@ -2969,7 +3024,22 @@ function VacancyFormModal({
 												},
 											});
 										}}
-										onUpdate={() => {}}
+										onUpdate={(id, updates) => {
+											// Implementacja aktualizacji pytania
+											setFormData({
+												...formData,
+												recruitment: {
+													...formData.recruitment,
+													questions: (
+														formData.recruitment?.questions || []
+													).map((q) =>
+														q.id === id ? { ...q, ...updates } : q,
+													),
+													type: "internal",
+													deadline: formData.recruitment?.deadline || "",
+												},
+											});
+										}}
 									/>
 								</div>
 							)}
@@ -3082,7 +3152,8 @@ function QuestionManager({
 	const [newRequired, setNewRequired] = useState(false);
 	const [newOptions, setNewOptions] = useState("");
 	const [showAddForm, setShowAddForm] = useState(false);
-
+	const [editingId, setEditingId] = useState<string | null>(null);
+	const [editQuestion, setEditQuestion] = useState<Partial<FormQuestion>>({});
 	const handleAdd = () => {
 		if (!newQuestion.trim()) return;
 
@@ -3116,11 +3187,11 @@ function QuestionManager({
 									{q.required && <span className={styles.requiredStar}>*</span>}
 								</span>
 								<span className={styles.questionType}>
-									{q.type === "text" && "📝 Tekst"}
-									{q.type === "number" && "🔢 Liczba"}
-									{q.type === "textarea" && "📄 Dłuższy tekst"}
-									{q.type === "select" && "📋 Wybór"}
-									{q.type === "checkbox" && "☑️ Checkbox"}
+									{q.type === "text" && "Tekst"}
+									{q.type === "number" && "Liczba"}
+									{q.type === "textarea" && "Dłuższy tekst"}
+									{q.type === "select" && "Wybór"}
+									{q.type === "checkbox" && "Checkbox"}
 								</span>
 								{q.options && q.options.length > 0 && (
 									<span className={styles.questionOptions}>
@@ -3128,20 +3199,143 @@ function QuestionManager({
 									</span>
 								)}
 							</div>
+
+							{/* ⭐ TUTAJ DODAJ TEN KOD - po questionInfo, przed zamykającym div */}
 							{!disabled && (
-								<button
-									type="button"
-									className={styles.questionRemove}
-									onClick={() => onRemove(q.id)}
-								>
-									<X size={16} />
-								</button>
+								<div className={styles.questionActions}>
+									<button
+										type="button"
+										className={styles.questionEdit}
+										onClick={() => {
+											setEditingId(q.id);
+											setEditQuestion({
+												question: q.question,
+												type: q.type,
+												required: q.required,
+												options: q.options,
+											});
+										}}
+									>
+										<Edit size={14} />
+									</button>
+									<button
+										type="button"
+										className={styles.questionRemove}
+										onClick={() => onRemove(q.id)}
+									>
+										<X size={16} />
+									</button>
+								</div>
+							)}
+
+							{/* Formularz edycji - ⭐ TUŻ POD przyciskami */}
+							{editingId === q.id && (
+								<div className={styles.editQuestionForm}>
+									<div className={styles.formField}>
+										<label className={styles.modal__label}>Treść pytania</label>
+										<input
+											type="text"
+											className={styles.modal__input}
+											value={editQuestion.question || ""}
+											onChange={(e) =>
+												setEditQuestion({
+													...editQuestion,
+													question: e.target.value,
+												})
+											}
+										/>
+									</div>
+
+									<div className={styles.formRow}>
+										<div className={styles.formField}>
+											<label className={styles.modal__label}>
+												Typ odpowiedzi
+											</label>
+											<select
+												className={styles.modal__select}
+												value={editQuestion.type || "text"}
+												onChange={(e) =>
+													setEditQuestion({
+														...editQuestion,
+														type: e.target.value as FormQuestion["type"],
+													})
+												}
+											>
+												<option value="text">Tekst</option>
+												<option value="number">Liczba</option>
+												<option value="textarea">Dłuższy tekst</option>
+												<option value="select">Wybór z listy</option>
+												<option value="checkbox">Checkbox</option>
+											</select>
+										</div>
+
+										<div className={styles.formField}>
+											<label className={styles.modal__label}>
+												<input
+													type="checkbox"
+													checked={editQuestion.required || false}
+													onChange={(e) =>
+														setEditQuestion({
+															...editQuestion,
+															required: e.target.checked,
+														})
+													}
+												/>
+												Wymagane
+											</label>
+										</div>
+									</div>
+
+									{editQuestion.type === "select" && (
+										<div className={styles.formField}>
+											<label className={styles.modal__label}>
+												Opcje (oddzielone przecinkami)
+											</label>
+											<input
+												type="text"
+												className={styles.modal__input}
+												value={editQuestion.options?.join(", ") || ""}
+												onChange={(e) =>
+													setEditQuestion({
+														...editQuestion,
+														options: e.target.value
+															.split(",")
+															.map((s) => s.trim())
+															.filter(Boolean),
+													})
+												}
+												placeholder="np. Tak, Nie, Może"
+											/>
+										</div>
+									)}
+
+									<div className={styles.formActions}>
+										<button
+											type="button"
+											className={styles.modal__btnCancel}
+											onClick={() => setEditingId(null)}
+										>
+											Anuluj
+										</button>
+										<button
+											type="button"
+											className={styles.modal__btnSave}
+											onClick={() => {
+												if (editQuestion.question) {
+													onUpdate(q.id, editQuestion);
+													setEditingId(null);
+												}
+											}}
+										>
+											Zapisz zmiany
+										</button>
+									</div>
+								</div>
 							)}
 						</div>
 					))}
 				</div>
 			)}
-
 			{/* Przycisk dodawania */}
 			{!disabled && (
 				<button
@@ -3239,9 +3433,9 @@ function QuestionManager({
 // ---------------------------------------------------------------------------
 
 export default function Vacancies({ title }: { title?: string }) {
-	const [vacancies, setVacancies] = useState<Vacancy[]>(MOCK_VACANCIES);
-	const [applications, setApplications] =
-		useState<Application[]>(MOCK_APPLICATIONS);
+	const [vacancies, setVacancies] = useState<Vacancy[]>([]);
+	const [applications, setApplications] = useState<Application[]>([]);
+	const [loading, setLoading] = useState(true);
 	const [searchTerm, setSearchTerm] = useState("");
 	const [selectedTeam, setSelectedTeam] = useState<string>("all");
 	const [selectedPillar, setSelectedPillar] = useState<string>("all");
@@ -3254,7 +3448,11 @@ export default function Vacancies({ title }: { title?: string }) {
 	const [isApplyOpen, setIsApplyOpen] = useState(false);
 	const [applyingVacancy, setApplyingVacancy] = useState<Vacancy | null>(null);
 	const [applicationMessage, setApplicationMessage] = useState("");
-
+	// W głównym komponencie Vacancies, razem z innymi stanami
+	const [confirmDialog, setConfirmDialog] = useState<{
+		isOpen: boolean;
+		vacancy: Vacancy | null;
+	}>({ isOpen: false, vacancy: null });
 	const currentUser = MOCK_USER;
 	const canManage = currentUser.role === "admin";
 
@@ -3267,6 +3465,159 @@ export default function Vacancies({ title }: { title?: string }) {
 	// Filary - połączenie stałej listy z tymi z wakatów
 	const pillars = useMemo(() => {
 		return [...DEFAULT_PILLARS].sort();
+	}, []);
+	useEffect(() => {
+		const fetchVacancies = async () => {
+			try {
+				setLoading(true);
+				const token = localStorage.getItem("accessToken");
+				const response = await fetch("/api/vacancies", {
+					headers: {
+						Authorization: `Bearer ${token}`,
+						"Content-Type": "application/json",
+					},
+				});
+
+				if (!response.ok) {
+					throw new Error("Błąd pobierania wakatów");
+				}
+
+				const data = await response.json();
+
+				// ⭐ DODAJ MAPOWANIE DANYCH
+				const mappedVacancies = data.map((v: any) => ({
+					id: v.id.toString(),
+					title: v.title,
+					icon: v.icon || "Briefcase",
+					description: v.description,
+					// ⭐ POPRAWKA: upewnij się że to są tablice
+					responsibilities: v.responsibilities
+						? Array.isArray(v.responsibilities)
+							? v.responsibilities
+							: JSON.parse(v.responsibilities)
+						: [],
+					requirements: v.requirements
+						? Array.isArray(v.requirements)
+							? v.requirements
+							: JSON.parse(v.requirements)
+						: [],
+					niceToHave: v.nice_to_have
+						? Array.isArray(v.nice_to_have)
+							? v.nice_to_have
+							: JSON.parse(v.nice_to_have)
+						: [],
+					team: v.team || "",
+					teamId: v.team_id || "",
+					pillar: v.pillar || "",
+					contactPerson: v.contact_person
+						? {
+								name: `${v.contact_person.first_name || ""} ${v.contact_person.last_name || ""}`.trim(),
+								email: v.contact_person.email || "",
+								phone: v.contact_person.phone || "",
+							}
+						: {
+								name: "",
+								email: "",
+								phone: "",
+							},
+					createdAt: v.created_at
+						? new Date(v.created_at).toISOString().split("T")[0]
+						: new Date().toISOString().split("T")[0],
+					status: v.status || "active",
+					applicants:
+						v.applications?.map((a: any) => a.user_id.toString()) || [],
+					recruitment: {
+						type: v.recruitment_type || "internal",
+						deadline: v.recruitment_deadline
+							? new Date(v.recruitment_deadline).toISOString()
+							: "",
+						formUrl: v.recruitment_form_url || "",
+						messengerContact: v.recruitment_messenger_contact || "",
+						questions:
+							v.questions?.map((q: any) => ({
+								id: q.id.toString(),
+								question: q.question,
+								type: q.type || "text",
+								required: q.required || false,
+								options: q.options ? JSON.parse(q.options) : [],
+							})) || [],
+					},
+					attachments:
+						v.attachments?.map((a: any) => ({
+							id: a.id.toString(),
+							name: a.name,
+							size: a.size,
+							type: a.type || "",
+							url: a.url,
+							uploadedAt: a.uploaded_at
+								? new Date(a.uploaded_at).toISOString().split("T")[0]
+								: new Date().toISOString().split("T")[0],
+						})) || [],
+				}));
+
+				setVacancies(mappedVacancies);
+			} catch (error) {
+				console.error("Błąd pobierania wakatów:", error);
+				setVacancies(MOCK_VACANCIES);
+			} finally {
+				setLoading(false);
+			}
+		};
+
+		fetchVacancies();
+	}, []);
+
+	// W głównym komponencie Vacancies, po fetchVacancies:
+	// ZMIEŃ ten kod (około linii 3560):
+	useEffect(() => {
+		const fetchApplications = async () => {
+			try {
+				const token = localStorage.getItem("accessToken");
+				const response = await fetch("/api/applications", {
+					headers: {
+						Authorization: `Bearer ${token}`,
+						"Content-Type": "application/json",
+					},
+				});
+
+				if (!response.ok) {
+					throw new Error("Błąd pobierania zgłoszeń");
+				}
+
+				const data = await response.json();
+
+				// ⭐ DODAJ TO - sprawdź czy data jest tablicą
+				if (!Array.isArray(data)) {
+					console.warn("⚠️ Otrzymane dane nie są tablicą:", data);
+					setApplications(MOCK_APPLICATIONS);
+					return;
+				}
+
+				// Mapowanie danych
+				const mappedApplications = data.map((app: any) => ({
+					id: app.id?.toString() || `app-${Date.now()}`,
+					vacancyId:
+						app.vacancyId?.toString() || app.vacancy_id?.toString() || "",
+					userId: app.userId?.toString() || app.user_id?.toString() || "",
+					userName: app.userName || app.user?.name || "Nieznany",
+					userEmail: app.userEmail || app.user?.email || "",
+					message: app.message || "",
+					appliedAt:
+						app.appliedAt ||
+						app.applied_at ||
+						new Date().toISOString().split("T")[0],
+					status: app.status || "pending",
+					answers: app.answers || {},
+				}));
+
+				setApplications(mappedApplications);
+			} catch (error) {
+				console.error("Błąd pobierania zgłoszeń:", error);
+				setApplications(MOCK_APPLICATIONS);
+			}
+		};
+
+		fetchApplications();
 	}, []);
 	// W głównym komponencie Vacancies
 	useEffect(() => {
@@ -3356,59 +3707,108 @@ export default function Vacancies({ title }: { title?: string }) {
 		setApplyingVacancy(vacancy);
 		setIsApplyOpen(true);
 	};
-	const handleSubmitApplication = (
+	const handleSubmitApplication = async (
 		vacancy: Vacancy,
 		answers: Record<string, string>,
 		message: string,
 	) => {
-		// Sprawdź czy już się zgłoszono
-		const existingApplication = applications.find(
-			(a) => a.vacancyId === vacancy.id && a.userId === currentUser.id,
-		);
-		if (existingApplication) {
-			alert("Już zgłosiłeś się na to stanowisko!");
-			return;
-		}
+		try {
+			const token = localStorage.getItem("accessToken");
 
-		const newApplication: Application = {
-			id: `app-${Date.now()}`,
-			vacancyId: vacancy.id,
-			userId: currentUser.id,
-			userName: currentUser.name,
-			userEmail: "jan.kowalski@silamlodych.pl", // Pobierz z danych użytkownika
-			message: message || "Jestem zainteresowany/a tą funkcją.",
-			appliedAt: new Date().toISOString().split("T")[0],
-			status: "pending",
-			answers: answers, // <-- ZAPISZ ODPOWIEDZI
-		};
-
-		setApplications([...applications, newApplication]);
-
-		// Aktualizuj listę zgłoszeń w wakacie
-		const updatedVacancies = vacancies.map((v) => {
-			if (v.id === vacancy.id) {
-				return {
-					...v,
-					applicants: [...(v.applicants || []), currentUser.id],
-				};
+			// Sprawdź czy już się zgłoszono
+			const existingApplication = applications.find(
+				(a) => a.vacancyId === vacancy.id && a.userId === currentUser.id,
+			);
+			if (existingApplication) {
+				toast.error("Już zgłosiłeś się na to stanowisko!");
+				return;
 			}
-			return v;
-		});
-		setVacancies(updatedVacancies);
 
-		console.log(
-			`📧 Powiadomienie wysłane do ${vacancy.contactPerson.name} (${vacancy.contactPerson.email})`,
-		);
-		console.log(
-			`📧 Treść: Nowe zgłoszenie od ${currentUser.name} na stanowisko ${vacancy.title}`,
-		);
-		if (answers && Object.keys(answers).length > 0) {
-			console.log("📧 Odpowiedzi:", answers);
+			// Przygotuj dane do wysłania
+			const payload = {
+				message: message || "Jestem zainteresowany/a tą funkcją.",
+				answers: answers || {},
+			};
+
+			// Wyślij zgłoszenie do API
+			const response = await fetch(`/api/vacancies/${vacancy.id}/apply`, {
+				method: "POST",
+				headers: {
+					Authorization: `Bearer ${token}`,
+					"Content-Type": "application/json",
+				},
+				body: JSON.stringify(payload),
+			});
+
+			if (!response.ok) {
+				const errorData = await response.json();
+				throw new Error(errorData.error || "Nie udało się zgłosić na wakat");
+			}
+
+			const data = await response.json();
+
+			// Dodaj zgłoszenie do stanu lokalnego
+			const newApplication: Application = {
+				id: data.id?.toString() || `app-${Date.now()}`,
+				vacancyId: vacancy.id,
+				userId: currentUser.id,
+				userName: currentUser.name,
+				userEmail: "jan.kowalski@silamlodych.pl", // Pobierz z profilu użytkownika
+				message: message || "Jestem zainteresowany/a tą funkcją.",
+				appliedAt: new Date().toISOString().split("T")[0],
+				status: "pending",
+				answers: answers,
+			};
+
+			setApplications([...applications, newApplication]);
+
+			// Aktualizuj listę zgłoszeń w wakacie
+			const updatedVacancies = vacancies.map((v) => {
+				if (v.id === vacancy.id) {
+					return {
+						...v,
+						applicants: [...(v.applicants || []), currentUser.id],
+					};
+				}
+				return v;
+			});
+			setVacancies(updatedVacancies);
+
+			// Wyślij powiadomienie email (opcjonalnie)
+			try {
+				await fetch(`/api/vacancies/${vacancy.id}/notify`, {
+					method: "POST",
+					headers: {
+						Authorization: `Bearer ${token}`,
+						"Content-Type": "application/json",
+					},
+					body: JSON.stringify({
+						applicantName: currentUser.name,
+						applicantEmail: "jan.kowalski@silamlodych.pl",
+					}),
+				});
+			} catch (emailError) {
+				console.warn(
+					"⚠️ Nie udało się wysłać powiadomienia email:",
+					emailError,
+				);
+			}
+
+			toast.success(
+				`Zgłoszenie na stanowisko "${vacancy.title}" zostało wysłane!`,
+			);
+
+			// Zamknij modal
+			setIsApplyOpen(false);
+			setApplyingVacancy(null);
+		} catch (error) {
+			console.error("Błąd zgłaszania na wakat:", error);
+			toast.error(
+				error instanceof Error
+					? error.message
+					: "Nie udało się zgłosić na wakat",
+			);
 		}
-
-		alert(
-			`Zgłoszenie zostało wysłane! ${vacancy.contactPerson.name} otrzymał/a powiadomienie.`,
-		);
 	};
 
 	const handleEditVacancy = (vacancy: Vacancy) => {
@@ -3417,27 +3817,127 @@ export default function Vacancies({ title }: { title?: string }) {
 	};
 
 	const handleDeleteVacancy = (vacancy: Vacancy) => {
-		setVacancies(vacancies.filter((v) => v.id !== vacancy.id));
+		setConfirmDialog({ isOpen: true, vacancy });
+	};
+	const confirmDeleteVacancy = async () => {
+		const vacancy = confirmDialog.vacancy;
+		if (!vacancy) return;
+
+		setConfirmDialog({ isOpen: false, vacancy: null });
+
+		try {
+			const token = localStorage.getItem("accessToken");
+			const response = await fetch(`/api/vacancies/${vacancy.id}`, {
+				method: "DELETE",
+				headers: {
+					Authorization: `Bearer ${token}`,
+				},
+			});
+
+			if (!response.ok) {
+				const errorText = await response.text();
+				throw new Error(errorText || "Błąd usuwania wakatu");
+			}
+
+			setVacancies(vacancies.filter((v) => v.id !== vacancy.id));
+			toast.success(`Wakat "${vacancy.title}" został usunięty.`);
+		} catch (error) {
+			console.error("Błąd usuwania wakatu:", error);
+			toast.error(
+				error instanceof Error ? error.message : "Nie udało się usunąć wakatu",
+			);
+		}
 	};
 
-	const handleSaveVacancy = (vacancy: Vacancy) => {
-		const existingIndex = vacancies.findIndex((v) => v.id === vacancy.id);
-		if (existingIndex >= 0) {
-			const updated = [...vacancies];
-			updated[existingIndex] = vacancy;
-			setVacancies(updated);
-		} else {
-			setVacancies([vacancy, ...vacancies]);
+	const cancelDeleteVacancy = () => {
+		setConfirmDialog({ isOpen: false, vacancy: null });
+	};
+	const handleSaveVacancy = async (vacancy: Vacancy) => {
+		try {
+			const token = localStorage.getItem("accessToken");
+			const isEdit = vacancies.some((v) => v.id === vacancy.id);
+			const url = isEdit ? `/api/vacancies/${vacancy.id}` : "/api/vacancies";
+			const method = isEdit ? "PUT" : "POST";
+
+			const payload = {
+				title: vacancy.title,
+				icon: vacancy.icon,
+				description: vacancy.description,
+				responsibilities: JSON.stringify(vacancy.responsibilities),
+				requirements: JSON.stringify(vacancy.requirements),
+				nice_to_have: JSON.stringify(vacancy.niceToHave || []),
+				team: vacancy.team,
+				team_id: vacancy.teamId,
+				pillar: vacancy.pillar || "",
+				contact_person_id: null,
+				status: vacancy.status,
+				recruitment_type: vacancy.recruitment.type,
+				recruitment_deadline: vacancy.recruitment.deadline,
+				recruitment_form_url: vacancy.recruitment.formUrl || "",
+				recruitment_messenger_contact:
+					vacancy.recruitment.messengerContact || "",
+				questions: vacancy.recruitment.questions || [],
+			};
+
+			const response = await fetch(url, {
+				method: method,
+				headers: {
+					Authorization: `Bearer ${token}`,
+					"Content-Type": "application/json",
+				},
+				body: JSON.stringify(payload),
+			});
+
+			if (!response.ok) {
+				// ⭐ POPRAWA: Lepsza obsługa błędów
+				let errorMessage = "Nie udało się zapisać wakatu";
+				try {
+					const errorData = await response.json();
+					if (errorData.error) errorMessage = errorData.error;
+					else if (errorData.message) errorMessage = errorData.message;
+				} catch {
+					// Jeśli nie można sparsować JSON, użyj text
+					const text = await response.text();
+					if (text) errorMessage = text;
+				}
+				throw new Error(errorMessage);
+			}
+
+			const savedVacancy = await response.json();
+
+			if (isEdit) {
+				// ⭐ POPRAWA: Użyj danych z odpowiedzi zamiast starych
+				const updatedVacancy = {
+					...vacancy,
+					id: savedVacancy.id?.toString() || vacancy.id,
+				};
+				setVacancies(
+					vacancies.map((v) => (v.id === vacancy.id ? updatedVacancy : v)),
+				);
+				toast.success(`Wakat "${vacancy.title}" został zaktualizowany!`);
+			} else {
+				const newVacancy = {
+					...vacancy,
+					id: savedVacancy.id?.toString() || `vacancy-${Date.now()}`,
+				};
+				setVacancies([newVacancy, ...vacancies]);
+				toast.success(`Wakat "${vacancy.title}" został dodany!`);
+			}
+		} catch (error) {
+			console.error("Błąd zapisywania wakatu:", error);
+			toast.error(
+				error instanceof Error ? error.message : "Nie udało się zapisać wakatu",
+			);
+			throw error; // ⭐ DODAJ: pozwala na obsługę w wyższym komponencie
 		}
 	};
 
 	const handleApply = (vacancy: Vacancy) => {
-		// Sprawdź czy już się zgłoszono
 		const existingApplication = applications.find(
 			(a) => a.vacancyId === vacancy.id && a.userId === currentUser.id,
 		);
 		if (existingApplication) {
-			alert("Już zgłosiłeś się na to stanowisko!");
+			toast.error("Już zgłosiłeś się na to stanowisko!");
 			return;
 		}
 
@@ -3473,14 +3973,14 @@ export default function Vacancies({ title }: { title?: string }) {
 
 			// Symulacja powiadomienia email
 			console.log(
-				`📧 Powiadomienie wysłane do ${vacancy.contactPerson.name} (${vacancy.contactPerson.email})`,
+				`Powiadomienie wysłane do ${vacancy.contactPerson.name} (${vacancy.contactPerson.email})`,
 			);
 			console.log(
-				`📧 Treść: Nowe zgłoszenie od ${currentUser.name} na stanowisko ${vacancy.title}`,
+				`Treść: Nowe zgłoszenie od ${currentUser.name} na stanowisko ${vacancy.title}`,
 			);
 
-			alert(
-				`Zgłoszenie zostało wysłane! ${vacancy.contactPerson.name} otrzymał/a powiadomienie.`,
+			toast.success(
+				`Zgłoszenie na stanowisko "${vacancy.title}" zostało wysłane!`,
 			);
 		}
 	};
@@ -3497,6 +3997,18 @@ export default function Vacancies({ title }: { title?: string }) {
 		setSelectedPillar("all");
 		setSelectedStatus("all");
 	};
+
+	// ⭐ DODAJ TUTAJ - przed return
+	if (loading) {
+		return (
+			<div className={styles.vacancies}>
+				<div className={styles.loading}>
+					<div className={styles.loading__spinner}></div>
+					<p>Ładowanie wakatów...</p>
+				</div>
+			</div>
+		);
+	}
 
 	return (
 		<div className={styles.vacancies}>
@@ -3652,15 +4164,16 @@ export default function Vacancies({ title }: { title?: string }) {
 							)}
 					</div>
 				) : (
+					// ZMIEŃ to (około linii 4170):
 					filteredVacancies.map((vacancy) => (
 						<VacancyCard
-							key={vacancy.id}
+							key={`${vacancy.id}-${hasApplied(vacancy.id)}`} // ⭐ DODAJ key z hasApplied
 							vacancy={vacancy}
 							currentUser={currentUser}
 							onView={handleViewVacancy}
 							onEdit={canManage ? handleEditVacancy : undefined}
 							onDelete={canManage ? handleDeleteVacancy : undefined}
-							onApply={handleOpenApply} // <-- OTWIERA MODAL ZGŁOSZENIOWY
+							onApply={handleOpenApply}
 							viewMode={viewMode}
 							hasApplied={hasApplied(vacancy.id)}
 						/>
@@ -3707,6 +4220,15 @@ export default function Vacancies({ title }: { title?: string }) {
 					setApplyingVacancy(null);
 				}}
 				onSubmit={handleSubmitApplication}
+			/>
+			<ConfirmDialog
+				isOpen={confirmDialog.isOpen}
+				title="Potwierdź usunięcie"
+				message={`Czy na pewno chcesz usunąć wakat "${confirmDialog.vacancy?.title}"? Tej operacji nie można cofnąć.`}
+				confirmText="Usuń"
+				cancelText="Anuluj"
+				onConfirm={confirmDeleteVacancy}
+				onCancel={cancelDeleteVacancy}
 			/>
 		</div>
 	);

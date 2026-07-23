@@ -8,8 +8,6 @@ import {
 	ChevronDown,
 	ChevronRight,
 	Mail,
-	Phone,
-	MapPin,
 	Building2,
 	Search,
 	X,
@@ -30,8 +28,6 @@ type Person = {
 	lastName: string;
 	role: string;
 	email: string;
-	phone?: string;
-	province?: string;
 	avatar?: string;
 };
 
@@ -227,20 +223,6 @@ function TreeNode({
 									>
 										<Mail size={14} />
 									</a>
-								)}
-								{person.phone && (
-									<a
-										href={`tel:${person.phone}`}
-										className={styles.personCard__link}
-									>
-										<Phone size={14} />
-									</a>
-								)}
-								{person.province && (
-									<span className={styles.personCard__province}>
-										<MapPin size={14} />
-										{person.province}
-									</span>
 								)}
 							</div>
 						</div>
