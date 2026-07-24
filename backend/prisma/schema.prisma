@@ -14,7 +14,7 @@ model User {
   password_hash         String               @db.VarChar(255)
   first_name            String               @db.VarChar(50)
   last_name             String               @db.VarChar(50)
-    tasks                 Task[]
+  tasks                 Task[]
   leaves                Leave[]
   leaveComments         LeaveComment[]
   is_active             Boolean?             @default(true)
@@ -40,6 +40,8 @@ model User {
   roles                 roles?               @relation(fields: [role_id], references: [id], onUpdate: Restrict, map: "users_ibfk_1")
   vacancies             Vacancy[]
   vacancyApplications   VacancyApplication[]
+  ideas                 Idea[]
+  ideaVotes             IdeaVote[]
 
   @@index([role_id], map: "idx_users_role_id")
   @@index([status], map: "idx_users_status")
@@ -293,8 +295,8 @@ model Task {
   status      String   @default("pending") @db.VarChar(50)
   created_at  DateTime @default(now()) @db.Timestamp(0)
   updated_at  DateTime @default(now()) @updatedAt @db.Timestamp(0)
-  
-  user        User?    @relation(fields: [assigned_to], references: [id])
+
+  user User? @relation(fields: [assigned_to], references: [id])
 }
 
 model Leave {
@@ -313,20 +315,62 @@ model Leave {
   approved_at       DateTime?
   created_at        DateTime  @default(now()) @db.Timestamp(0)
   updated_at        DateTime  @default(now()) @updatedAt @db.Timestamp(0)
-  
-  user              User      @relation(fields: [user_id], references: [id])
-  comments          LeaveComment[]
-  @@map("leaves") 
+
+  user     User           @relation(fields: [user_id], references: [id])
+  comments LeaveComment[]
+
+  @@map("leaves")
 }
 
 model LeaveComment {
-  id          Int      @id @default(autoincrement())
-  leave_id    Int
-  author_id   Int
-  content     String   @db.Text
-  created_at  DateTime @default(now()) @db.Timestamp(0)
-  
-  leave       Leave    @relation(fields: [leave_id], references: [id])
-  author      User     @relation(fields: [author_id], references: [id])
+  id         Int      @id @default(autoincrement())
+  leave_id   Int
+  author_id  Int
+  content    String   @db.Text
+  created_at DateTime @default(now()) @db.Timestamp(0)
+
+  leave  Leave @relation(fields: [leave_id], references: [id])
+  author User  @relation(fields: [author_id], references: [id])
+
   @@map("leave_comments")
+}
+
+model Idea {
+  id          Int      @id @default(autoincrement())
+  title       String   @db.VarChar(255)
+  description String   @db.Text
+  pillar      String   @db.VarChar(50)
+  author_id   Int
+  author_name String   @db.VarChar(100)
+  status      String   @default("pending") @db.VarChar(50)
+  is_active   Boolean  @default(true)
+  created_at  DateTime @default(now()) @db.Timestamp(0)
+  updated_at  DateTime @default(now()) @updatedAt @db.Timestamp(0)
+
+  user  User       @relation(fields: [author_id], references: [id])
+  votes IdeaVote[] // ✅ relacja do głosów
+
+  @@index([status])
+  @@index([pillar])
+  @@index([author_id])
+  @@index([created_at])
+  @@index([is_active])
+  @@map("ideas")
+}
+
+model IdeaVote {
+  id         Int      @id @default(autoincrement())
+  idea_id    Int
+  user_id    Int
+  vote_type  String   @db.VarChar(10) // 'up' lub 'down'
+  created_at DateTime @default(now()) @db.Timestamp(0)
+  updated_at DateTime @default(now()) @updatedAt @db.Timestamp(0)
+
+  idea Idea @relation(fields: [idea_id], references: [id], onDelete: Cascade)
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@unique([idea_id, user_id])
+  @@index([idea_id])
+  @@index([user_id])
+  @@map("idea_votes")
 }

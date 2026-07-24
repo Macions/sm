@@ -1,6 +1,8 @@
 import toast from "react-hot-toast";
 import { ConfirmDialog } from "../../components/common/ConfirmDialog";
 import { useState, useMemo, useEffect } from "react";
+import { hasPermission } from "../../utils/permissions";
+
 import {
 	Briefcase,
 	Search,
@@ -129,523 +131,12 @@ type Application = {
 // ---------------------------------------------------------------------------
 // DANE PRZYKŁADOWE
 // ---------------------------------------------------------------------------
-
-const MOCK_USER: User = {
-	id: "1",
-	name: "Jan Kowalski",
-	role: "admin",
-	teamId: "project",
-};
-const MOCK_MEMBERS = [
-	{ id: "1", name: "Maksym Marczak", email: "maksym.marczak@silamlodych.pl" },
-	{
-		id: "2",
-		name: "Krzysztof Korbut",
-		email: "krzysztof.korbut@silamlodych.pl",
-	},
-	{ id: "3", name: "Zosia Wartacz", email: "zosia.wartacz@silamlodych.pl" },
-	{
-		id: "4",
-		name: "Adrian Wróblewski",
-		email: "adrian.wroblewski@silamlodych.pl",
-	},
-	{ id: "5", name: "Jan Augustynak", email: "jan.augustynak@silamlodych.pl" },
-	{ id: "6", name: "Igor Piskórz", email: "igor.piskorz@silamlodych.pl" },
-	{ id: "7", name: "Maja Melerska", email: "maja.melerska@silamlodych.pl" },
-	{ id: "8", name: "Maja Kądziela", email: "maja.kadziela@silamlodych.pl" },
-	{ id: "9", name: "Emilia Dobias", email: "emilia.dobias@silamlodych.pl" },
-	{
-		id: "10",
-		name: "Jakub Patrowicz",
-		email: "jakub.patrowicz@silamlodych.pl",
-	},
-	{ id: "11", name: "Jan Kowalski", email: "jan.kowalski@silamlodych.pl" },
-];
 const DEFAULT_PILLARS = [
 	"Filar Projektowy",
 	"Filar Konferencyjny",
 	"Filar Symulacyjny",
 	"Filar Rzeczniczy",
 ];
-
-const MOCK_VACANCIES: Vacancy[] = [
-	{
-		id: "1",
-		title: "Koordynator Filaru Projektowego",
-		icon: "Target",
-		description:
-			"Osoba odpowiedzialna za koordynację działań w ramach Filaru Projektowego, nadzorująca realizację projektów i inicjatyw organizacyjnych.",
-		responsibilities: [
-			"Koordynacja prac zespołów projektowych",
-			"Nadzór nad harmonogramami i terminami realizacji",
-			"Raportowanie postępów do Zarządu",
-			"Organizacja spotkań i warsztatów projektowych",
-		],
-		requirements: [
-			"Doświadczenie w zarządzaniu projektami",
-			"Umiejętność pracy zespołowej",
-			"Dobra organizacja pracy",
-			"Komunikatywność",
-		],
-		niceToHave: [
-			"Certyfikat zarządzania projektami (PRINCE2, Agile)",
-			"Znajomość narzędzi do zarządzania projektami",
-		],
-		team: "Filar Projektowy",
-		teamId: "project",
-		pillar: "Filar Projektowy",
-		contactPerson: {
-			name: "Maksym Marczak",
-			email: "maksym.marczak@silamlodych.pl",
-			phone: "+48 123 456 789",
-		},
-		createdAt: "2024-12-01",
-		status: "active",
-		applicants: ["2", "3"],
-		recruitment: {
-			// <-- DODAJ TO
-			type: "internal",
-			deadline: "2026-12-31T23:59",
-			questions: [],
-		},
-	},
-	{
-		id: "2",
-		title: "Opiekun TikToka",
-		icon: "Video",
-		description:
-			"Osoba odpowiedzialna za prowadzenie i rozwój profilu Siły Młodych na TikToku, tworzenie angażujących treści i budowanie społeczności.",
-		responsibilities: [
-			"Tworzenie i planowanie contentu na TikToka",
-			"Monitorowanie trendów i nowości na platformie",
-			"Analiza statystyk i optymalizacja treści",
-			"Współpraca z zespołem Social Media",
-		],
-		requirements: [
-			"Znajomość platformy TikTok",
-			"Umiejętność tworzenia angażujących treści wideo",
-			"Kreatywność",
-			"Znajomość podstaw montażu wideo",
-		],
-		niceToHave: [
-			"Doświadczenie w prowadzeniu profili na TikTok",
-			"Umiejętność obsługi programów do montażu",
-		],
-		team: "Zespół TikToka",
-		teamId: "tiktok",
-		pillar: "Zespół TikToka",
-		contactPerson: {
-			name: "Maja Kądziela",
-			email: "maja.kadziela@silamlodych.pl",
-		},
-		createdAt: "2024-12-05",
-		status: "recruiting",
-		applicants: ["4", "5", "6"],
-		recruitment: {
-			type: "internal",
-			deadline: "2026-12-31T23:59",
-			questions: [
-				// <-- DODAJ PYTANIA
-				{
-					id: "q1",
-					question: "Jakie masz doświadczenie w zarządzaniu projektami?",
-					type: "textarea",
-					required: true,
-				},
-				{
-					id: "q2",
-					question: "Czy masz certyfikat zarządzania projektami?",
-					type: "select",
-					required: false,
-					options: [
-						"Tak, mam",
-						"Nie, ale chcę zdobyć",
-						"Nie interesuje mnie to",
-					],
-				},
-				{
-					id: "q3",
-					question: "Ile godzin tygodniowo możesz poświęcić?",
-					type: "number",
-					required: true,
-				},
-			],
-		},
-	},
-	{
-		id: "3",
-		title: "Opiekun Instagrama",
-		icon: "Smartphone",
-		description:
-			"Osoba odpowiedzialna za prowadzenie profilu Siły Młodych na Instagramie, tworzenie atrakcyjnych wizualnie treści i budowanie zaangażowania społeczności.",
-		responsibilities: [
-			"Planowanie i tworzenie contentu na Instagram",
-			"Tworzenie Stories i Reels",
-			"Interakcja z obserwującymi",
-			"Współpraca z zespołem Social Media",
-		],
-		requirements: [
-			"Znajomość platformy Instagram",
-			"Umiejętność tworzenia atrakcyjnych wizualnie treści",
-			"Kreatywność",
-			"Znajomość Canvy lub podobnych narzędzi",
-		],
-		niceToHave: [
-			"Doświadczenie w prowadzeniu profili na Instagram",
-			"Umiejętność obsługi programów graficznych",
-		],
-		team: "Social Media",
-		teamId: "social-media",
-		pillar: "Social Media",
-		contactPerson: {
-			name: "Maja Melerska",
-			email: "maja.melerska@silamlodych.pl",
-			phone: "+48 123 456 780",
-		},
-		createdAt: "2024-12-10",
-		status: "active",
-		applicants: ["7"],
-		recruitment: {
-			// <-- DODAJ TO
-			type: "internal",
-			deadline: "2026-12-31T23:59",
-			questions: [],
-		},
-	},
-	{
-		id: "4",
-		title: "Montażysta Materiałów Wideo",
-		icon: "Camera",
-		description:
-			"Osoba odpowiedzialna za montaż i postprodukcję materiałów wideo wykorzystywanych w działaniach organizacji.",
-		responsibilities: [
-			"Montaż materiałów wideo z wydarzeń",
-			"Tworzenie krótkich form wideo na social media",
-			"Postprodukcja - korekcja koloru, dźwięk",
-			"Archwizacja i zarządzanie materiałami wideo",
-		],
-		requirements: [
-			"Znajomość programów do montażu wideo",
-			"Umiejętność tworzenia angażujących treści",
-			"Kreatywność",
-			"Dobra organizacja pracy",
-		],
-		niceToHave: [
-			"Doświadczenie w montażu wideo",
-			"Znajomość After Effects lub podobnych narzędzi",
-		],
-		team: "Zespół TikToka",
-		teamId: "tiktok",
-		pillar: "Zespół TikToka",
-		contactPerson: {
-			name: "Maja Kądziela",
-			email: "maja.kadziela@silamlodych.pl",
-		},
-		createdAt: "2024-12-15",
-		status: "active",
-		applicants: [],
-		recruitment: {
-			// <-- DODAJ TO
-			type: "internal",
-			deadline: "2026-12-31T23:59",
-			questions: [],
-		},
-	},
-	{
-		id: "5",
-		title: "Grafik",
-		icon: "Palette",
-		description:
-			"Osoba odpowiedzialna za tworzenie grafik i materiałów wizualnych wykorzystywanych w działaniach organizacji.",
-		responsibilities: [
-			"Tworzenie grafik na social media",
-			"Projektowanie materiałów promocyjnych",
-			"Tworzenie identyfikacji wizualnej dla projektów",
-			"Współpraca z zespołem Social Media",
-		],
-		requirements: [
-			"Znajomość programów graficznych",
-			"Umiejętność tworzenia atrakcyjnych wizualnie treści",
-			"Kreatywność",
-			"Dobra komunikacja",
-		],
-		niceToHave: [
-			"Doświadczenie w projektowaniu graficznym",
-			"Znajomość Figmy lub podobnych narzędzi",
-		],
-		team: "Social Media",
-		teamId: "social-media",
-		pillar: "Social Media",
-		contactPerson: {
-			name: "Maja Melerska",
-			email: "maja.melerska@silamlodych.pl",
-			phone: "+48 123 456 780",
-		},
-		createdAt: "2024-12-20",
-		status: "active",
-		applicants: ["8"],
-		recruitment: {
-			// <-- DODAJ TO
-			type: "internal",
-			deadline: "2026-12-31T23:59",
-			questions: [],
-		},
-	},
-	{
-		id: "6",
-		title: "Osoba ds. Kontaktu z Partnerami",
-		icon: "Megaphone",
-		description:
-			"Osoba odpowiedzialna za budowanie i utrzymywanie relacji z partnerami organizacji, pozyskiwanie nowych współprac.",
-		responsibilities: [
-			"Identyfikacja potencjalnych partnerów",
-			"Prowadzenie rozmów z partnerami",
-			"Przygotowywanie ofert współpracy",
-			"Utrzymywanie bazy partnerów",
-		],
-		requirements: [
-			"Umiejętności komunikacyjne",
-			"Zdolności negocjacyjne",
-			"Znajomość rynku partnerskiego",
-			"Dobra organizacja pracy",
-		],
-		niceToHave: [
-			"Doświadczenie w pozyskiwaniu partnerów",
-			"Znajomość języka angielskiego",
-		],
-		team: "Zarząd",
-		teamId: "board",
-		pillar: "Zarząd",
-		contactPerson: {
-			name: "Maksym Marczak",
-			email: "maksym.marczak@silamlodych.pl",
-			phone: "+48 123 456 789",
-		},
-		createdAt: "2025-01-05",
-		status: "active",
-		applicants: ["9"],
-		recruitment: {
-			// <-- DODAJ TO
-			type: "internal",
-			deadline: "2026-12-31T23:59",
-			questions: [],
-		},
-	},
-	{
-		id: "7",
-		title: "Członek Zespołu Social Media",
-		icon: "MessageCircle",
-		description:
-			"Osoba wspierająca działania zespołu Social Media w prowadzeniu profili i tworzeniu treści.",
-		responsibilities: [
-			"Pomoc w tworzeniu contentu",
-			"Monitorowanie mediów społecznościowych",
-			"Interakcja z społecznością",
-			"Wsparcie w planowaniu działań",
-		],
-		requirements: [
-			"Znajomość mediów społecznościowych",
-			"Kreatywność",
-			"Umiejętność pracy zespołowej",
-		],
-		niceToHave: [
-			"Doświadczenie w prowadzeniu social media",
-			"Znajomość narzędzi do zarządzania social media",
-		],
-		team: "Social Media",
-		teamId: "social-media",
-		pillar: "Social Media",
-		contactPerson: {
-			name: "Maja Melerska",
-			email: "maja.melerska@silamlodych.pl",
-		},
-		createdAt: "2025-01-10",
-		status: "recruiting",
-		applicants: ["10"],
-		recruitment: {
-			// <-- DODAJ TO
-			type: "internal",
-			deadline: "2026-12-31T23:59",
-			questions: [],
-		},
-	},
-	{
-		id: "8",
-		title: "Koordynator Filaru Konferencyjnego",
-		icon: "Sparkles",
-		description:
-			"Osoba odpowiedzialna za koordynację działań w ramach Filaru Konferencyjnego, organizację konferencji i wydarzeń.",
-		responsibilities: [
-			"Organizacja konferencji i wydarzeń",
-			"Zarządzanie budżetem wydarzeń",
-			"Koordynacja zespołów konferencyjnych",
-			"Raportowanie do Zarządu",
-		],
-		requirements: [
-			"Doświadczenie w organizacji wydarzeń",
-			"Umiejętność zarządzania zespołem",
-			"Dobra organizacja pracy",
-			"Komunikatywność",
-		],
-		niceToHave: [
-			"Doświadczenie w organizacji konferencji",
-			"Znajomość narzędzi do zarządzania wydarzeniami",
-		],
-		team: "Filar Konferencyjny",
-		teamId: "conference",
-		pillar: "Filar Konferencyjny",
-		contactPerson: {
-			name: "Adrian Wróblewski",
-			email: "adrian.wroblewski@silamlodych.pl",
-			phone: "+48 123 456 784",
-		},
-		createdAt: "2025-01-15",
-		status: "active",
-		applicants: [],
-		recruitment: {
-			// <-- DODAJ TO
-			type: "internal",
-			deadline: "2026-12-31T23:59",
-			questions: [],
-		},
-	},
-	{
-		id: "9",
-		title: "Koordynator Filaru Rzeczniczego",
-		icon: "Award",
-		description:
-			"Osoba odpowiedzialna za koordynację działań rzeczniczych organizacji, reprezentowanie stanowisk i kontakt z mediami.",
-		responsibilities: [
-			"Przygotowywanie stanowisk i komunikatów",
-			"Kontakt z mediami",
-			"Koordynacja działań rzeczniczych",
-			"Współpraca z Zarządem",
-		],
-		requirements: [
-			"Umiejętności komunikacyjne",
-			"Znajomość mediów",
-			"Zdolności analityczne",
-			"Dobra organizacja pracy",
-		],
-		niceToHave: [
-			"Doświadczenie w rzecznictwie",
-			"Znajomość języka angielskiego",
-		],
-		team: "Filar Rzeczniczy",
-		teamId: "advocacy",
-		pillar: "Filar Rzeczniczy",
-		contactPerson: {
-			name: "Jan Augustynak",
-			email: "jan.augustynak@silamlodych.pl",
-			phone: "+48 123 456 782",
-		},
-		createdAt: "2025-01-20",
-		status: "filled",
-		applicants: ["11"],
-		filledBy: "11",
-		recruitment: {
-			// <-- DODAJ TO
-			type: "internal",
-			deadline: "2026-12-31T23:59",
-			questions: [],
-		},
-	},
-	{
-		id: "10",
-		title: "Opiekun Mediów Społecznościowych",
-		icon: "Share2",
-		description:
-			"Osoba odpowiedzialna za nadzór nad wszystkimi profilami social media organizacji.",
-		responsibilities: [
-			"Nadzór nad treściami publikowanymi w social media",
-			"Zarządzanie strategią social media",
-			"Analiza efektywności działań",
-			"Koordynacja zespołu social media",
-		],
-		requirements: [
-			"Doświadczenie w prowadzeniu social media",
-			"Znajomość strategii social media",
-			"Umiejętność zarządzania zespołem",
-			"Analityczne myślenie",
-		],
-		niceToHave: [
-			"Doświadczenie w zarządzaniu social media",
-			"Znajomość narzędzi do analizy social media",
-		],
-		team: "Social Media",
-		teamId: "social-media",
-		pillar: "Social Media",
-		contactPerson: {
-			name: "Maja Melerska",
-			email: "maja.melerska@silamlodych.pl",
-			phone: "+48 123 456 780",
-		},
-		createdAt: "2025-02-01",
-		status: "active",
-		applicants: [],
-		recruitment: {
-			// <-- DODAJ TO
-			type: "internal",
-			deadline: "2026-12-31T23:59",
-			questions: [],
-		},
-	},
-];
-
-const MOCK_APPLICATIONS: Application[] = [
-	{
-		id: "1",
-		vacancyId: "1",
-		userId: "2",
-		userName: "Krzysztof Korbut",
-		userEmail: "krzysztof.korbut@silamlodych.pl",
-		message:
-			"Jestem zainteresowany tą funkcją, mam doświadczenie w zarządzaniu projektami.",
-		appliedAt: "2024-12-02",
-		status: "pending",
-	},
-	{
-		id: "2",
-		vacancyId: "1",
-		userId: "3",
-		userName: "Zosia Wartacz",
-		userEmail: "zosia.wartacz@silamlodych.pl",
-		message: "Chętnie podejmę to wyzwanie!",
-		appliedAt: "2024-12-03",
-		status: "reviewed",
-	},
-	{
-		id: "3",
-		vacancyId: "2",
-		userId: "4",
-		userName: "Adrian Wróblewski",
-		userEmail: "adrian.wroblewski@silamlodych.pl",
-		message: "Mam doświadczenie w tworzeniu treści na TikTok.",
-		appliedAt: "2024-12-06",
-		status: "pending",
-	},
-	{
-		id: "4",
-		vacancyId: "2",
-		userId: "5",
-		userName: "Jan Augustynak",
-		userEmail: "jan.augustynak@silamlodych.pl",
-		message: "Chciałbym rozwijać się w social media.",
-		appliedAt: "2024-12-07",
-		status: "pending",
-	},
-	{
-		id: "5",
-		vacancyId: "2",
-		userId: "6",
-		userName: "Igor Piskórz",
-		userEmail: "igor.piskorz@silamlodych.pl",
-		message: "Mam pomysły na angażujące treści na TikTok!",
-		appliedAt: "2024-12-08",
-		status: "accepted",
-	},
-];
-
 // ---------------------------------------------------------------------------
 // MAPOWANIE I IKONY
 // ---------------------------------------------------------------------------
@@ -1317,7 +808,7 @@ function ApplyModal({ isOpen, vacancy, onClose, onSubmit }: ApplyModalProps) {
 											value={message}
 											onChange={(e) => setMessage(e.target.value)}
 											rows={3}
-											placeholder="Napisz coś o sobie, dlaczego chcesz dołączyć..."
+											placeholder="Napisz coś o sobie, dlaczego chcesz dołączyć... (opcjonalnie)"
 										/>
 									</div>
 								</div>
@@ -1845,6 +1336,7 @@ interface VacancyFormModalProps {
 	onClose: () => void;
 	onSave: (vacancy: Vacancy) => void;
 	onDelete?: (vacancy: Vacancy) => void;
+	members: { id: string; name: string; email: string }[];
 }
 function VacancyFormModal({
 	isOpen,
@@ -1855,6 +1347,7 @@ function VacancyFormModal({
 	onClose,
 	onSave,
 	onDelete,
+	members = [],
 }: VacancyFormModalProps) {
 	const [formData, setFormData] = useState<Partial<Vacancy>>(
 		vacancy || {
@@ -1888,9 +1381,6 @@ function VacancyFormModal({
 	const [errors, setErrors] = useState<Record<string, string>>({});
 	const [showCustomTeam, setShowCustomTeam] = useState(false);
 	const [showCustomPillar, setShowCustomPillar] = useState(false);
-	const [contactSuggestions, setContactSuggestions] = useState<
-		typeof MOCK_MEMBERS
-	>([]);
 	const [attachments, setAttachments] = useState<
 		{
 			id: string;
@@ -1987,8 +1477,9 @@ function VacancyFormModal({
 			setShowSuggestions(false);
 			return;
 		}
-		const filtered = MOCK_MEMBERS.filter((member) =>
-			member.name.toLowerCase().includes(search.toLowerCase()),
+		const filtered = members.filter(
+			(member: { id: string; name: string; email: string }) =>
+				member.name.toLowerCase().includes(search.toLowerCase()),
 		);
 		setContactSuggestions(filtered);
 		setShowSuggestions(filtered.length > 0);
@@ -3069,12 +2560,12 @@ function VacancyFormModal({
 										>
 											{
 												STATUS_ICONS[
-												(formData.status as VacancyStatus) || "active"
+													(formData.status as VacancyStatus) || "active"
 												]
 											}
 											{
 												STATUS_LABELS[
-												(formData.status as VacancyStatus) || "active"
+													(formData.status as VacancyStatus) || "active"
 												]
 											}
 										</span>
@@ -3439,6 +2930,9 @@ function QuestionManager({
 export default function Vacancies({ title }: { title?: string }) {
 	const [vacancies, setVacancies] = useState<Vacancy[]>([]);
 	const [applications, setApplications] = useState<Application[]>([]);
+	const [members, setMembers] = useState<
+		{ id: string; name: string; email: string }[]
+	>([]);
 	const [loading, setLoading] = useState(true);
 	const [searchTerm, setSearchTerm] = useState("");
 	const [selectedTeam, setSelectedTeam] = useState<string>("all");
@@ -3457,8 +2951,20 @@ export default function Vacancies({ title }: { title?: string }) {
 		vacancy: Vacancy | null;
 	}>({ isOpen: false, vacancy: null });
 
-	const currentUser = MOCK_USER;
-	const canManage = currentUser.role === "admin";
+	// ✅ DODAJ currentUser jako state
+	const [currentUser, setCurrentUser] = useState<User>({
+		id: "",
+		name: "",
+		role: "member",
+		teamId: "",
+	});
+
+	// ✅ UŻYJ hasPermission
+	const canManage =
+		hasPermission(currentUser?.role, "canEditVacancies") ||
+		hasPermission(currentUser?.role, "canDeleteVacancies");
+	const canEdit = hasPermission(currentUser?.role, "canEditVacancies");
+	const canDelete = hasPermission(currentUser?.role, "canDeleteVacancies");
 
 	// Unikalne zespoły i filary dla filtrów
 	const teams = useMemo(() => {
@@ -3470,102 +2976,176 @@ export default function Vacancies({ title }: { title?: string }) {
 	const pillars = useMemo(() => {
 		return [...DEFAULT_PILLARS].sort();
 	}, []);
-
-	// JEDEN useEffect do pobierania danych
+	// ✅ NOWY useEffect - pobieranie z backendu
 	useEffect(() => {
 		const fetchData = async () => {
 			try {
 				setLoading(true);
-				console.log("📡 Pobieranie danych...");
+				const token = localStorage.getItem("accessToken");
 
-				// UŻYJ MOCKÓW OD RAZU (pomijamy backend)
-				setVacancies(MOCK_VACANCIES);
-				setApplications(MOCK_APPLICATIONS);
-
-				// Opcjonalnie spróbuj pobrać z backendu (jeśli działa)
-				try {
-					const token = localStorage.getItem("accessToken");
-					const response = await fetch("/api/vacancies", {
-						headers: {
-							Authorization: `Bearer ${token}`,
-							"Content-Type": "application/json",
-						},
-					});
-
-					if (response.ok) {
-						const data = await response.json();
-						if (Array.isArray(data) && data.length > 0) {
-							console.log("✅ Pobrano dane z backendu");
-							// Mapowanie danych...
-							const mapped = data.map((v: any) => ({
-								id: v.id?.toString() || `vac-${Date.now()}`,
-								title: v.title || "Bez nazwy",
-								icon: v.icon || "Briefcase",
-								description: v.description || "",
-								responsibilities: Array.isArray(v.responsibilities)
-									? v.responsibilities
-									: (v.responsibilities ? JSON.parse(v.responsibilities) : []),
-								requirements: Array.isArray(v.requirements)
-									? v.requirements
-									: (v.requirements ? JSON.parse(v.requirements) : []),
-								niceToHave: Array.isArray(v.nice_to_have)
-									? v.nice_to_have
-									: (v.nice_to_have ? JSON.parse(v.nice_to_have) : []),
-								team: v.team || "",
-								teamId: v.team_id || "",
-								pillar: v.pillar || "",
-								contactPerson: v.contact_person ? {
-									name: `${v.contact_person.first_name || ""} ${v.contact_person.last_name || ""}`.trim() || v.contact_person.name || "",
-									email: v.contact_person.email || "",
-									phone: v.contact_person.phone || "",
-								} : { name: "", email: "", phone: "" },
-								createdAt: v.created_at
-									? new Date(v.created_at).toISOString().split("T")[0]
-									: new Date().toISOString().split("T")[0],
-								status: v.status || "active",
-								applicants: v.applications?.map((a: any) => a.user_id?.toString()) || [],
-								filledBy: v.filled_by?.toString() || "",
-								attachments: v.attachments?.map((a: any) => ({
-									id: a.id?.toString() || `att-${Date.now()}`,
-									name: a.name || "bez nazwy",
-									size: a.size || 0,
-									type: a.type || "",
-									url: a.url || "",
-									uploadedAt: a.uploaded_at
-										? new Date(a.uploaded_at).toISOString().split("T")[0]
-										: new Date().toISOString().split("T")[0],
-								})) || [],
-								recruitment: {
-									type: v.recruitment_type || "internal",
-									deadline: v.recruitment_deadline
-										? new Date(v.recruitment_deadline).toISOString()
-										: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-									formUrl: v.recruitment_form_url || "",
-									messengerContact: v.recruitment_messenger_contact || "",
-									questions: Array.isArray(v.questions)
-										? v.questions.map((q: any) => ({
-											id: q.id?.toString() || `q-${Date.now()}`,
-											question: q.question || "",
-											type: q.type || "text",
-											required: q.required || false,
-											options: Array.isArray(q.options)
-												? q.options
-												: (q.options ? JSON.parse(q.options) : []),
-										}))
-										: [],
-								},
-							}));
-							setVacancies(mapped);
-						}
-					}
-				} catch (error) {
-					console.warn("⚠️ Backend niedostępny - używam mocków");
+				if (!token) {
+					console.warn("⚠️ Brak tokenu - przekierowanie do logowania");
+					setLoading(false);
+					return;
 				}
 
+				// 1. Pobierz profil użytkownika
+				const userResponse = await fetch("/api/profile", {
+					headers: { Authorization: `Bearer ${token}` },
+				});
+				if (userResponse.ok) {
+					const userData = await userResponse.json();
+					setCurrentUser({
+						id: userData.id?.toString() || "",
+						name:
+							`${userData.firstName || ""} ${userData.lastName || ""}`.trim() ||
+							"Użytkownik",
+						role: userData.role || "member",
+						teamId: userData.teamId || "",
+					});
+				}
+
+				// 2. Pobierz członków (do sugestii w formularzu)
+				const membersResponse = await fetch("/api/members", {
+					headers: { Authorization: `Bearer ${token}` },
+				});
+				if (membersResponse.ok) {
+					const membersData = await membersResponse.json();
+					const mappedMembers = (
+						Array.isArray(membersData) ? membersData : []
+					).map((user: any) => ({
+						id: user.id?.toString() || "",
+						name:
+							`${user.first_name || ""} ${user.last_name || ""}`.trim() ||
+							user.email ||
+							"Nieznany",
+						email: user.email || "",
+					}));
+					setMembers(mappedMembers);
+				}
+
+				// 3. Pobierz wakaty z backendu
+				const vacanciesResponse = await fetch("/api/vacancies", {
+					headers: {
+						Authorization: `Bearer ${token}`,
+						"Content-Type": "application/json",
+					},
+				});
+
+				if (vacanciesResponse.ok) {
+					const data = await vacanciesResponse.json();
+					console.log("📦 Dane wakatów z backendu:", data);
+
+					const mapped = (Array.isArray(data) ? data : []).map((v: any) => ({
+						id: v.id?.toString() || `vac-${Date.now()}`,
+						title: v.title || "Bez nazwy",
+						icon: v.icon || "Briefcase",
+						description: v.description || "",
+						responsibilities: Array.isArray(v.responsibilities)
+							? v.responsibilities
+							: v.responsibilities
+								? JSON.parse(v.responsibilities)
+								: [],
+						requirements: Array.isArray(v.requirements)
+							? v.requirements
+							: v.requirements
+								? JSON.parse(v.requirements)
+								: [],
+						niceToHave: Array.isArray(v.nice_to_have)
+							? v.nice_to_have
+							: v.nice_to_have
+								? JSON.parse(v.nice_to_have)
+								: [],
+						team: v.team || "",
+						teamId: v.team_id || "",
+						pillar: v.pillar || "",
+						contactPerson: v.contact_person
+							? {
+									name:
+										`${v.contact_person.first_name || ""} ${v.contact_person.last_name || ""}`.trim() ||
+										v.contact_person.name ||
+										"",
+									email: v.contact_person.email || "",
+									phone: v.contact_person.phone || "",
+								}
+							: { name: "", email: "", phone: "" },
+						createdAt: v.created_at
+							? new Date(v.created_at).toISOString().split("T")[0]
+							: new Date().toISOString().split("T")[0],
+						status: (v.status as VacancyStatus) || "active",
+						applicants:
+							v.applications?.map((a: any) => a.user_id?.toString()) || [],
+						filledBy: v.filled_by?.toString() || "",
+						attachments:
+							v.attachments?.map((a: any) => ({
+								id: a.id?.toString() || `att-${Date.now()}`,
+								name: a.name || "bez nazwy",
+								size: a.size || 0,
+								type: a.type || "",
+								url: a.url || "",
+								uploadedAt: a.uploaded_at
+									? new Date(a.uploaded_at).toISOString().split("T")[0]
+									: new Date().toISOString().split("T")[0],
+							})) || [],
+						recruitment: {
+							type: (v.recruitment_type as RecruitmentType) || "internal",
+							deadline: v.recruitment_deadline
+								? new Date(v.recruitment_deadline).toISOString()
+								: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+							formUrl: v.recruitment_form_url || "",
+							messengerContact: v.recruitment_messenger_contact || "",
+							questions: Array.isArray(v.questions)
+								? v.questions.map((q: any) => ({
+										id: q.id?.toString() || `q-${Date.now()}`,
+										question: q.question || "",
+										type: (q.type as FormQuestion["type"]) || "text",
+										required: q.required || false,
+										options: Array.isArray(q.options)
+											? q.options
+											: q.options
+												? JSON.parse(q.options)
+												: [],
+									}))
+								: [],
+						},
+					}));
+					setVacancies(mapped);
+				} else {
+					console.warn("⚠️ Błąd pobierania wakatów:", vacanciesResponse.status);
+					setVacancies([]);
+				}
+
+				// 4. Pobierz zgłoszenia (applications)
+				const applicationsResponse = await fetch("/api/applications", {
+					headers: {
+						Authorization: `Bearer ${token}`,
+						"Content-Type": "application/json",
+					},
+				});
+
+				if (applicationsResponse.ok) {
+					const appsData = await applicationsResponse.json();
+					const mappedApps = (Array.isArray(appsData) ? appsData : []).map(
+						(a: any) => ({
+							id: a.id?.toString() || `app-${Date.now()}`,
+							vacancyId: a.vacancyId?.toString() || "",
+							userId: a.userId?.toString() || "",
+							userName: a.userName || "Nieznany",
+							userEmail: a.userEmail || "",
+							message: a.message || "",
+							appliedAt: a.appliedAt
+								? new Date(a.appliedAt).toISOString().split("T")[0]
+								: new Date().toISOString().split("T")[0],
+							status: (a.status as Application["status"]) || "pending",
+							answers: a.answers || {},
+						}),
+					);
+					setApplications(mappedApps);
+				}
 			} catch (error) {
-				console.error("❌ Błąd:", error);
-				setVacancies(MOCK_VACANCIES);
-				setApplications(MOCK_APPLICATIONS);
+				console.error("❌ Błąd pobierania danych:", error);
+				setVacancies([]);
+				setApplications([]);
 			} finally {
 				setLoading(false);
 			}
@@ -3573,7 +3153,6 @@ export default function Vacancies({ title }: { title?: string }) {
 
 		fetchData();
 	}, []);
-
 	// Sprawdzanie terminów
 	useEffect(() => {
 		const checkDeadlines = () => {
@@ -3676,14 +3255,17 @@ export default function Vacancies({ title }: { title?: string }) {
 				return;
 			}
 
-			// Symulacja - dodaj lokalnie
+			// ✅ DODAJ - usuń domyślną wiadomość
+			const finalMessage =
+				message && message.trim() !== "" ? message : undefined;
+
 			const newApplication: Application = {
 				id: `app-${Date.now()}`,
 				vacancyId: vacancy.id,
 				userId: currentUser.id,
 				userName: currentUser.name,
 				userEmail: "jan.kowalski@silamlodych.pl",
-				message: message || "Jestem zainteresowany/a tą funkcją.",
+				message: finalMessage, // ✅ użyj finalMessage
 				appliedAt: new Date().toISOString().split("T")[0],
 				status: "pending",
 				answers: answers,
@@ -3702,8 +3284,18 @@ export default function Vacancies({ title }: { title?: string }) {
 			});
 			setVacancies(updatedVacancies);
 
-			// Spróbuj wysłać do backendu
+			// ✅ Wyślij do backendu - bez domyślnej wiadomości
+			// ✅ Wyślij do backendu
 			try {
+				console.log(
+					"📤 Wysyłam zgłoszenie do:",
+					`/api/vacancies/${vacancy.id}/apply`,
+				);
+				console.log("📦 Dane:", {
+					message: finalMessage || "",
+					answers: answers || {},
+				});
+
 				const response = await fetch(`/api/vacancies/${vacancy.id}/apply`, {
 					method: "POST",
 					headers: {
@@ -3711,15 +3303,23 @@ export default function Vacancies({ title }: { title?: string }) {
 						"Content-Type": "application/json",
 					},
 					body: JSON.stringify({
-						message: message || "Jestem zainteresowany/a tą funkcją.",
+						message: finalMessage || "",
 						answers: answers || {},
 					}),
 				});
+
+				console.log("📥 Status odpowiedzi:", response.status);
+
 				if (!response.ok) {
-					console.warn("⚠️ Backend nie przyjął zgłoszenia, ale zapisano lokalnie");
+					const errorText = await response.text();
+					console.warn("⚠️ Backend zwrócił błąd:", response.status, errorText);
+					// ⚠️ NIE RZUCAJ BŁĘDU - tylko ostrzeżenie
+				} else {
+					const result = await response.json();
+					console.log("✅ Zapisano w backendzie:", result);
 				}
 			} catch (error) {
-				console.warn("⚠️ Backend niedostępny, zapisano lokalnie");
+				console.warn("⚠️ Backend niedostępny, zapisano lokalnie:", error);
 			}
 
 			toast.success(
@@ -3782,9 +3382,7 @@ export default function Vacancies({ title }: { title?: string }) {
 			const isEdit = vacancies.some((v) => v.id === vacancy.id);
 
 			if (isEdit) {
-				setVacancies(
-					vacancies.map((v) => (v.id === vacancy.id ? vacancy : v)),
-				);
+				setVacancies(vacancies.map((v) => (v.id === vacancy.id ? vacancy : v)));
 				toast.success(`Wakat "${vacancy.title}" został zaktualizowany!`);
 			} else {
 				const newVacancy = {
@@ -3820,7 +3418,8 @@ export default function Vacancies({ title }: { title?: string }) {
 						recruitment_type: vacancy.recruitment.type,
 						recruitment_deadline: vacancy.recruitment.deadline,
 						recruitment_form_url: vacancy.recruitment.formUrl || "",
-						recruitment_messenger_contact: vacancy.recruitment.messengerContact || "",
+						recruitment_messenger_contact:
+							vacancy.recruitment.messengerContact || "",
 						questions: vacancy.recruitment.questions || [],
 					}),
 				});
@@ -3853,7 +3452,7 @@ export default function Vacancies({ title }: { title?: string }) {
 				userId: currentUser.id,
 				userName: currentUser.name,
 				userEmail: "jan.kowalski@silamlodych.pl",
-				message: "Jestem zainteresowany/a tą funkcją.",
+				message: "",
 				appliedAt: new Date().toISOString().split("T")[0],
 				status: "pending",
 			};
@@ -4014,10 +3613,10 @@ export default function Vacancies({ title }: { title?: string }) {
 						selectedPillar !== "all" ||
 						selectedStatus !== "all" ||
 						searchTerm) && (
-							<button className={styles.filters__reset} onClick={clearFilters}>
-								Wyczyść filtry
-							</button>
-						)}
+						<button className={styles.filters__reset} onClick={clearFilters}>
+							Wyczyść filtry
+						</button>
+					)}
 				</div>
 			</div>
 
@@ -4031,9 +3630,9 @@ export default function Vacancies({ title }: { title?: string }) {
 						<h3 className={styles.emptyState__title}>Brak wakatów</h3>
 						<p className={styles.emptyState__description}>
 							{searchTerm ||
-								selectedTeam !== "all" ||
-								selectedPillar !== "all" ||
-								selectedStatus !== "all"
+							selectedTeam !== "all" ||
+							selectedPillar !== "all" ||
+							selectedStatus !== "all"
 								? "Nie znaleziono wakatów spełniających kryteria wyszukiwania."
 								: canManage
 									? "Nie ma jeszcze żadnych wakatów. Kliknij 'Dodaj wakat' aby utworzyć pierwszy."
@@ -4097,6 +3696,7 @@ export default function Vacancies({ title }: { title?: string }) {
 					setEditingVacancy(null);
 				}}
 				onSave={handleSaveVacancy}
+				members={members}
 				onDelete={canManage ? handleDeleteVacancy : undefined}
 			/>
 

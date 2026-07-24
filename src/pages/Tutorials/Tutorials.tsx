@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
+import { hasPermission } from "../../utils/permissions";
 import {
 	BookOpen,
 	Search,
@@ -307,15 +308,15 @@ const ACCESS_COLORS: Record<TutorialAccess, string> = {
 const downloadFile = async (url: string, fileName: string) => {
 	try {
 		// ⭐ DODAJ /api przed URL (to jest kluczowe!)
-		const fullUrl = url.startsWith('/uploads') ? `/api${url}` : url;
+		const fullUrl = url.startsWith("/uploads") ? `/api${url}` : url;
 
-		console.log('📥 Pobieranie:', fullUrl); // Debug - zobaczysz w konsoli
+		console.log("📥 Pobieranie:", fullUrl); // Debug - zobaczysz w konsoli
 
 		const token = localStorage.getItem("accessToken");
 		const response = await fetch(fullUrl, {
 			headers: {
-				'Authorization': `Bearer ${token}`,
-			}
+				Authorization: `Bearer ${token}`,
+			},
 		});
 
 		if (!response.ok) {
@@ -323,10 +324,10 @@ const downloadFile = async (url: string, fileName: string) => {
 		}
 
 		const blob = await response.blob();
-		console.log('📦 Rozmiar pliku:', blob.size, 'Typ:', blob.type); // Debug
+		console.log("📦 Rozmiar pliku:", blob.size, "Typ:", blob.type); // Debug
 
 		const downloadUrl = window.URL.createObjectURL(blob);
-		const link = document.createElement('a');
+		const link = document.createElement("a");
 		link.href = downloadUrl;
 		link.download = fileName;
 		document.body.appendChild(link);
@@ -337,8 +338,8 @@ const downloadFile = async (url: string, fileName: string) => {
 			window.URL.revokeObjectURL(downloadUrl);
 		}, 1000);
 	} catch (error) {
-		console.error('❌ Błąd pobierania:', error);
-		alert('Nie udało się pobrać pliku');
+		console.error("❌ Błąd pobierania:", error);
+		alert("Nie udało się pobrać pliku");
 	}
 };
 // ---------------------------------------------------------------------------
@@ -485,7 +486,6 @@ function TutorialCard({
 				)}
 
 				<div className={styles.tutorialCard__actions}>
-
 					<div className={styles.tutorialCard__actionButtons}>
 						{canEdit && (
 							<>
@@ -613,37 +613,40 @@ function TutorialModal({
 				content: formData.content || "",
 				functionalRoles: formData.functionalRoles || [],
 				attachments: (formData.attachments || [])
-					.filter(att => att.id)
-					.map(att => ({
+					.filter((att) => att.id)
+					.map((att) => ({
 						id: att.id,
 						name: att.name,
 						url: att.url,
 						size: att.size,
-					}))
+					})),
 			};
 
 			const formDataToSend = new FormData();
-			formDataToSend.append('data', JSON.stringify(tutorialData));
+			formDataToSend.append("data", JSON.stringify(tutorialData));
 
 			// ⭐ DODAJEMY NOWE PLIKI - POPRAWNIE
 			(formData.attachments || [])
-				.filter(att => att.file && typeof att.file === 'object' && 'name' in att.file) // Sprawdzamy czy to File
-				.forEach(attachment => {
+				.filter(
+					(att) =>
+						att.file && typeof att.file === "object" && "name" in att.file,
+				) // Sprawdzamy czy to File
+				.forEach((attachment) => {
 					if (attachment.file) {
-						formDataToSend.append('files', attachment.file);
+						formDataToSend.append("files", attachment.file);
 					}
 				});
 
 			const url = tutorial?.id
 				? `/api/tutorials/${tutorial.id}`
-				: '/api/tutorials';
+				: "/api/tutorials";
 
 			const response = await fetch(url, {
-				method: tutorial?.id ? 'PUT' : 'POST',
+				method: tutorial?.id ? "PUT" : "POST",
 				headers: {
-					'Authorization': `Bearer ${token}`,
+					Authorization: `Bearer ${token}`,
 				},
-				body: formDataToSend
+				body: formDataToSend,
 			});
 
 			if (!response.ok) {
@@ -654,10 +657,9 @@ function TutorialModal({
 			const savedTutorial = await response.json();
 			onSave(savedTutorial);
 			onClose();
-
 		} catch (error) {
-			console.error('❌ Błąd zapisu:', error);
-			alert('Nie udało się zapisać: ' + (error as Error).message);
+			console.error("❌ Błąd zapisu:", error);
+			alert("Nie udało się zapisać: " + (error as Error).message);
 		} finally {
 			setIsUploading(false);
 			setLoading(false);
@@ -667,7 +669,7 @@ function TutorialModal({
 	const handleFileUpload = (file: File) => {
 		// Sprawdź rozmiar (max 10MB)
 		if (file.size > 10 * 1024 * 1024) {
-			alert('Plik jest za duży. Maksymalny rozmiar: 10MB');
+			alert("Plik jest za duży. Maksymalny rozmiar: 10MB");
 			return;
 		}
 
@@ -681,12 +683,9 @@ function TutorialModal({
 			file: file, // ⭐ Przechowaj referencję do pliku
 		};
 
-		setFormData(prev => ({
+		setFormData((prev) => ({
 			...prev,
-			attachments: [
-				...(prev.attachments || []),
-				newAttachmentObj
-			]
+			attachments: [...(prev.attachments || []), newAttachmentObj],
 		}));
 
 		setNewAttachment({ name: "", url: "", size: "" });
@@ -700,19 +699,22 @@ function TutorialModal({
 		if (attachment?.id) {
 			try {
 				const token = localStorage.getItem("accessToken");
-				const response = await fetch(`/api/tutorials/attachments/${attachment.id}`, {
-					method: 'DELETE',
-					headers: {
-						'Authorization': `Bearer ${token}`,
-					}
-				});
+				const response = await fetch(
+					`/api/tutorials/attachments/${attachment.id}`,
+					{
+						method: "DELETE",
+						headers: {
+							Authorization: `Bearer ${token}`,
+						},
+					},
+				);
 
 				if (!response.ok) {
-					throw new Error('Nie udało się usunąć pliku');
+					throw new Error("Nie udało się usunąć pliku");
 				}
 			} catch (error) {
-				console.error('❌ Błąd usuwania pliku:', error);
-				alert('Nie udało się usunąć pliku');
+				console.error("❌ Błąd usuwania pliku:", error);
+				alert("Nie udało się usunąć pliku");
 				return;
 			}
 		}
@@ -957,7 +959,10 @@ function TutorialModal({
 							{/* Wskaźnik uploadu */}
 							{isUploading && (
 								<div className={styles.modal__progress}>
-									<div className={styles.modal__progressBar} style={{ width: '100%' }} />
+									<div
+										className={styles.modal__progressBar}
+										style={{ width: "100%" }}
+									/>
 									<span>Przesyłanie...</span>
 								</div>
 							)}
@@ -1002,9 +1007,7 @@ function TutorialModal({
 										htmlFor="fileInput"
 										className={styles.modal__dropzoneLabel}
 									>
-										<span>
-											Przeciągnij plik tutaj lub kliknij aby wybrać
-										</span>
+										<span>Przeciągnij plik tutaj lub kliknij aby wybrać</span>
 										<span className={styles.modal__dropzoneHint}>
 											Maksymalny rozmiar: 10 MB
 										</span>
@@ -1042,7 +1045,11 @@ function TutorialModal({
 										type="button"
 										className={styles.modal__addBtn}
 										onClick={addAttachment}
-										disabled={!newAttachment.name.trim() || !newAttachment.url.trim() || isUploading}
+										disabled={
+											!newAttachment.name.trim() ||
+											!newAttachment.url.trim() ||
+											isUploading
+										}
 									>
 										<Plus size={16} />
 										Dodaj link
@@ -1116,7 +1123,11 @@ function TutorialModal({
 								className={styles.modal__btnSave}
 								disabled={isUploading}
 							>
-								{isUploading ? "Zapisywanie..." : (tutorial ? "Zapisz zmiany" : "Dodaj poradnik")}
+								{isUploading
+									? "Zapisywanie..."
+									: tutorial
+										? "Zapisz zmiany"
+										: "Dodaj poradnik"}
 							</button>
 						)}
 					</div>
@@ -1132,7 +1143,8 @@ function TutorialModal({
 
 export default function Tutorials() {
 	const [loading, setLoading] = useState(true);
-	const [tutorials, setTutorials] = useState<Tutorial[]>(MOCK_TUTORIALS);
+	const [tutorials, setTutorials] = useState<Tutorial[]>([]);
+	const [currentUser, setCurrentUser] = useState<User | null>(null);
 	const [searchTerm, setSearchTerm] = useState("");
 	const [selectedCategory, setSelectedCategory] = useState<
 		TutorialCategory | "all"
@@ -1143,15 +1155,82 @@ export default function Tutorials() {
 	const [isModalOpen, setIsModalOpen] = useState(false);
 	const [editingTutorial, setEditingTutorial] = useState<Tutorial | null>(null);
 
-	// W rzeczywistej aplikacji pobieramy z kontekstu/auth
-	const currentUser = MOCK_USER;
+	// W głównym komponencie Tutorials, po currentUser:
 
-	const canManageTutorials = currentUser.role === "admin";
+	const canManageTutorials = hasPermission(
+		currentUser?.role,
+		"canManageGuides",
+	);
+	useEffect(() => {
+		const fetchUserAndTutorials = async () => {
+			try {
+				setLoading(true);
+				const token = localStorage.getItem("accessToken");
+
+				// 1. Pobierz dane użytkownika
+				const userResponse = await fetch("/api/profile", {
+					headers: {
+						Authorization: `Bearer ${token}`,
+						"Content-Type": "application/json",
+					},
+				});
+
+				if (!userResponse.ok) {
+					throw new Error("Błąd pobierania profilu");
+				}
+
+				const userData = await userResponse.json();
+				console.log("📊 Dane użytkownika z API:", userData);
+
+				// Mapuj dane z API na typ User
+				const mappedUser: User = {
+					id: userData.id,
+					name:
+						`${userData.firstName || ""} ${userData.lastName || ""}`.trim() ||
+						"Użytkownik",
+					role: userData.role || "member",
+					functionalRole: userData.function || userData.functional_role || "",
+				};
+
+				setCurrentUser(mappedUser);
+				console.log("✅ Zmapowany użytkownik:", mappedUser);
+				console.log("🔍 Rola użytkownika:", mappedUser.role); // ✅ TUTAJ LOGUJ
+
+				// 2. Pobierz poradniki
+				const tutorialsResponse = await fetch("/api/tutorials", {
+					headers: {
+						Authorization: `Bearer ${token}`,
+						"Content-Type": "application/json",
+					},
+				});
+
+				if (!tutorialsResponse.ok) {
+					throw new Error("Błąd pobierania poradników");
+				}
+
+				const tutorialsData = await tutorialsResponse.json();
+				setTutorials(tutorialsData);
+			} catch (error) {
+				console.error("❌ Błąd:", error);
+				setTutorials([]);
+			} finally {
+				setLoading(false);
+			}
+		};
+
+		fetchUserAndTutorials();
+	}, []);
 	const canViewTutorial = (tutorial: Tutorial): boolean => {
 		if (tutorial.access === "all") return true;
-		if (tutorial.access === "coordinator" && currentUser.role === "coordinator")
+		if (
+			tutorial.access === "coordinator" &&
+			hasPermission(currentUser?.role, "canManageGuides")
+		)
 			return true;
-		if (tutorial.access === "functional" && currentUser.role === "functional") {
+		if (
+			tutorial.access === "functional" &&
+			hasPermission(currentUser?.role, "canManageGuides")
+		) {
 			if (tutorial.functionalRoles) {
 				return tutorial.functionalRoles.includes(
 					currentUser.functionalRole || "",
@@ -1159,39 +1238,13 @@ export default function Tutorials() {
 			}
 			return true;
 		}
-		if (tutorial.access === "board" && currentUser.role === "admin")
+		if (
+			tutorial.access === "board" &&
+			hasPermission(currentUser?.role, "canManageTeams")
+		)
 			return true;
 		return false;
 	};
-	useEffect(() => {
-		const fetchTutorials = async () => {
-			try {
-				setLoading(true);
-				const token = localStorage.getItem("accessToken");
-
-				const response = await fetch("/api/tutorials", {
-					headers: {
-						Authorization: `Bearer ${token}`,
-						"Content-Type": "application/json",
-					},
-				});
-
-				if (!response.ok) {
-					throw new Error("Błąd pobierania poradników");
-				}
-
-				const data = await response.json();
-				setTutorials(data);
-			} catch (error) {
-				console.error("❌ Błąd pobierania poradników:", error);
-				setTutorials([]); // ⭐ ZMIEŃ: pusta tablica zamiast MOCK_TUTORIALS
-			} finally {
-				setLoading(false);
-			}
-		};
-
-		fetchTutorials();
-	}, []);
 
 	const filteredTutorials = useMemo(() => {
 		return tutorials.filter((tutorial) => {
@@ -1229,14 +1282,14 @@ export default function Tutorials() {
 			const token = localStorage.getItem("accessToken");
 
 			const response = await fetch(`/api/tutorials/${id}`, {
-				method: 'DELETE',
+				method: "DELETE",
 				headers: {
-					'Authorization': `Bearer ${token}`,
-				}
+					Authorization: `Bearer ${token}`,
+				},
 			});
 
 			if (!response.ok) {
-				throw new Error('Błąd usuwania');
+				throw new Error("Błąd usuwania");
 			}
 
 			// ✅ Odśwież listę po usunięciu
@@ -1248,10 +1301,9 @@ export default function Tutorials() {
 			});
 			const allTutorials = await fetchResponse.json();
 			setTutorials(allTutorials);
-
 		} catch (error) {
-			console.error('❌ Błąd usuwania:', error);
-			alert('Nie udało się usunąć poradnika');
+			console.error("❌ Błąd usuwania:", error);
+			alert("Nie udało się usunąć poradnika");
 		}
 	};
 
@@ -1267,28 +1319,29 @@ export default function Tutorials() {
 			// ✅ Odśwież listę poradników z backendu
 			const response = await fetch("/api/tutorials", {
 				headers: {
-					'Authorization': `Bearer ${token}`,
-					'Content-Type': 'application/json',
-				}
+					Authorization: `Bearer ${token}`,
+					"Content-Type": "application/json",
+				},
 			});
 
 			if (!response.ok) {
-				throw new Error('Błąd pobierania poradników');
+				throw new Error("Błąd pobierania poradników");
 			}
 
 			const allTutorials = await response.json();
 			setTutorials(allTutorials);
 
 			console.log("✅ Odświeżono listę poradników");
-
 		} catch (error) {
-			console.error('❌ Błąd odświeżania:', error);
+			console.error("❌ Błąd odświeżania:", error);
 
 			// ⭐ Na wypadek błędu - dodaj/zaktualizuj lokalnie
-			setTutorials(prev => {
-				const exists = prev.some(t => t.id === savedTutorial.id);
+			setTutorials((prev) => {
+				const exists = prev.some((t) => t.id === savedTutorial.id);
 				if (exists) {
-					return prev.map(t => t.id === savedTutorial.id ? savedTutorial : t);
+					return prev.map((t) =>
+						t.id === savedTutorial.id ? savedTutorial : t,
+					);
 				} else {
 					return [savedTutorial, ...prev];
 				}
@@ -1307,7 +1360,16 @@ export default function Tutorials() {
 			(t) => t.category === category && canViewTutorial(t),
 		).length;
 	};
-
+	if (loading || !currentUser) {
+		return (
+			<div className={styles.tutorials}>
+				<div className={styles.loadingState}>
+					<div className={styles.loadingSpinner}></div>
+					<p>Ładowanie...</p>
+				</div>
+			</div>
+		);
+	}
 	return (
 		<div className={styles.tutorials}>
 			{/* Nagłówek */}
@@ -1397,10 +1459,10 @@ export default function Tutorials() {
 					{(selectedCategory !== "all" ||
 						selectedAccess !== "all" ||
 						searchTerm) && (
-							<button className={styles.filters__reset} onClick={clearFilters}>
-								Wyczyść filtry
-							</button>
-						)}
+						<button className={styles.filters__reset} onClick={clearFilters}>
+							Wyczyść filtry
+						</button>
+					)}
 				</div>
 			</div>
 
@@ -1419,7 +1481,9 @@ export default function Tutorials() {
 						<BookOpen size={48} className={styles.emptyState__icon} />
 						<h3 className={styles.emptyState__title}>Brak poradników</h3>
 						<p className={styles.emptyState__description}>
-							{searchTerm || selectedCategory !== "all" || selectedAccess !== "all"
+							{searchTerm ||
+							selectedCategory !== "all" ||
+							selectedAccess !== "all"
 								? "Nie znaleziono poradników spełniających kryteria wyszukiwania."
 								: "Nie ma jeszcze żadnych poradników."}
 						</p>
@@ -1427,7 +1491,10 @@ export default function Tutorials() {
 							!searchTerm &&
 							selectedCategory === "all" &&
 							selectedAccess === "all" && (
-								<button className={styles.emptyState__btn} onClick={handleAddTutorial}>
+								<button
+									className={styles.emptyState__btn}
+									onClick={handleAddTutorial}
+								>
 									<Plus size={18} />
 									Dodaj pierwszy poradnik
 								</button>
