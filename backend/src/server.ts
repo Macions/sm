@@ -6,12 +6,19 @@ import { ProjectController } from "./controllers/project.controller";
 import { UserController } from "./controllers/user.controller";
 import { authMiddleware } from "./middleware/auth.middleware";
 import memberRoutes from "./routes/member.routes";
-
+import cron from "node-cron";
+import { updateLeaveStatus } from "./jobs/updateLeaveStatus";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import path from "path";
 import fs from "fs";
 import multer from "multer";
+
+updateLeaveStatus();
+cron.schedule("1 0 * * *", async () => {
+	console.log("⏰ [CRON] Uruchamiam codzienny job aktualizacji statusów...");
+	await updateLeaveStatus();
+});
 
 // ⭐ ZASTĄP UUID PROSTSZYM GENERATOREM
 function generateId(): string {
@@ -94,10 +101,10 @@ app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 // ============================================================
 function mapRoleId(roleId: number | null): string {
 	const roleMap: Record<number, string> = {
-		1: "admin",
-		2: "coordinator",
-		3: "coordinator",
-		4: "member",
+		1: "admin", // ✅ admin
+		2: "board", // zarząd
+		3: "coordinator", // koordynator
+		4: "member", // ✅ member
 	};
 	return roleMap[roleId || 4] || "member";
 }
@@ -272,6 +279,388 @@ app.get(
 	},
 );
 
+// ============================================================
+// POMYSŁY (IDEAS)
+// ============================================================
+
+// 📥 GET - pobierz wszystkie pomysły
+// 📥 GET - pobierz wszystkie pomysły z głosami
+app.get("/api/ideas", authMiddleware, async (req: any, res) => {
+	try {
+		const userId = req.user?.id;
+
+		const ideas = await prisma.idea.findMany({
+			where: { is_active: true },
+			include: {
+				votes: true,
+			},
+			orderBy: { created_at: "desc" },
+		});
+
+		const mappedIdeas = ideas.map((idea: any) => {
+			const upvotes = idea.votes.filter(
+				(v: any) => v.vote_type === "up",
+			).length;
+			const downvotes = idea.votes.filter(
+				(v: any) => v.vote_type === "down",
+			).length;
+
+			const userVote = userId
+				? idea.votes.find((v: any) => v.user_id === userId)
+				: null;
+
+			return {
+				id: idea.id.toString(),
+				title: idea.title,
+				description: idea.description,
+				pillar: idea.pillar,
+				author_id: idea.author_id,
+				author_name: idea.author_name,
+				status: idea.status,
+				upvotes: upvotes,
+				downvotes: downvotes,
+				votes: upvotes - downvotes,
+				created_at: idea.created_at,
+				updated_at: idea.updated_at,
+				user_vote: userVote ? userVote.vote_type : null,
+			};
+		});
+
+		res.json(mappedIdeas);
+	} catch (error) {
+		console.error("❌ Błąd pobierania pomysłów:", error);
+		res.status(500).json({ error: "Nie udało się pobrać pomysłów" });
+	}
+});
+
+// 📤 POST - dodaj pomysł
+// 📤 POST - dodaj pomysł
+// 📤 POST - dodaj pomysł
+app.post("/api/ideas", authMiddleware, async (req: any, res) => {
+	try {
+		const { title, description, pillar, authorId, authorName } = req.body;
+		const userId = req.user?.id;
+
+		console.log("📥 Otrzymano pomysł:", {
+			title,
+			description,
+			pillar,
+			authorId,
+			authorName,
+		});
+
+		if (!title || !description || !pillar) {
+			return res.status(400).json({ error: "Wszystkie pola są wymagane" });
+		}
+
+		// ✅ UTWÓRZ POMYSŁ
+		const idea = await prisma.idea.create({
+			data: {
+				title,
+				description,
+				pillar,
+				author_id: parseInt(authorId) || userId,
+				author_name:
+					authorName ||
+					req.user?.first_name + " " + req.user?.last_name ||
+					"Nieznany",
+				status: "pending",
+				is_active: true,
+			},
+		});
+
+		console.log("✅ Utworzono pomysł w bazie:", idea);
+
+		// ✅ AUTOMATYCZNIE DODAJ GŁOS UP OD AUTORA
+		try {
+			await prisma.ideaVote.create({
+				data: {
+					idea_id: idea.id,
+					user_id: parseInt(authorId) || userId,
+					vote_type: "up",
+				},
+			});
+			console.log(`⬆️ Automatyczny głos UP od autora (user ${userId})`);
+		} catch (voteError) {
+			// Jeśli już jest głos (np. duplikat) - pomiń
+			console.warn("⚠️ Nie udało się dodać automatycznego głosu:", voteError);
+		}
+
+		// ✅ Pobierz liczbę głosów
+		const voteCounts = await getVoteCounts(idea.id);
+
+		res.status(201).json({
+			id: idea.id.toString(),
+			title: idea.title,
+			description: idea.description,
+			pillar: idea.pillar,
+			author_id: idea.author_id,
+			author_name: idea.author_name,
+			status: idea.status,
+			votes: voteCounts.total || 0,
+			upvotes: voteCounts.upvotes || 0,
+			downvotes: voteCounts.downvotes || 0,
+			created_at: idea.created_at,
+			updated_at: idea.updated_at,
+			user_vote: "up", // ✅ Autor ma głos UP
+		});
+	} catch (error) {
+		console.error("❌ Błąd dodawania pomysłu:", error);
+		res.status(500).json({
+			error: "Nie udało się dodać pomysłu",
+			details: error instanceof Error ? error.message : "Nieznany błąd",
+		});
+	}
+});
+
+// 📤 POST - głosuj na pomysł
+// 📤 POST - głosuj na pomysł
+// 📤 POST - głosuj na pomysł
+// 📤 POST - głosuj na pomysł
+app.post("/api/ideas/:id/vote", authMiddleware, async (req: any, res) => {
+	try {
+		const { id } = req.params;
+		const userId = req.user?.id;
+		const { type } = req.body;
+
+		if (!userId) {
+			return res.status(401).json({ error: "Brak autoryzacji" });
+		}
+
+		// ✅ SPRAWDŹ CZY UŻYTKOWNIK JEST AUTOREM
+		const idea = await prisma.idea.findUnique({
+			where: { id: parseInt(id) },
+		});
+
+		if (!idea) {
+			return res.status(404).json({ error: "Nie znaleziono pomysłu" });
+		}
+
+		// ✅ BLOKADA: Autor nie może głosować na swój pomysł
+		if (idea.author_id === userId) {
+			return res.status(403).json({
+				error: "Nie możesz głosować na swój własny pomysł",
+				votes: await getVoteCounts(parseInt(id)),
+			});
+		}
+
+		// ✅ Sprawdź czy już głosował
+		const existingVote = await prisma.ideaVote.findUnique({
+			where: {
+				idea_id_user_id: {
+					idea_id: parseInt(id),
+					user_id: userId,
+				},
+			},
+		});
+
+		// Jeśli głosował na ten sam typ - NIC NIE RÓB
+		if (existingVote && existingVote.vote_type === type) {
+			return res.json({
+				message: "Już zagłosowałeś w ten sposób",
+				votes: await getVoteCounts(parseInt(id)),
+			});
+		}
+
+		// Jeśli głosował na przeciwny typ - usuń stary
+		if (existingVote) {
+			await prisma.ideaVote.delete({
+				where: {
+					idea_id_user_id: {
+						idea_id: parseInt(id),
+						user_id: userId,
+					},
+				},
+			});
+		}
+
+		// Dodaj nowy głos
+		await prisma.ideaVote.create({
+			data: {
+				idea_id: parseInt(id),
+				user_id: userId,
+				vote_type: type,
+			},
+		});
+
+		const voteCounts = await getVoteCounts(parseInt(id));
+
+		res.json({
+			id: idea.id.toString(),
+			votes: voteCounts,
+		});
+	} catch (error) {
+		console.error("❌ Błąd głosowania:", error);
+		res.status(500).json({
+			error: "Nie udało się zagłosować",
+			details: error instanceof Error ? error.message : "Nieznany błąd",
+		});
+	}
+});
+
+// ✅ FUNKCJA POMOCNICZA
+async function getVoteCounts(ideaId: number) {
+	const votes = await prisma.ideaVote.findMany({
+		where: { idea_id: ideaId },
+	});
+
+	const upvotes = votes.filter((v: any) => v.vote_type === "up").length;
+	const downvotes = votes.filter((v: any) => v.vote_type === "down").length;
+
+	return {
+		upvotes: upvotes,
+		downvotes: downvotes,
+		total: upvotes - downvotes,
+	};
+}
+
+// 📝 PUT - zmień status pomysłu
+app.put("/api/ideas/:id/status", authMiddleware, async (req: any, res) => {
+	try {
+		const { id } = req.params;
+		const { status } = req.body;
+		const userRole = req.user?.role;
+
+		// Tylko admin lub koordynator może zmieniać status
+		if (userRole !== "admin" && userRole !== "coordinator") {
+			return res.status(403).json({ error: "Brak uprawnień" });
+		}
+
+		const idea = await prisma.idea.update({
+			where: { id: parseInt(id) },
+			data: { status },
+		});
+
+		res.json(idea);
+	} catch (error) {
+		console.error("❌ Błąd zmiany statusu:", error);
+		res.status(500).json({ error: "Nie udało się zmienić statusu" });
+	}
+});
+// ============================================================
+// CZŁONKOWIE (MEMBERS)
+// ============================================================
+// 📥 GET - pobierz pojedynczy pomysł (opcjonalnie)
+app.get("/api/ideas/:id", authMiddleware, async (req: any, res) => {
+	try {
+		const { id } = req.params;
+
+		const idea = await prisma.idea.findUnique({
+			where: { id: parseInt(id) },
+			include: {
+				votes: true,
+			},
+		});
+
+		if (!idea) {
+			return res.status(404).json({ error: "Nie znaleziono pomysłu" });
+		}
+
+		const upvotes = idea.votes.filter((v: any) => v.vote_type === "up").length;
+		const downvotes = idea.votes.filter(
+			(v: any) => v.vote_type === "down",
+		).length;
+
+		res.json({
+			id: idea.id.toString(),
+			title: idea.title,
+			description: idea.description,
+			pillar: idea.pillar,
+			author_id: idea.author_id,
+			author_name: idea.author_name,
+			status: idea.status,
+			upvotes: upvotes,
+			downvotes: downvotes,
+			votes: upvotes - downvotes,
+			created_at: idea.created_at,
+		});
+	} catch (error) {
+		console.error("❌ Błąd pobierania pomysłu:", error);
+		res.status(500).json({ error: "Nie udało się pobrać pomysłu" });
+	}
+});
+// 📥 GET - pobierz wszystkich członków
+app.get("/api/members", authMiddleware, async (req: any, res) => {
+	try {
+		const users = await prisma.user.findMany({
+			where: {
+				is_active: true,
+			},
+			include: {
+				team_members: {
+					include: {
+						team: true,
+					},
+				},
+				onboarding_data: { orderBy: { created_at: "desc" }, take: 1 },
+				leaves: {
+					where: {
+						status: "approved",
+					},
+					select: {
+						start_date: true,
+						end_date: true,
+						scope: true,
+						affected_teams: true,
+					},
+				},
+			},
+		});
+
+		const mappedUsers = users.map((user: any) => {
+			const onboarding = user.onboarding_data?.[0] || {};
+
+			// ✅ Pobierz zespoły z team_members
+			const teams = user.team_members
+				.map((tm: any) => tm.team?.name)
+				.filter(Boolean);
+
+			const teamString = teams.length > 0 ? teams.join(", ") : "Brak zespołu";
+
+			// Znajdź aktualny urlop
+			const today = new Date();
+			today.setHours(0, 0, 0, 0);
+
+			const activeLeave = user.leaves?.find((leave: any) => {
+				const start = new Date(leave.start_date);
+				const end = new Date(leave.end_date);
+				start.setHours(0, 0, 0, 0);
+				end.setHours(0, 0, 0, 0);
+				return start <= today && end >= today;
+			});
+
+			return {
+				id: user.id.toString(),
+				first_name: user.first_name,
+				last_name: user.last_name,
+				email: user.email,
+				phone: user.phone,
+				province: user.province,
+				status: user.status || "active",
+				team: teamString, // ✅ Zespoły z team_members
+				team_id: teams.length > 0 ? teams.join("-") : "",
+				functional_role: user.functional_role || "Członek",
+				join_date:
+					user.join_date?.toISOString().split("T")[0] ||
+					user.created_at.toISOString().split("T")[0],
+				vacation: activeLeave
+					? {
+							startDate: activeLeave.start_date.toISOString().split("T")[0],
+							endDate: activeLeave.end_date.toISOString().split("T")[0],
+							type: activeLeave.scope === "team" ? "team" : "organization",
+							teamId: activeLeave.affected_teams || undefined,
+						}
+					: null,
+				onboarding_data: onboarding,
+			};
+		});
+
+		res.json(mappedUsers);
+	} catch (error) {
+		console.error("❌ Błąd pobierania członków:", error);
+		res.status(500).json({ error: "Nie udało się pobrać członków" });
+	}
+});
 // PROJEKTY
 app.get("/api/projects", authMiddleware, projectController.getAllProjects);
 app.get("/api/projects/:id", authMiddleware, projectController.getProjectById);
@@ -285,7 +674,6 @@ app.delete(
 
 // UŻYTKOWNICY
 app.get("/api/users", authMiddleware, userController.getAllUsers);
-
 
 // 📥 GET - pobierz wszystkie zespoły
 app.get("/api/teams", authMiddleware, async (req: any, res) => {
@@ -381,17 +769,30 @@ app.get(
 	async (req: any, res) => {
 		try {
 			const userId = req.user?.id;
+			const userRole = req.user?.role;
+
 			if (!userId) {
 				return res.status(401).json({ error: "Brak autoryzacji" });
 			}
 
 			const limit = parseInt(req.query.limit as string) || 4;
 
-			const notifications = await prisma.notification.findMany({
-				where: { user_id: userId },
-				orderBy: { created_at: "desc" },
-				take: limit,
-			});
+			let notifications;
+
+			// ✅ ADMIN widzi WSZYSTKIE powiadomienia
+			if (userRole === "admin") {
+				notifications = await prisma.notification.findMany({
+					orderBy: { created_at: "desc" },
+					take: limit,
+				});
+			} else {
+				// Zwykły użytkownik widzi tylko swoje
+				notifications = await prisma.notification.findMany({
+					where: { user_id: userId },
+					orderBy: { created_at: "desc" },
+					take: limit,
+				});
+			}
 
 			const mappedNotifications = notifications.map((n: any) => ({
 				id: n.id.toString(),
@@ -635,18 +1036,31 @@ app.post(
 // ============================================================
 
 // 📥 GET - pobierz wszystkie zgłoszenia na wakaty
+// 📥 GET - pobierz zgłoszenia na wakaty
 app.get("/api/applications", authMiddleware, async (req: any, res) => {
 	try {
+		const userId = req.user?.id;
 		const userRole = req.user?.role;
 
-		// Tylko admin i koordynator mogą widzieć wszystkie zgłoszenia
-		if (userRole !== "admin" && userRole !== "coordinator") {
-			return res.status(403).json({ error: "Brak uprawnień" });
+		// ✅ ZWYKŁY UŻYTKOWNIK widzi tylko swoje zgłoszenia
+		let whereCondition = {};
+		if (userRole === "admin" || userRole === "coordinator") {
+			// Admin i koordynator widzą wszystkie
+			whereCondition = {};
+		} else {
+			// Zwykły użytkownik widzi tylko swoje
+			whereCondition = { user_id: userId };
 		}
 
-		console.log("📥 Pobieranie zgłoszeń...");
+		console.log(
+			"📥 Pobieranie zgłoszeń dla użytkownika:",
+			userId,
+			"rola:",
+			userRole,
+		);
 
 		const applications = await prisma.vacancyApplication.findMany({
+			where: whereCondition,
 			include: {
 				user: {
 					select: {
@@ -684,7 +1098,6 @@ app.get("/api/applications", authMiddleware, async (req: any, res) => {
 
 		// Mapuj dane
 		const mappedApplications = applications.map((app: any) => {
-			// Zbuduj obiekt odpowiedzi
 			const answers: Record<string, string> = {};
 
 			if (app.answers && Array.isArray(app.answers)) {
@@ -702,7 +1115,7 @@ app.get("/api/applications", authMiddleware, async (req: any, res) => {
 				userId: app.user_id.toString(),
 				userName: app.user
 					? `${app.user.first_name || ""} ${app.user.last_name || ""}`.trim() ||
-					"Nieznany"
+						"Nieznany"
 					: "Nieznany",
 				userEmail: app.user?.email || "",
 				message: app.message || "",
@@ -719,7 +1132,6 @@ app.get("/api/applications", authMiddleware, async (req: any, res) => {
 		res.json(mappedApplications);
 	} catch (error) {
 		console.error("❌ Błąd pobierania zgłoszeń:", error);
-		// Zwróć szczegółowy błąd
 		res.status(500).json({
 			error: "Nie udało się pobrać zgłoszeń",
 			details: error instanceof Error ? error.message : "Nieznany błąd",
@@ -842,7 +1254,7 @@ app.get(
 					userId: app.user_id.toString(),
 					userName: app.user
 						? `${app.user.first_name || ""} ${app.user.last_name || ""}`.trim() ||
-						"Nieznany"
+							"Nieznany"
 						: "Nieznany",
 					userEmail: app.user?.email || "",
 					message: app.message || "",
@@ -1339,6 +1751,7 @@ app.delete("/api/vacancies/:id", authMiddleware, async (req: any, res) => {
 });
 
 // 📤 POST - zgłoś się na wakat
+// 📤 POST - zgłoś się na wakat
 app.post("/api/vacancies/:id/apply", authMiddleware, async (req: any, res) => {
 	try {
 		const { id } = req.params;
@@ -1347,6 +1760,18 @@ app.post("/api/vacancies/:id/apply", authMiddleware, async (req: any, res) => {
 
 		if (!userId) {
 			return res.status(401).json({ error: "Brak autoryzacji" });
+		}
+
+		// Sprawdź czy wakat istnieje i jest aktywny
+		const vacancy = await prisma.vacancy.findUnique({
+			where: {
+				id: parseInt(id),
+				is_active: true,
+			},
+		});
+
+		if (!vacancy) {
+			return res.status(404).json({ error: "Nie znaleziono wakatu" });
 		}
 
 		// Sprawdź czy już się zgłoszono
@@ -1363,6 +1788,7 @@ app.post("/api/vacancies/:id/apply", authMiddleware, async (req: any, res) => {
 			});
 		}
 
+		// 🔥 UTWÓRZ ZGŁOSZENIE
 		const application = await prisma.vacancyApplication.create({
 			data: {
 				vacancy_id: parseInt(id),
@@ -1372,23 +1798,83 @@ app.post("/api/vacancies/:id/apply", authMiddleware, async (req: any, res) => {
 			},
 		});
 
-		// Dodaj odpowiedzi na pytania
+		// 🔥 DODAJ ODPOWIEDZI NA PYTANIA (jeśli są)
 		if (answers && Object.keys(answers).length > 0) {
-			await prisma.vacancyAnswer.createMany({
-				data: Object.entries(answers).map(([questionId, answer]) => ({
+			// Pobierz pytania dla tego wakatu, żeby sprawdzić które istnieją
+			const questions = await prisma.vacancyQuestion.findMany({
+				where: {
+					vacancy_id: parseInt(id),
+				},
+				select: {
+					id: true,
+				},
+			});
+
+			const questionIds = questions.map((q: { id: number }) => q.id);
+
+			// Filtruj odpowiedzi tylko dla istniejących pytań
+			const validAnswers = Object.entries(answers)
+				.filter(([questionId]) => questionIds.includes(parseInt(questionId)))
+				.map(([questionId, answer]) => ({
 					application_id: application.id,
 					question_id: parseInt(questionId),
 					answer: answer as string,
-				})),
-			});
+				}));
+
+			if (validAnswers.length > 0) {
+				await prisma.vacancyAnswer.createMany({
+					data: validAnswers,
+				});
+			}
 		}
 
-		res.status(201).json(application);
+		// 🔥 ZWROCĘ ODPOWIEDŹ
+		res.status(201).json({
+			id: application.id.toString(),
+			vacancyId: application.vacancy_id.toString(),
+			userId: application.user_id.toString(),
+			message: application.message,
+			status: application.status,
+			appliedAt: new Date().toISOString().split("T")[0],
+		});
 	} catch (error) {
 		console.error("❌ Błąd zgłaszania na wakat:", error);
-		res.status(500).json({ error: "Nie udało się zgłosić na wakat" });
+		res.status(500).json({
+			error: "Nie udało się zgłosić na wakat",
+			details: error instanceof Error ? error.message : "Nieznany błąd",
+		});
 	}
 });
+// 📥 GET - sprawdź czy użytkownik już zgłosił się na wakat
+app.get(
+	"/api/vacancies/:id/check-application",
+	authMiddleware,
+	async (req: any, res) => {
+		try {
+			const { id } = req.params;
+			const userId = req.user?.id;
+
+			if (!userId) {
+				return res.status(401).json({ error: "Brak autoryzacji" });
+			}
+
+			const application = await prisma.vacancyApplication.findFirst({
+				where: {
+					vacancy_id: parseInt(id),
+					user_id: userId,
+				},
+			});
+
+			res.json({
+				hasApplied: !!application,
+				applicationId: application?.id?.toString() || null,
+			});
+		} catch (error) {
+			console.error("❌ Błąd sprawdzania zgłoszenia:", error);
+			res.status(500).json({ error: "Nie udało się sprawdzić zgłoszenia" });
+		}
+	},
+);
 // POWIADOMIENIA - USUŃ
 app.delete(
 	"/api/dashboard/notifications/:id",
@@ -1419,6 +1905,7 @@ app.delete(
 );
 
 // STRUKTURA
+// STRUKTURA
 app.get("/api/structure", authMiddleware, async (req: any, res) => {
 	try {
 		console.log("📥 [STRUCTURE] Pobieranie struktury...");
@@ -1433,13 +1920,21 @@ app.get("/api/structure", authMiddleware, async (req: any, res) => {
 			},
 		});
 
+		// ✅ TYLKO JEDNA deklaracja teamMembers - POPRAWNA
 		const teamMembers = await prisma.teamMember.findMany({
 			select: {
 				id: true,
 				team_id: true,
 				user_id: true,
-				roles: true,
+				role: true, // ✅ role (liczba pojedyncza)
 				is_leader: true,
+				created_at: true,
+				team: {
+					select: {
+						id: true,
+						name: true,
+					},
+				},
 				user: {
 					select: {
 						id: true,
@@ -1542,37 +2037,58 @@ app.get("/api/profile", authMiddleware, async (req: any, res) => {
 
 		const user = await prisma.user.findUnique({
 			where: { id: parseInt(userId) },
-			include: { roles: true, team_members: { include: { team: true } }, onboarding_data: { orderBy: { created_at: "desc" }, take: 1 } },
+			include: {
+				roles: true,
+				team_members: { include: { team: true } },
+				onboarding_data: { orderBy: { created_at: "desc" }, take: 1 },
+			},
 		});
 
-		if (!user) return res.status(404).json({ error: "Użytkownik nie znaleziony" });
+		if (!user)
+			return res.status(404).json({ error: "Użytkownik nie znaleziony" });
 
 		// Mapowanie danych
-		const teams = user.team_members.map((tm: any) => tm.team?.name).filter(Boolean);
+		const teams = user.team_members
+			.map((tm: any) => tm.team?.name)
+			.filter(Boolean);
 		const onboarding = user.onboarding_data?.[0] || {};
 
 		const profile = {
 			id: user.id.toString(),
 			firstName: user.first_name,
 			lastName: user.last_name,
+			role: mapRoleId(user.role_id),
 			function: user.functional_role || "Członek",
-			team: teams.length > 0 ? teams.join(", ") : (user.team || "Brak zespołu"),
+			team: teams.length > 0 ? teams.join(", ") : user.team || "Brak zespołu",
+			pillar: teams.find((t: string) => t.includes("Filar")) || null, // ✅ DODAJ TĘ LINIĘ
 			province: user.province || "Brak danych",
 			status: user.status || "active",
 			email: user.email || "",
 			phone: user.phone || undefined,
-			joinDate: user.join_date?.toISOString().split("T")[0] || user.created_at.toISOString().split("T")[0],
+			joinDate:
+				user.join_date?.toISOString().split("T")[0] ||
+				user.created_at.toISOString().split("T")[0],
 			currentTasks: [],
 			projects: [],
-			developmentAreas: onboarding.development_areas ? JSON.parse(onboarding.development_areas) : [],
+			developmentAreas: onboarding.development_areas
+				? JSON.parse(onboarding.development_areas)
+				: [],
 			skills: onboarding.skills ? JSON.parse(onboarding.skills) : [],
 			availability: onboarding.availability || "Uzgodnij z koordynatorem",
 			description: onboarding.description || "",
 			contacts: {
-				salaContacts: onboarding.sala_contacts ? JSON.parse(onboarding.sala_contacts) : [],
-				mpContacts: onboarding.mp_contacts ? JSON.parse(onboarding.mp_contacts) : [],
-				institutionContacts: onboarding.institution_contacts ? JSON.parse(onboarding.institution_contacts) : [],
-				otherContacts: onboarding.other_contacts ? JSON.parse(onboarding.other_contacts) : [],
+				salaContacts: onboarding.sala_contacts
+					? JSON.parse(onboarding.sala_contacts)
+					: [],
+				mpContacts: onboarding.mp_contacts
+					? JSON.parse(onboarding.mp_contacts)
+					: [],
+				institutionContacts: onboarding.institution_contacts
+					? JSON.parse(onboarding.institution_contacts)
+					: [],
+				otherContacts: onboarding.other_contacts
+					? JSON.parse(onboarding.other_contacts)
+					: [],
 			},
 			contributionInfo: { arrears: 0, status: "paid" },
 			leave: { isOnLeave: false, history: [] },
@@ -1595,7 +2111,6 @@ app.get("/api/leaves", authMiddleware, async (req: any, res) => {
 		const userRole = req.user?.role;
 		const userTeam = req.user?.team;
 
-		// Pobierz urlopy z bazy
 		const leaves = await prisma.leave.findMany({
 			include: {
 				user: {
@@ -1624,49 +2139,61 @@ app.get("/api/leaves", authMiddleware, async (req: any, res) => {
 			},
 		});
 
-		// Mapuj dane
-		const mappedLeaves = leaves.map((leave: any) => {
-			const user = leave.user;
-			const userName = user ? `${user.first_name || ''} ${user.last_name || ''}`.trim() : 'Nieznany';
+		const mappedLeaves = leaves
+			.map((leave: any) => {
+				const user = leave.user;
+				const userName = user
+					? `${user.first_name || ""} ${user.last_name || ""}`.trim()
+					: "Nieznany";
 
-			// Sprawdź czy użytkownik może zobaczyć ten urlop
-			let canView = false;
-			if (userRole === 'admin') {
-				canView = true;
-			} else if (userRole === 'coordinator') {
-				// Koordynator widzi urlopy swojego zespołu
-				canView = user?.team === userTeam || leave.affected_teams?.includes(userTeam) || userId === leave.user_id;
-			} else {
-				canView = userId === leave.user_id;
-			}
+				// ✅ ZARZĄD widzi WSZYSTKIE wnioski
+				// ✅ ADMIN widzi WSZYSTKIE wnioski (tylko podgląd)
+				// ✅ KOORDYNATOR widzi tylko swój zespół
+				let canView = false;
+				if (userRole === "board" || userRole === "admin") {
+					canView = true; // Zarząd i Admin widzą wszystko
+				} else if (userRole === "coordinator") {
+					canView =
+						user?.team === userTeam ||
+						leave.affected_teams?.includes(userTeam) ||
+						userId === leave.user_id;
+				} else {
+					canView = userId === leave.user_id;
+				}
 
-			if (!canView) return null;
+				if (!canView) return null;
 
-			return {
-				id: leave.id.toString(),
-				userId: leave.user_id.toString(),
-				userName: userName,
-				userTeam: user?.team || "Brak zespołu",
-				type: leave.type || "vacation",
-				scope: leave.scope || "all",
-				affectedTeams: leave.affected_teams ? JSON.parse(leave.affected_teams) : [],
-				startDate: leave.start_date.toISOString().split("T")[0],
-				endDate: leave.end_date.toISOString().split("T")[0],
-				reason: leave.reason || "",
-				reasonVisibility: leave.reason_visibility || "private",
-				status: leave.status || "pending",
-				createdAt: leave.created_at.toISOString(),
-				approvedBy: leave.approved_by || undefined,
-				approvedAt: leave.approved_at?.toISOString(),
-				attachments: leave.attachments ? JSON.parse(leave.attachments) : [],
-				comments: leave.comments?.map((c: any) => ({
-					id: c.id.toString(),
-					author: c.author ? `${c.author.first_name || ''} ${c.author.last_name || ''}`.trim() : 'Nieznany',
-					content: c.content,
-					createdAt: c.created_at.toISOString(),
-				})) || [],
-			};
-		}).filter(Boolean); // Usuń null-e (urlopy, których nie może zobaczyć)
+				return {
+					id: leave.id.toString(),
+					userId: leave.user_id.toString(),
+					userName: userName,
+					userTeam: user?.team || "Brak zespołu",
+					type: leave.type || "vacation",
+					scope: leave.scope || "all",
+					affectedTeams: leave.affected_teams
+						? JSON.parse(leave.affected_teams)
+						: [],
+					startDate: leave.start_date.toISOString().split("T")[0],
+					endDate: leave.end_date.toISOString().split("T")[0],
+					reason: leave.reason || "",
+					reasonVisibility: leave.reason_visibility || "private",
+					status: leave.status || "pending",
+					createdAt: leave.created_at.toISOString(),
+					approvedBy: leave.approved_by || undefined,
+					approvedAt: leave.approved_at?.toISOString(),
+					attachments: leave.attachments ? JSON.parse(leave.attachments) : [],
+					comments:
+						leave.comments?.map((c: any) => ({
+							id: c.id.toString(),
+							author: c.author
+								? `${c.author.first_name || ""} ${c.author.last_name || ""}`.trim()
+								: "Nieznany",
+							content: c.content,
+							createdAt: c.created_at.toISOString(),
+						})) || [],
+				};
+			})
+			.filter(Boolean);
 
 		res.json(mappedLeaves);
 	} catch (error) {
@@ -1677,12 +2204,14 @@ app.get("/api/leaves", authMiddleware, async (req: any, res) => {
 
 // 📤 POST - utwórz nowy wniosek urlopowy
 // 📤 POST - utwórz nowy wniosek urlopowy
+// 📤 POST - utwórz nowy wniosek urlopowy
+
 app.post("/api/leaves", authMiddleware, async (req: any, res) => {
 	try {
 		const userId = req.user?.id;
 		if (!userId) return res.status(401).json({ error: "Brak autoryzacji" });
 
-		console.log("📥 OTRZYMANE DANE:", req.body); // ⭐ LOG
+		console.log("📥 OTRZYMANE DANE:", req.body);
 
 		const {
 			type,
@@ -1696,9 +2225,22 @@ app.post("/api/leaves", authMiddleware, async (req: any, res) => {
 		} = req.body;
 
 		if (!startDate || !endDate) {
-			return res.status(400).json({ error: "Data rozpoczęcia i zakończenia są wymagane" });
+			return res
+				.status(400)
+				.json({ error: "Data rozpoczęcia i zakończenia są wymagane" });
 		}
 
+		// 1. Pobierz dane użytkownika
+		const user = await prisma.user.findUnique({
+			where: { id: userId },
+			select: {
+				first_name: true,
+				last_name: true,
+				team: true,
+			},
+		});
+
+		// 2. Utwórz wniosek urlopowy
 		const leave = await prisma.leave.create({
 			data: {
 				user_id: userId,
@@ -1714,20 +2256,69 @@ app.post("/api/leaves", authMiddleware, async (req: any, res) => {
 			},
 		});
 
-		console.log("✅ UTOWORZONO URLOP:", leave); // ⭐ LOG
+		// ✅✅✅ 3. UTWÓRZ POWIADOMIENIE ✅✅✅
+		const userName = user
+			? `${user.first_name || ""} ${user.last_name || ""}`.trim()
+			: "Nieznany";
 
-		// ⭐ ZWRÓĆ DANE W FORMACIE OCZEKIWANYM PRZEZ FRONTEND
-		const userName = req.user ? `${req.user.first_name || ''} ${req.user.last_name || ''}`.trim() || 'Nieznany' : 'Nieznany';
-		const userTeam = req.user?.team || "Brak zespołu";
+		// 1. Znajdź admina (user_id = 63)
+		const admin = await prisma.user.findUnique({
+			where: { id: 63 }, // admin_system
+			select: { id: true },
+		});
 
+		// 2. Znajdź zarząd (user_id = 1 - Maciej, ale on ma teraz role_id = 4)
+		// LUB znajdź pierwszego użytkownika z role_id = 2
+		const boardMember = await prisma.user.findFirst({
+			where: {
+				role_id: 2, // board (zarząd)
+			},
+			select: { id: true },
+			orderBy: { id: "asc" },
+		});
+
+		// 4. Utwórz powiadomienie dla ZARZĄDU z target: "board"
+		if (boardMember) {
+			const existing = await prisma.notification.findFirst({
+				where: {
+					user_id: boardMember.id,
+					message: `Użytkownik ${userName} zgłosił urlop od ${new Date(startDate).toLocaleDateString("pl-PL")} do ${new Date(endDate).toLocaleDateString("pl-PL")}`,
+					created_at: {
+						gte: new Date(Date.now() - 60000),
+					},
+				},
+			});
+
+			if (!existing) {
+				await prisma.notification.create({
+					data: {
+						user_id: boardMember.id,
+						title: "Nowy wniosek urlopowy",
+						message: `Użytkownik ${userName} zgłosił urlop od ${new Date(startDate).toLocaleDateString("pl-PL")} do ${new Date(endDate).toLocaleDateString("pl-PL")}`,
+						type: "info",
+						read: false,
+						link: `/leave`,
+						target: "board", // ✅ TARGET: board
+						created_at: new Date(),
+					},
+				});
+			}
+		}
+
+		console.log("✅ UTOWORZONO URLOP:", leave);
+		console.log(`📨 Wysłano powiadomienia do Admina i Zarządu`);
+
+		// 5. Zwróć odpowiedź
 		res.status(201).json({
 			id: leave.id.toString(),
 			userId: leave.user_id.toString(),
 			userName: userName,
-			userTeam: userTeam,
+			userTeam: user?.team || "Brak zespołu",
 			type: leave.type,
 			scope: leave.scope,
-			affectedTeams: leave.affected_teams ? JSON.parse(leave.affected_teams) : [],
+			affectedTeams: leave.affected_teams
+				? JSON.parse(leave.affected_teams)
+				: [],
 			startDate: leave.start_date.toISOString().split("T")[0],
 			endDate: leave.end_date.toISOString().split("T")[0],
 			reason: leave.reason || "",
@@ -1744,7 +2335,7 @@ app.post("/api/leaves", authMiddleware, async (req: any, res) => {
 		res.status(500).json({ error: "Nie udało się utworzyć wniosku" });
 	}
 });
-
+// 📝 PUT - aktualizuj wniosek urlopowy
 // 📝 PUT - aktualizuj wniosek urlopowy
 app.put("/api/leaves/:id", authMiddleware, async (req: any, res) => {
 	try {
@@ -1756,21 +2347,32 @@ app.put("/api/leaves/:id", authMiddleware, async (req: any, res) => {
 
 		const existingLeave = await prisma.leave.findUnique({
 			where: { id: leaveId },
+			include: { user: true },
 		});
 
 		if (!existingLeave) {
 			return res.status(404).json({ error: "Nie znaleziono wniosku" });
 		}
 
-		// Sprawdź uprawnienia - tylko admin, koordynator lub autor wniosku
-		if (userRole !== "admin" && userRole !== "coordinator" && existingLeave.user_id !== userId) {
-			return res.status(403).json({ error: "Brak uprawnień" });
+		// ✅✅✅ ADMIN + ZARZĄD MOŻE ZATWIERDZAĆ/ODRZUCAĆ ✅✅✅
+		const canApprove =
+			userRole === "admin" || userRole === "board" || userRole === "zarząd";
+
+		if (!canApprove) {
+			return res.status(403).json({
+				error:
+					"Tylko Admin lub Zarząd może zatwierdzać lub odrzucać wnioski urlopowe",
+			});
 		}
 
-		// Nie można edytować zatwierdzonego lub odrzuconego wniosku (chyba że admin)
-		if (existingLeave.status !== "pending" && userRole !== "admin") {
-			return res.status(400).json({ error: "Nie można edytować już rozpatrzonego wniosku" });
-		}
+		// ✅ Pobierz dane aktualnego użytkownika
+		const currentUser = await prisma.user.findUnique({
+			where: { id: userId },
+			select: {
+				first_name: true,
+				last_name: true,
+			},
+		});
 
 		const {
 			type,
@@ -1784,24 +2386,66 @@ app.put("/api/leaves/:id", authMiddleware, async (req: any, res) => {
 			status,
 		} = req.body;
 
+		// ✅ ADMIN + ZARZĄD MOŻE ZMIENIAĆ STATUS
+		if (status && (status === "approved" || status === "rejected")) {
+			if (!canApprove) {
+				return res.status(403).json({
+					error: "Tylko Admin lub Zarząd może zatwierdzać lub odrzucać wnioski",
+				});
+			}
+		}
+
 		const leave = await prisma.leave.update({
 			where: { id: leaveId },
 			data: {
 				type: type || existingLeave.type,
 				scope: scope || existingLeave.scope,
-				affected_teams: affectedTeams ? JSON.stringify(affectedTeams) : existingLeave.affected_teams,
+				affected_teams: affectedTeams
+					? JSON.stringify(affectedTeams)
+					: existingLeave.affected_teams,
 				start_date: startDate ? new Date(startDate) : existingLeave.start_date,
 				end_date: endDate ? new Date(endDate) : existingLeave.end_date,
 				reason: reason !== undefined ? reason : existingLeave.reason,
 				reason_visibility: reasonVisibility || existingLeave.reason_visibility,
-				attachments: attachments ? JSON.stringify(attachments) : existingLeave.attachments,
+				attachments: attachments
+					? JSON.stringify(attachments)
+					: existingLeave.attachments,
 				status: status || existingLeave.status,
-				...(status === "approved" || status === "rejected" ? {
-					approved_by: req.user.first_name + " " + req.user.last_name,
-					approved_at: new Date(),
-				} : {}),
+				...(status === "approved" || status === "rejected"
+					? {
+							// ✅ UŻYJ currentUser zamiast req.user
+							approved_by:
+								`${currentUser?.first_name || ""} ${currentUser?.last_name || ""}`.trim() ||
+								"Nieznany",
+							approved_at: new Date(),
+						}
+					: {}),
 			},
 		});
+
+		// Powiadomienie o zmianie statusu
+		if (status && (status === "approved" || status === "rejected")) {
+			const statusText = status === "approved" ? "zaakceptowany" : "odrzucony";
+			const userName =
+				`${currentUser?.first_name || ""} ${currentUser?.last_name || ""}`.trim() ||
+				"Nieznany";
+
+			await prisma.notification.create({
+				data: {
+					user_id: existingLeave.user_id,
+					title:
+						status === "approved"
+							? "Wniosek zaakceptowany"
+							: "Wniosek odrzucony",
+					message: `Twój wniosek urlopowy został ${statusText} przez ${userName}`,
+					type: status === "approved" ? "success" : "warning",
+					read: false,
+					link: `/leave`,
+					target: "all",
+					created_at: new Date(),
+				},
+			});
+		}
 
 		res.json(leave);
 	} catch (error) {
@@ -1909,19 +2553,36 @@ app.put("/api/profile", authMiddleware, async (req: any, res) => {
 		const userId = req.user?.id;
 		if (!userId) return res.status(401).json({ error: "Brak autoryzacji" });
 
-		const { firstName, lastName, province, description, skills, developmentAreas, availability, phone } = req.body;
+		const {
+			firstName,
+			lastName,
+			province,
+			description,
+			skills,
+			developmentAreas,
+			availability,
+			phone,
+		} = req.body;
 
 		await prisma.user.update({
 			where: { id: userId },
 			data: { first_name: firstName, last_name: lastName, province, phone },
 		});
 
-		const existing = await prisma.onboarding_data.findFirst({ where: { user_id: userId }, orderBy: { created_at: "desc" } });
+		const existing = await prisma.onboarding_data.findFirst({
+			where: { user_id: userId },
+			orderBy: { created_at: "desc" },
+		});
 
 		if (existing) {
 			await prisma.onboarding_data.update({
 				where: { id: existing.id },
-				data: { description, skills: JSON.stringify(skills), development_areas: JSON.stringify(developmentAreas), availability },
+				data: {
+					description,
+					skills: JSON.stringify(skills),
+					development_areas: JSON.stringify(developmentAreas),
+					availability,
+				},
 			});
 		}
 
@@ -1938,7 +2599,10 @@ app.post("/api/profile/skills", authMiddleware, async (req: any, res) => {
 		const userId = req.user?.id;
 		const { skill } = req.body;
 
-		const onboarding = await prisma.onboarding_data.findFirst({ where: { user_id: userId }, orderBy: { created_at: "desc" } });
+		const onboarding = await prisma.onboarding_data.findFirst({
+			where: { user_id: userId },
+			orderBy: { created_at: "desc" },
+		});
 		let skills = onboarding?.skills ? JSON.parse(onboarding.skills) : [];
 		if (!skills.includes(skill)) skills.push(skill);
 
@@ -1955,26 +2619,33 @@ app.post("/api/profile/skills", authMiddleware, async (req: any, res) => {
 });
 
 // 🗑️ DELETE - usuń umiejętność
-app.delete("/api/profile/skills/:skill", authMiddleware, async (req: any, res) => {
-	try {
-		const userId = req.user?.id;
-		const skillToRemove = decodeURIComponent(req.params.skill);
+app.delete(
+	"/api/profile/skills/:skill",
+	authMiddleware,
+	async (req: any, res) => {
+		try {
+			const userId = req.user?.id;
+			const skillToRemove = decodeURIComponent(req.params.skill);
 
-		const onboarding = await prisma.onboarding_data.findFirst({ where: { user_id: userId }, orderBy: { created_at: "desc" } });
-		let skills = onboarding?.skills ? JSON.parse(onboarding.skills) : [];
-		skills = skills.filter((s: string) => s !== skillToRemove);
+			const onboarding = await prisma.onboarding_data.findFirst({
+				where: { user_id: userId },
+				orderBy: { created_at: "desc" },
+			});
+			let skills = onboarding?.skills ? JSON.parse(onboarding.skills) : [];
+			skills = skills.filter((s: string) => s !== skillToRemove);
 
-		await prisma.onboarding_data.update({
-			where: { id: onboarding!.id },
-			data: { skills: JSON.stringify(skills) },
-		});
+			await prisma.onboarding_data.update({
+				where: { id: onboarding!.id },
+				data: { skills: JSON.stringify(skills) },
+			});
 
-		res.json({ success: true, skills });
-	} catch (error) {
-		console.error("❌ Błąd:", error);
-		res.status(500).json({ error: "Nie udało się usunąć umiejętności" });
-	}
-});
+			res.json({ success: true, skills });
+		} catch (error) {
+			console.error("❌ Błąd:", error);
+			res.status(500).json({ error: "Nie udało się usunąć umiejętności" });
+		}
+	},
+);
 // ============================================================
 // ⭐ OBSŁUGA BŁĘDÓW MULTER
 // ============================================================

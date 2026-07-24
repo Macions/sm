@@ -102,7 +102,7 @@ export default function Dashboard() {
 				// ✅ PRAWIDŁOWE MAPOWANIE - używamy pól z API
 				setUser({
 					id: userData.id,
-					firstName: userData.first_name || "Użytkowniku", // ✅ first_name z API
+					firstName: userData.firstName || "Użytkowniku", // ✅ first_name z API
 					lastName: userData.last_name || "",
 					first_name: userData.first_name,
 					last_name: userData.last_name,
@@ -249,7 +249,7 @@ export default function Dashboard() {
 			const dayText = days === 1 ? "dzień" : "dni";
 			return `${days} ${dayText}`;
 		}
-		return "Dziś dołączyłeś! 🎉";
+		return "od dzisiaj! 🎉";
 	};
 
 	// ===== TŁUMACZENIE STATUSU =====

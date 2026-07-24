@@ -2,6 +2,11 @@ import { useState, useEffect, useMemo } from "react";
 import { ConfirmDialog } from "../../components/common/ConfirmDialog";
 import toast from "react-hot-toast";
 import {
+	hasPermission,
+	canManageUsers,
+	canManageProjects,
+} from "../../utils/permissions";
+import {
 	Users,
 	Search,
 	X,
@@ -40,7 +45,7 @@ import styles from "./Members.module.css";
 // TYPY
 // ---------------------------------------------------------------------------
 
-type MemberStatus = "active" | "trial" | "mentor" | ""; // ✅ TYLKO 3
+type MemberStatus = "active" | "trial" | "mentor" | "vacation" | "";
 type MemberVacation = {
 	startDate: string;
 	endDate: string;
@@ -90,13 +95,6 @@ type User = {
 // DANE PRZYKŁADOWE
 // ---------------------------------------------------------------------------
 
-const MOCK_USER: User = {
-	id: "1",
-	name: "Jan Kowalski",
-	role: "admin",
-	teamId: "project",
-};
-
 // ---------------------------------------------------------------------------
 // MAPOWANIE NA TEKSTY
 // ---------------------------------------------------------------------------
@@ -105,6 +103,7 @@ const STATUS_LABELS: Record<MemberStatus, string> = {
 	active: "Pełnoprawny członek", // ✅ zamiast "full"
 	trial: "Okres próbny",
 	mentor: "Mentor",
+	vacation: "Na urlopie",
 	"": "Nieznany",
 };
 
@@ -112,6 +111,7 @@ const STATUS_COLORS: Record<MemberStatus, string> = {
 	trial: styles.statusTrial,
 	active: styles.statusFull, // ✅ "active" zamiast "full"
 	mentor: styles.statusMentor,
+	vacation: styles.statusVacation,
 	"": styles.statusTrial,
 };
 
@@ -119,6 +119,7 @@ const STATUS_ICONS: Record<MemberStatus, React.ReactNode> = {
 	trial: <Clock size={14} />,
 	active: <CheckCircle size={14} />, // ✅ "active" zamiast "full"
 	mentor: <Star size={14} />,
+	vacation: <Umbrella size={14} />,
 	"": <Clock size={14} />,
 };
 
@@ -149,10 +150,7 @@ function MemberCard({
 		);
 	};
 
-	const isOnVacation =
-		member.vacation &&
-		new Date(member.vacation.startDate) <= new Date() &&
-		new Date(member.vacation.endDate) >= new Date();
+	const isOnVacation = member.status === "vacation";
 	// const canViewSensitiveData = currentUser.role === "admin" ||
 	//     (currentUser.role === "coordinator" && currentUser.teamId === member.teamId) ||
 	//     currentUser.id === member.id;
@@ -167,7 +165,9 @@ function MemberCard({
 
 	if (viewMode === "list") {
 		return (
-			<div className={`${styles.memberCard} ${styles.memberCardList}`}>
+			<div
+				className={`${styles.memberCard} ${styles.memberCardList} ${isOnVacation ? styles.memberCardOnVacation : ""}`}
+			>
 				<div className={styles.memberCard__avatar}>
 					{member.avatar || getInitials() || "?"}
 				</div>
@@ -207,7 +207,7 @@ function MemberCard({
 					{isOnVacation && (
 						<span className={styles.memberCard__vacationBadge}>
 							<Umbrella size={14} />
-							Na urlopie do {formatDate(member.vacation!.endDate)}
+							Na urlopie
 						</span>
 					)}
 					<button
@@ -217,13 +217,13 @@ function MemberCard({
 					>
 						<Eye size={16} />
 					</button>
-					{(currentUser.id === member.id || currentUser.role === "admin") && (
+					{hasPermission(currentUser?.role, "canEditUsers") && (
 						<button
 							className={styles.memberCard__actionBtn}
 							onClick={() => onEdit(member)}
 							title="Edytuj profil"
 						>
-							<Edit size={16} />
+							<Edit size={16} color="#60A5FA" />
 						</button>
 					)}
 				</div>
@@ -232,7 +232,9 @@ function MemberCard({
 	}
 
 	return (
-		<div className={styles.memberCard}>
+		<div
+			className={`${styles.memberCard} ${isOnVacation ? styles.memberCardOnVacation : ""}`}
+		>
 			<div className={styles.memberCard__avatar}>
 				{member.avatar || getInitials() || "?"}
 			</div>
@@ -257,16 +259,11 @@ function MemberCard({
 				<span
 					className={`${styles.memberCard__statusBadge} ${STATUS_COLORS[member.status]}`}
 				>
-					{STATUS_ICONS[member.status || "trial"]}
+					{STATUS_ICONS[member.status]}
 					{STATUS_LABELS[member.status]}
 				</span>
 			</div>
-			{isOnVacation && (
-				<div className={styles.memberCard__vacation}>
-					<Umbrella size={14} />
-					<span>Urlop do {formatDate(member.vacation!.endDate)}</span>
-				</div>
-			)}
+
 			<div className={styles.memberCard__skills}>
 				{(member.skills || []).slice(0, 3).map((skill) => (
 					<span key={skill} className={styles.memberCard__skillTag}>
@@ -287,7 +284,7 @@ function MemberCard({
 				>
 					<Eye size={16} color="#e5ac00" />
 				</button>
-				{(currentUser.id === member.id || currentUser.role === "admin") && (
+				{hasPermission(currentUser?.role, "canEditUsers") && (
 					<button
 						className={styles.memberCard__actionBtn}
 						onClick={() => onEdit(member)}
@@ -296,15 +293,16 @@ function MemberCard({
 						<Edit size={16} color="#60A5FA" />
 					</button>
 				)}
-				{currentUser.role === "admin" && currentUser.id !== member.id && (
-					<button
-						className={`${styles.memberCard__actionBtn} ${styles.memberCard__deleteBtn}`}
-						onClick={() => onDelete(member)}
-						title="Usuń członka"
-					>
-						<Trash2 size={16} color="#f86a6a" />
-					</button>
-				)}
+				{hasPermission(currentUser?.role, "canDeleteUsers") &&
+					currentUser.id !== member.id && (
+						<button
+							className={`${styles.memberCard__actionBtn} ${styles.memberCard__deleteBtn}`}
+							onClick={() => onDelete(member)}
+							title="Usuń członka"
+						>
+							<Trash2 size={16} color="#f86a6a" />
+						</button>
+					)}
 			</div>
 		</div>
 	);
@@ -402,9 +400,6 @@ function ProfileModal({
 	// ⭐ useEffect do aktualizacji formData gdy member się zmienia
 	useEffect(() => {
 		if (member) {
-			console.log("📝 Member status:", member.status);
-			console.log("📝 Member status type:", typeof member.status);
-
 			const newFormData = {
 				id: member.id,
 				firstName: member.firstName || "",
@@ -413,13 +408,16 @@ function ProfileModal({
 				team: member.team || "",
 				teamId: member.teamId || "",
 				province: member.province || "",
-				status: member.status || "",
+				status: (member.status as MemberStatus) || "",
 				interests: member.interests || [],
 				skills: member.skills || [],
 				smAreas: member.smAreas || [],
 				email: member.email || "",
 				phone: member.phone || "",
-				joinDate: member.joinDate || "",
+				// ✅ POPRAW FORMAT DATY
+				joinDate: member.joinDate
+					? new Date(member.joinDate).toISOString().split("T")[0]
+					: "",
 				contacts: member.contacts || {
 					salaContacts: [],
 					mpContacts: [],
@@ -433,13 +431,7 @@ function ProfileModal({
 				formData: member.formData || {},
 			};
 
-			console.log("📝 Nowy formData.status:", newFormData.status);
 			setFormData(newFormData);
-
-			// ⭐ Sprawdź czy formData się ustawiło po chwili
-			setTimeout(() => {
-				console.log("📝 formData.status po setTimeout:", formData.status);
-			}, 100);
 		} else {
 			setFormData({
 				firstName: "",
@@ -537,10 +529,11 @@ function ProfileModal({
 
 	const canEdit =
 		isEdit &&
-		(currentUser.id === currentMember.id || currentUser.role === "admin");
+		(currentUser.id === currentMember.id ||
+			hasPermission(currentUser?.role, "canEditUsers"));
 
 	const canViewSensitive =
-		currentUser.role === "admin" ||
+		hasPermission(currentUser?.role, "canViewAllUsers") ||
 		(currentUser.role === "coordinator" &&
 			currentUser.teamId === currentMember.teamId) ||
 		currentUser.id === currentMember.id;
@@ -618,7 +611,38 @@ function ProfileModal({
 			day: "numeric",
 		});
 	};
+	// W ProfileModal, przed return (około linii 350)
+	const hasInterests = canEdit
+		? (formData.interests || []).length > 0
+		: (currentMember.interests || []).length > 0;
 
+	const hasSkills = canEdit
+		? (formData.skills || []).length > 0
+		: (currentMember.skills || []).length > 0;
+
+	const hasSmAreas = canEdit
+		? (formData.smAreas || []).length > 0
+		: (currentMember.smAreas || []).length > 0;
+
+	const hasSalaContacts = canEdit
+		? (formData.contacts?.salaContacts || []).length > 0
+		: (currentMember.contacts?.salaContacts || []).length > 0;
+
+	const hasMpContacts = canEdit
+		? (formData.contacts?.mpContacts || []).length > 0
+		: (currentMember.contacts?.mpContacts || []).length > 0;
+
+	const hasOtherContacts = canEdit
+		? (formData.contacts?.otherContacts || []).length > 0
+		: (currentMember.contacts?.otherContacts || []).length > 0;
+
+	const hasTrainingAreas = canEdit
+		? (formData.trainingAreas || []).length > 0
+		: (currentMember.trainingAreas || []).length > 0;
+
+	const hasAnyInterestsData = hasInterests || hasSkills || hasSmAreas;
+	const hasAnyContactData =
+		hasSalaContacts || hasMpContacts || hasOtherContacts || hasTrainingAreas;
 	return (
 		<div className={styles.modalOverlay} onClick={onClose}>
 			<div
@@ -639,14 +663,13 @@ function ProfileModal({
 				</div>
 
 				<form onSubmit={handleSubmit} className={styles.modal__form}>
-					{/* Podstawowe informacje - zawsze widoczne */}
-					{/* Podstawowe informacje - zawsze widoczne */}
+					{/* Podstawowe informacje */}
 					<div className={styles.modal__section}>
 						<h3 className={styles.modal__sectionTitle}>
 							Podstawowe informacje
 						</h3>
 
-						{/* ⭐ WIERSZ 1: Imię i Nazwisko */}
+						{/* WIERSZ 1: Imię i Nazwisko */}
 						<div className={styles.modal__row}>
 							<div className={styles.modal__field}>
 								<label className={styles.modal__label}>Imię *</label>
@@ -676,7 +699,7 @@ function ProfileModal({
 							</div>
 						</div>
 
-						{/* ⭐ WIERSZ 2: Email (tylko dla edycji/dodawania) */}
+						{/* WIERSZ 2: Email (tylko dla edycji/dodawania) */}
 						{isEdit && (
 							<div className={styles.modal__row}>
 								<div className={styles.modal__field}>
@@ -705,7 +728,6 @@ function ProfileModal({
 									)}
 								</div>
 								<div className={styles.modal__field}>
-									{/* Puste pole dla wyrównania - lub telefon jeśli chcesz */}
 									<label className={styles.modal__label}>Telefon</label>
 									<input
 										type="text"
@@ -720,7 +742,7 @@ function ProfileModal({
 							</div>
 						)}
 
-						{/* ⭐ WIERSZ 3: Funkcja i Zespół */}
+						{/* WIERSZ 3: Funkcja i Zespół */}
 						<div className={styles.modal__row}>
 							<div className={styles.modal__field}>
 								<label className={styles.modal__label}>Funkcja</label>
@@ -734,226 +756,319 @@ function ProfileModal({
 									disabled={!canEdit}
 								/>
 							</div>
-							{/* Zespół - jako select */}
-							{/* Zespół - jako select z opcją "Inny" */}
-							{/* Zespół - jako select z opcją "Inny" */}
+
+							{/* Zespoły - jako tagi (multi-select) */}
 							<div className={styles.modal__field}>
-								<label className={styles.modal__label}>Zespół</label>
-								<select
-									className={styles.modal__select}
-									value={formData.team || currentMember.team || ""}
-									onChange={(e) => {
-										const value = e.target.value;
-										if (value === "other") {
-											setShowCustomTeam?.(true);
-											setFormData({ ...formData, team: "" });
-										} else {
-											setShowCustomTeam?.(false);
-											setFormData({ ...formData, team: value });
-										}
-									}}
-									disabled={!canEdit}
-								>
-									<option value="">Brak zespołu</option>
-									{teamsList.map((team) => (
-										<option key={team.id} value={team.name}>
-											{team.name}
-										</option>
-									))}
-									<option value="other">➕ Inny (dodaj nowy)</option>
-								</select>
+								<label className={styles.modal__label}>Zespoły</label>
 
-								{/* Pole do wpisania nowej nazwy zespołu */}
-								{showCustomTeam && isEdit && (
-									<div
-										style={{
-											marginTop: "12px",
-											padding: "12px",
-											border: "1px solid #e5e7eb",
-											borderRadius: "8px",
-											background: "#f9fafb",
-										}}
-									>
-										<div
-											style={{
-												marginBottom: "8px",
-												fontWeight: "500",
-												color: "#374151",
-											}}
-										>
-											➕ Dodawanie nowego zespołu
-										</div>
-
-										{/* Nazwa zespołu */}
-										<div className={styles.modal__field}>
-											<label className={styles.modal__label}>
-												Nazwa zespołu *
-											</label>
-											<input
-												type="text"
-												className={styles.modal__input}
-												value={customTeamName || ""}
-												onChange={(e) => {
-													setCustomTeamName?.(e.target.value);
-													setFormData({ ...formData, team: e.target.value });
-												}}
-												placeholder="Wpisz nazwę nowego zespołu..."
-												style={{
-													borderColor: customTeamName ? "#22c55e" : "#ef4444",
-												}}
-											/>
-										</div>
-
-										{/* Rola */}
-										<div className={styles.modal__field}>
-											<label className={styles.modal__label}>Rola</label>
-											<input
-												type="text"
-												className={styles.modal__input}
-												value={customTeamRole || ""}
-												onChange={(e) => setCustomTeamRole?.(e.target.value)}
-												placeholder="np. Zespół, Filar, Dyrekcja..."
-											/>
-										</div>
-
-										{/* Opis */}
-										<div className={styles.modal__field}>
-											<label className={styles.modal__label}>Opis</label>
-											<textarea
-												className={styles.modal__input}
-												value={customTeamDescription || ""}
-												onChange={(e) =>
-													setCustomTeamDescription?.(e.target.value)
-												}
-												placeholder="Krótki opis zespołu..."
-												rows={2}
-												style={{ resize: "vertical" }}
-											/>
-										</div>
-
-										{/* Ikona */}
-										<div className={styles.modal__field}>
-											<label className={styles.modal__label}>Ikona</label>
+								{/* Wybór zespołów - tylko w trybie edycji */}
+								{canEdit ? (
+									<>
+										{/* Select do dodawania zespołów */}
+										<div className={styles.modal__tagInput}>
 											<select
 												className={styles.modal__select}
-												value={customTeamIcon || "Users"}
-												onChange={(e) => setCustomTeamIcon?.(e.target.value)}
-											>
-												<option value="Users">👥 Users</option>
-												<option value="UserCog">⚙️ UserCog</option>
-												<option value="Briefcase">💼 Briefcase</option>
-												<option value="Building2">🏢 Building2</option>
-												<option value="Megaphone">📢 Megaphone</option>
-												<option value="GraduationCap">🎓 GraduationCap</option>
-												<option value="Calendar">📅 Calendar</option>
-												<option value="Settings">⚙️ Settings</option>
-												<option value="Shield">🛡️ Shield</option>
-												<option value="Star">⭐ Star</option>
-											</select>
-										</div>
-
-										{/* Zespół nadrzędny */}
-										{/* Zespół nadrzędny */}
-										{/* Zespół nadrzędny */}
-										<div className={styles.modal__field}>
-											<label className={styles.modal__label}>
-												Zespół nadrzędny
-											</label>
-											<select
-												className={styles.modal__select}
-												value={customTeamParent || ""}
+												value=""
 												onChange={(e) => {
 													const value = e.target.value;
-													setCustomTeamParent?.(value);
+													if (value === "other") {
+														setShowCustomTeam?.(true);
+													} else if (value) {
+														const currentTeams = formData.team
+															? formData.team.split(", ")
+															: [];
+														if (!currentTeams.includes(value)) {
+															const newTeams = [...currentTeams, value];
+															setFormData({
+																...formData,
+																team: newTeams.join(", "),
+																teamId: newTeams.join("-"),
+															});
+														}
+														e.target.value = "";
+													}
 												}}
+												disabled={!canEdit}
 											>
-												<option value="">Brak (zespół główny)</option>
-												{parentTeamsList.map((team) => (
-													<option key={team.id} value={team.id.toString()}>
-														{team.name}
-													</option>
-												))}
+												<option value="">Dodaj zespół...</option>
+												{teamsList
+													.filter(
+														(team) =>
+															!(formData.team || "")
+																.split(", ")
+																.includes(team.name),
+													)
+													.map((team) => (
+														<option key={team.id} value={team.name}>
+															{team.name}
+														</option>
+													))}
+												<option value="other">➕ Inny (dodaj nowy)</option>
 											</select>
 										</div>
 
-										{/* Email */}
-										<div className={styles.modal__field}>
-											<label className={styles.modal__label}>Email</label>
-											<input
-												type="email"
-												className={styles.modal__input}
-												value={customTeamEmail || ""}
-												onChange={(e) => setCustomTeamEmail?.(e.target.value)}
-												placeholder="email@domena.pl"
-											/>
+										{/* Lista wybranych zespołów jako tagi */}
+										<div className={styles.modal__tags}>
+											{(formData.team || "")
+												.split(", ")
+												.filter(Boolean)
+												.map((team) => (
+													<span key={team} className={styles.modal__tag}>
+														{team}
+														<button
+															type="button"
+															className={styles.modal__removeTag}
+															onClick={() => {
+																const currentTeams = formData.team
+																	? formData.team.split(", ")
+																	: [];
+																const newTeams = currentTeams.filter(
+																	(t) => t !== team,
+																);
+																setFormData({
+																	...formData,
+																	team:
+																		newTeams.length > 0
+																			? newTeams.join(", ")
+																			: "",
+																	teamId:
+																		newTeams.length > 0
+																			? newTeams.join("-")
+																			: "",
+																});
+															}}
+														>
+															<X size={12} />
+														</button>
+													</span>
+												))}
 										</div>
 
-										{!customTeamName && (
-											<small
+										{/* Pole do wpisania nowej nazwy zespołu */}
+										{showCustomTeam && isEdit && (
+											<div
 												style={{
-													color: "#ef4444",
-													fontSize: "12px",
-													display: "block",
-													marginTop: "4px",
+													marginTop: "12px",
+													padding: "12px",
+													border: "1px solid #e5e7eb",
+													borderRadius: "8px",
+													background: "#f9fafb",
 												}}
 											>
-												⚠️ Nazwa zespołu jest wymagana
-											</small>
+												<div
+													style={{
+														marginBottom: "8px",
+														fontWeight: "500",
+														color: "#374151",
+													}}
+												>
+													➕ Dodawanie nowego zespołu
+												</div>
+
+												<div className={styles.modal__field}>
+													<label className={styles.modal__label}>
+														Nazwa zespołu *
+													</label>
+													<input
+														type="text"
+														className={styles.modal__input}
+														value={customTeamName || ""}
+														onChange={(e) => {
+															setCustomTeamName?.(e.target.value);
+															setFormData({
+																...formData,
+																team: e.target.value,
+															});
+														}}
+														placeholder="Wpisz nazwę nowego zespołu..."
+														style={{
+															borderColor: customTeamName
+																? "#22c55e"
+																: "#ef4444",
+														}}
+													/>
+												</div>
+
+												<div className={styles.modal__field}>
+													<label className={styles.modal__label}>Rola</label>
+													<input
+														type="text"
+														className={styles.modal__input}
+														value={customTeamRole || ""}
+														onChange={(e) =>
+															setCustomTeamRole?.(e.target.value)
+														}
+														placeholder="np. Zespół, Filar, Dyrekcja..."
+													/>
+												</div>
+
+												<div className={styles.modal__field}>
+													<label className={styles.modal__label}>Opis</label>
+													<textarea
+														className={styles.modal__input}
+														value={customTeamDescription || ""}
+														onChange={(e) =>
+															setCustomTeamDescription?.(e.target.value)
+														}
+														placeholder="Krótki opis zespołu..."
+														rows={2}
+														style={{ resize: "vertical" }}
+													/>
+												</div>
+
+												<div className={styles.modal__field}>
+													<label className={styles.modal__label}>Ikona</label>
+													<select
+														className={styles.modal__select}
+														value={customTeamIcon || "Users"}
+														onChange={(e) =>
+															setCustomTeamIcon?.(e.target.value)
+														}
+													>
+														<option value="Users">👥 Users</option>
+														<option value="UserCog">⚙️ UserCog</option>
+														<option value="Briefcase">💼 Briefcase</option>
+														<option value="Building2">🏢 Building2</option>
+														<option value="Megaphone">📢 Megaphone</option>
+														<option value="GraduationCap">
+															🎓 GraduationCap
+														</option>
+														<option value="Calendar">📅 Calendar</option>
+														<option value="Settings">⚙️ Settings</option>
+														<option value="Shield">🛡️ Shield</option>
+														<option value="Star">⭐ Star</option>
+													</select>
+												</div>
+
+												<div className={styles.modal__field}>
+													<label className={styles.modal__label}>
+														Zespół nadrzędny
+													</label>
+													<select
+														className={styles.modal__select}
+														value={customTeamParent || ""}
+														onChange={(e) => {
+															const value = e.target.value;
+															setCustomTeamParent?.(value);
+														}}
+													>
+														<option value="">Brak (zespół główny)</option>
+														{parentTeamsList.map((team) => (
+															<option key={team.id} value={team.id.toString()}>
+																{team.name}
+															</option>
+														))}
+													</select>
+												</div>
+
+												<div className={styles.modal__field}>
+													<label className={styles.modal__label}>Email</label>
+													<input
+														type="email"
+														className={styles.modal__input}
+														value={customTeamEmail || ""}
+														onChange={(e) =>
+															setCustomTeamEmail?.(e.target.value)
+														}
+														placeholder="email@domena.pl"
+													/>
+												</div>
+
+												{!customTeamName && (
+													<small
+														style={{
+															color: "#ef4444",
+															fontSize: "12px",
+															display: "block",
+															marginTop: "4px",
+														}}
+													>
+														⚠️ Nazwa zespołu jest wymagana
+													</small>
+												)}
+											</div>
 										)}
+									</>
+								) : (
+									/* Widok tylko do odczytu - wyświetl zespoły jako tagi */
+									<div className={styles.modal__tags}>
+										{(formData.team || "")
+											.split(", ")
+											.filter(Boolean)
+											.map((team) => (
+												<span key={team} className={styles.modal__tag}>
+													{team}
+												</span>
+											))}
 									</div>
 								)}
 							</div>
 						</div>
 
-						{/* ⭐ WIERSZ 4: Województwo i Status */}
-						<div className={styles.modal__field}>
-							<label className={styles.modal__label}>Status *</label>
-							<select
-								className={styles.modal__select}
-								value={formData.status || ""}
-								onChange={(e) => {
-									const value = e.target.value;
-									setFormData({
-										...formData,
-										status: value as MemberStatus,
-									});
-									// ⬅️ Wyczyść komunikat błędu gdy coś wybrano
-									e.target.setCustomValidity(
-										value ? "" : "Wybierz status członka",
-									);
-								}}
-								onInvalid={(e) => {
-									e.target.setCustomValidity("Wybierz status członka");
-								}}
-								disabled={!canEdit}
-								required={isEdit}
-							>
-								<option value="">Wybierz status</option>
-								<option value="trial">Okres próbny</option>
-								<option value="active">Pełnoprawny członek</option>
-								<option value="mentor">Mentor</option>
-							</select>
-							{isEdit && !formData.status && (
-								<small
-									style={{
-										color: "#a2a2a2",
-										fontSize: "12px",
-										display: "block",
-										marginTop: "4px",
+						{/* WIERSZ 4: Województwo i Status */}
+						<div className={styles.modal__row}>
+							<div className={styles.modal__field}>
+								<label className={styles.modal__label}>Województwo</label>
+								<input
+									type="text"
+									className={styles.modal__input}
+									value={formData.province || currentMember.province}
+									onChange={(e) =>
+										setFormData({ ...formData, province: e.target.value })
+									}
+									disabled={!canEdit}
+								/>
+							</div>
+							<div className={styles.modal__field}>
+								<label className={styles.modal__label}>Status *</label>
+								<select
+									className={styles.modal__select}
+									value={formData.status || ""}
+									onChange={(e) => {
+										const value = e.target.value;
+										setFormData({
+											...formData,
+											status: value as MemberStatus,
+										});
+										(e.target as HTMLSelectElement).setCustomValidity(
+											value ? "" : "Wybierz status członka",
+										);
 									}}
+									onInvalid={(e) => {
+										(e.target as HTMLSelectElement).setCustomValidity(
+											"Wybierz status członka",
+										);
+									}}
+									disabled={!canEdit}
+									required={isEdit}
 								>
-									Wybierz status członka
-								</small>
-							)}
+									<option value="">Wybierz status</option>
+									<option value="trial">Okres próbny</option>
+									<option value="active">Pełnoprawny członek</option>
+									<option value="mentor">Mentor</option>
+								</select>
+								{isEdit && !formData.status && (
+									<small
+										style={{
+											color: "#a2a2a2",
+											fontSize: "12px",
+											display: "block",
+											marginTop: "4px",
+										}}
+									>
+										Wybierz status członka
+									</small>
+								)}
+							</div>
 						</div>
 
-						{/* ⭐ WIERSZ 5: Data dołączenia (pełna szerokość) */}
+						{/* WIERSZ 5: Data dołączenia */}
 						<div className={styles.modal__field}>
 							<label className={styles.modal__label}>Data dołączenia</label>
 							<input
 								type="date"
 								className={styles.modal__input}
-								value={formData.joinDate || currentMember.joinDate}
+								value={formData.joinDate || ""}
 								onChange={(e) =>
 									setFormData({ ...formData, joinDate: e.target.value })
 								}
@@ -981,691 +1096,779 @@ function ProfileModal({
 						</div>
 					)}
 
-					{/* Zainteresowania i umiejętności */}
-					<div className={styles.modal__section}>
-						<h3 className={styles.modal__sectionTitle}>
-							Zainteresowania i umiejętności
-						</h3>
+					{/* Zainteresowania i umiejętności - ukryj jeśli puste */}
+					{(() => {
+						const hasInterests = canEdit
+							? (formData.interests || []).length > 0
+							: (currentMember.interests || []).length > 0;
+						const hasSkills = canEdit
+							? (formData.skills || []).length > 0
+							: (currentMember.skills || []).length > 0;
+						const hasSmAreas = canEdit
+							? (formData.smAreas || []).length > 0
+							: (currentMember.smAreas || []).length > 0;
+						const hasAnyData = hasInterests || hasSkills || hasSmAreas;
 
-						<div className={styles.modal__field}>
-							<label className={styles.modal__label}>Zainteresowania</label>
-							{canEdit ? (
-								<>
-									<div className={styles.modal__tagInput}>
-										<input
-											type="text"
-											className={styles.modal__input}
-											value={newInterest}
-											onChange={(e) => setNewInterest(e.target.value)}
-											placeholder="Dodaj zainteresowanie"
-											onKeyDown={(e) => {
-												if (e.key === "Enter") {
-													e.preventDefault();
-													addItem(
-														formData.interests || [],
-														(list) =>
-															setFormData({ ...formData, interests: list }),
-														newInterest,
-													);
-													setNewInterest("");
-												}
-											}}
-										/>
-										<button
-											type="button"
-											className={styles.modal__addBtn}
-											onClick={() => {
-												addItem(
-													formData.interests || [],
-													(list) =>
-														setFormData({ ...formData, interests: list }),
-													newInterest,
-												);
-												setNewInterest("");
-											}}
-										>
-											<Plus size={16} />
-										</button>
-									</div>
-									<div className={styles.modal__tags}>
-										{(formData.interests || currentMember.interests).map(
-											(item) => (
-												<span key={item} className={styles.modal__tag}>
-													{item}
+						if (!hasAnyData && !canEdit) return null;
+
+						return (
+							<div className={styles.modal__section}>
+								<h3 className={styles.modal__sectionTitle}>
+									Zainteresowania i umiejętności
+								</h3>
+
+								{/* Zainteresowania */}
+								{(hasInterests || canEdit) && (
+									<div className={styles.modal__field}>
+										<label className={styles.modal__label}>
+											Zainteresowania
+										</label>
+										{canEdit ? (
+											<>
+												<div className={styles.modal__tagInput}>
+													<input
+														type="text"
+														className={styles.modal__input}
+														value={newInterest}
+														onChange={(e) => setNewInterest(e.target.value)}
+														placeholder="Dodaj zainteresowanie"
+														onKeyDown={(e) => {
+															if (e.key === "Enter") {
+																e.preventDefault();
+																addItem(
+																	formData.interests || [],
+																	(list) =>
+																		setFormData({
+																			...formData,
+																			interests: list,
+																		}),
+																	newInterest,
+																);
+																setNewInterest("");
+															}
+														}}
+													/>
 													<button
 														type="button"
-														className={styles.modal__removeTag}
-														onClick={() =>
-															removeItem(
+														className={styles.modal__addBtn}
+														onClick={() => {
+															addItem(
 																formData.interests || [],
 																(list) =>
 																	setFormData({ ...formData, interests: list }),
-																item,
-															)
-														}
+																newInterest,
+															);
+															setNewInterest("");
+														}}
 													>
-														<X size={12} />
+														<Plus size={16} />
 													</button>
-												</span>
-											),
+												</div>
+												<div className={styles.modal__tags}>
+													{(formData.interests || currentMember.interests).map(
+														(item) => (
+															<span key={item} className={styles.modal__tag}>
+																{item}
+																<button
+																	type="button"
+																	className={styles.modal__removeTag}
+																	onClick={() =>
+																		removeItem(
+																			formData.interests || [],
+																			(list) =>
+																				setFormData({
+																					...formData,
+																					interests: list,
+																				}),
+																			item,
+																		)
+																	}
+																>
+																	<X size={12} />
+																</button>
+															</span>
+														),
+													)}
+												</div>
+											</>
+										) : (
+											<div className={styles.modal__tags}>
+												{currentMember.interests.map((item) => (
+													<span key={item} className={styles.modal__tag}>
+														{item}
+													</span>
+												))}
+											</div>
 										)}
 									</div>
-								</>
-							) : (
-								<div className={styles.modal__tags}>
-									{currentMember.interests.map((item) => (
-										<span key={item} className={styles.modal__tag}>
-											{item}
-										</span>
-									))}
-								</div>
-							)}
-						</div>
+								)}
 
-						<div className={styles.modal__field}>
-							<label className={styles.modal__label}>Umiejętności</label>
-							{canEdit ? (
-								<>
-									<div className={styles.modal__tagInput}>
-										<input
-											type="text"
-											className={styles.modal__input}
-											value={newSkill}
-											onChange={(e) => setNewSkill(e.target.value)}
-											placeholder="Dodaj umiejętność"
-											onKeyDown={(e) => {
-												if (e.key === "Enter") {
-													e.preventDefault();
-													addItem(
-														formData.skills || [],
-														(list) =>
-															setFormData({ ...formData, skills: list }),
-														newSkill,
-													);
-													setNewSkill("");
-												}
-											}}
-										/>
-										<button
-											type="button"
-											className={styles.modal__addBtn}
-											onClick={() => {
-												addItem(
-													formData.skills || [],
-													(list) => setFormData({ ...formData, skills: list }),
-													newSkill,
-												);
-												setNewSkill("");
-											}}
-										>
-											<Plus size={16} />
-										</button>
-									</div>
-									<div className={styles.modal__tags}>
-										{(formData.skills || currentMember.skills).map((item) => (
-											<span key={item} className={styles.modal__tag}>
-												{item}
-												<button
-													type="button"
-													className={styles.modal__removeTag}
-													onClick={() =>
-														removeItem(
-															formData.skills || [],
-															(list) =>
-																setFormData({ ...formData, skills: list }),
-															item,
-														)
-													}
-												>
-													<X size={12} />
-												</button>
-											</span>
-										))}
-									</div>
-								</>
-							) : (
-								<div className={styles.modal__tags}>
-									{currentMember.skills.map((item) => (
-										<span key={item} className={styles.modal__tag}>
-											{item}
-										</span>
-									))}
-								</div>
-							)}
-						</div>
-
-						<div className={styles.modal__field}>
-							<label className={styles.modal__label}>
-								Obszary działania w SM
-							</label>
-							{canEdit ? (
-								<>
-									<div className={styles.modal__tagInput}>
-										<input
-											type="text"
-											className={styles.modal__input}
-											value={newArea}
-											onChange={(e) => setNewArea(e.target.value)}
-											placeholder="Dodaj obszar"
-											onKeyDown={(e) => {
-												if (e.key === "Enter") {
-													e.preventDefault();
-													addItem(
-														formData.smAreas || [],
-														(list) =>
-															setFormData({ ...formData, smAreas: list }),
-														newArea,
-													);
-													setNewArea("");
-												}
-											}}
-										/>
-										<button
-											type="button"
-											className={styles.modal__addBtn}
-											onClick={() => {
-												addItem(
-													formData.smAreas || [],
-													(list) => setFormData({ ...formData, smAreas: list }),
-													newArea,
-												);
-												setNewArea("");
-											}}
-										>
-											<Plus size={16} />
-										</button>
-									</div>
-									<div className={styles.modal__tags}>
-										{(formData.smAreas || currentMember.smAreas).map((item) => (
-											<span key={item} className={styles.modal__tag}>
-												{item}
-												<button
-													type="button"
-													className={styles.modal__removeTag}
-													onClick={() =>
-														removeItem(
-															formData.smAreas || [],
-															(list) =>
-																setFormData({ ...formData, smAreas: list }),
-															item,
-														)
-													}
-												>
-													<X size={12} />
-												</button>
-											</span>
-										))}
-									</div>
-								</>
-							) : (
-								<div className={styles.modal__tags}>
-									{currentMember.smAreas.map((item) => (
-										<span key={item} className={styles.modal__tag}>
-											{item}
-										</span>
-									))}
-								</div>
-							)}
-						</div>
-					</div>
-
-					{/* Dane kontaktowe - tylko dla użytkownika i koordynatorów */}
-					{canViewSensitive && (
-						<>
-							{/* Kontakty i znajomości */}
-							<div className={styles.modal__section}>
-								<h3 className={styles.modal__sectionTitle}>
-									Kontakty i znajomości
-								</h3>
-
-								<div className={styles.modal__field}>
-									<label className={styles.modal__label}>
-										Kontakty z salami
-									</label>
-									{canEdit ? (
-										<>
-											<div className={styles.modal__tagInput}>
-												<input
-													type="text"
-													className={styles.modal__input}
-													value={newSalaContact}
-													onChange={(e) => setNewSalaContact(e.target.value)}
-													placeholder="Dodaj kontakt"
-													onKeyDown={(e) => {
-														if (e.key === "Enter") {
-															e.preventDefault();
-															addItem(
-																formData.contacts?.salaContacts || [],
-																(list) =>
-																	setFormData({
-																		...formData,
-																		contacts: {
-																			...formData.contacts,
-																			salaContacts: list,
-																		},
-																	}),
-																newSalaContact,
-															);
-															setNewSalaContact("");
-														}
-													}}
-												/>
-												<button
-													type="button"
-													className={styles.modal__addBtn}
-													onClick={() => {
-														addItem(
-															formData.contacts?.salaContacts || [],
-															(list) =>
-																setFormData({
-																	...formData,
-																	contacts: {
-																		...formData.contacts,
-																		salaContacts: list,
-																	},
-																}),
-															newSalaContact,
-														);
-														setNewSalaContact("");
-													}}
-												>
-													<Plus size={16} />
-												</button>
-											</div>
-											<div className={styles.modal__tags}>
-												{(
-													formData.contacts?.salaContacts ||
-													currentMember.contacts?.salaContacts ||
-													[]
-												).map((item) => (
-													<span key={item} className={styles.modal__tag}>
-														{item}
-														<button
-															type="button"
-															className={styles.modal__removeTag}
-															onClick={() =>
-																removeItem(
-																	formData.contacts?.salaContacts || [],
-																	(list) =>
-																		setFormData({
-																			...formData,
-																			contacts: {
-																				...formData.contacts,
-																				salaContacts: list,
-																			},
-																		}),
-																	item,
-																)
-															}
-														>
-															<X size={12} />
-														</button>
-													</span>
-												))}
-											</div>
-										</>
-									) : (
-										<div className={styles.modal__tags}>
-											{(currentMember.contacts?.salaContacts || []).map(
-												(item) => (
-													<span key={item} className={styles.modal__tag}>
-														{item}
-													</span>
-												),
-											)}
-										</div>
-									)}
-								</div>
-
-								<div className={styles.modal__field}>
-									<label className={styles.modal__label}>
-										Kontakty z posłami
-									</label>
-									{canEdit ? (
-										<>
-											<div className={styles.modal__tagInput}>
-												<input
-													type="text"
-													className={styles.modal__input}
-													value={newMpContact}
-													onChange={(e) => setNewMpContact(e.target.value)}
-													placeholder="Dodaj kontakt"
-													onKeyDown={(e) => {
-														if (e.key === "Enter") {
-															e.preventDefault();
-															addItem(
-																formData.contacts?.mpContacts || [],
-																(list) =>
-																	setFormData({
-																		...formData,
-																		contacts: {
-																			...formData.contacts,
-																			mpContacts: list,
-																		},
-																	}),
-																newMpContact,
-															);
-															setNewMpContact("");
-														}
-													}}
-												/>
-												<button
-													type="button"
-													className={styles.modal__addBtn}
-													onClick={() => {
-														addItem(
-															formData.contacts?.mpContacts || [],
-															(list) =>
-																setFormData({
-																	...formData,
-																	contacts: {
-																		...formData.contacts,
-																		mpContacts: list,
-																	},
-																}),
-															newMpContact,
-														);
-														setNewMpContact("");
-													}}
-												>
-													<Plus size={16} />
-												</button>
-											</div>
-											<div className={styles.modal__tags}>
-												{(
-													formData.contacts?.mpContacts ||
-													currentMember.contacts?.mpContacts ||
-													[]
-												).map((item) => (
-													<span key={item} className={styles.modal__tag}>
-														{item}
-														<button
-															type="button"
-															className={styles.modal__removeTag}
-															onClick={() =>
-																removeItem(
-																	formData.contacts?.mpContacts || [],
-																	(list) =>
-																		setFormData({
-																			...formData,
-																			contacts: {
-																				...formData.contacts,
-																				mpContacts: list,
-																			},
-																		}),
-																	item,
-																)
-															}
-														>
-															<X size={12} />
-														</button>
-													</span>
-												))}
-											</div>
-										</>
-									) : (
-										<div className={styles.modal__tags}>
-											{(currentMember.contacts?.mpContacts || []).map(
-												(item) => (
-													<span key={item} className={styles.modal__tag}>
-														{item}
-													</span>
-												),
-											)}
-										</div>
-									)}
-								</div>
-
-								<div className={styles.modal__field}>
-									<label className={styles.modal__label}>
-										Inne przydatne kontakty
-									</label>
-									{canEdit ? (
-										<>
-											<div className={styles.modal__tagInput}>
-												<input
-													type="text"
-													className={styles.modal__input}
-													value={newOtherContact}
-													onChange={(e) => setNewOtherContact(e.target.value)}
-													placeholder="Dodaj kontakt"
-													onKeyDown={(e) => {
-														if (e.key === "Enter") {
-															e.preventDefault();
-															addItem(
-																formData.contacts?.otherContacts || [],
-																(list) =>
-																	setFormData({
-																		...formData,
-																		contacts: {
-																			...formData.contacts,
-																			otherContacts: list,
-																		},
-																	}),
-																newOtherContact,
-															);
-															setNewOtherContact("");
-														}
-													}}
-												/>
-												<button
-													type="button"
-													className={styles.modal__addBtn}
-													onClick={() => {
-														addItem(
-															formData.contacts?.otherContacts || [],
-															(list) =>
-																setFormData({
-																	...formData,
-																	contacts: {
-																		...formData.contacts,
-																		otherContacts: list,
-																	},
-																}),
-															newOtherContact,
-														);
-														setNewOtherContact("");
-													}}
-												>
-													<Plus size={16} />
-												</button>
-											</div>
-											<div className={styles.modal__tags}>
-												{(
-													formData.contacts?.otherContacts ||
-													currentMember.contacts?.otherContacts ||
-													[]
-												).map((item) => (
-													<span key={item} className={styles.modal__tag}>
-														{item}
-														<button
-															type="button"
-															className={styles.modal__removeTag}
-															onClick={() =>
-																removeItem(
-																	formData.contacts?.otherContacts || [],
-																	(list) =>
-																		setFormData({
-																			...formData,
-																			contacts: {
-																				...formData.contacts,
-																				otherContacts: list,
-																			},
-																		}),
-																	item,
-																)
-															}
-														>
-															<X size={12} />
-														</button>
-													</span>
-												))}
-											</div>
-										</>
-									) : (
-										<div className={styles.modal__tags}>
-											{(currentMember.contacts?.otherContacts || []).map(
-												(item) => (
-													<span key={item} className={styles.modal__tag}>
-														{item}
-													</span>
-												),
-											)}
-										</div>
-									)}
-								</div>
-
-								<div className={styles.modal__field}>
-									<label className={styles.modal__label}>
-										Obszary szkoleniowe
-									</label>
-									{canEdit ? (
-										<>
-											<div className={styles.modal__tagInput}>
-												<input
-													type="text"
-													className={styles.modal__input}
-													value={newTrainingArea}
-													onChange={(e) => setNewTrainingArea(e.target.value)}
-													placeholder="Dodaj obszar szkoleniowy"
-													onKeyDown={(e) => {
-														if (e.key === "Enter") {
-															e.preventDefault();
-															addItem(
-																formData.trainingAreas || [],
-																(list) =>
-																	setFormData({
-																		...formData,
-																		trainingAreas: list,
-																	}),
-																newTrainingArea,
-															);
-															setNewTrainingArea("");
-														}
-													}}
-												/>
-												<button
-													type="button"
-													className={styles.modal__addBtn}
-													onClick={() => {
-														addItem(
-															formData.trainingAreas || [],
-															(list) =>
-																setFormData({
-																	...formData,
-																	trainingAreas: list,
-																}),
-															newTrainingArea,
-														);
-														setNewTrainingArea("");
-													}}
-												>
-													<Plus size={16} />
-												</button>
-											</div>
-											<div className={styles.modal__tags}>
-												{(
-													formData.trainingAreas ||
-													currentMember.trainingAreas ||
-													[]
-												).map((item) => (
-													<span key={item} className={styles.modal__tag}>
-														{item}
-														<button
-															type="button"
-															className={styles.modal__removeTag}
-															onClick={() =>
-																removeItem(
-																	formData.trainingAreas || [],
-																	(list) =>
-																		setFormData({
-																			...formData,
-																			trainingAreas: list,
-																		}),
-																	item,
-																)
-															}
-														>
-															<X size={12} />
-														</button>
-													</span>
-												))}
-											</div>
-										</>
-									) : (
-										<div className={styles.modal__tags}>
-											{(currentMember.trainingAreas || []).map((item) => (
-												<span key={item} className={styles.modal__tag}>
-													{item}
-												</span>
-											))}
-										</div>
-									)}
-								</div>
-							</div>
-
-							{/* Informacje o składkach */}
-							<div className={styles.modal__section}>
-								<h3 className={styles.modal__sectionTitle}>
-									Informacje o składkach
-								</h3>
-								<div className={styles.modal__row}>
+								{/* Umiejętności */}
+								{(hasSkills || canEdit) && (
 									<div className={styles.modal__field}>
-										<label className={styles.modal__label}>Status</label>
-										<select
-											className={styles.modal__select}
-											value={
-												formData.contributionInfo?.status ||
-												currentMember.contributionInfo?.status ||
-												"paid"
-											}
-											onChange={(e) =>
-												setFormData({
-													...formData,
-													contributionInfo: {
-														...formData.contributionInfo,
-														status: e.target.value as
-															| "paid"
-															| "partial"
-															| "unpaid",
-													},
-												})
-											}
-											disabled={!canEdit}
-										>
-											<option value="paid">Opłacone</option>
-											<option value="partial">Częściowo opłacone</option>
-											<option value="unpaid">Nieopłacone</option>
-										</select>
+										<label className={styles.modal__label}>Umiejętności</label>
+										{canEdit ? (
+											<>
+												<div className={styles.modal__tagInput}>
+													<input
+														type="text"
+														className={styles.modal__input}
+														value={newSkill}
+														onChange={(e) => setNewSkill(e.target.value)}
+														placeholder="Dodaj umiejętność"
+														onKeyDown={(e) => {
+															if (e.key === "Enter") {
+																e.preventDefault();
+																addItem(
+																	formData.skills || [],
+																	(list) =>
+																		setFormData({ ...formData, skills: list }),
+																	newSkill,
+																);
+																setNewSkill("");
+															}
+														}}
+													/>
+													<button
+														type="button"
+														className={styles.modal__addBtn}
+														onClick={() => {
+															addItem(
+																formData.skills || [],
+																(list) =>
+																	setFormData({ ...formData, skills: list }),
+																newSkill,
+															);
+															setNewSkill("");
+														}}
+													>
+														<Plus size={16} />
+													</button>
+												</div>
+												<div className={styles.modal__tags}>
+													{(formData.skills || currentMember.skills).map(
+														(item) => (
+															<span key={item} className={styles.modal__tag}>
+																{item}
+																<button
+																	type="button"
+																	className={styles.modal__removeTag}
+																	onClick={() =>
+																		removeItem(
+																			formData.skills || [],
+																			(list) =>
+																				setFormData({
+																					...formData,
+																					skills: list,
+																				}),
+																			item,
+																		)
+																	}
+																>
+																	<X size={12} />
+																</button>
+															</span>
+														),
+													)}
+												</div>
+											</>
+										) : (
+											<div className={styles.modal__tags}>
+												{currentMember.skills.map((item) => (
+													<span key={item} className={styles.modal__tag}>
+														{item}
+													</span>
+												))}
+											</div>
+										)}
 									</div>
+								)}
+
+								{/* Obszary działania w SM */}
+								{(hasSmAreas || canEdit) && (
 									<div className={styles.modal__field}>
 										<label className={styles.modal__label}>
-											Zaległości (zł)
+											Obszary działania w SM
 										</label>
-										<input
-											type="number"
-											className={styles.modal__input}
-											value={
-												formData.contributionInfo?.arrears ||
-												currentMember.contributionInfo?.arrears ||
-												0
-											}
-											onChange={(e) =>
-												setFormData({
-													...formData,
-													contributionInfo: {
-														...formData.contributionInfo,
-														arrears: parseFloat(e.target.value) || 0,
-													},
-												})
-											}
-											disabled={!canEdit}
-										/>
+										{canEdit ? (
+											<>
+												<div className={styles.modal__tagInput}>
+													<input
+														type="text"
+														className={styles.modal__input}
+														value={newArea}
+														onChange={(e) => setNewArea(e.target.value)}
+														placeholder="Dodaj obszar"
+														onKeyDown={(e) => {
+															if (e.key === "Enter") {
+																e.preventDefault();
+																addItem(
+																	formData.smAreas || [],
+																	(list) =>
+																		setFormData({ ...formData, smAreas: list }),
+																	newArea,
+																);
+																setNewArea("");
+															}
+														}}
+													/>
+													<button
+														type="button"
+														className={styles.modal__addBtn}
+														onClick={() => {
+															addItem(
+																formData.smAreas || [],
+																(list) =>
+																	setFormData({ ...formData, smAreas: list }),
+																newArea,
+															);
+															setNewArea("");
+														}}
+													>
+														<Plus size={16} />
+													</button>
+												</div>
+												<div className={styles.modal__tags}>
+													{(formData.smAreas || currentMember.smAreas).map(
+														(item) => (
+															<span key={item} className={styles.modal__tag}>
+																{item}
+																<button
+																	type="button"
+																	className={styles.modal__removeTag}
+																	onClick={() =>
+																		removeItem(
+																			formData.smAreas || [],
+																			(list) =>
+																				setFormData({
+																					...formData,
+																					smAreas: list,
+																				}),
+																			item,
+																		)
+																	}
+																>
+																	<X size={12} />
+																</button>
+															</span>
+														),
+													)}
+												</div>
+											</>
+										) : (
+											<div className={styles.modal__tags}>
+												{currentMember.smAreas.map((item) => (
+													<span key={item} className={styles.modal__tag}>
+														{item}
+													</span>
+												))}
+											</div>
+										)}
 									</div>
-								</div>
+								)}
 							</div>
-						</>
-					)}
+						);
+					})()}
+
+					{/* Dane kontaktowe - tylko dla użytkownika i koordynatorów */}
+					{canViewSensitive &&
+						(() => {
+							const hasSalaContacts = canEdit
+								? (formData.contacts?.salaContacts || []).length > 0
+								: (currentMember.contacts?.salaContacts || []).length > 0;
+							const hasMpContacts = canEdit
+								? (formData.contacts?.mpContacts || []).length > 0
+								: (currentMember.contacts?.mpContacts || []).length > 0;
+							const hasOtherContacts = canEdit
+								? (formData.contacts?.otherContacts || []).length > 0
+								: (currentMember.contacts?.otherContacts || []).length > 0;
+							const hasTrainingAreas = canEdit
+								? (formData.trainingAreas || []).length > 0
+								: (currentMember.trainingAreas || []).length > 0;
+							const hasAnyContactData =
+								hasSalaContacts ||
+								hasMpContacts ||
+								hasOtherContacts ||
+								hasTrainingAreas;
+
+							if (!hasAnyContactData && !canEdit) return null;
+
+							return (
+								<>
+									<div className={styles.modal__section}>
+										<h3 className={styles.modal__sectionTitle}>
+											Kontakty i znajomości
+										</h3>
+
+										{/* Kontakty z salami */}
+										{(hasSalaContacts || canEdit) && (
+											<div className={styles.modal__field}>
+												<label className={styles.modal__label}>
+													Kontakty z salami
+												</label>
+												{canEdit ? (
+													<>
+														<div className={styles.modal__tagInput}>
+															<input
+																type="text"
+																className={styles.modal__input}
+																value={newSalaContact}
+																onChange={(e) =>
+																	setNewSalaContact(e.target.value)
+																}
+																placeholder="Dodaj kontakt"
+																onKeyDown={(e) => {
+																	if (e.key === "Enter") {
+																		e.preventDefault();
+																		addItem(
+																			formData.contacts?.salaContacts || [],
+																			(list) =>
+																				setFormData({
+																					...formData,
+																					contacts: {
+																						...formData.contacts,
+																						salaContacts: list,
+																					},
+																				}),
+																			newSalaContact,
+																		);
+																		setNewSalaContact("");
+																	}
+																}}
+															/>
+															<button
+																type="button"
+																className={styles.modal__addBtn}
+																onClick={() => {
+																	addItem(
+																		formData.contacts?.salaContacts || [],
+																		(list) =>
+																			setFormData({
+																				...formData,
+																				contacts: {
+																					...formData.contacts,
+																					salaContacts: list,
+																				},
+																			}),
+																		newSalaContact,
+																	);
+																	setNewSalaContact("");
+																}}
+															>
+																<Plus size={16} />
+															</button>
+														</div>
+														<div className={styles.modal__tags}>
+															{(
+																formData.contacts?.salaContacts ||
+																currentMember.contacts?.salaContacts ||
+																[]
+															).map((item) => (
+																<span key={item} className={styles.modal__tag}>
+																	{item}
+																	<button
+																		type="button"
+																		className={styles.modal__removeTag}
+																		onClick={() =>
+																			removeItem(
+																				formData.contacts?.salaContacts || [],
+																				(list) =>
+																					setFormData({
+																						...formData,
+																						contacts: {
+																							...formData.contacts,
+																							salaContacts: list,
+																						},
+																					}),
+																				item,
+																			)
+																		}
+																	>
+																		<X size={12} />
+																	</button>
+																</span>
+															))}
+														</div>
+													</>
+												) : (
+													<div className={styles.modal__tags}>
+														{(currentMember.contacts?.salaContacts || []).map(
+															(item) => (
+																<span key={item} className={styles.modal__tag}>
+																	{item}
+																</span>
+															),
+														)}
+													</div>
+												)}
+											</div>
+										)}
+
+										{/* Kontakty z posłami */}
+										{(hasMpContacts || canEdit) && (
+											<div className={styles.modal__field}>
+												<label className={styles.modal__label}>
+													Kontakty z posłami
+												</label>
+												{canEdit ? (
+													<>
+														<div className={styles.modal__tagInput}>
+															<input
+																type="text"
+																className={styles.modal__input}
+																value={newMpContact}
+																onChange={(e) =>
+																	setNewMpContact(e.target.value)
+																}
+																placeholder="Dodaj kontakt"
+																onKeyDown={(e) => {
+																	if (e.key === "Enter") {
+																		e.preventDefault();
+																		addItem(
+																			formData.contacts?.mpContacts || [],
+																			(list) =>
+																				setFormData({
+																					...formData,
+																					contacts: {
+																						...formData.contacts,
+																						mpContacts: list,
+																					},
+																				}),
+																			newMpContact,
+																		);
+																		setNewMpContact("");
+																	}
+																}}
+															/>
+															<button
+																type="button"
+																className={styles.modal__addBtn}
+																onClick={() => {
+																	addItem(
+																		formData.contacts?.mpContacts || [],
+																		(list) =>
+																			setFormData({
+																				...formData,
+																				contacts: {
+																					...formData.contacts,
+																					mpContacts: list,
+																				},
+																			}),
+																		newMpContact,
+																	);
+																	setNewMpContact("");
+																}}
+															>
+																<Plus size={16} />
+															</button>
+														</div>
+														<div className={styles.modal__tags}>
+															{(
+																formData.contacts?.mpContacts ||
+																currentMember.contacts?.mpContacts ||
+																[]
+															).map((item) => (
+																<span key={item} className={styles.modal__tag}>
+																	{item}
+																	<button
+																		type="button"
+																		className={styles.modal__removeTag}
+																		onClick={() =>
+																			removeItem(
+																				formData.contacts?.mpContacts || [],
+																				(list) =>
+																					setFormData({
+																						...formData,
+																						contacts: {
+																							...formData.contacts,
+																							mpContacts: list,
+																						},
+																					}),
+																				item,
+																			)
+																		}
+																	>
+																		<X size={12} />
+																	</button>
+																</span>
+															))}
+														</div>
+													</>
+												) : (
+													<div className={styles.modal__tags}>
+														{(currentMember.contacts?.mpContacts || []).map(
+															(item) => (
+																<span key={item} className={styles.modal__tag}>
+																	{item}
+																</span>
+															),
+														)}
+													</div>
+												)}
+											</div>
+										)}
+
+										{/* Inne przydatne kontakty */}
+										{(hasOtherContacts || canEdit) && (
+											<div className={styles.modal__field}>
+												<label className={styles.modal__label}>
+													Inne przydatne kontakty
+												</label>
+												{canEdit ? (
+													<>
+														<div className={styles.modal__tagInput}>
+															<input
+																type="text"
+																className={styles.modal__input}
+																value={newOtherContact}
+																onChange={(e) =>
+																	setNewOtherContact(e.target.value)
+																}
+																placeholder="Dodaj kontakt"
+																onKeyDown={(e) => {
+																	if (e.key === "Enter") {
+																		e.preventDefault();
+																		addItem(
+																			formData.contacts?.otherContacts || [],
+																			(list) =>
+																				setFormData({
+																					...formData,
+																					contacts: {
+																						...formData.contacts,
+																						otherContacts: list,
+																					},
+																				}),
+																			newOtherContact,
+																		);
+																		setNewOtherContact("");
+																	}
+																}}
+															/>
+															<button
+																type="button"
+																className={styles.modal__addBtn}
+																onClick={() => {
+																	addItem(
+																		formData.contacts?.otherContacts || [],
+																		(list) =>
+																			setFormData({
+																				...formData,
+																				contacts: {
+																					...formData.contacts,
+																					otherContacts: list,
+																				},
+																			}),
+																		newOtherContact,
+																	);
+																	setNewOtherContact("");
+																}}
+															>
+																<Plus size={16} />
+															</button>
+														</div>
+														<div className={styles.modal__tags}>
+															{(
+																formData.contacts?.otherContacts ||
+																currentMember.contacts?.otherContacts ||
+																[]
+															).map((item) => (
+																<span key={item} className={styles.modal__tag}>
+																	{item}
+																	<button
+																		type="button"
+																		className={styles.modal__removeTag}
+																		onClick={() =>
+																			removeItem(
+																				formData.contacts?.otherContacts || [],
+																				(list) =>
+																					setFormData({
+																						...formData,
+																						contacts: {
+																							...formData.contacts,
+																							otherContacts: list,
+																						},
+																					}),
+																				item,
+																			)
+																		}
+																	>
+																		<X size={12} />
+																	</button>
+																</span>
+															))}
+														</div>
+													</>
+												) : (
+													<div className={styles.modal__tags}>
+														{(currentMember.contacts?.otherContacts || []).map(
+															(item) => (
+																<span key={item} className={styles.modal__tag}>
+																	{item}
+																</span>
+															),
+														)}
+													</div>
+												)}
+											</div>
+										)}
+
+										{/* Obszary szkoleniowe */}
+										{(hasTrainingAreas || canEdit) && (
+											<div className={styles.modal__field}>
+												<label className={styles.modal__label}>
+													Obszary szkoleniowe
+												</label>
+												{canEdit ? (
+													<>
+														<div className={styles.modal__tagInput}>
+															<input
+																type="text"
+																className={styles.modal__input}
+																value={newTrainingArea}
+																onChange={(e) =>
+																	setNewTrainingArea(e.target.value)
+																}
+																placeholder="Dodaj obszar szkoleniowy"
+																onKeyDown={(e) => {
+																	if (e.key === "Enter") {
+																		e.preventDefault();
+																		addItem(
+																			formData.trainingAreas || [],
+																			(list) =>
+																				setFormData({
+																					...formData,
+																					trainingAreas: list,
+																				}),
+																			newTrainingArea,
+																		);
+																		setNewTrainingArea("");
+																	}
+																}}
+															/>
+															<button
+																type="button"
+																className={styles.modal__addBtn}
+																onClick={() => {
+																	addItem(
+																		formData.trainingAreas || [],
+																		(list) =>
+																			setFormData({
+																				...formData,
+																				trainingAreas: list,
+																			}),
+																		newTrainingArea,
+																	);
+																	setNewTrainingArea("");
+																}}
+															>
+																<Plus size={16} />
+															</button>
+														</div>
+														<div className={styles.modal__tags}>
+															{(
+																formData.trainingAreas ||
+																currentMember.trainingAreas ||
+																[]
+															).map((item) => (
+																<span key={item} className={styles.modal__tag}>
+																	{item}
+																	<button
+																		type="button"
+																		className={styles.modal__removeTag}
+																		onClick={() =>
+																			removeItem(
+																				formData.trainingAreas || [],
+																				(list) =>
+																					setFormData({
+																						...formData,
+																						trainingAreas: list,
+																					}),
+																				item,
+																			)
+																		}
+																	>
+																		<X size={12} />
+																	</button>
+																</span>
+															))}
+														</div>
+													</>
+												) : (
+													<div className={styles.modal__tags}>
+														{(currentMember.trainingAreas || []).map((item) => (
+															<span key={item} className={styles.modal__tag}>
+																{item}
+															</span>
+														))}
+													</div>
+												)}
+											</div>
+										)}
+									</div>
+
+									{/* Informacje o składkach */}
+									<div className={styles.modal__section}>
+										<h3 className={styles.modal__sectionTitle}>
+											Informacje o składkach
+										</h3>
+										<div className={styles.modal__row}>
+											<div className={styles.modal__field}>
+												<label className={styles.modal__label}>Status</label>
+												<select
+													className={styles.modal__select}
+													value={
+														formData.contributionInfo?.status ||
+														currentMember.contributionInfo?.status ||
+														"paid"
+													}
+													onChange={(e) =>
+														setFormData({
+															...formData,
+															contributionInfo: {
+																...formData.contributionInfo,
+																status: e.target.value as
+																	| "paid"
+																	| "partial"
+																	| "unpaid",
+															},
+														})
+													}
+													disabled={!canEdit}
+												>
+													<option value="paid">Opłacone</option>
+													<option value="partial">Częściowo opłacone</option>
+													<option value="unpaid">Nieopłacone</option>
+												</select>
+											</div>
+											<div className={styles.modal__field}>
+												<label className={styles.modal__label}>
+													Zaległości (zł)
+												</label>
+												<input
+													type="number"
+													className={styles.modal__input}
+													value={
+														formData.contributionInfo?.arrears ||
+														currentMember.contributionInfo?.arrears ||
+														0
+													}
+													onChange={(e) =>
+														setFormData({
+															...formData,
+															contributionInfo: {
+																...formData.contributionInfo,
+																arrears: parseFloat(e.target.value) || 0,
+															},
+														})
+													}
+													disabled={!canEdit}
+												/>
+											</div>
+										</div>
+									</div>
+								</>
+							);
+						})()}
 
 					<div className={styles.modal__actions}>
 						<button
@@ -1679,7 +1882,7 @@ function ProfileModal({
 							<button
 								type="submit"
 								className={styles.modal__btnSave}
-								disabled={!formData.status} // ✅ Zablokuj jeśli status nie jest wybrany
+								disabled={!formData.status}
 							>
 								Zapisz zmiany
 							</button>
@@ -1698,6 +1901,7 @@ function ProfileModal({
 export default function Members({ title }: { title?: string }) {
 	const [loading, setLoading] = useState(true);
 	const [members, setMembers] = useState<Member[]>([]);
+	const [currentUser, setCurrentUser] = useState<User | null>(null);
 	const [searchTerm, setSearchTerm] = useState("");
 	const [selectedProvince, setSelectedProvince] = useState<string>("all");
 	const [selectedTeam, setSelectedTeam] = useState<string>("all");
@@ -1711,9 +1915,9 @@ export default function Members({ title }: { title?: string }) {
 	);
 	const [showCustomTeam, setShowCustomTeam] = useState(false); // ✅ DODAJ
 	const [customTeamName, setCustomTeamName] = useState("");
-	const [teamsList, setTeamsList] = useState<{ id: number; name: string }[]>(
-		[],
-	);
+	const [teamsList, setTeamsList] = useState<
+		{ id: number; name: string; parent_id?: number | null }[]
+	>([]);
 	const [customTeamRole, setCustomTeamRole] = useState("Zespół");
 	const [customTeamDescription, setCustomTeamDescription] = useState("");
 	const [customTeamIcon, setCustomTeamIcon] = useState("Users");
@@ -1725,50 +1929,62 @@ export default function Members({ title }: { title?: string }) {
 	const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
 	// ⭐ POBIERANIE CZŁONKÓW Z BACKENDU
 	// ⭐ DODAJ TO
-	useEffect(() => {
-		const fetchTeams = async () => {
-			try {
-				const token = localStorage.getItem("accessToken");
-				const response = await fetch("/api/teams", {
-					headers: {
-						Authorization: `Bearer ${token}`,
-					},
-				});
-				if (response.ok) {
-					const data = await response.json();
-					setTeamsList(data);
-				}
-			} catch (error) {
-				console.error("❌ Błąd pobierania zespołów:", error);
-			}
-		};
-		fetchTeams();
-	}, []);
 
 	useEffect(() => {
-		const fetchMembers = async () => {
+		const fetchAllData = async () => {
 			try {
 				setLoading(true);
 				const token = localStorage.getItem("accessToken");
 
-				const response = await fetch("/api/members", {
-					headers: {
-						Authorization: `Bearer ${token}`,
-						"Content-Type": "application/json",
-					},
+				// 1. Pobierz użytkownika
+				const userResponse = await fetch("/api/profile", {
+					headers: { Authorization: `Bearer ${token}` },
+				});
+				if (!userResponse.ok) throw new Error("Błąd profilu");
+				const userData = await userResponse.json();
+
+				setCurrentUser({
+					id: userData.id,
+					name:
+						`${userData.firstName || ""} ${userData.lastName || ""}`.trim() ||
+						"Użytkownik",
+					role: userData.role || "member",
+					teamId: userData.teamId,
 				});
 
-				if (!response.ok) {
-					throw new Error("Błąd pobierania członków");
+				// 2. Pobierz zespoły
+				const teamsResponse = await fetch("/api/teams", {
+					headers: { Authorization: `Bearer ${token}` },
+				});
+				if (teamsResponse.ok) {
+					const teamsData = await teamsResponse.json();
+					setTeamsList(teamsData);
 				}
 
-				const data = await response.json();
+				// 3. Pobierz członków (backend zwraca już zespoły!)
+				const membersResponse = await fetch("/api/members", {
+					headers: { Authorization: `Bearer ${token}` },
+				});
+				if (!membersResponse.ok) throw new Error("Błąd członków");
+				const membersData = await membersResponse.json();
+				console.log("📦 Dane z backendu:", membersData);
 
-				// ⭐ DODAJ MAPOWANIE DANYCH
-				const mappedMembers = data.map((user: any) => {
+				// ✅ Mapowanie - używamy danych z backendu
+				const mappedMembers = membersData.map((user: any) => {
 					const onboarding = user.onboarding_data || {};
 
-					// Sprawdź czy są jakieś dane onboardingowe
+					// ✅ Użyj team z backendu
+					const teamString = user.team || "Brak zespołu";
+					const teams = user.team ? user.team.split(", ") : [];
+
+					console.log(`🔍 Mapped member:`, {
+						id: user.id,
+						firstName: user.first_name,
+						lastName: user.last_name,
+						teamFromBackend: user.team,
+						teamString: teamString,
+					});
+
 					const hasOnboardingData =
 						onboarding &&
 						((onboarding.development_areas &&
@@ -1785,19 +2001,10 @@ export default function Members({ title }: { title?: string }) {
 						firstName: user.first_name || "",
 						lastName: user.last_name || "",
 						function: user.functional_role || user.role || "Członek",
-						team: user.team || "Brak zespołu",
-						teamId:
-							user.team_id ||
-							user.team?.toLowerCase().replace(/\s/g, "-") ||
-							"",
+						team: teamString,
+						teamId: user.team_id || (teams.length > 0 ? teams.join("-") : ""),
 						province: user.province || "",
-						status:
-							user.status === "mentor"
-								? "mentor"
-								: user.status === "active"
-									? "active"
-									: "trial",
-						// Tylko jeśli są dane, to parsuj, inaczej pusta tablica
+						status: (user.status || "trial") as MemberStatus,
 						interests:
 							hasOnboardingData && onboarding.development_areas
 								? (() => {
@@ -1830,10 +2037,10 @@ export default function Members({ title }: { title?: string }) {
 								: [],
 						email: user.email || "",
 						phone: user.phone || "",
-						joinDate:
-							user.join_date ||
-							user.created_at?.split("T")[0] ||
-							new Date().toISOString().split("T")[0],
+						joinDate: user.join_date
+							? new Date(user.join_date).toISOString().split("T")[0]
+							: user.created_at?.split("T")[0] ||
+								new Date().toISOString().split("T")[0],
 						contacts: {
 							salaContacts:
 								hasOnboardingData && onboarding.sala_contacts
@@ -1890,23 +2097,26 @@ export default function Members({ title }: { title?: string }) {
 							status: "paid",
 							arrears: 0,
 						},
-						// Dodaj flagę czy ma dane onboardingowe
 						hasOnboarding: hasOnboardingData,
 					};
 				});
 
+				console.log("📊 Wszyscy członkowie po mapowaniu:", mappedMembers);
+				console.log(
+					"🏷️ Lista zespołów:",
+					mappedMembers.map((m: any) => m.team),
+				);
 				setMembers(mappedMembers);
 			} catch (error) {
-				console.error("❌ Błąd pobierania członków:", error);
+				console.error("❌ Błąd:", error);
 				setMembers([]);
 			} finally {
 				setLoading(false);
 			}
 		};
 
-		fetchMembers();
-	}, []);
-	const currentUser = MOCK_USER;
+		fetchAllData();
+	}, []); // ✅ TYLKO JEDEN useEffect z pustą tablicą zależności
 	// ===== DODANE FUNKCJE DLA NOWEGO CZŁONKA =====
 	const handleAddMember = () => {
 		const newMember: Partial<Member> = {
@@ -2071,13 +2281,27 @@ export default function Members({ title }: { title?: string }) {
 	// Obok innych useMemo
 	// Obok innych useMemo
 	const parentTeams = useMemo(() => {
-		// Tylko zespoły o ID: 1, 4, 7
 		const allowedParentIds = [1, 4, 7];
-		return teamsList.filter((team) => allowedParentIds.includes(team.id));
+		return teamsList
+			.filter((team) => allowedParentIds.includes(team.id))
+			.map((team) => ({
+				...team,
+				parent_id: team.parent_id || null,
+			}));
 	}, [teamsList]);
 	const teams = useMemo(() => {
-		const unique = new Set(members.map((m) => m.team));
-		return Array.from(unique).sort();
+		const allTeams = new Set<string>();
+		members.forEach((member) => {
+			// Podziel team po przecinku i dodaj każdy zespół osobno
+			const teamList = member.team.split(", ");
+			teamList.forEach((team) => {
+				// Pomijamy "Brak zespołu" i puste
+				if (team && team !== "Brak zespołu") {
+					allTeams.add(team);
+				}
+			});
+		});
+		return Array.from(allTeams).sort();
 	}, [members]);
 	// W Members, razem z innymi useState
 	const [confirmDialog, setConfirmDialog] = useState<{
@@ -2156,8 +2380,11 @@ export default function Members({ title }: { title?: string }) {
 
 				const matchesProvince =
 					selectedProvince === "all" || member.province === selectedProvince;
+
+				// ✅ POPRAWA: sprawdzaj czy wybrany zespół istnieje w team (który może zawierać wiele zespołów)
 				const matchesTeam =
-					selectedTeam === "all" || member.team === selectedTeam;
+					selectedTeam === "all" ||
+					member.team.split(", ").includes(selectedTeam);
 
 				return matchesSearch && matchesProvince && matchesTeam;
 			})
@@ -2237,7 +2464,16 @@ export default function Members({ title }: { title?: string }) {
 			setSortOrder("asc");
 		}
 	};
-
+	if (loading || !currentUser) {
+		return (
+			<div className={styles.members}>
+				<div className={styles.loadingState}>
+					<div className={styles.loadingSpinner}></div>
+					<p>Ładowanie...</p>
+				</div>
+			</div>
+		);
+	}
 	return (
 		<div className={styles.members}>
 			{/* Nagłówek */}
@@ -2251,7 +2487,7 @@ export default function Members({ title }: { title?: string }) {
 					</p>
 				</div>
 				{/* DODAJ TEN PRZYCISK */}
-				{currentUser.role === "admin" && (
+				{hasPermission(currentUser?.role, "canEditUsers") && (
 					<button className={styles.header__addBtn} onClick={handleAddMember}>
 						<Plus size={18} />
 						Dodaj członka
