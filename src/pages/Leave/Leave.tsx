@@ -409,13 +409,12 @@ function LeaveCard({
 
 				{leave.approvedBy && (
 					<div
-						className={`${styles.leaveCard__approval} ${
-							leave.status === "approved"
-								? styles.leaveCard__approvalApproved
-								: leave.status === "rejected"
-									? styles.leaveCard__approvalRejected
-									: ""
-						}`}
+						className={`${styles.leaveCard__approval} ${leave.status === "approved"
+							? styles.leaveCard__approvalApproved
+							: leave.status === "rejected"
+								? styles.leaveCard__approvalRejected
+								: ""
+							}`}
 					>
 						{leave.status === "approved" ? (
 							<CheckCircle size={14} />
@@ -477,7 +476,7 @@ function LeaveCard({
 				<div className={styles.leaveCard__actions}>
 					{/* Pokaż szczegóły TYLKO jeśli są komentarze lub załączniki */}
 					{(leave.comments && leave.comments.length > 0) ||
-					(leave.attachments && leave.attachments.length > 0) ? (
+						(leave.attachments && leave.attachments.length > 0) ? (
 						<button
 							className={styles.leaveCard__expandBtn}
 							onClick={() => setIsExpanded(!isExpanded)}
@@ -715,6 +714,58 @@ function LeaveModal({
 			comments: [],
 		},
 	);
+	const [userTeams, setUserTeams] = useState<string[]>([]); // <-- DODAJ
+	const [loadingTeams, setLoadingTeams] = useState(false);
+	// Pobieranie zespołów użytkownika
+	useEffect(() => {
+		const fetchUserTeams = async () => {
+			if (!isOpen || !currentUser) return;
+
+			try {
+				setLoadingTeams(true);
+				const token = localStorage.getItem("accessToken");
+
+				// ✅ Pobierz PROFIL użytkownika (zwraca pillars)
+				const response = await fetch("/api/profile", {
+					headers: {
+						Authorization: `Bearer ${token}`,
+						"Content-Type": "application/json",
+					},
+				});
+
+				if (!response.ok) {
+					throw new Error("Nie udało się pobrać profilu");
+				}
+
+				const userData = await response.json();
+				console.log("📊 Dane z /api/profile:", userData);
+
+				// ✅ POBIERZ FILARY z odpowiedzi
+				// Backend zwraca: pillars: ["Filar Projektowy", "Filar Konferencyjny"]
+				const teams = userData.pillars || [];
+
+				// Jeśli nie ma pillarów, użyj pojedynczego zespołu
+				if (teams.length === 0 && userData.team) {
+					setUserTeams([userData.team]);
+				} else {
+					setUserTeams(teams);
+				}
+
+				console.log("✅ Zespoły użytkownika:", teams);
+
+			} catch (error) {
+				console.error("❌ Błąd pobierania zespołów:", error);
+				// Fallback - użyj zespołu z currentUser
+				if (currentUser.team) {
+					setUserTeams([currentUser.team]);
+				}
+			} finally {
+				setLoadingTeams(false);
+			}
+		};
+
+		fetchUserTeams();
+	}, [isOpen, currentUser]);
 	useEffect(() => {
 		if (leave) {
 			setFormData({
@@ -756,8 +807,8 @@ function LeaveModal({
 	const canEdit =
 		!isViewOnly &&
 		(currentUser.role === "admin" ||
-			currentUser.id === leave?.userId ||
-			!leave);
+			currentUser.role === "coordinator") && // <-- TYLKO admin/coordinator mogą zmieniać status
+		(currentUser.id === leave?.userId || !leave || currentUser.role === "admin");
 
 	const canViewReason =
 		!isViewOnly ||
@@ -893,7 +944,7 @@ function LeaveModal({
 										status: e.target.value as LeaveStatus,
 									})
 								}
-								disabled={!canEdit || isViewOnly}
+								disabled
 							>
 								<option value="pending">Oczekuje</option>
 								<option value="approved">Zaakceptowany</option>
@@ -943,22 +994,30 @@ function LeaveModal({
 					{formData.scope === "team" && (
 						<div className={styles.modal__field}>
 							<label className={styles.modal__label}>Wybierz zespoły *</label>
-							<div className={styles.modal__teams}>
-								{TEAMS.map((team) => (
-									<label key={team} className={styles.modal__teamCheckbox}>
-										<input
-											type="checkbox"
-											checked={(formData.affectedTeams || []).includes(team)}
-											onChange={() => toggleTeam(team)}
-											disabled={!canEdit || isViewOnly}
-										/>
-										{team}
-									</label>
-								))}
-							</div>
+							{loadingTeams ? (
+								<div className={styles.modal__loading}>Ładowanie zespołów...</div>
+							) : userTeams.length === 0 ? (
+								<div className={styles.modal__noTeams}>
+									<AlertCircle size={16} />
+									<span>Nie należysz do żadnego zespołu</span>
+								</div>
+							) : (
+								<div className={styles.modal__teams}>
+									{userTeams.map((team) => (
+										<label key={team} className={styles.modal__teamCheckbox}>
+											<input
+												type="checkbox"
+												checked={(formData.affectedTeams || []).includes(team)}
+												onChange={() => toggleTeam(team)}
+												disabled={!canEdit || isViewOnly}
+											/>
+											{team}
+										</label>
+									))}
+								</div>
+							)}
 						</div>
 					)}
-
 					<div className={styles.modal__row}>
 						<div className={styles.modal__field}>
 							<label className={styles.modal__label}>Data rozpoczęcia *</label>
@@ -1121,13 +1180,12 @@ function LeaveModal({
 
 					{leave?.approvedBy && (
 						<div
-							className={`${styles.modal__approval} ${
-								leave.status === "approved"
-									? styles.modal__approvalApproved
-									: leave.status === "rejected"
-										? styles.modal__approvalRejected
-										: ""
-							}`}
+							className={`${styles.modal__approval} ${leave.status === "approved"
+								? styles.modal__approvalApproved
+								: leave.status === "rejected"
+									? styles.modal__approvalRejected
+									: ""
+								}`}
 						>
 							{leave.status === "approved" ? (
 								<CheckCircle size={16} />
@@ -1239,8 +1297,8 @@ export default function Leave({ title }: { title?: string }) {
 		title: "",
 		message: "",
 		confirmText: "Potwierdź",
-		onConfirm: () => {},
-		onCancel: () => {},
+		onConfirm: () => { },
+		onCancel: () => { },
 	});
 	const unreadCount = notifications.filter((n) => !n.read).length;
 
@@ -1413,15 +1471,15 @@ export default function Leave({ title }: { title?: string }) {
 						prevLeaves.map((l) =>
 							l.id === id
 								? {
-										...l,
-										status,
-										approvedBy:
-											status === "pending" ? undefined : currentUser?.name,
-										approvedAt:
-											status === "pending"
-												? undefined
-												: new Date().toISOString(),
-									}
+									...l,
+									status,
+									approvedBy:
+										status === "pending" ? undefined : currentUser?.name,
+									approvedAt:
+										status === "pending"
+											? undefined
+											: new Date().toISOString(),
+								}
 								: l,
 						),
 					);
@@ -1641,10 +1699,10 @@ export default function Leave({ title }: { title?: string }) {
 					{(selectedStatus !== "all" ||
 						selectedType !== "all" ||
 						searchTerm) && (
-						<button className={styles.filters__reset} onClick={clearFilters}>
-							Wyczyść filtry
-						</button>
-					)}
+							<button className={styles.filters__reset} onClick={clearFilters}>
+								Wyczyść filtry
+							</button>
+						)}
 				</div>
 			</div>
 
@@ -1657,8 +1715,8 @@ export default function Leave({ title }: { title?: string }) {
 							<h3 className={styles.emptyState__title}>Brak wniosków</h3>
 							<p className={styles.emptyState__description}>
 								{searchTerm ||
-								selectedStatus !== "all" ||
-								selectedType !== "all"
+									selectedStatus !== "all" ||
+									selectedType !== "all"
 									? "Nie znaleziono wniosków spełniających kryteria wyszukiwania."
 									: "Nie ma jeszcze żadnych wniosków urlopowych."}
 							</p>

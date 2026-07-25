@@ -2560,12 +2560,12 @@ function VacancyFormModal({
 										>
 											{
 												STATUS_ICONS[
-													(formData.status as VacancyStatus) || "active"
+												(formData.status as VacancyStatus) || "active"
 												]
 											}
 											{
 												STATUS_LABELS[
-													(formData.status as VacancyStatus) || "active"
+												(formData.status as VacancyStatus) || "active"
 												]
 											}
 										</span>
@@ -3061,13 +3061,13 @@ export default function Vacancies({ title }: { title?: string }) {
 						pillar: v.pillar || "",
 						contactPerson: v.contact_person
 							? {
-									name:
-										`${v.contact_person.first_name || ""} ${v.contact_person.last_name || ""}`.trim() ||
-										v.contact_person.name ||
-										"",
-									email: v.contact_person.email || "",
-									phone: v.contact_person.phone || "",
-								}
+								name:
+									`${v.contact_person.first_name || ""} ${v.contact_person.last_name || ""}`.trim() ||
+									v.contact_person.name ||
+									"",
+								email: v.contact_person.email || "",
+								phone: v.contact_person.phone || "",
+							}
 							: { name: "", email: "", phone: "" },
 						createdAt: v.created_at
 							? new Date(v.created_at).toISOString().split("T")[0]
@@ -3096,16 +3096,16 @@ export default function Vacancies({ title }: { title?: string }) {
 							messengerContact: v.recruitment_messenger_contact || "",
 							questions: Array.isArray(v.questions)
 								? v.questions.map((q: any) => ({
-										id: q.id?.toString() || `q-${Date.now()}`,
-										question: q.question || "",
-										type: (q.type as FormQuestion["type"]) || "text",
-										required: q.required || false,
-										options: Array.isArray(q.options)
-											? q.options
-											: q.options
-												? JSON.parse(q.options)
-												: [],
-									}))
+									id: q.id?.toString() || `q-${Date.now()}`,
+									question: q.question || "",
+									type: (q.type as FormQuestion["type"]) || "text",
+									required: q.required || false,
+									options: Array.isArray(q.options)
+										? q.options
+										: q.options
+											? JSON.parse(q.options)
+											: [],
+								}))
 								: [],
 						},
 					}));
@@ -3220,7 +3220,7 @@ export default function Vacancies({ title }: { title?: string }) {
 	}, [vacancies, searchTerm, selectedTeam, selectedPillar, selectedStatus]);
 
 	const activeCount = vacancies.filter(
-		(v) => v.status === "active" || v.status === "recruiting",
+		(v) => v.status === "active",
 	).length;
 
 	// ... reszta funkcji pozostaje bez zmian
@@ -3499,7 +3499,13 @@ export default function Vacancies({ title }: { title?: string }) {
 			</div>
 		);
 	}
-
+	const getWakatLabel = (count) => {
+		if (count === 1) return "aktywny wakat";
+		if (count % 10 >= 2 && count % 10 <= 4 && (count % 100 < 12 || count % 100 > 14)) {
+			return "aktywne wakaty";
+		}
+		return "aktywnych wakatów";
+	};
 	return (
 		<div className={styles.vacancies}>
 			{/* ... reszta JSX pozostaje bez zmian ... */}
@@ -3516,11 +3522,11 @@ export default function Vacancies({ title }: { title?: string }) {
 					<div className={styles.header__stats}>
 						<span className={styles.header__stat}>
 							<Briefcase size={18} />
-							{activeCount} aktywnych wakatów
+							{activeCount} {getWakatLabel(activeCount)}
 						</span>
 						<span className={styles.header__stat}>
 							<Users size={18} />
-							{vacancies.length} wszystkich
+							{vacancies.length} wszystkich wakatów
 						</span>
 					</div>
 				</div>
@@ -3613,10 +3619,10 @@ export default function Vacancies({ title }: { title?: string }) {
 						selectedPillar !== "all" ||
 						selectedStatus !== "all" ||
 						searchTerm) && (
-						<button className={styles.filters__reset} onClick={clearFilters}>
-							Wyczyść filtry
-						</button>
-					)}
+							<button className={styles.filters__reset} onClick={clearFilters}>
+								Wyczyść filtry
+							</button>
+						)}
 				</div>
 			</div>
 
@@ -3630,9 +3636,9 @@ export default function Vacancies({ title }: { title?: string }) {
 						<h3 className={styles.emptyState__title}>Brak wakatów</h3>
 						<p className={styles.emptyState__description}>
 							{searchTerm ||
-							selectedTeam !== "all" ||
-							selectedPillar !== "all" ||
-							selectedStatus !== "all"
+								selectedTeam !== "all" ||
+								selectedPillar !== "all" ||
+								selectedStatus !== "all"
 								? "Nie znaleziono wakatów spełniających kryteria wyszukiwania."
 								: canManage
 									? "Nie ma jeszcze żadnych wakatów. Kliknij 'Dodaj wakat' aby utworzyć pierwszy."

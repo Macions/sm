@@ -232,7 +232,7 @@ export default function Profile({ title, userId }: { title?: string; userId?: st
                         skills: editData.skills || user.skills,
                         developmentAreas: editData.developmentAreas || user.developmentAreas,
                         availability: editData.availability || user.availability,
-                        phone: editData.phone || user.phone,
+                        phone: editData.phone || user.phone || null, // <-- DODAJ || null
                     }),
                 });
 
@@ -260,7 +260,7 @@ export default function Profile({ title, userId }: { title?: string; userId?: st
                 skills: user.skills,
                 developmentAreas: user.developmentAreas,
                 availability: user.availability,
-                phone: user.phone,
+                phone: user.phone || "", // <-- DODAJ || "" żeby było puste gdy null
             });
         }
         setIsEditing(!isEditing);
@@ -483,12 +483,10 @@ export default function Profile({ title, userId }: { title?: string; userId?: st
                                 <Mail size={14} />
                                 <span>{displayUser.email}</span>
                             </div>
-                            {displayUser.phone && (
-                                <div className={styles.profileCard__contactItem}>
-                                    <Phone size={14} />
-                                    <span>{displayUser.phone}</span>
-                                </div>
-                            )}
+                            <div className={styles.profileCard__contactItem}>
+                                <Phone size={14} />
+                                <span>{displayUser.phone || "Brak numeru"}</span> {/* <-- ZMIENIONE */}
+                            </div>
                             <div className={styles.profileCard__contactItem}>
                                 <Calendar size={14} />
                                 <span>Dołączył: {formatDate(displayUser.joinDate)}</span>
@@ -577,6 +575,27 @@ export default function Profile({ title, userId }: { title?: string; userId?: st
                                             />
                                         ) : (
                                             <span className={styles.section__value}>{displayUser.province}</span>
+                                        )}
+                                    </div>
+
+                                    {/* TELEFON - edytowalne, OPCJONALNE */} {/* <-- DODAJ TEN BLOK */}
+                                    <div className={styles.section__item}>
+                                        <span className={styles.section__label}>
+                                            Telefon
+                                            <span style={{ fontSize: '0.75rem', color: '#6b7280', fontWeight: 'normal', marginLeft: '0.5rem' }}>(opcjonalny)</span>
+                                        </span>
+                                        {isEditing ? (
+                                            <input
+                                                type="tel"
+                                                className={styles.section__input}
+                                                value={editData.phone || user.phone || ""}
+                                                onChange={(e) => handleInputChange("phone", e.target.value)}
+                                                placeholder="np. 123 456 789"
+                                            />
+                                        ) : (
+                                            <span className={styles.section__value} style={{ color: displayUser.phone ? 'inherit' : '#9ca3af', fontStyle: displayUser.phone ? 'normal' : 'italic' }}>
+                                                {displayUser.phone || "Brak numeru telefonu"}
+                                            </span>
                                         )}
                                     </div>
 
