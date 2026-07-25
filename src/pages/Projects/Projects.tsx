@@ -35,11 +35,48 @@ import styles from "./Projects.module.css";
 type IdeaStatus = "pending" | "approved" | "rejected" | "in_progress";
 type ProjectStatus = "planning" | "in_progress" | "promotion";
 // Poprawne mapowanie - klucz to wartość z API, wartość to wyświetlana nazwa
+// Na górze pliku, przed ROLE_COLORS:
+const ROLE_LABELS: Record<string, string> = {
+	admin: "Administrator",
+	coordinator: "Koordynator",
+	member: "Członek",
+};
+
+const MOCK_IDEAS: Idea[] = [
+	{
+		id: "1",
+		title: "Aplikacja mobilna dla członków",
+		description: "Aplikacja umożliwiająca łatwy dostęp do informacji o projektach i wydarzeniach.",
+		pillar: "Filar Projektowy",
+		authorId: "1",
+		authorName: "Jan Kowalski",
+		status: "pending",
+		votes: 5,
+		upvotes: 7,
+		downvotes: 2,
+		createdAt: new Date().toISOString(),
+		currentUserVote: null,
+	},
+	{
+		id: "2",
+		title: "Warsztaty z wystąpień publicznych",
+		description: "Cykl warsztatów dla członków organizacji uczących skutecznej komunikacji.",
+		pillar: "Filar Konferencyjny",
+		authorId: "2",
+		authorName: "Anna Nowak",
+		status: "approved",
+		votes: 12,
+		upvotes: 14,
+		downvotes: 2,
+		createdAt: new Date(Date.now() - 86400000).toISOString(),
+		currentUserVote: null,
+	},
+];
 const PILLAR_LABELS_FALLBACK: Record<string, string> = {
-    "project": "Filar Projektowy",
-    "conference": "Filar Konferencyjny", 
-    "advocacy": "Filar Rzeczniczy",
-    "simulation": "Filar Symulacyjny",
+	"project": "Filar Projektowy",
+	"conference": "Filar Konferencyjny",
+	"advocacy": "Filar Rzeczniczy",
+	"simulation": "Filar Symulacyjny",
 };
 type ProjectPillar = "project" | "conference" | "advocacy" | "simulation";
 
@@ -66,7 +103,7 @@ type Project = {
 	status: ProjectStatus;
 	estimated_end: string;
 	team: string[]; // Lista ID użytkowników
-coordinator_id: string | number; 
+	coordinator_id: string | number;
 	created_at: string;
 	updated_at: string;
 };
@@ -242,22 +279,22 @@ function ProjectCard({
 	const teamMembers = project.team.filter((member) => /^\d+$/.test(member));
 	const displayTeamCount =
 		teamMembers.length > 0 ? teamMembers.length : project.team.length;
-const formatDate = (dateString: string) => {
-    if (!dateString) return "Brak daty";
-    
-    try {
-        const date = new Date(dateString);
-        if (isNaN(date.getTime())) return "Nieprawidłowa data";
-        
-        // Formatuj jako DD.MM.YYYY
-        const day = String(date.getDate()).padStart(2, '0');
-        const month = String(date.getMonth() + 1).padStart(2, '0');
-        const year = date.getFullYear();
-        return `${day}.${month}.${year}`;
-    } catch {
-        return "Nieprawidłowa data";
-    }
-};
+	const formatDate = (dateString: string) => {
+		if (!dateString) return "Brak daty";
+
+		try {
+			const date = new Date(dateString);
+			if (isNaN(date.getTime())) return "Nieprawidłowa data";
+
+			// Formatuj jako DD.MM.YYYY
+			const day = String(date.getDate()).padStart(2, '0');
+			const month = String(date.getMonth() + 1).padStart(2, '0');
+			const year = date.getFullYear();
+			return `${day}.${month}.${year}`;
+		} catch {
+			return "Nieprawidłowa data";
+		}
+	};
 
 	return (
 		<div className={styles.projectCard}>
@@ -272,9 +309,9 @@ const formatDate = (dateString: string) => {
 					</span>
 				</div>
 				<div className={styles.projectCard__pillar}>
-    {PILLAR_ICONS[project.pillar]}
-    {PILLAR_LABELS_FALLBACK[project.pillar] || project.pillar}
-</div>
+					{PILLAR_ICONS[project.pillar]}
+					{PILLAR_LABELS_FALLBACK[project.pillar] || project.pillar}
+				</div>
 			</div>
 
 			<div className={styles.projectCard__body}>
@@ -478,23 +515,23 @@ function ProjectModal({
 					<div className={styles.modal__row}>
 						<div className={styles.modal__field}>
 							<label className={styles.modal__label}>Filar *</label>
-<select
-    className={styles.modal__select}
-    value={formData.pillar || "project"}
-    onChange={(e) =>
-        setFormData({
-            ...formData,
-            pillar: e.target.value as ProjectPillar,
-        })
-    }
->
-    <option value="">Wybierz filar</option>
-    {Object.keys(PILLAR_LABELS_FALLBACK).map((key) => (
-        <option key={key} value={key}>
-            {PILLAR_LABELS_FALLBACK[key]}
-        </option>
-    ))}
-</select>
+							<select
+								className={styles.modal__select}
+								value={formData.pillar || "project"}
+								onChange={(e) =>
+									setFormData({
+										...formData,
+										pillar: e.target.value as ProjectPillar,
+									})
+								}
+							>
+								<option value="">Wybierz filar</option>
+								{Object.keys(PILLAR_LABELS_FALLBACK).map((key) => (
+									<option key={key} value={key}>
+										{PILLAR_LABELS_FALLBACK[key]}
+									</option>
+								))}
+							</select>
 						</div>
 
 						<div className={styles.modal__field}>
@@ -607,16 +644,16 @@ function TeamSelector({
 }: TeamSelectorProps) {
 	const [filter, setFilter] = useState<"all" | "pillar" | "custom">("all");
 
-const filteredUsers = useMemo(() => {
-    if (filter === "pillar" && pillar) {
-        return users.filter((u) => u.pillar === pillar);
-    }
-    if (filter === "all") {
-        return users; // Wszyscy użytkownicy
-    }
-    // filter === "custom" - pokaż wszystkich do ręcznego wyboru
-    return users;
-}, [users, filter, pillar]);
+	const filteredUsers = useMemo(() => {
+		if (filter === "pillar" && pillar) {
+			return users.filter((u) => u.pillar === pillar);
+		}
+		if (filter === "all") {
+			return users; // Wszyscy użytkownicy
+		}
+		// filter === "custom" - pokaż wszystkich do ręcznego wyboru
+		return users;
+	}, [users, filter, pillar]);
 
 	// W TeamSelector, w onTeamChange:
 	const toggleUser = (userId: string) => {
@@ -768,27 +805,22 @@ const filteredUsers = useMemo(() => {
 // Dodaj tę funkcję przed komponentem Projects
 // API zwraca ID filaru (np. "project", "conference" itp.)
 const mapPillar = (pillar: string): ProjectPillar => {
-    // Jeśli to już jest ID, zwróć je
-    if (["project", "conference", "advocacy", "simulation"].includes(pillar)) {
-        return pillar as ProjectPillar;
-    }
-    // Jeśli to polska nazwa, zmapuj na ID
-    const mapping: Record<string, ProjectPillar> = {
-        "Filar Projektowy": "project",
-        "Filar Konferencyjny": "conference",
-        "Filar Rzeczniczy": "advocacy",
-        "Filar Symulacyjny": "simulation",
-    };
-    return mapping[pillar] || "project";
+	// Jeśli to już jest ID, zwróć je
+	if (["project", "conference", "advocacy", "simulation"].includes(pillar)) {
+		return pillar as ProjectPillar;
+	}
+	// Jeśli to polska nazwa, zmapuj na ID
+	const mapping: Record<string, ProjectPillar> = {
+		"Filar Projektowy": "project",
+		"Filar Konferencyjny": "conference",
+		"Filar Rzeczniczy": "advocacy",
+		"Filar Symulacyjny": "simulation",
+	};
+	return mapping[pillar] || "project";
 };
 // ---------------------------------------------------------------------------
 // GŁÓWNY KOMPONENT
 // ---------------------------------------------------------------------------
-const ROLE_LABELS: Record<string, string> = {
-	admin: "Administrator",
-	coordinator: "Koordynator",
-	member: "Członek",
-};
 
 // W Projects, dodaj te funkcje:
 
@@ -835,13 +867,13 @@ function IdeaModal({ isOpen, onClose, onSubmit, pillars }: IdeaModalProps) {
 		}
 	};
 
-const pillarOptions = [
-    { value: "", label: "Wybierz filar..." },
-    ...pillars.map((p) => ({
-        value: p,
-        label: p, // ✅ Używamy nazwy z bazy
-    })),
-];
+	const pillarOptions = [
+		{ value: "", label: "Wybierz filar..." },
+		...pillars.map((p) => ({
+			value: p,
+			label: p, // ✅ Używamy nazwy z bazy
+		})),
+	];
 
 	return (
 		<div className={styles.modalOverlay} onClick={onClose}>
@@ -1002,9 +1034,9 @@ function IdeaCard({
 					</span>
 				</div>
 				<div className={styles.ideaCard__pillar}>
-    {IconComponent}
-    {pillarLabel} 
-</div>
+					{IconComponent}
+					{pillarLabel}
+				</div>
 			</div>
 
 			<p className={styles.ideaCard__description}>{idea.description}</p>
@@ -1023,16 +1055,14 @@ function IdeaCard({
 				<div className={styles.ideaCard__coordinatorInfo}>
 					{currentUser.pillar !== idea.pillar ? (
 						<span className={styles.ideaCard__coordinatorLabel}>
-							🏷️ Filar:{" "}
-							<strong>{pillarLabel}</strong>
+							🏷️ Filar: <strong>{pillarLabel}</strong>
 							<span className={styles.ideaCard__otherPillarBadge}>
 								(nie twój filar - tylko podgląd)
 							</span>
 						</span>
 					) : (
 						<span className={styles.ideaCard__coordinatorLabel}>
-							🏷️ Filar:{" "}
-							<strong>{pillarLabel}</strong>
+							🏷️ Filar: <strong>{pillarLabel}</strong>
 							<span className={styles.ideaCard__myPillarBadge}>
 								✅ Twój filar - możesz zarządzać
 							</span>
@@ -1042,49 +1072,49 @@ function IdeaCard({
 			)}
 
 			<div className={styles.ideaCard__votes}>
-{/* Głosowanie - autor nie może głosować */}
-{isAuthor ? (
-    <div className={styles.ideaCard__authorVotes}>
-        <span className={styles.voteCount}>
-            <ThumbsUp size={16} />
-            {idea.upvotes}
-        </span>
-        <span className={styles.voteCount}>
-            <ThumbsDown size={16} />
-            {idea.downvotes}
-        </span>
-        <span className={styles.ideaCard__voteScore}>
-            {getPointsLabel(idea.votes)}
-        </span>
-        <span className={styles.ideaCard__authorBadge}>
-            <PenLine size={14} />
-            Twój pomysł
-        </span>
-    </div>
-) : (
-    // Przyciski do głosowania
-    <div className={styles.ideaCard__votes}>
-        <button
-            className={`${styles.voteBtn} ${styles.voteUp} ${isUpActive ? styles.voteUpActive : ""}`}
-            onClick={() => onVote(idea.id, "up")}
-            disabled={isUpActive}
-        >
-            <ThumbsUp size={16} />
-            {idea.upvotes}
-        </button>
-        <button
-            className={`${styles.voteBtn} ${styles.voteDown} ${isDownActive ? styles.voteDownActive : ""}`}
-            onClick={() => onVote(idea.id, "down")}
-            disabled={isDownActive}
-        >
-            <ThumbsDown size={16} />
-            {idea.downvotes}
-        </button>
-        <span className={styles.ideaCard__voteScore}>
-            {getPointsLabel(idea.votes)}
-        </span>
-    </div>
-)}
+				{/* Głosowanie - autor nie może głosować */}
+				{isAuthor ? (
+					<div className={styles.ideaCard__authorVotes}>
+						<span className={styles.voteCount}>
+							<ThumbsUp size={16} />
+							{idea.upvotes}
+						</span>
+						<span className={styles.voteCount}>
+							<ThumbsDown size={16} />
+							{idea.downvotes}
+						</span>
+						<span className={styles.ideaCard__voteScore}>
+							{getPointsLabel(idea.votes)}
+						</span>
+						<span className={styles.ideaCard__authorBadge}>
+							<PenLine size={14} />
+							Twój pomysł
+						</span>
+					</div>
+				) : (
+					// Przyciski do głosowania
+					<div className={styles.ideaCard__votes}>
+						<button
+							className={`${styles.voteBtn} ${styles.voteUp} ${isUpActive ? styles.voteUpActive : ""}`}
+							onClick={() => onVote(idea.id, "up")}
+							disabled={isUpActive}
+						>
+							<ThumbsUp size={16} />
+							{idea.upvotes}
+						</button>
+						<button
+							className={`${styles.voteBtn} ${styles.voteDown} ${isDownActive ? styles.voteDownActive : ""}`}
+							onClick={() => onVote(idea.id, "down")}
+							disabled={isDownActive}
+						>
+							<ThumbsDown size={16} />
+							{idea.downvotes}
+						</button>
+						<span className={styles.ideaCard__voteScore}>
+							{getPointsLabel(idea.votes)}
+						</span>
+					</div>
+				)}
 			</div>
 			{/* ✅ Koordynator może zarządzać TYLKO pomysłami ze swojego filaru */}
 			{canManage && idea.status === "pending" && (
@@ -1157,26 +1187,26 @@ export default function Projects() {
 		}
 		return null;
 	});
-// Dodaj useEffect do synchronizacji z localStorage
-useEffect(() => {
-    const userStr = localStorage.getItem("user");
-    if (userStr) {
-        try {
-            const user = JSON.parse(userStr);
-            setCurrentUser({
-                id: user.id.toString(),
-                name: `${user.first_name} ${user.last_name}`,
-                email: user.email,
-                role: user.role as "admin" | "coordinator" | "member",
-                pillar: user.pillar || null,
-            });
-        } catch {
-            setCurrentUser(null);
-        }
-    } else {
-        setCurrentUser(null);
-    }
-}, []);
+	// Dodaj useEffect do synchronizacji z localStorage
+	useEffect(() => {
+		const userStr = localStorage.getItem("user");
+		if (userStr) {
+			try {
+				const user = JSON.parse(userStr);
+				setCurrentUser({
+					id: user.id.toString(),
+					name: `${user.first_name} ${user.last_name}`,
+					email: user.email,
+					role: user.role as "admin" | "coordinator" | "member",
+					pillar: user.pillar || null,
+				});
+			} catch {
+				setCurrentUser(null);
+			}
+		} else {
+			setCurrentUser(null);
+		}
+	}, []);
 	const [searchTerm, setSearchTerm] = useState("");
 	const [selectedPillar, setSelectedPillar] = useState<ProjectPillar | "all">(
 		"all",
@@ -1206,7 +1236,9 @@ useEffect(() => {
 					"Content-Type": "application/json",
 				},
 				body: JSON.stringify({
-					...idea,
+					title: idea.title,
+					description: idea.description,
+					pillar: idea.pillar, // ✅ Przekazuj nazwę filaru
 					authorId: currentUser?.id,
 					authorName: currentUser?.name,
 				}),
@@ -1277,83 +1309,83 @@ useEffect(() => {
 		}
 	};
 
-const handleVote = async (ideaId: string, type: "up" | "down") => {
-    try {
-        const token = localStorage.getItem("accessToken");
-        
-        // Znajdź aktualny stan pomysłu
-        const currentIdea = ideas.find(i => i.id === ideaId);
-        if (!currentIdea) return;
-        
-        // Sprawdź czy użytkownik już głosował
-        if (currentIdea.currentUserVote === type) {
-            toast.info("Już zagłosowałeś w ten sposób");
-            return;
-        }
-        
-        // OPTIMISTIC UPDATE
-        setIdeas(prevIdeas =>
-            prevIdeas.map(i => {
-                if (i.id === ideaId) {
-                    let newUpvotes = i.upvotes;
-                    let newDownvotes = i.downvotes;
-                    let newVotes = i.votes;
-                    
-                    // Jeśli zmienia głos z down na up
-                    if (i.currentUserVote === "down" && type === "up") {
-                        newDownvotes--;
-                        newUpvotes++;
-                        newVotes += 2;
-                    }
-                    // Jeśli zmienia głos z up na down
-                    else if (i.currentUserVote === "up" && type === "down") {
-                        newUpvotes--;
-                        newDownvotes++;
-                        newVotes -= 2;
-                    }
-                    // Jeśli głosuje pierwszy raz
-                    else {
-                        if (type === "up") {
-                            newUpvotes++;
-                            newVotes++;
-                        } else {
-                            newDownvotes++;
-                            newVotes--;
-                        }
-                    }
-                    
-                    return {
-                        ...i,
-                        upvotes: newUpvotes,
-                        downvotes: newDownvotes,
-                        votes: newVotes,
-                        currentUserVote: type,
-                    };
-                }
-                return i;
-            })
-        );
-        
-        // Wyślij do backendu
-        const response = await fetch(`/api/ideas/${ideaId}/vote`, {
-            method: "POST",
-            headers: {
-                Authorization: `Bearer ${token}`,
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ type }),
-        });
-        
-        if (!response.ok) {
-            throw new Error("Błąd głosowania");
-        }
-        
-        toast.success(type === "up" ? "👍 Głos oddany!" : "👎 Głos oddany!");
-    } catch (error) {
-        console.error("❌ Błąd:", error);
-        toast.error("Nie udało się zagłosować");
-    }
-};
+	const handleVote = async (ideaId: string, type: "up" | "down") => {
+		try {
+			const token = localStorage.getItem("accessToken");
+
+			// Znajdź aktualny stan pomysłu
+			const currentIdea = ideas.find(i => i.id === ideaId);
+			if (!currentIdea) return;
+
+			// Sprawdź czy użytkownik już głosował
+			if (currentIdea.currentUserVote === type) {
+				toast.info("Już zagłosowałeś w ten sposób");
+				return;
+			}
+
+			// OPTIMISTIC UPDATE
+			setIdeas(prevIdeas =>
+				prevIdeas.map(i => {
+					if (i.id === ideaId) {
+						let newUpvotes = i.upvotes;
+						let newDownvotes = i.downvotes;
+						let newVotes = i.votes;
+
+						// Jeśli zmienia głos z down na up
+						if (i.currentUserVote === "down" && type === "up") {
+							newDownvotes--;
+							newUpvotes++;
+							newVotes += 2;
+						}
+						// Jeśli zmienia głos z up na down
+						else if (i.currentUserVote === "up" && type === "down") {
+							newUpvotes--;
+							newDownvotes++;
+							newVotes -= 2;
+						}
+						// Jeśli głosuje pierwszy raz
+						else {
+							if (type === "up") {
+								newUpvotes++;
+								newVotes++;
+							} else {
+								newDownvotes++;
+								newVotes--;
+							}
+						}
+
+						return {
+							...i,
+							upvotes: newUpvotes,
+							downvotes: newDownvotes,
+							votes: newVotes,
+							currentUserVote: type,
+						};
+					}
+					return i;
+				})
+			);
+
+			// Wyślij do backendu
+			const response = await fetch(`/api/ideas/${ideaId}/vote`, {
+				method: "POST",
+				headers: {
+					Authorization: `Bearer ${token}`,
+					"Content-Type": "application/json",
+				},
+				body: JSON.stringify({ type }),
+			});
+
+			if (!response.ok) {
+				throw new Error("Błąd głosowania");
+			}
+
+			toast.success(type === "up" ? "👍 Głos oddany!" : "👎 Głos oddany!");
+		} catch (error) {
+			console.error("❌ Błąd:", error);
+			toast.error("Nie udało się zagłosować");
+		}
+	};
 
 	const handleIdeaStatusChange = async (ideaId: string, status: IdeaStatus) => {
 		try {
@@ -1391,7 +1423,7 @@ const handleVote = async (ideaId: string, type: "up" | "down") => {
 
 				if (response.ok) {
 					const data = await response.json();
-					// ✅ Filtruj tylko zespoły które są filarami (zawierają "Filar" w nazwie)
+					// ✅ Filtruj tylko filary (zawierają "Filar" w nazwie)
 					const pillarNames = data
 						.filter((team: any) => team.name?.includes("Filar"))
 						.map((team: any) => team.name);
@@ -1400,7 +1432,7 @@ const handleVote = async (ideaId: string, type: "up" | "down") => {
 				}
 			} catch (error) {
 				console.error("❌ Błąd pobierania filarów:", error);
-				// Fallback - sztywne filary
+				// Fallback
 				setPillars([
 					"Filar Projektowy",
 					"Filar Konferencyjny",
@@ -1417,6 +1449,14 @@ const handleVote = async (ideaId: string, type: "up" | "down") => {
 		const fetchIdeas = async () => {
 			try {
 				const token = localStorage.getItem("accessToken");
+
+				// Sprawdź czy token istnieje
+				if (!token) {
+					console.warn("⚠️ Brak tokenu, używam danych przykładowych");
+					setIdeas(MOCK_IDEAS);
+					return;
+				}
+
 				const response = await fetch("/api/ideas", {
 					headers: {
 						Authorization: `Bearer ${token}`,
@@ -1424,31 +1464,47 @@ const handleVote = async (ideaId: string, type: "up" | "down") => {
 					},
 				});
 
-				if (response.ok) {
-					const data = await response.json();
-					console.log("📦 Pomysły z bazy:", data);
-
-					// ✅ MAPUJ DANE Z BACKENDU NA TYP IDEA
-					// W fetchIdeas, upewnij się że poprawnie mapujesz:
-					const mappedIdeas = data.map((idea: any) => ({
-						id: idea.id.toString(),
-						title: idea.title,
-						description: idea.description,
-						pillar: idea.pillar,
-						authorId: idea.author_id.toString(),
-						authorName: idea.author_name,
-						status: idea.status as IdeaStatus,
-						votes: idea.votes || 0,
-						upvotes: idea.upvotes || 0,
-						downvotes: idea.downvotes || 0,
-						createdAt: idea.created_at,
-						currentUserVote: idea.user_vote || null, // ✅ z backendu
-					}));
-
-					setIdeas(mappedIdeas);
+				if (!response.ok) {
+					console.warn(`⚠️ Błąd API (${response.status}), używam danych przykładowych`);
+					setIdeas(MOCK_IDEAS);
+					toast.error("Nie udało się pobrać pomysłów z serwera", {
+						icon: "⚠️",
+					});
+					return;
 				}
+
+				const data = await response.json();
+				console.log("📦 Pomysły z bazy:", data);
+
+				// Sprawdź czy dane są tablicą
+				if (!Array.isArray(data)) {
+					console.warn("⚠️ Oczekiwano tablicy, otrzymano:", typeof data);
+					setIdeas(MOCK_IDEAS);
+					return;
+				}
+
+				const mappedIdeas = data.map((idea: any) => ({
+					id: idea.id.toString(),
+					title: idea.title,
+					description: idea.description,
+					pillar: idea.pillar,
+					authorId: idea.author_id?.toString() || "unknown",
+					authorName: idea.author_name || "Nieznany",
+					status: idea.status as IdeaStatus || "pending",
+					votes: idea.votes || 0,
+					upvotes: idea.upvotes || 0,
+					downvotes: idea.downvotes || 0,
+					createdAt: idea.created_at || new Date().toISOString(),
+					currentUserVote: idea.user_vote || null,
+				}));
+
+				setIdeas(mappedIdeas);
 			} catch (error) {
 				console.error("❌ Błąd pobierania pomysłów:", error);
+				setIdeas(MOCK_IDEAS);
+				toast.error("Nie udało się pobrać pomysłów, używam danych testowych", {
+					icon: "⚠️",
+				});
 			}
 		};
 
@@ -1582,16 +1638,16 @@ const handleVote = async (ideaId: string, type: "up" | "down") => {
 	}, [projects, searchTerm, selectedPillar, selectedStatus]);
 
 	// ✅ DODAJ TUTAJ:
-const coordinatorStats = useMemo(() => {
-    if (currentUser?.role !== "coordinator" || !currentUser.pillar) return null;
+	const coordinatorStats = useMemo(() => {
+		if (currentUser?.role !== "coordinator" || !currentUser.pillar) return null;
 
-    const pillarIdeas = ideas.filter((i) => i.pillar === currentUser.pillar);
-    const pending = pillarIdeas.filter((i) => i.status === "pending").length;
-    const approved = pillarIdeas.filter((i) => i.status === "approved").length;
-    const rejected = pillarIdeas.filter((i) => i.status === "rejected").length;
+		const pillarIdeas = ideas.filter((i) => i.pillar === currentUser.pillar);
+		const pending = pillarIdeas.filter((i) => i.status === "pending").length;
+		const approved = pillarIdeas.filter((i) => i.status === "approved").length;
+		const rejected = pillarIdeas.filter((i) => i.status === "rejected").length;
 
-    return { total: pillarIdeas.length, pending, approved, rejected };
-}, [ideas, currentUser]);
+		return { total: pillarIdeas.length, pending, approved, rejected };
+	}, [ideas, currentUser]);
 
 	const handleAddProject = () => {
 		setEditingProject(null);
@@ -1602,16 +1658,19 @@ const coordinatorStats = useMemo(() => {
 		setEditingProject(project);
 		setIsModalOpen(true);
 	};
-const filteredIdeas = useMemo(() => {
-    return ideas.filter((idea) => {
-        const matchesSearch =
-            idea.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            idea.description.toLowerCase().includes(searchTerm.toLowerCase());
-        const matchesPillar =
-            selectedPillar === "all" || idea.pillar === selectedPillar;
-        return matchesSearch && matchesPillar;
-    });
-}, [ideas, searchTerm, selectedPillar]);
+	const filteredIdeas = useMemo(() => {
+		return ideas.filter((idea) => {
+			const matchesSearch =
+				idea.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+				idea.description.toLowerCase().includes(searchTerm.toLowerCase());
+
+			// Porównaj jako string
+			const matchesPillar =
+				selectedPillar === "all" || idea.pillar === selectedPillar;
+
+			return matchesSearch && matchesPillar;
+		});
+	}, [ideas, searchTerm, selectedPillar]);
 	// ZMIEŃ tę funkcję (około linii 450):
 	const handleDeleteProject = async (id: string) => {
 		if (!window.confirm("Czy na pewno chcesz usunąć ten projekt?")) {
@@ -1758,14 +1817,14 @@ const filteredIdeas = useMemo(() => {
 					<span className={styles.stats__number}>{projects.length}</span>
 					<span className={styles.stats__label}>Wszystkie projekty</span>
 				</div>
-{pillars.map((pillar) => (
-    <div key={pillar} className={styles.stats__item}>
-        <span className={styles.stats__number}>
-            {projects.filter((p) => p.pillar === pillar).length}
-        </span>
-        <span className={styles.stats__label}>{pillar}</span>
-    </div>
-))}
+				{pillars.map((pillar) => (
+					<div key={pillar} className={styles.stats__item}>
+						<span className={styles.stats__number}>
+							{projects.filter((p) => p.pillar === pillar).length}
+						</span>
+						<span className={styles.stats__label}>{pillar}</span>
+					</div>
+				))}
 			</div>
 
 			{/* ✅ DODAJ TUTAJ - STATYSTYKI DLA KOORDYNATORA */}
@@ -1868,10 +1927,10 @@ const filteredIdeas = useMemo(() => {
 					>
 						<option value="all">Wszystkie filary</option>
 						{pillars.map((pillar) => (
-    <option key={pillar} value={pillar}>
-        {pillar}
-    </option>
-))}
+							<option key={pillar} value={pillar}>
+								{pillar}
+							</option>
+						))}
 					</select>
 
 					<select
@@ -1892,10 +1951,10 @@ const filteredIdeas = useMemo(() => {
 					{(selectedPillar !== "all" ||
 						selectedStatus !== "all" ||
 						searchTerm) && (
-						<button className={styles.filters__reset} onClick={clearFilters}>
-							Wyczyść filtry
-						</button>
-					)}
+							<button className={styles.filters__reset} onClick={clearFilters}>
+								Wyczyść filtry
+							</button>
+						)}
 				</div>
 			</div>
 
@@ -1909,8 +1968,8 @@ const filteredIdeas = useMemo(() => {
 							<h3 className={styles.emptyState__title}>Brak projektów</h3>
 							<p className={styles.emptyState__description}>
 								{searchTerm ||
-								selectedPillar !== "all" ||
-								selectedStatus !== "all"
+									selectedPillar !== "all" ||
+									selectedStatus !== "all"
 									? "Nie znaleziono projektów spełniających kryteria wyszukiwania."
 									: canManageProjects
 										? 'Nie ma jeszcze żadnych projektów. Kliknij "Dodaj projekt", aby utworzyć pierwszy.'
@@ -1944,37 +2003,57 @@ const filteredIdeas = useMemo(() => {
 				</div>
 			) : (
 				/* Lista pomysłów */
-{/* Lista pomysłów */}
-<div className={styles.ideasGrid}>
-    {filteredIdeas.length === 0 ? (
-        <div className={styles.emptyState}>
-            <Lightbulb size={48} className={styles.emptyState__icon} />
-            <h3 className={styles.emptyState__title}>Brak pomysłów</h3>
-            <p className={styles.emptyState__description}>
-                Nie ma jeszcze żadnych zgłoszonych pomysłów. Bądź pierwszy i
-                zgłoś swój pomysł!
-            </p>
-            <button
-                className={styles.emptyState__btn}
-                onClick={() => setIsIdeaModalOpen(true)}
-            >
-                <Plus size={16} />
-                Zgłoś pomysł
-            </button>
-        </div>
-    ) : (
-        filteredIdeas.map((idea) => (
-            <IdeaCard
-                key={idea.id}
-                idea={idea}
-                currentUser={currentUser!}
-                onVote={handleVote}
-                onStatusChange={handleIdeaStatusChange}
-                canManage={canManageProjects}
-                pillars={pillars}
-            />
-        ))
-    )}
-</div>
-	);
-}
+				<div className={styles.ideasGrid}>
+					{filteredIdeas.length === 0 ? (
+						<div className={styles.emptyState}>
+							<Lightbulb size={48} className={styles.emptyState__icon} />
+							<h3 className={styles.emptyState__title}>Brak pomysłów</h3>
+							<p className={styles.emptyState__description}>
+								Nie ma jeszcze żadnych zgłoszonych pomysłów. Bądź pierwszy i
+								zgłoś swój pomysł!
+							</p>
+							<button
+								className={styles.emptyState__btn}
+								onClick={() => setIsIdeaModalOpen(true)}
+							>
+								<Plus size={16} />
+								Zgłoś pomysł
+							</button>
+						</div>
+					) : (
+						filteredIdeas.map((idea) => (
+							<IdeaCard
+								key={idea.id}
+								idea={idea}
+								currentUser={currentUser!}
+								onVote={handleVote}
+								onStatusChange={handleIdeaStatusChange}
+								canManage={canManageProjects}
+								pillars={pillars}
+							/>
+						))
+					)}
+				</div>
+			)}
+			{/* Modale */}
+			<ProjectModal
+				isOpen={isModalOpen}
+				project={editingProject}
+				onClose={() => {
+					setIsModalOpen(false);
+					setEditingProject(null);
+				}}
+				onSave={handleSaveProject}
+				users={users}
+			/>
+
+			<IdeaModal
+				isOpen={isIdeaModalOpen}
+				onClose={() => setIsIdeaModalOpen(false)}
+				onSubmit={handleSubmitIdea}
+				currentUser={currentUser!}
+				pillars={pillars}
+			/>
+		</div>
+	); // 👈 TO JEST WAŻNE - zamyka return
+} // 👈 TO ZAMYKA KOMPONENT
