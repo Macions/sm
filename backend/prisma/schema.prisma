@@ -14,9 +14,6 @@ model User {
   password_hash         String               @db.VarChar(255)
   first_name            String               @db.VarChar(50)
   last_name             String               @db.VarChar(50)
-  tasks                 Task[]
-  leaves                Leave[]
-  leaveComments         LeaveComment[]
   is_active             Boolean?             @default(true)
   created_at            DateTime             @default(now()) @db.Timestamp(0)
   team                  String?              @db.VarChar(100)
@@ -31,17 +28,19 @@ model User {
   attendance_percentage Decimal?             @default(92.00) @db.Decimal(5, 2)
   form_data             String?              @db.LongText
   guides                Guide[]
+  ideaVotes             IdeaVote[]
+  leaveComments         LeaveComment[]
+  leaves                Leave[]
   notifications         Notification[]
   onboarding_data       onboarding_data[]
   projects              Project[]
   refresh_tokens        refresh_tokens[]
+  task                  task[]
   team_members          TeamMember[]
   user_notifications    user_notifications[]
   roles                 roles?               @relation(fields: [role_id], references: [id], onUpdate: Restrict, map: "users_ibfk_1")
   vacancies             Vacancy[]
   vacancyApplications   VacancyApplication[]
-  ideas                 Idea[]
-  ideaVotes             IdeaVote[]
 
   @@index([role_id], map: "idx_users_role_id")
   @@index([status], map: "idx_users_status")
@@ -287,38 +286,26 @@ model VacancyAttachment {
   @@map("vacancy_attachments")
 }
 
-model Task {
-  id          Int      @id @default(autoincrement())
-  title       String   @db.VarChar(255)
-  description String?  @db.Text
-  assigned_to Int?
-  status      String   @default("pending") @db.VarChar(50)
-  created_at  DateTime @default(now()) @db.Timestamp(0)
-  updated_at  DateTime @default(now()) @updatedAt @db.Timestamp(0)
-
-  user User? @relation(fields: [assigned_to], references: [id])
-}
-
 model Leave {
-  id                Int       @id @default(autoincrement())
+  id                Int            @id @default(autoincrement())
   user_id           Int
-  type              String    @default("vacation") @db.VarChar(50)
-  scope             String    @default("all") @db.VarChar(50)
-  affected_teams    String?   @db.LongText // JSON array
-  start_date        DateTime  @db.Date
-  end_date          DateTime  @db.Date
-  reason            String?   @db.Text
-  reason_visibility String    @default("private") @db.VarChar(50)
-  status            String    @default("pending") @db.VarChar(50)
-  attachments       String?   @db.LongText // JSON
-  approved_by       String?   @db.VarChar(255)
+  type              String         @default("vacation") @db.VarChar(50)
+  scope             String         @default("all") @db.VarChar(50)
+  affected_teams    String?        @db.LongText
+  start_date        DateTime       @db.Date
+  end_date          DateTime       @db.Date
+  reason            String?        @db.Text
+  reason_visibility String         @default("private") @db.VarChar(50)
+  status            String         @default("pending") @db.VarChar(50)
+  attachments       String?        @db.LongText
+  approved_by       String?        @db.VarChar(255)
   approved_at       DateTime?
-  created_at        DateTime  @default(now()) @db.Timestamp(0)
-  updated_at        DateTime  @default(now()) @updatedAt @db.Timestamp(0)
+  created_at        DateTime       @default(now()) @db.Timestamp(0)
+  updated_at        DateTime       @default(now()) @updatedAt @db.Timestamp(0)
+  comments          LeaveComment[]
+  user              User           @relation(fields: [user_id], references: [id])
 
-  user     User           @relation(fields: [user_id], references: [id])
-  comments LeaveComment[]
-
+  @@index([user_id], map: "leaves_user_id_fkey")
   @@map("leaves")
 }
 
@@ -328,49 +315,65 @@ model LeaveComment {
   author_id  Int
   content    String   @db.Text
   created_at DateTime @default(now()) @db.Timestamp(0)
+  author     User     @relation(fields: [author_id], references: [id])
+  leave      Leave    @relation(fields: [leave_id], references: [id])
 
-  leave  Leave @relation(fields: [leave_id], references: [id])
-  author User  @relation(fields: [author_id], references: [id])
-
+  @@index([author_id], map: "leave_comments_author_id_fkey")
+  @@index([leave_id], map: "leave_comments_leave_id_fkey")
   @@map("leave_comments")
 }
 
 model Idea {
-  id          Int      @id @default(autoincrement())
-  title       String   @db.VarChar(255)
-  description String   @db.Text
-  pillar      String   @db.VarChar(50)
+  id          Int        @id @default(autoincrement())
+  title       String     @db.VarChar(255)
+  description String     @db.Text
+  pillar      String     @db.VarChar(50)
   author_id   Int
-  author_name String   @db.VarChar(100)
-  status      String   @default("pending") @db.VarChar(50)
-  is_active   Boolean  @default(true)
-  created_at  DateTime @default(now()) @db.Timestamp(0)
-  updated_at  DateTime @default(now()) @updatedAt @db.Timestamp(0)
+  author_name String     @db.VarChar(100)
+  status      String     @default("pending") @db.VarChar(50)
+  is_active   Boolean    @default(true)
+  created_at  DateTime   @default(now()) @db.Timestamp(0)
+  updated_at  DateTime   @default(now()) @updatedAt @db.Timestamp(0)
+  votes       IdeaVote[]
 
-  user  User       @relation(fields: [author_id], references: [id])
-  votes IdeaVote[] // ✅ relacja do głosów
-
-  @@index([status])
-  @@index([pillar])
-  @@index([author_id])
-  @@index([created_at])
-  @@index([is_active])
+  @@index([is_active], map: "idx_ideas_active")
+  @@index([author_id], map: "idx_ideas_author")
+  @@index([created_at], map: "idx_ideas_created")
+  @@index([pillar], map: "idx_ideas_pillar")
+  @@index([status], map: "idx_ideas_status")
   @@map("ideas")
 }
 
 model IdeaVote {
-  id         Int      @id @default(autoincrement())
+  id         Int                  @id @default(autoincrement())
   idea_id    Int
   user_id    Int
-  vote_type  String   @db.VarChar(10) // 'up' lub 'down'
-  created_at DateTime @default(now()) @db.Timestamp(0)
-  updated_at DateTime @default(now()) @updatedAt @db.Timestamp(0)
+  vote_type  idea_votes_vote_type
+  created_at DateTime             @default(now()) @db.Timestamp(0)
+  updated_at DateTime             @default(now()) @updatedAt @db.Timestamp(0)
+  idea       Idea                 @relation(fields: [idea_id], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "fk_idea_votes_idea")
+  user       User                 @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "fk_idea_votes_user")
 
-  idea Idea @relation(fields: [idea_id], references: [id], onDelete: Cascade)
-  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
-
-  @@unique([idea_id, user_id])
-  @@index([idea_id])
-  @@index([user_id])
+  @@unique([idea_id, user_id], map: "unique_idea_user")
+  @@index([idea_id], map: "idx_idea_votes_idea")
+  @@index([user_id], map: "idx_idea_votes_user")
   @@map("idea_votes")
+}
+
+model task {
+  id          Int      @id @default(autoincrement())
+  title       String   @db.VarChar(255)
+  description String?  @db.Text
+  assigned_to Int?
+  status      String   @default("pending") @db.VarChar(50)
+  created_at  DateTime @default(now()) @db.Timestamp(0)
+  updated_at  DateTime @default(now()) @db.Timestamp(0)
+  users       User?    @relation(fields: [assigned_to], references: [id], map: "Task_assigned_to_fkey")
+
+  @@index([assigned_to], map: "Task_assigned_to_fkey")
+}
+
+enum idea_votes_vote_type {
+  up
+  down
 }
