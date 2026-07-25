@@ -257,7 +257,7 @@ export default function Structure() {
 	const [loading, setLoading] = useState(true);
 	const containerRef = useRef<HTMLDivElement>(null);
 	const contentRef = useRef<HTMLDivElement>(null);
-	const [pan, setPan] = useState({ x: -410, y: -300 });
+	const [pan, setPan] = useState({ x: -580, y: -250 });
 	const [zoom, setZoom] = useState(1.2);
 	const [isDragging, setIsDragging] = useState(false);
 	const [startPan, setStartPan] = useState({ x: 0, y: 0 });

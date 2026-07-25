@@ -198,7 +198,6 @@ function mapTeamToPillar(team: string | null): ProjectPillar | null {
 	const pillarMap: Record<string, ProjectPillar> = {
 		"Filar Projektowy": "project",
 		"Filar Konferencyjny": "conference",
-		"Filar Konferencji i Debat": "conference",
 		"Filar Rzeczniczy": "advocacy",
 		"Filar Symulacyjny": "simulation",
 	};
