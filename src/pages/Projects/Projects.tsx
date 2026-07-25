@@ -46,7 +46,8 @@ const MOCK_IDEAS: Idea[] = [
 	{
 		id: "1",
 		title: "Aplikacja mobilna dla członków",
-		description: "Aplikacja umożliwiająca łatwy dostęp do informacji o projektach i wydarzeniach.",
+		description:
+			"Aplikacja umożliwiająca łatwy dostęp do informacji o projektach i wydarzeniach.",
 		pillar: "Filar Projektowy",
 		authorId: "1",
 		authorName: "Jan Kowalski",
@@ -60,7 +61,8 @@ const MOCK_IDEAS: Idea[] = [
 	{
 		id: "2",
 		title: "Warsztaty z wystąpień publicznych",
-		description: "Cykl warsztatów dla członków organizacji uczących skutecznej komunikacji.",
+		description:
+			"Cykl warsztatów dla członków organizacji uczących skutecznej komunikacji.",
 		pillar: "Filar Konferencyjny",
 		authorId: "2",
 		authorName: "Anna Nowak",
@@ -73,10 +75,10 @@ const MOCK_IDEAS: Idea[] = [
 	},
 ];
 const PILLAR_LABELS_FALLBACK: Record<string, string> = {
-	"project": "Filar Projektowy",
-	"conference": "Filar Konferencyjny",
-	"advocacy": "Filar Rzeczniczy",
-	"simulation": "Filar Symulacyjny",
+	project: "Filar Projektowy",
+	conference: "Filar Konferencyjny",
+	advocacy: "Filar Rzeczniczy",
+	simulation: "Filar Symulacyjny",
 };
 type ProjectPillar = "project" | "conference" | "advocacy" | "simulation";
 
@@ -113,6 +115,7 @@ type User = {
 	email: string;
 	role: "admin" | "coordinator" | "member";
 	pillar?: ProjectPillar | null;
+	pillars?: string[]; // ✅ DODAJ
 };
 
 // ---------------------------------------------------------------------------
@@ -254,16 +257,21 @@ function ProjectCard({
 	canEdit,
 	users,
 }: ProjectCardProps) {
+	console.log("🔍 ProjectCard - projekt:", {
+		id: project.id,
+		name: project.name,
+		coordinator_id: project.coordinator_id,
+		users: users.length,
+		// ✅ SPRAWDŹ CZY IGA JEST W USERS
+		foundUser: users.find((u) => u.id === project.coordinator_id?.toString()),
+	});
 	const [isExpanded, setIsExpanded] = useState(false);
 
 	// ✅ DODAJ TUTAJ funkcje pomocnicze:
 	const getCoordinatorName = (coordinatorId: string) => {
 		if (!coordinatorId) return "Brak";
-		if (/^\d+$/.test(coordinatorId)) {
-			const user = users.find((u) => u.id === coordinatorId);
-			return user ? user.name : coordinatorId;
-		}
-		return coordinatorId;
+		const user = users.find((u) => u.id === coordinatorId);
+		return user ? user.name : "Brak";
 	};
 
 	const getTeamMemberName = (memberId: string) => {
@@ -276,9 +284,10 @@ function ProjectCard({
 	};
 
 	// ✅ Liczenie rzeczywistych członków
-	const teamMembers = project.team.filter((member) => /^\d+$/.test(member));
-	const displayTeamCount =
-		teamMembers.length > 0 ? teamMembers.length : project.team.length;
+	const teamMembers = project.team.filter(
+		(member) => /^\d+$/.test(member) && member !== "63", // ← POMIŃ ADMINA
+	);
+	const displayTeamCount = teamMembers.length;
 	const formatDate = (dateString: string) => {
 		if (!dateString) return "Brak daty";
 
@@ -287,15 +296,19 @@ function ProjectCard({
 			if (isNaN(date.getTime())) return "Nieprawidłowa data";
 
 			// Formatuj jako DD.MM.YYYY
-			const day = String(date.getDate()).padStart(2, '0');
-			const month = String(date.getMonth() + 1).padStart(2, '0');
+			const day = String(date.getDate()).padStart(2, "0");
+			const month = String(date.getMonth() + 1).padStart(2, "0");
 			const year = date.getFullYear();
 			return `${day}.${month}.${year}`;
 		} catch {
 			return "Nieprawidłowa data";
 		}
 	};
-
+	const pluralizePeople = (count: number) => {
+		if (count === 1) return "osoba";
+		if (count >= 2 && count <= 4) return "osoby";
+		return "osób";
+	};
 	return (
 		<div className={styles.projectCard}>
 			<div className={styles.projectCard__header}>
@@ -329,7 +342,10 @@ function ProjectCard({
 					<div className={styles.projectCard__metaItem}>
 						<UsersIcon size={14} />
 						<span>
-							Zespół: <strong>{displayTeamCount} osób</strong>
+							Zespół:{" "}
+							<strong>
+								{displayTeamCount} {pluralizePeople(displayTeamCount)}
+							</strong>
 						</span>
 					</div>
 				</div>
@@ -774,30 +790,27 @@ function TeamSelector({
 
 			{filter !== "custom" && (
 				<div className={styles.teamSelector__info}>
-					{filter === "all" && (
+					{selectedTeam.length === users.length ? (
 						<p className={styles.teamSelector__infoText}>
 							Wybrano{" "}
 							<strong>
 								wszystkich {users.length} {pluralizeUsers(users.length)}
 							</strong>
 						</p>
-					)}
-
-					{filter === "pillar" && pillar && (
+					) : (
 						<p className={styles.teamSelector__infoText}>
-							Wybrano{" "}
+							Wybrano:{" "}
 							<strong>
-								{filteredUsers.length} {pluralizeUsers(filteredUsers.length)}
-							</strong>{" "}
-							z filaru "{PILLAR_LABELS_FALLBACK[pillar] || pillar}"
+								{selectedTeam.length} {pluralizePeople(selectedTeam.length)}
+							</strong>
 						</p>
 					)}
 				</div>
 			)}
 
 			<div className={styles.teamSelector__summary}>
-				Wybrano: <strong>{selectedTeam.length}</strong>{" "}
-				{pluralizePeople(selectedTeam.length)}
+				<strong>{selectedTeam.length}</strong> / {users.length}{" "}
+				{pluralizeUsers(users.length)}
 			</div>
 		</div>
 	);
@@ -986,11 +999,18 @@ function IdeaCard({
 	const userVote = idea.currentUserVote || null;
 
 	const formatDate = (date: string) => {
-		return new Date(date).toLocaleDateString("pl-PL", {
-			year: "numeric",
-			month: "short",
-			day: "numeric",
-		});
+		if (!date) return "Brak daty";
+		try {
+			const d = new Date(date);
+			if (isNaN(d.getTime())) return "Brak daty";
+			return d.toLocaleDateString("pl-PL", {
+				year: "numeric",
+				month: "short",
+				day: "numeric",
+			});
+		} catch {
+			return "Brak daty";
+		}
 	};
 	const getPointsLabel = (points: number | string): string => {
 		const value = Number(points);
@@ -1051,30 +1071,12 @@ function IdeaCard({
 					{formatDate(idea.createdAt)}
 				</span>
 			</div>
-			{canManage && currentUser?.role === "coordinator" && (
-				<div className={styles.ideaCard__coordinatorInfo}>
-					{currentUser.pillar !== idea.pillar ? (
-						<span className={styles.ideaCard__coordinatorLabel}>
-							🏷️ Filar: <strong>{pillarLabel}</strong>
-							<span className={styles.ideaCard__otherPillarBadge}>
-								(nie twój filar - tylko podgląd)
-							</span>
-						</span>
-					) : (
-						<span className={styles.ideaCard__coordinatorLabel}>
-							🏷️ Filar: <strong>{pillarLabel}</strong>
-							<span className={styles.ideaCard__myPillarBadge}>
-								✅ Twój filar - możesz zarządzać
-							</span>
-						</span>
-					)}
-				</div>
-			)}
 
+			{/* ✅ ZAWSZE POKAZUJ GŁOSY - W JEDNEJ LINII */}
 			<div className={styles.ideaCard__votes}>
-				{/* Głosowanie - autor nie może głosować */}
+				{/* Autor - widzi swoje głosy, ale nie może głosować */}
 				{isAuthor ? (
-					<div className={styles.ideaCard__authorVotes}>
+					<>
 						<span className={styles.voteCount}>
 							<ThumbsUp size={16} />
 							{idea.upvotes}
@@ -1090,34 +1092,53 @@ function IdeaCard({
 							<PenLine size={14} />
 							Twój pomysł
 						</span>
-					</div>
+					</>
 				) : (
-					// Przyciski do głosowania
-					<div className={styles.ideaCard__votes}>
-						<button
-							className={`${styles.voteBtn} ${styles.voteUp} ${isUpActive ? styles.voteUpActive : ""}`}
-							onClick={() => onVote(idea.id, "up")}
-							disabled={isUpActive}
-						>
-							<ThumbsUp size={16} />
-							{idea.upvotes}
-						</button>
-						<button
-							className={`${styles.voteBtn} ${styles.voteDown} ${isDownActive ? styles.voteDownActive : ""}`}
-							onClick={() => onVote(idea.id, "down")}
-							disabled={isDownActive}
-						>
-							<ThumbsDown size={16} />
-							{idea.downvotes}
-						</button>
-						<span className={styles.ideaCard__voteScore}>
-							{getPointsLabel(idea.votes)}
-						</span>
-					</div>
+					// Inni użytkownicy - mogą głosować (tylko gdy pending)
+					<>
+						{idea.status === "pending" ? (
+							// Przyciski do głosowania
+							<>
+								<button
+									className={`${styles.voteBtn} ${styles.voteUp} ${isUpActive ? styles.voteUpActive : ""}`}
+									onClick={() => onVote(idea.id, "up")}
+									disabled={isUpActive}
+								>
+									<ThumbsUp size={16} />
+									{idea.upvotes}
+								</button>
+								<button
+									className={`${styles.voteBtn} ${styles.voteDown} ${isDownActive ? styles.voteDownActive : ""}`}
+									onClick={() => onVote(idea.id, "down")}
+									disabled={isDownActive}
+								>
+									<ThumbsDown size={16} />
+									{idea.downvotes}
+								</button>
+								<span className={styles.ideaCard__voteScore}>
+									{getPointsLabel(idea.votes)}
+								</span>
+							</>
+						) : (
+							// Pomysł zaakceptowany/odrzucony - tylko liczby, bez przycisków
+							<>
+								<span className={styles.voteCount}>
+									<ThumbsUp size={16} />
+									{idea.upvotes}
+								</span>
+								<span className={styles.voteCount}>
+									<ThumbsDown size={16} />
+									{idea.downvotes}
+								</span>
+								<span className={styles.ideaCard__voteScore}>
+									{getPointsLabel(idea.votes)}
+								</span>
+							</>
+						)}
+					</>
 				)}
 			</div>
-			{/* ✅ Koordynator może zarządzać TYLKO pomysłami ze swojego filaru */}
-			{canManage && idea.status === "pending" && (
+			{idea.status === "pending" && (
 				<div className={styles.ideaCard__actions}>
 					{/* Admin - może zarządzać wszystkim */}
 					{currentUser?.role === "admin" && (
@@ -1141,7 +1162,7 @@ function IdeaCard({
 
 					{/* Koordynator - tylko swój filar */}
 					{currentUser?.role === "coordinator" &&
-						currentUser.pillar === idea.pillar && (
+						currentUser.pillars?.includes(idea.pillar) && (
 							<>
 								<button
 									className={`${styles.ideaCard__actionBtn} ${styles.ideaCard__actionBtnSuccess}`}
@@ -1314,7 +1335,7 @@ export default function Projects() {
 			const token = localStorage.getItem("accessToken");
 
 			// Znajdź aktualny stan pomysłu
-			const currentIdea = ideas.find(i => i.id === ideaId);
+			const currentIdea = ideas.find((i) => i.id === ideaId);
 			if (!currentIdea) return;
 
 			// Sprawdź czy użytkownik już głosował
@@ -1324,8 +1345,8 @@ export default function Projects() {
 			}
 
 			// OPTIMISTIC UPDATE
-			setIdeas(prevIdeas =>
-				prevIdeas.map(i => {
+			setIdeas((prevIdeas) =>
+				prevIdeas.map((i) => {
 					if (i.id === ideaId) {
 						let newUpvotes = i.upvotes;
 						let newDownvotes = i.downvotes;
@@ -1363,7 +1384,7 @@ export default function Projects() {
 						};
 					}
 					return i;
-				})
+				}),
 			);
 
 			// Wyślij do backendu
@@ -1380,7 +1401,7 @@ export default function Projects() {
 				throw new Error("Błąd głosowania");
 			}
 
-			toast.success(type === "up" ? "👍 Głos oddany!" : "👎 Głos oddany!");
+			toast.success(type === "up" ? "Głos oddany!" : "Głos oddany!");
 		} catch (error) {
 			console.error("❌ Błąd:", error);
 			toast.error("Nie udało się zagłosować");
@@ -1402,7 +1423,21 @@ export default function Projects() {
 			if (!response.ok) throw new Error("Błąd zmiany statusu");
 
 			const updatedIdea = await response.json();
-			setIdeas(ideas.map((i: Idea) => (i.id === ideaId ? updatedIdea : i)));
+			console.log("📦 Odpowiedź z API po zmianie statusu:", updatedIdea);
+
+			// ✅ ZAKTUALIZUJ TYLKO STATUS, nie nadpisuj całego obiektu
+			setIdeas(
+				ideas.map((i: Idea) => {
+					if (i.id === ideaId) {
+						return {
+							...i, // zachowaj wszystkie istniejące dane
+							status: status, // zaktualizuj tylko status
+						};
+					}
+					return i;
+				}),
+			);
+
 			toast.success(`Status zmieniony na: ${IDEA_STATUS_LABELS[status]}`);
 		} catch (error) {
 			console.error("Błąd:", error);
@@ -1414,6 +1449,8 @@ export default function Projects() {
 		const fetchPillars = async () => {
 			try {
 				const token = localStorage.getItem("accessToken");
+				console.log("🔍 Pobieranie filarów z API...");
+
 				const response = await fetch("/api/teams", {
 					headers: {
 						Authorization: `Bearer ${token}`,
@@ -1421,24 +1458,43 @@ export default function Projects() {
 					},
 				});
 
+				console.log("📥 Status odpowiedzi /api/teams:", response.status);
+
 				if (response.ok) {
 					const data = await response.json();
+					console.log("📦 Surowe dane z API /api/teams:", data);
+
 					// ✅ Filtruj tylko filary (zawierają "Filar" w nazwie)
 					const pillarNames = data
-						.filter((team: any) => team.name?.includes("Filar"))
+						.filter(
+							(team: any) =>
+								team.name?.includes("Filar") &&
+								team.name !== "Filary organizacji", // ← wyklucz
+						)
 						.map((team: any) => team.name);
+
+					console.log("📋 Przefiltrowane filary z bazy:", pillarNames);
+					console.log("📊 Liczba filarów:", pillarNames.length);
+
 					setPillars(pillarNames);
-					console.log("📋 Pobrane filary z bazy:", pillarNames);
+				} else {
+					console.warn(
+						"⚠️ Odpowiedź nie OK:",
+						response.status,
+						response.statusText,
+					);
 				}
 			} catch (error) {
 				console.error("❌ Błąd pobierania filarów:", error);
 				// Fallback
-				setPillars([
+				const fallback = [
 					"Filar Projektowy",
 					"Filar Konferencyjny",
 					"Filar Rzeczniczy",
 					"Filar Symulacyjny",
-				]);
+				];
+				console.log("📋 Używam fallback filarów:", fallback);
+				setPillars(fallback);
 			}
 		};
 
@@ -1449,8 +1505,8 @@ export default function Projects() {
 		const fetchIdeas = async () => {
 			try {
 				const token = localStorage.getItem("accessToken");
+				console.log("🔍 Pobieranie pomysłów z API...");
 
-				// Sprawdź czy token istnieje
 				if (!token) {
 					console.warn("⚠️ Brak tokenu, używam danych przykładowych");
 					setIdeas(MOCK_IDEAS);
@@ -1464,24 +1520,26 @@ export default function Projects() {
 					},
 				});
 
+				console.log("📥 Status odpowiedzi /api/ideas:", response.status);
+
 				if (!response.ok) {
-					console.warn(`⚠️ Błąd API (${response.status}), używam danych przykładowych`);
+					console.warn(
+						`⚠️ Błąd API (${response.status}), używam danych przykładowych`,
+					);
 					setIdeas(MOCK_IDEAS);
-					toast.error("Nie udało się pobrać pomysłów z serwera", {
-						icon: "⚠️",
-					});
 					return;
 				}
 
 				const data = await response.json();
-				console.log("📦 Pomysły z bazy:", data);
+				console.log("📦 Surowe dane pomysłów:", data);
+				console.log("📊 Liczba pomysłów:", data.length);
 
-				// Sprawdź czy dane są tablicą
-				if (!Array.isArray(data)) {
-					console.warn("⚠️ Oczekiwano tablicy, otrzymano:", typeof data);
-					setIdeas(MOCK_IDEAS);
-					return;
-				}
+				// Wyświetl filary w pomysłach
+				const pillarsInIdeas = data.map((i: any) => i.pillar);
+				console.log("🏷️ Filary w pomysłach:", pillarsInIdeas);
+				console.log("🏷️ Unikalne filary w pomysłach:", [
+					...new Set(pillarsInIdeas),
+				]);
 
 				const mappedIdeas = data.map((idea: any) => ({
 					id: idea.id.toString(),
@@ -1490,7 +1548,7 @@ export default function Projects() {
 					pillar: idea.pillar,
 					authorId: idea.author_id?.toString() || "unknown",
 					authorName: idea.author_name || "Nieznany",
-					status: idea.status as IdeaStatus || "pending",
+					status: (idea.status as IdeaStatus) || "pending",
 					votes: idea.votes || 0,
 					upvotes: idea.upvotes || 0,
 					downvotes: idea.downvotes || 0,
@@ -1498,13 +1556,11 @@ export default function Projects() {
 					currentUserVote: idea.user_vote || null,
 				}));
 
+				console.log("✅ Zamapowane pomysły:", mappedIdeas);
 				setIdeas(mappedIdeas);
 			} catch (error) {
 				console.error("❌ Błąd pobierania pomysłów:", error);
 				setIdeas(MOCK_IDEAS);
-				toast.error("Nie udało się pobrać pomysłów, używam danych testowych", {
-					icon: "⚠️",
-				});
 			}
 		};
 
@@ -1514,6 +1570,7 @@ export default function Projects() {
 		const fetchProjects = async () => {
 			try {
 				const token = localStorage.getItem("accessToken");
+				console.log("🔍 Pobieranie projektów z API...");
 
 				const response = await fetch("/api/projects", {
 					headers: {
@@ -1522,7 +1579,12 @@ export default function Projects() {
 					},
 				});
 
+				console.log("📥 Status odpowiedzi /api/projects:", response.status);
+
 				if (response.status === 401) {
+					console.warn(
+						"⚠️ Token wygasł lub nieprawidłowy - przekierowanie do login",
+					);
 					window.location.href = "/login";
 					return;
 				}
@@ -1532,6 +1594,19 @@ export default function Projects() {
 				}
 
 				const data = await response.json();
+				console.log("📦 Surowe dane z API /api/projects:", data);
+				console.log("📊 Liczba projektów:", data.length);
+				if (data.length > 0) {
+					console.log("📋 Pierwszy projekt:", data[0]);
+					console.log("📋 Klucze projektu:", Object.keys(data[0]));
+					console.log("👤 coordinator_id:", data[0].coordinator_id);
+				}
+				// Wyświetl jakie filary są w projektach
+				const pillarsInProjects = data.map((p: any) => p.pillar);
+				console.log("🏷️ Filary w projektach:", pillarsInProjects);
+				console.log("🏷️ Unikalne filary w projektach:", [
+					...new Set(pillarsInProjects),
+				]);
 
 				const mappedProjects = data.map((apiProject: any) => ({
 					id: apiProject.id,
@@ -1540,7 +1615,7 @@ export default function Projects() {
 					pillar: mapPillar(apiProject.pillar),
 					status: apiProject.status as ProjectStatus,
 					estimated_end: apiProject.estimated_end,
-					coordinator_id: apiProject.coordinator_id?.toString() || "", // ✅ Konwersja na string
+					coordinator_id: apiProject.coordinator_id?.toString() || "",
 					team: apiProject.team
 						? apiProject.team.split(",").map((t: string) => t.trim())
 						: [],
@@ -1548,10 +1623,11 @@ export default function Projects() {
 					updated_at: apiProject.updated_at,
 				}));
 
-				console.log("✅ Zamapowane dane:", mappedProjects);
+				console.log("✅ Zamapowane projekty:", mappedProjects);
 				setProjects(mappedProjects);
 			} catch (error) {
 				console.error("❌ Błąd ładowania projektów:", error);
+				console.log("📋 Używam MOCK_PROJECTS jako fallback");
 				setProjects(MOCK_PROJECTS);
 			}
 		};
@@ -1559,6 +1635,7 @@ export default function Projects() {
 		fetchProjects();
 	}, []);
 	// Pobieranie użytkowników
+	// W Projects.tsx - znajdź fetchUsers
 	useEffect(() => {
 		const fetchUsers = async () => {
 			try {
@@ -1572,55 +1649,113 @@ export default function Projects() {
 
 				if (response.ok) {
 					const data = await response.json();
-					setUsers(data);
+					console.log("📦 Surowe dane użytkowników:", data);
+					if (data.length > 0) {
+						console.log("👤 Pierwszy użytkownik:", data[0]);
+						console.log("📋 Klucze użytkownika:", Object.keys(data[0]));
+					}
+
+					// ✅ MAPUJ UŻYTKOWNIKÓW Z PILLAREM
+					const mappedUsers = data
+						.filter((user: any) => user.id !== 63 && user.id !== "63") // ← POMIŃ ADMINA
+						.map((user: any) => ({
+							id: user.id.toString(),
+							name:
+								user.name ||
+								`${user.first_name || ""} ${user.last_name || ""}`.trim() ||
+								user.email ||
+								"Nieznany",
+							email: user.email,
+							role: user.role || "member",
+							pillar: user.pillar || null,
+						}));
+
+					setUsers(mappedUsers);
+
+					const currentUserData = data.find(
+						(u: any) => u.id === currentUser?.id,
+					);
+					if (currentUserData) {
+						console.log("👤 Obecny użytkownik z API:", currentUserData);
+						console.log("🏷️ Jego filar:", currentUserData.pillar);
+
+						setCurrentUser({
+							id: currentUserData.id.toString(),
+							name:
+								currentUserData.name ||
+								`${currentUserData.first_name || ""} ${currentUserData.last_name || ""}`.trim() ||
+								"Nieznany", // ✅ POPRAWA
+							email: currentUserData.email,
+							role: currentUserData.role || "member",
+							pillar: currentUserData.pillar || null,
+						});
+					}
 				}
 			} catch (error) {
 				console.error("❌ Błąd pobierania użytkowników:", error);
-				// Fallback - użytkownicy z mocków
-				setUsers([
-					{
-						id: "1",
-						name: "Jan Kowalski",
-						email: "jan@example.com",
-						role: "coordinator",
-						pillar: "project",
-					},
-					{
-						id: "2",
-						name: "Anna Nowak",
-						email: "anna@example.com",
-						role: "coordinator",
-						pillar: "conference",
-					},
-					{
-						id: "3",
-						name: "Piotr Wiśniewski",
-						email: "piotr@example.com",
-						role: "member",
-					},
-					{
-						id: "4",
-						name: "Maria Kowalczyk",
-						email: "maria@example.com",
-						role: "member",
-					},
-					{
-						id: "5",
-						name: "Tomasz Lewandowski",
-						email: "tomasz@example.com",
-						role: "coordinator",
-						pillar: "advocacy",
-					},
-				]);
+				// Fallback
 			}
 		};
 
 		fetchUsers();
 	}, []);
+	const canManageProject = (project: Project) => {
+		if (currentUser?.role === "admin") return true;
+		if (currentUser?.role === "coordinator") {
+			// ✅ Zamień ID filaru na polską nazwę
+			const pillarName =
+				PILLAR_LABELS_FALLBACK[project.pillar as ProjectPillar] ||
+				project.pillar;
+			console.log("🔍 Porównanie:", {
+				projectPillar: project.pillar,
+				pillarName: pillarName,
+				userPillars: currentUser.pillars,
+				result: currentUser.pillars?.includes(pillarName),
+			});
+			return currentUser.pillars?.includes(pillarName) || false;
+		}
+		return false;
+	};
+
 	const canManageProjects =
 		currentUser?.role === "admin" || currentUser?.role === "coordinator";
-	// Dodaj:
 
+	// Dodaj:
+	// ✅ OSOBNY FETCH DLA OBECNEGO UŻYTKOWNIKA
+	// ✅ OSOBNY FETCH DLA OBECNEGO UŻYTKOWNIKA
+	useEffect(() => {
+		const fetchCurrentUser = async () => {
+			try {
+				const token = localStorage.getItem("accessToken");
+				const response = await fetch("/api/profile", {
+					headers: {
+						Authorization: `Bearer ${token}`,
+						"Content-Type": "application/json",
+					},
+				});
+
+				if (response.ok) {
+					const data = await response.json();
+					console.log("👤 Profil użytkownika:", data);
+					console.log("🏷️ Filar użytkownika:", data.pillar);
+					console.log("🏷️ WSZYSTKIE filary:", data.pillars); // ✅ DODAJ
+
+					setCurrentUser({
+						id: data.id.toString(),
+						name: `${data.firstName} ${data.lastName}`,
+						email: data.email,
+						role: data.role,
+						pillar: data.pillar || null,
+						pillars: data.pillars || [], // ✅ DODAJ - TO JEST KLUCZOWE!
+					});
+				}
+			} catch (error) {
+				console.error("❌ Błąd pobierania profilu:", error);
+			}
+		};
+
+		fetchCurrentUser();
+	}, []);
 	const filteredProjects = useMemo(() => {
 		return projects.filter((project) => {
 			const matchesSearch =
@@ -1632,21 +1767,31 @@ export default function Projects() {
 				selectedPillar === "all" || project.pillar === selectedPillar;
 			const matchesStatus =
 				selectedStatus === "all" || project.status === selectedStatus;
-
 			return matchesSearch && matchesPillar && matchesStatus;
 		});
 	}, [projects, searchTerm, selectedPillar, selectedStatus]);
 
 	// ✅ DODAJ TUTAJ:
 	const coordinatorStats = useMemo(() => {
-		if (currentUser?.role !== "coordinator" || !currentUser.pillar) return null;
+		if (currentUser?.role !== "coordinator" || !currentUser.pillars?.length)
+			return null;
 
-		const pillarIdeas = ideas.filter((i) => i.pillar === currentUser.pillar);
+		// ✅ Pobierz WSZYSTKIE filary koordynatora
+		const pillarIdeas = ideas.filter((i) =>
+			currentUser.pillars?.includes(i.pillar),
+		);
+
 		const pending = pillarIdeas.filter((i) => i.status === "pending").length;
 		const approved = pillarIdeas.filter((i) => i.status === "approved").length;
 		const rejected = pillarIdeas.filter((i) => i.status === "rejected").length;
 
-		return { total: pillarIdeas.length, pending, approved, rejected };
+		return {
+			total: pillarIdeas.length,
+			pending,
+			approved,
+			rejected,
+			pillars: currentUser.pillars, // ✅ wszystkie filary
+		};
 	}, [ideas, currentUser]);
 
 	const handleAddProject = () => {
@@ -1717,10 +1862,16 @@ export default function Projects() {
 				description: project.description,
 				pillar: PILLAR_LABELS_FALLBACK[project.pillar] || project.pillar,
 				status: project.status,
-				coordinator_id: parseInt(project.coordinator_id, 10), // ✅ Konwersja na number
+				coordinator_id: parseInt(project.coordinator_id, 10),
 				team: project.team.join(", "),
 				estimated_end: project.estimated_end,
 			};
+
+			// ✅ DODAJ TE LOGI:
+			console.log("📤 Team przed wysyłką:", project.team);
+			console.log("📤 Team jako string:", project.team.join(", "));
+			console.log("📤 Liczba członków:", project.team.length);
+			console.log("📤 Cały payload:", payload);
 
 			console.log("📤 Wysyłane dane:", payload); // ✅ Debug
 
@@ -1772,8 +1923,15 @@ export default function Projects() {
 		setSelectedPillar("all");
 		setSelectedStatus("all");
 	};
-
-
+	// Na końcu efektów, dodaj useEffect który pokaże podsumowanie:
+	useEffect(() => {
+		console.log("📊 PODSUMOWANIE DANYCH:");
+		console.log("📋 Filary:", pillars);
+		console.log("📋 Projekty:", projects.length);
+		console.log("📋 Użytkownicy:", users.length);
+		console.log("📋 Pomysły:", ideas.length);
+		console.log("👤 Aktualny użytkownik:", currentUser);
+	}, [pillars, projects, users, ideas, currentUser]);
 	// const getStatusCount = (status: ProjectStatus) => {
 	//     return projects.filter((p) => p.status === status).length;
 	// };
@@ -1833,8 +1991,8 @@ export default function Projects() {
 				currentUser?.role === "coordinator" && (
 					<div className={styles.coordinatorStats}>
 						<span className={styles.coordinatorStats__title}>
-							📊 Twój filar:{" "}
-							<strong>{currentUser.pillar}</strong>
+							Pomysły dla twoich filarów:{" "}
+							<strong>{currentUser.pillars?.join(", ")}</strong>
 						</span>
 						<span className={styles.coordinatorStats__item}>
 							<span className={styles.coordinatorStats__number}>
@@ -1951,10 +2109,10 @@ export default function Projects() {
 					{(selectedPillar !== "all" ||
 						selectedStatus !== "all" ||
 						searchTerm) && (
-							<button className={styles.filters__reset} onClick={clearFilters}>
-								Wyczyść filtry
-							</button>
-						)}
+						<button className={styles.filters__reset} onClick={clearFilters}>
+							Wyczyść filtry
+						</button>
+					)}
 				</div>
 			</div>
 
@@ -1968,8 +2126,8 @@ export default function Projects() {
 							<h3 className={styles.emptyState__title}>Brak projektów</h3>
 							<p className={styles.emptyState__description}>
 								{searchTerm ||
-									selectedPillar !== "all" ||
-									selectedStatus !== "all"
+								selectedPillar !== "all" ||
+								selectedStatus !== "all"
 									? "Nie znaleziono projektów spełniających kryteria wyszukiwania."
 									: canManageProjects
 										? 'Nie ma jeszcze żadnych projektów. Kliknij "Dodaj projekt", aby utworzyć pierwszy.'
@@ -1995,7 +2153,7 @@ export default function Projects() {
 								project={project}
 								onEdit={handleEditProject}
 								onDelete={handleDeleteProject}
-								canEdit={canManageProjects}
+								canEdit={canManageProject(project)}
 								users={users}
 							/>
 						))

@@ -2030,6 +2030,8 @@ app.use("/api", memberRoutes);
 // ============================================================
 
 // 📥 GET - pobierz profil użytkownika (swój lub innego)
+// 📥 GET - pobierz profil użytkownika (swój lub innego)
+// 📥 GET - pobierz profil użytkownika (swój lub innego)
 app.get("/api/profile", authMiddleware, async (req: any, res) => {
 	try {
 		const userId = req.user?.id;
@@ -2053,6 +2055,13 @@ app.get("/api/profile", authMiddleware, async (req: any, res) => {
 			.filter(Boolean);
 		const onboarding = user.onboarding_data?.[0] || {};
 
+		// ✅ FILARY - wszystkie
+		const pillars = teams.filter((t: string) => t.includes("Filar"));
+		const pillar = pillars.length > 0 ? pillars[0] : null;
+
+		console.log("🏷️ TEAMS:", teams); // ✅ DODAJ LOG
+		console.log("🏷️ PILLARS:", pillars); // ✅ DODAJ LOG
+
 		const profile = {
 			id: user.id.toString(),
 			firstName: user.first_name,
@@ -2060,7 +2069,8 @@ app.get("/api/profile", authMiddleware, async (req: any, res) => {
 			role: mapRoleId(user.role_id),
 			function: user.functional_role || "Członek",
 			team: teams.length > 0 ? teams.join(", ") : user.team || "Brak zespołu",
-			pillar: teams.find((t: string) => t.includes("Filar")) || null, // ✅ DODAJ TĘ LINIĘ
+			pillar: pillar, // pierwszy filar
+			pillars: pillars, // ✅ WSZYSTKIE FILARY - TO MUSI BYĆ!
 			province: user.province || "Brak danych",
 			status: user.status || "active",
 			email: user.email || "",
