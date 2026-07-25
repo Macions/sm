@@ -645,11 +645,11 @@ app.get("/api/members", authMiddleware, async (req: any, res) => {
 					user.created_at.toISOString().split("T")[0],
 				vacation: activeLeave
 					? {
-							startDate: activeLeave.start_date.toISOString().split("T")[0],
-							endDate: activeLeave.end_date.toISOString().split("T")[0],
-							type: activeLeave.scope === "team" ? "team" : "organization",
-							teamId: activeLeave.affected_teams || undefined,
-						}
+						startDate: activeLeave.start_date.toISOString().split("T")[0],
+						endDate: activeLeave.end_date.toISOString().split("T")[0],
+						type: activeLeave.scope === "team" ? "team" : "organization",
+						teamId: activeLeave.affected_teams || undefined,
+					}
 					: null,
 				onboarding_data: onboarding,
 			};
@@ -1115,7 +1115,7 @@ app.get("/api/applications", authMiddleware, async (req: any, res) => {
 				userId: app.user_id.toString(),
 				userName: app.user
 					? `${app.user.first_name || ""} ${app.user.last_name || ""}`.trim() ||
-						"Nieznany"
+					"Nieznany"
 					: "Nieznany",
 				userEmail: app.user?.email || "",
 				message: app.message || "",
@@ -1254,7 +1254,7 @@ app.get(
 					userId: app.user_id.toString(),
 					userName: app.user
 						? `${app.user.first_name || ""} ${app.user.last_name || ""}`.trim() ||
-							"Nieznany"
+						"Nieznany"
 						: "Nieznany",
 					userEmail: app.user?.email || "",
 					message: app.message || "",
@@ -2172,12 +2172,15 @@ app.get("/api/leaves", authMiddleware, async (req: any, res) => {
 				}
 
 				if (!canView) return null;
-
+				const teams = user?.team_members
+					?.map((tm: any) => tm.team?.name)
+					.filter(Boolean) || [];
+				const userTeam = teams.length > 0 ? teams.join(", ") : user?.team || "Brak zespołu";
 				return {
 					id: leave.id.toString(),
 					userId: leave.user_id.toString(),
 					userName: userName,
-					userTeam: user?.team || "Brak zespołu",
+					userTeam: userTeam,
 					type: leave.type || "vacation",
 					scope: leave.scope || "all",
 					affectedTeams: leave.affected_teams
@@ -2247,8 +2250,19 @@ app.post("/api/leaves", authMiddleware, async (req: any, res) => {
 				first_name: true,
 				last_name: true,
 				team: true,
+				team_members: {  // ✅ DODAJ
+					include: {
+						team: true,
+					},
+				},
 			},
 		});
+
+		const teams = user?.team_members
+			?.map((tm: any) => tm.team?.name)
+			.filter(Boolean) || [];
+		const userTeam = teams.length > 0 ? teams.join(", ") : user?.team || "Brak zespołu";
+
 
 		// 2. Utwórz wniosek urlopowy
 		const leave = await prisma.leave.create({
@@ -2317,13 +2331,17 @@ app.post("/api/leaves", authMiddleware, async (req: any, res) => {
 
 		console.log("✅ UTOWORZONO URLOP:", leave);
 		console.log(`📨 Wysłano powiadomienia do Admina i Zarządu`);
+		const teams = user?.team_members
+			?.map((tm: any) => tm.team?.name)
+			.filter(Boolean) || [];
+		const userTeam = teams.length > 0 ? teams.join(", ") : user?.team || "Brak zespołu";
 
 		// 5. Zwróć odpowiedź
 		res.status(201).json({
 			id: leave.id.toString(),
 			userId: leave.user_id.toString(),
 			userName: userName,
-			userTeam: user?.team || "Brak zespołu",
+			userTeam: userTeam,
 			type: leave.type,
 			scope: leave.scope,
 			affectedTeams: leave.affected_teams
@@ -2423,12 +2441,12 @@ app.put("/api/leaves/:id", authMiddleware, async (req: any, res) => {
 				status: status || existingLeave.status,
 				...(status === "approved" || status === "rejected"
 					? {
-							// ✅ UŻYJ currentUser zamiast req.user
-							approved_by:
-								`${currentUser?.first_name || ""} ${currentUser?.last_name || ""}`.trim() ||
-								"Nieznany",
-							approved_at: new Date(),
-						}
+						// ✅ UŻYJ currentUser zamiast req.user
+						approved_by:
+							`${currentUser?.first_name || ""} ${currentUser?.last_name || ""}`.trim() ||
+							"Nieznany",
+						approved_at: new Date(),
+					}
 					: {}),
 			},
 		});

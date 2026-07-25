@@ -725,3 +725,15 @@
         gap: 4px;
     }
 }
+
+.section__optional {
+    font-size: 0.75rem;
+    color: #6b7280;
+    font-weight: normal;
+    margin-left: 0.5rem;
+}
+
+.section__empty {
+    color: #9ca3af;
+    font-style: italic;
+}
