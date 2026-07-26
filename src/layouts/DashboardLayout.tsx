@@ -1,3 +1,5 @@
+// frontend/src/layouts/DashboardLayout.tsx
+
 import { useState, useEffect } from "react";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import Sidebar from "../components/layout/Sidebar/Sidebar";
@@ -8,18 +10,73 @@ export default function DashboardLayout() {
 	const location = useLocation();
 	const navigate = useNavigate();
 	const [activeNav, setActiveNav] = useState("dashboard");
-	const [sidebarCollapsed, setSidebarCollapsed] = useState(false); // ⬅️ STAN ZWIJANIA
+	const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+	const [isSocialMember, setIsSocialMember] = useState(false);
+	const [loading, setLoading] = useState(true);
+	const [currentUser, setCurrentUser] = useState<any>(null);
+
+	// ⭐ TYLKO JEDEN useEffect
+	useEffect(() => {
+		const checkSocialMediaAccess = async () => {
+			try {
+				const token = localStorage.getItem("accessToken");
+				if (!token) {
+					setLoading(false);
+					return;
+				}
+
+				// Pobierz profil
+				const response = await fetch("/api/profile", {
+					headers: { Authorization: `Bearer ${token}` },
+				});
+
+				if (response.ok) {
+					const userData = await response.json();
+					setCurrentUser(userData);
+
+					// ⭐ SPRAWDŹ UPRAWNIENIA
+					// Admin zawsze ma dostęp do wszystkiego
+					if (userData.role === "admin") {
+						setIsSocialMember(true);
+					}
+					// Sprawdź czy użytkownik jest w social_media_members
+					else if (userData.isSocialMember === true) {
+						setIsSocialMember(true);
+					}
+					// Jeśli nie ma pola isSocialMember - sprawdź przez osobny endpoint
+					else {
+						try {
+							const socialCheck = await fetch("/api/social/members/check", {
+								headers: { Authorization: `Bearer ${token}` },
+							});
+							setIsSocialMember(socialCheck.ok);
+						} catch {
+							setIsSocialMember(false);
+						}
+					}
+				}
+			} catch (error) {
+				console.error("❌ Błąd sprawdzania uprawnień:", error);
+				setIsSocialMember(false);
+			} finally {
+				setLoading(false);
+			}
+		};
+
+		checkSocialMediaAccess();
+	}, []);
 
 	// Ustawianie aktywnego elementu na podstawie URL
 	useEffect(() => {
 		const path = location.pathname.replace("/", "") || "dashboard";
 		setActiveNav(path);
 	}, [location]);
+
 	const handleNavSelect = (key: string) => {
 		setActiveNav(key);
-		navigate(`/${key}`); // ⬅️ PRZEKIEROWANIE
+		navigate(`/${key}`);
 	};
-	// ⬅️ FUNKCJA PRZEŁĄCZANIA SIDEBARU
+
 	const toggleSidebar = () => {
 		setSidebarCollapsed(!sidebarCollapsed);
 	};
@@ -49,6 +106,10 @@ export default function DashboardLayout() {
 		}
 	};
 
+	if (loading) {
+		return <div className={styles.loading}>Ładowanie...</div>;
+	}
+
 	return (
 		<div
 			className={`${styles.layout} ${sidebarCollapsed ? styles.layoutCollapsed : ""}`}
@@ -56,7 +117,9 @@ export default function DashboardLayout() {
 			<Sidebar
 				activeKey={activeNav}
 				onSelect={handleNavSelect}
-				collapsed={sidebarCollapsed} // ⬅️ PRZEKAZUJEMY STAN
+				collapsed={sidebarCollapsed}
+				isSocialMember={isSocialMember}
+				userRole={currentUser?.role} // ⭐ PRZEKAŻ ROLĘ
 			/>
 			<main className={styles.main}>
 				<Header
@@ -64,7 +127,7 @@ export default function DashboardLayout() {
 					userRole="ADMIN"
 					userName="Maciej Kowalski"
 					collapsed={sidebarCollapsed}
-					onMenuClick={toggleSidebar} // ⬅️ PRZEKAZUJEMY FUNKCJĘ
+					onMenuClick={toggleSidebar}
 				/>
 				<Outlet />
 			</main>

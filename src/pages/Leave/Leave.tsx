@@ -409,12 +409,13 @@ function LeaveCard({
 
 				{leave.approvedBy && (
 					<div
-						className={`${styles.leaveCard__approval} ${leave.status === "approved"
-							? styles.leaveCard__approvalApproved
-							: leave.status === "rejected"
-								? styles.leaveCard__approvalRejected
-								: ""
-							}`}
+						className={`${styles.leaveCard__approval} ${
+							leave.status === "approved"
+								? styles.leaveCard__approvalApproved
+								: leave.status === "rejected"
+									? styles.leaveCard__approvalRejected
+									: ""
+						}`}
 					>
 						{leave.status === "approved" ? (
 							<CheckCircle size={14} />
@@ -476,7 +477,7 @@ function LeaveCard({
 				<div className={styles.leaveCard__actions}>
 					{/* Pokaż szczegóły TYLKO jeśli są komentarze lub załączniki */}
 					{(leave.comments && leave.comments.length > 0) ||
-						(leave.attachments && leave.attachments.length > 0) ? (
+					(leave.attachments && leave.attachments.length > 0) ? (
 						<button
 							className={styles.leaveCard__expandBtn}
 							onClick={() => setIsExpanded(!isExpanded)}
@@ -545,7 +546,9 @@ function LeaveCard({
 							</>
 						)}
 
-						{(canManage || currentUser.id === leave.userId) && (
+						{/* ⭐ NOWA LOGIKA - TYLKO ADMIN LUB AUTOR (JEŚLI PENDING) */}
+						{/* ⭐ EDYCJA I USUWANIE - TYLKO ADMIN */}
+						{currentUser.role === "admin" && (
 							<>
 								<button
 									className={styles.leaveCard__actionBtn}
@@ -752,7 +755,6 @@ function LeaveModal({
 				}
 
 				console.log("✅ Zespoły użytkownika:", teams);
-
 			} catch (error) {
 				console.error("❌ Błąd pobierania zespołów:", error);
 				// Fallback - użyj zespołu z currentUser
@@ -804,11 +806,12 @@ function LeaveModal({
 	if (!isOpen) return null;
 
 	const isEdit = !!leave;
+	// ⭐ NOWA LOGIKA - TYLKO ADMIN MOŻE EDYTOWAĆ WSZYSTKIE WNIOSKI
+	// Użytkownik może edytować TYLKO swoje własne wnioski, i to tylko jeśli są w statusie "pending"
 	const canEdit =
 		!isViewOnly &&
-		(currentUser.role === "admin" ||
-			currentUser.role === "coordinator") && // <-- TYLKO admin/coordinator mogą zmieniać status
-		(currentUser.id === leave?.userId || !leave || currentUser.role === "admin");
+		(currentUser.role === "admin" || // Admin edytuje wszystko
+			(!leave && currentUser.role !== "admin")); // ← TYLKO TWORZENIE NOWEGO
 
 	const canViewReason =
 		!isViewOnly ||
@@ -816,9 +819,66 @@ function LeaveModal({
 		currentUser.role === "coordinator" ||
 		currentUser.id === leave?.userId;
 
+	// W LeaveModal - przed handleSubmit
+	// ============================================================
+	// ⭐ FUNKCJA WALIDUJĄCA DATY
+	// ============================================================
+
+	const validateDates = (
+		startDate: string,
+		endDate: string,
+	): { valid: boolean; error: string } => {
+		const today = new Date();
+		today.setHours(0, 0, 0, 0); // Reset czasu do północy
+
+		// 🔥 KONWERSJA NA OBIEKTY DATE
+		const start = new Date(startDate);
+		const end = new Date(endDate);
+
+		// Reset czasu do północy dla porównania
+		start.setHours(0, 0, 0, 0);
+		end.setHours(0, 0, 0, 0);
+
+		// ✅ SPRAWDŹ CZY DATA ROZPOCZĘCIA NIE JEST WCZEŚNIEJSZA NIŻ DZISIAJ
+		if (start < today) {
+			return {
+				valid: false,
+				error: "Data rozpoczęcia nie może być wcześniejsza niż dzisiejsza data",
+			};
+		}
+
+		// ✅ SPRAWDŹ CZY DATA ZAKOŃCZENIA NIE JEST WCZEŚNIEJSZA NIŻ ROZPOCZĘCIE
+		if (end < start) {
+			return {
+				valid: false,
+				error:
+					"Data zakończenia nie może być wcześniejsza niż data rozpoczęcia",
+			};
+		}
+
+		return { valid: true, error: "" };
+	};
+
+	// ============================================================
+	// ⭐ ZMODYFIKOWANA FUNKCJA handleSubmit
+	// ============================================================
+
 	const handleSubmit = (e: React.FormEvent) => {
 		e.preventDefault();
+
 		if (onSave && canEdit) {
+			// ✅ WALIDUJ DATY
+			const validation = validateDates(
+				formData.startDate || "",
+				formData.endDate || "",
+			);
+
+			if (!validation.valid) {
+				toast.error(validation.error);
+				return; // ⭐ PRZERYWAMY ZAPIS
+			}
+
+			// Reszta kodu zapisu...
 			const saveData: LeaveRequest = {
 				id: leave?.id || `leave-${Date.now()}`,
 				userId: formData.userId || currentUser.id,
@@ -995,7 +1055,9 @@ function LeaveModal({
 						<div className={styles.modal__field}>
 							<label className={styles.modal__label}>Wybierz zespoły *</label>
 							{loadingTeams ? (
-								<div className={styles.modal__loading}>Ładowanie zespołów...</div>
+								<div className={styles.modal__loading}>
+									Ładowanie zespołów...
+								</div>
 							) : userTeams.length === 0 ? (
 								<div className={styles.modal__noTeams}>
 									<AlertCircle size={16} />
@@ -1018,6 +1080,7 @@ function LeaveModal({
 							)}
 						</div>
 					)}
+					{/* W sekcji z datami - ZMIEŃ NA TO: */}
 					<div className={styles.modal__row}>
 						<div className={styles.modal__field}>
 							<label className={styles.modal__label}>Data rozpoczęcia *</label>
@@ -1029,11 +1092,22 @@ function LeaveModal({
 										? new Date(formData.startDate).toISOString().split("T")[0]
 										: ""
 								}
-								onChange={(e) =>
-									setFormData({ ...formData, startDate: e.target.value })
-								}
+								onChange={(e) => {
+									const newStartDate = e.target.value;
+									setFormData({
+										...formData,
+										startDate: newStartDate,
+										// ⭐ AUTOMATYCZNIE ZERUJ END DATE JESLI JEST WCZEŚNIEJSZA
+										endDate:
+											formData.endDate &&
+											new Date(formData.endDate) < new Date(newStartDate)
+												? ""
+												: formData.endDate,
+									});
+								}}
 								required
 								disabled={!canEdit || isViewOnly}
+								min={new Date().toISOString().split("T")[0]} // ⭐ DODAJ TO!
 							/>
 						</div>
 						<div className={styles.modal__field}>
@@ -1051,6 +1125,9 @@ function LeaveModal({
 								}
 								required
 								disabled={!canEdit || isViewOnly}
+								min={
+									formData.startDate || new Date().toISOString().split("T")[0]
+								} // ⭐ DODAJ TO!
 							/>
 						</div>
 					</div>
@@ -1180,12 +1257,13 @@ function LeaveModal({
 
 					{leave?.approvedBy && (
 						<div
-							className={`${styles.modal__approval} ${leave.status === "approved"
-								? styles.modal__approvalApproved
-								: leave.status === "rejected"
-									? styles.modal__approvalRejected
-									: ""
-								}`}
+							className={`${styles.modal__approval} ${
+								leave.status === "approved"
+									? styles.modal__approvalApproved
+									: leave.status === "rejected"
+										? styles.modal__approvalRejected
+										: ""
+							}`}
 						>
 							{leave.status === "approved" ? (
 								<CheckCircle size={16} />
@@ -1199,33 +1277,6 @@ function LeaveModal({
 							</span>
 						</div>
 					)}
-
-					{!isViewOnly &&
-						(currentUser.role === "admin" ||
-							currentUser.role === "coordinator") && (
-							<div className={styles.modal__field}>
-								<label className={styles.modal__label}>Dodaj komentarz</label>
-								<div className={styles.modal__commentInput}>
-									<textarea
-										className={`${styles.modal__input} ${styles.modal__textarea}`}
-										value={newComment}
-										onChange={(e) => setNewComment(e.target.value)}
-										placeholder="Dodaj komentarz do wniosku..."
-										rows={2}
-										disabled={!canEdit}
-									/>
-									<button
-										type="button"
-										className={styles.modal__addCommentBtn}
-										onClick={addComment}
-										disabled={!canEdit || !newComment.trim()}
-									>
-										<Plus size={16} />
-										Dodaj
-									</button>
-								</div>
-							</div>
-						)}
 
 					<div className={styles.modal__actions}>
 						<button
@@ -1297,8 +1348,8 @@ export default function Leave({ title }: { title?: string }) {
 		title: "",
 		message: "",
 		confirmText: "Potwierdź",
-		onConfirm: () => { },
-		onCancel: () => { },
+		onConfirm: () => {},
+		onCancel: () => {},
 	});
 	const unreadCount = notifications.filter((n) => !n.read).length;
 
@@ -1471,15 +1522,15 @@ export default function Leave({ title }: { title?: string }) {
 						prevLeaves.map((l) =>
 							l.id === id
 								? {
-									...l,
-									status,
-									approvedBy:
-										status === "pending" ? undefined : currentUser?.name,
-									approvedAt:
-										status === "pending"
-											? undefined
-											: new Date().toISOString(),
-								}
+										...l,
+										status,
+										approvedBy:
+											status === "pending" ? undefined : currentUser?.name,
+										approvedAt:
+											status === "pending"
+												? undefined
+												: new Date().toISOString(),
+									}
 								: l,
 						),
 					);
@@ -1699,10 +1750,10 @@ export default function Leave({ title }: { title?: string }) {
 					{(selectedStatus !== "all" ||
 						selectedType !== "all" ||
 						searchTerm) && (
-							<button className={styles.filters__reset} onClick={clearFilters}>
-								Wyczyść filtry
-							</button>
-						)}
+						<button className={styles.filters__reset} onClick={clearFilters}>
+							Wyczyść filtry
+						</button>
+					)}
 				</div>
 			</div>
 
@@ -1715,8 +1766,8 @@ export default function Leave({ title }: { title?: string }) {
 							<h3 className={styles.emptyState__title}>Brak wniosków</h3>
 							<p className={styles.emptyState__description}>
 								{searchTerm ||
-									selectedStatus !== "all" ||
-									selectedType !== "all"
+								selectedStatus !== "all" ||
+								selectedType !== "all"
 									? "Nie znaleziono wniosków spełniających kryteria wyszukiwania."
 									: "Nie ma jeszcze żadnych wniosków urlopowych."}
 							</p>
