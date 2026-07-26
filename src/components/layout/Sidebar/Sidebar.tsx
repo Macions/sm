@@ -1,3 +1,5 @@
+// frontend/src/components/layout/Sidebar/Sidebar.tsx
+
 import { NAV_ITEMS } from "../../../data/navigation";
 import styles from "./Sidebar.module.css";
 import { LogOut } from "lucide-react";
@@ -5,24 +7,45 @@ import { LogOut } from "lucide-react";
 interface SidebarProps {
 	activeKey: string;
 	onSelect: (key: string) => void;
-	collapsed?: boolean; // ⬅️ DODAJEMY PROP
+	collapsed?: boolean;
+	isSocialMember?: boolean;
+	userRole?: string; // ⭐ DODAJ
 }
 
 export default function Sidebar({
 	activeKey,
 	onSelect,
 	collapsed = false,
+	isSocialMember = false,
+	userRole, // ⭐ DODAJ
 }: SidebarProps) {
-	const handleLogout = () => {
+	// ⭐ SPRAWDŹ CZY UŻYTKOWNIK JEST ADMINEM LUB ZARZĄDEM
+	const isAdminOrBoard =
+		userRole === "admin" || userRole === "board" || userRole === "zarząd";
 
+	// ⭐ FILTRUJ NAV_ITEMS
+	const filteredNavItems = NAV_ITEMS.filter((item) => {
+		// Social Media - tylko dla uprawnionych
+		if (item.key === "social") {
+			return isSocialMember;
+		}
+		// Administracja - tylko dla admin/board
+		if (item.key === "admin") {
+			return isAdminOrBoard;
+		}
+		// Inne elementy pokazuj zawsze
+		return true;
+	});
+
+	const handleLogout = () => {
 		localStorage.removeItem("accessToken");
 		localStorage.removeItem("refreshToken");
 		localStorage.removeItem("user");
 		localStorage.removeItem("onboardingCompleted");
 		localStorage.removeItem("onboardingData");
-
 		window.location.replace("/login");
 	};
+
 	return (
 		<aside
 			className={`${styles.sidebar} ${collapsed ? styles.sidebarCollapsed : ""}`}
@@ -39,12 +62,12 @@ export default function Sidebar({
 			</div>
 
 			<nav className={styles.nav}>
-				{NAV_ITEMS.map(({ key, label, icon: Icon }) => (
+				{filteredNavItems.map(({ key, label, icon: Icon }) => (
 					<button
 						key={key}
 						className={`${styles.nav__item} ${activeKey === key ? styles.active : ""} ${collapsed ? styles.nav__itemCollapsed : ""}`}
 						onClick={() => onSelect(key)}
-						title={collapsed ? label : ""} // ⬅️ Tooltip gdy zwinięte
+						title={collapsed ? label : ""}
 					>
 						<Icon size={18} />
 						<span
@@ -63,11 +86,8 @@ export default function Sidebar({
 					title={collapsed ? "Wyloguj" : ""}
 				>
 					<LogOut size={18} />
-
 					<span
-						className={`${styles.nav__label} ${
-							collapsed ? styles.nav__labelHidden : ""
-						}`}
+						className={`${styles.nav__label} ${collapsed ? styles.nav__labelHidden : ""}`}
 					>
 						Wyloguj
 					</span>
