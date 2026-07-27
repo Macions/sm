@@ -8,7 +8,6 @@
 	width: 100%;
 	margin: 0 auto;
 	/* padding: 32px 24px; */
-	background: #f8fafc;
 	min-height: 100vh;
 }
 
@@ -1877,4 +1876,415 @@
 	background: #f1f5f9;
 	color: #475569;
 	white-space: nowrap;
+}
+
+/* ============================================================
+   STYLE DLA KARTY MATERIAŁU - NAGŁÓWEK Z PRZYCISKAMI
+   ============================================================ */
+
+.board__cardHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.board__cardTitle {
+    font-size: 14px;
+    font-weight: 600;
+    color: #1a1a2e;
+    margin: 0;
+    flex: 1;
+}
+
+.board__cardActions {
+    display: flex;
+    gap: 4px;
+    flex-shrink: 0;
+}
+
+/* ============================================================
+   PRZYCISKI EDYCJI I USUWANIA NA KARCIE
+   ============================================================ */
+
+.board__cardEditBtn,
+.board__cardDeleteBtn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border: none;
+    border-radius: 6px;
+    background: transparent;
+    color: #8b8fa7;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.board__cardEditBtn:hover {
+    background: #eef2ff;
+    color: #4f46e5;
+}
+
+.board__cardDeleteBtn:hover {
+    background: #fef2f2;
+    color: #ef4444;
+}
+
+/* ============================================================
+   STYLE DLA PRZYCISKÓW W PUBLIKACJACH, ZADANIACH, KONTAKTACH
+   (JEŚLI NIE MASZ ICH JESZCZE)
+   ============================================================ */
+
+.publicationCard__editBtn,
+.publicationCard__deleteBtn,
+.taskCard__editBtn,
+.taskCard__deleteBtn,
+.contactCard__editBtn,
+.contactCard__deleteBtn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border: none;
+    border-radius: 6px;
+    background: transparent;
+    color: #8b8fa7;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.publicationCard__editBtn:hover,
+.taskCard__editBtn:hover,
+.contactCard__editBtn:hover {
+    background: #eef2ff;
+    color: #4f46e5;
+}
+
+.publicationCard__deleteBtn:hover,
+.taskCard__deleteBtn:hover,
+.contactCard__deleteBtn:hover {
+    background: #fef2f2;
+    color: #ef4444;
+}
+
+/* ============================================================
+   STYLE DLA AKCJI W KARTACH (KONTENER PRZYCISKÓW)
+   ============================================================ */
+
+.publicationCard__actions,
+.taskCard__actions,
+.contactCard__actions {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex-shrink: 0;
+}
+
+/* ============================================================
+   STYLE DLA SEARCHABLE SELECT (JEŚLI NIE MASZ)
+   ============================================================ */
+
+.searchableSelect {
+    position: relative;
+    width: 100%;
+}
+
+.searchableSelect__inputWrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.searchableSelect__input {
+    width: 100%;
+    padding: 10px 36px 10px 14px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    font-size: 14px;
+    background: #fff;
+    color: #1a1a2e;
+    transition: border-color 0.2s ease;
+}
+
+.searchableSelect__input:focus {
+    outline: none;
+    border-color: #4f46e5;
+    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+}
+
+.searchableSelect__clear {
+    position: absolute;
+    right: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    border: none;
+    background: transparent;
+    color: #9ca3af;
+    cursor: pointer;
+    border-radius: 50%;
+    transition: all 0.2s ease;
+}
+
+.searchableSelect__clear:hover {
+    background: #f3f4f6;
+    color: #4b5563;
+}
+
+.searchableSelect__dropdown {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    right: 0;
+    max-height: 200px;
+    overflow-y: auto;
+    background: #fff;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    z-index: 100;
+}
+
+.searchableSelect__item {
+    padding: 10px 14px;
+    cursor: pointer;
+    transition: background 0.15s ease;
+    font-size: 14px;
+    color: #1a1a2e;
+}
+
+.searchableSelect__item:hover {
+    background: #f3f4f6;
+}
+
+.searchableSelect__itemSelected {
+    background: #eef2ff;
+    color: #4f46e5;
+}
+
+.searchableSelect__empty {
+    padding: 12px 14px;
+    color: #9ca3af;
+    font-size: 14px;
+    text-align: center;
+}
+
+/* ============================================================
+   STYLE DLA MODALA - OGÓLNE (JEŚLI NIE MASZ)
+   ============================================================ */
+
+.modalOverlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    padding: 20px;
+}
+
+.modal {
+    background: #fff;
+    border-radius: 16px;
+    max-width: 560px;
+    width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
+    padding: 28px 32px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+    animation: modalFadeIn 0.25s ease;
+}
+
+@keyframes modalFadeIn {
+    from {
+        opacity: 0;
+        transform: scale(0.96) translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+.modal__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+}
+
+.modal__title {
+    font-size: 20px;
+    font-weight: 700;
+    color: #1a1a2e;
+    margin: 0;
+}
+
+.modal__close {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border: none;
+    border-radius: 50%;
+    background: transparent;
+    color: #6b7280;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.modal__close:hover {
+    background: #f3f4f6;
+    color: #1a1a2e;
+}
+
+.modal__form {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.modal__field {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.modal__label {
+    font-size: 13px;
+    font-weight: 500;
+    color: #374151;
+}
+
+.modal__input {
+    padding: 10px 14px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    font-size: 14px;
+    color: #1a1a2e;
+    transition: border-color 0.2s ease;
+    background: #fff;
+}
+
+.modal__input:focus {
+    outline: none;
+    border-color: #4f46e5;
+    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+}
+
+.modal__textarea {
+    resize: vertical;
+    min-height: 80px;
+    font-family: inherit;
+}
+
+.modal__select {
+    padding: 10px 14px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    font-size: 14px;
+    color: #1a1a2e;
+    background: #fff;
+    transition: border-color 0.2s ease;
+    appearance: none;
+    cursor: pointer;
+}
+
+.modal__select:focus {
+    outline: none;
+    border-color: #4f46e5;
+    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+}
+
+.modal__row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+}
+
+.modal__actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    margin-top: 8px;
+    padding-top: 16px;
+    border-top: 1px solid #f3f4f6;
+}
+
+.modal__btnCancel {
+    padding: 10px 20px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    background: transparent;
+    color: #6b7280;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.modal__btnCancel:hover {
+    background: #f3f4f6;
+    color: #1a1a2e;
+}
+
+.modal__btnSave {
+    padding: 10px 24px;
+    border: none;
+    border-radius: 8px;
+    background: #4f46e5;
+    color: #fff;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.modal__btnSave:hover {
+    background: #4338ca;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+}
+
+.modal__btnSave:active {
+    transform: translateY(0);
+}
+
+/* ============================================================
+   RESPONSYWNOŚĆ
+   ============================================================ */
+
+@media (max-width: 600px) {
+    .modal {
+        padding: 20px;
+        max-width: 100%;
+        margin: 10px;
+    }
+
+    .modal__row {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+
+    .modal__actions {
+        flex-direction: column;
+    }
+
+    .modal__btnCancel,
+    .modal__btnSave {
+        width: 100%;
+        justify-content: center;
+    }
 }

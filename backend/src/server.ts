@@ -24,14 +24,7 @@ cron.schedule("1 0 * * *", async () => {
 function generateId(): string {
 	return Date.now().toString(36) + Math.random().toString(36).substring(2, 9);
 }
-type SocialRole =
-	| "instagram"
-	| "tiktok"
-	| "manager"
-	| "graphic"
-	| "editor"
-	| "photographer"
-	| "content_creator";
+
 const app = express();
 const port = process.env.PORT || 3000;
 const JWT_SECRET =
@@ -652,11 +645,11 @@ app.get("/api/members", authMiddleware, async (req: any, res) => {
 					user.created_at.toISOString().split("T")[0],
 				vacation: activeLeave
 					? {
-							startDate: activeLeave.start_date.toISOString().split("T")[0],
-							endDate: activeLeave.end_date.toISOString().split("T")[0],
-							type: activeLeave.scope === "team" ? "team" : "organization",
-							teamId: activeLeave.affected_teams || undefined,
-						}
+						startDate: activeLeave.start_date.toISOString().split("T")[0],
+						endDate: activeLeave.end_date.toISOString().split("T")[0],
+						type: activeLeave.scope === "team" ? "team" : "organization",
+						teamId: activeLeave.affected_teams || undefined,
+					}
 					: null,
 				onboarding_data: onboarding,
 			};
@@ -768,37 +761,7 @@ app.get("/api/dashboard/stats", authMiddleware, async (req: any, res) => {
 		res.status(500).json({ error: "Nie udało się pobrać statystyk" });
 	}
 });
-const checkSocialMediaAccess = async (req: any, res: any, next: any) => {
-	try {
-		const userId = req.user?.id;
-		if (!userId) {
-			return res.status(401).json({ error: "Brak autoryzacji" });
-		}
 
-		// Admin ma zawsze dostęp
-		if (req.user?.role === "admin") {
-			return next();
-		}
-
-		// Sprawdź czy użytkownik jest w zespole Social Media
-		const socialMember = await prisma.socialMediaMember.findUnique({
-			where: { user_id: parseInt(userId) },
-		});
-
-		if (!socialMember || !socialMember.is_active) {
-			return res.status(403).json({
-				error: "Brak uprawnień - dostęp tylko dla zespołu Social Media",
-			});
-		}
-
-		next();
-	} catch (error) {
-		console.error("❌ Błąd sprawdzania uprawnień Social Media:", error);
-		res
-			.status(500)
-			.json({ error: "Wystąpił błąd podczas sprawdzania uprawnień" });
-	}
-};
 // POWIADOMIENIA - POBIERANIE
 app.get(
 	"/api/dashboard/notifications",
@@ -1152,7 +1115,7 @@ app.get("/api/applications", authMiddleware, async (req: any, res) => {
 				userId: app.user_id.toString(),
 				userName: app.user
 					? `${app.user.first_name || ""} ${app.user.last_name || ""}`.trim() ||
-						"Nieznany"
+					"Nieznany"
 					: "Nieznany",
 				userEmail: app.user?.email || "",
 				message: app.message || "",
@@ -1291,7 +1254,7 @@ app.get(
 					userId: app.user_id.toString(),
 					userName: app.user
 						? `${app.user.first_name || ""} ${app.user.last_name || ""}`.trim() ||
-							"Nieznany"
+						"Nieznany"
 						: "Nieznany",
 					userEmail: app.user?.email || "",
 					message: app.message || "",
@@ -2069,8 +2032,6 @@ app.use("/api", memberRoutes);
 // 📥 GET - pobierz profil użytkownika (swój lub innego)
 // 📥 GET - pobierz profil użytkownika (swój lub innego)
 // 📥 GET - pobierz profil użytkownika (swój lub innego)
-// backend/src/server.ts - w /api/profile
-
 app.get("/api/profile", authMiddleware, async (req: any, res) => {
 	try {
 		const userId = req.user?.id;
@@ -2088,11 +2049,6 @@ app.get("/api/profile", authMiddleware, async (req: any, res) => {
 		if (!user)
 			return res.status(404).json({ error: "Użytkownik nie znaleziony" });
 
-		// ⭐ SPRAWDŹ CZY UŻYTKOWNIK JEST W SOCIAL MEDIA
-		const socialMember = await prisma.socialMediaMember.findUnique({
-			where: { user_id: parseInt(userId) },
-		});
-
 		// Mapowanie danych
 		const teams = user.team_members
 			.map((tm: any) => tm.team?.name)
@@ -2103,6 +2059,9 @@ app.get("/api/profile", authMiddleware, async (req: any, res) => {
 		const pillars = teams.filter((t: string) => t.includes("Filar"));
 		const pillar = pillars.length > 0 ? pillars[0] : null;
 
+		console.log("🏷️ TEAMS:", teams); // ✅ DODAJ LOG
+		console.log("🏷️ PILLARS:", pillars); // ✅ DODAJ LOG
+
 		const profile = {
 			id: user.id.toString(),
 			firstName: user.first_name,
@@ -2110,8 +2069,8 @@ app.get("/api/profile", authMiddleware, async (req: any, res) => {
 			role: mapRoleId(user.role_id),
 			function: user.functional_role || "Członek",
 			team: teams.length > 0 ? teams.join(", ") : user.team || "Brak zespołu",
-			pillar: pillar,
-			pillars: pillars,
+			pillar: pillar, // pierwszy filar
+			pillars: pillars, // ✅ WSZYSTKIE FILARY - TO MUSI BYĆ!
 			province: user.province || "Brak danych",
 			status: user.status || "active",
 			email: user.email || "",
@@ -2143,9 +2102,6 @@ app.get("/api/profile", authMiddleware, async (req: any, res) => {
 			},
 			contributionInfo: { arrears: 0, status: "paid" },
 			leave: { isOnLeave: false, history: [] },
-			// ⭐ DODAJ TE POLA
-			isSocialMember: !!socialMember && socialMember.is_active,
-			socialRole: socialMember?.role || null,
 		};
 
 		res.json(profile);
@@ -2157,70 +2113,8 @@ app.get("/api/profile", authMiddleware, async (req: any, res) => {
 // ============================================================
 // URLOPY (LEAVE)
 // ============================================================
-app.post(
-	"/api/social/materials",
-	authMiddleware,
-	checkSocialMediaAccess,
-	async (req: any, res) => {
-		try {
-			const { name, description, responsible_id, deadline, priority, stage } =
-				req.body;
 
-			if (!name || !responsible_id || !deadline) {
-				return res.status(400).json({
-					error: "Nazwa, osoba odpowiedzialna i termin są wymagane",
-				});
-			}
-
-			// Sprawdź czy użytkownik istnieje
-			const user = await prisma.user.findUnique({
-				where: { id: parseInt(responsible_id) },
-			});
-
-			if (!user) {
-				return res
-					.status(404)
-					.json({ error: "Osoba odpowiedzialna nie istnieje" });
-			}
-
-			const material = await prisma.material.create({
-				data: {
-					name,
-					description: description || null,
-					responsible_id: parseInt(responsible_id),
-					deadline: new Date(deadline),
-					priority: priority || "medium",
-					stage: stage || "ideas",
-				},
-				include: {
-					responsible: {
-						select: {
-							first_name: true,
-							last_name: true,
-						},
-					},
-				},
-			});
-
-			res.status(201).json({
-				id: material.id.toString(),
-				name: material.name,
-				description: material.description || undefined,
-				responsible: `${material.responsible.first_name} ${material.responsible.last_name}`,
-				responsibleId: material.responsible_id.toString(),
-				deadline: material.deadline.toISOString().split("T")[0],
-				priority: material.priority,
-				stage: material.stage,
-				createdAt: material.created_at.toISOString(),
-			});
-		} catch (error) {
-			console.error("❌ Błąd dodawania materiału:", error);
-			res.status(500).json({ error: "Nie udało się dodać materiału" });
-		}
-	},
-);
 // 📥 GET - pobierz wszystkie urlopy
-// 📥 GET - pobierz wszystkie urlopy - POPRAWIONA WERSJA
 app.get("/api/leaves", authMiddleware, async (req: any, res) => {
 	try {
 		const userId = req.user?.id;
@@ -2267,17 +2161,12 @@ app.get("/api/leaves", authMiddleware, async (req: any, res) => {
 					? `${user.first_name || ""} ${user.last_name || ""}`.trim()
 					: "Nieznany";
 
-				// ✅ POBIERZ ZESPOŁY UŻYTKOWNIKA
-				const teams =
-					user?.team_members?.map((tm: any) => tm.team?.name).filter(Boolean) ||
-					[];
-				const userTeamName =
-					teams.length > 0 ? teams.join(", ") : user?.team || "Brak zespołu";
-
 				// ✅ ZARZĄD widzi WSZYSTKIE wnioski
+				// ✅ ADMIN widzi WSZYSTKIE wnioski (tylko podgląd)
+				// ✅ KOORDYNATOR widzi tylko swój zespół
 				let canView = false;
 				if (userRole === "board" || userRole === "admin") {
-					canView = true;
+					canView = true; // Zarząd i Admin widzą wszystko
 				} else if (userRole === "coordinator") {
 					canView =
 						user?.team === userTeam ||
@@ -2289,11 +2178,17 @@ app.get("/api/leaves", authMiddleware, async (req: any, res) => {
 
 				if (!canView) return null;
 
+				const teams = user?.team_members
+					?.map((tm: any) => tm.team?.name)
+					.filter(Boolean) || [];
+
+				const userTeamName = teams.length > 0 ? teams.join(", ") : user?.team || "Brak zespołu";  // ← zmieniona nazwa
+
 				return {
 					id: leave.id.toString(),
 					userId: leave.user_id.toString(),
 					userName: userName,
-					userTeam: userTeamName, // ✅ UŻYJ userTeamName zamiast userTeam
+					userTeam: userTeamName,
 					type: leave.type || "vacation",
 					scope: leave.scope || "all",
 					affectedTeams: leave.affected_teams
@@ -2327,11 +2222,11 @@ app.get("/api/leaves", authMiddleware, async (req: any, res) => {
 		res.status(500).json({ error: "Nie udało się pobrać urlopów" });
 	}
 });
+
 // 📤 POST - utwórz nowy wniosek urlopowy
 // 📤 POST - utwórz nowy wniosek urlopowy
 // 📤 POST - utwórz nowy wniosek urlopowy
 
-// 📤 POST - utwórz nowy wniosek urlopowy - POPRAWIONA WERSJA
 app.post("/api/leaves", authMiddleware, async (req: any, res) => {
 	try {
 		const userId = req.user?.id;
@@ -2363,7 +2258,7 @@ app.post("/api/leaves", authMiddleware, async (req: any, res) => {
 				first_name: true,
 				last_name: true,
 				team: true,
-				team_members: {
+				team_members: {  // ✅ DODAJ
 					include: {
 						team: true,
 					},
@@ -2371,11 +2266,11 @@ app.post("/api/leaves", authMiddleware, async (req: any, res) => {
 			},
 		});
 
-		// ✅ POBIERZ ZESPOŁY - TYLKO RAZ
-		const teams =
-			user?.team_members?.map((tm: any) => tm.team?.name).filter(Boolean) || [];
-		const userTeam =
-			teams.length > 0 ? teams.join(", ") : user?.team || "Brak zespołu";
+		const teams = user?.team_members
+			?.map((tm: any) => tm.team?.name)
+			.filter(Boolean) || [];
+		const userTeam = teams.length > 0 ? teams.join(", ") : user?.team || "Brak zespołu";
+
 
 		// 2. Utwórz wniosek urlopowy
 		const leave = await prisma.leave.create({
@@ -2393,26 +2288,28 @@ app.post("/api/leaves", authMiddleware, async (req: any, res) => {
 			},
 		});
 
+		// ✅✅✅ 3. UTWÓRZ POWIADOMIENIE ✅✅✅
 		const userName = user
 			? `${user.first_name || ""} ${user.last_name || ""}`.trim()
 			: "Nieznany";
 
-		// 3. Znajdź admina
+		// 1. Znajdź admina (user_id = 63)
 		const admin = await prisma.user.findUnique({
-			where: { id: 63 },
+			where: { id: 63 }, // admin_system
 			select: { id: true },
 		});
 
-		// 4. Znajdź zarząd
+		// 2. Znajdź zarząd (user_id = 1 - Maciej, ale on ma teraz role_id = 4)
+		// LUB znajdź pierwszego użytkownika z role_id = 2
 		const boardMember = await prisma.user.findFirst({
 			where: {
-				role_id: 2,
+				role_id: 2, // board (zarząd)
 			},
 			select: { id: true },
 			orderBy: { id: "asc" },
 		});
 
-		// 5. Utwórz powiadomienie dla ZARZĄDU
+		// 4. Utwórz powiadomienie dla ZARZĄDU z target: "board"
 		if (boardMember) {
 			const existing = await prisma.notification.findFirst({
 				where: {
@@ -2433,7 +2330,7 @@ app.post("/api/leaves", authMiddleware, async (req: any, res) => {
 						type: "info",
 						read: false,
 						link: `/leave`,
-						target: "board",
+						target: "board", // ✅ TARGET: board
 						created_at: new Date(),
 					},
 				});
@@ -2441,13 +2338,13 @@ app.post("/api/leaves", authMiddleware, async (req: any, res) => {
 		}
 
 		console.log("✅ UTOWORZONO URLOP:", leave);
-
-		// 6. Zwróć odpowiedź - UŻYJ userTeam zamiast deklarować ponownie
+		console.log(`📨 Wysłano powiadomienia do Admina i Zarządu`);
+		// 5. Zwróć odpowiedź
 		res.status(201).json({
 			id: leave.id.toString(),
 			userId: leave.user_id.toString(),
 			userName: userName,
-			userTeam: userTeam, // ✅ UŻYJ ZDECLAROWANEJ ZMIENNEJ
+			userTeam: userTeam,
 			type: leave.type,
 			scope: leave.scope,
 			affectedTeams: leave.affected_teams
@@ -2547,12 +2444,12 @@ app.put("/api/leaves/:id", authMiddleware, async (req: any, res) => {
 				status: status || existingLeave.status,
 				...(status === "approved" || status === "rejected"
 					? {
-							// ✅ UŻYJ currentUser zamiast req.user
-							approved_by:
-								`${currentUser?.first_name || ""} ${currentUser?.last_name || ""}`.trim() ||
-								"Nieznany",
-							approved_at: new Date(),
-						}
+						// ✅ UŻYJ currentUser zamiast req.user
+						approved_by:
+							`${currentUser?.first_name || ""} ${currentUser?.last_name || ""}`.trim() ||
+							"Nieznany",
+						approved_at: new Date(),
+					}
 					: {}),
 			},
 		});
@@ -2817,7 +2714,740 @@ app.use(
 		res.status(500).json({ error: err.message || "Wewnętrzny błąd serwera" });
 	},
 );
+// ============================================================
+// SOCIAL MEDIA - API
+// ============================================================
 
+// ---------------------- MEMBERS ----------------------
+app.get("/api/social/members", authMiddleware, async (req: any, res) => {
+	try {
+		const members = await prisma.socialMediaMember.findMany({
+			include: {
+				user: {
+					select: {
+						id: true,
+						first_name: true,
+						last_name: true,
+						email: true,
+						phone: true,
+						province: true,
+						team: true,
+						functional_role: true,
+					}
+				}
+			}
+		});
+
+		const formattedMembers = members.map((m: any) => ({
+			id: m.id.toString(),
+			user_id: m.user_id.toString(),
+			firstName: m.user.first_name,
+			lastName: m.user.last_name,
+			role: m.role,
+			email: m.user.email,
+			phone: m.user.phone || "",
+			province: m.user.province || "",
+			team: m.user.team || "",
+			joinDate: m.created_at.toISOString().split("T")[0],
+			active: m.is_active,
+		}));
+
+		res.json(formattedMembers);
+	} catch (error) {
+		console.error("❌ Błąd pobierania członków social media:", error);
+		res.status(500).json({ error: "Nie udało się pobrać członków" });
+	}
+});
+
+// ---------------------- CREATORS ----------------------
+app.get("/api/social/creators", authMiddleware, async (req: any, res) => {
+	try {
+		const creators = await prisma.contentCreator.findMany({
+			include: {
+				user: {
+					select: {
+						id: true,
+						first_name: true,
+						last_name: true,
+						email: true,
+						phone: true,
+						province: true,
+						team: true,
+					}
+				}
+			}
+		});
+
+		const formattedCreators = creators.map((c: any) => ({
+			id: c.id.toString(),
+			firstName: c.user.first_name,
+			lastName: c.user.last_name,
+			province: c.user.province || "",
+			team: c.user.team || "",
+			availability: c.availability,
+			experience: c.experience,
+			topics: c.topics ? JSON.parse(c.topics) : [],
+			email: c.user.email,
+			phone: c.user.phone || "",
+			active: c.is_active,
+		}));
+
+		res.json(formattedCreators);
+	} catch (error) {
+		console.error("❌ Błąd pobierania twórców:", error);
+		res.status(500).json({ error: "Nie udało się pobrać twórców" });
+	}
+});
+
+// ---------------------- PUBLICATIONS ----------------------
+app.get("/api/social/publications", authMiddleware, async (req: any, res) => {
+	try {
+		const publications = await prisma.publication.findMany({
+			include: {
+				responsible: {
+					select: {
+						id: true,
+						first_name: true,
+						last_name: true,
+					}
+				}
+			},
+			orderBy: {
+				created_at: "desc",
+			},
+		});
+
+		const formattedPublications = publications.map((p: any) => ({
+			id: p.id.toString(),
+			title: p.title,
+			platform: p.platform,
+			type: p.type,
+			responsible: p.responsible ? `${p.responsible.first_name} ${p.responsible.last_name}` : "Nieprzypisany",
+			dueDate: p.due_date.toISOString().split("T")[0],
+			status: p.status,
+			description: p.description || "",
+			createdAt: p.created_at.toISOString(),
+		}));
+
+		res.json(formattedPublications);
+	} catch (error) {
+		console.error("❌ Błąd pobierania publikacji:", error);
+		res.status(500).json({ error: "Nie udało się pobrać publikacji" });
+	}
+});
+
+// ---------------------- MATERIALS ----------------------
+app.get("/api/social/materials", authMiddleware, async (req: any, res) => {
+	try {
+		const materials = await prisma.material.findMany({
+			include: {
+				responsible: {
+					select: {
+						id: true,
+						first_name: true,
+						last_name: true,
+					}
+				}
+			},
+			orderBy: {
+				created_at: "desc",
+			},
+		});
+
+		const formattedMaterials = materials.map((m: any) => ({
+			id: m.id.toString(),
+			name: m.name,
+			description: m.description || "",
+			responsible: m.responsible ? `${m.responsible.first_name} ${m.responsible.last_name}` : "Nieprzypisany",
+			deadline: m.deadline.toISOString().split("T")[0],
+			priority: m.priority,
+			stage: m.stage,
+			createdAt: m.created_at.toISOString(),
+		}));
+
+		res.json(formattedMaterials);
+	} catch (error) {
+		console.error("❌ Błąd pobierania materiałów:", error);
+		res.status(500).json({ error: "Nie udało się pobrać materiałów" });
+	}
+});
+
+// ---------------------- TASKS ----------------------
+app.get("/api/social/tasks", authMiddleware, async (req: any, res) => {
+	try {
+		const tasks = await prisma.socialTask.findMany({
+			include: {
+				responsible: {
+					select: {
+						id: true,
+						first_name: true,
+						last_name: true,
+					}
+				}
+			},
+			orderBy: {
+				created_at: "desc",
+			},
+		});
+
+		const formattedTasks = tasks.map((t: any) => ({
+			id: t.id.toString(),
+			name: t.name,
+			description: t.description || "",
+			responsible: t.responsible ? `${t.responsible.first_name} ${t.responsible.last_name}` : "Nieprzypisany",
+			deadline: t.deadline.toISOString().split("T")[0],
+			status: t.status,
+			createdAt: t.created_at.toISOString(),
+		}));
+
+		res.json(formattedTasks);
+	} catch (error) {
+		console.error("❌ Błąd pobierania zadań:", error);
+		res.status(500).json({ error: "Nie udało się pobrać zadań" });
+	}
+});
+
+// ---------------------- CONTACTS ----------------------
+app.get("/api/social/contacts", authMiddleware, async (req: any, res) => {
+	try {
+		const contacts = await prisma.mediaContact.findMany({
+			include: {
+				responsible: {
+					select: {
+						id: true,
+						first_name: true,
+						last_name: true,
+					}
+				}
+			},
+			orderBy: {
+				created_at: "desc",
+			},
+		});
+
+		const formattedContacts = contacts.map((c: any) => ({
+			id: c.id.toString(),
+			name: c.name,
+			channel: c.channel,
+			responsible: c.responsible ? `${c.responsible.first_name} ${c.responsible.last_name}` : "Nieprzypisany",
+			email: c.email || "",
+			phone: c.phone || "",
+			notes: c.notes || "",
+			createdAt: c.created_at.toISOString(),
+		}));
+
+		res.json(formattedContacts);
+	} catch (error) {
+		console.error("❌ Błąd pobierania kontaktów:", error);
+		res.status(500).json({ error: "Nie udało się pobrać kontaktów" });
+	}
+});
+
+// ============================================================
+// SOCIAL MEDIA - CRUD OPERATIONS
+// ============================================================
+
+// ---------------------- MEMBERS ----------------------
+// POST - Dodaj członka
+app.post("/api/social/members", authMiddleware, async (req: any, res) => {
+	try {
+		const { user_id, role } = req.body;
+
+		if (!user_id || !role) {
+			return res.status(400).json({ error: "user_id i role są wymagane" });
+		}
+
+		// Sprawdź czy użytkownik istnieje
+		const user = await prisma.user.findUnique({
+			where: { id: parseInt(user_id) },
+		});
+
+		if (!user) {
+			return res.status(404).json({ error: "Użytkownik nie istnieje" });
+		}
+
+		// Sprawdź czy już jest członkiem
+		const existing = await prisma.socialMediaMember.findUnique({
+			where: { user_id: parseInt(user_id) },
+		});
+
+		if (existing) {
+			return res.status(400).json({ error: "Użytkownik już jest członkiem social media" });
+		}
+
+		const member = await prisma.socialMediaMember.create({
+			data: {
+				user_id: parseInt(user_id),
+				role: role,
+				is_active: true,
+			},
+			include: {
+				user: {
+					select: {
+						id: true,
+						first_name: true,
+						last_name: true,
+						email: true,
+						phone: true,
+						province: true,
+						team: true,
+					}
+				}
+			}
+		});
+
+		const formattedMember = {
+			id: member.id.toString(),
+			user_id: member.user_id.toString(),
+			firstName: member.user.first_name,
+			lastName: member.user.last_name,
+			role: member.role,
+			email: member.user.email,
+			phone: member.user.phone || "",
+			province: member.user.province || "",
+			team: member.user.team || "",
+			joinDate: member.created_at.toISOString().split("T")[0],
+			active: member.is_active,
+		};
+
+		res.status(201).json(formattedMember);
+	} catch (error) {
+		console.error("❌ Błąd dodawania członka:", error);
+		res.status(500).json({ error: "Nie udało się dodać członka" });
+	}
+});
+
+// ---------------------- PUBLICATIONS ----------------------
+// POST - Dodaj publikację
+app.post("/api/social/publications", authMiddleware, async (req: any, res) => {
+	try {
+		const { title, platform, type, responsible_id, due_date, status, description } = req.body;
+
+		if (!title || !platform || !type || !responsible_id || !due_date) {
+			return res.status(400).json({ error: "Wszystkie wymagane pola muszą być wypełnione" });
+		}
+
+		const publication = await prisma.publication.create({
+			data: {
+				title,
+				platform,
+				type,
+				responsible_id: parseInt(responsible_id),
+				due_date: new Date(due_date),
+				status: status || "idea",
+				description: description || "",
+			},
+			include: {
+				responsible: {
+					select: {
+						id: true,
+						first_name: true,
+						last_name: true,
+					}
+				}
+			}
+		});
+
+		const formattedPublication = {
+			id: publication.id.toString(),
+			title: publication.title,
+			platform: publication.platform,
+			type: publication.type,
+			responsible: publication.responsible ? `${publication.responsible.first_name} ${publication.responsible.last_name}` : "Nieprzypisany",
+			dueDate: publication.due_date.toISOString().split("T")[0],
+			status: publication.status,
+			description: publication.description || "",
+			createdAt: publication.created_at.toISOString(),
+		};
+
+		res.status(201).json(formattedPublication);
+	} catch (error) {
+		console.error("❌ Błąd dodawania publikacji:", error);
+		res.status(500).json({ error: "Nie udało się dodać publikacji" });
+	}
+});
+
+// PUT - Aktualizuj publikację
+app.put("/api/social/publications/:id", authMiddleware, async (req: any, res) => {
+	try {
+		const { id } = req.params;
+		const { title, platform, type, responsible_id, due_date, status, description } = req.body;
+
+		const publication = await prisma.publication.update({
+			where: { id: parseInt(id) },
+			data: {
+				title,
+				platform,
+				type,
+				responsible_id: parseInt(responsible_id),
+				due_date: new Date(due_date),
+				status,
+				description: description || "",
+			},
+			include: {
+				responsible: {
+					select: {
+						id: true,
+						first_name: true,
+						last_name: true,
+					}
+				}
+			}
+		});
+
+		const formattedPublication = {
+			id: publication.id.toString(),
+			title: publication.title,
+			platform: publication.platform,
+			type: publication.type,
+			responsible: publication.responsible ? `${publication.responsible.first_name} ${publication.responsible.last_name}` : "Nieprzypisany",
+			dueDate: publication.due_date.toISOString().split("T")[0],
+			status: publication.status,
+			description: publication.description || "",
+			createdAt: publication.created_at.toISOString(),
+		};
+
+		res.json(formattedPublication);
+	} catch (error) {
+		console.error("❌ Błąd aktualizacji publikacji:", error);
+		res.status(500).json({ error: "Nie udało się zaktualizować publikacji" });
+	}
+});
+
+// DELETE - Usuń publikację
+app.delete("/api/social/publications/:id", authMiddleware, async (req: any, res) => {
+	try {
+		const { id } = req.params;
+		await prisma.publication.delete({
+			where: { id: parseInt(id) },
+		});
+		res.status(204).send();
+	} catch (error) {
+		console.error("❌ Błąd usuwania publikacji:", error);
+		res.status(500).json({ error: "Nie udało się usunąć publikacji" });
+	}
+});
+
+// ---------------------- MATERIALS ----------------------
+// POST - Dodaj materiał
+app.post("/api/social/materials", authMiddleware, async (req: any, res) => {
+	try {
+		const { name, description, responsible_id, deadline, priority, stage } = req.body;
+
+		if (!name || !responsible_id || !deadline) {
+			return res.status(400).json({ error: "Nazwa, osoba odpowiedzialna i termin są wymagane" });
+		}
+
+		const material = await prisma.material.create({
+			data: {
+				name,
+				description: description || "",
+				responsible_id: parseInt(responsible_id),
+				deadline: new Date(deadline),
+				priority: priority || "medium",
+				stage: stage || "ideas",
+			},
+			include: {
+				responsible: {
+					select: {
+						id: true,
+						first_name: true,
+						last_name: true,
+					}
+				}
+			}
+		});
+
+		const formattedMaterial = {
+			id: material.id.toString(),
+			name: material.name,
+			description: material.description || "",
+			responsible: material.responsible ? `${material.responsible.first_name} ${material.responsible.last_name}` : "Nieprzypisany",
+			deadline: material.deadline.toISOString().split("T")[0],
+			priority: material.priority,
+			stage: material.stage,
+			createdAt: material.created_at.toISOString(),
+		};
+
+		res.status(201).json(formattedMaterial);
+	} catch (error) {
+		console.error("❌ Błąd dodawania materiału:", error);
+		res.status(500).json({ error: "Nie udało się dodać materiału" });
+	}
+});
+
+// PUT - Aktualizuj materiał
+app.put("/api/social/materials/:id", authMiddleware, async (req: any, res) => {
+	try {
+		const { id } = req.params;
+		const { name, description, responsible_id, deadline, priority, stage } = req.body;
+
+		if (!name || !responsible_id || !deadline) {
+			return res.status(400).json({ error: "Nazwa, osoba odpowiedzialna i termin są wymagane" });
+		}
+
+		const material = await prisma.material.update({
+			where: { id: parseInt(id) },
+			data: {
+				name,
+				description: description || "",
+				responsible_id: parseInt(responsible_id),
+				deadline: new Date(deadline),
+				priority: priority || "medium",
+				stage: stage || "ideas",
+			},
+			include: {
+				responsible: {
+					select: {
+						id: true,
+						first_name: true,
+						last_name: true,
+					}
+				}
+			}
+		});
+
+		const formattedMaterial = {
+			id: material.id.toString(),
+			name: material.name,
+			description: material.description || "",
+			responsible: material.responsible ? `${material.responsible.first_name} ${material.responsible.last_name}` : "Nieprzypisany",
+			deadline: material.deadline.toISOString().split("T")[0],
+			priority: material.priority,
+			stage: material.stage,
+			createdAt: material.created_at.toISOString(),
+		};
+
+		res.json(formattedMaterial);
+	} catch (error) {
+		console.error("❌ Błąd aktualizacji materiału:", error);
+		res.status(500).json({ error: "Nie udało się zaktualizować materiału" });
+	}
+});
+
+// DELETE - Usuń materiał
+app.delete("/api/social/materials/:id", authMiddleware, async (req: any, res) => {
+	try {
+		const { id } = req.params;
+		await prisma.material.delete({
+			where: { id: parseInt(id) },
+		});
+		res.status(204).send();
+	} catch (error) {
+		console.error("❌ Błąd usuwania materiału:", error);
+		res.status(500).json({ error: "Nie udało się usunąć materiału" });
+	}
+});
+
+// ---------------------- TASKS ----------------------
+// POST - Dodaj zadanie
+app.post("/api/social/tasks", authMiddleware, async (req: any, res) => {
+	try {
+		const { name, description, responsible_id, deadline, status } = req.body;
+
+		if (!name || !responsible_id || !deadline) {
+			return res.status(400).json({ error: "Nazwa, osoba odpowiedzialna i termin są wymagane" });
+		}
+
+		const task = await prisma.socialTask.create({
+			data: {
+				name,
+				description: description || "",
+				responsible_id: parseInt(responsible_id),
+				deadline: new Date(deadline),
+				status: status || "pending",
+			},
+			include: {
+				responsible: {
+					select: {
+						id: true,
+						first_name: true,
+						last_name: true,
+					}
+				}
+			}
+		});
+
+		const formattedTask = {
+			id: task.id.toString(),
+			name: task.name,
+			description: task.description || "",
+			responsible: task.responsible ? `${task.responsible.first_name} ${task.responsible.last_name}` : "Nieprzypisany",
+			deadline: task.deadline.toISOString().split("T")[0],
+			status: task.status,
+			createdAt: task.created_at.toISOString(),
+		};
+
+		res.status(201).json(formattedTask);
+	} catch (error) {
+		console.error("❌ Błąd dodawania zadania:", error);
+		res.status(500).json({ error: "Nie udało się dodać zadania" });
+	}
+});
+
+// PUT - Aktualizuj zadanie
+app.put("/api/social/tasks/:id", authMiddleware, async (req: any, res) => {
+	try {
+		const { id } = req.params;
+		const { name, description, responsible_id, deadline, status } = req.body;
+
+		const task = await prisma.socialTask.update({
+			where: { id: parseInt(id) },
+			data: {
+				name,
+				description: description || "",
+				responsible_id: parseInt(responsible_id),
+				deadline: new Date(deadline),
+				status,
+			},
+			include: {
+				responsible: {
+					select: {
+						id: true,
+						first_name: true,
+						last_name: true,
+					}
+				}
+			}
+		});
+
+		const formattedTask = {
+			id: task.id.toString(),
+			name: task.name,
+			description: task.description || "",
+			responsible: task.responsible ? `${task.responsible.first_name} ${task.responsible.last_name}` : "Nieprzypisany",
+			deadline: task.deadline.toISOString().split("T")[0],
+			status: task.status,
+			createdAt: task.created_at.toISOString(),
+		};
+
+		res.json(formattedTask);
+	} catch (error) {
+		console.error("❌ Błąd aktualizacji zadania:", error);
+		res.status(500).json({ error: "Nie udało się zaktualizować zadania" });
+	}
+});
+
+// DELETE - Usuń zadanie
+app.delete("/api/social/tasks/:id", authMiddleware, async (req: any, res) => {
+	try {
+		const { id } = req.params;
+		await prisma.socialTask.delete({
+			where: { id: parseInt(id) },
+		});
+		res.status(204).send();
+	} catch (error) {
+		console.error("❌ Błąd usuwania zadania:", error);
+		res.status(500).json({ error: "Nie udało się usunąć zadania" });
+	}
+});
+
+// ---------------------- CONTACTS ----------------------
+// POST - Dodaj kontakt
+app.post("/api/social/contacts", authMiddleware, async (req: any, res) => {
+	try {
+		const { name, channel, responsible_id, email, phone, notes } = req.body;
+
+		if (!name || !channel || !responsible_id) {
+			return res.status(400).json({ error: "Nazwa, kanał i osoba odpowiedzialna są wymagane" });
+		}
+
+		const contact = await prisma.mediaContact.create({
+			data: {
+				name,
+				channel,
+				responsible_id: parseInt(responsible_id),
+				email: email || "",
+				phone: phone || "",
+				notes: notes || "",
+			},
+			include: {
+				responsible: {
+					select: {
+						id: true,
+						first_name: true,
+						last_name: true,
+					}
+				}
+			}
+		});
+
+		const formattedContact = {
+			id: contact.id.toString(),
+			name: contact.name,
+			channel: contact.channel,
+			responsible: contact.responsible ? `${contact.responsible.first_name} ${contact.responsible.last_name}` : "Nieprzypisany",
+			email: contact.email || "",
+			phone: contact.phone || "",
+			notes: contact.notes || "",
+			createdAt: contact.created_at.toISOString(),
+		};
+
+		res.status(201).json(formattedContact);
+	} catch (error) {
+		console.error("❌ Błąd dodawania kontaktu:", error);
+		res.status(500).json({ error: "Nie udało się dodać kontaktu" });
+	}
+});
+
+// PUT - Aktualizuj kontakt
+app.put("/api/social/contacts/:id", authMiddleware, async (req: any, res) => {
+	try {
+		const { id } = req.params;
+		const { name, channel, responsible_id, email, phone, notes } = req.body;
+
+		const contact = await prisma.mediaContact.update({
+			where: { id: parseInt(id) },
+			data: {
+				name,
+				channel,
+				responsible_id: parseInt(responsible_id),
+				email: email || "",
+				phone: phone || "",
+				notes: notes || "",
+			},
+			include: {
+				responsible: {
+					select: {
+						id: true,
+						first_name: true,
+						last_name: true,
+					}
+				}
+			}
+		});
+
+		const formattedContact = {
+			id: contact.id.toString(),
+			name: contact.name,
+			channel: contact.channel,
+			responsible: contact.responsible ? `${contact.responsible.first_name} ${contact.responsible.last_name}` : "Nieprzypisany",
+			email: contact.email || "",
+			phone: contact.phone || "",
+			notes: contact.notes || "",
+			createdAt: contact.created_at.toISOString(),
+		};
+
+		res.json(formattedContact);
+	} catch (error) {
+		console.error("❌ Błąd aktualizacji kontaktu:", error);
+		res.status(500).json({ error: "Nie udało się zaktualizować kontaktu" });
+	}
+});
+
+// DELETE - Usuń kontakt
+app.delete("/api/social/contacts/:id", authMiddleware, async (req: any, res) => {
+	try {
+		const { id } = req.params;
+		await prisma.mediaContact.delete({
+			where: { id: parseInt(id) },
+		});
+		res.status(204).send();
+	} catch (error) {
+		console.error("❌ Błąd usuwania kontaktu:", error);
+		res.status(500).json({ error: "Nie udało się usunąć kontaktu" });
+	}
+});
 // ============================================================
 // START SERWERA
 // ============================================================
@@ -2829,1074 +3459,3 @@ app.listen(port, () => {
 		Object.keys(prisma).filter((key: string) => !key.startsWith("_")),
 	);
 });
-
-// 📁 backend/src/server.ts
-// DODAJ NA KOŃCU PLIKU, PRZED app.listen()
-
-// ============================================================
-// SOCIAL MEDIA ENDPOINTS
-// ============================================================
-
-// ============================================================
-// MIDDLEWARE - sprawdzanie uprawnień Social Media
-// ============================================================
-
-// ============================================================
-// 1. CZŁONKOWIE SOCIAL MEDIA (SOCIAL MEDIA MEMBERS)
-// ============================================================
-
-// 📤 POST - dodaj członka Social Media
-// backend/src/server.ts - ZMIEŃ TEN ENDPOINT
-
-// 📥 GET - pobierz wszystkich członków Social Media (z zespołów TikTok i Instagram)
-// backend/src/server.ts - POPRAW ENDPOINT
-
-// 📥 GET - pobierz wszystkich członków Social Media (z zespołów TikTok i Instagram)
-app.get(
-	"/api/social/members",
-	authMiddleware,
-	checkSocialMediaAccess,
-	async (req: any, res) => {
-		try {
-			// 1. Pobierz z social_media_members
-			const socialMembers = await prisma.socialMediaMember.findMany({
-				where: { is_active: true },
-				include: {
-					user: {
-						select: {
-							id: true,
-							first_name: true,
-							last_name: true,
-							email: true,
-							phone: true,
-							province: true,
-							team: true,
-							team_members: {
-								include: { team: true },
-							},
-						},
-					},
-				},
-			});
-
-			// 2. Pobierz z team_members (TikTok i Instagram)
-			const teamMembers = await prisma.$queryRaw`
-        SELECT 
-          u.id,
-          u.first_name,
-          u.last_name,
-          u.email,
-          u.phone,
-          u.province,
-          t.name AS team,
-          tm.is_leader,
-          u.created_at
-        FROM users u
-        JOIN team_members tm ON tm.user_id = u.id
-        JOIN teams t ON t.id = tm.team_id
-        WHERE t.name IN ('TikTok', 'Instagram')
-          AND u.is_active = 1
-      `;
-
-			// 3. Połącz i usuń duplikaty (po user_id)
-			const allMembersMap = new Map();
-
-			// Dodaj z social_media_members
-			socialMembers.forEach((member: any) => {
-				const teams =
-					member.user.team_members
-						?.map((tm: any) => tm.team?.name)
-						.filter(Boolean) || [];
-				const team =
-					teams.length > 0
-						? teams.join(", ")
-						: member.user.team || "Brak zespołu";
-
-				allMembersMap.set(member.user_id.toString(), {
-					id: member.id.toString(),
-					user_id: member.user_id.toString(),
-					firstName: member.user.first_name,
-					lastName: member.user.last_name,
-					role: member.role,
-					email: member.user.email,
-					phone: member.user.phone || undefined,
-					province: member.user.province || "Brak danych",
-					team: team,
-					joinDate: member.created_at.toISOString().split("T")[0],
-					active: member.is_active,
-					source: "social_media_members",
-				});
-			});
-
-			// Dodaj z team_members (tylko jeśli nie istnieją już z social_media_members)
-			(teamMembers as any[]).forEach((member: any) => {
-				if (!allMembersMap.has(member.id.toString())) {
-					let role = "content_creator";
-					if (member.team === "Instagram") role = "instagram";
-					else if (member.team === "TikTok") role = "tiktok";
-
-					allMembersMap.set(member.id.toString(), {
-						id: member.id.toString(),
-						user_id: member.id.toString(),
-						firstName: member.first_name,
-						lastName: member.last_name,
-						role: role,
-						email: member.email,
-						phone: member.phone || undefined,
-						province: member.province || "Brak danych",
-						team: member.team,
-						joinDate: member.created_at
-							? new Date(member.created_at).toISOString().split("T")[0]
-							: new Date().toISOString().split("T")[0],
-						active: true,
-						is_leader: member.is_leader || false,
-						source: "team_members",
-					});
-				}
-			});
-
-			const mappedMembers = Array.from(allMembersMap.values());
-			res.json(mappedMembers);
-		} catch (error) {
-			console.error("❌ Błąd pobierania członków Social Media:", error);
-			res
-				.status(500)
-				.json({ error: "Nie udało się pobrać członków Social Media" });
-		}
-	},
-);
-app.post(
-	"/api/social/members",
-	authMiddleware,
-	checkSocialMediaAccess,
-	async (req: any, res) => {
-		try {
-			const { user_id, role } = req.body;
-
-			if (!user_id || !role) {
-				return res
-					.status(400)
-					.json({ error: "ID użytkownika i rola są wymagane" });
-			}
-
-			// Sprawdź czy użytkownik istnieje
-			const user = await prisma.user.findUnique({
-				where: { id: parseInt(user_id) },
-			});
-
-			if (!user) {
-				return res.status(404).json({ error: "Użytkownik nie istnieje" });
-			}
-
-			// Sprawdź czy już jest członkiem Social Media
-			const existing = await prisma.socialMediaMember.findUnique({
-				where: { user_id: parseInt(user_id) },
-			});
-
-			if (existing) {
-				return res
-					.status(400)
-					.json({ error: "Użytkownik już jest członkiem Social Media" });
-			}
-
-			// Utwórz nowego członka
-			const member = await prisma.socialMediaMember.create({
-				data: {
-					user_id: parseInt(user_id),
-					role: role,
-					is_active: true,
-				},
-				include: {
-					user: {
-						select: {
-							first_name: true,
-							last_name: true,
-							email: true,
-						},
-					},
-				},
-			});
-
-			res.status(201).json({
-				id: member.id.toString(),
-				user_id: member.user_id.toString(),
-				firstName: member.user.first_name,
-				lastName: member.user.last_name,
-				role: member.role,
-				email: member.user.email,
-				active: member.is_active,
-			});
-		} catch (error) {
-			console.error("❌ Błąd dodawania członka Social Media:", error);
-			res.status(500).json({ error: "Nie udało się dodać członka" });
-		}
-	},
-);
-// 📝 PUT - aktualizuj członka Social Media
-app.put(
-	"/api/social/members/:id",
-	authMiddleware,
-	checkSocialMediaAccess,
-	async (req: any, res) => {
-		try {
-			const id = parseInt(req.params.id);
-			const { role, is_active } = req.body;
-
-			const member = await prisma.socialMediaMember.update({
-				where: { id },
-				data: {
-					role: role || undefined,
-					is_active: is_active !== undefined ? is_active : undefined,
-				},
-				include: {
-					user: {
-						select: {
-							first_name: true,
-							last_name: true,
-							email: true,
-						},
-					},
-				},
-			});
-
-			res.json({
-				id: member.id.toString(),
-				user_id: member.user_id.toString(),
-				firstName: member.user.first_name,
-				lastName: member.user.last_name,
-				role: member.role,
-				email: member.user.email,
-				active: member.is_active,
-			});
-		} catch (error) {
-			console.error("❌ Błąd aktualizacji członka:", error);
-			res.status(500).json({ error: "Nie udało się zaktualizować członka" });
-		}
-	},
-);
-
-// 🗑️ DELETE - usuń członka Social Media (soft delete)
-app.delete(
-	"/api/social/members/:id",
-	authMiddleware,
-	checkSocialMediaAccess,
-	async (req: any, res) => {
-		try {
-			const id = parseInt(req.params.id);
-
-			await prisma.socialMediaMember.update({
-				where: { id },
-				data: { is_active: false },
-			});
-
-			res.status(204).send();
-		} catch (error) {
-			console.error("❌ Błąd usuwania członka:", error);
-			res.status(500).json({ error: "Nie udało się usunąć członka" });
-		}
-	},
-);
-
-// ============================================================
-// 2. TWÓRCY ROLEK (CONTENT CREATORS)
-// ============================================================
-
-// 📥 GET - pobierz wszystkich twórców rolek
-app.get(
-	"/api/social/creators",
-	authMiddleware,
-	checkSocialMediaAccess,
-	async (req: any, res) => {
-		try {
-			const creators = await prisma.contentCreator.findMany({
-				where: { is_active: true },
-				include: {
-					user: {
-						select: {
-							id: true,
-							first_name: true,
-							last_name: true,
-							email: true,
-							phone: true,
-							province: true,
-							team: true,
-							team_members: {
-								include: { team: true },
-							},
-						},
-					},
-				},
-				orderBy: { created_at: "desc" },
-			});
-
-			const mappedCreators = creators.map((creator: any) => {
-				const teams =
-					creator.user.team_members
-						?.map((tm: any) => tm.team?.name)
-						.filter(Boolean) || [];
-				const team =
-					teams.length > 0
-						? teams.join(", ")
-						: creator.user.team || "Brak zespołu";
-
-				return {
-					id: creator.id.toString(),
-					user_id: creator.user_id.toString(),
-					firstName: creator.user.first_name,
-					lastName: creator.user.last_name,
-					province: creator.user.province || "Brak danych",
-					team: team,
-					availability: creator.availability,
-					experience: creator.experience,
-					topics: creator.topics ? JSON.parse(creator.topics) : [],
-					email: creator.user.email,
-					phone: creator.user.phone || undefined,
-					active: creator.is_active,
-				};
-			});
-
-			res.json(mappedCreators);
-		} catch (error) {
-			console.error("❌ Błąd pobierania twórców rolek:", error);
-			res.status(500).json({ error: "Nie udało się pobrać twórców rolek" });
-		}
-	},
-);
-
-// 📤 POST - dodaj twórcę rolek
-app.post(
-	"/api/social/creators",
-	authMiddleware,
-	checkSocialMediaAccess,
-	async (req: any, res) => {
-		try {
-			const { user_id, availability, experience, topics } = req.body;
-
-			if (!user_id) {
-				return res.status(400).json({ error: "ID użytkownika jest wymagane" });
-			}
-
-			const user = await prisma.user.findUnique({
-				where: { id: parseInt(user_id) },
-			});
-
-			if (!user) {
-				return res.status(404).json({ error: "Użytkownik nie istnieje" });
-			}
-
-			const existing = await prisma.contentCreator.findUnique({
-				where: { user_id: parseInt(user_id) },
-			});
-
-			if (existing) {
-				return res
-					.status(400)
-					.json({ error: "Użytkownik już jest twórcą rolek" });
-			}
-
-			const creator = await prisma.contentCreator.create({
-				data: {
-					user_id: parseInt(user_id),
-					availability: availability || "Uzgodnij z koordynatorem",
-					experience: experience || "none",
-					topics: topics ? JSON.stringify(topics) : JSON.stringify([]),
-					is_active: true,
-				},
-				include: {
-					user: {
-						select: {
-							first_name: true,
-							last_name: true,
-							email: true,
-						},
-					},
-				},
-			});
-
-			res.status(201).json({
-				id: creator.id.toString(),
-				user_id: creator.user_id.toString(),
-				firstName: creator.user.first_name,
-				lastName: creator.user.last_name,
-				availability: creator.availability,
-				experience: creator.experience,
-				topics: creator.topics ? JSON.parse(creator.topics) : [],
-				email: creator.user.email,
-				active: creator.is_active,
-			});
-		} catch (error) {
-			console.error("❌ Błąd dodawania twórcy rolek:", error);
-			res.status(500).json({ error: "Nie udało się dodać twórcy rolek" });
-		}
-	},
-);
-
-// ============================================================
-// 3. PUBLIKACJE
-// ============================================================
-
-// 📥 GET - pobierz wszystkie publikacje
-app.get(
-	"/api/social/publications",
-	authMiddleware,
-	checkSocialMediaAccess,
-	async (req: any, res) => {
-		try {
-			const publications = await prisma.publication.findMany({
-				include: {
-					responsible: {
-						select: {
-							id: true,
-							first_name: true,
-							last_name: true,
-							email: true,
-						},
-					},
-				},
-				orderBy: { due_date: "asc" },
-			});
-
-			const mappedPublications = publications.map((pub: any) => ({
-				id: pub.id.toString(),
-				title: pub.title,
-				platform: pub.platform,
-				type: pub.type,
-				responsible: `${pub.responsible.first_name} ${pub.responsible.last_name}`,
-				responsibleId: pub.responsible_id.toString(),
-				dueDate: pub.due_date.toISOString().split("T")[0],
-				status: pub.status,
-				description: pub.description || undefined,
-				createdAt: pub.created_at.toISOString(),
-				updatedAt: pub.updated_at?.toISOString(),
-			}));
-
-			res.json(mappedPublications);
-		} catch (error) {
-			console.error("❌ Błąd pobierania publikacji:", error);
-			res.status(500).json({ error: "Nie udało się pobrać publikacji" });
-		}
-	},
-);
-
-// 📤 POST - dodaj publikację
-app.post(
-	"/api/social/publications",
-	authMiddleware,
-	checkSocialMediaAccess,
-	async (req: any, res) => {
-		try {
-			const {
-				title,
-				platform,
-				type,
-				responsible_id,
-				due_date,
-				status,
-				description,
-			} = req.body;
-
-			if (!title || !platform || !type || !responsible_id || !due_date) {
-				return res
-					.status(400)
-					.json({ error: "Wszystkie wymagane pola muszą być wypełnione" });
-			}
-
-			const publication = await prisma.publication.create({
-				data: {
-					title,
-					platform,
-					type,
-					responsible_id: parseInt(responsible_id),
-					due_date: new Date(due_date),
-					status: status || "idea",
-					description: description || null,
-				},
-				include: {
-					responsible: {
-						select: {
-							first_name: true,
-							last_name: true,
-						},
-					},
-				},
-			});
-
-			res.status(201).json({
-				id: publication.id.toString(),
-				title: publication.title,
-				platform: publication.platform,
-				type: publication.type,
-				responsible: `${publication.responsible.first_name} ${publication.responsible.last_name}`,
-				responsibleId: publication.responsible_id.toString(),
-				dueDate: publication.due_date.toISOString().split("T")[0],
-				status: publication.status,
-				description: publication.description || undefined,
-				createdAt: publication.created_at.toISOString(),
-			});
-		} catch (error) {
-			console.error("❌ Błąd dodawania publikacji:", error);
-			res.status(500).json({ error: "Nie udało się dodać publikacji" });
-		}
-	},
-);
-
-// ============================================================
-// 4. MATERIAŁY
-// ============================================================
-
-// 📥 GET - pobierz wszystkie materiały
-app.get(
-	"/api/social/materials",
-	authMiddleware,
-	checkSocialMediaAccess,
-	async (req: any, res) => {
-		try {
-			const materials = await prisma.material.findMany({
-				include: {
-					responsible: {
-						select: {
-							id: true,
-							first_name: true,
-							last_name: true,
-							email: true,
-						},
-					},
-				},
-				orderBy: { deadline: "asc" },
-			});
-
-			const mappedMaterials = materials.map((material: any) => ({
-				id: material.id.toString(),
-				name: material.name,
-				description: material.description || undefined,
-				responsible: `${material.responsible.first_name} ${material.responsible.last_name}`,
-				responsibleId: material.responsible_id.toString(),
-				deadline: material.deadline.toISOString().split("T")[0],
-				priority: material.priority,
-				stage: material.stage,
-				createdAt: material.created_at.toISOString(),
-			}));
-
-			res.json(mappedMaterials);
-		} catch (error) {
-			console.error("❌ Błąd pobierania materiałów:", error);
-			res.status(500).json({ error: "Nie udało się pobrać materiałów" });
-		}
-	},
-);
-
-// ============================================================
-// 5. ZADANIA
-// ============================================================
-
-// 📥 GET - pobierz wszystkie zadania
-app.get(
-	"/api/social/tasks",
-	authMiddleware,
-	checkSocialMediaAccess,
-	async (req: any, res) => {
-		try {
-			const tasks = await prisma.socialTask.findMany({
-				include: {
-					responsible: {
-						select: {
-							id: true,
-							first_name: true,
-							last_name: true,
-							email: true,
-						},
-					},
-				},
-				orderBy: { deadline: "asc" },
-			});
-
-			const mappedTasks = tasks.map((task: any) => ({
-				id: task.id.toString(),
-				name: task.name,
-				description: task.description || undefined,
-				responsible: `${task.responsible.first_name} ${task.responsible.last_name}`,
-				responsibleId: task.responsible_id.toString(),
-				deadline: task.deadline.toISOString().split("T")[0],
-				status: task.status,
-				createdAt: task.created_at.toISOString(),
-			}));
-
-			res.json(mappedTasks);
-		} catch (error) {
-			console.error("❌ Błąd pobierania zadań:", error);
-			res.status(500).json({ error: "Nie udało się pobrać zadań" });
-		}
-	},
-);
-// 🗑️ DELETE - usuń publikację
-app.delete(
-	"/api/social/publications/:id",
-	authMiddleware,
-	checkSocialMediaAccess,
-	async (req: any, res) => {
-		try {
-			const id = parseInt(req.params.id);
-
-			const publication = await prisma.publication.findUnique({
-				where: { id },
-			});
-
-			if (!publication) {
-				return res.status(404).json({ error: "Nie znaleziono publikacji" });
-			}
-
-			await prisma.publication.delete({
-				where: { id },
-			});
-
-			res.status(204).send();
-		} catch (error) {
-			console.error("❌ Błąd usuwania publikacji:", error);
-			res.status(500).json({ error: "Nie udało się usunąć publikacji" });
-		}
-	},
-);
-// ============================================================
-// 6. KONTAKTY MEDIALNE
-// ============================================================
-// 🗑️ DELETE - usuń zadanie
-app.delete(
-	"/api/social/tasks/:id",
-	authMiddleware,
-	checkSocialMediaAccess,
-	async (req: any, res) => {
-		try {
-			const id = parseInt(req.params.id);
-
-			const task = await prisma.socialTask.findUnique({
-				where: { id },
-			});
-
-			if (!task) {
-				return res.status(404).json({ error: "Nie znaleziono zadania" });
-			}
-
-			await prisma.socialTask.delete({
-				where: { id },
-			});
-
-			res.status(204).send();
-		} catch (error) {
-			console.error("❌ Błąd usuwania zadania:", error);
-			res.status(500).json({ error: "Nie udało się usunąć zadania" });
-		}
-	},
-);
-
-// backend/src/server.ts - w sekcji 5. ZADANIA
-
-// 📤 POST - dodaj zadanie
-app.post(
-	"/api/social/tasks",
-	authMiddleware,
-	checkSocialMediaAccess,
-	async (req: any, res) => {
-		try {
-			const { name, description, responsible_id, deadline, status } = req.body;
-
-			console.log("📥 Otrzymano zadanie:", { name, responsible_id, deadline });
-
-			if (!name || !responsible_id || !deadline) {
-				return res.status(400).json({
-					error: "Nazwa, osoba odpowiedzialna i termin są wymagane",
-				});
-			}
-
-			// Sprawdź czy użytkownik istnieje
-			const user = await prisma.user.findUnique({
-				where: { id: parseInt(responsible_id) },
-			});
-
-			if (!user) {
-				return res
-					.status(404)
-					.json({ error: "Osoba odpowiedzialna nie istnieje" });
-			}
-
-			const task = await prisma.socialTask.create({
-				data: {
-					name,
-					description: description || null,
-					responsible_id: parseInt(responsible_id),
-					deadline: new Date(deadline),
-					status: status || "pending",
-				},
-				include: {
-					responsible: {
-						select: {
-							first_name: true,
-							last_name: true,
-						},
-					},
-				},
-			});
-
-			console.log("✅ Utworzono zadanie:", task.id);
-
-			res.status(201).json({
-				id: task.id.toString(),
-				name: task.name,
-				description: task.description || undefined,
-				responsible: `${task.responsible.first_name} ${task.responsible.last_name}`,
-				responsibleId: task.responsible_id.toString(),
-				deadline: task.deadline.toISOString().split("T")[0],
-				status: task.status,
-				createdAt: task.created_at.toISOString(),
-			});
-		} catch (error) {
-			console.error("❌ Błąd dodawania zadania:", error);
-			res.status(500).json({ error: "Nie udało się dodać zadania" });
-		}
-	},
-);
-// backend/src/server.ts - w sekcji 5. ZADANIA
-
-// 📝 PUT - aktualizuj zadanie
-app.put(
-	"/api/social/tasks/:id",
-	authMiddleware,
-	checkSocialMediaAccess,
-	async (req: any, res) => {
-		try {
-			const id = parseInt(req.params.id);
-			const { name, description, responsible_id, deadline, status } = req.body;
-
-			console.log(`📥 Aktualizacja zadania ${id}:`, {
-				name,
-				responsible_id,
-				deadline,
-			});
-
-			// Sprawdź czy zadanie istnieje
-			const existing = await prisma.socialTask.findUnique({
-				where: { id },
-			});
-
-			if (!existing) {
-				return res.status(404).json({ error: "Nie znaleziono zadania" });
-			}
-
-			// Jeśli zmieniamy osobę odpowiedzialną - sprawdź czy istnieje
-			if (responsible_id) {
-				const user = await prisma.user.findUnique({
-					where: { id: parseInt(responsible_id) },
-				});
-				if (!user) {
-					return res
-						.status(404)
-						.json({ error: "Osoba odpowiedzialna nie istnieje" });
-				}
-			}
-
-			const task = await prisma.socialTask.update({
-				where: { id },
-				data: {
-					name: name || undefined,
-					description: description !== undefined ? description : undefined,
-					responsible_id: responsible_id ? parseInt(responsible_id) : undefined,
-					deadline: deadline ? new Date(deadline) : undefined,
-					status: status || undefined,
-				},
-				include: {
-					responsible: {
-						select: {
-							first_name: true,
-							last_name: true,
-						},
-					},
-				},
-			});
-
-			res.json({
-				id: task.id.toString(),
-				name: task.name,
-				description: task.description || undefined,
-				responsible: `${task.responsible.first_name} ${task.responsible.last_name}`,
-				responsibleId: task.responsible_id.toString(),
-				deadline: task.deadline.toISOString().split("T")[0],
-				status: task.status,
-				updatedAt: task.updated_at.toISOString(),
-			});
-		} catch (error) {
-			console.error("❌ Błąd aktualizacji zadania:", error);
-			res.status(500).json({ error: "Nie udało się zaktualizować zadania" });
-		}
-	},
-);
-// backend/src/server.ts - w sekcji 6. KONTAKTY MEDIALNE
-
-// 📤 POST - dodaj kontakt
-app.post(
-	"/api/social/contacts",
-	authMiddleware,
-	checkSocialMediaAccess,
-	async (req: any, res) => {
-		try {
-			const { name, channel, responsible_id, email, phone, notes } = req.body;
-
-			console.log("📥 Otrzymano kontakt:", { name, channel, responsible_id });
-
-			if (!name || !channel || !responsible_id) {
-				return res.status(400).json({
-					error: "Nazwa, kanał i osoba odpowiedzialna są wymagane",
-				});
-			}
-
-			// Sprawdź czy użytkownik istnieje
-			const user = await prisma.user.findUnique({
-				where: { id: parseInt(responsible_id) },
-			});
-
-			if (!user) {
-				return res
-					.status(404)
-					.json({ error: "Osoba odpowiedzialna nie istnieje" });
-			}
-
-			const contact = await prisma.mediaContact.create({
-				data: {
-					name,
-					channel,
-					responsible_id: parseInt(responsible_id),
-					email: email || null,
-					phone: phone || null,
-					notes: notes || null,
-				},
-				include: {
-					responsible: {
-						select: {
-							first_name: true,
-							last_name: true,
-						},
-					},
-				},
-			});
-
-			console.log("✅ Utworzono kontakt:", contact.id);
-
-			res.status(201).json({
-				id: contact.id.toString(),
-				name: contact.name,
-				channel: contact.channel,
-				responsible: `${contact.responsible.first_name} ${contact.responsible.last_name}`,
-				responsibleId: contact.responsible_id.toString(),
-				email: contact.email || undefined,
-				phone: contact.phone || undefined,
-				notes: contact.notes || undefined,
-				createdAt: contact.created_at.toISOString(),
-			});
-		} catch (error) {
-			console.error("❌ Błąd dodawania kontaktu:", error);
-			res.status(500).json({ error: "Nie udało się dodać kontaktu" });
-		}
-	},
-);
-// backend/src/server.ts - w sekcji 6. KONTAKTY MEDIALNE
-
-// 📝 PUT - aktualizuj kontakt
-app.put(
-	"/api/social/contacts/:id",
-	authMiddleware,
-	checkSocialMediaAccess,
-	async (req: any, res) => {
-		try {
-			const id = parseInt(req.params.id);
-			const { name, channel, responsible_id, email, phone, notes } = req.body;
-
-			console.log(`📥 Aktualizacja kontaktu ${id}:`, {
-				name,
-				channel,
-				responsible_id,
-			});
-
-			// Sprawdź czy kontakt istnieje
-			const existing = await prisma.mediaContact.findUnique({
-				where: { id },
-			});
-
-			if (!existing) {
-				return res.status(404).json({ error: "Nie znaleziono kontaktu" });
-			}
-
-			// Jeśli zmieniamy osobę odpowiedzialną - sprawdź czy istnieje
-			if (responsible_id) {
-				const user = await prisma.user.findUnique({
-					where: { id: parseInt(responsible_id) },
-				});
-				if (!user) {
-					return res
-						.status(404)
-						.json({ error: "Osoba odpowiedzialna nie istnieje" });
-				}
-			}
-
-			const contact = await prisma.mediaContact.update({
-				where: { id },
-				data: {
-					name: name || undefined,
-					channel: channel || undefined,
-					responsible_id: responsible_id ? parseInt(responsible_id) : undefined,
-					email: email !== undefined ? email : undefined,
-					phone: phone !== undefined ? phone : undefined,
-					notes: notes !== undefined ? notes : undefined,
-				},
-				include: {
-					responsible: {
-						select: {
-							first_name: true,
-							last_name: true,
-						},
-					},
-				},
-			});
-
-			res.json({
-				id: contact.id.toString(),
-				name: contact.name,
-				channel: contact.channel,
-				responsible: `${contact.responsible.first_name} ${contact.responsible.last_name}`,
-				responsibleId: contact.responsible_id.toString(),
-				email: contact.email || undefined,
-				phone: contact.phone || undefined,
-				notes: contact.notes || undefined,
-				updatedAt: contact.updated_at.toISOString(),
-			});
-		} catch (error) {
-			console.error("❌ Błąd aktualizacji kontaktu:", error);
-			res.status(500).json({ error: "Nie udało się zaktualizować kontaktu" });
-		}
-	},
-);
-
-// 🗑️ DELETE - usuń kontakt
-app.delete(
-	"/api/social/contacts/:id",
-	authMiddleware,
-	checkSocialMediaAccess,
-	async (req: any, res) => {
-		try {
-			const id = parseInt(req.params.id);
-
-			const contact = await prisma.mediaContact.findUnique({
-				where: { id },
-			});
-
-			if (!contact) {
-				return res.status(404).json({ error: "Nie znaleziono kontaktu" });
-			}
-
-			await prisma.mediaContact.delete({
-				where: { id },
-			});
-
-			res.status(204).send();
-		} catch (error) {
-			console.error("❌ Błąd usuwania kontaktu:", error);
-			res.status(500).json({ error: "Nie udało się usunąć kontaktu" });
-		}
-	},
-);
-// 📝 PUT - aktualizuj publikację
-app.put(
-	"/api/social/publications/:id",
-	authMiddleware,
-	checkSocialMediaAccess,
-	async (req: any, res) => {
-		try {
-			const id = parseInt(req.params.id);
-			const {
-				title,
-				platform,
-				type,
-				responsible_id,
-				due_date,
-				status,
-				description,
-			} = req.body;
-
-			const publication = await prisma.publication.update({
-				where: { id },
-				data: {
-					title: title || undefined,
-					platform: platform || undefined,
-					type: type || undefined,
-					responsible_id: responsible_id ? parseInt(responsible_id) : undefined,
-					due_date: due_date ? new Date(due_date) : undefined,
-					status: status || undefined,
-					description: description !== undefined ? description : undefined,
-				},
-				include: {
-					responsible: {
-						select: {
-							first_name: true,
-							last_name: true,
-						},
-					},
-				},
-			});
-
-			res.json({
-				id: publication.id.toString(),
-				title: publication.title,
-				platform: publication.platform,
-				type: publication.type,
-				responsible: `${publication.responsible.first_name} ${publication.responsible.last_name}`,
-				responsibleId: publication.responsible_id.toString(),
-				dueDate: publication.due_date.toISOString().split("T")[0],
-				status: publication.status,
-				description: publication.description || undefined,
-				updatedAt: publication.updated_at.toISOString(),
-			});
-		} catch (error) {
-			console.error("❌ Błąd aktualizacji publikacji:", error);
-			res.status(500).json({ error: "Nie udało się zaktualizować publikacji" });
-		}
-	},
-);
-// 📥 GET - pobierz wszystkie kontakty
-app.get(
-	"/api/social/contacts",
-	authMiddleware,
-	checkSocialMediaAccess,
-	async (req: any, res) => {
-		try {
-			const contacts = await prisma.mediaContact.findMany({
-				include: {
-					responsible: {
-						select: {
-							id: true,
-							first_name: true,
-							last_name: true,
-							email: true,
-						},
-					},
-				},
-				orderBy: { created_at: "desc" },
-			});
-
-			const mappedContacts = contacts.map((contact: any) => ({
-				id: contact.id.toString(),
-				name: contact.name,
-				channel: contact.channel,
-				responsible: `${contact.responsible.first_name} ${contact.responsible.last_name}`,
-				responsibleId: contact.responsible_id.toString(),
-				email: contact.email || undefined,
-				phone: contact.phone || undefined,
-				notes: contact.notes || undefined,
-				createdAt: contact.created_at.toISOString(),
-			}));
-
-			res.json(mappedContacts);
-		} catch (error) {
-			console.error("❌ Błąd pobierania kontaktów:", error);
-			res.status(500).json({ error: "Nie udało się pobrać kontaktów" });
-		}
-	},
-);
-
-console.log("✅ Social Media endpoints loaded");
