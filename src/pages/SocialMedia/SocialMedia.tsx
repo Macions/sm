@@ -62,6 +62,14 @@ interface MaterialFormData {
 	priority: "low" | "medium" | "high";
 	stage: MaterialStage;
 }
+// ⭐ DODAJ TYP DLA EDYCJI MATERIAŁU
+interface EditMaterialModalProps {
+	isOpen: boolean;
+	material: Material | null;
+	onClose: () => void;
+	onSave: (id: string, data: MaterialFormData) => void;
+	teamMembers: TeamMember[];
+}
 interface TeamMember {
 	id: string;
 	user_id: string;
@@ -234,6 +242,173 @@ function AddMaterialModal({
 		</div>
 	);
 }
+// ---------- MODAL EDYCJI MATERIAŁU ----------
+function EditMaterialModal({
+	isOpen,
+	material,
+	onClose,
+	onSave,
+	teamMembers,
+}: EditMaterialModalProps) {
+	const [formData, setFormData] = useState<MaterialFormData>({
+		name: "",
+		description: "",
+		responsible_id: "",
+		deadline: "",
+		priority: "medium",
+		stage: "ideas",
+	});
+
+	// ⭐ WYPEŁNIJ FORMULARZ DANYMI MATERIAŁU
+	useEffect(() => {
+		if (material) {
+			const responsible = teamMembers.find(
+				(m) => `${m.firstName} ${m.lastName}` === material.responsible,
+			);
+			setFormData({
+				name: material.name,
+				description: material.description || "",
+				responsible_id: responsible?.id || "",
+				deadline: material.deadline,
+				priority: material.priority,
+				stage: material.stage,
+			});
+		}
+	}, [material, teamMembers]);
+
+	if (!isOpen || !material) return null;
+
+	const handleSubmit = (e: React.FormEvent) => {
+		e.preventDefault();
+		if (!formData.name || !formData.responsible_id || !formData.deadline) {
+			toast.error("Wypełnij wszystkie wymagane pola");
+			return;
+		}
+		onSave(material.id, formData);
+		onClose();
+	};
+
+	return (
+		<div className={styles.modalOverlay} onClick={onClose}>
+			<div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+				<div className={styles.modal__header}>
+					<h2 className={styles.modal__title}>Edytuj materiał</h2>
+					<button className={styles.modal__close} onClick={onClose}>
+						<X size={20} />
+					</button>
+				</div>
+				<form onSubmit={handleSubmit} className={styles.modal__form}>
+					<div className={styles.modal__field}>
+						<label className={styles.modal__label}>Nazwa materiału *</label>
+						<input
+							type="text"
+							className={styles.modal__input}
+							value={formData.name}
+							onChange={(e) =>
+								setFormData({ ...formData, name: e.target.value })
+							}
+							required
+						/>
+					</div>
+					<div className={styles.modal__field}>
+						<label className={styles.modal__label}>Opis</label>
+						<textarea
+							className={`${styles.modal__input} ${styles.modal__textarea}`}
+							value={formData.description}
+							onChange={(e) =>
+								setFormData({ ...formData, description: e.target.value })
+							}
+							rows={3}
+						/>
+					</div>
+					<div className={styles.modal__field}>
+						<label className={styles.modal__label}>
+							Osoba odpowiedzialna *
+						</label>
+						<select
+							className={styles.modal__select}
+							value={formData.responsible_id}
+							onChange={(e) =>
+								setFormData({ ...formData, responsible_id: e.target.value })
+							}
+							required
+						>
+							<option value="">Wybierz osobę</option>
+							{teamMembers.map((member) => (
+								<option key={member.id} value={member.user_id}>
+									{member.firstName} {member.lastName}
+								</option>
+							))}
+						</select>
+					</div>
+					<div className={styles.modal__row}>
+						<div className={styles.modal__field}>
+							<label className={styles.modal__label}>Termin *</label>
+							<input
+								type="date"
+								className={styles.modal__input}
+								value={formData.deadline}
+								onChange={(e) =>
+									setFormData({ ...formData, deadline: e.target.value })
+								}
+								required
+							/>
+						</div>
+						<div className={styles.modal__field}>
+							<label className={styles.modal__label}>Priorytet</label>
+							<select
+								className={styles.modal__select}
+								value={formData.priority}
+								onChange={(e) =>
+									setFormData({
+										...formData,
+										priority: e.target.value as "low" | "medium" | "high",
+									})
+								}
+							>
+								<option value="low">Niski</option>
+								<option value="medium">Średni</option>
+								<option value="high">Wysoki</option>
+							</select>
+						</div>
+					</div>
+					<div className={styles.modal__field}>
+						<label className={styles.modal__label}>Etap</label>
+						<select
+							className={styles.modal__select}
+							value={formData.stage}
+							onChange={(e) =>
+								setFormData({
+									...formData,
+									stage: e.target.value as MaterialStage,
+								})
+							}
+						>
+							{Object.entries(STAGE_LABELS).map(([key, label]) => (
+								<option key={key} value={key}>
+									{label}
+								</option>
+							))}
+						</select>
+					</div>
+					<div className={styles.modal__actions}>
+						<button
+							type="button"
+							className={styles.modal__btnCancel}
+							onClick={onClose}
+						>
+							Anuluj
+						</button>
+						<button type="submit" className={styles.modal__btnSave}>
+							Zapisz zmiany
+						</button>
+					</div>
+				</form>
+			</div>
+		</div>
+	);
+}
+
 interface EditPublicationModalProps {
 	isOpen: boolean;
 	publication: Publication | null;
@@ -245,6 +420,8 @@ interface MaterialsBoardProps {
 	materials: Material[];
 	canManage?: boolean;
 	onAddMaterial?: () => void;
+	onEditMaterial?: (material: Material) => void; // ⭐ DODAJ
+	onDeleteMaterial?: (id: string) => void; // ⭐ DODAJ
 }
 function EditPublicationModal({
 	isOpen,
@@ -1116,11 +1293,10 @@ function AddMemberModal({
 											return (
 												<div
 													key={user.id}
-													className={`${styles.searchableSelect__item} ${
-														formData.user_id === user.id
-															? styles.searchableSelect__itemSelected
-															: ""
-													}`}
+													className={`${styles.searchableSelect__item} ${formData.user_id === user.id
+														? styles.searchableSelect__itemSelected
+														: ""
+														}`}
 													onClick={() => handleSelectUser(user.id)}
 												>
 													<span className={styles.searchableSelect__itemName}>
@@ -2013,6 +2189,8 @@ function MaterialsBoard({
 	materials,
 	canManage = false,
 	onAddMaterial,
+	onEditMaterial, // ⭐ DODAJ
+	onDeleteMaterial, // ⭐ DODAJ
 }: MaterialsBoardProps) {
 	const stages: MaterialStage[] = [
 		"ideas",
@@ -2069,7 +2247,27 @@ function MaterialsBoard({
 						<div className={styles.board__columnBody}>
 							{getMaterialsByStage(stage).map((material) => (
 								<div key={material.id} className={styles.board__card}>
-									<h4 className={styles.board__cardTitle}>{material.name}</h4>
+									<div className={styles.board__cardHeader}>
+										<h4 className={styles.board__cardTitle}>{material.name}</h4>
+										{canManage && (
+											<div className={styles.board__cardActions}>
+												<button
+													className={styles.board__cardEditBtn}
+													onClick={() => onEditMaterial?.(material)}
+													title="Edytuj"
+												>
+													<Edit size={14} />
+												</button>
+												<button
+													className={styles.board__cardDeleteBtn}
+													onClick={() => onDeleteMaterial?.(material.id)}
+													title="Usuń"
+												>
+													<Trash2 size={14} />
+												</button>
+											</div>
+										)}
+									</div>
 									<p className={styles.board__cardDescription}>
 										{material.description}
 									</p>
@@ -2176,13 +2374,12 @@ function TasksSection({
 							<h3 className={styles.taskCard__title}>{task.name}</h3>
 							<div className={styles.taskCard__actions}>
 								<span
-									className={`${styles.taskCard__status} ${
-										task.status === "done"
-											? styles.taskStatusDone
-											: task.status === "in_progress"
-												? styles.taskStatusInProgress
-												: styles.taskStatusPending
-									}`}
+									className={`${styles.taskCard__status} ${task.status === "done"
+										? styles.taskStatusDone
+										: task.status === "in_progress"
+											? styles.taskStatusInProgress
+											: styles.taskStatusPending
+										}`}
 								>
 									{TASK_STATUS_LABELS[task.status]}
 								</span>
@@ -2342,8 +2539,57 @@ export default function SocialMedia({ title }: { title?: string }) {
 	const [editingContact, setEditingContact] = useState<MediaContact | null>(
 		null,
 	);
+	const [editingMaterial, setEditingMaterial] = useState<Material | null>(null);
+	const [isEditMaterialModalOpen, setIsEditMaterialModalOpen] = useState(false);
 	const [isMaterialModalOpen, setIsMaterialModalOpen] = useState(false);
+	const handleEditMaterial = (material: Material) => {
+		setEditingMaterial(material);
+		setIsEditMaterialModalOpen(true);
+	};
 
+	const handleUpdateMaterial = async (id: string, data: MaterialFormData) => {
+		try {
+			const token = localStorage.getItem("accessToken");
+			const response = await fetch(`/api/social/materials/${id}`, {
+				method: "PUT",
+				headers: {
+					Authorization: `Bearer ${token}`,
+					"Content-Type": "application/json",
+				},
+				body: JSON.stringify(data),
+			});
+			if (!response.ok) throw new Error("Błąd aktualizacji materiału");
+			const updated = await response.json();
+			setMaterials(materials.map((m) => (m.id === id ? updated : m)));
+			toast.success("Materiał zaktualizowany!");
+		} catch (error) {
+			console.error("❌ Błąd:", error);
+			toast.error("Nie udało się zaktualizować materiału");
+		}
+	};
+
+	const handleDeleteMaterial = (id: string) => {
+		showConfirm(
+			"Usuń materiał",
+			"Czy na pewno chcesz usunąć ten materiał? Tej operacji nie można cofnąć.",
+			"Usuń",
+			async () => {
+				try {
+					const token = localStorage.getItem("accessToken");
+					const response = await fetch(`/api/social/materials/${id}`, {
+						method: "DELETE",
+						headers: { Authorization: `Bearer ${token}` },
+					});
+					if (!response.ok) throw new Error("Błąd usuwania materiału");
+					setMaterials(materials.filter((m) => m.id !== id));
+					toast.success("Materiał usunięty!");
+				} catch (error) {
+					console.error("❌ Błąd:", error);
+					toast.error("Nie udało się usunąć materiału");
+				}
+			},
+		);
+	};
 	const [isEditPublicationModalOpen, setIsEditPublicationModalOpen] =
 		useState(false);
 	const [isEditTaskModalOpen, setIsEditTaskModalOpen] = useState(false);
@@ -2381,8 +2627,8 @@ export default function SocialMedia({ title }: { title?: string }) {
 		title: "",
 		message: "",
 		confirmText: "Potwierdź",
-		onConfirm: () => {},
-		onCancel: () => {},
+		onConfirm: () => { },
+		onCancel: () => { },
 	});
 	useEffect(() => {
 		const fetchAllData = async () => {
@@ -2761,6 +3007,18 @@ export default function SocialMedia({ title }: { title?: string }) {
 				materials={materials}
 				canManage={canManage}
 				onAddMaterial={() => setIsMaterialModalOpen(true)}
+				onEditMaterial={handleEditMaterial} // ⭐ DODAJ
+				onDeleteMaterial={handleDeleteMaterial} // ⭐ DODAJ
+			/>
+			<EditMaterialModal
+				isOpen={isEditMaterialModalOpen}
+				material={editingMaterial}
+				onClose={() => {
+					setIsEditMaterialModalOpen(false);
+					setEditingMaterial(null);
+				}}
+				onSave={handleUpdateMaterial}
+				teamMembers={members}
 			/>
 			<AddMaterialModal
 				isOpen={isMaterialModalOpen}
@@ -2850,7 +3108,14 @@ export default function SocialMedia({ title }: { title?: string }) {
 				onSave={handleUpdatePublication}
 				teamMembers={members}
 			/>
-
+			<ConfirmDialog
+				isOpen={confirmDialog.isOpen}
+				title={confirmDialog.title}
+				message={confirmDialog.message}
+				confirmText={confirmDialog.confirmText}
+				onConfirm={confirmDialog.onConfirm}
+				onCancel={confirmDialog.onCancel}
+			/>
 			<EditTaskModal
 				isOpen={isEditTaskModalOpen}
 				task={editingTask}
@@ -2872,6 +3137,7 @@ export default function SocialMedia({ title }: { title?: string }) {
 				onSave={handleUpdateContact}
 				teamMembers={members}
 			/>
+			
 		</div>
 	);
 }
