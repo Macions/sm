@@ -1,4 +1,7 @@
+// frontend/src/pages/Login.tsx
+
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import styles from "./Login.module.css";
 
 const Login: React.FC = () => {
@@ -6,7 +9,9 @@ const Login: React.FC = () => {
 	const [password, setPassword] = useState("");
 	const [loading, setLoading] = useState(false);
 	const [error, setError] = useState<string | null>(null);
-	
+
+	const navigate = useNavigate();
+
 	const getGreeting = () => {
 		const hour = new Date().getHours();
 		if (hour >= 22 || hour < 6) {
@@ -56,6 +61,8 @@ const Login: React.FC = () => {
 			// ===== SPRAWDŹ STATUS ONBOARDINGU =====
 			try {
 				const token = localStorage.getItem("accessToken");
+				console.log("🔍 Sprawdzam status onboardingu...");
+
 				const onboardingResponse = await fetch("/api/auth/onboarding-status", {
 					method: "GET",
 					headers: {
@@ -64,34 +71,33 @@ const Login: React.FC = () => {
 					},
 				});
 
+				console.log("📡 Status onboardingu:", onboardingResponse.status);
+
 				if (onboardingResponse.ok) {
 					const onboardingData = await onboardingResponse.json();
 					console.log("📋 Status onboardingu:", onboardingData);
 
 					if (onboardingData.completed) {
-						console.log("➡️ Przekierowanie do Dashboard");
+						console.log("✅ Onboarding ukończony - przechodzę do dashboard");
 						localStorage.setItem("onboardingCompleted", "true");
 						window.location.href = "/dashboard";
-
 					} else {
-						console.log("➡️ Przekierowanie do Onboarding");
+						console.log("⚠️ Onboarding NIEUKOŃCZONY - przechodzę do onboarding");
 						localStorage.removeItem("onboardingCompleted");
 						window.location.href = "/onboarding";
-
 					}
 				} else {
-					// Jeśli odpowiedź nie jest OK, i tak przejdź do dashboardu
-					console.warn(
-						"⚠️ Błąd sprawdzania onboardingu, przechodzę do dashboardu",
-					);
-					localStorage.setItem("onboardingCompleted", "true");
-					navigate("/dashboard");
+					// ⭐ ENDPOINT NIE ISTNIEJE LUB BŁĄD - zakładamy że onboarding jest potrzebny
+					console.warn("⚠️ Błąd sprawdzania onboardingu (", onboardingResponse.status, ") - przekierowuję do onboardingu");
+					localStorage.removeItem("onboardingCompleted");
+					window.location.href = "/onboarding";
 				}
 			} catch (onboardingError) {
 				console.error("❌ Błąd sprawdzania onboardingu:", onboardingError);
-				// W przypadku błędu - przejdź do dashboardu (bezpieczniej)
-				localStorage.setItem("onboardingCompleted", "true");
-				navigate("/dashboard");
+				// ⭐ W PRZYPADKU BŁĘDU - PRZEJDŹ DO ONBOARDINGU (bezpieczniej)
+				console.log("⚠️ Błąd - przekierowuję do onboardingu");
+				localStorage.removeItem("onboardingCompleted");
+				window.location.href = "/onboarding";
 			}
 		} catch (error) {
 			console.error("❌ Błąd logowania:", error);

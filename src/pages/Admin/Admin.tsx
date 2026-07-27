@@ -1,76 +1,463 @@
-import { useState, useMemo, useEffect } from "react"; // <-- ZMIEŃ IMPORT
-import { useNavigate } from "react-router-dom"; // <-- DODAJ
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import toast from "react-hot-toast";
 import {
     Users,
-    Search,
     Plus,
     Edit,
     Trash2,
-    Eye,
-    User,
-    MapPin,
-    Briefcase,
-    Clock,
     CheckCircle,
-    Calendar,
-    Tag,
     ChevronDown,
     ChevronRight,
-    X,
-    Download,
-    Mail,
-    Shield,
     FolderTree,
-    Projector,
-    Briefcase as BriefcaseIcon,
-    UserCheck,
-    UserX,
+    RefreshCw,
+    Mail,
+    UserCog,
+    Building2,
+    Briefcase,
+    Megaphone,
+    GraduationCap,
+    X,
+    Save,
+    UserPlus,
+    Crown,
+    User,
+    Shield,
 } from "lucide-react";
+import type { Permission } from "../../utils/permissions";
+import {
+    PERMISSION_LABELS,
+    clearPermissionsCache,
+    updateRolePermissions,
+} from "../../utils/permissions";
+import { ConfirmDialog } from "../../components/common/ConfirmDialog";
 import styles from "./Admin.module.css";
 
 // ---------------------------------------------------------------------------
 // TYPY
 // ---------------------------------------------------------------------------
 
-type UserRole = "admin" | "board" | "coordinator" | "member" | "mentor";
-type UserStatus = "trial" | "active" | "mentor" | "former";
-type ProjectStatus = "planning" | "work" | "promotion" | "completed";
-type DocumentCategory =
-    | "new_member"
-    | "coordinator"
-    | "project_guidelines"
-    | "statute"
-    | "regulations"
-    | "procedures";
-
-type Permission =
-    | "manage_users"
-    | "manage_projects"
-    | "approve_leaves"
-    | "add_documents"
-    | "manage_structure"
-    | "manage_social_media"
-    | "view_member_data"
-    | "manage_roles";
-
 // ---------------------------------------------------------------------------
-// INTERFEJSY
+// TYPY DLA LOGÓW
 // ---------------------------------------------------------------------------
 
-interface AdminUser {
+interface SystemLog {
     id: string;
-    firstName: string;
-    lastName: string;
-    email: string;
-    province: string;
-    role: UserRole;
-    team: string;
-    status: UserStatus;
-    joinDate: string;
-    active: boolean;
-    permissions?: Permission[];
+    user_id: number;
+    user_name: string;
+    user_role: string;
+    action_type: 'CREATE' | 'UPDATE' | 'DELETE' | 'LOGIN' | 'LOGOUT' | 'APPROVE' | 'REJECT';
+    category: 'USER' | 'TEAM' | 'LEAVE' | 'PROJECT' | 'VACANCY' | 'TUTORIAL' | 'SOCIAL_MEDIA' | 'PERMISSION' | 'STRUCTURE' | 'NOTIFICATION' | 'AUTH';
+    endpoint: string;
+    method: string;
+    entity_id: string | null;
+    entity_name: string | null;
+    changes: any;
+    ip_address: string | null;
+    user_agent: string | null;
+    status: 'success' | 'error' | 'warning';
+    error_message: string | null;
+    created_at: string;
 }
 
+interface LogsResponse {
+    logs: SystemLog[];
+    total: number;
+    page: number;
+    totalPages: number;
+    limit: number;
+}
+
+type UserRole = "admin" | "board" | "coordinator" | "member" | "mentor";
+
+// ---- Komponent zarządzania logami ----
+// ---- Komponent zarządzania logami ----
+function LogsManagement() {
+    const [logs, setLogs] = useState<SystemLog[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [page, setPage] = useState(1);
+    const [totalPages, setTotalPages] = useState(1);
+    const [total, setTotal] = useState(0);
+    const [limit] = useState(15);
+    const [searchTerm, setSearchTerm] = useState("");
+    const [selectedCategory, setSelectedCategory] = useState<string>("all");
+    const [selectedAction, setSelectedAction] = useState<string>("all");
+    const [selectedStatus, setSelectedStatus] = useState<string>("all");
+
+    // Przyjazne nazwy kategorii
+    const categoryLabels: Record<string, string> = {
+        USER: 'Użytkownicy',
+        TEAM: 'Zespoły',
+        LEAVE: 'Urlopy i nieobecności',
+        PROJECT: 'Projekty',
+        VACANCY: 'Rekrutacja',
+        TUTORIAL: 'Poradniki',
+        SOCIAL_MEDIA: 'Media społecznościowe',
+        PERMISSION: 'Uprawnienia',
+        STRUCTURE: 'Struktura organizacji',
+        NOTIFICATION: 'Powiadomienia',
+        AUTH: 'Logowanie'
+    };
+
+    // Przyjazne nazwy akcji
+    const actionLabels: Record<string, string> = {
+        CREATE: 'Dodanie',
+        UPDATE: 'Modyfikacja',
+        DELETE: 'Usunięcie',
+        LOGIN: 'Logowanie',
+        LOGOUT: 'Wylogowanie',
+        APPROVE: 'Zatwierdzenie',
+        REJECT: 'Odrzucenie'
+    };
+
+    // Przyjazne opisy statusów
+    const statusLabels: Record<string, { label: string; icon: string; color: string }> = {
+        success: { label: 'Powodzenie', icon: '✓', color: '#059669' },
+        error: { label: 'Błąd', icon: '✗', color: '#dc2626' },
+        warning: { label: 'Ostrzeżenie', icon: '⚠', color: '#d97706' }
+    };
+
+    // Funkcja do generowania przyjaznego opisu akcji
+    const getHumanReadableDescription = (log: SystemLog): string => {
+        const action = actionLabels[log.action_type] || log.action_type;
+        const category = categoryLabels[log.category] || log.category;
+
+        // Specjalne przypadki dla bardziej szczegółowych opisów
+        if (log.category === 'LEAVE' && log.action_type === 'CREATE') {
+            return `Zgłoszono nowy wniosek urlopowy przez ${log.user_name}`;
+        }
+        if (log.category === 'LEAVE' && log.action_type === 'DELETE') {
+            return `Usunięto wniosek urlopowy (${log.entity_name || 'brak danych'})`;
+        }
+        if (log.category === 'LEAVE' && log.action_type === 'APPROVE') {
+            return `Zatwierdzono wniosek urlopowy`;
+        }
+        if (log.category === 'LEAVE' && log.action_type === 'REJECT') {
+            return `Odrzucono wniosek urlopowy`;
+        }
+        if (log.category === 'TEAM' && log.action_type === 'CREATE') {
+            return `Utworzono nowy zespół: ${log.entity_name || 'brak nazwy'}`;
+        }
+        if (log.category === 'TEAM' && log.action_type === 'DELETE') {
+            return `Usunięto zespół: ${log.entity_name || 'brak nazwy'}`;
+        }
+        if (log.category === 'USER' && log.action_type === 'UPDATE') {
+            return `Zaktualizowano dane profilu użytkownika ${log.user_name}`;
+        }
+        if (log.category === 'PERMISSION' && log.action_type === 'UPDATE') {
+            return `Zmieniono uprawnienia dla roli`;
+        }
+        if (log.category === 'AUTH' && log.action_type === 'LOGIN') {
+            return `Użytkownik ${log.user_name} zalogował się do systemu`;
+        }
+        if (log.category === 'AUTH' && log.action_type === 'LOGOUT') {
+            return `Użytkownik ${log.user_name} wylogował się z systemu`;
+        }
+
+        // Domyślny opis
+        return `${action} w kategorii ${category.toLowerCase()}`;
+    };
+
+    // Funkcja do wyciągania czytelnych zmian
+    const getReadableChanges = (log: SystemLog): string | null => {
+        if (!log.changes) return null;
+
+        try {
+            const changes = typeof log.changes === 'string' ? JSON.parse(log.changes) : log.changes;
+
+            // Dla urlopów - pokaż daty
+            if (log.category === 'LEAVE' && changes.startDate && changes.endDate) {
+                const start = new Date(changes.startDate).toLocaleDateString('pl-PL');
+                const end = new Date(changes.endDate).toLocaleDateString('pl-PL');
+                return `Okres: ${start} - ${end}`;
+            }
+
+            // Dla profilu - pokaż co było zmieniane
+            if (log.category === 'USER' && log.action_type === 'UPDATE') {
+                const fields: string[] = [];
+                if (changes.firstName) fields.push(`imię na "${changes.firstName}"`);
+                if (changes.lastName) fields.push(`nazwisko na "${changes.lastName}"`);
+                if (changes.description) fields.push(`opis profilu`);
+                if (changes.skills !== undefined) fields.push(`umiejętności`);
+                if (changes.availability) fields.push(`dostępność`);
+                if (fields.length === 0) return 'Zaktualizowano dane profilu';
+                return `Zmieniono: ${fields.join(', ')}`;
+            }
+
+            // Dla zespołów
+            if (log.category === 'TEAM' && changes.name) {
+                return `Nazwa zespołu: "${changes.name}"`;
+            }
+
+            // Ogólnie - pokaż pierwsze 3 klucze
+            const keys = Object.keys(changes);
+            if (keys.length === 0) return null;
+            if (keys.length <= 3) {
+                return keys.map(k => `${k}: ${changes[k]}`).join(', ');
+            }
+            return `${keys.slice(0, 3).map(k => `${k}: ${changes[k]}`).join(', ')} i ${keys.length - 3} innych...`;
+        } catch {
+            return null;
+        }
+    };
+
+    // Funkcja do formatowania daty
+    const formatDateTime = (date: string) => {
+        const d = new Date(date);
+        return d.toLocaleString('pl-PL', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+    };
+
+    // Funkcja do formatowania daty z czasem względnym
+    const getRelativeTime = (date: string) => {
+        const now = new Date();
+        const then = new Date(date);
+        const diffMs = now.getTime() - then.getTime();
+        const diffMin = Math.floor(diffMs / 60000);
+        const diffHour = Math.floor(diffMin / 60);
+        const diffDay = Math.floor(diffHour / 24);
+
+        if (diffMin < 1) return 'przed chwilą';
+        if (diffMin < 60) return `${diffMin} min temu`;
+        if (diffHour < 24) return `${diffHour} godz. temu`;
+        if (diffDay === 1) return 'wczoraj';
+        if (diffDay < 7) return `${diffDay} dni temu`;
+        if (diffDay < 30) {
+            const weeks = Math.floor(diffDay / 7);
+            return `${weeks} ${weeks === 1 ? 'tydzień' : 'tygodnie'} temu`;
+        }
+        if (diffDay < 365) {
+            const months = Math.floor(diffDay / 30);
+            return `${months} ${months === 1 ? 'miesiąc' : 'miesięcy'} temu`;
+        }
+        const years = Math.floor(diffDay / 365);
+        return `${years} ${years === 1 ? 'rok' : 'lat'} temu`;
+    };
+
+    const fetchLogs = async () => {
+        try {
+            setLoading(true);
+            const token = localStorage.getItem("accessToken");
+
+            let url = `/api/admin/logs?page=${page}&limit=${limit}`;
+            if (searchTerm) url += `&search=${encodeURIComponent(searchTerm)}`;
+            if (selectedCategory !== "all") url += `&category=${selectedCategory}`;
+            if (selectedAction !== "all") url += `&action=${selectedAction}`;
+            if (selectedStatus !== "all") url += `&status=${selectedStatus}`;
+
+            const response = await fetch(url, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    "Content-Type": "application/json",
+                },
+            });
+
+            if (!response.ok) throw new Error("Błąd pobierania logów");
+
+            const data: LogsResponse = await response.json();
+            setLogs(data.logs);
+            setTotal(data.total);
+            setTotalPages(data.totalPages);
+        } catch (error) {
+            console.error("❌ Błąd:", error);
+            toast.error("Nie udało się pobrać logów");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchLogs();
+    }, [page, searchTerm, selectedCategory, selectedAction, selectedStatus]);
+
+    const categories = Object.keys(categoryLabels);
+    const actionTypes = Object.keys(actionLabels);
+    const statusTypes = ['success', 'error', 'warning'];
+
+    return (
+        <section className={styles.section}>
+            <div className={styles.section__header}>
+                <div className={styles.section__headerLeft}>
+                    <h2 className={styles.section__title}>Historia działań</h2>
+                    <p className={styles.section__subtitle}>
+                        Rejestr wszystkich operacji wykonanych w systemie.
+                    </p>
+                </div>
+                <button
+                    className={styles.section__refreshBtn}
+                    onClick={() => { setPage(1); fetchLogs(); }}
+                    title="Odśwież logi"
+                >
+                    <RefreshCw size={16} />
+                </button>
+            </div>
+
+            {/* Filtry */}
+            <div className={styles.logsFilters}>
+                <div className={styles.logsFilters__search}>
+                    <input
+                        type="text"
+                        className={styles.logsFilters__input}
+                        placeholder="Szukaj po nazwie użytkownika lub opisie..."
+                        value={searchTerm}
+                        onChange={(e) => {
+                            setSearchTerm(e.target.value);
+                            setPage(1);
+                        }}
+                    />
+                    {searchTerm && (
+                        <button
+                            className={styles.logsFilters__clear}
+                            onClick={() => { setSearchTerm(""); setPage(1); }}
+                        >
+                            <X size={14} />
+                        </button>
+                    )}
+                </div>
+                <div className={styles.logsFilters__group}>
+                    <select
+                        className={styles.logsFilters__select}
+                        value={selectedCategory}
+                        onChange={(e) => { setSelectedCategory(e.target.value); setPage(1); }}
+                    >
+                        <option value="all">Wszystkie obszary</option>
+                        {categories.map(cat => (
+                            <option key={cat} value={cat}>{categoryLabels[cat]}</option>
+                        ))}
+                    </select>
+                    <select
+                        className={styles.logsFilters__select}
+                        value={selectedAction}
+                        onChange={(e) => { setSelectedAction(e.target.value); setPage(1); }}
+                    >
+                        <option value="all">Wszystkie operacje</option>
+                        {actionTypes.map(action => (
+                            <option key={action} value={action}>{actionLabels[action]}</option>
+                        ))}
+                    </select>
+                    <select
+                        className={styles.logsFilters__select}
+                        value={selectedStatus}
+                        onChange={(e) => { setSelectedStatus(e.target.value); setPage(1); }}
+                    >
+                        <option value="all">Wszystkie statusy</option>
+                        <option value="success">✓ Powodzenie</option>
+                        <option value="error">✗ Błąd</option>
+                        <option value="warning">⚠ Ostrzeżenie</option>
+                    </select>
+                </div>
+            </div>
+
+            {/* Lista logów */}
+            {loading ? (
+                <div className={styles.logsLoading}>Ładowanie historii...</div>
+            ) : logs.length === 0 ? (
+                <div className={styles.logsEmpty}>
+                    <Shield size={48} />
+                    <h3>Brak zapisanych działań</h3>
+                    <p>Nie znaleziono żadnych wpisów spełniających kryteria wyszukiwania.</p>
+                </div>
+            ) : (
+                <>
+                    <div className={styles.logsList}>
+                        {logs.map((log) => {
+                            const statusInfo = statusLabels[log.status] || statusLabels.success;
+                            const description = getHumanReadableDescription(log);
+                            const changes = getReadableChanges(log);
+                            const relativeTime = getRelativeTime(log.created_at);
+                            const fullTime = formatDateTime(log.created_at);
+
+                            return (
+                                <div key={log.id} className={styles.logItem}>
+                                    <div className={styles.logItem__header}>
+                                        <div className={styles.logItem__left}>
+                                            <span
+                                                className={styles.logItem__statusDot}
+                                                style={{ backgroundColor: statusInfo.color }}
+                                            />
+                                            <span className={styles.logItem__user}>
+                                                {log.user_name}
+                                            </span>
+                                            <span className={styles.logItem__action}>
+                                                {actionLabels[log.action_type] || log.action_type}
+                                            </span>
+                                            <span className={styles.logItem__category}>
+                                                {categoryLabels[log.category] || log.category}
+                                            </span>
+                                        </div>
+                                        <div className={styles.logItem__right}>
+                                            <span className={styles.logItem__time} title={fullTime}>
+                                                {relativeTime}
+                                            </span>
+                                        </div>
+                                    </div>
+
+                                    <div className={styles.logItem__body}>
+                                        <div className={styles.logItem__description}>
+                                            {description}
+                                        </div>
+
+                                        {changes && (
+                                            <div className={styles.logItem__changes}>
+                                                <span className={styles.logItem__changesLabel}>
+                                                    Szczegóły: {changes}
+                                                </span>
+                                            </div>
+                                        )}
+
+                                        {log.error_message && (
+                                            <div className={styles.logItem__error}>
+                                                Błąd: {log.error_message}
+                                            </div>
+                                        )}
+
+                                        {log.entity_id && (
+                                            <div className={styles.logItem__meta}>
+                                                <span>Identyfikator: {log.entity_id}</span>
+                                                {log.ip_address && <span>Adres IP: {log.ip_address}</span>}
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
+
+                    {/* Paginacja */}
+                    <div className={styles.pagination}>
+                        <div className={styles.pagination__info}>
+                            Wyświetlono {(page - 1) * limit + 1} - {Math.min(page * limit, total)} z {total} wpisów
+                        </div>
+                        <div className={styles.pagination__controls}>
+                            <button
+                                className={styles.pagination__btn}
+                                onClick={() => setPage(page - 1)}
+                                disabled={page === 1}
+                            >
+                                Poprzednia strona
+                            </button>
+                            <span className={styles.pagination__current}>
+                                Strona {page} z {totalPages}
+                            </span>
+                            <button
+                                className={styles.pagination__btn}
+                                onClick={() => setPage(page + 1)}
+                                disabled={page === totalPages}
+                            >
+                                Następna strona
+                            </button>
+                        </div>
+                    </div>
+                </>
+            )}
+        </section>
+    );
+}
 interface Role {
     id: string;
     name: UserRole;
@@ -79,339 +466,41 @@ interface Role {
     description: string;
 }
 
+interface TeamMember {
+    id: string;
+    user_id: string;
+    team_id: string;
+    first_name: string;
+    last_name: string;
+    email: string;
+    functional_role: string;
+    province: string;
+    role_in_team: string;
+    is_leader: boolean;
+}
+
 interface Team {
     id: string;
     name: string;
     description: string;
-    parent?: string;
-    members: string[];
-    lead?: string;
+    role: string;
+    icon: string;
+    status: string;
+    parent_id: string | null;
+    email: string | null;
+    members: TeamMember[];
+    created_at: string;
 }
 
-interface Document {
+interface AvailableUser {
     id: string;
-    title: string;
-    category: DocumentCategory;
-    description: string;
-    url: string;
-    visibility: "all" | "coordinator" | "admin";
-    createdAt: string;
-    updatedAt: string;
-    author: string;
+    first_name: string;
+    last_name: string;
+    email: string;
+    functional_role: string;
+    province: string;
+    team_ids: string[];
 }
-
-interface Project {
-    id: string;
-    name: string;
-    description: string;
-    pillar: string;
-    coordinator: string;
-    team: string;
-    status: ProjectStatus;
-    estimatedEnd: string;
-    createdAt: string;
-    updatedAt?: string;
-}
-
-interface Vacancy {
-    id: string;
-    title: string;
-    description: string;
-    requirements: string;
-    team: string;
-    contactPerson: string;
-    status: "open" | "closed";
-    createdAt: string;
-}
-
-interface SystemLog {
-    id: string;
-    action: string;
-    user: string;
-    timestamp: string;
-    details: string;
-}
-
-
-// ---------------------------------------------------------------------------
-// DANE PRZYKŁADOWE
-// ---------------------------------------------------------------------------
-
-const MOCK_ADMIN = {
-    id: "1",
-    name: "Jan Kowalski",
-    role: "member",
-};
-
-const MOCK_USERS: AdminUser[] = [
-    {
-        id: "1",
-        firstName: "Maksym",
-        lastName: "Marczak",
-        email: "maksym.marczak@silamlodych.pl",
-        province: "Mazowieckie",
-        role: "admin",
-        team: "Zarząd",
-        status: "active",
-        joinDate: "2024-01-15",
-        active: true,
-        permissions: ["manage_users", "manage_projects", "approve_leaves", "add_documents", "manage_structure", "manage_social_media", "view_member_data", "manage_roles"],
-    },
-    {
-        id: "2",
-        firstName: "Krzysztof",
-        lastName: "Korbut",
-        email: "krzysztof.korbut@silamlodych.pl",
-        province: "Małopolskie",
-        role: "board",
-        team: "Zarząd",
-        status: "active",
-        joinDate: "2024-02-01",
-        active: true,
-        permissions: ["manage_projects", "approve_leaves", "view_member_data"],
-    },
-    {
-        id: "3",
-        firstName: "Zosia",
-        lastName: "Wartacz",
-        email: "zosia.wartacz@silamlodych.pl",
-        province: "Pomorskie",
-        role: "coordinator",
-        team: "Filar Projektowy",
-        status: "active",
-        joinDate: "2024-03-15",
-        active: true,
-        permissions: ["manage_projects", "view_member_data"],
-    },
-    {
-        id: "4",
-        firstName: "Adrian",
-        lastName: "Wróblewski",
-        email: "adrian.wroblewski@silamlodych.pl",
-        province: "Dolnośląskie",
-        role: "member",
-        team: "Filar Konferencji i Debat",
-        status: "trial",
-        joinDate: "2025-06-01",
-        active: true,
-        permissions: [],
-    },
-    {
-        id: "5",
-        firstName: "Jan",
-        lastName: "Augustynak",
-        email: "jan.augustynak@silamlodych.pl",
-        province: "Łódzkie",
-        role: "mentor",
-        team: "Filar Rzeczniczy",
-        status: "mentor",
-        joinDate: "2023-11-01",
-        active: true,
-        permissions: ["view_member_data"],
-    },
-];
-
-const MOCK_ROLES: Role[] = [
-    {
-        id: "admin",
-        name: "admin",
-        label: "Administrator główny",
-        description: "Pełny dostęp do systemu",
-        permissions: ["manage_users", "manage_projects", "approve_leaves", "add_documents", "manage_structure", "manage_social_media", "view_member_data", "manage_roles"],
-    },
-    {
-        id: "board",
-        name: "board",
-        label: "Zarząd",
-        description: "Zarządzanie projektami i strukturami",
-        permissions: ["manage_projects", "approve_leaves", "manage_structure", "view_member_data"],
-    },
-    {
-        id: "coordinator",
-        name: "coordinator",
-        label: "Koordynator",
-        description: "Zarządzanie projektami i zespołami",
-        permissions: ["manage_projects", "view_member_data"],
-    },
-    {
-        id: "member",
-        name: "member",
-        label: "Członek",
-        description: "Podstawowy dostęp",
-        permissions: [],
-    },
-    {
-        id: "mentor",
-        name: "mentor",
-        label: "Mentor",
-        description: "Dostęp do danych członków",
-        permissions: ["view_member_data"],
-    },
-];
-
-const MOCK_TEAMS: Team[] = [
-    {
-        id: "board",
-        name: "Zarząd",
-        description: "Najwyższy organ zarządzający",
-        members: ["1", "2"],
-    },
-    {
-        id: "project",
-        name: "Filar Projektowy",
-        description: "Tworzenie i prowadzenie projektów",
-        parent: "pillars",
-        members: ["3"],
-    },
-    {
-        id: "conference",
-        name: "Filar Konferencji i Debat",
-        description: "Organizacja debat i wydarzeń",
-        parent: "pillars",
-        members: ["4"],
-    },
-    {
-        id: "advocacy",
-        name: "Filar Rzeczniczy",
-        description: "Komunikacja i reprezentowanie organizacji",
-        parent: "pillars",
-        members: ["5"],
-    },
-    {
-        id: "simulation",
-        name: "Filar Symulacyjny",
-        description: "Symulacje edukacyjne",
-        parent: "pillars",
-        members: [],
-    },
-    {
-        id: "social-media",
-        name: "Social Media",
-        description: "Zarządzanie mediami społecznościowymi",
-        members: [],
-    },
-    {
-        id: "court",
-        name: "Sąd Koleżeński",
-        description: "Rozwiązywanie sporów",
-        members: [],
-    },
-    {
-        id: "audit",
-        name: "Komisja Rewizyjna",
-        description: "Kontrola działalności organizacji",
-        members: [],
-    },
-];
-
-const MOCK_DOCUMENTS: Document[] = [
-    {
-        id: "1",
-        title: "Poradnik nowych członków",
-        category: "new_member",
-        description: "Kompleksowy przewodnik dla nowych członków",
-        url: "#",
-        visibility: "all",
-        createdAt: "2026-01-15",
-        updatedAt: "2026-07-15",
-        author: "Maksym Marczak",
-    },
-    {
-        id: "2",
-        title: "Poradnik koordynatorów",
-        category: "coordinator",
-        description: "Materiał dla koordynatorów",
-        url: "#",
-        visibility: "coordinator",
-        createdAt: "2026-02-01",
-        updatedAt: "2026-07-12",
-        author: "Zarząd",
-    },
-    {
-        id: "3",
-        title: "Wytyczne projektowe",
-        category: "project_guidelines",
-        description: "Zasady tworzenia projektów",
-        url: "#",
-        visibility: "all",
-        createdAt: "2026-03-15",
-        updatedAt: "2026-07-10",
-        author: "Dział Projektów",
-    },
-];
-
-const MOCK_PROJECTS: Project[] = [
-    {
-        id: "1",
-        name: "Letnia Akademia Liderów",
-        description: "Szkolenia dla młodych liderów",
-        pillar: "Filar Projektowy",
-        coordinator: "Zosia Wartacz",
-        team: "Filar Projektowy",
-        status: "work",
-        estimatedEnd: "2026-09-30",
-        createdAt: "2026-06-01",
-    },
-    {
-        id: "2",
-        name: "Debata Młodych 2026",
-        description: "Ogólnopolska debata młodzieżowa",
-        pillar: "Filar Konferencji i Debat",
-        coordinator: "Adrian Wróblewski",
-        team: "Filar Konferencji i Debat",
-        status: "planning",
-        estimatedEnd: "2026-11-15",
-        createdAt: "2026-07-01",
-    },
-];
-
-const MOCK_VACANCIES: Vacancy[] = [
-    {
-        id: "1",
-        title: "Koordynator Filaru Symulacyjnego",
-        description: "Zarządzanie filarem symulacyjnym",
-        requirements: "Doświadczenie w prowadzeniu symulacji",
-        team: "Filar Symulacyjny",
-        contactPerson: "Maksym Marczak",
-        status: "open",
-        createdAt: "2026-07-01",
-    },
-    {
-        id: "2",
-        title: "Social Media Manager",
-        description: "Zarządzanie mediami społecznościowymi",
-        requirements: "Znajomość Instagrama, TikToka",
-        team: "Social Media",
-        contactPerson: "Maja Melerska",
-        status: "open",
-        createdAt: "2026-07-15",
-    },
-];
-
-const MOCK_LOGS: SystemLog[] = [
-    {
-        id: "1",
-        action: "Nadano rolę koordynatora",
-        user: "Maksym Marczak",
-        timestamp: "2026-07-15T10:30:00",
-        details: "Użytkownik Zosia Wartacz otrzymał rolę koordynatora",
-    },
-    {
-        id: "2",
-        action: "Dodano nowy projekt",
-        user: "Maksym Marczak",
-        timestamp: "2026-07-01T09:00:00",
-        details: "Utworzono projekt 'Debata Młodych 2026'",
-    },
-    {
-        id: "3",
-        action: "Zmieniono status projektu",
-        user: "Zosia Wartacz",
-        timestamp: "2026-06-15T14:20:00",
-        details: "Status projektu 'Letnia Akademia Liderów' zmieniony na 'Faza pracy'",
-    },
-];
-
 
 // ---------------------------------------------------------------------------
 // MAPOWANIA
@@ -425,201 +514,81 @@ const ROLE_LABELS: Record<UserRole, string> = {
     mentor: "Mentor",
 };
 
-const STATUS_LABELS: Record<UserStatus, string> = {
-    trial: "Okres próbny",
-    active: "Aktywny członek",
-    mentor: "Mentor",
-    former: "Były członek",
-};
-
-const STATUS_COLORS: Record<UserStatus, string> = {
-    trial: styles.statusTrial,
-    active: styles.statusActive,
-    mentor: styles.statusMentor,
-    former: styles.statusFormer,
-};
-
-const PROJECT_STATUS_LABELS: Record<ProjectStatus, string> = {
-    planning: "Faza planowania",
-    work: "Faza pracy",
-    promotion: "Faza promocji",
-    completed: "Zakończony",
-};
-
-const PROJECT_STATUS_COLORS: Record<ProjectStatus, string> = {
-    planning: styles.projectStatusPlanning,
-    work: styles.projectStatusWork,
-    promotion: styles.projectStatusPromotion,
-    completed: styles.projectStatusCompleted,
-};
-
-const DOCUMENT_CATEGORY_LABELS: Record<DocumentCategory, string> = {
-    new_member: "Poradnik nowych członków",
-    coordinator: "Poradnik koordynatorów",
-    project_guidelines: "Wytyczne projektowe",
-    statute: "Statut",
-    regulations: "Regulamin",
-    procedures: "Procedury organizacyjne",
-};
-
-const PERMISSION_LABELS: Record<Permission, string> = {
-    manage_users: "Zarządzanie użytkownikami",
-    manage_projects: "Zarządzanie projektami",
-    approve_leaves: "Akceptowanie urlopów",
-    add_documents: "Dodawanie dokumentów",
-    manage_structure: "Zarządzanie strukturą",
-    manage_social_media: "Zarządzanie social mediami",
-    view_member_data: "Dostęp do danych członków",
-    manage_roles: "Zarządzanie rolami",
-};
+const ICON_OPTIONS = [
+    { value: "Users", label: "Użytkownicy", icon: Users },
+    { value: "UserCog", label: "Ustawienia użytkownika", icon: UserCog },
+    { value: "Building2", label: "Budynki", icon: Building2 },
+    { value: "Briefcase", label: "Teczka", icon: Briefcase },
+    { value: "Megaphone", label: "Megafon", icon: Megaphone },
+    { value: "GraduationCap", label: "Czapka", icon: GraduationCap },
+];
 
 // ---------------------------------------------------------------------------
 // KOMPONENTY
 // ---------------------------------------------------------------------------
 
-function UsersManagement({ users, canManage }: { users: AdminUser[]; canManage: boolean }) {
-    const [searchTerm, setSearchTerm] = useState("");
-    const [selectedRole, setSelectedRole] = useState<UserRole | "all">("all");
-    const [selectedStatus, setSelectedStatus] = useState<UserStatus | "all">("all");
-
-    const filteredUsers = useMemo(() => {
-        return users.filter((user) => {
-            const matchesSearch =
-                (user.firstName + " " + user.lastName).toLowerCase().includes(searchTerm.toLowerCase()) ||
-                user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                user.team.toLowerCase().includes(searchTerm.toLowerCase());
-            const matchesRole = selectedRole === "all" || user.role === selectedRole;
-            const matchesStatus = selectedStatus === "all" || user.status === selectedStatus;
-            return matchesSearch && matchesRole && matchesStatus;
-        });
-    }, [users, searchTerm, selectedRole, selectedStatus]);
-
-    return (
-        <section className={styles.section}>
-            <div className={styles.section__header}>
-                <div className={styles.section__headerLeft}>
-                    <h2 className={styles.section__title}>Zarządzanie użytkownikami</h2>
-                    <p className={styles.section__subtitle}>
-                        Zarządzanie członkami Stowarzyszenia Siła Młodych.
-                    </p>
-                </div>
-                {canManage && (
-                    <button className={styles.section__addBtn}>
-                        <Plus size={18} />
-                        Dodaj użytkownika
-                    </button>
-                )}
-            </div>
-
-            <div className={styles.section__filters}>
-                <div className={styles.section__search}>
-                    <Search size={18} className={styles.section__searchIcon} />
-                    <input
-                        type="text"
-                        className={styles.section__searchInput}
-                        placeholder="Szukaj po imieniu, nazwisku, email, zespole..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                    />
-                </div>
-                <select
-                    className={styles.section__select}
-                    value={selectedRole}
-                    onChange={(e) => setSelectedRole(e.target.value as UserRole | "all")}
-                >
-                    <option value="all">Wszystkie role</option>
-                    {Object.entries(ROLE_LABELS).map(([key, label]) => (
-                        <option key={key} value={key}>{label}</option>
-                    ))}
-                </select>
-                <select
-                    className={styles.section__select}
-                    value={selectedStatus}
-                    onChange={(e) => setSelectedStatus(e.target.value as UserStatus | "all")}
-                >
-                    <option value="all">Wszystkie statusy</option>
-                    {Object.entries(STATUS_LABELS).map(([key, label]) => (
-                        <option key={key} value={key}>{label}</option>
-                    ))}
-                </select>
-            </div>
-
-            <div className={styles.usersGrid}>
-                {filteredUsers.map((user) => (
-                    <div key={user.id} className={styles.userCard}>
-                        <div className={styles.userCard__header}>
-                            <div className={styles.userCard__avatar}>
-                                {user.firstName[0] + user.lastName[0]}
-                            </div>
-                            <div className={styles.userCard__info}>
-                                <h3 className={styles.userCard__name}>
-                                    {user.firstName} {user.lastName}
-                                </h3>
-                                <span className={styles.userCard__email}>
-                                    <Mail size={14} />
-                                    {user.email}
-                                </span>
-                            </div>
-                            <div className={styles.userCard__status}>
-                                <span className={`${styles.userCard__statusBadge} ${STATUS_COLORS[user.status]}`}>
-                                    {STATUS_LABELS[user.status]}
-                                </span>
-                            </div>
-                        </div>
-                        <div className={styles.userCard__body}>
-                            <div className={styles.userCard__details}>
-                                <span>
-                                    <MapPin size={14} />
-                                    {user.province}
-                                </span>
-                                <span>
-                                    <Briefcase size={14} />
-                                    {user.team}
-                                </span>
-                                <span>
-                                    <Shield size={14} />
-                                    {ROLE_LABELS[user.role]}
-                                </span>
-                            </div>
-                            <div className={styles.userCard__permissions}>
-                                {user.permissions && user.permissions.length > 0 ? (
-                                    user.permissions.slice(0, 3).map((p) => (
-                                        <span key={p} className={styles.userCard__permissionTag}>
-                                            {PERMISSION_LABELS[p]}
-                                        </span>
-                                    ))
-                                ) : (
-                                    <span className={styles.userCard__noPermissions}>Brak uprawnień</span>
-                                )}
-                                {user.permissions && user.permissions.length > 3 && (
-                                    <span className={styles.userCard__permissionMore}>
-                                        +{user.permissions.length - 3}
-                                    </span>
-                                )}
-                            </div>
-                        </div>
-                        {canManage && (
-                            <div className={styles.userCard__actions}>
-                                <button className={styles.userCard__actionBtn} title="Edytuj">
-                                    <Edit size={16} />
-                                </button>
-                                <button className={styles.userCard__actionBtn} title="Podgląd">
-                                    <Eye size={16} />
-                                </button>
-                                <button className={`${styles.userCard__actionBtn} ${user.active ? styles.userCard__actionBtnDanger : styles.userCard__actionBtnSuccess}`} title={user.active ? "Dezaktywuj" : "Aktywuj"}>
-                                    {user.active ? <UserX size={16} /> : <UserCheck size={16} />}
-                                </button>
-                            </div>
-                        )}
-                    </div>
-                ))}
-            </div>
-        </section>
-    );
-}
-
-function RolesManagement({ roles, canManage }: { roles: Role[]; canManage: boolean }) {
+// ---- Komponent zarządzania rolami ----
+function RolesManagement({
+    roles,
+    canManage,
+    onUpdatePermissions,
+    onRefresh,
+    refreshing
+}: {
+    roles: Role[];
+    canManage: boolean;
+    onUpdatePermissions: (roleId: string, permissions: Permission[]) => Promise<void>;
+    onRefresh: () => void;
+    refreshing: boolean;
+}) {
     const [expandedRole, setExpandedRole] = useState<string | null>(null);
+    const [editingRole, setEditingRole] = useState<string | null>(null);
+    const [selectedPermissions, setSelectedPermissions] = useState<Permission[]>([]);
+    const [updating, setUpdating] = useState(false);
+
+    const allPermissions: Permission[] = [
+        "canViewAllLeaves", "canApproveLeaves", "canRejectLeaves",
+        "canEditAllLeaves", "canDeleteAllLeaves", "canViewAllUsers",
+        "canEditUsers", "canDeleteUsers", "canManageProjects",
+        "canManageVacancies", "canEditVacancies", "canDeleteVacancies",
+        "canCreateVacancies", "canViewVacancies", "canApplyVacancies",
+        "canViewApplications", "canEditApplications", "canManageGuides",
+        "canViewAllNotifications", "canManageTeams", "canViewStructure",
+        "canEditProfile"
+    ];
+
+    const handleEditStart = (role: Role) => {
+        setEditingRole(role.id);
+        setSelectedPermissions(role.permissions || []);
+    };
+
+    const handleEditCancel = () => {
+        setEditingRole(null);
+        setSelectedPermissions([]);
+    };
+
+    const handlePermissionToggle = (permission: Permission) => {
+        setSelectedPermissions(prev =>
+            prev.includes(permission)
+                ? prev.filter(p => p !== permission)
+                : [...prev, permission]
+        );
+    };
+
+    const handleSavePermissions = async (roleId: string) => {
+        try {
+            setUpdating(true);
+            await onUpdatePermissions(roleId, selectedPermissions);
+            setEditingRole(null);
+            setSelectedPermissions([]);
+            toast.success("Uprawnienia zaktualizowane!");
+        } catch (error) {
+            console.error("❌ Błąd:", error);
+            toast.error("Nie udało się zaktualizować uprawnień");
+        } finally {
+            setUpdating(false);
+        }
+    };
 
     return (
         <section className={styles.section}>
@@ -630,12 +599,22 @@ function RolesManagement({ roles, canManage }: { roles: Role[]; canManage: boole
                         Zarządzanie dostępami i uprawnieniami użytkowników.
                     </p>
                 </div>
-                {canManage && (
-                    <button className={styles.section__addBtn}>
-                        <Plus size={18} />
-                        Dodaj rolę
+                <div className={styles.section__headerRight}>
+                    <button
+                        className={styles.section__refreshBtn}
+                        onClick={onRefresh}
+                        disabled={refreshing}
+                        title="Odśwież uprawnienia"
+                    >
+                        <RefreshCw size={16} className={refreshing ? styles.spinning : ''} />
                     </button>
-                )}
+                    {canManage && (
+                        <button className={styles.section__addBtn}>
+                            <Plus size={18} />
+                            Dodaj rolę
+                        </button>
+                    )}
+                </div>
             </div>
 
             <div className={styles.rolesGrid}>
@@ -658,30 +637,71 @@ function RolesManagement({ roles, canManage }: { roles: Role[]; canManage: boole
                         </div>
                         {expandedRole === role.id && (
                             <div className={styles.roleCard__body}>
-                                <h4 className={styles.roleCard__permissionsTitle}>Uprawnienia:</h4>
-                                <div className={styles.roleCard__permissions}>
-                                    {role.permissions.length > 0 ? (
-                                        role.permissions.map((p) => (
-                                            <span key={p} className={styles.roleCard__permission}>
-                                                <CheckCircle size={14} />
-                                                {PERMISSION_LABELS[p]}
-                                            </span>
-                                        ))
-                                    ) : (
-                                        <span className={styles.roleCard__noPermissions}>Brak uprawnień</span>
-                                    )}
-                                </div>
-                                {canManage && (
-                                    <div className={styles.roleCard__actions}>
-                                        <button className={styles.roleCard__actionBtn}>
-                                            <Edit size={16} />
-                                            Edytuj
-                                        </button>
-                                        <button className={`${styles.roleCard__actionBtn} ${styles.roleCard__actionBtnDanger}`}>
-                                            <Trash2 size={16} />
-                                            Usuń
-                                        </button>
+                                {editingRole === role.id ? (
+                                    <div className={styles.roleCard__edit}>
+                                        <h4 className={styles.roleCard__permissionsTitle}>
+                                            Wybierz uprawnienia dla roli {role.label}:
+                                        </h4>
+                                        <div className={styles.roleCard__permissionsGrid}>
+                                            {allPermissions.map((perm) => (
+                                                <label key={perm} className={styles.roleCard__permissionCheckbox}>
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={selectedPermissions.includes(perm)}
+                                                        onChange={() => handlePermissionToggle(perm)}
+                                                    />
+                                                    <span>{PERMISSION_LABELS[perm] || perm}</span>
+                                                </label>
+                                            ))}
+                                        </div>
+                                        <div className={styles.roleCard__editActions}>
+                                            <button
+                                                className={styles.roleCard__saveBtn}
+                                                onClick={() => handleSavePermissions(role.id)}
+                                                disabled={updating}
+                                            >
+                                                {updating ? 'Zapisywanie...' : 'Zapisz'}
+                                            </button>
+                                            <button
+                                                className={styles.roleCard__cancelBtn}
+                                                onClick={handleEditCancel}
+                                                disabled={updating}
+                                            >
+                                                Anuluj
+                                            </button>
+                                        </div>
                                     </div>
+                                ) : (
+                                    <>
+                                        <h4 className={styles.roleCard__permissionsTitle}>Uprawnienia:</h4>
+                                        <div className={styles.roleCard__permissions}>
+                                            {role.permissions && role.permissions.length > 0 ? (
+                                                role.permissions.map((p) => (
+                                                    <span key={p} className={styles.roleCard__permission}>
+                                                        <CheckCircle size={14} />
+                                                        {PERMISSION_LABELS[p] || p}
+                                                    </span>
+                                                ))
+                                            ) : (
+                                                <span className={styles.roleCard__noPermissions}>Brak uprawnień</span>
+                                            )}
+                                        </div>
+                                        {canManage && (
+                                            <div className={styles.roleCard__actions}>
+                                                <button
+                                                    className={styles.roleCard__actionBtn}
+                                                    onClick={() => handleEditStart(role)}
+                                                >
+                                                    <Edit size={16} />
+                                                    Edytuj uprawnienia
+                                                </button>
+                                                <button className={`${styles.roleCard__actionBtn} ${styles.roleCard__actionBtnDanger}`}>
+                                                    <Trash2 size={16} />
+                                                    Usuń rolę
+                                                </button>
+                                            </div>
+                                        )}
+                                    </>
                                 )}
                             </div>
                         )}
@@ -692,223 +712,563 @@ function RolesManagement({ roles, canManage }: { roles: Role[]; canManage: boole
     );
 }
 
-function StructureManagement({ teams, canManage }: { teams: Team[]; canManage: boolean }) {
+// ---- Komponent zarządzania strukturą ----
+function StructureManagement({
+    teams,
+    canManage,
+    availableUsers,
+    onRefresh,
+    onTeamUpdated
+}: {
+    teams: Team[];
+    canManage: boolean;
+    availableUsers: AvailableUser[];
+    onRefresh: () => void;
+    onTeamUpdated: (teamId: string) => void;
+}) {
+    const [isAddingTeam, setIsAddingTeam] = useState(false);
+    const [editingTeam, setEditingTeam] = useState<Team | null>(null);
+    const [isAddingMember, setIsAddingMember] = useState<string | null>(null);
+    const [selectedUser, setSelectedUser] = useState<string>("");
+    const [selectedRole, setSelectedRole] = useState<string>("Członek");
+    const [isLeader, setIsLeader] = useState(false);
+    const [teamForm, setTeamForm] = useState({
+        name: "",
+        description: "",
+        role: "Zespół",
+        icon: "Users",
+        email: "",
+    });
+    const [confirmDialog, setConfirmDialog] = useState<{
+        isOpen: boolean;
+        title: string;
+        message: string;
+        confirmText: string;
+        onConfirm: () => void;
+        onCancel: () => void;
+    }>({
+        isOpen: false,
+        title: "",
+        message: "",
+        confirmText: "Potwierdź",
+        onConfirm: () => { },
+        onCancel: () => { },
+    });
+
+    // Ref do śledzenia zespołu który był edytowany
+    // const lastEditedTeamIdRef = useRef<string | null>(null);
+
+    // Reset formularza
+    const resetTeamForm = () => {
+        setTeamForm({
+            name: "",
+            description: "",
+            role: "Zespół",
+            icon: "Users",
+            email: "",
+        });
+        setIsAddingTeam(false);
+        setEditingTeam(null);
+        setIsAddingMember(null);
+        setSelectedUser("");
+        setSelectedRole("Członek");
+        setIsLeader(false);
+    };
+
+    // Dodawanie zespołu
+    const handleAddTeam = async (e: React.FormEvent) => {
+        e.preventDefault();
+        try {
+            const token = localStorage.getItem("accessToken");
+            const response = await fetch("/api/admin/teams", {
+                method: "POST",
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify(teamForm),
+            });
+
+            if (!response.ok) throw new Error("Błąd dodawania zespołu");
+
+            toast.success("Zespół dodany!");
+            resetTeamForm();
+            await onRefresh();
+        } catch (error) {
+            console.error("❌ Błąd:", error);
+            toast.error("Nie udało się dodać zespołu");
+        }
+    };
+
+    // Edycja zespołu
+    const handleEditTeam = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!editingTeam) return;
+
+        try {
+            const token = localStorage.getItem("accessToken");
+            const response = await fetch(`/api/admin/teams/${editingTeam.id}`, {
+                method: "PUT",
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify(teamForm),
+            });
+
+            if (!response.ok) throw new Error("Błąd edycji zespołu");
+
+            toast.success("Zespół zaktualizowany!");
+            const teamId = editingTeam.id;
+            resetTeamForm();
+            await onRefresh();
+            // Po odświeżeniu, wróć do tego zespołu
+            onTeamUpdated(teamId);
+        } catch (error) {
+            console.error("❌ Błąd:", error);
+            toast.error("Nie udało się zaktualizować zespołu");
+        }
+    };
+
+    // Usuwanie zespołu - z ConfirmDialog
+    const showDeleteTeamConfirm = (teamId: string, teamName: string) => {
+        setConfirmDialog({
+            isOpen: true,
+            title: "Usuń zespół",
+            message: `Czy na pewno chcesz usunąć zespół "${teamName}"? Tej operacji nie można cofnąć.`,
+            confirmText: "Usuń",
+            onConfirm: async () => {
+                try {
+                    const token = localStorage.getItem("accessToken");
+                    const response = await fetch(`/api/admin/teams/${teamId}`, {
+                        method: "DELETE",
+                        headers: {
+                            Authorization: `Bearer ${token}`,
+                        },
+                    });
+
+                    if (!response.ok) throw new Error("Błąd usuwania zespołu");
+
+                    toast.success("Zespół usunięty!");
+                    await onRefresh();
+                } catch (error) {
+                    console.error("❌ Błąd:", error);
+                    toast.error("Nie udało się usunąć zespołu");
+                }
+                setConfirmDialog(prev => ({ ...prev, isOpen: false }));
+            },
+            onCancel: () => {
+                setConfirmDialog(prev => ({ ...prev, isOpen: false }));
+            },
+        });
+    };
+
+    // Usuwanie członka z zespołu - z ConfirmDialog
+    const showRemoveMemberConfirm = (memberId: string, memberName: string, teamId: string) => {
+        setConfirmDialog({
+            isOpen: true,
+            title: "Usuń członka z zespołu",
+            message: `Czy na pewno chcesz usunąć "${memberName}" z zespołu?`,
+            confirmText: "Usuń",
+            onConfirm: async () => {
+                try {
+                    const token = localStorage.getItem("accessToken");
+                    const response = await fetch(`/api/admin/team-members/${memberId}`, {
+                        method: "DELETE",
+                        headers: {
+                            Authorization: `Bearer ${token}`,
+                        },
+                    });
+
+                    if (!response.ok) throw new Error("Błąd usuwania członka");
+
+                    toast.success("Członek usunięty z zespołu!");
+                    await onRefresh();
+                    onTeamUpdated(teamId);
+                } catch (error) {
+                    console.error("❌ Błąd:", error);
+                    toast.error("Nie udało się usunąć członka");
+                }
+                setConfirmDialog(prev => ({ ...prev, isOpen: false }));
+            },
+            onCancel: () => {
+                setConfirmDialog(prev => ({ ...prev, isOpen: false }));
+            },
+        });
+    };
+
+    // Dodawanie członka do zespołu
+    const handleAddMember = async (teamId: string) => {
+        if (!selectedUser) {
+            toast.error("Wybierz użytkownika");
+            return;
+        }
+
+        try {
+            const token = localStorage.getItem("accessToken");
+            const response = await fetch("/api/admin/team-members", {
+                method: "POST",
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    team_id: teamId,
+                    user_id: selectedUser,
+                    role: selectedRole,
+                    is_leader: isLeader,
+                }),
+            });
+
+            if (!response.ok) throw new Error("Błąd dodawania członka");
+
+            toast.success("Członek dodany!");
+            setIsAddingMember(null);
+            setSelectedUser("");
+            setIsLeader(false);
+            await onRefresh();
+            onTeamUpdated(teamId);
+        } catch (error) {
+            console.error("❌ Błąd:", error);
+            toast.error("Nie udało się dodać członka");
+        }
+    };
+
+    // Zmiana roli członka
+    const handleChangeMemberRole = async (memberId: string, isLeader: boolean, teamId: string) => {
+        try {
+            const token = localStorage.getItem("accessToken");
+            const response = await fetch(`/api/admin/team-members/${memberId}`, {
+                method: "PUT",
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ is_leader: isLeader }),
+            });
+
+            if (!response.ok) throw new Error("Błąd zmiany roli");
+
+            toast.success(isLeader ? "Ustawiono jako lidera!" : "Usunięto z liderów!");
+            await onRefresh();
+            onTeamUpdated(teamId);
+        } catch (error) {
+            console.error("❌ Błąd:", error);
+            toast.error("Nie udało się zmienić roli");
+        }
+    };
+
+    // Start edycji zespołu
+    const startEditTeam = (team: Team) => {
+        setTeamForm({
+            name: team.name,
+            description: team.description || "",
+            role: team.role || "Zespół",
+            icon: team.icon || "Users",
+            email: team.email || "",
+        });
+        setEditingTeam(team);
+    };
+
+    const getIconComponent = (iconName: string) => {
+        const found = ICON_OPTIONS.find(i => i.value === iconName);
+        if (found) {
+            const Icon = found.icon;
+            return <Icon size={20} />;
+        }
+        return <Users size={20} />;
+    };
+
     return (
         <section className={styles.section}>
+            <ConfirmDialog
+                isOpen={confirmDialog.isOpen}
+                title={confirmDialog.title}
+                message={confirmDialog.message}
+                confirmText={confirmDialog.confirmText}
+                onConfirm={confirmDialog.onConfirm}
+                onCancel={confirmDialog.onCancel}
+            />
+
             <div className={styles.section__header}>
                 <div className={styles.section__headerLeft}>
-                    <h2 className={styles.section__title}>Struktura organizacji</h2>
+                    <h2 className={styles.section__title}>Zespoły i członkowie</h2>
                     <p className={styles.section__subtitle}>
-                        Zarządzanie zespołami i strukturą organizacyjną.
+                        Zarządzanie zespołami oraz przypisywanie członków.
                     </p>
                 </div>
                 {canManage && (
-                    <button className={styles.section__addBtn}>
+                    <button
+                        className={styles.section__addBtn}
+                        onClick={() => setIsAddingTeam(true)}
+                    >
                         <Plus size={18} />
                         Dodaj zespół
                     </button>
                 )}
             </div>
 
-            <div className={styles.structure}>
-                <div className={styles.structure__root}>
-                    <div className={styles.structure__node}>
-                        <div className={styles.structure__nodeContent}>
-                            <h3 className={styles.structure__nodeTitle}>Siła Młodych</h3>
-                            <span className={styles.structure__nodeCount}>{teams.length} zespołów</span>
+            {/* Formularz dodawania/edycji zespołu - Modal */}
+            {(isAddingTeam || editingTeam) && (
+                <div className={styles.modalOverlay} onClick={() => {
+                    if (isAddingTeam) setIsAddingTeam(false);
+                    if (editingTeam) setEditingTeam(null);
+                }}>
+                    <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+                        <div className={styles.modal__header}>
+                            <h2 className={styles.modal__title}>
+                                {editingTeam ? "Edytuj zespół" : "Dodaj nowy zespół"}
+                            </h2>
+                            <button
+                                className={styles.modal__close}
+                                onClick={() => {
+                                    resetTeamForm();
+                                    setEditingTeam(null);
+                                }}
+                            >
+                                <X size={20} />
+                            </button>
                         </div>
-                    </div>
-                    <div className={styles.structure__children}>
-                        {teams.map((team) => (
-                            <div key={team.id} className={styles.structure__node}>
-                                <div className={styles.structure__nodeContent}>
-                                    <h4 className={styles.structure__nodeName}>{team.name}</h4>
-                                    <p className={styles.structure__nodeDescription}>{team.description}</p>
-                                    <div className={styles.structure__nodeMeta}>
-                                        <span>{team.members.length} członków</span>
-                                        {team.lead && <span>Lider: {team.lead}</span>}
+                        <form onSubmit={editingTeam ? handleEditTeam : handleAddTeam}>
+                            <div className={styles.modal__body}>
+                                <div className={styles.modal__field}>
+                                    <label>Nazwa zespołu *</label>
+                                    <input
+                                        type="text"
+                                        value={teamForm.name}
+                                        onChange={(e) => setTeamForm({ ...teamForm, name: e.target.value })}
+                                        required
+                                    />
+                                </div>
+                                <div className={styles.modal__field}>
+                                    <label>Email</label>
+                                    <input
+                                        type="email"
+                                        value={teamForm.email}
+                                        onChange={(e) => setTeamForm({ ...teamForm, email: e.target.value })}
+                                    />
+                                </div>
+                                <div className={styles.modal__field}>
+                                    <label>Opis</label>
+                                    <textarea
+                                        value={teamForm.description}
+                                        onChange={(e) => setTeamForm({ ...teamForm, description: e.target.value })}
+                                        rows={3}
+                                    />
+                                </div>
+                                <div className={styles.modal__row}>
+                                    <div className={styles.modal__field}>
+                                        <label>Typ</label>
+                                        <input
+                                            type="text"
+                                            value={teamForm.role}
+                                            onChange={(e) => setTeamForm({ ...teamForm, role: e.target.value })}
+                                        />
+                                    </div>
+                                    <div className={styles.modal__field}>
+                                        <label>Ikona</label>
+                                        <select
+                                            value={teamForm.icon}
+                                            onChange={(e) => setTeamForm({ ...teamForm, icon: e.target.value })}
+                                        >
+                                            {ICON_OPTIONS.map((opt) => (
+                                                <option key={opt.value} value={opt.value}>
+                                                    {opt.label}
+                                                </option>
+                                            ))}
+                                        </select>
                                     </div>
                                 </div>
+                                <div className={styles.modal__field} style={{ display: "flex", alignItems: "center", gap: "8px", marginTop: "8px" }}>
+                                    <span>Podgląd ikony:</span>
+                                    {getIconComponent(teamForm.icon)}
+                                </div>
+                            </div>
+                            <div className={styles.modal__actions}>
+                                <button
+                                    type="button"
+                                    className={styles.modal__btnCancel}
+                                    onClick={() => {
+                                        resetTeamForm();
+                                        setEditingTeam(null);
+                                    }}
+                                >
+                                    Anuluj
+                                </button>
+                                <button type="submit" className={styles.modal__btnSave}>
+                                    <Save size={16} />
+                                    {editingTeam ? "Zapisz zmiany" : "Dodaj zespół"}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Lista zespołów */}
+            <div className={styles.teamsGrid}>
+                {teams.map((team) => (
+                    <div key={team.id} id={`team-${team.id}`} className={styles.teamCard}>
+                        <div className={styles.teamCard__header}>
+                            <div className={styles.teamCard__icon}>
+                                {getIconComponent(team.icon)}
+                            </div>
+                            <div className={styles.teamCard__info}>
+                                <h3 className={styles.teamCard__name}>{team.name}</h3>
+                                <p className={styles.teamCard__description}>{team.description}</p>
+                            </div>
+                            <div className={styles.teamCard__actions}>
                                 {canManage && (
-                                    <div className={styles.structure__nodeActions}>
-                                        <button className={styles.structure__nodeBtn} title="Edytuj">
-                                            <Edit size={14} />
+                                    <>
+                                        <button
+                                            className={styles.teamCard__editBtn}
+                                            onClick={() => startEditTeam(team)}
+                                            title="Edytuj zespół"
+                                        >
+                                            <Edit size={16} />
                                         </button>
-                                        <button className={`${styles.structure__nodeBtn} ${styles.structure__nodeBtnDanger}`} title="Usuń">
-                                            <Trash2 size={14} />
+                                        <button
+                                            className={styles.teamCard__deleteBtn}
+                                            onClick={() => showDeleteTeamConfirm(team.id, team.name)}
+                                            title="Usuń zespół"
+                                        >
+                                            <Trash2 size={16} />
                                         </button>
-                                    </div>
+                                    </>
                                 )}
                             </div>
-                        ))}
-                    </div>
-                </div>
-            </div>
-        </section>
-    );
-}
-
-function DocumentsManagement({ documents, canManage }: { documents: Document[]; canManage: boolean }) {
-    const [searchTerm, setSearchTerm] = useState("");
-    const [selectedCategory, setSelectedCategory] = useState<DocumentCategory | "all">("all");
-
-    const filteredDocuments = useMemo(() => {
-        return documents.filter((doc) => {
-            const matchesSearch = doc.title.toLowerCase().includes(searchTerm.toLowerCase());
-            const matchesCategory = selectedCategory === "all" || doc.category === selectedCategory;
-            return matchesSearch && matchesCategory;
-        });
-    }, [documents, searchTerm, selectedCategory]);
-
-    return (
-        <section className={styles.section}>
-            <div className={styles.section__header}>
-                <div className={styles.section__headerLeft}>
-                    <h2 className={styles.section__title}>Zarządzanie dokumentami</h2>
-                    <p className={styles.section__subtitle}>
-                        Administracja materiałami dostępnymi w zakładce "Poradniki".
-                    </p>
-                </div>
-                {canManage && (
-                    <button className={styles.section__addBtn}>
-                        <Plus size={18} />
-                        Dodaj dokument
-                    </button>
-                )}
-            </div>
-
-            <div className={styles.section__filters}>
-                <div className={styles.section__search}>
-                    <Search size={18} className={styles.section__searchIcon} />
-                    <input
-                        type="text"
-                        className={styles.section__searchInput}
-                        placeholder="Szukaj po tytule..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                    />
-                </div>
-                <select
-                    className={styles.section__select}
-                    value={selectedCategory}
-                    onChange={(e) => setSelectedCategory(e.target.value as DocumentCategory | "all")}
-                >
-                    <option value="all">Wszystkie kategorie</option>
-                    {Object.entries(DOCUMENT_CATEGORY_LABELS).map(([key, label]) => (
-                        <option key={key} value={key}>{label}</option>
-                    ))}
-                </select>
-            </div>
-
-            <div className={styles.documentsGrid}>
-                {filteredDocuments.map((doc) => (
-                    <div key={doc.id} className={styles.documentCard}>
-                        <div className={styles.documentCard__header}>
-                            <h3 className={styles.documentCard__title}>{doc.title}</h3>
-                            <span className={`${styles.documentCard__visibility} ${doc.visibility === "all" ? styles.visibilityAll :
-                                doc.visibility === "coordinator" ? styles.visibilityCoordinator :
-                                    styles.visibilityAdmin
-                                }`}>
-                                {doc.visibility === "all" ? "Dla wszystkich" :
-                                    doc.visibility === "coordinator" ? "Dla koordynatorów" :
-                                        "Dla admina"}
-                            </span>
                         </div>
-                        <div className={styles.documentCard__body}>
-                            <p className={styles.documentCard__description}>{doc.description}</p>
-                            <div className={styles.documentCard__meta}>
-                                <span>
-                                    <Tag size={14} />
-                                    {DOCUMENT_CATEGORY_LABELS[doc.category]}
-                                </span>
-                                <span>
-                                    <User size={14} />
-                                    {doc.author}
-                                </span>
-                                <span>
-                                    <Calendar size={14} />
-                                    {new Date(doc.updatedAt).toLocaleDateString("pl-PL")}
-                                </span>
-                            </div>
-                        </div>
-                        {canManage && (
-                            <div className={styles.documentCard__actions}>
-                                <button className={styles.documentCard__actionBtn} title="Edytuj">
-                                    <Edit size={16} />
-                                </button>
-                                <button className={styles.documentCard__actionBtn} title="Pobierz">
-                                    <Download size={16} />
-                                </button>
-                                <button className={`${styles.documentCard__actionBtn} ${styles.documentCard__actionBtnDanger}`} title="Usuń">
-                                    <Trash2 size={16} />
-                                </button>
-                            </div>
-                        )}
-                    </div>
-                ))}
-            </div>
-        </section>
-    );
-}
-
-function ProjectsManagement({ projects, canManage }: { projects: Project[]; canManage: boolean }) {
-    return (
-        <section className={styles.section}>
-            <div className={styles.section__header}>
-                <div className={styles.section__headerLeft}>
-                    <h2 className={styles.section__title}>Zarządzanie projektami</h2>
-                    <p className={styles.section__subtitle}>
-                        Panel kontroli projektów organizacji.
-                    </p>
-                </div>
-                {canManage && (
-                    <button className={styles.section__addBtn}>
-                        <Plus size={18} />
-                        Dodaj projekt
-                    </button>
-                )}
-            </div>
-
-            <div className={styles.projectsGrid}>
-                {projects.map((project) => (
-                    <div key={project.id} className={styles.projectCard}>
-                        <div className={styles.projectCard__header}>
-                            <h3 className={styles.projectCard__title}>{project.name}</h3>
-                            <span className={`${styles.projectCard__status} ${PROJECT_STATUS_COLORS[project.status]}`}>
-                                {PROJECT_STATUS_LABELS[project.status]}
-                            </span>
-                        </div>
-                        <div className={styles.projectCard__body}>
-                            <p className={styles.projectCard__description}>{project.description}</p>
-                            <div className={styles.projectCard__meta}>
-                                <span>
-                                    <BriefcaseIcon size={14} />
-                                    {project.pillar}
-                                </span>
-                                <span>
-                                    <User size={14} />
-                                    {project.coordinator}
-                                </span>
-                                <span>
+                        <div className={styles.teamCard__body}>
+                            <div className={styles.teamCard__meta}>
+                                {team.email && (
+                                    <a href={`mailto:${team.email}`} className={styles.teamCard__email}>
+                                        <Mail size={14} />
+                                        {team.email}
+                                    </a>
+                                )}
+                                <span className={styles.teamCard__memberCount}>
                                     <Users size={14} />
-                                    {project.team}
-                                </span>
-                                <span>
-                                    <Calendar size={14} />
-                                    {new Date(project.estimatedEnd).toLocaleDateString("pl-PL")}
+                                    {team.members.length} członków
                                 </span>
                             </div>
+
+                            {/* Lista członków */}
+                            <div className={styles.teamCard__members}>
+                                {team.members.map((member) => (
+                                    <div key={member.id} className={styles.memberItem}>
+                                        <div className={styles.memberItem__avatar}>
+                                            {member.first_name[0]}{member.last_name[0]}
+                                        </div>
+                                        <div className={styles.memberItem__info}>
+                                            <span className={styles.memberItem__name}>
+                                                {member.first_name} {member.last_name}
+                                            </span>
+                                            <span className={styles.memberItem__role}>
+                                                {member.is_leader && <Crown size={12} />}
+                                                {member.role_in_team}
+                                                {member.functional_role && ` (${member.functional_role})`}
+                                            </span>
+                                        </div>
+                                        <div className={styles.memberItem__actions}>
+                                            {canManage && (
+                                                <>
+                                                    {!member.is_leader && (
+                                                        <button
+                                                            className={styles.memberItem__makeLeader}
+                                                            onClick={() => handleChangeMemberRole(member.id, true, team.id)}
+                                                            title="Ustaw jako lidera"
+                                                        >
+                                                            <Crown size={14} />
+                                                        </button>
+                                                    )}
+                                                    {member.is_leader && (
+                                                        <button
+                                                            className={styles.memberItem__removeLeader}
+                                                            onClick={() => handleChangeMemberRole(member.id, false, team.id)}
+                                                            title="Usuń z liderów"
+                                                        >
+                                                            <User size={14} />
+                                                        </button>
+                                                    )}
+                                                    <button
+                                                        className={styles.memberItem__remove}
+                                                        onClick={() => showRemoveMemberConfirm(member.id, `${member.first_name} ${member.last_name}`, team.id)}
+                                                        title="Usuń z zespołu"
+                                                    >
+                                                        <X size={14} />
+                                                    </button>
+                                                </>
+                                            )}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+
+                            {/* Dodawanie członka */}
+                            {canManage && (
+                                <div className={styles.teamCard__addMember}>
+                                    {isAddingMember === team.id ? (
+                                        <div className={styles.addMemberForm}>
+                                            <select
+                                                value={selectedUser}
+                                                onChange={(e) => setSelectedUser(e.target.value)}
+                                                className={styles.addMemberForm__select}
+                                            >
+                                                <option value="">Wybierz użytkownika...</option>
+                                                {availableUsers
+                                                    .filter(u => !team.members.some(m => m.user_id === u.id))
+                                                    .map((user) => (
+                                                        <option key={user.id} value={user.id}>
+                                                            {user.first_name} {user.last_name} ({user.email})
+                                                        </option>
+                                                    ))}
+                                            </select>
+                                            <select
+                                                value={selectedRole}
+                                                onChange={(e) => setSelectedRole(e.target.value)}
+                                                className={styles.addMemberForm__select}
+                                            >
+                                                <option value="Członek">Członek</option>
+                                                <option value="Koordynator">Koordynator</option>
+                                                <option value="Specjalista">Specjalista</option>
+                                            </select>
+                                            <label className={styles.addMemberForm__leader}>
+                                                <input
+                                                    type="checkbox"
+                                                    checked={isLeader}
+                                                    onChange={(e) => setIsLeader(e.target.checked)}
+                                                />
+                                                Lider
+                                            </label>
+                                            <button
+                                                className={styles.addMemberForm__save}
+                                                onClick={() => handleAddMember(team.id)}
+                                            >
+                                                <Save size={14} />
+                                            </button>
+                                            <button
+                                                className={styles.addMemberForm__cancel}
+                                                onClick={() => {
+                                                    setIsAddingMember(null);
+                                                    setSelectedUser("");
+                                                    setIsLeader(false);
+                                                }}
+                                            >
+                                                <X size={14} />
+                                            </button>
+                                        </div>
+                                    ) : (
+                                        <button
+                                            className={styles.teamCard__addMemberBtn}
+                                            onClick={() => setIsAddingMember(team.id)}
+                                        >
+                                            <UserPlus size={16} />
+                                            Dodaj członka
+                                        </button>
+                                    )}
+                                </div>
+                            )}
                         </div>
-                        {canManage && (
-                            <div className={styles.projectCard__actions}>
-                                <button className={styles.projectCard__actionBtn} title="Edytuj">
-                                    <Edit size={16} />
-                                </button>
-                                <button className={styles.projectCard__actionBtn} title="Podgląd">
-                                    <Eye size={16} />
-                                </button>
-                            </div>
-                        )}
                     </div>
                 ))}
             </div>
@@ -916,79 +1276,23 @@ function ProjectsManagement({ projects, canManage }: { projects: Project[]; canM
     );
 }
 
-function VacanciesManagement({ vacancies, canManage }: { vacancies: Vacancy[]; canManage: boolean }) {
-    return (
-        <section className={styles.section}>
-            <div className={styles.section__header}>
-                <div className={styles.section__headerLeft}>
-                    <h2 className={styles.section__title}>Zarządzanie wakatami</h2>
-                    <p className={styles.section__subtitle}>
-                        Dodawanie i edycja wolnych stanowisk.
-                    </p>
-                </div>
-                {canManage && (
-                    <button className={styles.section__addBtn}>
-                        <Plus size={18} />
-                        Dodaj wakat
-                    </button>
-                )}
-            </div>
-
-            <div className={styles.vacanciesGrid}>
-                {vacancies.map((vacancy) => (
-                    <div key={vacancy.id} className={styles.vacancyCard}>
-                        <div className={styles.vacancyCard__header}>
-                            <h3 className={styles.vacancyCard__title}>{vacancy.title}</h3>
-                            <span className={`${styles.vacancyCard__status} ${vacancy.status === "open" ? styles.vacancyOpen : styles.vacancyClosed
-                                }`}>
-                                {vacancy.status === "open" ? "Otwarty" : "Zamknięty"}
-                            </span>
-                        </div>
-                        <div className={styles.vacancyCard__body}>
-                            <p className={styles.vacancyCard__description}>{vacancy.description}</p>
-                            <div className={styles.vacancyCard__requirements}>
-                                <strong>Wymagania:</strong> {vacancy.requirements}
-                            </div>
-                            <div className={styles.vacancyCard__meta}>
-                                <span>
-                                    <Briefcase size={14} />
-                                    {vacancy.team}
-                                </span>
-                                <span>
-                                    <User size={14} />
-                                    Kontakt: {vacancy.contactPerson}
-                                </span>
-                            </div>
-                        </div>
-                        {canManage && (
-                            <div className={styles.vacancyCard__actions}>
-                                <button className={styles.vacancyCard__actionBtn} title="Edytuj">
-                                    <Edit size={16} />
-                                </button>
-                                <button className={`${styles.vacancyCard__actionBtn} ${vacancy.status === "open" ? styles.vacancyCard__actionBtnDanger : styles.vacancyCard__actionBtnSuccess
-                                    }`} title={vacancy.status === "open" ? "Zamknij" : "Otwórz"}>
-                                    {vacancy.status === "open" ? <X size={16} /> : <CheckCircle size={16} />}
-                                </button>
-                            </div>
-                        )}
-                    </div>
-                ))}
-            </div>
-        </section>
-    );
-}
-
-function ActivityMonitoring({ users, projects }: { users: AdminUser[]; projects: Project[]; leaves: any[] }) {
-    const activeUsers = users.filter(u => u.active).length;
-    const activeProjects = projects.filter(p => p.status !== "completed").length;
+// ---- Komponent statystyk ----
+function ActivityMonitoring({
+    teams,
+    roles
+}: {
+    teams: Team[];
+    roles: Role[];
+}) {
+    const totalMembers = teams.reduce((acc, team) => acc + team.members.length, 0);
 
     return (
         <section className={styles.section}>
             <div className={styles.section__header}>
                 <div className={styles.section__headerLeft}>
-                    <h2 className={styles.section__title}>Monitorowanie aktywności</h2>
+                    <h2 className={styles.section__title}>Statystyki organizacji</h2>
                     <p className={styles.section__subtitle}>
-                        Statystyki organizacji.
+                        Podsumowanie danych organizacji.
                     </p>
                 </div>
             </div>
@@ -999,8 +1303,8 @@ function ActivityMonitoring({ users, projects }: { users: AdminUser[]; projects:
                         <Users size={24} />
                     </div>
                     <div className={styles.statCard__content}>
-                        <span className={styles.statCard__value}>{activeUsers}</span>
-                        <span className={styles.statCard__label}>Aktywnych członków</span>
+                        <span className={styles.statCard__value}>{totalMembers}</span>
+                        <span className={styles.statCard__label}>Członków</span>
                     </div>
                 </div>
                 <div className={styles.statCard}>
@@ -1008,76 +1312,19 @@ function ActivityMonitoring({ users, projects }: { users: AdminUser[]; projects:
                         <FolderTree size={24} />
                     </div>
                     <div className={styles.statCard__content}>
-                        <span className={styles.statCard__value}>{users.length}</span>
+                        <span className={styles.statCard__value}>{teams.length}</span>
                         <span className={styles.statCard__label}>Zespołów</span>
                     </div>
                 </div>
                 <div className={styles.statCard}>
                     <div className={styles.statCard__icon} style={{ background: "#fef3c7", color: "#d97706" }}>
-                        <Projector size={24} />
+                        <Shield size={24} />
                     </div>
                     <div className={styles.statCard__content}>
-                        <span className={styles.statCard__value}>{activeProjects}</span>
-                        <span className={styles.statCard__label}>Aktywnych projektów</span>
+                        <span className={styles.statCard__value}>{roles.length}</span>
+                        <span className={styles.statCard__label}>Ról</span>
                     </div>
                 </div>
-                <div className={styles.statCard}>
-                    <div className={styles.statCard__icon} style={{ background: "#fce4ec", color: "#dc2626" }}>
-                        <Clock size={24} />
-                    </div>
-                    <div className={styles.statCard__content}>
-                        <span className={styles.statCard__value}>3</span>
-                        <span className={styles.statCard__label}>Oczekujących wniosków</span>
-                    </div>
-                </div>
-            </div>
-        </section>
-    );
-}
-
-function SystemLogs({ logs }: { logs: SystemLog[] }) {
-    const [expandedLog, setExpandedLog] = useState<string | null>(null);
-
-    return (
-        <section className={styles.section}>
-            <div className={styles.section__header}>
-                <div className={styles.section__headerLeft}>
-                    <h2 className={styles.section__title}>Logi systemowe</h2>
-                    <p className={styles.section__subtitle}>
-                        Historia działań administracyjnych.
-                    </p>
-                </div>
-            </div>
-
-            <div className={styles.logsList}>
-                {logs.map((log) => (
-                    <div key={log.id} className={styles.logItem}>
-                        <div className={styles.logItem__header}>
-                            <div className={styles.logItem__info}>
-                                <span className={styles.logItem__action}>{log.action}</span>
-                                <span className={styles.logItem__user}>
-                                    <User size={14} />
-                                    {log.user}
-                                </span>
-                                <span className={styles.logItem__time}>
-                                    <Clock size={14} />
-                                    {new Date(log.timestamp).toLocaleString("pl-PL")}
-                                </span>
-                            </div>
-                            <button
-                                className={styles.logItem__expandBtn}
-                                onClick={() => setExpandedLog(expandedLog === log.id ? null : log.id)}
-                            >
-                                {expandedLog === log.id ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
-                            </button>
-                        </div>
-                        {expandedLog === log.id && (
-                            <div className={styles.logItem__details}>
-                                <p>{log.details}</p>
-                            </div>
-                        )}
-                    </div>
-                ))}
             </div>
         </section>
     );
@@ -1089,24 +1336,153 @@ function SystemLogs({ logs }: { logs: SystemLog[] }) {
 
 export default function Admin({ title }: { title?: string }) {
     const navigate = useNavigate();
+    const [loading, setLoading] = useState(true);
+    const [refreshing, setRefreshing] = useState(false);
+    const [teams, setTeams] = useState<Team[]>([]);
+    const [roles, setRoles] = useState<Role[]>([]);
+    const [availableUsers, setAvailableUsers] = useState<AvailableUser[]>([]);
+    const [currentUser, setCurrentUser] = useState<any>(null);
+    const [scrollToTeamId, setScrollToTeamId] = useState<string | null>(null);
 
-    const currentUser = MOCK_ADMIN;
-    const canManage = currentUser.role === "admin";
+    // ===== POBIERANIE DANYCH Z BACKENDU =====
+    const fetchData = async () => {
+        try {
+            setLoading(true);
+            const token = localStorage.getItem("accessToken");
 
+            const profileRes = await fetch("/api/profile", {
+                headers: { Authorization: `Bearer ${token}` }
+            });
 
-    // ===== DODAJ ZABEZPIECZENIE =====
-    useEffect(() => {
-        // Sprawdź czy użytkownik ma uprawnienia admina
-        // W rzeczywistej aplikacji pobierasz dane z kontekstu/auth
-        if (currentUser.role !== "admin") {
-            navigate("/dashboard", { replace: true });
+            if (!profileRes.ok) {
+                throw new Error("Błąd pobierania profilu");
+            }
+
+            const profileData = await profileRes.json();
+            setCurrentUser(profileData);
+
+            if (profileData.role !== "admin") {
+                navigate("/dashboard", { replace: true });
+                return;
+            }
+
+            const teamsRes = await fetch("/api/admin/teams", {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+
+            if (teamsRes.ok) {
+                const teamsData = await teamsRes.json();
+                setTeams(teamsData);
+                console.log("🔍 [Admin] Zespoły pobrane:", teamsData);
+            }
+
+            const usersRes = await fetch("/api/admin/available-users", {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+
+            if (usersRes.ok) {
+                const usersData = await usersRes.json();
+                setAvailableUsers(usersData);
+            }
+
+            const rolesRes = await fetch("/api/admin/roles", {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+
+            if (rolesRes.ok) {
+                const rolesData = await rolesRes.json();
+                const mappedRoles: Role[] = rolesData.map((r: any) => ({
+                    id: r.id,
+                    name: r.name as UserRole,
+                    label: ROLE_LABELS[r.name as UserRole] || r.name,
+                    description: r.description || '',
+                    permissions: r.permissions || [],
+                }));
+                setRoles(mappedRoles);
+            }
+
+            clearPermissionsCache();
+
+        } catch (error) {
+            console.error("❌ Błąd pobierania danych:", error);
+            toast.error("Nie udało się pobrać danych");
+        } finally {
+            setLoading(false);
+            setRefreshing(false);
         }
-    }, [currentUser.role, navigate]);
+    };
 
-    // Jeśli nie jest adminem, nie renderuj strony (zabezpieczenie przed błyskiem)
-    if (currentUser.role !== "admin") {
+    // ===== ODSWIEŻANIE =====
+    const handleRefresh = async () => {
+        setRefreshing(true);
+        await fetchData();
+        setRefreshing(false);
+        toast.success("Dane odświeżone");
+    };
+
+    // ===== AKTUALIZACJA UPRAWNIEŃ =====
+    const handleUpdatePermissions = async (roleId: string, permissions: Permission[]) => {
+        try {
+            const success = await updateRolePermissions(roleId, permissions);
+            if (success) {
+                setRoles((prev: Role[]) =>
+                    prev.map((role: Role) =>
+                        role.id === roleId
+                            ? { ...role, permissions }
+                            : role
+                    )
+                );
+                clearPermissionsCache();
+                toast.success("Uprawnienia zaktualizowane!");
+            } else {
+                throw new Error("Nie udało się zaktualizować uprawnień");
+            }
+        } catch (error) {
+            console.error("❌ Błąd:", error);
+            toast.error("Nie udało się zaktualizować uprawnień");
+            throw error;
+        }
+    };
+
+    // ===== SKOK DO ZESPOŁU PO ODSWIEŻENIU =====
+    const handleTeamUpdated = (teamId: string) => {
+        setScrollToTeamId(teamId);
+    };
+
+    useEffect(() => {
+        if (scrollToTeamId) {
+            const element = document.getElementById(`team-${scrollToTeamId}`);
+            if (element) {
+                element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                // Podświetlenie zespołu
+                element.style.transition = 'background-color 0.5s';
+                element.style.backgroundColor = '#dbeafe';
+                setTimeout(() => {
+                    element.style.backgroundColor = '';
+                }, 2000);
+                setScrollToTeamId(null);
+            }
+        }
+    }, [scrollToTeamId, teams]);
+
+    useEffect(() => {
+        fetchData();
+    }, []);
+
+    if (loading) {
+        return (
+            <div className={styles.loading}>
+                <div className={styles.loading__spinner} />
+                <span>Ładowanie panelu administracyjnego...</span>
+            </div>
+        );
+    }
+
+    if (!currentUser || currentUser.role !== "admin") {
         return null;
     }
+
+    const canManage = currentUser.role === "admin";
 
     return (
         <div className={styles.admin}>
@@ -1116,19 +1492,32 @@ export default function Admin({ title }: { title?: string }) {
                         {title ?? "Administracja systemu"}
                     </h1>
                     <p className={styles.header__subtitle}>
-                        Panel zarządzania organizacją, użytkownikami, uprawnieniami oraz konfiguracją systemu Stowarzyszenia Siła Młodych.
+                        Panel zarządzania rolami, uprawnieniami, zespołami i członkami.
                     </p>
                 </div>
             </div>
 
-            <UsersManagement users={MOCK_USERS} canManage={canManage} />
-            <RolesManagement roles={MOCK_ROLES} canManage={canManage} />
-            <StructureManagement teams={MOCK_TEAMS} canManage={canManage} />
-            <DocumentsManagement documents={MOCK_DOCUMENTS} canManage={canManage} />
-            <ProjectsManagement projects={MOCK_PROJECTS} canManage={canManage} />
-            <VacanciesManagement vacancies={MOCK_VACANCIES} canManage={canManage} />
-            <ActivityMonitoring users={MOCK_USERS} projects={MOCK_PROJECTS} leaves={[]} />
-            <SystemLogs logs={MOCK_LOGS} />
+            <RolesManagement
+                roles={roles}
+                canManage={canManage}
+                onUpdatePermissions={handleUpdatePermissions}
+                onRefresh={handleRefresh}
+                refreshing={refreshing}
+            />
+
+            <StructureManagement
+                teams={teams}
+                canManage={canManage}
+                availableUsers={availableUsers}
+                onRefresh={handleRefresh}
+                onTeamUpdated={handleTeamUpdated}
+            />
+
+            <ActivityMonitoring
+                teams={teams}
+                roles={roles}
+            />
+            <LogsManagement />
         </div>
     );
 }

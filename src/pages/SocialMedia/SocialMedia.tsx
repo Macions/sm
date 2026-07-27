@@ -70,6 +70,27 @@ interface EditMaterialModalProps {
 	onSave: (id: string, data: MaterialFormData) => void;
 	teamMembers: TeamMember[];
 }
+
+interface CreatorFormData {
+	user_id: string;
+	availability: string;
+	experience: "none" | "beginner" | "intermediate" | "advanced";
+	// topics: string[];
+}
+
+interface AddCreatorModalProps {
+	isOpen: boolean;
+	onClose: () => void;
+	onSave: (data: CreatorFormData) => void;
+	availableUsers: any[];
+}
+
+// ⭐ ZAKTUALIZUJ interfejs CreatorsSection
+interface CreatorsSectionProps {
+	creators: ContentCreator[];
+	canManage: boolean;
+	onAddCreator?: () => void;
+}
 interface TeamMember {
 	id: string;
 	user_id: string;
@@ -82,7 +103,7 @@ interface TeamMember {
 	province: string;
 	team: string;
 	joinDate: string;
-	active: boolean;
+	status: 'active' | 'trial' | 'mentor' | 'vacation'; // ⭐ ZMIEŃ z active: boolean na status
 }
 // frontend/src/pages/SocialMedia/SocialMedia.tsx
 // DODAJ PO INNYCH MODALACH
@@ -1154,6 +1175,216 @@ interface AddMemberModalProps {
 	availableUsers: any[];
 }
 
+function AddCreatorModal({
+	isOpen,
+	onClose,
+	onSave,
+	availableUsers, // ⭐ TERAZ availableUsers zamiast teamMembers
+}: AddCreatorModalProps) {
+	const [formData, setFormData] = useState<CreatorFormData>({
+		user_id: "",
+		availability: "",
+		experience: "beginner",
+		// topics: [],
+	});
+	// const [topicInput, setTopicInput] = useState("");
+	const [searchTerm, setSearchTerm] = useState("");
+	const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+	const dropdownRef = useRef<HTMLDivElement>(null);
+
+	// ⭐ FILTRUJ UŻYTKOWNIKÓW (pomiń adminów)
+	const filteredUsers = useMemo(() => {
+		const users = availableUsers.filter((user) => user.role !== "admin");
+
+		if (!searchTerm.trim()) return users;
+		const term = searchTerm.toLowerCase();
+		return users.filter(
+			(user) =>
+				(user.name || "").toLowerCase().includes(term) ||
+				(user.email || "").toLowerCase().includes(term)
+		);
+	}, [availableUsers, searchTerm]);
+
+	const selectedUser = availableUsers.find((u) => u.id === formData.user_id);
+	const inputValue = selectedUser
+		? `${selectedUser.name} (${selectedUser.email})`
+		: searchTerm;
+
+	// Zamknij dropdown po kliknięciu poza
+	useEffect(() => {
+		const handleClickOutside = (event: MouseEvent) => {
+			if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+				setIsDropdownOpen(false);
+			}
+		};
+		document.addEventListener("mousedown", handleClickOutside);
+		return () => document.removeEventListener("mousedown", handleClickOutside);
+	}, []);
+
+	if (!isOpen) return null;
+
+	const handleSubmit = (e: React.FormEvent) => {
+		e.preventDefault();
+		if (!formData.user_id) {
+			toast.error("Wybierz użytkownika");
+			return;
+		}
+		if (!formData.availability) {
+			toast.error("Podaj dostępność");
+			return;
+		}
+		onSave(formData);
+		onClose();
+	};
+
+	const handleSelectUser = (userId: string) => {
+		setFormData({ ...formData, user_id: userId });
+		setSearchTerm("");
+		setIsDropdownOpen(false);
+	};
+
+	const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+		const value = e.target.value;
+		setSearchTerm(value);
+		setIsDropdownOpen(true);
+		if (formData.user_id) {
+			setFormData({ ...formData, user_id: "" });
+		}
+	};
+
+	return (
+		<div className={styles.modalOverlay} onClick={onClose}>
+			<div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+				<div className={styles.modal__header}>
+					<h2 className={styles.modal__title}>Dodaj twórcę rolek</h2>
+					<button className={styles.modal__close} onClick={onClose}>
+						<X size={20} />
+					</button>
+				</div>
+				<form onSubmit={handleSubmit} className={styles.modal__form}>
+					{/* Wybór użytkownika */}
+					<div className={styles.modal__field}>
+						<label className={styles.modal__label}>Użytkownik *</label>
+						<div className={styles.searchableSelect} ref={dropdownRef}>
+							<div className={styles.searchableSelect__inputWrapper}>
+								<input
+									type="text"
+									className={styles.searchableSelect__input}
+									placeholder="Szukaj użytkownika..."
+									value={inputValue}
+									onChange={handleInputChange}
+									onFocus={() => {
+										if (!formData.user_id) {
+											setIsDropdownOpen(true);
+										}
+									}}
+								/>
+								{selectedUser && (
+									<button
+										type="button"
+										className={styles.searchableSelect__clear}
+										onClick={() => {
+											setFormData({ ...formData, user_id: "" });
+											setSearchTerm("");
+										}}
+										title="Wyczyść wybór"
+									>
+										<X size={14} />
+									</button>
+								)}
+							</div>
+							{isDropdownOpen && !selectedUser && (
+								<div className={styles.searchableSelect__dropdown}>
+									{filteredUsers.length === 0 ? (
+										<div className={styles.searchableSelect__empty}>
+											{searchTerm
+												? "Nie znaleziono użytkownika"
+												: "Wpisz aby wyszukać"}
+										</div>
+									) : (
+										filteredUsers.map((user) => {
+											const displayText = user.name
+												? `${user.name} (${user.email})`
+												: user.email;
+
+											return (
+												<div
+													key={user.id}
+													className={`${styles.searchableSelect__item} ${formData.user_id === user.id
+														? styles.searchableSelect__itemSelected
+														: ""
+														}`}
+													onClick={() => handleSelectUser(user.id)}
+												>
+													<span className={styles.searchableSelect__itemName}>
+														{displayText}
+													</span>
+													{user.role && (
+														<span className={styles.searchableSelect__itemRole}>
+															{user.role}
+														</span>
+													)}
+												</div>
+											);
+										})
+									)}
+								</div>
+							)}
+						</div>
+					</div>
+
+					{/* Dostępność */}
+					<div className={styles.modal__field}>
+						<label className={styles.modal__label}>Dostępność *</label>
+						<input
+							type="text"
+							className={styles.modal__input}
+							placeholder="np. Codziennie, Weekendy, Pon-Pt..."
+							value={formData.availability}
+							onChange={(e) =>
+								setFormData({ ...formData, availability: e.target.value })
+							}
+							required
+						/>
+					</div>
+
+					{/* Doświadczenie */}
+					<div className={styles.modal__field}>
+						<label className={styles.modal__label}>Doświadczenie</label>
+						<select
+							className={styles.modal__select}
+							value={formData.experience}
+							onChange={(e) =>
+								setFormData({
+									...formData,
+									experience: e.target.value as "none" | "beginner" | "intermediate" | "advanced",
+								})
+							}
+						>
+							<option value="none">Brak</option>
+							<option value="beginner">Początkujący</option>
+							<option value="intermediate">Średniozaawansowany</option>
+							<option value="advanced">Zaawansowany</option>
+						</select>
+					</div>
+
+					<div className={styles.modal__actions}>
+						<button
+							type="button"
+							className={styles.modal__btnCancel}
+							onClick={onClose}
+						>
+							Anuluj
+						</button>
+						<button type="submit" className={styles.modal__btnSave}>
+							Dodaj twórcę
+						</button>
+					</div>
+				</form>
+			</div>
+		</div>
+	);
+}
 function AddMemberModal({
 	isOpen,
 	onClose,
@@ -1897,14 +2128,18 @@ function TeamSection({ members, canManage, onAddMember }: TeamSectionProps) {
 								{ROLE_LABELS[member.role]}
 							</div>
 							<div className={styles.teamCard__details}>
-								<span>
-									<MapPin size={14} />
-									{member.province}
-								</span>
-								<span>
-									<Briefcase size={14} />
-									{member.team}
-								</span>
+								{member.province && (
+									<span>
+										<MapPin size={14} />
+										{member.province}
+									</span>
+								)}
+								{member.team && (
+									<span>
+										<Briefcase size={14} />
+										{member.team}
+									</span>
+								)}
 							</div>
 							<div className={styles.teamCard__contact}>
 								<a
@@ -1933,10 +2168,12 @@ function TeamSection({ members, canManage, onAddMember }: TeamSectionProps) {
 						<div className={styles.teamCard__status}>
 							<span
 								className={
-									member.active ? styles.statusActive : styles.statusInactive
+									member.status === 'vacation'
+										? styles.statusVacation
+										: styles.statusActive  // lub brak klasy dla domyślnego stylu
 								}
 							>
-								{member.active ? "Aktywny" : "Nieaktywny"}
+								{member.status === 'vacation' ? 'Urlop' : 'Aktywny'}
 							</span>
 						</div>
 					</div>
@@ -1947,7 +2184,7 @@ function TeamSection({ members, canManage, onAddMember }: TeamSectionProps) {
 }
 
 // ---------- SEKCJA TWÓRCÓW ROLEK ----------
-function CreatorsSection({ creators }: { creators: ContentCreator[] }) {
+function CreatorsSection({ creators, canManage, onAddCreator }: CreatorsSectionProps) {
 	const [searchTerm, setSearchTerm] = useState("");
 
 	const filteredCreators = useMemo(() => {
@@ -1967,6 +2204,13 @@ function CreatorsSection({ creators }: { creators: ContentCreator[] }) {
 						Osoby, które chcą regularnie nagrywać materiały wideo.
 					</p>
 				</div>
+				{/* ⭐ DODAJ PRZYCISK */}
+				{canManage && (
+					<button className={styles.section__addBtn} onClick={onAddCreator}>
+						<Plus size={18} />
+						Dodaj twórcę
+					</button>
+				)}
 			</div>
 			<div className={styles.section__filters}>
 				<div className={styles.section__search}>
@@ -1991,14 +2235,18 @@ function CreatorsSection({ creators }: { creators: ContentCreator[] }) {
 								{creator.firstName} {creator.lastName}
 							</h3>
 							<div className={styles.creatorCard__details}>
-								<span>
-									<MapPin size={14} />
-									{creator.province}
-								</span>
-								<span>
-									<Briefcase size={14} />
-									{creator.team}
-								</span>
+								{creator.province && (
+									<span>
+										<MapPin size={14} />
+										{creator.province}
+									</span>
+								)}
+								{creator.team && (
+									<span>
+										<Briefcase size={14} />
+										{creator.team}
+									</span>
+								)}
 							</div>
 							<div className={styles.creatorCard__availability}>
 								<Clock size={14} />
@@ -2011,13 +2259,7 @@ function CreatorsSection({ creators }: { creators: ContentCreator[] }) {
 								{creator.experience === "intermediate" && "Średniozaawansowany"}
 								{creator.experience === "advanced" && "Zaawansowany"}
 							</div>
-							<div className={styles.creatorCard__topics}>
-								{creator.topics.map((topic) => (
-									<span key={topic} className={styles.creatorCard__topic}>
-										{topic}
-									</span>
-								))}
-							</div>
+
 						</div>
 					</div>
 				))}
@@ -2203,7 +2445,22 @@ function MaterialsBoard({
 	const getMaterialsByStage = (stage: MaterialStage) => {
 		return materials.filter((m) => m.stage === stage);
 	};
+	// Funkcja do wyświetlania etykiety statusu
+	const getStatusLabel = (status: string): string => {
+		if (status === 'vacation') {
+			return 'Urlop';
+		}
+		// Dla 'active', 'trial', 'mentor' - wszystkie pokazują "Aktywny"
+		return 'Aktywny';
+	};
 
+	// Funkcja do określania klasy CSS
+	const getStatusClass = (status: string): string => {
+		if (status === 'vacation') {
+			return styles.statusVacation; // Możesz dodać osobny styl dla urlopu
+		}
+		return styles.statusActive; // Dla wszystkich aktywnych
+	};
 	const getPriorityColor = (priority: string) => {
 		switch (priority) {
 			case "high":
@@ -2278,7 +2535,11 @@ function MaterialsBoard({
 										</span>
 										<span>
 											<Calendar size={12} />
-											{new Date(material.deadline).toLocaleDateString("pl-PL")}
+											{new Date(material.deadline).toLocaleDateString("pl-PL", {
+												day: '2-digit',
+												month: '2-digit',
+												year: 'numeric'
+											})}
 										</span>
 									</div>
 									<span
@@ -2531,6 +2792,8 @@ export default function SocialMedia({ title }: { title?: string }) {
 	const [isMemberModalOpen, setIsMemberModalOpen] = useState(false);
 	const [isPublicationModalOpen, setIsPublicationModalOpen] = useState(false);
 	const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
+	const [isCreatorModalOpen, setIsCreatorModalOpen] = useState(false);
+
 	const [isContactModalOpen, setIsContactModalOpen] = useState(false);
 	const [availableUsers, setAvailableUsers] = useState<any[]>([]);
 	const [editingPublication, setEditingPublication] =
@@ -2546,7 +2809,26 @@ export default function SocialMedia({ title }: { title?: string }) {
 		setEditingMaterial(material);
 		setIsEditMaterialModalOpen(true);
 	};
-
+	const handleAddCreator = async (data: CreatorFormData) => {
+		try {
+			const token = localStorage.getItem("accessToken");
+			const response = await fetch("/api/social/creators", {
+				method: "POST",
+				headers: {
+					Authorization: `Bearer ${token}`,
+					"Content-Type": "application/json",
+				},
+				body: JSON.stringify(data),
+			});
+			if (!response.ok) throw new Error("Błąd dodawania twórcy");
+			const newCreator = await response.json();
+			setCreators([...creators, newCreator]);
+			toast.success("Twórca dodany!");
+		} catch (error) {
+			console.error("❌ Błąd:", error);
+			toast.error("Nie udało się dodać twórcy");
+		}
+	};
 	const handleUpdateMaterial = async (id: string, data: MaterialFormData) => {
 		try {
 			const token = localStorage.getItem("accessToken");
@@ -2998,9 +3280,12 @@ export default function SocialMedia({ title }: { title?: string }) {
 				canManage={canManage}
 				onAddMember={() => setIsMemberModalOpen(true)}
 			/>
-
 			{/* Twórcy rolek */}
-			<CreatorsSection creators={creators} />
+			<CreatorsSection
+				creators={creators}
+				canManage={canManage}
+				onAddCreator={() => setIsCreatorModalOpen(true)}
+			/>
 
 			{/* Tablica materiałów */}
 			<MaterialsBoard
@@ -3025,6 +3310,12 @@ export default function SocialMedia({ title }: { title?: string }) {
 				onClose={() => setIsMaterialModalOpen(false)}
 				onSave={handleAddMaterial}
 				teamMembers={members}
+			/>
+			<AddCreatorModal
+				isOpen={isCreatorModalOpen}
+				onClose={() => setIsCreatorModalOpen(false)}
+				onSave={handleAddCreator}
+				availableUsers={availableUsers} // ⭐ przekazujemy listę członków SM
 			/>
 			{/* Planowanie publikacji */}
 			<PublicationsSection
@@ -3137,7 +3428,7 @@ export default function SocialMedia({ title }: { title?: string }) {
 				onSave={handleUpdateContact}
 				teamMembers={members}
 			/>
-			
+
 		</div>
 	);
 }

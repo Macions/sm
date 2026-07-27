@@ -18,6 +18,7 @@ model User {
   created_at            DateTime             @default(now()) @db.Timestamp(0)
   team                  String?              @db.VarChar(100)
   status                String?              @default("active") @db.VarChar(50)
+  previous_status       String?              @default("active") @db.VarChar(50) // ⭐ DODAJ TĘ LINIĘ
   province              String?              @db.VarChar(100)
   phone                 String?              @db.VarChar(20)
   avatar                String?              @db.VarChar(255)
@@ -42,6 +43,7 @@ model User {
   vacancies             Vacancy[]
   vacancyApplications   VacancyApplication[]
   socialMediaMember     SocialMediaMember?
+  socialMediaCreator    SocialMediaCreator?
   contentCreator        ContentCreator?
   publications          Publication[]
   materials             Material[]
@@ -51,6 +53,20 @@ model User {
   @@index([role_id], map: "idx_users_role_id")
   @@index([status], map: "idx_users_status")
   @@map("users")
+}
+
+model SocialMediaCreator {
+  id           Int      @id @default(autoincrement())
+  user_id      Int      @unique
+  user         User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  availability String   @db.Text
+  experience   String   @default("none") @db.VarChar(50)
+  topics       String?  @db.LongText // ⭐ ZMIEŃ NA STRING (przechowuj jako JSON string)
+  is_active    Boolean  @default(true)
+  created_at   DateTime @default(now())
+  updated_at   DateTime @updatedAt
+
+  @@map("social_media_creators")
 }
 
 model Project {
@@ -186,8 +202,12 @@ model roles {
   id          Int      @id @default(autoincrement())
   name        String   @unique(map: "name") @db.VarChar(50)
   description String?  @db.Text
+  permissions String?  @db.LongText // ⭐ DODAJ TĘ LINIĘ - JSON z uprawnieniami
   created_at  DateTime @default(now()) @db.Timestamp(0)
+  updated_at  DateTime @default(now()) @db.Timestamp(0) // ⭐ OPCJONALNIE - DODAJ TĘ LINIĘ
   users       User[]
+
+  @@map("roles")
 }
 
 model user_notifications {
@@ -435,21 +455,24 @@ model Publication {
   @@map("publications")
 }
 
-model socialMaterial {
-    id             Int      @id @default(autoincrement())
-    name           String
-    description    String?
-    responsible_id Int
-    deadline       DateTime
-    priority       String   // "low", "medium", "high"
-    stage          String   // "ideas", "recording", "editing", "approval", "ready"
-    created_at     DateTime @default(now())
-    updated_at     DateTime @updatedAt
+// ✅ ZOSTAW TEN - POJEDYNCZY MODEL DLA MATERIAŁÓW
+model Material {
+  id             Int      @id @default(autoincrement())
+  name           String   @db.VarChar(255)
+  description    String?  @db.Text
+  responsible_id Int
+  deadline       DateTime @db.Date
+  priority       String   @default("medium") @db.VarChar(20)
+  stage          String   @default("ideas") @db.VarChar(50)
+  is_active      Boolean  @default(true)
+  created_at     DateTime @default(now())
+  updated_at     DateTime @updatedAt
 
-    responsible User @relation(fields: [responsible_id], references: [id])
+  responsible User @relation(fields: [responsible_id], references: [id], onDelete: Cascade)
 
-    @@map("social_materials")
+  @@map("materials")
 }
+
 model SocialTask {
   id             Int      @id @default(autoincrement())
   name           String
@@ -479,4 +502,29 @@ model MediaContact {
   responsible User @relation(fields: [responsible_id], references: [id])
 
   @@map("media_contacts")
+}
+
+model SystemLog {
+  id            Int      @id @default(autoincrement())
+  user_id       Int
+  user_name     String   @db.VarChar(100)
+  user_role     String   @db.VarChar(50)
+  action_type   String   @db.VarChar(50)
+  category      String   @db.VarChar(50)
+  endpoint      String   @db.VarChar(255)
+  method        String   @db.VarChar(10)
+  entity_id     String?  @db.VarChar(50)
+  entity_name   String?  @db.VarChar(255)
+  changes       Json?
+  ip_address    String?  @db.VarChar(45)
+  user_agent    String?  @db.LongText
+  status        String?  @default("success") @db.VarChar(20)
+  error_message String?  @db.Text
+  created_at    DateTime @default(now())
+
+  @@index([user_id])
+  @@index([action_type])
+  @@index([category])
+  @@index([created_at])
+  @@map("system_logs")
 }
