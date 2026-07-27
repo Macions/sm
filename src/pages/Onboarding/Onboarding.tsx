@@ -124,6 +124,53 @@ interface OnboardingProps {
 	onComplete: (data: OnboardingData) => void;
 	initialData?: Partial<OnboardingData>;
 }
+// ============================================================
+// ⭐ FORMATOWANIE NUMERU TELEFONU ⭐
+// ============================================================
+
+const formatPhoneNumber = (rawPhone: string | null | undefined): string => {
+	if (!rawPhone) return '';
+
+	// Wyciągnij tylko cyfry
+	const digits = rawPhone.toString().replace(/\D/g, '');
+
+	// Jeśli nie ma cyfr - zwróć puste
+	if (!digits) return '';
+
+	// Sprawdź czy numer zaczyna się od 48 (prefix Polski)
+	let number = digits;
+
+	// Jeśli zaczyna się od 48, usuń 48 z przodu
+	if (number.startsWith('48')) {
+		number = number.substring(2);
+	}
+
+	// Jeśli numer ma 9 cyfr (bez prefixu) - to standardowy polski numer
+	if (number.length === 9) {
+		// Format: 123 123 123
+		const part1 = number.substring(0, 3);
+		const part2 = number.substring(3, 6);
+		const part3 = number.substring(6, 9);
+		return `+48 ${part1} ${part2} ${part3}`;
+	}
+
+	// Jeśli ma mniej niż 9 cyfr - zwróć same cyfry z +48
+	if (number.length < 9 && number.length > 0) {
+		return `+48 ${number}`;
+	}
+
+	// Jeśli ma więcej niż 9 cyfr (np. 11 cyfr) - weź ostatnie 9
+	if (number.length > 9) {
+		const last9 = number.substring(number.length - 9);
+		const part1 = last9.substring(0, 3);
+		const part2 = last9.substring(3, 6);
+		const part3 = last9.substring(6, 9);
+		return `+48 ${part1} ${part2} ${part3}`;
+	}
+
+	// Fallback - zwróć z +48
+	return `+48 ${digits}`;
+};
 
 export default function Onboarding({
 	onComplete,
@@ -227,15 +274,24 @@ export default function Onboarding({
 		return "mniej niż miesiąc";
 	};
 	// ZMIEŃ w handleSubmit:
+	// Onboarding.tsx - w handleSubmit
+
 	const handleSubmit = async () => {
+		console.log("🚀 [SUBMIT] START");
+
 		try {
 			const token = localStorage.getItem("accessToken");
 
-			// Oblicz datę dołączenia
+			console.log("📋 [formData] joinMonth:", formData.joinMonth);
+			console.log("📋 [formData] joinYear:", formData.joinYear);
+			console.log("📋 [formData] isTrial:", formData.isTrial);
+
 			let joinDate = null;
 			if (formData.joinMonth && formData.joinYear && !formData.isTrial) {
 				joinDate = `${formData.joinYear}-${String(formData.joinMonth).padStart(2, "0")}-01`;
 			}
+
+			console.log("📅 [joinDate] wynik:", joinDate);
 
 			const payload = {
 				...formData,
@@ -243,34 +299,42 @@ export default function Onboarding({
 				isTrial: formData.isTrial || false,
 			};
 
-			const response = await fetch(
-				"http://localhost:3000/api/onboarding/save",
-				{
-					method: "POST",
-					headers: {
-						"Content-Type": "application/json",
-						Authorization: `Bearer ${token}`,
-					},
-					body: JSON.stringify(payload),
+			console.log("📦 [payload] wysyłane:", JSON.stringify(payload, null, 2));
+
+			const response = await fetch("/api/onboarding/save", {
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json",
+					Authorization: `Bearer ${token}`,
 				},
-			);
+				body: JSON.stringify(payload),
+			});
+
+			console.log("📡 [response] status:", response.status);
 
 			if (!response.ok) {
 				const error = await response.json();
+				console.error("❌ [response] błąd:", error);
 				throw new Error(error.error || "Błąd zapisu");
 			}
 
 			const result = await response.json();
-			console.log("Zapisano:", result);
+			console.log("✅ [response] sukces:", result);
 
-			// Wywołaj callback
-			onComplete(formData);
-
-			// Przekieruj - spróbuj z window.location
+			// ⭐ ZATRZYMAJ PRZEKIEROWANIE NA 5 SEKUND ⭐
 			window.location.href = "/dashboard";
+
+			// Zamiast od razu przekierowywać - pokaż komunikat
+			// alert("✅ Dane zapisane! Sprawdź konsolę (F12) dla szczegółów.");
+
+			// Po 5 sekundach przekieruj
+			setTimeout(() => {
+				window.location.href = "/dashboard";
+			}, 5000);
+
 		} catch (error) {
-			console.error("Błąd zapisu onboardingu:", error);
-			alert("Wystąpił błąd podczas zapisywania danych. Spróbuj ponownie.");
+			console.error("❌ Błąd zapisu onboardingu:", error);
+			alert("❌ Wystąpił błąd: " + (error instanceof Error ? error.message : "Nieznany błąd"));
 		}
 	};
 
@@ -305,56 +369,100 @@ export default function Onboarding({
 			setStep(step - 1);
 		}
 	};
-	// ===== FUNKCJE POMOCNICZE =====
-	const parseNameFromEmail = (
-		email: string,
-	): { firstName: string; lastName: string } => {
+	const parseNameFromEmail = (email: string) => {
 		if (!email) return { firstName: "", lastName: "" };
-
-		// Usuń @silamlodych.pl i rozdziel po kropce
 		const localPart = email.split("@")[0];
 		const parts = localPart.split(".");
-
 		if (parts.length >= 2) {
-			// Zamień pierwsze litery na duże
 			const firstName = parts[0].charAt(0).toUpperCase() + parts[0].slice(1);
 			const lastName = parts[1].charAt(0).toUpperCase() + parts[1].slice(1);
 			return { firstName, lastName };
 		}
-
 		return { firstName: "", lastName: "" };
 	};
-	// Po istniejącym useEffect (tym od emaila), dodaj:
-	useEffect(() => {
-		// Jeśli email jest wypełniony, a imię lub nazwisko są puste
-		if (formData.email && (!formData.firstName || !formData.lastName)) {
-			const { firstName, lastName } = parseNameFromEmail(formData.email);
-			if (firstName && lastName) {
-				// Ustaw imię i nazwisko tylko jeśli są puste
-				if (!formData.firstName) {
-					handleInputChange("firstName", firstName);
-				}
-				if (!formData.lastName) {
-					handleInputChange("lastName", lastName);
-				}
-			}
-		}
-	}, [formData.email]); // Uruchamia się gdy zmieni się email
 	// Na początku komponentu, po deklaracji stanów:
+	// Onboarding.tsx - znajdź ten useEffect i ZASTĄP GO:
+
+	// Onboarding.tsx - znajdź ten useEffect i ZMIEŃ:
+
+	// Onboarding.tsx - ZMIEŃ useEffect
+
 	useEffect(() => {
-		// Pobierz email z localStorage po zalogowaniu
 		const userData = localStorage.getItem("user");
 		if (userData) {
 			try {
 				const user = JSON.parse(userData);
+				console.log("📋 Dane użytkownika z localStorage:", user);
+				console.log("🔍 Klucze w user:", Object.keys(user));
+
+				// ⭐ SPRAWDŹ WSZYSTKIE MOŻLIWE NAZWY DLA TELEFONU ⭐
+				const phoneValue = user.phone || user.phone_number || user.telefon || user.tel || user.mobile || '';
+
+				if (user.first_name && !formData.firstName) {
+					handleInputChange("firstName", user.first_name);
+				}
+				if (user.last_name && !formData.lastName) {
+					handleInputChange("lastName", user.last_name);
+				}
 				if (user.email && !formData.email) {
-					setFormData((prev) => ({ ...prev, email: user.email }));
+					handleInputChange("email", user.email);
+				}
+				if (phoneValue && !formData.phone) {
+					const formattedPhone = formatPhoneNumber(phoneValue);
+					handleInputChange("phone", formattedPhone);
+					console.log(`📱 [Onboarding] Znaleziono numer: ${phoneValue} -> sformatowano: ${formattedPhone}`);
+				} else {
+					console.log("📱 [Onboarding] Brak numeru telefonu w danych użytkownika");
 				}
 			} catch (e) {
 				console.error("Błąd parsowania user data:", e);
 			}
+		} else {
+			console.log("❌ [Onboarding] Brak danych w localStorage");
 		}
 	}, []);
+	// Onboarding.tsx - DODAJ TEN useEffect
+
+	useEffect(() => {
+		const fetchUserProfile = async () => {
+			try {
+				const token = localStorage.getItem("accessToken");
+				if (!token) return;
+
+				console.log("📱 [Onboarding] Pobieram profil z API...");
+
+				const response = await fetch("/api/profile", {
+					headers: {
+						Authorization: `Bearer ${token}`,
+						"Content-Type": "application/json"
+					}
+				});
+
+				if (response.ok) {
+					const data = await response.json();
+					console.log("📋 [Onboarding] Profil z API:", data);
+
+					// ⭐ Pobierz telefon z API ⭐
+					if (data.phone && !formData.phone) {
+						const formattedPhone = formatPhoneNumber(data.phone);
+						handleInputChange("phone", formattedPhone);
+						console.log(`📱 [Onboarding] Ustawiono numer z API: ${data.phone} -> ${formattedPhone}`);
+					} else {
+						console.log("📱 [Onboarding] Brak numeru telefonu w API");
+					}
+				} else {
+					console.error("❌ [Onboarding] Błąd API:", response.status);
+				}
+			} catch (error) {
+				console.error("❌ [Onboarding] Błąd pobierania profilu:", error);
+			}
+		};
+
+		// Uruchom jeśli nie ma numeru telefonu
+		if (!formData.phone) {
+			fetchUserProfile();
+		}
+	}, [formData.phone]);
 	useEffect(() => {
 		// Generuj email tylko jeśli imię i nazwisko nie są puste
 		if (formData.firstName.trim() && formData.lastName.trim()) {
@@ -397,27 +505,6 @@ export default function Onboarding({
 			}
 		}
 	}, [formData.firstName, formData.lastName, isEmailManuallyEdited]); // <-- DODAJ isEmailManuallyEdited
-	// ===== FORMATOWANIE NUMERU TELEFONU =====
-	const formatPhoneNumber = (value: string): string => {
-		// Usuń wszystko poza cyframi i znakiem +
-		const cleaned = value.replace(/[^0-9+]/g, "");
-
-		// Jeśli jest puste, zwróć puste
-		if (!cleaned) return "";
-
-		// Jeśli zaczyna się od +, zostaw jak jest
-		if (cleaned.startsWith("+")) {
-			return cleaned;
-		}
-
-		// Jeśli zaczyna się od 48 (bez +), dodaj +
-		if (cleaned.startsWith("48")) {
-			return "+" + cleaned;
-		}
-
-		// W przeciwnym razie dodaj +48
-		return "+48" + cleaned;
-	};
 
 	const navigate = useNavigate();
 
@@ -510,14 +597,12 @@ export default function Onboarding({
 										value={formData.phone}
 										onChange={(e) => handleInputChange("phone", e.target.value)}
 										onBlur={(e) => {
-											let value = e.target.value.replace(/\s/g, "");
-											if (value && !value.startsWith("+")) {
-												if (value.startsWith("48")) {
-													value = "+" + value;
-												} else {
-													value = "+48" + value;
+											const raw = e.target.value;
+											if (raw) {
+												const formatted = formatPhoneNumber(raw);
+												if (formatted !== raw) {
+													handleInputChange("phone", formatted);
 												}
-												handleInputChange("phone", value);
 											}
 										}}
 										placeholder="+48 123 456 789"
@@ -1114,80 +1199,80 @@ export default function Onboarding({
 									formData.mpContacts.length > 0 ||
 									formData.institutionContacts.length > 0 ||
 									formData.otherContacts.length > 0) && (
-									<div className={styles.summary__section}>
-										<h4 className={styles.summary__title}>Kontakty prywatne</h4>
-										<div className={styles.summary__grid}>
-											{formData.salaContacts.length > 0 && (
-												<div>
-													<span className={styles.summary__label}>
-														Kontakty do sal
-													</span>
-													<div className={styles.summary__tags}>
-														{formData.salaContacts.map((contact) => (
-															<span
-																key={contact}
-																className={styles.summary__tag}
-															>
-																{contact}
-															</span>
-														))}
+										<div className={styles.summary__section}>
+											<h4 className={styles.summary__title}>Kontakty prywatne</h4>
+											<div className={styles.summary__grid}>
+												{formData.salaContacts.length > 0 && (
+													<div>
+														<span className={styles.summary__label}>
+															Kontakty do sal
+														</span>
+														<div className={styles.summary__tags}>
+															{formData.salaContacts.map((contact) => (
+																<span
+																	key={contact}
+																	className={styles.summary__tag}
+																>
+																	{contact}
+																</span>
+															))}
+														</div>
 													</div>
-												</div>
-											)}
-											{formData.mpContacts.length > 0 && (
-												<div>
-													<span className={styles.summary__label}>
-														Kontakty do posłów
-													</span>
-													<div className={styles.summary__tags}>
-														{formData.mpContacts.map((contact) => (
-															<span
-																key={contact}
-																className={styles.summary__tag}
-															>
-																{contact}
-															</span>
-														))}
+												)}
+												{formData.mpContacts.length > 0 && (
+													<div>
+														<span className={styles.summary__label}>
+															Kontakty do posłów
+														</span>
+														<div className={styles.summary__tags}>
+															{formData.mpContacts.map((contact) => (
+																<span
+																	key={contact}
+																	className={styles.summary__tag}
+																>
+																	{contact}
+																</span>
+															))}
+														</div>
 													</div>
-												</div>
-											)}
-											{formData.institutionContacts.length > 0 && (
-												<div>
-													<span className={styles.summary__label}>
-														Kontakty do instytucji
-													</span>
-													<div className={styles.summary__tags}>
-														{formData.institutionContacts.map((contact) => (
-															<span
-																key={contact}
-																className={styles.summary__tag}
-															>
-																{contact}
-															</span>
-														))}
+												)}
+												{formData.institutionContacts.length > 0 && (
+													<div>
+														<span className={styles.summary__label}>
+															Kontakty do instytucji
+														</span>
+														<div className={styles.summary__tags}>
+															{formData.institutionContacts.map((contact) => (
+																<span
+																	key={contact}
+																	className={styles.summary__tag}
+																>
+																	{contact}
+																</span>
+															))}
+														</div>
 													</div>
-												</div>
-											)}
-											{formData.otherContacts.length > 0 && (
-												<div>
-													<span className={styles.summary__label}>
-														Inne kontakty
-													</span>
-													<div className={styles.summary__tags}>
-														{formData.otherContacts.map((contact) => (
-															<span
-																key={contact}
-																className={styles.summary__tag}
-															>
-																{contact}
-															</span>
-														))}
+												)}
+												{formData.otherContacts.length > 0 && (
+													<div>
+														<span className={styles.summary__label}>
+															Inne kontakty
+														</span>
+														<div className={styles.summary__tags}>
+															{formData.otherContacts.map((contact) => (
+																<span
+																	key={contact}
+																	className={styles.summary__tag}
+																>
+																	{contact}
+																</span>
+															))}
+														</div>
 													</div>
-												</div>
-											)}
+												)}
+											</div>
 										</div>
-									</div>
-								)}
+									)}
 
 								{formData.description && (
 									<div className={styles.summary__section}>

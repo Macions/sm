@@ -23,6 +23,7 @@ import {
 	Eye as EyeIcon,
 	LayoutGrid,
 	List,
+	AlertCircle,
 } from "lucide-react";
 import styles from "./Leave.module.css";
 
@@ -409,13 +410,12 @@ function LeaveCard({
 
 				{leave.approvedBy && (
 					<div
-						className={`${styles.leaveCard__approval} ${
-							leave.status === "approved"
+						className={`${styles.leaveCard__approval} ${leave.status === "approved"
 								? styles.leaveCard__approvalApproved
 								: leave.status === "rejected"
 									? styles.leaveCard__approvalRejected
 									: ""
-						}`}
+							}`}
 					>
 						{leave.status === "approved" ? (
 							<CheckCircle size={14} />
@@ -477,7 +477,7 @@ function LeaveCard({
 				<div className={styles.leaveCard__actions}>
 					{/* Pokaż szczegóły TYLKO jeśli są komentarze lub załączniki */}
 					{(leave.comments && leave.comments.length > 0) ||
-					(leave.attachments && leave.attachments.length > 0) ? (
+						(leave.attachments && leave.attachments.length > 0) ? (
 						<button
 							className={styles.leaveCard__expandBtn}
 							onClick={() => setIsExpanded(!isExpanded)}
@@ -1100,7 +1100,7 @@ function LeaveModal({
 										// ⭐ AUTOMATYCZNIE ZERUJ END DATE JESLI JEST WCZEŚNIEJSZA
 										endDate:
 											formData.endDate &&
-											new Date(formData.endDate) < new Date(newStartDate)
+												new Date(formData.endDate) < new Date(newStartDate)
 												? ""
 												: formData.endDate,
 									});
@@ -1257,13 +1257,12 @@ function LeaveModal({
 
 					{leave?.approvedBy && (
 						<div
-							className={`${styles.modal__approval} ${
-								leave.status === "approved"
+							className={`${styles.modal__approval} ${leave.status === "approved"
 									? styles.modal__approvalApproved
 									: leave.status === "rejected"
 										? styles.modal__approvalRejected
 										: ""
-							}`}
+								}`}
 						>
 							{leave.status === "approved" ? (
 								<CheckCircle size={16} />
@@ -1348,8 +1347,8 @@ export default function Leave({ title }: { title?: string }) {
 		title: "",
 		message: "",
 		confirmText: "Potwierdź",
-		onConfirm: () => {},
-		onCancel: () => {},
+		onConfirm: () => { },
+		onCancel: () => { },
 	});
 	const unreadCount = notifications.filter((n) => !n.read).length;
 
@@ -1458,9 +1457,43 @@ export default function Leave({ title }: { title?: string }) {
 	};
 
 	const handleDeleteLeave = (id: string) => {
-		if (window.confirm("Czy na pewno chcesz usunąć ten wniosek?")) {
-			setLeaves(leaves.filter((l) => l.id !== id));
-		}
+		// ⭐ UŻYJ ConfirmDialog ZAMIAST window.confirm
+		showConfirm(
+			"Usuń wniosek urlopowy",
+			"Czy na pewno chcesz usunąć ten wniosek? Tej operacji nie można cofnąć.",
+			"Usuń",
+			async () => {
+				try {
+					const token = localStorage.getItem('accessToken');
+					console.log(`🔍 [FRONTEND] Usuwanie wniosku: ${id}`);
+
+					const response = await fetch(`/api/leaves/${id}`, {
+						method: 'DELETE',
+						headers: {
+							Authorization: `Bearer ${token}`,
+							'Content-Type': 'application/json',
+						},
+					});
+
+					console.log(`🔍 [FRONTEND] Status odpowiedzi: ${response.status}`);
+
+					if (response.ok) {
+						const data = await response.json();
+						console.log('🔍 [FRONTEND] Odpowiedź:', data);
+
+						// ⭐ USUŃ Z LISTY TYLKO PO POTWIERDZENIU Z API
+						setLeaves(leaves.filter((l) => l.id !== id));
+						toast.success('Wniosek usunięty!');
+					} else {
+						const error = await response.json();
+						toast.error(error.error || 'Nie udało się usunąć wniosku');
+					}
+				} catch (error) {
+					console.error('🔍 [FRONTEND] Błąd:', error);
+					toast.error('Wystąpił błąd podczas usuwania');
+				}
+			}
+		);
 	};
 	const showConfirm = (
 		title: string,
@@ -1522,15 +1555,15 @@ export default function Leave({ title }: { title?: string }) {
 						prevLeaves.map((l) =>
 							l.id === id
 								? {
-										...l,
-										status,
-										approvedBy:
-											status === "pending" ? undefined : currentUser?.name,
-										approvedAt:
-											status === "pending"
-												? undefined
-												: new Date().toISOString(),
-									}
+									...l,
+									status,
+									approvedBy:
+										status === "pending" ? undefined : currentUser?.name,
+									approvedAt:
+										status === "pending"
+											? undefined
+											: new Date().toISOString(),
+								}
 								: l,
 						),
 					);
@@ -1750,10 +1783,10 @@ export default function Leave({ title }: { title?: string }) {
 					{(selectedStatus !== "all" ||
 						selectedType !== "all" ||
 						searchTerm) && (
-						<button className={styles.filters__reset} onClick={clearFilters}>
-							Wyczyść filtry
-						</button>
-					)}
+							<button className={styles.filters__reset} onClick={clearFilters}>
+								Wyczyść filtry
+							</button>
+						)}
 				</div>
 			</div>
 
@@ -1766,8 +1799,8 @@ export default function Leave({ title }: { title?: string }) {
 							<h3 className={styles.emptyState__title}>Brak wniosków</h3>
 							<p className={styles.emptyState__description}>
 								{searchTerm ||
-								selectedStatus !== "all" ||
-								selectedType !== "all"
+									selectedStatus !== "all" ||
+									selectedType !== "all"
 									? "Nie znaleziono wniosków spełniających kryteria wyszukiwania."
 									: "Nie ma jeszcze żadnych wniosków urlopowych."}
 							</p>

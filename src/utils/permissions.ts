@@ -2,223 +2,272 @@
 
 export type UserRole = "admin" | "board" | "zarząd" | "coordinator" | "member";
 
-// ✅ UŻYJ as const
-export const PERMISSIONS = {
-	admin: {
-		canViewAllLeaves: true,
-		canApproveLeaves: true,
-		canRejectLeaves: true,
-		canEditAllLeaves: true,
-		canDeleteAllLeaves: true,
-		canViewAllUsers: true,
-		canEditUsers: true,
-		canDeleteUsers: true,
-		canManageProjects: true,
-		canManageVacancies: true,
-		canEditVacancies: true,
-		canDeleteVacancies: true,
-		canCreateVacancies: true,
-		canViewVacancies: true,
-		canApplyVacancies: true,
-		canViewApplications: true,
-		canEditApplications: true,
-		canManageGuides: true,
-		canViewAllNotifications: true,
-		canManageTeams: true,
-		canViewStructure: true,
-		canEditProfile: true,
-	},
-	board: {
-		canViewAllLeaves: true,
-		canApproveLeaves: true,
-		canRejectLeaves: true,
-		canEditAllLeaves: false,
-		canDeleteAllLeaves: false,
-		canViewAllUsers: true,
-		canEditUsers: false,
-		canDeleteUsers: false,
-		canManageProjects: true,
-		canManageVacancies: true,
-		canEditVacancies: true,
-		canDeleteVacancies: false,
-		canCreateVacancies: true,
-		canViewVacancies: true,
-		canApplyVacancies: true,
-		canViewApplications: true,
-		canEditApplications: true,
-		canManageGuides: false,
-		canViewAllNotifications: true,
-		canManageTeams: false,
-		canViewStructure: true,
-		canEditProfile: true,
-	},
-	// ✅ DODAJ "zarząd" jako alias
-	zarząd: {
-		canViewAllLeaves: true,
-		canApproveLeaves: true,
-		canRejectLeaves: true,
-		canEditAllLeaves: false,
-		canDeleteAllLeaves: false,
-		canViewAllUsers: true,
-		canEditUsers: false,
-		canDeleteUsers: false,
-		canManageProjects: true,
-		canManageVacancies: true,
-		canEditVacancies: true,
-		canDeleteVacancies: false,
-		canCreateVacancies: true,
-		canViewVacancies: true,
-		canApplyVacancies: true,
-		canViewApplications: true,
-		canEditApplications: true,
-		canManageGuides: false,
-		canViewAllNotifications: true,
-		canManageTeams: false,
-		canViewStructure: true,
-		canEditProfile: true,
-	},
-	coordinator: {
-		canViewAllLeaves: false,
-		canApproveLeaves: false,
-		canRejectLeaves: false,
-		canEditAllLeaves: false,
-		canDeleteAllLeaves: false,
-		canViewAllUsers: false,
-		canEditUsers: false,
-		canDeleteUsers: false,
-		canManageProjects: true,
-		canManageVacancies: false,
-		canEditVacancies: false,
-		canDeleteVacancies: false,
-		canCreateVacancies: false,
-		canViewVacancies: true,
-		canApplyVacancies: true,
-		canViewApplications: true,
-		canEditApplications: false,
-		canManageGuides: false,
-		canViewAllNotifications: false,
-		canManageTeams: false,
-		canViewStructure: true,
-		canEditProfile: true,
-	},
-	member: {
-		canViewAllLeaves: false,
-		canApproveLeaves: false,
-		canRejectLeaves: false,
-		canEditAllLeaves: false,
-		canDeleteAllLeaves: false,
-		canViewAllUsers: false,
-		canEditUsers: false,
-		canDeleteUsers: false,
-		canManageProjects: false,
-		canManageVacancies: false,
-		canEditVacancies: false,
-		canDeleteVacancies: false,
-		canCreateVacancies: false,
-		canViewVacancies: true,
-		canApplyVacancies: true,
-		canViewApplications: true,
-		canEditApplications: false,
-		canManageGuides: false,
-		canViewAllNotifications: false,
-		canManageTeams: false,
-		canViewStructure: true,
-		canEditProfile: true,
-	},
-} as const;
+export type Permission =
+	| "canViewAllLeaves"
+	| "canApproveLeaves"
+	| "canRejectLeaves"
+	| "canEditAllLeaves"
+	| "canDeleteAllLeaves"
+	| "canViewAllUsers"
+	| "canEditUsers"
+	| "canDeleteUsers"
+	| "canManageProjects"
+	| "canManageVacancies"
+	| "canEditVacancies"
+	| "canDeleteVacancies"
+	| "canCreateVacancies"
+	| "canViewVacancies"
+	| "canApplyVacancies"
+	| "canViewApplications"
+	| "canEditApplications"
+	| "canManageGuides"
+	| "canViewAllNotifications"
+	| "canManageTeams"
+	| "canViewStructure"
+	| "canEditProfile";
 
-// ✅ POPRAWNIEJ - użyj typeof
-export type Permission = keyof typeof PERMISSIONS.admin;
+export const PERMISSION_LABELS: Record<Permission, string> = {
+	canViewAllLeaves: "Podgląd wszystkich urlopów",
+	canApproveLeaves: "Akceptowanie urlopów",
+	canRejectLeaves: "Odrzucanie urlopów",
+	canEditAllLeaves: "Edycja wszystkich urlopów",
+	canDeleteAllLeaves: "Usuwanie wszystkich urlopów",
+	canViewAllUsers: "Podgląd wszystkich użytkowników",
+	canEditUsers: "Edycja użytkowników",
+	canDeleteUsers: "Usuwanie użytkowników",
+	canManageProjects: "Zarządzanie projektami",
+	canManageVacancies: "Zarządzanie wakatami",
+	canEditVacancies: "Edycja wakatów",
+	canDeleteVacancies: "Usuwanie wakatów",
+	canCreateVacancies: "Tworzenie wakatów",
+	canViewVacancies: "Podgląd wakatów",
+	canApplyVacancies: "Aplikowanie na wakaty",
+	canViewApplications: "Podgląd aplikacji",
+	canEditApplications: "Edycja aplikacji",
+	canManageGuides: "Zarządzanie poradnikami",
+	canViewAllNotifications: "Podgląd wszystkich powiadomień",
+	canManageTeams: "Zarządzanie zespołami",
+	canViewStructure: "Podgląd struktury",
+	canEditProfile: "Edycja profilu",
+};
 
-// Funkcja pomocnicza do sprawdzania uprawnień
+export const DEFAULT_PERMISSIONS: Record<UserRole, Permission[]> = {
+	admin: [
+		"canViewAllLeaves", "canApproveLeaves", "canRejectLeaves",
+		"canEditAllLeaves", "canDeleteAllLeaves", "canViewAllUsers",
+		"canEditUsers", "canDeleteUsers", "canManageProjects",
+		"canManageVacancies", "canEditVacancies", "canDeleteVacancies",
+		"canCreateVacancies", "canViewVacancies", "canApplyVacancies",
+		"canViewApplications", "canEditApplications", "canManageGuides",
+		"canViewAllNotifications", "canManageTeams", "canViewStructure",
+		"canEditProfile"
+	],
+	board: [
+		"canViewAllLeaves", "canApproveLeaves", "canRejectLeaves",
+		"canViewAllUsers", "canManageProjects", "canManageVacancies",
+		"canEditVacancies", "canCreateVacancies", "canViewVacancies",
+		"canApplyVacancies", "canViewApplications", "canEditApplications",
+		"canViewAllNotifications", "canViewStructure", "canEditProfile"
+	],
+	zarząd: [
+		"canViewAllLeaves", "canApproveLeaves", "canRejectLeaves",
+		"canViewAllUsers", "canManageProjects", "canManageVacancies",
+		"canEditVacancies", "canCreateVacancies", "canViewVacancies",
+		"canApplyVacancies", "canViewApplications", "canEditApplications",
+		"canViewAllNotifications", "canViewStructure", "canEditProfile"
+	],
+	coordinator: [
+		"canManageProjects", "canViewVacancies", "canApplyVacancies",
+		"canViewApplications", "canViewStructure", "canEditProfile"
+	],
+	member: [
+		"canViewVacancies", "canApplyVacancies", "canViewApplications",
+		"canViewStructure", "canEditProfile"
+	],
+};
+
+// ============================================================
+// CACHE
+// ============================================================
+
+let permissionsCache: Record<string, Permission[]> = {};
+
+export function clearPermissionsCache(): void {
+	permissionsCache = {};
+}
+
+// W permissions.ts, w fetchPermissions:
+
+export async function fetchPermissions(role: string): Promise<Permission[]> {
+	console.log(`🔍 [fetchPermissions] Pobieranie uprawnień dla roli: "${role}"`);
+
+	try {
+		const token = localStorage.getItem("accessToken");
+		console.log(`🔍 [fetchPermissions] Token: ${token ? 'Jest ✅' : 'Brak ❌'}`);
+
+		const url = `/api/admin/permissions/${role}`;
+		console.log(`🔍 [fetchPermissions] URL: ${url}`);
+
+		const response = await fetch(url, {
+			headers: {
+				Authorization: `Bearer ${token}`,
+				"Content-Type": "application/json",
+			},
+		});
+
+		console.log(`🔍 [fetchPermissions] Status odpowiedzi: ${response.status}`);
+
+		if (!response.ok) {
+			const errorText = await response.text();
+			console.error(`❌ [fetchPermissions] Błąd: ${response.status} - ${errorText}`);
+			throw new Error("Błąd pobierania uprawnień");
+		}
+
+		const data = await response.json();
+		console.log(`🔍 [fetchPermissions] Otrzymane dane:`, JSON.stringify(data, null, 2));
+
+		const permissions = data.permissions || DEFAULT_PERMISSIONS[role as UserRole] || [];
+		console.log(`🔍 [fetchPermissions] Zwracane uprawnienia:`, permissions);
+
+		return permissions;
+	} catch (error) {
+		console.error("❌ [fetchPermissions] Błąd pobierania uprawnień:", error);
+		const fallback = DEFAULT_PERMISSIONS[role as UserRole] || [];
+		console.log(`🔍 [fetchPermissions] Używam fallback:`, fallback);
+		return fallback;
+	}
+}
+
+export async function getCachedPermissions(role: string): Promise<Permission[]> {
+	if (permissionsCache[role]) {
+		return permissionsCache[role];
+	}
+	const permissions = await fetchPermissions(role);
+	permissionsCache[role] = permissions;
+	return permissions;
+}
+
+// ============================================================
+// FUNKCJE SYNCHRONICZNE
+// ============================================================
+
 export function hasPermission(
-	role: UserRole | string | undefined,
-	permission: Permission,
+	role: string | undefined,
+	permission: Permission
 ): boolean {
 	if (!role) return false;
+	const permissions = permissionsCache[role];
+	if (!permissions) return false;
+	return permissions.includes(permission);
+}
 
-	// ✅ Obsługa "zarząd" jako alias dla "board"
-	let roleKey = role as UserRole;
-	if (roleKey === "zarząd") {
-		roleKey = "board" as UserRole;
+export function getPermissionsSync(role: string): Permission[] {
+	return permissionsCache[role] || [];
+}
+
+// ============================================================
+// FUNKCJE ASYNCHRONICZNE
+// ============================================================
+
+export async function canManageLeaves(role: string | undefined): Promise<boolean> {
+	if (!role) return false;
+	const permissions = await getCachedPermissions(role);
+	return permissions.includes("canApproveLeaves") || permissions.includes("canRejectLeaves");
+}
+
+export async function canViewAllLeaves(role: string | undefined): Promise<boolean> {
+	if (!role) return false;
+	const permissions = await getCachedPermissions(role);
+	return permissions.includes("canViewAllLeaves");
+}
+
+export async function canManageUsers(role: string | undefined): Promise<boolean> {
+	if (!role) return false;
+	const permissions = await getCachedPermissions(role);
+	return permissions.includes("canViewAllUsers") || permissions.includes("canEditUsers");
+}
+
+export async function canManageProjects(role: string | undefined): Promise<boolean> {
+	if (!role) return false;
+	const permissions = await getCachedPermissions(role);
+	return permissions.includes("canManageProjects");
+}
+
+export async function canManageVacancies(role: string | undefined): Promise<boolean> {
+	if (!role) return false;
+	const permissions = await getCachedPermissions(role);
+	return permissions.includes("canEditVacancies") ||
+		permissions.includes("canDeleteVacancies") ||
+		permissions.includes("canCreateVacancies");
+}
+
+export async function canViewVacancies(role: string | undefined): Promise<boolean> {
+	if (!role) return false;
+	const permissions = await getCachedPermissions(role);
+	return permissions.includes("canViewVacancies");
+}
+
+export async function canApplyVacancies(role: string | undefined): Promise<boolean> {
+	if (!role) return false;
+	const permissions = await getCachedPermissions(role);
+	return permissions.includes("canApplyVacancies");
+}
+
+export async function canViewApplications(role: string | undefined): Promise<boolean> {
+	if (!role) return false;
+	const permissions = await getCachedPermissions(role);
+	return permissions.includes("canViewApplications");
+}
+
+export async function canManageGuides(role: string | undefined): Promise<boolean> {
+	if (!role) return false;
+	const permissions = await getCachedPermissions(role);
+	return permissions.includes("canManageGuides");
+}
+
+export async function canManageTeams(role: string | undefined): Promise<boolean> {
+	if (!role) return false;
+	const permissions = await getCachedPermissions(role);
+	return permissions.includes("canManageTeams");
+}
+
+export async function canViewStructure(role: string | undefined): Promise<boolean> {
+	if (!role) return false;
+	const permissions = await getCachedPermissions(role);
+	return permissions.includes("canViewStructure");
+}
+
+// ============================================================
+// AKTUALIZACJA UPRAWNIEŃ (dla admina)
+// ============================================================
+
+export async function updateRolePermissions(
+	roleId: string,
+	permissions: Permission[]
+): Promise<boolean> {
+	try {
+		const token = localStorage.getItem("accessToken");
+		const response = await fetch(`/api/admin/roles/${roleId}/permissions`, {
+			method: "PUT",
+			headers: {
+				Authorization: `Bearer ${token}`,
+				"Content-Type": "application/json",
+			},
+			body: JSON.stringify({ permissions }),
+		});
+
+		if (!response.ok) {
+			const error = await response.json();
+			throw new Error(error.error || "Błąd aktualizacji uprawnień");
+		}
+
+		clearPermissionsCache();
+		return true;
+	} catch (error) {
+		console.error("❌ Błąd aktualizacji uprawnień:", error);
+		return false;
 	}
-
-	const rolePermissions = PERMISSIONS[roleKey];
-	if (!rolePermissions) return false;
-
-	return rolePermissions[permission] || false;
 }
 
-// ============================================================
-// ✅ DODAJ TE EKSPORTY - są potrzebne w innych plikach
-// ============================================================
-
-// Funkcja do sprawdzania czy użytkownik może zarządzać wnioskami urlopowymi
-export function canManageLeaves(role: UserRole | string | undefined): boolean {
-	return (
-		hasPermission(role, "canApproveLeaves") ||
-		hasPermission(role, "canRejectLeaves")
-	);
-}
-
-// Funkcja do sprawdzania czy użytkownik może widzieć wszystkie wnioski
-export function canViewAllLeaves(role: UserRole | string | undefined): boolean {
-	return hasPermission(role, "canViewAllLeaves");
-}
-
-// Funkcja do sprawdzania czy użytkownik może zarządzać użytkownikami
-export function canManageUsers(role: UserRole | string | undefined): boolean {
-	return (
-		hasPermission(role, "canViewAllUsers") ||
-		hasPermission(role, "canEditUsers")
-	);
-}
-
-// Funkcja do sprawdzania czy użytkownik może zarządzać projektami
-export function canManageProjects(
-	role: UserRole | string | undefined,
-): boolean {
-	return hasPermission(role, "canManageProjects");
-}
-
-// ✅ DODAJ FUNKCJE DLA WAKATÓW
-export function canManageVacancies(
-	role: UserRole | string | undefined,
-): boolean {
-	return (
-		hasPermission(role, "canEditVacancies") ||
-		hasPermission(role, "canDeleteVacancies") ||
-		hasPermission(role, "canCreateVacancies")
-	);
-}
-
-export function canViewVacancies(role: UserRole | string | undefined): boolean {
-	return hasPermission(role, "canViewVacancies");
-}
-
-export function canApplyVacancies(
-	role: UserRole | string | undefined,
-): boolean {
-	return hasPermission(role, "canApplyVacancies");
-}
-
-export function canViewApplications(
-	role: UserRole | string | undefined,
-): boolean {
-	return hasPermission(role, "canViewApplications");
-}
-
-// Funkcja do sprawdzania czy użytkownik może zarządzać poradnikami
-export function canManageGuides(role: UserRole | string | undefined): boolean {
-	return hasPermission(role, "canManageGuides");
-}
-
-// Funkcja do sprawdzania czy użytkownik może zarządzać zespołami
-export function canManageTeams(role: UserRole | string | undefined): boolean {
-	return hasPermission(role, "canManageTeams");
-}
-
-// Funkcja do sprawdzania czy użytkownik może widzieć strukturę
-export function canViewStructure(role: UserRole | string | undefined): boolean {
-	return hasPermission(role, "canViewStructure");
-}
+// ✅ NIE DODAWAJ TEGO - już masz export type na początku!
+// export type { UserRole, Permission };

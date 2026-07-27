@@ -335,9 +335,7 @@ export default function Header({
 													<div className={styles.notification__footer}>
 														<span className={styles.notification__time}>
 															<Clock size={12} />
-															{notification.time ||
-																formatTime(notification.createdAt)}
-															{/* ✅ Użyj time z API, a jeśli go nie ma - oblicz */}
+															{notification.time || "przed chwilą"}  {/* ⭐ UŻYJ time z API */}
 														</span>
 														{!notification.read && (
 															<span className={styles.notification__unreadDot}>

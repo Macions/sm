@@ -16,6 +16,7 @@
     "jwt-decode": "^4.0.0",
     "lucide-react": "^0.462.0",
     "multer": "^2.2.0",
+    "mysql2": "^3.23.2",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
     "react-hook-form": "^7.81.0",
