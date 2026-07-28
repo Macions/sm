@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "dev": "ts-node-dev src/server.ts",
-    "build": "tsc",
+    "build": "tsc --noEmitOnError false",
     "start": "node dist/server.js",
     "prisma:generate": "prisma generate"
   },
