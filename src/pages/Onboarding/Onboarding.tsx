@@ -129,19 +129,19 @@ interface OnboardingProps {
 // ============================================================
 
 const formatPhoneNumber = (rawPhone: string | null | undefined): string => {
-	if (!rawPhone) return '';
+	if (!rawPhone) return "";
 
 	// Wyciągnij tylko cyfry
-	const digits = rawPhone.toString().replace(/\D/g, '');
+	const digits = rawPhone.toString().replace(/\D/g, "");
 
 	// Jeśli nie ma cyfr - zwróć puste
-	if (!digits) return '';
+	if (!digits) return "";
 
 	// Sprawdź czy numer zaczyna się od 48 (prefix Polski)
 	let number = digits;
 
 	// Jeśli zaczyna się od 48, usuń 48 z przodu
-	if (number.startsWith('48')) {
+	if (number.startsWith("48")) {
 		number = number.substring(2);
 	}
 
@@ -321,20 +321,55 @@ export default function Onboarding({
 			const result = await response.json();
 			console.log("✅ [response] sukces:", result);
 
-			// ⭐ ZATRZYMAJ PRZEKIEROWANIE NA 5 SEKUND ⭐
+			// ============================================================
+			// ✅✅✅ UTWÓRZ POWIADOMIENIE POWITALNE (przez API) ✅✅✅
+			// ============================================================
+			try {
+				console.log("📨 [ONBOARDING] Tworzę powiadomienie powitalne...");
+
+				const welcomeResponse = await fetch("/api/notifications/welcome", {
+					method: "POST",
+					headers: {
+						"Content-Type": "application/json",
+						Authorization: `Bearer ${token}`,
+					},
+				});
+
+				if (welcomeResponse.ok) {
+					const welcomeData = await welcomeResponse.json();
+					console.log("✅ [ONBOARDING] Powiadomienie utworzone:", welcomeData);
+				} else {
+					const errorText = await welcomeResponse.text();
+					console.warn(
+						"⚠️ [ONBOARDING] Nie udało się utworzyć powiadomienia:",
+						welcomeResponse.status,
+						errorText,
+					);
+				}
+			} catch (welcomeError) {
+				// ⚠️ NIE BLOKUJ PROCESU - powiadomienie to tylko dodatek
+				console.error(
+					"⚠️ [ONBOARDING] Błąd tworzenia powiadomienia:",
+					welcomeError,
+				);
+				// Kontynuuj - nie przerywamy przekierowania
+			}
+			// ============================================================
+
+			// ⭐ PRZEKIERUJ NA DASHBOARD ⭐
+			console.log("🚀 [ONBOARDING] Przekierowuję na dashboard...");
+
+			// Opcjonalnie: pokaż komunikat sukcesu przed przekierowaniem
+			// alert("✅ Onboarding zakończony! Za chwilę zostaniesz przeniesiony na dashboard.");
+
+			// Przekieruj od razu (backend sam tworzy powiadomienie)
 			window.location.href = "/dashboard";
-
-			// Zamiast od razu przekierowywać - pokaż komunikat
-			// alert("✅ Dane zapisane! Sprawdź konsolę (F12) dla szczegółów.");
-
-			// Po 5 sekundach przekieruj
-			setTimeout(() => {
-				window.location.href = "/dashboard";
-			}, 5000);
-
 		} catch (error) {
 			console.error("❌ Błąd zapisu onboardingu:", error);
-			alert("❌ Wystąpił błąd: " + (error instanceof Error ? error.message : "Nieznany błąd"));
+			alert(
+				"❌ Wystąpił błąd: " +
+					(error instanceof Error ? error.message : "Nieznany błąd"),
+			);
 		}
 	};
 
@@ -396,7 +431,13 @@ export default function Onboarding({
 				console.log("🔍 Klucze w user:", Object.keys(user));
 
 				// ⭐ SPRAWDŹ WSZYSTKIE MOŻLIWE NAZWY DLA TELEFONU ⭐
-				const phoneValue = user.phone || user.phone_number || user.telefon || user.tel || user.mobile || '';
+				const phoneValue =
+					user.phone ||
+					user.phone_number ||
+					user.telefon ||
+					user.tel ||
+					user.mobile ||
+					"";
 
 				if (user.first_name && !formData.firstName) {
 					handleInputChange("firstName", user.first_name);
@@ -410,9 +451,13 @@ export default function Onboarding({
 				if (phoneValue && !formData.phone) {
 					const formattedPhone = formatPhoneNumber(phoneValue);
 					handleInputChange("phone", formattedPhone);
-					console.log(`📱 [Onboarding] Znaleziono numer: ${phoneValue} -> sformatowano: ${formattedPhone}`);
+					console.log(
+						`📱 [Onboarding] Znaleziono numer: ${phoneValue} -> sformatowano: ${formattedPhone}`,
+					);
 				} else {
-					console.log("📱 [Onboarding] Brak numeru telefonu w danych użytkownika");
+					console.log(
+						"📱 [Onboarding] Brak numeru telefonu w danych użytkownika",
+					);
 				}
 			} catch (e) {
 				console.error("Błąd parsowania user data:", e);
@@ -434,8 +479,8 @@ export default function Onboarding({
 				const response = await fetch("/api/profile", {
 					headers: {
 						Authorization: `Bearer ${token}`,
-						"Content-Type": "application/json"
-					}
+						"Content-Type": "application/json",
+					},
 				});
 
 				if (response.ok) {
@@ -446,7 +491,9 @@ export default function Onboarding({
 					if (data.phone && !formData.phone) {
 						const formattedPhone = formatPhoneNumber(data.phone);
 						handleInputChange("phone", formattedPhone);
-						console.log(`📱 [Onboarding] Ustawiono numer z API: ${data.phone} -> ${formattedPhone}`);
+						console.log(
+							`📱 [Onboarding] Ustawiono numer z API: ${data.phone} -> ${formattedPhone}`,
+						);
 					} else {
 						console.log("📱 [Onboarding] Brak numeru telefonu w API");
 					}
@@ -1199,80 +1246,80 @@ export default function Onboarding({
 									formData.mpContacts.length > 0 ||
 									formData.institutionContacts.length > 0 ||
 									formData.otherContacts.length > 0) && (
-										<div className={styles.summary__section}>
-											<h4 className={styles.summary__title}>Kontakty prywatne</h4>
-											<div className={styles.summary__grid}>
-												{formData.salaContacts.length > 0 && (
-													<div>
-														<span className={styles.summary__label}>
-															Kontakty do sal
-														</span>
-														<div className={styles.summary__tags}>
-															{formData.salaContacts.map((contact) => (
-																<span
-																	key={contact}
-																	className={styles.summary__tag}
-																>
-																	{contact}
-																</span>
-															))}
-														</div>
+									<div className={styles.summary__section}>
+										<h4 className={styles.summary__title}>Kontakty prywatne</h4>
+										<div className={styles.summary__grid}>
+											{formData.salaContacts.length > 0 && (
+												<div>
+													<span className={styles.summary__label}>
+														Kontakty do sal
+													</span>
+													<div className={styles.summary__tags}>
+														{formData.salaContacts.map((contact) => (
+															<span
+																key={contact}
+																className={styles.summary__tag}
+															>
+																{contact}
+															</span>
+														))}
 													</div>
-												)}
-												{formData.mpContacts.length > 0 && (
-													<div>
-														<span className={styles.summary__label}>
-															Kontakty do posłów
-														</span>
-														<div className={styles.summary__tags}>
-															{formData.mpContacts.map((contact) => (
-																<span
-																	key={contact}
-																	className={styles.summary__tag}
-																>
-																	{contact}
-																</span>
-															))}
-														</div>
+												</div>
+											)}
+											{formData.mpContacts.length > 0 && (
+												<div>
+													<span className={styles.summary__label}>
+														Kontakty do posłów
+													</span>
+													<div className={styles.summary__tags}>
+														{formData.mpContacts.map((contact) => (
+															<span
+																key={contact}
+																className={styles.summary__tag}
+															>
+																{contact}
+															</span>
+														))}
 													</div>
-												)}
-												{formData.institutionContacts.length > 0 && (
-													<div>
-														<span className={styles.summary__label}>
-															Kontakty do instytucji
-														</span>
-														<div className={styles.summary__tags}>
-															{formData.institutionContacts.map((contact) => (
-																<span
-																	key={contact}
-																	className={styles.summary__tag}
-																>
-																	{contact}
-																</span>
-															))}
-														</div>
+												</div>
+											)}
+											{formData.institutionContacts.length > 0 && (
+												<div>
+													<span className={styles.summary__label}>
+														Kontakty do instytucji
+													</span>
+													<div className={styles.summary__tags}>
+														{formData.institutionContacts.map((contact) => (
+															<span
+																key={contact}
+																className={styles.summary__tag}
+															>
+																{contact}
+															</span>
+														))}
 													</div>
-												)}
-												{formData.otherContacts.length > 0 && (
-													<div>
-														<span className={styles.summary__label}>
-															Inne kontakty
-														</span>
-														<div className={styles.summary__tags}>
-															{formData.otherContacts.map((contact) => (
-																<span
-																	key={contact}
-																	className={styles.summary__tag}
-																>
-																	{contact}
-																</span>
-															))}
-														</div>
+												</div>
+											)}
+											{formData.otherContacts.length > 0 && (
+												<div>
+													<span className={styles.summary__label}>
+														Inne kontakty
+													</span>
+													<div className={styles.summary__tags}>
+														{formData.otherContacts.map((contact) => (
+															<span
+																key={contact}
+																className={styles.summary__tag}
+															>
+																{contact}
+															</span>
+														))}
 													</div>
-												)}
-											</div>
+												</div>
+											)}
 										</div>
-									)}
+									</div>
+								)}
 
 								{formData.description && (
 									<div className={styles.summary__section}>
