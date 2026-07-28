@@ -533,23 +533,27 @@ app.get(
 
 			console.log(`🔍 Sprawdzam onboarding dla użytkownika ${userId}`);
 
-			// ⭐ SPRAWDŹ CZY UŻYTKOWNIK MA DANE ONBOARDINGOWE ⭐
 			const onboarding = await prisma.onboarding_data.findFirst({
 				where: { user_id: userId },
 				orderBy: { created_at: "desc" },
 			});
 
-			// Jeśli nie ma onboardingu - zwróć completed: false
 			if (!onboarding) {
 				console.log(`📋 Użytkownik ${userId} NIE ma onboardingu`);
 				return res.json({ completed: false });
 			}
 
-			// Sprawdź czy wszystkie dane są wypełnione
-			res.json({ completed: onboarding.completed === 1 });
+			// ⭐ NAJPROSTSZE ROZWIĄZANIE - działa na wszystko ⭐
+			const isCompleted = !!onboarding.completed;
+
+			console.log(`📋 Użytkownik ${userId} - completed: ${isCompleted}`);
+			console.log(`   - wartość w bazie: ${onboarding.completed}`);
+			console.log(`   - typ: ${typeof onboarding.completed}`);
+
+			res.json({ completed: isCompleted });
+
 		} catch (error) {
 			console.error("❌ Błąd sprawdzania onboardingu:", error);
-			// ⭐ W PRZYPADKU BŁĘDU ZWÓRĆ completed: false (bezpieczniej)
 			res.json({ completed: false });
 		}
 	},
@@ -920,11 +924,11 @@ app.get("/api/members", authMiddleware, async (req: any, res) => {
 					user.created_at.toISOString().split("T")[0],
 				vacation: activeLeave
 					? {
-							startDate: activeLeave.start_date.toISOString().split("T")[0],
-							endDate: activeLeave.end_date.toISOString().split("T")[0],
-							type: activeLeave.scope === "team" ? "team" : "organization",
-							teamId: activeLeave.affected_teams || undefined,
-						}
+						startDate: activeLeave.start_date.toISOString().split("T")[0],
+						endDate: activeLeave.end_date.toISOString().split("T")[0],
+						type: activeLeave.scope === "team" ? "team" : "organization",
+						teamId: activeLeave.affected_teams || undefined,
+					}
 					: null,
 				onboarding_data: onboarding,
 			};
@@ -1438,7 +1442,7 @@ app.get("/api/applications", authMiddleware, async (req: any, res) => {
 				userId: app.user_id.toString(),
 				userName: app.user
 					? `${app.user.first_name || ""} ${app.user.last_name || ""}`.trim() ||
-						"Nieznany"
+					"Nieznany"
 					: "Nieznany",
 				userEmail: app.user?.email || "",
 				message: app.message || "",
@@ -1577,7 +1581,7 @@ app.get(
 					userId: app.user_id.toString(),
 					userName: app.user
 						? `${app.user.first_name || ""} ${app.user.last_name || ""}`.trim() ||
-							"Nieznany"
+						"Nieznany"
 						: "Nieznany",
 					userEmail: app.user?.email || "",
 					message: app.message || "",
@@ -2820,12 +2824,12 @@ app.put("/api/leaves/:id", authMiddleware, async (req: any, res) => {
 				status: status || existingLeave.status,
 				...(status === "approved" || status === "rejected"
 					? {
-							// ✅ UŻYJ currentUser zamiast req.user
-							approved_by:
-								`${currentUser?.first_name || ""} ${currentUser?.last_name || ""}`.trim() ||
-								"Nieznany",
-							approved_at: new Date(),
-						}
+						// ✅ UŻYJ currentUser zamiast req.user
+						approved_by:
+							`${currentUser?.first_name || ""} ${currentUser?.last_name || ""}`.trim() ||
+							"Nieznany",
+						approved_at: new Date(),
+					}
 					: {}),
 			},
 		});
@@ -3652,6 +3656,10 @@ app.delete(
 // ONBOARDING - ZAPIS DANYCH
 // ============================================================
 
+// ============================================================
+// ONBOARDING - ZAPIS DANYCH
+// ============================================================
+
 app.post("/api/onboarding/save", authMiddleware, async (req: any, res) => {
 	try {
 		const userId = req.user?.id;
@@ -3679,7 +3687,12 @@ app.post("/api/onboarding/save", authMiddleware, async (req: any, res) => {
 			mpContacts,
 			institutionContacts,
 			otherContacts,
+			pillarIds,
 		} = req.body;
+
+		console.log("🔍 [ONBOARDING] pillarIds:", pillarIds);
+		console.log("🔍 [ONBOARDING] typeof pillarIds:", typeof pillarIds);
+		console.log("🔍 [ONBOARDING] Array.isArray(pillarIds):", Array.isArray(pillarIds));
 
 		// ⭐ SPRAWDŹ CZY JUŻ ISTNIEJE ⭐
 		const existing = await prisma.onboarding_data.findFirst({
@@ -3750,6 +3763,61 @@ app.post("/api/onboarding/save", authMiddleware, async (req: any, res) => {
 
 		console.log(`✅ [ONBOARDING] Zaktualizowano dane użytkownika ${userId}`);
 
+		// ⭐⭐⭐ ZAPIS DO TEAM_MEMBERS ⭐⭐⭐
+		if (pillarIds && Array.isArray(pillarIds) && pillarIds.length > 0) {
+			console.log(`📋 [ONBOARDING] Dodawanie użytkownika ${userId} do filarów:`, pillarIds);
+
+			// SPRAWDŹ CZY TEAM ID ISTNIEJĄ
+			const existingTeams = await prisma.team.findMany({
+				where: {
+					id: { in: pillarIds }
+				},
+				select: { id: true }
+			});
+			const existingTeamIds = existingTeams.map((t: any) => t.id);
+			console.log("🔍 [ONBOARDING] Istniejące team ID:", existingTeamIds);
+
+			// FILTRUJ TYLKO ISTNIEJĄCE
+			const validPillarIds = pillarIds.filter((id: number) => existingTeamIds.includes(id));
+			console.log("🔍 [ONBOARDING] Valid pillarIds:", validPillarIds);
+
+			if (validPillarIds.length > 0) {
+				// Pobierz istniejące członkostwa użytkownika
+				const existingMemberships = await prisma.teamMember.findMany({
+					where: {
+						user_id: userId,
+						team_id: { in: validPillarIds },
+					},
+					select: { team_id: true },
+				});
+
+				const existingMembershipIds = existingMemberships.map((m: any) => m.team_id);
+				console.log("🔍 [ONBOARDING] Istniejące członkostwa:", existingMembershipIds);
+
+				// Dodaj tylko te, których jeszcze nie ma
+				const toAdd = validPillarIds.filter((id: number) => !existingMembershipIds.includes(id));
+				console.log("🔍 [ONBOARDING] Do dodania:", toAdd);
+
+				if (toAdd.length > 0) {
+					const result = await prisma.teamMember.createMany({
+						data: toAdd.map((teamId: number) => ({
+							user_id: userId,
+							team_id: teamId,
+							role: "Członek",
+							is_leader: false,
+						})),
+					});
+					console.log(`✅ [ONBOARDING] Dodano ${result.count} rekordów do team_members`);
+				} else {
+					console.log(`⏭️ [ONBOARDING] Użytkownik ${userId} już jest we wszystkich wybranych filarach`);
+				}
+			} else {
+				console.log(`⚠️ [ONBOARDING] Żadne z podanych ID nie istnieje w tabeli teams`);
+			}
+		} else {
+			console.log(`⚠️ [ONBOARDING] Brak pillarIds lub nieprawidłowy format:`, pillarIds);
+		}
+
 		// ============================================================
 		// ✅✅✅ UTWÓRZ POWIADOMIENIE POWITALNE DLA UŻYTKOWNIKA ✅✅✅
 		// ============================================================
@@ -3819,6 +3887,8 @@ app.post("/api/onboarding/save", authMiddleware, async (req: any, res) => {
 		});
 	}
 });
+
+
 // ---------------------- MATERIALS ----------------------
 // POST - Dodaj materiał
 app.post("/api/social/materials", authMiddleware, async (req: any, res) => {
