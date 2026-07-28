@@ -22,7 +22,7 @@ export default defineConfig({
 		allowedHosts: ["turbine-protector-aluminum.ngrok-free.dev"],
 		proxy: {
 			"/api": {
-				target: "http://localhost:3000",
+				target: "https://sm-backend.onrender.com", // ⬅️ TWÓJ URL
 				changeOrigin: true,
 				secure: false,
 			},
