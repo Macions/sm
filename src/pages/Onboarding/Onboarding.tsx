@@ -211,7 +211,53 @@ export default function Onboarding({
 			setIsEmailManuallyEdited(true);
 		}
 	};
+	// Onboarding.tsx - dodaj stan dla filaru
+	const [selectedPillars, setSelectedPillars] = useState<number[]>([]);
+	const [pillars, setPillars] = useState<{ id: number, name: string }[]>([]);
 
+	// Dodaj useEffect do pobierania filarów
+	// Onboarding.tsx - useEffect do pobierania filarów
+	// ✅ ZOSTAW TYLKO TEN JEDEN (przed toggleDevelopmentArea):
+	// Onboarding.tsx - useEffect do pobierania filarów
+	useEffect(() => {
+		const fetchPillars = async () => {
+			try {
+				const token = localStorage.getItem("accessToken");
+				const response = await fetch("/api/teams", {
+					headers: {
+						Authorization: `Bearer ${token}`,
+						"Content-Type": "application/json",
+					},
+				});
+
+				if (response.ok) {
+					const data = await response.json();
+					// ⭐ FILTRUJ TYLKO "Filar" (liczba pojedyncza) - NIE "Filary"
+					const pillarsList = data.filter((team: any) => {
+						// Sprawdź czy nazwa zawiera "Filar" ale NIE zawiera "Filary"
+						return team.name.includes("Filar") && !team.name.includes("Filary");
+					});
+					setPillars(pillarsList);
+					console.log("📋 [Onboarding] Znalezione filary:", pillarsList);
+				}
+			} catch (error) {
+				console.error("❌ Błąd pobierania filarów:", error);
+			}
+		};
+
+		fetchPillars();
+	}, []);
+
+	// Onboarding.tsx - dodaj przed toggleDevelopmentArea
+	const togglePillar = (pillarId: number) => {
+		setSelectedPillars(prev => {
+			if (prev.includes(pillarId)) {
+				return prev.filter(id => id !== pillarId);
+			} else {
+				return [...prev, pillarId];
+			}
+		});
+	};
 	const toggleDevelopmentArea = (area: DevelopmentArea) => {
 		const current = formData.developmentAreas;
 		if (current.includes(area)) {
@@ -278,7 +324,8 @@ export default function Onboarding({
 
 	const handleSubmit = async () => {
 		console.log("🚀 [SUBMIT] START");
-
+		console.log("🔍 [SUBMIT] selectedPillars:", selectedPillars); // ⬅️ TO POWINNO POKAZAĆ TABLICĘ
+		console.log("🔍 [SUBMIT] selectedPillars length:", selectedPillars.length); // ⬅️ POWINNO BYĆ > 0
 		try {
 			const token = localStorage.getItem("accessToken");
 
@@ -297,6 +344,7 @@ export default function Onboarding({
 				...formData,
 				joinDate: joinDate,
 				isTrial: formData.isTrial || false,
+				pillarIds: selectedPillars,
 			};
 
 			console.log("📦 [payload] wysyłane:", JSON.stringify(payload, null, 2));
@@ -368,7 +416,7 @@ export default function Onboarding({
 			console.error("❌ Błąd zapisu onboardingu:", error);
 			alert(
 				"❌ Wystąpił błąd: " +
-					(error instanceof Error ? error.message : "Nieznany błąd"),
+				(error instanceof Error ? error.message : "Nieznany błąd"),
 			);
 		}
 	};
@@ -380,14 +428,15 @@ export default function Onboarding({
 					formData.firstName.trim() &&
 					formData.lastName.trim() &&
 					formData.email.trim() &&
-					formData.province
+					formData.province &&
+					selectedPillars.length > 0 // ⬅️ DODAJ
 				);
 			case 2:
 				return formData.developmentAreas.length > 0;
 			case 3:
-				return true; // Opcjonalne
+				return true;
 			case 4:
-				return true; // Opcjonalne
+				return true;
 			default:
 				return false;
 		}
@@ -673,6 +722,24 @@ export default function Onboarding({
 										</option>
 									))}
 								</select>
+							</div>
+							{/* Wybór filarów - checkboxy */}
+							<div className={styles.form__field}>
+								<label className={styles.form__label}>
+									Filar/y w których działasz *
+								</label>
+								<div className={styles.pillars__grid}>
+									{pillars.map((pillar) => (
+										<label key={pillar.id} className={styles.pillar__checkbox}>
+											<input
+												type="checkbox"
+												checked={selectedPillars.includes(pillar.id)}
+												onChange={() => togglePillar(pillar.id)}
+											/>
+											<span>{pillar.name}</span>
+										</label>
+									))}
+								</div>
 							</div>
 							<div className={styles.form__grid}>
 								<div className={styles.form__field}>
@@ -1180,6 +1247,21 @@ export default function Onboarding({
 												{formData.email}
 											</span>
 										</div>
+										{/* W podsumowaniu - dodaj po województwie */}
+										<div>
+											<span className={styles.summary__label}>Filar/y</span>
+											<div className={styles.summary__tags}>
+												{selectedPillars.map((id) => {
+													const pillar = pillars.find(p => p.id === id);
+													return pillar ? (
+														<span key={id} className={styles.summary__tag}>
+															{pillar.name}
+														</span>
+													) : null;
+												})}
+												{selectedPillars.length === 0 && "—"}
+											</div>
+										</div>
 										<div>
 											<span className={styles.summary__label}>Telefon</span>
 											<span className={styles.summary__value}>
@@ -1246,80 +1328,80 @@ export default function Onboarding({
 									formData.mpContacts.length > 0 ||
 									formData.institutionContacts.length > 0 ||
 									formData.otherContacts.length > 0) && (
-									<div className={styles.summary__section}>
-										<h4 className={styles.summary__title}>Kontakty prywatne</h4>
-										<div className={styles.summary__grid}>
-											{formData.salaContacts.length > 0 && (
-												<div>
-													<span className={styles.summary__label}>
-														Kontakty do sal
-													</span>
-													<div className={styles.summary__tags}>
-														{formData.salaContacts.map((contact) => (
-															<span
-																key={contact}
-																className={styles.summary__tag}
-															>
-																{contact}
-															</span>
-														))}
+										<div className={styles.summary__section}>
+											<h4 className={styles.summary__title}>Kontakty prywatne</h4>
+											<div className={styles.summary__grid}>
+												{formData.salaContacts.length > 0 && (
+													<div>
+														<span className={styles.summary__label}>
+															Kontakty do sal
+														</span>
+														<div className={styles.summary__tags}>
+															{formData.salaContacts.map((contact) => (
+																<span
+																	key={contact}
+																	className={styles.summary__tag}
+																>
+																	{contact}
+																</span>
+															))}
+														</div>
 													</div>
-												</div>
-											)}
-											{formData.mpContacts.length > 0 && (
-												<div>
-													<span className={styles.summary__label}>
-														Kontakty do posłów
-													</span>
-													<div className={styles.summary__tags}>
-														{formData.mpContacts.map((contact) => (
-															<span
-																key={contact}
-																className={styles.summary__tag}
-															>
-																{contact}
-															</span>
-														))}
+												)}
+												{formData.mpContacts.length > 0 && (
+													<div>
+														<span className={styles.summary__label}>
+															Kontakty do posłów
+														</span>
+														<div className={styles.summary__tags}>
+															{formData.mpContacts.map((contact) => (
+																<span
+																	key={contact}
+																	className={styles.summary__tag}
+																>
+																	{contact}
+																</span>
+															))}
+														</div>
 													</div>
-												</div>
-											)}
-											{formData.institutionContacts.length > 0 && (
-												<div>
-													<span className={styles.summary__label}>
-														Kontakty do instytucji
-													</span>
-													<div className={styles.summary__tags}>
-														{formData.institutionContacts.map((contact) => (
-															<span
-																key={contact}
-																className={styles.summary__tag}
-															>
-																{contact}
-															</span>
-														))}
+												)}
+												{formData.institutionContacts.length > 0 && (
+													<div>
+														<span className={styles.summary__label}>
+															Kontakty do instytucji
+														</span>
+														<div className={styles.summary__tags}>
+															{formData.institutionContacts.map((contact) => (
+																<span
+																	key={contact}
+																	className={styles.summary__tag}
+																>
+																	{contact}
+																</span>
+															))}
+														</div>
 													</div>
-												</div>
-											)}
-											{formData.otherContacts.length > 0 && (
-												<div>
-													<span className={styles.summary__label}>
-														Inne kontakty
-													</span>
-													<div className={styles.summary__tags}>
-														{formData.otherContacts.map((contact) => (
-															<span
-																key={contact}
-																className={styles.summary__tag}
-															>
-																{contact}
-															</span>
-														))}
+												)}
+												{formData.otherContacts.length > 0 && (
+													<div>
+														<span className={styles.summary__label}>
+															Inne kontakty
+														</span>
+														<div className={styles.summary__tags}>
+															{formData.otherContacts.map((contact) => (
+																<span
+																	key={contact}
+																	className={styles.summary__tag}
+																>
+																	{contact}
+																</span>
+															))}
+														</div>
 													</div>
-												</div>
-											)}
+												)}
+											</div>
 										</div>
-									</div>
-								)}
+									)}
 
 								{formData.description && (
 									<div className={styles.summary__section}>
