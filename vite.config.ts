@@ -9,6 +9,9 @@ const __dirname = path.dirname(__filename);
 export default defineConfig({
 	plugins: [react()],
 
+	// ⭐ DODAJ BASE - NAZWA TWOJEGO REPOZYTORIUM ⭐
+	base: '/sm/', // ⬅️ TO JEST NAJWAŻNIEJSZE!
+
 	resolve: {
 		alias: {
 			"@": path.resolve(__dirname, "./src"),
@@ -22,6 +25,18 @@ export default defineConfig({
 				target: "http://localhost:3000",
 				changeOrigin: true,
 				secure: false,
+			},
+		},
+	},
+
+	// ⭐ OPCJONALNIE - skonfiguruj build ⭐
+	build: {
+		outDir: 'dist',
+		assetsDir: 'assets',
+		sourcemap: false,
+		rollupOptions: {
+			output: {
+				manualChunks: undefined,
 			},
 		},
 	},
