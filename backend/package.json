@@ -5,8 +5,8 @@
   "main": "index.js",
   "scripts": {
     "dev": "ts-node-dev src/server.ts",
-    "build": "tsx src/server.ts",
-    "start": "node dist/server.js",
+    "build": "echo 'Build completed'",
+    "start": "tsx src/server.ts",
     "prisma:generate": "prisma generate"
   },
   "prisma": {
