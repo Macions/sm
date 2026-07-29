@@ -450,7 +450,7 @@ function ProfileModal({
 					status: "paid",
 					arrears: 0,
 				},
-				formData: member.formData || {},
+				formData: member.formData || ,
 			};
 
 			setFormData(newFormData);
@@ -685,13 +685,13 @@ function ProfileModal({
 				</div>
 
 				<form onSubmit={handleSubmit} className={styles.modal__form}>
-					{}
+					
 					<div className={styles.modal__section}>
 						<h3 className={styles.modal__sectionTitle}>
 							Podstawowe informacje
 						</h3>
 
-						{}
+						
 						<div className={styles.modal__row}>
 							<div className={styles.modal__field}>
 								<label className={styles.modal__label}>Imię *</label>
@@ -721,7 +721,7 @@ function ProfileModal({
 							</div>
 						</div>
 
-						{}
+						
 						{isEdit && (
 							<div className={styles.modal__row}>
 								<div className={styles.modal__field}>
@@ -764,7 +764,7 @@ function ProfileModal({
 							</div>
 						)}
 
-						{}
+						
 						<div className={styles.modal__row}>
 							<div className={styles.modal__field}>
 								<label className={styles.modal__label}>Funkcja</label>
@@ -779,14 +779,14 @@ function ProfileModal({
 								/>
 							</div>
 
-							{}
+							
 							<div className={styles.modal__field}>
 								<label className={styles.modal__label}>Zespoły</label>
 
-								{}
+								
 								{canEdit ? (
 									<>
-										{}
+										
 										<div className={styles.modal__tagInput}>
 											<select
 												className={styles.modal__select}
@@ -829,7 +829,7 @@ function ProfileModal({
 											</select>
 										</div>
 
-										{}
+										
 										<div className={styles.modal__tags}>
 											{(formData.team || "")
 												.split(", ")
@@ -866,7 +866,7 @@ function ProfileModal({
 												))}
 										</div>
 
-										{}
+										
 										{showCustomTeam && isEdit && (
 											<div
 												style={{
@@ -1027,7 +1027,7 @@ function ProfileModal({
 							</div>
 						</div>
 
-						{}
+						
 						<div className={styles.modal__row}>
 							<div className={styles.modal__field}>
 								<label className={styles.modal__label}>Województwo</label>
@@ -1084,7 +1084,7 @@ function ProfileModal({
 							</div>
 						</div>
 
-						{}
+						
 						<div className={styles.modal__field}>
 							<label className={styles.modal__label}>Data dołączenia</label>
 							<input
@@ -1099,7 +1099,7 @@ function ProfileModal({
 						</div>
 					</div>
 
-					{}
+					
 					{currentMember.vacation && (
 						<div className={styles.modal__section}>
 							<h3 className={styles.modal__sectionTitle}>Aktualny urlop</h3>
@@ -1118,7 +1118,7 @@ function ProfileModal({
 						</div>
 					)}
 
-					{}
+					
 					{(() => {
 						const hasInterests = canEdit
 							? (formData.interests || []).length > 0
@@ -1139,7 +1139,7 @@ function ProfileModal({
 									Zainteresowania i umiejętności
 								</h3>
 
-								{}
+								
 								{(hasInterests || canEdit) && (
 									<div className={styles.modal__field}>
 										<label className={styles.modal__label}>
@@ -1225,7 +1225,7 @@ function ProfileModal({
 									</div>
 								)}
 
-								{}
+								
 								{(hasSkills || canEdit) && (
 									<div className={styles.modal__field}>
 										<label className={styles.modal__label}>Umiejętności</label>
@@ -1306,7 +1306,7 @@ function ProfileModal({
 									</div>
 								)}
 
-								{}
+								
 								{(hasSmAreas || canEdit) && (
 									<div className={styles.modal__field}>
 										<label className={styles.modal__label}>
@@ -1392,7 +1392,7 @@ function ProfileModal({
 						);
 					})()}
 
-					{}
+					
 					{canViewSensitive &&
 						(() => {
 							const hasSalaContacts = canEdit
@@ -1422,7 +1422,7 @@ function ProfileModal({
 											Kontakty i znajomości
 										</h3>
 
-										{}
+										
 										{(hasSalaContacts || canEdit) && (
 											<div className={styles.modal__field}>
 												<label className={styles.modal__label}>
@@ -1526,7 +1526,7 @@ function ProfileModal({
 											</div>
 										)}
 
-										{}
+										
 										{(hasMpContacts || canEdit) && (
 											<div className={styles.modal__field}>
 												<label className={styles.modal__label}>
@@ -1630,7 +1630,7 @@ function ProfileModal({
 											</div>
 										)}
 
-										{}
+										
 										{(hasOtherContacts || canEdit) && (
 											<div className={styles.modal__field}>
 												<label className={styles.modal__label}>
@@ -1734,7 +1734,7 @@ function ProfileModal({
 											</div>
 										)}
 
-										{}
+										
 										{(hasTrainingAreas || canEdit) && (
 											<div className={styles.modal__field}>
 												<label className={styles.modal__label}>
@@ -1828,7 +1828,7 @@ function ProfileModal({
 										)}
 									</div>
 
-									{}
+									
 									<div className={styles.modal__section}>
 										<h3 className={styles.modal__sectionTitle}>
 											Informacje o składkach
@@ -1993,7 +1993,7 @@ export default function Members({ title }: { title?: string }) {
 
 
 				const mappedMembers = membersData.map((user: any) => {
-					const onboarding = user.onboarding_data || {};
+					const onboarding = user.onboarding_data || ;
 
 
 					const teamString = user.team || "Brak zespołu";
@@ -2491,14 +2491,14 @@ export default function Members({ title }: { title?: string }) {
 			<div className={styles.members}>
 				<div className={styles.loadingState}>
 					<div className={styles.loadingSpinner}></div>
-					{}
+					
 				</div>
 			</div>
 		);
 	}
 	return (
 		<div className={styles.members}>
-			{}
+			
 			<div className={styles.header}>
 				<div className={styles.header__left}>
 					<h1 className={styles.header__title}>
@@ -2508,7 +2508,7 @@ export default function Members({ title }: { title?: string }) {
 						{members.length} członków w organizacji
 					</p>
 				</div>
-				{}
+				
 				{hasPermission(currentUser?.role, "canEditUsers") && (
 					<button className={styles.header__addBtn} onClick={handleAddMember}>
 						<Plus size={18} />
@@ -2517,7 +2517,7 @@ export default function Members({ title }: { title?: string }) {
 				)}
 			</div>
 
-			{}
+			
 			<div className={styles.filters}>
 				<div className={styles.filters__search}>
 					<Search size={18} className={styles.filters__searchIcon} />
@@ -2593,7 +2593,7 @@ export default function Members({ title }: { title?: string }) {
 				</div>
 			</div>
 
-			{}
+			
 			<div className={styles.sorting}>
 				<span className={styles.sorting__label}>Sortuj według:</span>
 				<button
@@ -2654,7 +2654,7 @@ export default function Members({ title }: { title?: string }) {
 				</button>
 			</div>
 
-			{}
+			
 			<div
 				className={`${styles.membersGrid} ${viewMode === "list" ? styles.membersGridList : ""}`}
 			>
@@ -2689,7 +2689,7 @@ export default function Members({ title }: { title?: string }) {
 					))
 				)}
 			</div>
-			{}
+			
 			<ProfileModal
 				isOpen={isAddMemberOpen}
 				member={newMemberData as Member}
@@ -2720,7 +2720,7 @@ export default function Members({ title }: { title?: string }) {
 				setCustomTeamEmail={setCustomTeamEmail}
 			/>
 
-			{}
+			
 			<ProfileModal
 				isOpen={isProfileOpen}
 				member={selectedMember}
@@ -2731,8 +2731,6 @@ export default function Members({ title }: { title?: string }) {
 					setSelectedMember(null);
 				}}
 			/>
-
-			{}
 			<ProfileModal
 				isOpen={isEditOpen}
 				member={selectedMember}
