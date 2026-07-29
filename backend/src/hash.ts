@@ -1,6 +1,6 @@
 import bcrypt from "bcrypt";
 
-const password = "test123";
+const password = "prezes";
 
 bcrypt.hash(password, 10).then((hash) => {
 	console.log(hash);

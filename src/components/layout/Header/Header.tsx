@@ -1,3 +1,4 @@
+import { useNavigate } from 'react-router-dom';
 import { useState, useRef, useEffect } from "react";
 import {
 	Search,
@@ -50,6 +51,8 @@ export default function Header({
 	userRole = "MEMBER",
 	userId = "1",
 }: HeaderProps) {
+	const navigate = useNavigate();
+
 	const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
 	const [notifications, setNotifications] = useState<Notification[]>([]);
 	const [loading, setLoading] = useState(false);
@@ -220,7 +223,7 @@ export default function Header({
 		}
 		setIsNotificationsOpen(false);
 		if (notification.link) {
-			window.location.href = notification.link;
+			(window as any).goTo(notification.link);
 		}
 	};
 

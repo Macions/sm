@@ -274,13 +274,23 @@ function ProjectCard({
 		return user ? user.name : "Brak";
 	};
 
-	const getTeamMemberName = (memberId: string) => {
-		if (!memberId) return "Nieznany";
-		if (/^\d+$/.test(memberId)) {
-			const user = users.find((u) => u.id === memberId);
-			return user ? user.name : memberId;
+	// W ProjectCard - zmień funkcję getTeamMemberName
+	const getTeamMemberName = (member: string) => {
+		// Jeśli to już jest imię i nazwisko (zawiera spację) - zwróć je
+		if (member.includes(' ')) {
+			return member;
 		}
-		return memberId;
+
+		// Jeśli to ID (liczba) - spróbuj znaleźć użytkownika
+		if (/^\d+$/.test(member)) {
+			const user = users.find((u) => u.id === member);
+			if (user) {
+				return user.name;
+			}
+			// ⭐ ZMIEŃ FALLBACK - pokaż tylko ID bez "Użytkownik"
+			return `ID: ${member}`;
+		}
+		return member;
 	};
 
 	// ✅ Liczenie rzeczywistych członków
@@ -1585,7 +1595,7 @@ export default function Projects() {
 					console.warn(
 						"⚠️ Token wygasł lub nieprawidłowy - przekierowanie do login",
 					);
-					window.location.href = "/login";
+					navigate("/login");
 					return;
 				}
 
@@ -2109,10 +2119,10 @@ export default function Projects() {
 					{(selectedPillar !== "all" ||
 						selectedStatus !== "all" ||
 						searchTerm) && (
-						<button className={styles.filters__reset} onClick={clearFilters}>
-							Wyczyść filtry
-						</button>
-					)}
+							<button className={styles.filters__reset} onClick={clearFilters}>
+								Wyczyść filtry
+							</button>
+						)}
 				</div>
 			</div>
 
@@ -2126,8 +2136,8 @@ export default function Projects() {
 							<h3 className={styles.emptyState__title}>Brak projektów</h3>
 							<p className={styles.emptyState__description}>
 								{searchTerm ||
-								selectedPillar !== "all" ||
-								selectedStatus !== "all"
+									selectedPillar !== "all" ||
+									selectedStatus !== "all"
 									? "Nie znaleziono projektów spełniających kryteria wyszukiwania."
 									: canManageProjects
 										? 'Nie ma jeszcze żadnych projektów. Kliknij "Dodaj projekt", aby utworzyć pierwszy.'

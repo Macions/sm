@@ -38,7 +38,7 @@ api.interceptors.response.use(
       localStorage.removeItem('refreshToken');
       localStorage.removeItem('user');
       // Przekieruj do logowania
-      window.location.href = '/login';
+      navigate("/login");
     }
     return Promise.reject(error);
   }

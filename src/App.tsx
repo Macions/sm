@@ -1,10 +1,22 @@
 import Router from "@/router/Router";
 import { Toaster } from 'react-hot-toast';
+import { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 function App() {
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    // ⭐ GLOBALNA FUNKCJA NAVIGACJI - działa w KAŻDYM komponencie bez importu!
+    (window as any).goTo = (path: string) => {
+      console.log(`🔄 [goTo] ${path}`);
+      navigate(path);
+    };
+  }, [navigate]);
+
   return (
     <>
-      <Toaster 
+      <Toaster
         position="top-right"
         toastOptions={{
           duration: 3000,

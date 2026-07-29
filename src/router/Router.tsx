@@ -12,7 +12,7 @@ import SocialMedia from "../pages/SocialMedia/SocialMedia";
 import Admin from "../pages/Admin/Admin";
 import Onboarding from "../pages/Onboarding/Onboarding";
 import Profile from "../pages/Profile/Profile";
-import { useState, useEffect } from "react"; // ⬅️ DODAJ
+import { useState, useEffect } from "react";
 
 function AppRoutes() {
 	const [isLoading, setIsLoading] = useState(true);
@@ -23,12 +23,56 @@ function AppRoutes() {
 	console.log("📦 STORAGE:", Object.keys(localStorage));
 	console.log("🔑 TOKEN RAW:", localStorage.getItem("accessToken"));
 
-	// ⭐⭐⭐ SPRAWDŹ STATUS ONBOARDINGU PRZEZ API ⭐⭐⭐
+	// ⭐⭐⭐ SPRAWDŹ STATUS ONBOARDINGU ⭐⭐⭐
+	// Router.tsx - w useEffect
+
 	useEffect(() => {
 		const checkOnboardingStatus = async () => {
 			try {
 				const token = localStorage.getItem("accessToken");
 				if (!token) {
+					setIsLoading(false);
+					return;
+				}
+
+				// ⭐ NAJPIERW SPRAWDŹ ROLĘ I EMAIL UŻYTKOWNIKA ⭐
+				const userStr = localStorage.getItem("user");
+				let userRole = "";
+				let userEmail = "";
+				try {
+					if (userStr) {
+						const user = JSON.parse(userStr);
+						userRole = user.role || "";
+						userEmail = user.email || "";
+						try {
+							if (userStr) {
+								const user = JSON.parse(userStr);
+								userRole = user.role || "";
+								userEmail = user.email || ""; // ⬅️ TO BYŁO POMINIĘTE!
+							}
+						} catch (e) {
+							console.error("Błąd parsowania user:", e);
+						}
+					}
+				} catch (e) {
+					console.error("Błąd parsowania user:", e);
+				}
+
+				// ⭐ ADMIN LUB MAKSYM - POMIŃ ONBOARDING ⭐
+				if (userRole === "admin" || userEmail === "maksym.marczak@silamlodych.pl") {
+					console.log("👑 [Router] Wykryto admina lub Maksyma - pomijam onboarding");
+					setOnboardingCompleted(true);
+					localStorage.setItem("onboardingCompleted", "true");
+					setIsLoading(false);
+					return;
+				}
+
+				// ⭐ NAJPIERW SPRAWDŹ LOCALSTORAGE ⭐
+				const localCompleted = localStorage.getItem("onboardingCompleted") === "true";
+
+				if (localCompleted) {
+					console.log("📋 [Router] Onboarding ukończony (z localStorage)");
+					setOnboardingCompleted(true);
 					setIsLoading(false);
 					return;
 				}
@@ -45,19 +89,17 @@ function AppRoutes() {
 				if (response.ok) {
 					const data = await response.json();
 					console.log("📋 [Router] Status onboardingu:", data);
-
-					// ⭐ UZYWAJ API A NIE LOCALSTORAGE! ⭐
 					setOnboardingCompleted(data.completed === true);
-
-					// Zapisz w localStorage dla szybkiego dostępu (ale API jest źródłem prawdy)
 					localStorage.setItem("onboardingCompleted", data.completed ? "true" : "false");
 				} else {
 					console.error("❌ [Router] Błąd API:", response.status);
-					setOnboardingCompleted(false);
+					const fallback = localStorage.getItem("onboardingCompleted") === "true";
+					setOnboardingCompleted(fallback);
 				}
 			} catch (error) {
 				console.error("❌ [Router] Błąd sprawdzania onboardingu:", error);
-				setOnboardingCompleted(false);
+				const fallback = localStorage.getItem("onboardingCompleted") === "true";
+				setOnboardingCompleted(fallback);
 			} finally {
 				setIsLoading(false);
 			}
@@ -66,20 +108,34 @@ function AppRoutes() {
 		checkOnboardingStatus();
 	}, []);
 
+	// ⭐ DODATKOWE SPRAWDZENIE - gdy status się zmieni
+	useEffect(() => {
+		if (!isLoading && onboardingCompleted) {
+			const isLoggedIn = !!localStorage.getItem("accessToken");
+			if (isLoggedIn) {
+				const currentPath = window.location.pathname;
+				const isOnboardingPath = currentPath.includes('/onboarding') ||
+					currentPath === '/sm/' ||
+					currentPath === '/';
+				if (isOnboardingPath) {
+					console.log("✅ [Router] Onboarding ukończony - przekierowuję do dashboard");
+					(window as any).goTo("/dashboard");
+				}
+			}
+		}
+	}, [isLoading, onboardingCompleted]);
+
 	const handleOnboardingComplete = (data: any) => {
-		// Zapisz dane onboarding w localStorage
 		localStorage.setItem("onboardingData", JSON.stringify(data));
 		localStorage.setItem("onboardingCompleted", "true");
-		setOnboardingCompleted(true); // ⬅️ AKTUALIZUJ STAN
+		setOnboardingCompleted(true);
 	};
 
-	// Sprawdź czy użytkownik jest zalogowany
 	const isLoggedIn = !!localStorage.getItem("accessToken");
 	console.log("🔐 Token w routerze:", localStorage.getItem("accessToken"));
 	console.log("👤 User w routerze:", localStorage.getItem("user"));
 	console.log("✅ Czy zalogowany:", isLoggedIn);
 
-	// ⭐ CZEKAJ AŻ ZAŁADUJE SIĘ STATUS ⭐
 	if (isLoading) {
 		return (
 			<div style={{
@@ -104,7 +160,6 @@ function AppRoutes() {
 		);
 	}
 
-	// ⭐ TERAZ UŻYWA PRAWDZIWEGO STATUSU Z API ⭐
 	if (isLoggedIn && !onboardingCompleted) {
 		console.log("⚠️ [Router] Onboarding NIEUKOŃCZONY - przekierowuję do /onboarding");
 		return (
