@@ -22,10 +22,6 @@ import {
 } from "lucide-react";
 import styles from "./Tutorials.module.css";
 
-
-
-
-
 type TutorialCategory =
 	| "new_member"
 	| "project_guidelines"
@@ -79,192 +75,11 @@ const isUpdatedTutorial = (
 	createdAt: string | undefined,
 	updatedAt: string,
 ): boolean => {
-
 	if (!createdAt) return false;
 	const createDate = new Date(createdAt);
 	const updateDate = new Date(updatedAt);
 	return updateDate > createDate;
 };
-
-
-
-
-const MOCK_USER: User = {
-	id: "1",
-	name: "Jan Kowalski",
-	role: "admin",
-	functionalRole: "Koordynator Filaru Projektowego",
-};
-
-const MOCK_TUTORIALS: Tutorial[] = [
-	{
-		id: "1",
-		title: "Poradnik dla nowych członków SM",
-		description:
-			"Kompleksowy przewodnik dla nowych członków organizacji. Zawiera informacje o strukturze, zasadach działania, komunikacji oraz podstawowych obowiązkach.",
-		category: "new_member",
-		access: "all",
-		author: "Zarząd Siły Młodych",
-		createdAt: "2026-07-01",
-		updatedAt: "2026-07-15",
-		content:
-			"Witaj w Sile Młodych! Ten poradnik pomoże Ci rozpocząć przygodę z naszą organizacją...",
-		attachments: [
-			{ name: "Przewodnik_nowego_członka.pdf", url: "#", size: "2.4 MB" },
-		],
-		isNew: false,
-		isUpdated: true,
-	},
-	{
-		id: "2",
-		title: "Wytyczne i poradnik tworzenia projektów",
-		description:
-			"Dokument opisujący sposób zgłaszania, planowania oraz realizacji projektów w organizacji.",
-		category: "project_guidelines",
-		access: "all",
-		author: "Dział Projektów",
-		createdAt: "2026-07-01",
-		updatedAt: "2026-07-10",
-		content:
-			"Proces tworzenia projektu w Siły Młodych składa się z kilku etapów...",
-		attachments: [
-			{ name: "Szablon_projektu.docx", url: "#", size: "1.1 MB" },
-			{ name: "Karta_projektu.pdf", url: "#", size: "0.8 MB" },
-		],
-		isNew: false,
-		isUpdated: false,
-	},
-	{
-		id: "3",
-		title: "Poradnik opłacania składek",
-		description:
-			"Informacje dotyczące zasad opłacania składek, terminów oraz procedur.",
-		category: "contributions",
-		access: "all",
-		author: "Komisja Rewizyjna",
-		createdAt: "2026-07-01",
-		updatedAt: "2026-07-01",
-		content: "Składki członkowskie są podstawą funkcjonowania organizacji...",
-		attachments: [
-			{ name: "Instrukcja_przelewu.pdf", url: "#", size: "0.5 MB" },
-		],
-		isNew: false,
-		isUpdated: false,
-	},
-	{
-		id: "4",
-		title: "Statut organizacji",
-		description:
-			"Oficjalny dokument określający zasady funkcjonowania, cele i strukturę organizacji.",
-		category: "statute",
-		access: "all",
-		author: "Zarząd Siły Młodych",
-		createdAt: "2026-07-01",
-		updatedAt: "2026-06-20",
-		content: "Statut Siły Młodych został uchwalony w dniu...",
-		attachments: [{ name: "Statut_SM_2026.pdf", url: "#", size: "3.2 MB" }],
-		isNew: false,
-		isUpdated: false,
-	},
-	{
-		id: "5",
-		title: "Regulamin organizacji",
-		description: "Zbiór zasad obowiązujących członków organizacji.",
-		category: "regulations",
-		access: "all",
-		author: "Zarząd Siły Młodych",
-		createdAt: "2026-07-01",
-		updatedAt: "2026-06-15",
-		content: "Regulamin określa prawa i obowiązki członków...",
-		attachments: [{ name: "Regulamin_SM.pdf", url: "#", size: "1.8 MB" }],
-		isNew: false,
-		isUpdated: false,
-	},
-	{
-		id: "6",
-		title: "Procedura 'Jak działają wyróżnienia'",
-		description:
-			"Informacje dotyczące zasad przyznawania wyróżnień, kryteriów oraz procedury ich otrzymywania.",
-		category: "distinctions",
-		access: "all",
-		author: "Zarząd Siły Młodych",
-		createdAt: "2026-07-01",
-		updatedAt: "2026-07-18",
-		content: "Wyróżnienia są przyznawane za szczególne osiągnięcia...",
-		attachments: [
-			{ name: "Procedura_wyróżnień.pdf", url: "#", size: "0.9 MB" },
-		],
-		isNew: true,
-		isUpdated: false,
-	},
-	{
-		id: "7",
-		title: "Poradnik dla koordynatorów",
-		description:
-			"Materiał dostępny wyłącznie dla osób pełniących funkcję koordynatora. Zawiera informacje o zarządzaniu zespołem, prowadzeniu projektów i obowiązkach.",
-		category: "coordinator",
-		access: "coordinator",
-		author: "Zarząd Siły Młodych",
-		createdAt: "2026-07-01",
-		updatedAt: "2026-07-12",
-		content: "Jako koordynator jesteś odpowiedzialny za...",
-		attachments: [
-			{ name: "Poradnik_koordynatora.pdf", url: "#", size: "2.1 MB" },
-			{ name: "Szablon_raportu.xlsx", url: "#", size: "0.6 MB" },
-		],
-		isNew: false,
-		isUpdated: true,
-	},
-	{
-		id: "8",
-		title: "Procedura zgłaszania problemów z frekwencją",
-		description:
-			"Instrukcja dla osób funkcyjnych dotycząca zgłaszania problemów z frekwencją członków zespołu.",
-		category: "functional",
-		access: "functional",
-		author: "Dział HR",
-		createdAt: "2026-07-01",
-		updatedAt: "2026-07-08",
-		content: "Procedura zgłaszania problemów z frekwencją...",
-		functionalRoles: [
-			"Koordynator Filaru Projektowego",
-			"Koordynator Filaru Konferencyjnego",
-		],
-		attachments: [
-			{ name: "Procedura_frekwencji.pdf", url: "#", size: "0.7 MB" },
-		],
-		isNew: false,
-		isUpdated: false,
-	},
-	{
-		id: "9",
-		title: "Zakres odpowiedzialności funkcji",
-		description:
-			"Szczegółowy opis obowiązków dla poszczególnych stanowisk w organizacji.",
-		category: "functional",
-		access: "functional",
-		author: "Zarząd Siły Młodych",
-		createdAt: "2026-07-01",
-		updatedAt: "2026-07-05",
-		content:
-			"Każda funkcja w organizacji ma określony zakres odpowiedzialności...",
-		functionalRoles: [
-			"Prezes",
-			"Wiceprezes",
-			"Koordynator Filaru Projektowego",
-			"Koordynator Filaru Konferencyjnego",
-		],
-		attachments: [
-			{ name: "Zakres_odpowiedzialnosci.pdf", url: "#", size: "1.2 MB" },
-		],
-		isNew: false,
-		isUpdated: false,
-	},
-];
-
-
-
-
 
 const CATEGORY_LABELS: Record<TutorialCategory, string> = {
 	new_member: "Dla nowych członków",
@@ -288,13 +103,6 @@ const CATEGORY_ICONS: Record<TutorialCategory, React.ReactNode> = {
 	functional: <UserCheck size={16} />,
 };
 
-
-
-
-
-
-
-
 const ACCESS_COLORS: Record<TutorialAccess, string> = {
 	all: styles.accessAll,
 	coordinator: styles.accessCoordinator,
@@ -302,12 +110,8 @@ const ACCESS_COLORS: Record<TutorialAccess, string> = {
 	board: styles.accessBoard,
 };
 
-
-
-
 const downloadFile = async (url: string, fileName: string) => {
 	try {
-
 		const fullUrl = url.startsWith("/uploads") ? `/api${url}` : url;
 
 		console.log("📥 Pobieranie:", fullUrl);
@@ -343,9 +147,6 @@ const downloadFile = async (url: string, fileName: string) => {
 	}
 };
 
-
-
-
 interface TutorialCardProps {
 	tutorial: Tutorial;
 	onEdit: (tutorial: Tutorial) => void;
@@ -370,7 +171,6 @@ function TutorialCard({
 			day: "numeric",
 		});
 	};
-
 
 	const isNew = isNewTutorial(tutorial.updatedAt);
 	const isUpdated = isUpdatedTutorial(tutorial.createdAt, tutorial.updatedAt);
@@ -512,10 +312,6 @@ function TutorialCard({
 	);
 }
 
-
-
-
-
 interface TutorialModalProps {
 	isOpen: boolean;
 	tutorial: Tutorial | null;
@@ -588,8 +384,6 @@ function TutorialModal({
 
 	if (!isOpen) return null;
 
-
-
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
 		if (!onSave || isViewOnly) return;
@@ -624,7 +418,6 @@ function TutorialModal({
 
 			const formDataToSend = new FormData();
 			formDataToSend.append("data", JSON.stringify(tutorialData));
-
 
 			(formData.attachments || [])
 				.filter(
@@ -667,14 +460,12 @@ function TutorialModal({
 	};
 
 	const handleFileUpload = (file: File) => {
-
 		if (file.size > 10 * 1024 * 1024) {
 			alert("Plik jest za duży. Maksymalny rozmiar: 10MB");
 			return;
 		}
 
 		const sizeInMB = (file.size / (1024 * 1024)).toFixed(1);
-
 
 		const newAttachmentObj = {
 			name: file.name,
@@ -691,10 +482,8 @@ function TutorialModal({
 		setNewAttachment({ name: "", url: "", size: "" });
 	};
 
-
 	const removeAttachment = async (index: number) => {
 		const attachment = formData.attachments?.[index];
-
 
 		if (attachment?.id) {
 			try {
@@ -719,13 +508,11 @@ function TutorialModal({
 			}
 		}
 
-
 		setFormData({
 			...formData,
 			attachments: formData.attachments?.filter((_, i) => i !== index) || [],
 		});
 	};
-
 
 	const addAttachment = () => {
 		if (newAttachment.name.trim() && newAttachment.url.trim()) {
@@ -780,7 +567,6 @@ function TutorialModal({
 				formData.functionalRoles?.filter((r) => r !== role) || [],
 		});
 	};
-
 
 	return (
 		<div className={styles.modalOverlay} onClick={onClose}>
@@ -1137,10 +923,6 @@ function TutorialModal({
 	);
 }
 
-
-
-
-
 export default function Tutorials() {
 	const [loading, setLoading] = useState(true);
 	const [tutorials, setTutorials] = useState<Tutorial[]>([]);
@@ -1155,8 +937,6 @@ export default function Tutorials() {
 	const [isModalOpen, setIsModalOpen] = useState(false);
 	const [editingTutorial, setEditingTutorial] = useState<Tutorial | null>(null);
 
-
-
 	const canManageTutorials = hasPermission(
 		currentUser?.role,
 		"canManageGuides",
@@ -1166,7 +946,6 @@ export default function Tutorials() {
 			try {
 				setLoading(true);
 				const token = localStorage.getItem("accessToken");
-
 
 				const userResponse = await fetch("/api/profile", {
 					headers: {
@@ -1182,7 +961,6 @@ export default function Tutorials() {
 				const userData = await userResponse.json();
 				console.log("📊 Dane użytkownika z API:", userData);
 
-
 				const mappedUser: User = {
 					id: userData.id,
 					name:
@@ -1195,7 +973,6 @@ export default function Tutorials() {
 				setCurrentUser(mappedUser);
 				console.log("✅ Zmapowany użytkownik:", mappedUser);
 				console.log("🔍 Rola użytkownika:", mappedUser.role);
-
 
 				const tutorialsResponse = await fetch("/api/tutorials", {
 					headers: {
@@ -1274,7 +1051,6 @@ export default function Tutorials() {
 		setIsModalOpen(true);
 	};
 
-
 	const handleDeleteTutorial = async (id: string) => {
 		if (!window.confirm("Czy na pewno chcesz usunąć ten poradnik?")) return;
 
@@ -1292,7 +1068,6 @@ export default function Tutorials() {
 				throw new Error("Błąd usuwania");
 			}
 
-
 			const fetchResponse = await fetch("/api/tutorials", {
 				headers: {
 					Authorization: `Bearer ${token}`,
@@ -1307,15 +1082,11 @@ export default function Tutorials() {
 		}
 	};
 
-
-
-
 	const handleSaveTutorial = async (savedTutorial: Tutorial) => {
 		console.log("✅ Otrzymano zapisany poradnik:", savedTutorial);
 
 		try {
 			const token = localStorage.getItem("accessToken");
-
 
 			const response = await fetch("/api/tutorials", {
 				headers: {
@@ -1334,7 +1105,6 @@ export default function Tutorials() {
 			console.log("✅ Odświeżono listę poradników");
 		} catch (error) {
 			console.error("❌ Błąd odświeżania:", error);
-
 
 			setTutorials((prev) => {
 				const exists = prev.some((t) => t.id === savedTutorial.id);
@@ -1470,13 +1240,11 @@ export default function Tutorials() {
 			{}
 			<div className={styles.tutorialsGrid}>
 				{loading ? (
-
 					<div className={styles.loadingState}>
 						<div className={styles.loadingSpinner}></div>
 						<p>Ładowanie poradników...</p>
 					</div>
 				) : filteredTutorials.length === 0 ? (
-
 					<div className={styles.emptyState}>
 						<BookOpen size={48} className={styles.emptyState__icon} />
 						<h3 className={styles.emptyState__title}>Brak poradników</h3>
@@ -1501,7 +1269,6 @@ export default function Tutorials() {
 							)}
 					</div>
 				) : (
-
 					filteredTutorials.map((tutorial) => (
 						<TutorialCard
 							key={tutorial.id}
