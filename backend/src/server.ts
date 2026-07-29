@@ -36,18 +36,6 @@ cron.schedule("0 7,14,21 * * *", async () => {
 	}
 });
 
-// Opcjonalnie - uruchom przy starcie serwera (po 10 sekundach)
-setTimeout(async () => {
-	console.log(
-		"🔄 [STARTUP] Uruchamiam synchronizację frekwencji przy starcie...",
-	);
-	try {
-		await syncAttendance();
-		console.log("✅ [STARTUP] Synchronizacja frekwencji zakończona");
-	} catch (error) {
-		console.error("❌ [STARTUP] Błąd synchronizacji frekwencji:", error);
-	}
-}, 10000);
 cron.schedule("1 0 * * *", async () => {
 	console.log("⏰ [CRON] Uruchamiam codzienny job aktualizacji statusów...");
 	await updateLeaveStatus();
