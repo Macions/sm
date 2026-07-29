@@ -1,4 +1,4 @@
-// backend/src/jobs/updateLeaveStatus.ts
+
 import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
@@ -18,7 +18,7 @@ export async function updateLeaveStatus() {
 
 		console.log("📅 TODAY:", today.toISOString());
 
-		// 1. Znajdź wszystkich użytkowników, którzy mają zatwierdzone urlopy DZISIAJ
+
 		const usersOnLeave = await prisma.user.findMany({
 			where: {
 				leaves: {
@@ -45,7 +45,7 @@ export async function updateLeaveStatus() {
 		console.log("👥 Użytkownicy aktualnie na urlopie:");
 		console.table(usersOnLeave);
 
-		// 2. Znajdź użytkowników, którzy NIE mają urlopu dzisiaj (ale mają status vacation)
+
 		const usersNotOnLeave = await prisma.user.findMany({
 			where: {
 				AND: [
@@ -79,7 +79,7 @@ export async function updateLeaveStatus() {
 		console.log("🔙 Użytkownicy wracający z urlopu:");
 		console.table(usersNotOnLeave);
 
-		// 3. Ustaw status na vacation i ZAPISZ poprzedni status
+
 		for (const user of usersOnLeave) {
 			if (user.status !== "vacation") {
 				const updatedUser = await prisma.user.update({
@@ -87,7 +87,7 @@ export async function updateLeaveStatus() {
 						id: user.id,
 					},
 					data: {
-						previous_status: user.status, // ⭐ ZAPISZ POPRZEDNI STATUS
+						previous_status: user.status,
 						status: "vacation",
 					},
 				});
@@ -102,9 +102,9 @@ export async function updateLeaveStatus() {
 			}
 		}
 
-		// 4. Przywróć poprzedni status (nie zawsze active!)
+
 		for (const user of usersNotOnLeave) {
-			// ⭐ UŻYJ poprzedniego statusu, jeśli istnieje, inaczej active
+
 			const previousStatus = user.previous_status || "active";
 
 			const updatedUser = await prisma.user.update({
@@ -113,7 +113,7 @@ export async function updateLeaveStatus() {
 				},
 				data: {
 					status: previousStatus,
-					previous_status: null, // ⭐ WYCZYŚĆ PO PRZYWRÓCENIU
+					previous_status: null,
 				},
 			});
 

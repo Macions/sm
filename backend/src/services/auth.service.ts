@@ -1,4 +1,4 @@
-// frontend/src/services/auth.service.ts
+
 import api from './api';
 
 export interface LoginCredentials {
@@ -30,13 +30,13 @@ export interface AuthResponse {
 }
 
 class AuthService {
-    // Logowanie
+
     async login(credentials: LoginCredentials): Promise<AuthResponse> {
         try {
             const response = await api.post('/api/auth/login', credentials);
             const data = response.data;
 
-            // Zapisz tokeny
+
             localStorage.setItem('accessToken', data.accessToken);
             localStorage.setItem('refreshToken', data.refreshToken);
             localStorage.setItem('user', JSON.stringify(data.user));
@@ -48,7 +48,7 @@ class AuthService {
         }
     }
 
-    // Rejestracja
+
     async register(data: RegisterData): Promise<any> {
         try {
             const response = await api.post('/api/auth/register', data);
@@ -59,7 +59,7 @@ class AuthService {
         }
     }
 
-    // Wylogowanie
+
     logout(): void {
         localStorage.removeItem('accessToken');
         localStorage.removeItem('refreshToken');
@@ -67,18 +67,18 @@ class AuthService {
         navigate("/login");
     }
 
-    // Pobierz zalogowanego użytkownika
+
     getCurrentUser(): AuthResponse['user'] | null {
         const user = localStorage.getItem('user');
         return user ? JSON.parse(user) : null;
     }
 
-    // Sprawdź czy użytkownik jest zalogowany
+
     isAuthenticated(): boolean {
         return !!localStorage.getItem('accessToken');
     }
 
-    // Odśwież token
+
     async refreshToken(): Promise<string> {
         try {
             const refreshToken = localStorage.getItem('refreshToken');

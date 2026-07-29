@@ -31,11 +31,11 @@ import {
 } from "lucide-react";
 import styles from "./Profile.module.css";
 
-// ---------------------------------------------------------------------------
-// TYPY
-// ---------------------------------------------------------------------------
 
-type MemberStatus = "active" | "trial" | "mentor";  // ✅ TYLKO 3
+
+
+
+type MemberStatus = "active" | "trial" | "mentor";
 type DevelopmentArea =
     | "projects"
     | "conferences"
@@ -91,9 +91,9 @@ interface Member {
     };
 }
 
-// ---------------------------------------------------------------------------
-// DANE PRZYKŁADOWE
-// ---------------------------------------------------------------------------
+
+
+
 
 const EMPTY_USER: Member = {
     id: "",
@@ -112,25 +112,25 @@ const EMPTY_USER: Member = {
     availability: "",
 };
 
-// ---------------------------------------------------------------------------
-// MAPOWANIA
-// ---------------------------------------------------------------------------
+
+
+
 
 const STATUS_LABELS: Record<MemberStatus, string> = {
-    active: "Pełnoprawny członek",  // ✅ zamiast "full"
+    active: "Pełnoprawny członek",
     trial: "Okres próbny",
     mentor: "Mentor",
 };
 
 const STATUS_COLORS: Record<MemberStatus, string> = {
     trial: styles.statusTrial,
-    active: styles.statusFull,  // ✅ "active" zamiast "full"
+    active: styles.statusFull,
     mentor: styles.statusMentor,
 };
 
 const STATUS_ICONS: Record<MemberStatus, React.ReactNode> = {
     trial: <Clock size={16} />,
-    active: <CheckCircle size={16} />,  // ✅ "active" zamiast "full"
+    active: <CheckCircle size={16} />,
     mentor: <Star size={16} />,
 };
 const DEVELOPMENT_AREA_LABELS: Record<DevelopmentArea, string> = {
@@ -169,15 +169,15 @@ const CONTRIBUTION_STATUS_COLORS: Record<ContributionStatus, string> = {
     unpaid: styles.contributionUnpaid,
 };
 
-// ---------------------------------------------------------------------------
-// KOMPONENT
-// ---------------------------------------------------------------------------
+
+
+
 
 export default function Profile({ title, userId }: { title?: string; userId?: string }) {
     const [user, setUser] = useState<Member>(EMPTY_USER);
     const [loading, setLoading] = useState(true);
     const [isEditing, setIsEditing] = useState(false);
-    // const [showPrivateData, setShowPrivateData] = useState(false);
+
     const [editData, setEditData] = useState<Partial<Member>>({});
     const [selectedTab, setSelectedTab] = useState<string>("profile");
     const navigate = useNavigate();
@@ -212,10 +212,10 @@ export default function Profile({ title, userId }: { title?: string; userId?: st
         fetchProfile();
     }, [userId]);
 
-    // Funkcje do edycji
+
     const handleEditToggle = async () => {
         if (isEditing) {
-            // Zapisz zmiany
+
             try {
                 const token = localStorage.getItem("accessToken");
                 const response = await fetch("/api/profile", {
@@ -232,7 +232,7 @@ export default function Profile({ title, userId }: { title?: string; userId?: st
                         skills: editData.skills || user.skills,
                         developmentAreas: editData.developmentAreas || user.developmentAreas,
                         availability: editData.availability || user.availability,
-                        phone: editData.phone || user.phone || null, // <-- DODAJ || null
+                        phone: editData.phone || user.phone || null,
                     }),
                 });
 
@@ -260,7 +260,7 @@ export default function Profile({ title, userId }: { title?: string; userId?: st
                 skills: user.skills,
                 developmentAreas: user.developmentAreas,
                 availability: user.availability,
-                phone: user.phone || "", // <-- DODAJ || "" żeby było puste gdy null
+                phone: user.phone || "",
             });
         }
         setIsEditing(!isEditing);
@@ -350,7 +350,7 @@ export default function Profile({ title, userId }: { title?: string; userId?: st
         }
     };
 
-    // DODAJ zabezpieczenie:
+
     const formatDate = (date: string) => {
         if (!date) return "Brak danych";
         return new Date(date).toLocaleDateString("pl-PL", {
@@ -360,7 +360,7 @@ export default function Profile({ title, userId }: { title?: string; userId?: st
         });
     };
 
-    const canViewPrivate = true; // W rzeczywistej aplikacji: currentUser.role === "admin" || currentUser.role === "coordinator" || currentUser.id === user.id
+    const canViewPrivate = true;
 
     const displayUser = isEditing
         ? { ...user, ...editData }
@@ -386,7 +386,7 @@ export default function Profile({ title, userId }: { title?: string; userId?: st
     }
     return (
         <div className={styles.profile}>
-            {/* Nagłówek */}
+            {}
             <div className={styles.header}>
                 <div className={styles.header__left}>
                     <h1 className={styles.header__title}>
@@ -416,7 +416,7 @@ export default function Profile({ title, userId }: { title?: string; userId?: st
                 </div>
             </div>
 
-            {/* Nawigacja */}
+            {}
             <div className={styles.navigation}>
                 <button
                     className={`${styles.navigation__item} ${selectedTab === "profile" ? styles.navigation__itemActive : ""}`}
@@ -441,9 +441,9 @@ export default function Profile({ title, userId }: { title?: string; userId?: st
                 </button>
             </div>
 
-            {/* Główna zawartość */}
+            {}
             <div className={styles.content}>
-                {/* Karta profilowa */}
+                {}
                 <div className={styles.profileCard}>
                     <div className={styles.profileCard__header}>
                         <div className={styles.profileCard__avatarSection}>
@@ -482,7 +482,7 @@ export default function Profile({ title, userId }: { title?: string; userId?: st
                             </div>
                             <div className={styles.profileCard__contactItem}>
                                 <Phone size={14} />
-                                <span>{displayUser.phone || "Brak numeru"}</span> {/* <-- ZMIENIONE */}
+                                <span>{displayUser.phone || "Brak numeru"}</span> {}
                             </div>
                             <div className={styles.profileCard__contactItem}>
                                 <Calendar size={14} />
@@ -506,19 +506,19 @@ export default function Profile({ title, userId }: { title?: string; userId?: st
                     </div>
                 </div>
 
-                {/* Sekcje - z filtrowaniem przez zakładki */}
+                {}
                 <div className={styles.sections}>
-                    {/* Zakładka "Profil" - pokazuje wszystko */}
+                    {}
                     {(selectedTab === "profile" || selectedTab === "all") && (
                         <>
-                            {/* Działalność w SM */}
+                            {}
                             <div className={styles.section}>
                                 <h3 className={styles.section__title}>
                                     <TrendingUp size={20} />
                                     Moja działalność w SM
                                 </h3>
                                 <div className={styles.section__grid}>
-                                    {/* IMIĘ - edytowalne */}
+                                    {}
                                     <div className={styles.section__item}>
                                         <span className={styles.section__label}>Imię</span>
                                         {isEditing ? (
@@ -533,7 +533,7 @@ export default function Profile({ title, userId }: { title?: string; userId?: st
                                         )}
                                     </div>
 
-                                    {/* NAZWISKO - edytowalne */}
+                                    {}
                                     <div className={styles.section__item}>
                                         <span className={styles.section__label}>Nazwisko</span>
                                         {isEditing ? (
@@ -548,19 +548,19 @@ export default function Profile({ title, userId }: { title?: string; userId?: st
                                         )}
                                     </div>
 
-                                    {/* FUNKCJA - NIEedytowalna */}
+                                    {}
                                     <div className={styles.section__item}>
                                         <span className={styles.section__label}>Funkcja</span>
                                         <span className={styles.section__value}>{displayUser.function}</span>
                                     </div>
 
-                                    {/* ZESPÓŁ - NIEedytowalny */}
+                                    {}
                                     <div className={styles.section__item}>
                                         <span className={styles.section__label}>Zespół</span>
                                         <span className={styles.section__value}>{displayUser.team}</span>
                                     </div>
 
-                                    {/* WOJEWÓDZTWO - edytowalne */}
+                                    {}
                                     <div className={styles.section__item}>
                                         <span className={styles.section__label}>Województwo</span>
                                         {isEditing ? (
@@ -575,7 +575,7 @@ export default function Profile({ title, userId }: { title?: string; userId?: st
                                         )}
                                     </div>
 
-                                    {/* TELEFON - edytowalne, OPCJONALNE */} {/* <-- DODAJ TEN BLOK */}
+                                    {} {}
                                     <div className={styles.section__item}>
                                         <span className={styles.section__label}>
                                             Telefon
@@ -596,14 +596,14 @@ export default function Profile({ title, userId }: { title?: string; userId?: st
                                         )}
                                     </div>
 
-                                    {/* DATA DOŁĄCZENIA - NIEedytowalna */}
+                                    {}
                                     <div className={styles.section__item}>
                                         <span className={styles.section__label}>Data dołączenia</span>
                                         <span className={styles.section__value}>{formatDate(displayUser.joinDate)}</span>
                                     </div>
                                 </div>
 
-                                {/* Zainteresowania i rozwój */}
+                                {}
                                 <div className={styles.section}>
                                     <h3 className={styles.section__title}>
                                         <BookOpen size={20} />
@@ -676,7 +676,7 @@ export default function Profile({ title, userId }: { title?: string; userId?: st
                                     </div>
                                 </div>
 
-                                {/* Kontakty i zasoby - prywatne */}
+                                {}
                                 {canViewPrivate && displayUser.contacts && (
                                     <div className={styles.section}>
                                         <h3 className={styles.section__title}>
@@ -732,7 +732,7 @@ export default function Profile({ title, userId }: { title?: string; userId?: st
                                     </div>
                                 )}
 
-                                {/* Składki */}
+                                {}
                                 {canViewPrivate && displayUser.contributionInfo && (
                                     <div className={styles.section}>
                                         <h3 className={styles.section__title}>
@@ -756,7 +756,7 @@ export default function Profile({ title, userId }: { title?: string; userId?: st
                                     </div>
                                 )}
 
-                                {/* Urlopy */}
+                                {}
                                 <div className={styles.section}>
                                     <h3 className={styles.section__title}>
                                         <Umbrella size={20} />
@@ -803,7 +803,7 @@ export default function Profile({ title, userId }: { title?: string; userId?: st
                         </>
                     )}
 
-                    {/* Zakładka "Aktywność" */}
+                    {}
                     {(selectedTab === "activity") && (
                         <>
                             <div className={styles.section}>
@@ -873,7 +873,7 @@ export default function Profile({ title, userId }: { title?: string; userId?: st
                         </>
                     )}
 
-                    {/* Zakładka "Prywatne" */}
+                    {}
                     {(selectedTab === "private") && (
                         <>
                             {canViewPrivate && displayUser.contacts && (

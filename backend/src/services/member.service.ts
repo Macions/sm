@@ -1,12 +1,12 @@
-// frontend/src/services/member.service.ts
+
 import api from "./api";
 
 export interface Member {
 	id: string;
 	firstName: string;
 	lastName: string;
-	username?: string; // ✅ DODANE
-	role?: string; // ✅ DODANE
+	username?: string;
+	role?: string;
 	avatar?: string;
 	function: string;
 	team: string;
@@ -46,7 +46,7 @@ export interface User {
 }
 
 class MemberService {
-	// Pobierz wszystkich członków
+
 	async getMembers(): Promise<Member[]> {
 		try {
 			const response = await api.get("/api/users");
@@ -57,7 +57,7 @@ class MemberService {
 		}
 	}
 
-	// Pobierz członka po ID
+
 	async getMemberById(id: string): Promise<Member> {
 		try {
 			const response = await api.get(`/api/users/${id}`);
@@ -68,7 +68,7 @@ class MemberService {
 		}
 	}
 
-	// Utwórz nowego członka
+
 	async createMember(data: Partial<Member>, password: string): Promise<Member> {
 		try {
 			const response = await api.post("/api/users", {
@@ -101,7 +101,7 @@ class MemberService {
 		}
 	}
 
-	// Aktualizuj członka
+
 	async updateMember(id: string, data: Partial<Member>): Promise<Member> {
 		try {
 			const isActive = data.status === "inactive" ? 0 : 1;
@@ -115,7 +115,7 @@ class MemberService {
 						? "mentor"
 						: data.status === "active"
 							? "active"
-							: "trial", // ✅
+							: "trial",
 				province: data.province,
 				phone: data.phone,
 				functional_role: data.function,
@@ -128,7 +128,7 @@ class MemberService {
 			throw error;
 		}
 	}
-	// Usuń członka (soft delete)
+
 	async deleteMember(id: string): Promise<void> {
 		try {
 			await api.delete(`/api/users/${id}`);
@@ -138,7 +138,7 @@ class MemberService {
 		}
 	}
 
-	// Mapuj dane z backendu na format frontendu
+
 	private mapToMember(data: any): Member {
 		return {
 			id: data.id?.toString() || "",
@@ -169,7 +169,7 @@ class MemberService {
 	): "trial" | "full" | "mentor" | "inactive" {
 		if (!status) return "trial";
 		if (status === "mentor") return "mentor";
-		if (status === "inactive") return "inactive"; // ✅ DODANE
+		if (status === "inactive") return "inactive";
 		if (status === "active" || status === "full") return "active";
 		if (status === "trial") return "trial";
 		return "trial";

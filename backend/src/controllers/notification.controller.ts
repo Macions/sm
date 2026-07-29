@@ -1,4 +1,4 @@
-// backend/src/controllers/notification.controller.ts
+
 import { Request, Response } from "express";
 import { PrismaClient } from "@prisma/client";
 import { AuthRequest } from "../middleware/auth.middleware";
@@ -6,7 +6,7 @@ import { AuthRequest } from "../middleware/auth.middleware";
 const prisma = new PrismaClient();
 
 export class NotificationController {
-	// Pobierz powiadomienia dla zalogowanego użytkownika
+
 	async getNotifications(req: AuthRequest, res: Response) {
 		try {
 			const userId = req.user?.id;
@@ -25,7 +25,7 @@ export class NotificationController {
 		}
 	}
 
-	// Oznacz powiadomienie jako przeczytane
+
 	async markAsRead(req: AuthRequest, res: Response) {
 		try {
 			const id = parseInt(req.params.id);
@@ -46,7 +46,7 @@ export class NotificationController {
 		}
 	}
 
-	// Oznacz wszystkie jako przeczytane
+
 	async markAllAsRead(req: AuthRequest, res: Response) {
 		try {
 			const userId = req.user?.id;
@@ -66,7 +66,7 @@ export class NotificationController {
 		}
 	}
 
-	// Usuń powiadomienie
+
 	async deleteNotification(req: AuthRequest, res: Response) {
 		try {
 			const id = parseInt(req.params.id);

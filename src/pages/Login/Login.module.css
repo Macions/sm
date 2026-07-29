@@ -256,7 +256,7 @@ body {
 	background: #106ebe;
 }
 
-/* TABLETY */
+
 @media (max-width: 1024px) {
 	.loginCard {
 		width: 92vw;
@@ -281,7 +281,7 @@ body {
 	}
 }
 
-/* MOBILE */
+
 @media (max-width: 768px) {
 	html,
 	body {
@@ -382,7 +382,7 @@ body {
 	}
 }
 
-/* MAŁE TELEFONY */
+
 @media (max-width: 420px) {
 	.loginContainer {
 		padding: 12px;
@@ -424,7 +424,7 @@ body {
 	}
 }
 
-/* BARDZO NISKIE EKRANY */
+
 @media (max-height: 650px) and (max-width: 768px) {
 	.loginContainer {
 		padding: 10px;
@@ -453,4 +453,42 @@ body {
 	.dots {
 		display: none;
 	}
+}
+
+
+
+.divider {
+	display: flex;
+	align-items: center;
+	text-align: center;
+	margin: 20px 0;
+}
+
+.divider::before,
+.divider::after {
+	content: "";
+	flex: 1;
+	border-bottom: 1px solid #e0e0e0;
+}
+
+.divider span {
+	padding: 0 10px;
+	color: #666;
+	font-size: 14px;
+}
+
+.googleButtonWrapper {
+	display: flex;
+	justify-content: center;
+	margin-top: 10px;
+	width: 100% !important;
+}
+
+.googleButtonWrapper > div {
+	width: 100% !important;
+}
+
+.googleButtonWrapper iframe {
+	width: 100% !important;
+	max-width: 300px;
 }

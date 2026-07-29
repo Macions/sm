@@ -1,8 +1,8 @@
 E
 
-/* --------------------------------------------------------------------------
+/*
    GŁÓWNY KONTENER
-   -------------------------------------------------------------------------- */
+
 .members {
 	padding: 24px 32px;
 	max-width: 1440px;
@@ -10,9 +10,9 @@ E
 	width: 100%;
 }
 
-/* --------------------------------------------------------------------------
+/*
    NAGŁÓWEK
-   -------------------------------------------------------------------------- */
+
 .header {
 	display: flex;
 	justify-content: space-between;
@@ -38,9 +38,9 @@ E
 	margin: 0;
 }
 
-/* --------------------------------------------------------------------------
+/*
    FILTRY
-   -------------------------------------------------------------------------- */
+
 .filters {
 	display: flex;
 	flex-wrap: wrap;
@@ -961,7 +961,7 @@ E
 	}
 }
 
-/* DODAJ W CSS */
+
 .header__addBtn {
 	display: flex;
 	align-items: center;
@@ -984,7 +984,7 @@ E
 	box-shadow: 0 6px 20px rgba(124, 58, 237, 0.35);
 }
 
-/* Loading state */
+
 .loadingState {
 	display: flex;
 	flex-direction: column;
@@ -1020,7 +1020,7 @@ E
 	color: #d97706;
 	border: 1px solid #fcd34d;
 }
-/* Na urlopie - efekt przyciemnienia */
+
 .memberCardOnVacation {
     opacity: 0.5;
     filter: grayscale(0.5);

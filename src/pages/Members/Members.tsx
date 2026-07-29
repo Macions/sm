@@ -16,25 +16,25 @@ import {
 	User,
 	MapPin,
 	Briefcase,
-	// Tag,
+
 	Star,
 	Clock,
 	CheckCircle,
-	// GraduationCap,
-	// Mail,
-	// Phone,
-	// Calendar,
-	// AlertCircle,
+
+
+
+
+
 	Edit,
 	Eye,
-	// ChevronDown,
-	// ChevronRight,
-	// UserPlus,
-	// UserCheck,
-	// UserX,
+
+
+
+
+
 	Umbrella,
-	// Building2,
-	// Settings,
+
+
 	Plus,
 	ArrowUpDown,
 	Trash2,
@@ -92,7 +92,7 @@ type Member = {
 	phone?: string;
 	joinDate: string;
 	vacation?: MemberVacation;
-	// Dodatkowe informacje (widoczne tylko dla użytkownika i koordynatorów)
+
 	contacts?: {
 		salaContacts?: string[];
 		mpContacts?: string[];
@@ -122,7 +122,7 @@ type User = {
 // ---------------------------------------------------------------------------
 
 const STATUS_LABELS: Record<MemberStatus, string> = {
-	active: "Pełnoprawny członek", // ✅ zamiast "full"
+	active: "Pełnoprawny członek",
 	trial: "Okres próbny",
 	mentor: "Mentor",
 	vacation: "Na urlopie",
@@ -131,7 +131,7 @@ const STATUS_LABELS: Record<MemberStatus, string> = {
 
 const STATUS_COLORS: Record<MemberStatus, string> = {
 	trial: styles.statusTrial,
-	active: styles.statusFull, // ✅ "active" zamiast "full"
+	active: styles.statusFull,
 	mentor: styles.statusMentor,
 	vacation: styles.statusVacation,
 	"": styles.statusTrial,
@@ -139,7 +139,7 @@ const STATUS_COLORS: Record<MemberStatus, string> = {
 
 const STATUS_ICONS: Record<MemberStatus, React.ReactNode> = {
 	trial: <Clock size={14} />,
-	active: <CheckCircle size={14} />, // ✅ "active" zamiast "full"
+	active: <CheckCircle size={14} />,
 	mentor: <Star size={14} />,
 	vacation: <Umbrella size={14} />,
 	"": <Clock size={14} />,
@@ -173,9 +173,9 @@ function MemberCard({
 	};
 
 	const isOnVacation = member.status === "vacation";
-	// const canViewSensitiveData = currentUser.role === "admin" ||
-	//     (currentUser.role === "coordinator" && currentUser.teamId === member.teamId) ||
-	//     currentUser.id === member.id;
+
+
+
 
 	const formatDate = (date: string) => {
 		return new Date(date).toLocaleDateString("pl-PL", {
@@ -342,10 +342,10 @@ interface ProfileModalProps {
 	onClose: () => void;
 	onSave?: (member: Member) => void;
 	teamsList?: { id: number; name: string }[];
-	showCustomTeam?: boolean; // ✅ DODAJ
-	setShowCustomTeam?: (value: boolean) => void; // ✅ DODAJ
-	customTeamName?: string; // ✅ DODAJ
-	setCustomTeamName?: (value: string) => void; // ✅ DODAJ
+	showCustomTeam?: boolean;
+	setShowCustomTeam?: (value: boolean) => void;
+	customTeamName?: string;
+	setCustomTeamName?: (value: string) => void;
 	customTeamRole?: string;
 	setCustomTeamRole?: (value: string) => void;
 	customTeamDescription?: string;
@@ -371,17 +371,17 @@ function ProfileModal({
 	setShowCustomTeam,
 	customTeamName = "",
 	setCustomTeamName,
-	customTeamRole = "", // ✅ DODAJ
-	setCustomTeamRole, // ✅ DODAJ
-	customTeamDescription = "", // ✅ DODAJ
-	setCustomTeamDescription, // ✅ DODAJ
-	customTeamIcon = "Users", // ✅ DODAJ
-	setCustomTeamIcon, // ✅ DODAJ
-	customTeamParent = "", // ✅ DODAJ
-	setCustomTeamParent, // ✅ DODAJ
-	customTeamEmail = "", // ✅ DODAJ
+	customTeamRole = "",
+	setCustomTeamRole,
+	customTeamDescription = "",
+	setCustomTeamDescription,
+	customTeamIcon = "Users",
+	setCustomTeamIcon,
+	customTeamParent = "",
+	setCustomTeamParent,
+	customTeamEmail = "",
 
-	setCustomTeamEmail, // ✅ DODAJ
+	setCustomTeamEmail,
 	parentTeamsList = [],
 }: ProfileModalProps) {
 	const [formData, setFormData] = useState<Partial<Member>>({
@@ -409,7 +409,7 @@ function ProfileModal({
 			arrears: 0,
 		},
 	});
-	// ✅ reszta kodu ProfileModal
+
 
 	const [newInterest, setNewInterest] = useState("");
 	const [newSkill, setNewSkill] = useState("");
@@ -419,7 +419,7 @@ function ProfileModal({
 	const [newOtherContact, setNewOtherContact] = useState("");
 	const [newTrainingArea, setNewTrainingArea] = useState("");
 
-	// ⭐ useEffect do aktualizacji formData gdy member się zmienia
+
 	useEffect(() => {
 		if (member) {
 			const newFormData = {
@@ -436,7 +436,7 @@ function ProfileModal({
 				smAreas: member.smAreas || [],
 				email: member.email || "",
 				phone: member.phone || "",
-				// ✅ POPRAW FORMAT DATY
+
 				joinDate: member.joinDate
 					? new Date(member.joinDate).toISOString().split("T")[0]
 					: "",
@@ -483,29 +483,29 @@ function ProfileModal({
 		}
 	}, [member, isOpen]);
 	useEffect(() => {
-		// Generuj email tylko gdy jesteśmy w trybie edycji/dodawania
+
 		if (isEdit) {
 			const firstName = formData.firstName?.trim() || "";
 			const lastName = formData.lastName?.trim() || "";
 
-			// Jeśli oba pola są wypełnione, wygeneruj email
+
 			if (firstName && lastName) {
-				// Zamień polskie znaki na podstawowe
+
 				const normalize = (str: string) => {
 					return str
 						.normalize("NFD")
-						.replace(/[\u0300-\u036f]/g, "") // Usuń polskie znaki
-						.replace(/ł/g, "l") // Ł → l
-						.replace(/Ł/g, "L") // Ł → L
-						.replace(/ /g, ".") // ✅ SPACJA → KROPKA
-						.replace(/\.+/g, ".") // ✅ Zamień wiele kropek na jedną
-						.replace(/^\.|\.$/g, ""); // ✅ Usuń kropki na początku i końcu
+						.replace(/[\u0300-\u036f]/g, "")
+						.replace(/ł/g, "l")
+						.replace(/Ł/g, "L")
+						.replace(/ /g, ".")
+						.replace(/\.+/g, ".")
+						.replace(/^\.|\.$/g, "");
 				};
 
 				const generatedEmail = `${normalize(firstName.toLowerCase())}.${normalize(lastName.toLowerCase())}@silamlodych.pl`;
 
-				// Aktualizuj email tylko jeśli jest pusty lub został wygenerowany automatycznie
-				// (nie zmieniaj jeśli użytkownik ręcznie wpisał inny email)
+
+
 				if (!formData.email || formData.email.endsWith("@silamlodych.pl")) {
 					setFormData((prev) => ({
 						...prev,
@@ -518,10 +518,10 @@ function ProfileModal({
 
 	if (!isOpen) return null;
 
-	// Sprawdzenie czy mamy member (dla podglądu) lub jesteśmy w trybie edycji/dodawania
+
 	if (!member && !isEdit) return null;
 
-	// Dla dodawania nowego (member null, isEdit true) - używamy domyślnych wartości
+
 	const currentMember = member || {
 		id: "",
 		firstName: "",
@@ -581,14 +581,14 @@ function ProfileModal({
 	const handleSubmit = (e: React.FormEvent) => {
 		e.preventDefault();
 
-		// ⭐ WALIDACJA - sprawdź czy status jest wybrany
+
 		if (isEdit && !formData.status) {
 			alert("Wybierz status członka");
 			return;
 		}
 
 		if (onSave && canEdit) {
-			console.log("📝 formData w handleSubmit:", formData); // ⭐ DODAJ
+			console.log("📝 formData w handleSubmit:", formData);
 
 			const saveData: Member = {
 				id: currentMember.id,
@@ -619,7 +619,7 @@ function ProfileModal({
 					? formData.formData || currentMember.formData
 					: undefined,
 			};
-			console.log("📤 saveData:", saveData); // ⭐ DODAJ
+			console.log("📤 saveData:", saveData);
 
 			onSave(saveData);
 		}
@@ -633,7 +633,7 @@ function ProfileModal({
 			day: "numeric",
 		});
 	};
-	// W ProfileModal, przed return (około linii 350)
+
 	const hasInterests = canEdit
 		? (formData.interests || []).length > 0
 		: (currentMember.interests || []).length > 0;
@@ -685,13 +685,13 @@ function ProfileModal({
 				</div>
 
 				<form onSubmit={handleSubmit} className={styles.modal__form}>
-					{/* Podstawowe informacje */}
+					{}
 					<div className={styles.modal__section}>
 						<h3 className={styles.modal__sectionTitle}>
 							Podstawowe informacje
 						</h3>
 
-						{/* WIERSZ 1: Imię i Nazwisko */}
+						{}
 						<div className={styles.modal__row}>
 							<div className={styles.modal__field}>
 								<label className={styles.modal__label}>Imię *</label>
@@ -721,7 +721,7 @@ function ProfileModal({
 							</div>
 						</div>
 
-						{/* WIERSZ 2: Email (tylko dla edycji/dodawania) */}
+						{}
 						{isEdit && (
 							<div className={styles.modal__row}>
 								<div className={styles.modal__field}>
@@ -764,7 +764,7 @@ function ProfileModal({
 							</div>
 						)}
 
-						{/* WIERSZ 3: Funkcja i Zespół */}
+						{}
 						<div className={styles.modal__row}>
 							<div className={styles.modal__field}>
 								<label className={styles.modal__label}>Funkcja</label>
@@ -779,14 +779,14 @@ function ProfileModal({
 								/>
 							</div>
 
-							{/* Zespoły - jako tagi (multi-select) */}
+							{}
 							<div className={styles.modal__field}>
 								<label className={styles.modal__label}>Zespoły</label>
 
-								{/* Wybór zespołów - tylko w trybie edycji */}
+								{}
 								{canEdit ? (
 									<>
-										{/* Select do dodawania zespołów */}
+										{}
 										<div className={styles.modal__tagInput}>
 											<select
 												className={styles.modal__select}
@@ -829,7 +829,7 @@ function ProfileModal({
 											</select>
 										</div>
 
-										{/* Lista wybranych zespołów jako tagi */}
+										{}
 										<div className={styles.modal__tags}>
 											{(formData.team || "")
 												.split(", ")
@@ -866,7 +866,7 @@ function ProfileModal({
 												))}
 										</div>
 
-										{/* Pole do wpisania nowej nazwy zespołu */}
+										{}
 										{showCustomTeam && isEdit && (
 											<div
 												style={{
@@ -1012,7 +1012,7 @@ function ProfileModal({
 										)}
 									</>
 								) : (
-									/* Widok tylko do odczytu - wyświetl zespoły jako tagi */
+									
 									<div className={styles.modal__tags}>
 										{(formData.team || "")
 											.split(", ")
@@ -1027,7 +1027,7 @@ function ProfileModal({
 							</div>
 						</div>
 
-						{/* WIERSZ 4: Województwo i Status */}
+						{}
 						<div className={styles.modal__row}>
 							<div className={styles.modal__field}>
 								<label className={styles.modal__label}>Województwo</label>
@@ -1084,7 +1084,7 @@ function ProfileModal({
 							</div>
 						</div>
 
-						{/* WIERSZ 5: Data dołączenia */}
+						{}
 						<div className={styles.modal__field}>
 							<label className={styles.modal__label}>Data dołączenia</label>
 							<input
@@ -1099,7 +1099,7 @@ function ProfileModal({
 						</div>
 					</div>
 
-					{/* Urlopy */}
+					{}
 					{currentMember.vacation && (
 						<div className={styles.modal__section}>
 							<h3 className={styles.modal__sectionTitle}>Aktualny urlop</h3>
@@ -1118,7 +1118,7 @@ function ProfileModal({
 						</div>
 					)}
 
-					{/* Zainteresowania i umiejętności - ukryj jeśli puste */}
+					{}
 					{(() => {
 						const hasInterests = canEdit
 							? (formData.interests || []).length > 0
@@ -1139,7 +1139,7 @@ function ProfileModal({
 									Zainteresowania i umiejętności
 								</h3>
 
-								{/* Zainteresowania */}
+								{}
 								{(hasInterests || canEdit) && (
 									<div className={styles.modal__field}>
 										<label className={styles.modal__label}>
@@ -1225,7 +1225,7 @@ function ProfileModal({
 									</div>
 								)}
 
-								{/* Umiejętności */}
+								{}
 								{(hasSkills || canEdit) && (
 									<div className={styles.modal__field}>
 										<label className={styles.modal__label}>Umiejętności</label>
@@ -1306,7 +1306,7 @@ function ProfileModal({
 									</div>
 								)}
 
-								{/* Obszary działania w SM */}
+								{}
 								{(hasSmAreas || canEdit) && (
 									<div className={styles.modal__field}>
 										<label className={styles.modal__label}>
@@ -1392,7 +1392,7 @@ function ProfileModal({
 						);
 					})()}
 
-					{/* Dane kontaktowe - tylko dla użytkownika i koordynatorów */}
+					{}
 					{canViewSensitive &&
 						(() => {
 							const hasSalaContacts = canEdit
@@ -1422,7 +1422,7 @@ function ProfileModal({
 											Kontakty i znajomości
 										</h3>
 
-										{/* Kontakty z salami */}
+										{}
 										{(hasSalaContacts || canEdit) && (
 											<div className={styles.modal__field}>
 												<label className={styles.modal__label}>
@@ -1526,7 +1526,7 @@ function ProfileModal({
 											</div>
 										)}
 
-										{/* Kontakty z posłami */}
+										{}
 										{(hasMpContacts || canEdit) && (
 											<div className={styles.modal__field}>
 												<label className={styles.modal__label}>
@@ -1630,7 +1630,7 @@ function ProfileModal({
 											</div>
 										)}
 
-										{/* Inne przydatne kontakty */}
+										{}
 										{(hasOtherContacts || canEdit) && (
 											<div className={styles.modal__field}>
 												<label className={styles.modal__label}>
@@ -1734,7 +1734,7 @@ function ProfileModal({
 											</div>
 										)}
 
-										{/* Obszary szkoleniowe */}
+										{}
 										{(hasTrainingAreas || canEdit) && (
 											<div className={styles.modal__field}>
 												<label className={styles.modal__label}>
@@ -1828,7 +1828,7 @@ function ProfileModal({
 										)}
 									</div>
 
-									{/* Informacje o składkach */}
+									{}
 									<div className={styles.modal__section}>
 										<h3 className={styles.modal__sectionTitle}>
 											Informacje o składkach
@@ -1935,7 +1935,7 @@ export default function Members({ title }: { title?: string }) {
 	const [newMemberData, setNewMemberData] = useState<Partial<Member> | null>(
 		null,
 	);
-	const [showCustomTeam, setShowCustomTeam] = useState(false); // ✅ DODAJ
+	const [showCustomTeam, setShowCustomTeam] = useState(false);
 	const [customTeamName, setCustomTeamName] = useState("");
 	const [teamsList, setTeamsList] = useState<
 		{ id: number; name: string; parent_id?: number | null }[]
@@ -1949,8 +1949,8 @@ export default function Members({ title }: { title?: string }) {
 		"name" | "function" | "province" | "status"
 	>("name");
 	const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
-	// ⭐ POBIERANIE CZŁONKÓW Z BACKENDU
-	// ⭐ DODAJ TO
+
+
 
 	useEffect(() => {
 		const fetchAllData = async () => {
@@ -1958,7 +1958,7 @@ export default function Members({ title }: { title?: string }) {
 				setLoading(true);
 				const token = localStorage.getItem("accessToken");
 
-				// 1. Pobierz użytkownika
+
 				const userResponse = await fetch("/api/profile", {
 					headers: { Authorization: `Bearer ${token}` },
 				});
@@ -1974,7 +1974,7 @@ export default function Members({ title }: { title?: string }) {
 					teamId: userData.teamId,
 				});
 
-				// 2. Pobierz zespoły
+
 				const teamsResponse = await fetch("/api/teams", {
 					headers: { Authorization: `Bearer ${token}` },
 				});
@@ -1983,7 +1983,7 @@ export default function Members({ title }: { title?: string }) {
 					setTeamsList(teamsData);
 				}
 
-				// 3. Pobierz członków (backend zwraca już zespoły!)
+
 				const membersResponse = await fetch("/api/members", {
 					headers: { Authorization: `Bearer ${token}` },
 				});
@@ -1991,11 +1991,11 @@ export default function Members({ title }: { title?: string }) {
 				const membersData = await membersResponse.json();
 				console.log("📦 Dane z backendu:", membersData);
 
-				// ✅ Mapowanie - używamy danych z backendu
+
 				const mappedMembers = membersData.map((user: any) => {
 					const onboarding = user.onboarding_data || {};
 
-					// ✅ Użyj team z backendu
+
 					const teamString = user.team || "Brak zespołu";
 					const teams = user.team ? user.team.split(", ") : [];
 
@@ -2138,8 +2138,8 @@ export default function Members({ title }: { title?: string }) {
 		};
 
 		fetchAllData();
-	}, []); // ✅ TYLKO JEDEN useEffect z pustą tablicą zależności
-	// ===== DODANE FUNKCJE DLA NOWEGO CZŁONKA =====
+	}, []);
+
 	const handleAddMember = () => {
 		const newMember: Partial<Member> = {
 			id: `member-${Date.now()}`,
@@ -2188,10 +2188,10 @@ export default function Members({ title }: { title?: string }) {
 		try {
 			const token = localStorage.getItem("accessToken");
 
-			// Sprawdź czy to nowy zespół
+
 			let teamName = member.team;
 			if (teamName && !teamsList.some((t) => t.name === teamName)) {
-				// Walidacja - nazwa zespołu jest wymagana
+
 				if (!teamName || !teamName.trim()) {
 					toast.error("Nazwa nowego zespołu jest wymagana");
 					return;
@@ -2203,7 +2203,7 @@ export default function Members({ title }: { title?: string }) {
 					description: customTeamDescription || null,
 					icon: customTeamIcon || "Users",
 					status: "active",
-					parent_id: customTeamParent ? parseInt(customTeamParent) : null, // ✅ to powinno działać
+					parent_id: customTeamParent ? parseInt(customTeamParent) : null,
 					email: customTeamEmail || null,
 				};
 
@@ -2227,7 +2227,7 @@ export default function Members({ title }: { title?: string }) {
 				setTeamsList([...teamsList, newTeam]);
 				toast.success(`Nowy zespół "${teamName}" został utworzony!`);
 
-				// Resetuj pola nowego zespołu
+
 				setCustomTeamName("");
 				setCustomTeamRole("Zespół");
 				setCustomTeamDescription("");
@@ -2236,7 +2236,7 @@ export default function Members({ title }: { title?: string }) {
 				setCustomTeamEmail("");
 			}
 
-			// Teraz utwórz członka
+
 			const response = await fetch("/api/members", {
 				method: "POST",
 				headers: {
@@ -2258,7 +2258,7 @@ export default function Members({ title }: { title?: string }) {
 					errorMessage = errorText || "Nie udało się dodać członka";
 				}
 
-				// Jeśli użytkownik już istnieje, pokaż konkretny komunikat
+
 				if (
 					errorMessage.includes("już istnieje") ||
 					errorMessage.includes("już jest przypisany")
@@ -2291,7 +2291,7 @@ export default function Members({ title }: { title?: string }) {
 			);
 		}
 	};
-	// Unikalne województwa i zespoły dla filtrów
+
 	const provinces = useMemo(() => {
 		const unique = new Set(
 			members
@@ -2300,8 +2300,8 @@ export default function Members({ title }: { title?: string }) {
 		);
 		return Array.from(unique).sort();
 	}, [members]);
-	// Obok innych useMemo
-	// Obok innych useMemo
+
+
 	const parentTeams = useMemo(() => {
 		const allowedParentIds = [1, 4, 7];
 		return teamsList
@@ -2314,10 +2314,10 @@ export default function Members({ title }: { title?: string }) {
 	const teams = useMemo(() => {
 		const allTeams = new Set<string>();
 		members.forEach((member) => {
-			// Podziel team po przecinku i dodaj każdy zespół osobno
+
 			const teamList = member.team.split(", ");
 			teamList.forEach((team) => {
-				// Pomijamy "Brak zespołu" i puste
+
 				if (team && team !== "Brak zespołu") {
 					allTeams.add(team);
 				}
@@ -2325,17 +2325,17 @@ export default function Members({ title }: { title?: string }) {
 		});
 		return Array.from(allTeams).sort();
 	}, [members]);
-	// W Members, razem z innymi useState
+
 	const [confirmDialog, setConfirmDialog] = useState<{
 		isOpen: boolean;
 		member: Member | null;
 	}>({ isOpen: false, member: null });
-	// Funkcja otwierająca dialog
+
 	const handleDeleteMember = (member: Member) => {
 		setConfirmDialog({ isOpen: true, member });
 	};
 
-	// Funkcja wykonująca usunięcie
+
 	const confirmDelete = async () => {
 		const member = confirmDialog.member;
 		if (!member) return;
@@ -2367,7 +2367,7 @@ export default function Members({ title }: { title?: string }) {
 		}
 	};
 
-	// Funkcja anulująca
+
 	const cancelDelete = () => {
 		setConfirmDialog({ isOpen: false, member: null });
 	};
@@ -2403,7 +2403,7 @@ export default function Members({ title }: { title?: string }) {
 				const matchesProvince =
 					selectedProvince === "all" || member.province === selectedProvince;
 
-				// ✅ POPRAWA: sprawdzaj czy wybrany zespół istnieje w team (który może zawierać wiele zespołów)
+
 				const matchesTeam =
 					selectedTeam === "all" ||
 					member.team.split(", ").includes(selectedTeam);
@@ -2436,7 +2436,7 @@ export default function Members({ title }: { title?: string }) {
 		setSelectedMember(member);
 		setIsProfileOpen(true);
 	};
-	// ⭐ USUWANIE CZŁONKA
+
 
 	const handleEditMember = (member: Member) => {
 		setSelectedMember(member);
@@ -2491,14 +2491,14 @@ export default function Members({ title }: { title?: string }) {
 			<div className={styles.members}>
 				<div className={styles.loadingState}>
 					<div className={styles.loadingSpinner}></div>
-					{/* <p>Ładowanie...</p> */}
+					{}
 				</div>
 			</div>
 		);
 	}
 	return (
 		<div className={styles.members}>
-			{/* Nagłówek */}
+			{}
 			<div className={styles.header}>
 				<div className={styles.header__left}>
 					<h1 className={styles.header__title}>
@@ -2508,7 +2508,7 @@ export default function Members({ title }: { title?: string }) {
 						{members.length} członków w organizacji
 					</p>
 				</div>
-				{/* DODAJ TEN PRZYCISK */}
+				{}
 				{hasPermission(currentUser?.role, "canEditUsers") && (
 					<button className={styles.header__addBtn} onClick={handleAddMember}>
 						<Plus size={18} />
@@ -2517,7 +2517,7 @@ export default function Members({ title }: { title?: string }) {
 				)}
 			</div>
 
-			{/* Filtry i wyszukiwarka */}
+			{}
 			<div className={styles.filters}>
 				<div className={styles.filters__search}>
 					<Search size={18} className={styles.filters__searchIcon} />
@@ -2593,7 +2593,7 @@ export default function Members({ title }: { title?: string }) {
 				</div>
 			</div>
 
-			{/* Sortowanie */}
+			{}
 			<div className={styles.sorting}>
 				<span className={styles.sorting__label}>Sortuj według:</span>
 				<button
@@ -2654,7 +2654,7 @@ export default function Members({ title }: { title?: string }) {
 				</button>
 			</div>
 
-			{/* Lista członków */}
+			{}
 			<div
 				className={`${styles.membersGrid} ${viewMode === "list" ? styles.membersGridList : ""}`}
 			>
@@ -2689,7 +2689,7 @@ export default function Members({ title }: { title?: string }) {
 					))
 				)}
 			</div>
-			{/* ===== MODAL DODAWANIA NOWEGO CZŁONKA ===== */}
+			{}
 			<ProfileModal
 				isOpen={isAddMemberOpen}
 				member={newMemberData as Member}
@@ -2698,15 +2698,15 @@ export default function Members({ title }: { title?: string }) {
 				onClose={() => {
 					setIsAddMemberOpen(false);
 					setNewMemberData(null);
-					setShowCustomTeam(false); // ✅ DODAJ
+					setShowCustomTeam(false);
 					setCustomTeamName("");
 				}}
 				onSave={handleAddNewMember}
 				teamsList={teamsList}
 				parentTeamsList={parentTeams}
-				showCustomTeam={showCustomTeam} // ✅ DODAJ
-				setShowCustomTeam={setShowCustomTeam} // ✅ DODAJ
-				customTeamName={customTeamName} // ✅ DODAJ
+				showCustomTeam={showCustomTeam}
+				setShowCustomTeam={setShowCustomTeam}
+				customTeamName={customTeamName}
 				setCustomTeamName={setCustomTeamName}
 				customTeamRole={customTeamRole}
 				setCustomTeamRole={setCustomTeamRole}
@@ -2720,7 +2720,7 @@ export default function Members({ title }: { title?: string }) {
 				setCustomTeamEmail={setCustomTeamEmail}
 			/>
 
-			{/* Modal podglądu profilu */}
+			{}
 			<ProfileModal
 				isOpen={isProfileOpen}
 				member={selectedMember}
@@ -2732,7 +2732,7 @@ export default function Members({ title }: { title?: string }) {
 				}}
 			/>
 
-			{/* Modal edycji profilu */}
+			{}
 			<ProfileModal
 				isOpen={isEditOpen}
 				member={selectedMember}

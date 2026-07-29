@@ -6,7 +6,7 @@ const prisma = new PrismaClient();
 async function main() {
     console.log('🌱 Seedowanie projektów...');
 
-    // Sprawdź czy już są dane
+
     const count = await prisma.project.count();
     if (count > 0) {
         console.log('✅ Dane już istnieją, pomijam seedowanie');

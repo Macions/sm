@@ -3,10 +3,10 @@
    --------------------------------------------------------------------------- */
 
 .vacancies {
-	/* max-width: 1400px; */
+	
 	width: 100%;
 	margin: 0 auto;
-	/* padding: 24px 32px; */
+	
 	font-family:
 		-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu,
 		sans-serif;
@@ -23,7 +23,7 @@
 	align-items: flex-start;
 	padding: 24px 0 32px;
 	border-bottom: 1px solid #e2e8f0;
-	/* margin-bottom: 32px; */
+	
 	flex-wrap: wrap;
 	gap: 6px;
 }
@@ -449,7 +449,7 @@
 	font-weight: 600;
 }
 
-/* Widok listy */
+
 .vacancyCardList {
 	flex-direction: row;
 	align-items: center;
@@ -1261,7 +1261,7 @@
 	font-weight: 500;
 }
 
-/* Podgląd wakatu */
+
 .modal__preview {
 	margin-top: 8px;
 }
@@ -1327,7 +1327,7 @@
 	line-height: 1.5;
 }
 
-/* Responsywność dla formularza */
+
 @media (max-width: 768px) {
 	.modal__previewHeader {
 		flex-wrap: wrap;
@@ -1716,7 +1716,7 @@
    INFORMACJE O REKRUTACJI - FORMULARZ
    --------------------------------------------------------------------------- */
 
-/* Sekcja rekrutacji */
+
 .modal__section {
 	margin-bottom: 24px;
 	padding: 16px 20px;
@@ -1744,14 +1744,14 @@
 	margin: 4px 0 16px 0;
 }
 
-/* Grid dla formularza - 2 kolumny */
+
 .modal__formGrid {
 	display: grid;
 	grid-template-columns: 1fr 1fr;
 	gap: 16px;
 }
 
-/* Pojedyncze pole */
+
 .modal__field {
 	margin-bottom: 8px;
 }
@@ -1760,7 +1760,7 @@
 	margin-bottom: 0;
 }
 
-/* Etykieta */
+
 .modal__label {
 	display: block;
 	font-size: 14px;
@@ -1775,7 +1775,7 @@
 	margin-left: 2px;
 }
 
-/* Input, select, textarea */
+
 .modal__input {
 	width: 100%;
 	padding: 10px 14px;
@@ -1840,14 +1840,14 @@
 	cursor: not-allowed;
 }
 
-/* Textarea */
+
 .modal__textarea {
 	resize: vertical;
 	min-height: 80px;
 	font-family: inherit;
 }
 
-/* Helper text */
+
 .modal__helper {
 	display: block;
 	margin-top: 4px;
@@ -1855,7 +1855,7 @@
 	color: #94a3b8;
 }
 
-/* Błąd */
+
 .modal__error {
 	display: block;
 	margin-top: 4px;
@@ -1863,7 +1863,7 @@
 	color: #ef4444;
 }
 
-/* Tagi (dla obowiązków, wymagań, pytań) */
+
 .modal__tagInput {
 	display: flex;
 	gap: 8px;
@@ -1943,7 +1943,7 @@
 	padding: 6px 0;
 }
 
-/* Question Manager - specyficzne style */
+
 .questionManager {
 	margin-top: 8px;
 }
@@ -2073,7 +2073,7 @@
 	border-top: 1px solid #f1f5f9;
 }
 
-/* Przyciski w formularzu */
+
 .modal__btnCancel {
 	padding: 10px 20px;
 	background: white;
@@ -2144,7 +2144,7 @@
 	gap: 12px;
 }
 
-/* Podgląd wakatu w formularzu */
+
 .modal__preview {
 	margin-top: 8px;
 }
@@ -2212,7 +2212,7 @@
 	line-height: 1.5;
 }
 
-/* Responsywność */
+
 @media (max-width: 768px) {
 	.modal__formGrid {
 		grid-template-columns: 1fr;
@@ -2562,7 +2562,7 @@
    ZGŁOSZENIA - SZCZEGÓŁY W MODALU WAKATU
    --------------------------------------------------------------------------- */
 
-/* Kontener zgłoszeń */
+
 .modal__applicants {
 	display: flex;
 	flex-direction: column;
@@ -2570,7 +2570,7 @@
 	margin-top: 8px;
 }
 
-/* Pojedyncze zgłoszenie */
+
 .modal__applicant {
 	background: white;
 	border: 1px solid #e2e8f0;
@@ -2584,7 +2584,7 @@
 	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
 }
 
-/* Nagłówek zgłoszenia */
+
 .modal__applicantHeader {
 	display: flex;
 	justify-content: space-between;
@@ -2601,14 +2601,14 @@
 	flex: 1;
 }
 
-/* Nazwa kandydata */
+
 .modal__applicantName {
 	font-size: 15px;
 	font-weight: 600;
 	color: #0f172a;
 }
 
-/* Email kandydata */
+
 .modal__applicantEmail {
 	display: flex;
 	align-items: center;
@@ -2622,7 +2622,7 @@
 	flex-shrink: 0;
 }
 
-/* Status zgłoszenia */
+
 .modal__applicantStatus {
 	font-size: 12px;
 	font-weight: 600;
@@ -2651,7 +2651,7 @@
 	color: #991b1b;
 }
 
-/* Przycisk "Szczegóły" */
+
 .modal__applicantToggle {
 	display: flex;
 	align-items: center;
@@ -2677,7 +2677,7 @@
 	transition: transform 0.2s ease;
 }
 
-/* Rozwijane szczegóły */
+
 .modal__applicantDetails {
 	margin-top: 12px;
 	padding-top: 12px;
@@ -2699,7 +2699,7 @@
 	}
 }
 
-/* Wiadomość kandydata */
+
 .modal__applicantMessage {
 	padding: 10px 14px;
 	background: #f8fafc;
@@ -2722,7 +2722,7 @@
 	word-wrap: break-word;
 }
 
-/* Odpowiedzi na pytania */
+
 .modal__applicantAnswers {
 	display: flex;
 	flex-direction: column;
@@ -2735,7 +2735,7 @@
 	margin-bottom: 4px;
 }
 
-/* Pojedyncza odpowiedź */
+
 .modal__applicantAnswer {
 	padding: 8px 12px;
 	background: #f8fafc;
@@ -2748,7 +2748,7 @@
 	background: #f1f5f9;
 }
 
-/* Treść pytania */
+
 .modal__applicantQuestion {
 	font-size: 13px;
 	font-weight: 500;
@@ -2761,7 +2761,7 @@
 	margin-left: 2px;
 }
 
-/* Treść odpowiedzi */
+
 .modal__applicantAnswerText {
 	font-size: 14px;
 	color: #475569;
@@ -2773,7 +2773,7 @@
 	line-height: 1.5;
 }
 
-/* Data zgłoszenia */
+
 .modal__applicantDate {
 	display: flex;
 	align-items: center;
@@ -2788,7 +2788,7 @@
 	flex-shrink: 0;
 }
 
-/* Przyciski akcji dla admina */
+
 .modal__applicantActions {
 	display: flex;
 	gap: 8px;
@@ -2830,7 +2830,7 @@
 	box-shadow: 0 2px 8px rgba(239, 68, 68, 0.3);
 }
 
-/* Odpowiedzi w formie tabeli - alternatywny styl */
+
 .modal__applicantAnswersGrid {
 	display: grid;
 	grid-template-columns: 1fr 1fr;
@@ -2859,7 +2859,7 @@
 	border: none;
 }
 
-/* Badge dla checkbox */
+
 .modal__applicantCheckboxBadge {
 	display: inline-flex;
 	align-items: center;
@@ -2880,7 +2880,7 @@
 	color: #991b1b;
 }
 
-/* Puste zgłoszenia */
+
 .modal__applicantsEmpty {
 	text-align: center;
 	padding: 32px 20px;
@@ -2897,7 +2897,7 @@
 	font-size: 14px;
 }
 
-/* Responsywność */
+
 @media (max-width: 768px) {
 	.modal__applicantHeader {
 		flex-direction: column;
@@ -2961,12 +2961,12 @@
 	}
 }
 
-/* Stan rozwinięcia - animacja */
+
 .modal__applicantDetails.active {
 	display: block !important;
 }
 
-/* Scroll dla długich odpowiedzi */
+
 .modal__applicantAnswerText pre {
 	white-space: pre-wrap;
 	word-wrap: break-word;
@@ -2975,7 +2975,7 @@
 	font-size: inherit;
 }
 
-/* Dla długich tekstów */
+
 .modal__applicantAnswerText.text-long {
 	max-height: 150px;
 	overflow-y: auto;
@@ -2995,7 +2995,7 @@
 	border-radius: 2px;
 }
 
-/* Kolor tła dla odpowiedzi w zależności od typu */
+
 .modal__applicantAnswer.type-text {
 	border-left: 3px solid #6366f1;
 }
@@ -3019,7 +3019,7 @@
    ZGŁOSZENIA - SZCZEGÓŁY W MODALU WAKATU
    --------------------------------------------------------------------------- */
 
-/* Kontener zgłoszeń */
+
 .modal__applicants {
 	display: flex;
 	flex-direction: column;
@@ -3027,7 +3027,7 @@
 	margin-top: 8px;
 }
 
-/* Pojedyncze zgłoszenie - karta */
+
 .modal__applicant {
 	background: #ffffff;
 	border: 1px solid #e2e8f0;
@@ -3043,7 +3043,7 @@
 	transform: translateY(-1px);
 }
 
-/* Nagłówek zgłoszenia - pierwszy wiersz */
+
 .modal__applicantHeader {
 	display: flex;
 	justify-content: space-between;
@@ -3052,7 +3052,7 @@
 	gap: 10px;
 }
 
-/* Lewa część nagłówka - dane kandydata */
+
 .modal__applicantInfo {
 	display: flex;
 	align-items: center;
@@ -3062,7 +3062,7 @@
 	min-width: 200px;
 }
 
-/* Imię i nazwisko kandydata */
+
 .modal__applicantName {
 	font-size: 15px;
 	font-weight: 600;
@@ -3070,7 +3070,7 @@
 	letter-spacing: -0.01em;
 }
 
-/* Email kandydata */
+
 .modal__applicantEmail {
 	display: flex;
 	align-items: center;
@@ -3088,7 +3088,7 @@
 	flex-shrink: 0;
 }
 
-/* Status zgłoszenia - odznaka */
+
 .modal__applicantStatus {
 	font-size: 12px;
 	font-weight: 600;
@@ -3098,7 +3098,7 @@
 	letter-spacing: 0.01em;
 }
 
-/* Statusy - kolory */
+
 .applicantStatusPending {
 	background: #fef3c7;
 	color: #92400e;
@@ -3123,7 +3123,7 @@
 	border: 1px solid #fca5a5;
 }
 
-/* Przycisk "Szczegóły" */
+
 .modal__applicantToggle {
 	display: flex;
 	align-items: center;
@@ -3154,12 +3154,12 @@
 	transition: transform 0.25s ease;
 }
 
-/* Strzałka obrócona gdy rozwinięte */
+
 .modal__applicantToggle.active svg {
 	transform: rotate(90deg);
 }
 
-/* Rozwijane szczegóły - kontener */
+
 .modal__applicantDetails {
 	margin-top: 14px;
 	padding-top: 14px;
@@ -3170,7 +3170,7 @@
 	animation: slideDown 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* Animacja rozwijania */
+
 @keyframes slideDown {
 	from {
 		opacity: 0;
@@ -3182,7 +3182,7 @@
 	}
 }
 
-/* Wiadomość kandydata - karta */
+
 .modal__applicantMessage {
 	padding: 12px 16px;
 	background: #f8fafc;
@@ -3207,7 +3207,7 @@
 	white-space: pre-wrap;
 }
 
-/* Odpowiedzi na pytania - kontener */
+
 .modal__applicantAnswers {
 	display: flex;
 	flex-direction: column;
@@ -3222,7 +3222,7 @@
 	display: block;
 }
 
-/* Pojedyncza odpowiedź - karta */
+
 .modal__applicantAnswer {
 	padding: 10px 14px;
 	background: #f8fafc;
@@ -3236,7 +3236,7 @@
 	border-color: #cbd5e1;
 }
 
-/* Kolorowy pasek po lewej dla typu pytania */
+
 .modal__applicantAnswer.type-text {
 	border-left: 4px solid #6366f1;
 }
@@ -3253,7 +3253,7 @@
 	border-left: 4px solid #ec4899;
 }
 
-/* Treść pytania */
+
 .modal__applicantQuestion {
 	font-size: 13px;
 	font-weight: 500;
@@ -3267,7 +3267,7 @@
 	font-weight: 700;
 }
 
-/* Treść odpowiedzi */
+
 .modal__applicantAnswerText {
 	font-size: 14px;
 	color: #1e293b;
@@ -3284,7 +3284,7 @@
 	border-color: #cbd5e1;
 }
 
-/* Odpowiedź checkbox - specjalne style */
+
 .modal__applicantAnswerText.checkbox-true {
 	background: #dcfce7;
 	border-color: #86efac;
@@ -3297,7 +3297,7 @@
 	color: #991b1b;
 }
 
-/* Data zgłoszenia */
+
 .modal__applicantDate {
 	display: flex;
 	align-items: center;
@@ -3312,7 +3312,7 @@
 	flex-shrink: 0;
 }
 
-/* Przyciski akcji dla admina - kontener */
+
 .modal__applicantActions {
 	display: flex;
 	gap: 10px;
@@ -3321,7 +3321,7 @@
 	padding-top: 4px;
 }
 
-/* Przyciski akcji */
+
 .modal__applicantActionBtn {
 	display: inline-flex;
 	align-items: center;
@@ -3349,7 +3349,7 @@
 	box-shadow: none;
 }
 
-/* Przycisk "Odrzuć" - czerwony */
+
 .modal__applicantActionBtnDanger {
 	background: #ef4444;
 }
@@ -3359,7 +3359,7 @@
 	box-shadow: 0 4px 12px rgba(239, 68, 68, 0.35);
 }
 
-/* Przycisk "Szczegóły" - alternatywny styl gdy aktywny */
+
 .modal__applicantToggle.active {
 	background: #6366f1;
 	color: white;
@@ -3371,7 +3371,7 @@
 	border-color: #4f46e5;
 }
 
-/* Puste zgłoszenia */
+
 .modal__applicantsEmpty {
 	text-align: center;
 	padding: 40px 20px;
@@ -3392,7 +3392,7 @@
 	color: #94a3b8;
 }
 
-/* Badge dla checkbox */
+
 .modal__applicantCheckboxBadge {
 	display: inline-flex;
 	align-items: center;
@@ -3413,7 +3413,7 @@
 	color: #991b1b;
 }
 
-/* Dla długich tekstów - scroll */
+
 .modal__applicantAnswerText.text-long {
 	max-height: 150px;
 	overflow-y: auto;
@@ -3433,7 +3433,7 @@
 	border-radius: 3px;
 }
 
-/* Responsywność */
+
 @media (max-width: 768px) {
 	.modal__applicantHeader {
 		flex-direction: column;
@@ -3504,22 +3504,22 @@
 		margin-top: 10px;
 	}
 }
-/* Gdy przycisk jest aktywny */
+
 .modal__applicantToggle.active svg {
 	transform: rotate(90deg);
 }
 
-/* Płynne przejście dla height (dla lepszego UX) */
+
 .modal__applicantDetails {
 	transition: all 0.3s ease;
 }
 
-/* Efekt hover dla całej karty */
+
 .modal__applicant:hover .modal__applicantActionBtn {
 	opacity: 1;
 }
 
-/* Licznik zgłoszeń w nagłówku */
+
 .modal__sectionTitle .badge {
 	display: inline-block;
 	background: #eef2ff;
@@ -3554,7 +3554,7 @@
 		transform: rotate(360deg);
 	}
 }
-/* Informacja o rekrutacji */
+
 .vacancyCard__recruitment {
 	display: flex;
 	align-items: center;
@@ -3587,7 +3587,7 @@
 	white-space: nowrap;
 }
 
-/* W widoku listy */
+
 .vacancyCardList .vacancyCard__recruitment {
 	padding: 4px 0;
 	background: transparent;
@@ -3597,7 +3597,7 @@
 	background: #e2e8f0;
 	padding: 2px 8px;
 }
-/* Dodaj te klasy jeśli brakuje */
+
 .modal__warning {
 	display: flex;
 	align-items: center;
@@ -3731,7 +3731,7 @@
    ZGŁOSZENIA - NOWOCZESNY WIDOK
    --------------------------------------------------------------------------- */
 
-/* Kontener zgłoszeń */
+
 .modal__applicants {
 	display: flex;
 	flex-direction: column;
@@ -3740,7 +3740,7 @@
 	width: 100%;
 }
 
-/* Pojedyncze zgłoszenie - karta */
+
 .modal__applicant {
 	background: #ffffff;
 	border: 1px solid #e2e8f0;
@@ -3757,7 +3757,7 @@
 	transform: translateY(-2px);
 }
 
-/* Nagłówek zgłoszenia - pierwszy wiersz */
+
 .modal__applicantHeader {
 	display: flex;
 	justify-content: space-between;
@@ -3767,7 +3767,7 @@
 	width: 100%;
 }
 
-/* Lewa część nagłówka - dane kandydata */
+
 .modal__applicantInfo {
 	display: flex;
 	align-items: center;
@@ -3777,7 +3777,7 @@
 	min-width: 200px;
 }
 
-/* Imię i nazwisko kandydata */
+
 .modal__applicantName {
 	font-size: 15px;
 	font-weight: 600;
@@ -3785,7 +3785,7 @@
 	letter-spacing: -0.01em;
 }
 
-/* Email kandydata */
+
 .modal__applicantEmail {
 	display: flex;
 	align-items: center;
@@ -3803,7 +3803,7 @@
 	flex-shrink: 0;
 }
 
-/* Status zgłoszenia - odznaka */
+
 .modal__applicantStatus {
 	font-size: 12px;
 	font-weight: 600;
@@ -3813,7 +3813,7 @@
 	letter-spacing: 0.01em;
 }
 
-/* Statusy - kolory */
+
 .applicantStatusPending {
 	background: #fef3c7;
 	color: #92400e;
@@ -3838,7 +3838,7 @@
 	border: 1px solid #fca5a5;
 }
 
-/* Przycisk "Szczegóły" */
+
 .modal__applicantToggle {
 	display: flex;
 	align-items: center;
@@ -3869,7 +3869,7 @@
 	transition: transform 0.25s ease;
 }
 
-/* Strzałka obrócona gdy rozwinięte */
+
 .modal__applicantToggle.active svg {
 	transform: rotate(90deg);
 }
@@ -3878,7 +3878,7 @@
    ROZWIJANE SZCZEGÓŁY - PEŁNA SZEROKOŚĆ POD SPODEM
    ============================================================ */
 
-/* Rozwijane szczegóły - kontener */
+
 .modal__applicantDetails {
 	margin-top: 16px;
 	padding-top: 16px;
@@ -3890,7 +3890,7 @@
 	animation: slideDown 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* Animacja rozwijania */
+
 @keyframes slideDown {
 	from {
 		opacity: 0;
@@ -3902,7 +3902,7 @@
 	}
 }
 
-/* Wiadomość kandydata - karta */
+
 .modal__applicantMessage {
 	padding: 14px 18px;
 	background: #f8fafc;
@@ -3928,7 +3928,7 @@
 	white-space: pre-wrap;
 }
 
-/* Odpowiedzi na pytania - kontener */
+
 .modal__applicantAnswers {
 	display: flex;
 	flex-direction: column;
@@ -3944,7 +3944,7 @@
 	display: block;
 }
 
-/* Lista odpowiedzi */
+
 .modal__applicantAnswersList {
 	display: flex;
 	flex-direction: column;
@@ -3952,7 +3952,7 @@
 	width: 100%;
 }
 
-/* Pojedyncza odpowiedź - karta */
+
 .modal__applicantAnswer {
 	padding: 12px 16px;
 	background: #f8fafc;
@@ -3967,7 +3967,7 @@
 	border-color: #cbd5e1;
 }
 
-/* Kolorowy pasek po lewej dla typu pytania */
+
 .modal__applicantAnswer.type-text {
 	border-left: 4px solid #6366f1;
 }
@@ -3984,7 +3984,7 @@
 	border-left: 4px solid #ec4899;
 }
 
-/* Treść pytania */
+
 .modal__applicantQuestion {
 	font-size: 13px;
 	font-weight: 500;
@@ -4005,7 +4005,7 @@
 	font-weight: 400;
 }
 
-/* Treść odpowiedzi */
+
 .modal__applicantAnswerText {
 	font-size: 14px;
 	color: #1e293b;
@@ -4023,7 +4023,7 @@
 	border-color: #cbd5e1;
 }
 
-/* Data zgłoszenia */
+
 .modal__applicantDate {
 	display: flex;
 	align-items: center;
@@ -4039,7 +4039,7 @@
 	flex-shrink: 0;
 }
 
-/* Przyciski akcji dla admina - kontener */
+
 .modal__applicantActions {
 	display: flex;
 	gap: 10px;
@@ -4049,7 +4049,7 @@
 	width: 100%;
 }
 
-/* Przyciski akcji */
+
 .modal__applicantActionBtn {
 	display: inline-flex;
 	align-items: center;
@@ -4077,7 +4077,7 @@
 	box-shadow: none;
 }
 
-/* Przycisk "Odrzuć" - czerwony */
+
 .modal__applicantActionBtnDanger {
 	background: #ef4444;
 }
@@ -4087,7 +4087,7 @@
 	box-shadow: 0 4px 12px rgba(239, 68, 68, 0.35);
 }
 
-/* Przycisk "Szczegóły" - aktywny stan */
+
 .modal__applicantToggle.active {
 	background: #6366f1;
 	color: white;
@@ -4260,7 +4260,7 @@
 	flex-wrap: wrap;
 }
 
-/* Lewa strona - użytkownik */
+
 .applicationUser {
 	display: flex;
 	align-items: center;
@@ -4310,7 +4310,7 @@
 	flex-shrink: 0;
 }
 
-/* Prawa strona - meta informacje */
+
 .applicationMeta {
 	display: flex;
 	align-items: center;
@@ -4417,7 +4417,7 @@
 	}
 }
 
-/* Wiadomość */
+
 .applicationMessage {
 	background: #f8fafc;
 	border-radius: 10px;
@@ -4441,7 +4441,7 @@
 	word-wrap: break-word;
 }
 
-/* Odpowiedzi */
+
 .applicationAnswers {
 	display: flex;
 	flex-direction: column;
@@ -4489,7 +4489,7 @@
 	word-break: break-word;
 }
 
-/* Przyciski akcji */
+
 .applicationActions {
 	display: flex;
 	gap: 10px;

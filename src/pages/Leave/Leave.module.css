@@ -2,16 +2,16 @@
    LEAVE.MODULE.CSS
    ======================================== */
 
-/* ===== GŁÓWNY KONTENER ===== */
+
 .leave {
-	/* max-width: 1200px; */
+	
 	margin: 0 auto;
 	width: 100%;
-	/* padding: 32px 24px; */
+	
 	min-height: 100vh;
 }
 
-/* ===== NAGŁÓWEK ===== */
+
 .header {
 	display: flex;
 	justify-content: space-between;
@@ -73,7 +73,7 @@
 	box-shadow: 0 6px 20px rgba(124, 58, 237, 0.35);
 }
 
-/* ===== STATUSY ===== */
+
 .statuses {
 	display: flex;
 	flex-wrap: wrap;
@@ -132,7 +132,7 @@
 	color: white;
 }
 
-/* ===== FILTRY ===== */
+
 .filters {
 	display: flex;
 	gap: 16px;
@@ -236,7 +236,7 @@
 	color: #0f172a;
 }
 
-/* ===== KARTA WNIOSKU ===== */
+
 .leaveCard {
 	background: white;
 	border-radius: 16px;
@@ -551,7 +551,7 @@
 	color: #dc2626;
 }
 
-/* ===== MODAL ===== */
+
 .modalOverlay {
 	position: fixed;
 	inset: 0;
@@ -922,7 +922,7 @@
 	box-shadow: 0 6px 20px rgba(124, 58, 237, 0.35);
 }
 
-/* ===== EMPTY STATE ===== */
+
 .emptyState {
 	text-align: center;
 	padding: 64px 24px;
@@ -970,14 +970,14 @@
 	box-shadow: 0 6px 20px rgba(124, 58, 237, 0.35);
 }
 
-/* ===== GRID ===== */
+
 .leavesGrid {
 	display: grid;
 	grid-template-columns: 1fr;
 	gap: 20px;
 }
 
-/* ===== ANIMACJE ===== */
+
 @keyframes fadeIn {
 	from {
 		opacity: 0;
@@ -1000,7 +1000,7 @@
 	}
 }
 
-/* ===== RESPONSYWNOŚĆ ===== */
+
 @media (max-width: 768px) {
 	.leave {
 		padding: 16px;
@@ -1128,7 +1128,7 @@
 	border: 1px solid #fecaca;
 }
 
-/* ===== SZEREGI ===== */
+
 .leaveCard__scope {
 	display: flex;
 	gap: 8px;
@@ -1168,7 +1168,7 @@
 	margin: 8px 0 12px 0;
 }
 
-/* ===== KALENDARZ ===== */
+
 .calendar {
 	background: white;
 	border-radius: 16px;
@@ -1280,7 +1280,7 @@
 	text-align: center;
 }
 
-/* ===== NOTYFIKACJE ===== */
+
 .header__right {
 	display: flex;
 	align-items: center;
@@ -1401,7 +1401,7 @@
 	margin-top: 4px;
 }
 
-/* ===== MODAL - ZESPOŁY ===== */
+
 .modal__teams {
 	display: grid;
 	grid-template-columns: 1fr 1fr;
@@ -1433,7 +1433,7 @@
 	cursor: pointer;
 }
 
-/* ===== RESPONSYWNOŚĆ ===== */
+
 @media (max-width: 768px) {
 	.header__notifDropdown {
 		width: 300px;
@@ -1454,7 +1454,7 @@
 	}
 }
 
-/* ===== RESPONSYWNOŚĆ ===== */
+
 @media (max-width: 768px) {
 	.filters__viewToggle {
 		padding: 3px;
@@ -1506,7 +1506,7 @@
 	}
 }
 
-/* ===== PRZYCISKI WIDOKU ===== */
+
 .filters__group {
 	display: flex;
 	align-items: center;
@@ -1596,7 +1596,7 @@
 	}
 }
 
-/* Walidacja dat */
+
 .modal__validation {
 	margin-top: 8px;
 	margin-bottom: 12px;
@@ -1623,7 +1623,7 @@
 	font-size: 13px;
 }
 
-/* Leave.module.css - dodaj na końcu */
+
 
 .loading {
 	display: flex;

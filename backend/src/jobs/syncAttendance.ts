@@ -1,11 +1,11 @@
-// backend/src/jobs/syncAttendance.ts
+
 
 import { PrismaClient } from "@prisma/client";
 import mysql from "mysql2/promise";
 
 const prisma = new PrismaClient();
 
-// ⭐ KONFIGURACJA BAZY FREKWENCJA
+
 const FREKWENCJA_DB_CONFIG = {
 	host: process.env.FREKWENCJA_DB_HOST || "57.128.253.89",
 	user: process.env.FREKWENCJA_DB_USER || "czarnecki",
@@ -25,14 +25,14 @@ export async function syncAttendance() {
 		connection = await mysql.createConnection(FREKWENCJA_DB_CONFIG);
 		console.log("✅ [ATTENDANCE] Połączono z SM_Frekwencja");
 
-		// ⭐ SPRAWDŹ TABELE W BAZIE FREKWENCJA
+
 		const [tables] = await connection.execute("SHOW TABLES");
 		console.log("📋 [ATTENDANCE] Tabele w SM_Frekwencja:", tables);
 
-		// ⭐ POBIERZ FREKWENCJĘ (dostosuj nazwy tabel)
-		// backend/src/jobs/syncAttendance.ts
 
-		// ZMIEŃ NAZWY TABEL na rzeczywiste z bazy SM_Frekwencja:
+
+
+
 		const [rows] = await connection.execute(`
     SELECT
         m.email,
@@ -43,8 +43,8 @@ export async function syncAttendance() {
             * 100,
             2
         ) AS attendance_percentage
-    FROM att_members m  -- ⭐ ZMIENIONE na att_members
-    LEFT JOIN att_attendance a  -- ⭐ ZMIENIONE na att_attendance
+    FROM att_members m
+    LEFT JOIN att_attendance a
         ON a.member_id = m.id
     GROUP BY m.id, m.email
     HAVING attendance_percentage IS NOT NULL
@@ -63,7 +63,7 @@ export async function syncAttendance() {
 			return;
 		}
 
-		// ⭐ AKTUALIZACJA W GŁÓWNEJ BAZIE (przez Prisma)
+
 		console.log("🔄 [ATTENDANCE] Aktualizacja frekwencji użytkowników...");
 		let updatedCount = 0;
 		let skippedCount = 0;

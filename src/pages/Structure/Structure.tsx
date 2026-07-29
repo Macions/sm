@@ -19,9 +19,9 @@ import {
 } from "lucide-react";
 import styles from "./Structure.module.css";
 
-// ---------------------------------------------------------------------------
-// TYPY
-// ---------------------------------------------------------------------------
+
+
+
 type Person = {
 	id: string;
 	firstName: string;
@@ -43,9 +43,9 @@ type Node = {
 	email?: string;
 };
 
-// ---------------------------------------------------------------------------
-// DANE FALLBACK (gdy fetch nie działa)
-// ---------------------------------------------------------------------------
+
+
+
 const ORGANIZATION_DATA: Node = {
 	id: "organization",
 	name: "Siła Młodych",
@@ -57,9 +57,9 @@ const ORGANIZATION_DATA: Node = {
 	children: [],
 };
 
-// ---------------------------------------------------------------------------
-// FUNKCJE POMOCNICZE
-// ---------------------------------------------------------------------------
+
+
+
 const countAllPeople = (node: Node): number => {
 	let count = node.people?.length || 0;
 	for (const child of node.children) {
@@ -68,9 +68,9 @@ const countAllPeople = (node: Node): number => {
 	return count;
 };
 
-// ---------------------------------------------------------------------------
-// Komponent węzła
-// ---------------------------------------------------------------------------
+
+
+
 interface TreeNodeProps {
 	node: Node;
 	isRoot?: boolean;
@@ -246,12 +246,12 @@ function TreeNode({
 	);
 }
 
-// ---------------------------------------------------------------------------
-// Główny komponent
-// ---------------------------------------------------------------------------
+
+
+
 
 export default function Structure() {
-	// ===== WSZYSTKIE HOOKI NA POCZĄTKU (ZAWSZE PRZED WARUNKAMI) =====
+
 	const [searchTerm, setSearchTerm] = useState("");
 	const [structureData, setStructureData] = useState<Node | null>(null);
 	const [loading, setLoading] = useState(true);
@@ -268,7 +268,7 @@ export default function Structure() {
 	const MAX_ZOOM = 2.5;
 	const PAN_BOUNDARY = 10000;
 
-	// ===== FETCH - HOOK 1 =====
+
 	useEffect(() => {
 		const fetchStructure = async () => {
 			try {
@@ -319,7 +319,7 @@ export default function Structure() {
 		fetchStructure();
 	}, []);
 
-	// ===== STATYSTYKI - HOOKI useMemo =====
+
 	const totalMembers = useMemo(() => {
 		if (!structureData) return 0;
 		return countAllPeople(structureData);
@@ -355,7 +355,7 @@ export default function Structure() {
 		return structureData.children.length;
 	}, [structureData]);
 
-	// ===== PINCH-TO-ZOOM - HOOK 2 (TYLKO JEDEN!) =====
+
 	useEffect(() => {
 		const handleTouchMovePinch = (e: TouchEvent) => {
 			if (e.touches.length === 2) {
@@ -393,9 +393,9 @@ export default function Structure() {
 				container.removeEventListener("touchend", handleTouchEndPinch);
 			}
 		};
-	}, [zoom, lastTouchDistance]); // Zależności
+	}, [zoom, lastTouchDistance]);
 
-	// ===== TERAZ MOGĄ BYĆ WARUNKI =====
+
 	if (loading) {
 		return (
 			<div className={styles.structure}>
@@ -420,7 +420,7 @@ export default function Structure() {
 		);
 	}
 
-	// ===== FUNKCJE (po warunkach) =====
+
 	const resetView = () => {
 		setPan({ x: -410, y: -300 });
 		setZoom(1.2);
@@ -524,10 +524,10 @@ export default function Structure() {
 		setIsDragging(false);
 	};
 
-	// ===== RENDER =====
+
 	return (
 		<div className={styles.structure}>
-			{/* Nagłówek */}
+			{}
 			<div className={styles.header}>
 				<div className={styles.header__left}>
 					<h1 className={styles.header__title}>Struktura Siły Młodych</h1>
@@ -558,7 +558,7 @@ export default function Structure() {
 				</div>
 			</div>
 
-			{/* Wyszukiwarka */}
+			{}
 			<div className={styles.searchWrapper}>
 				<div className={styles.searchBox}>
 					<Search size={18} className={styles.searchBox__icon} />
@@ -580,7 +580,7 @@ export default function Structure() {
 				</div>
 			</div>
 
-			{/* Sterowanie mapą */}
+			{}
 			<div className={styles.mapControls}>
 				<button
 					onClick={resetView}
@@ -612,7 +612,7 @@ export default function Structure() {
 				</div>
 			</div>
 
-			{/* Nieskończona mapa */}
+			{}
 			<div
 				className={styles.mapContainer}
 				ref={containerRef}
@@ -647,7 +647,7 @@ export default function Structure() {
 				</div>
 			</div>
 
-			{/* Wskazówka */}
+			{}
 			<div className={styles.dragHint}>
 				<span className={styles.dragHint__icon}>↔</span>
 				<span>Przeciągnij aby przesuwać mapę • Ctrl + scroll aby zoom</span>

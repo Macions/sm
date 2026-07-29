@@ -1,4 +1,4 @@
-// frontend/src/components/layout/Sidebar/Sidebar.tsx
+
 
 import { NAV_ITEMS } from "../../../data/navigation";
 import styles from "./Sidebar.module.css";
@@ -11,7 +11,7 @@ interface SidebarProps {
 	collapsed?: boolean;
 	isSocialMember?: boolean;
 	userRole?: string;
-	onToggleCollapse?: () => void; // ⭐ DODAJ
+	onToggleCollapse?: () => void;
 }
 
 export default function Sidebar({
@@ -20,13 +20,13 @@ export default function Sidebar({
 	collapsed = false,
 	isSocialMember = false,
 	userRole,
-	onToggleCollapse, // ⭐ DODAJ
+	onToggleCollapse,
 }: SidebarProps) {
 	const navigate = useNavigate();
 	const isAdminOrBoard =
 		userRole === "admin" || userRole === "board" || userRole === "zarząd";
 
-	// ⭐ MAPA Ikon dla mobilnego paska
+
 	const iconMap: Record<string, any> = {
 		dashboard: Home,
 		projects: FolderKanban,
@@ -59,14 +59,14 @@ export default function Sidebar({
 		(window as any).goTo("/login");
 	};
 
-	// Funkcja do nawigacji w mobilnym pasku
+
 	const handleMobileNav = (key: string) => {
 		onSelect(key);
 	};
 
 	return (
 		<>
-			{/* ⭐ DESKTOP SIDEBAR - ukrywa się na mobile */}
+			{}
 			<aside
 				className={`${styles.sidebar} ${collapsed ? styles.sidebarCollapsed : ""}`}
 			>
@@ -133,7 +133,7 @@ export default function Sidebar({
 				</div>
 			</aside>
 
-			{/* ⭐ MOBILNY DOLNY PASEK - pokazuje się TYLKO NA MOBILE */}
+			{}
 			<nav className={styles.mobileBottomNav}>
 				{filteredNavItems.map(({ key, icon: Icon }) => {
 					const MobileIcon = iconMap[key] || Icon;
@@ -151,7 +151,7 @@ export default function Sidebar({
 						</button>
 					);
 				})}
-				{/* Przycisk wylogowania na mobile */}
+				{}
 				<button
 					className={`${styles.mobileNav__item} ${styles.logoutBtn}`}
 					onClick={handleLogout}

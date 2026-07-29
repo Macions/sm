@@ -1,14 +1,14 @@
-// backend/src/controllers/user.controller.ts
+
 import { Request, Response } from "express";
 import { PrismaClient } from "@prisma/client";
 
-// ✅ Użyj "as any" aby ominąć problem z typami
+
 const prisma = new PrismaClient() as any;
 
 type ProjectPillar = "project" | "conference" | "advocacy" | "simulation";
 
 export class UserController {
-	// Pobierz wszystkich użytkowników
+
 	async getAllUsers(req: Request, res: Response) {
 		try {
 			const users = await prisma.user.findMany({
@@ -39,10 +39,10 @@ export class UserController {
 		}
 	}
 
-	// Pobierz użytkownika po ID
+
 	async getUserById(req: Request, res: Response) {
 		try {
-			// ✅ Poprawne pobranie ID z params
+
 			const id = parseInt(req.params.id as string);
 
 			if (isNaN(id)) {
@@ -95,10 +95,10 @@ export class UserController {
 		}
 	}
 
-	// Aktualizuj użytkownika
+
 	async updateUser(req: Request, res: Response) {
 		try {
-			// ✅ Poprawne pobranie ID z params
+
 			const id = parseInt(req.params.id as string);
 
 			if (isNaN(id)) {
@@ -119,7 +119,7 @@ export class UserController {
 				is_active,
 			} = req.body;
 
-			// Sprawdź czy użytkownik istnieje
+
 			const existingUser = await prisma.user.findUnique({
 				where: { id },
 			});
@@ -155,10 +155,10 @@ export class UserController {
 		}
 	}
 
-	// Usuń użytkownika (soft delete)
+
 	async deleteUser(req: Request, res: Response) {
 		try {
-			// ✅ Poprawne pobranie ID z params
+
 			const id = parseInt(req.params.id as string);
 
 			if (isNaN(id)) {
@@ -178,7 +178,7 @@ export class UserController {
 	}
 }
 
-// ✅ Funkcja pomocnicza do mapowania role_id na nazwę roli
+
 function mapRoleId(roleId: number | null): "admin" | "coordinator" | "member" {
 	const roleMap: Record<number, "admin" | "coordinator" | "member"> = {
 		1: "admin",
@@ -189,7 +189,7 @@ function mapRoleId(roleId: number | null): "admin" | "coordinator" | "member" {
 	return roleMap[roleId || 4] || "member";
 }
 
-// ✅ Funkcja pomocnicza do mapowania team na pillar
+
 function mapTeamToPillar(team: string | null): ProjectPillar | null {
 	if (!team) return null;
 

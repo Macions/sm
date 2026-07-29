@@ -1,4 +1,4 @@
-// backend/src/server.ts
+
 import express from "express";
 import cors from "cors";
 import { OAuth2Client } from "google-auth-library";
@@ -48,14 +48,14 @@ cron.schedule("0 3 */2 * *", async () => {
 });
 const PUBLIC_ENDPOINTS = [
 	"/api/auth/login",
-	"/api/auth/google", // ⭐ TO JEST KLUCZOWE!
+	"/api/auth/google",
 	"/api/auth/register",
 	"/api/auth/refresh-token",
 	"/api/auth/forgot-password",
 	"/api/auth/reset-password",
 	"/api/health",
 	"/api/status",
-	"/uploads", // Pliki statyczne
+	"/uploads",
 ];
 const isPublicPath = (path: string): boolean => {
 	return PUBLIC_ENDPOINTS.some(
@@ -82,7 +82,7 @@ type LogCategory =
 	| "STRUCTURE"
 	| "NOTIFICATION"
 	| "AUTH";
-// ⭐ ZASTĄP UUID PROSTSZYM GENERATOREM
+
 function generateId(): string {
 	return Date.now().toString(36) + Math.random().toString(36).substring(2, 9);
 }
@@ -125,7 +125,7 @@ app.post("/api/auth/google", async (req, res) => {
 
 		console.log("📧 Email z Google:", payload.email);
 
-		// ⭐ SPRAWDŹ CZY UŻYTKOWNIK ISTNIEJE
+
 		const user = await prisma.user.findUnique({
 			where: { email: payload.email },
 		});
@@ -142,7 +142,7 @@ app.post("/api/auth/google", async (req, res) => {
 			`✅ Znaleziono użytkownika: ${user.first_name} ${user.last_name}`,
 		);
 
-		// ⭐ GENERUJ TOKEN JWT
+
 		const token = jwt.sign(
 			{
 				id: user.id,
@@ -180,26 +180,26 @@ app.post("/api/auth/google", async (req, res) => {
 		});
 	}
 });
-// ============================================================
-// ⭐ KONFIGURACJA MULTER DO OBSŁUGI PLIKÓW
-// ============================================================
+
+
+
 
 const uploadDir = path.join(__dirname, "uploads/tutorials");
 if (!fs.existsSync(uploadDir)) {
 	fs.mkdirSync(uploadDir, { recursive: true });
 }
-// ============================================================
-// ⭐ MIDDLEWARE DO AUTOMATYCZNEGO LOGOWANIA
-// ============================================================
 
-// Dodaj to w server.ts po definicji prisma i przed endpointami
 
-// Funkcja do wyciągania nazwy encji z odpowiedzi
-// Funkcja do wyciągania nazwy encji z odpowiedzi
+
+
+
+
+
+
 function getEntityName(body: any): string | null {
 	if (!body) return null;
 
-	// ⭐ DLA ODPOWIEDZI DELETE
+
 	if (body.id && body.success) {
 		return `Usunięto ${body.id}`;
 	}
@@ -207,7 +207,7 @@ function getEntityName(body: any): string | null {
 		return body.message;
 	}
 
-	// Standardowe pola
+
 	if (body.name) return body.name;
 	if (body.title) return body.title;
 	if (body.first_name && body.last_name)
@@ -215,7 +215,7 @@ function getEntityName(body: any): string | null {
 	if (body.userName) return body.userName;
 	if (body.email) return body.email;
 	if (body.message) {
-		// Spróbuj wyciągnąć nazwę z message
+
 		const match = body.message.match(/Urlop (.*?) \(/);
 		if (match) return match[1];
 		return body.message;
@@ -224,7 +224,7 @@ function getEntityName(body: any): string | null {
 	return null;
 }
 
-// Funkcja do wyciągania ID encji z odpowiedzi
+
 function getEntityId(body: any): string | null {
 	if (!body) return null;
 	if (body.id) return body.id.toString();
@@ -234,7 +234,7 @@ function getEntityId(body: any): string | null {
 	if (body.team?.id) return body.team.id.toString();
 	return null;
 }
-// Funkcja do określania kategorii na podstawie URL
+
 function getCategoryFromUrl(url: string): LogCategory {
 	if (url.includes("/api/admin/teams")) return "TEAM";
 	if (url.includes("/api/admin/roles")) return "PERMISSION";
@@ -250,9 +250,9 @@ function getCategoryFromUrl(url: string): LogCategory {
 	if (url.includes("/api/ideas")) return "PROJECT";
 	return "STRUCTURE";
 }
-// ============================================================
-// ⭐ FUNKCJA DO LOGOWANIA AKCJI
-// ============================================================
+
+
+
 
 async function logAction(
 	req: any,
@@ -269,7 +269,7 @@ async function logAction(
 			`🔍 [logAction] START - ${actionType} ${category} ${entityName || "unknown"}`,
 		);
 
-		// ⭐ SPRAWDŹ CZY PRISMA MA MODEL systemLog
+
 		if (!prisma.systemLog) {
 			console.warn("⚠️ [logAction] Model systemLog nie istnieje w Prisma!");
 			return;
@@ -326,7 +326,7 @@ async function logAction(
 	}
 }
 
-// ⭐ MIDDLEWARE - AUTOMATYCZNIE LOGUJE WSZYSTKIE OPERACJE
+
 
 const storage = multer.diskStorage({
 	destination: (req, file, cb) => {
@@ -367,29 +367,29 @@ const fileFilter = (req: any, file: any, cb: any) => {
 const upload = multer({
 	storage: storage,
 	limits: {
-		fileSize: 10 * 1024 * 1024, // 10MB
+		fileSize: 10 * 1024 * 1024,
 		files: 5,
 	},
 	fileFilter: fileFilter,
 });
 
-// ============================================================
-// ⭐ MIDDLEWARE - AUTOMATYCZNIE LOGUJE WSZYSTKIE OPERACJE ZAPISU
-// ============================================================
 
-// ============================================================
-// MIDDLEWARE
-// ============================================================
 
-// ⭐ STATYCZNE PLIKI (do pobierania załączników)
+
+
+
+
+
+
+
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
-// ============================================================
-// MIDDLEWARE - z wyjątkiem dla publicznych endpointów
-// ============================================================
+
+
+
 
 app.use(async (req: any, res: any, next: any) => {
-	// ⭐⭐⭐ DODANY WARUNEK - POMIJAMY PUBLICZNE ENDPOINTY ⭐⭐⭐
+
 	const publicPaths = [
 		"/api/auth/google",
 		"/api/auth/login",
@@ -403,7 +403,7 @@ app.use(async (req: any, res: any, next: any) => {
 		return next();
 	}
 
-	// Reszta kodu middleware (bez zmian)
+
 	console.log(`🔍 [MIDDLEWARE] ${req.method} ${req.originalUrl}`);
 
 	const originalJson = res.json;
@@ -480,28 +480,28 @@ app.use(async (req: any, res: any, next: any) => {
 		return originalJson.call(this, body);
 	};
 
-	// ⭐ DODAJ OBSŁUGĘ res.send
+
 	res.send = function (body: any) {
 		console.log(`🔍 [MIDDLEWARE] res.send wywołane`);
 		if (!responseSent) {
 			responseBody = body;
 			responseSent = true;
-			// ... podobna logika jak w res.json
+
 		}
 		return originalSend.call(this, body);
 	};
 
 	next();
 });
-// ============================================================
-// FUNKCJE POMOCNICZE
-// ============================================================
+
+
+
 function mapRoleId(roleId: number | null): string {
 	const roleMap: Record<number, string> = {
-		1: "admin", // ✅ admin
-		2: "board", // zarząd
-		3: "coordinator", // koordynator
-		4: "member", // ✅ member
+		1: "admin",
+		2: "board",
+		3: "coordinator",
+		4: "member",
 	};
 	return roleMap[roleId || 4] || "member";
 }
@@ -534,15 +534,15 @@ function getIconForTeam(name: string): string {
 	return iconMap[name] || "Users";
 }
 
-// ============================================================
-// KONTROLERY
-// ============================================================
+
+
+
 const projectController = new ProjectController();
 const userController = new UserController();
 
-// ============================================================
-// LOGOWANIE
-// ============================================================
+
+
+
 app.post("/api/auth/login", async (req, res) => {
 	try {
 		const { email, password } = req.body;
@@ -600,7 +600,7 @@ app.post("/api/auth/login", async (req, res) => {
 	}
 });
 
-// REJESTRACJA
+
 app.post("/api/auth/register", async (req, res) => {
 	try {
 		const { email, password, first_name, last_name, username } = req.body;
@@ -652,12 +652,12 @@ app.post("/api/auth/register", async (req, res) => {
 	}
 });
 
-// ============================================================
-// ENDPOINTY ZABEZPIECZONE
-// ============================================================
 
-// SPRAWDZANIE ONBOARDINGU
-// backend/src/server.ts
+
+
+
+
+
 
 app.get(
 	"/api/auth/onboarding-status",
@@ -672,7 +672,7 @@ app.get(
 			console.log(`🔍 Sprawdzam onboarding dla użytkownika ${userId}`);
 			console.log(`👤 Rola użytkownika: ${req.user?.role}`);
 
-			// ⭐ ADMIN POBIERA ONBOARDING
+
 			if (req.user?.role === "admin") {
 				console.log(`👑 Admin ${userId} - pomijam onboarding, zwracam true`);
 				return res.json({ completed: true });
@@ -701,12 +701,12 @@ app.get(
 		}
 	},
 );
-// ============================================================
-// POMYSŁY (IDEAS)
-// ============================================================
 
-// 📥 GET - pobierz wszystkie pomysły
-// 📥 GET - pobierz wszystkie pomysły z głosami
+
+
+
+
+
 app.get("/api/ideas", authMiddleware, async (req: any, res) => {
 	try {
 		const userId = req.user?.id;
@@ -755,9 +755,9 @@ app.get("/api/ideas", authMiddleware, async (req: any, res) => {
 	}
 });
 
-// 📤 POST - dodaj pomysł
-// 📤 POST - dodaj pomysł
-// 📤 POST - dodaj pomysł
+
+
+
 app.post("/api/ideas", authMiddleware, async (req: any, res) => {
 	try {
 		const { title, description, pillar, authorId, authorName } = req.body;
@@ -775,7 +775,7 @@ app.post("/api/ideas", authMiddleware, async (req: any, res) => {
 			return res.status(400).json({ error: "Wszystkie pola są wymagane" });
 		}
 
-		// ✅ UTWÓRZ POMYSŁ
+
 		const idea = await prisma.idea.create({
 			data: {
 				title,
@@ -793,7 +793,7 @@ app.post("/api/ideas", authMiddleware, async (req: any, res) => {
 
 		console.log("✅ Utworzono pomysł w bazie:", idea);
 
-		// ✅ AUTOMATYCZNIE DODAJ GŁOS UP OD AUTORA
+
 		try {
 			await prisma.ideaVote.create({
 				data: {
@@ -804,11 +804,11 @@ app.post("/api/ideas", authMiddleware, async (req: any, res) => {
 			});
 			console.log(`⬆️ Automatyczny głos UP od autora (user ${userId})`);
 		} catch (voteError) {
-			// Jeśli już jest głos (np. duplikat) - pomiń
+
 			console.warn("⚠️ Nie udało się dodać automatycznego głosu:", voteError);
 		}
 
-		// ✅ Pobierz liczbę głosów
+
 		const voteCounts = await getVoteCounts(idea.id);
 
 		res.status(201).json({
@@ -824,7 +824,7 @@ app.post("/api/ideas", authMiddleware, async (req: any, res) => {
 			downvotes: voteCounts.downvotes || 0,
 			created_at: idea.created_at,
 			updated_at: idea.updated_at,
-			user_vote: "up", // ✅ Autor ma głos UP
+			user_vote: "up",
 		});
 	} catch (error) {
 		console.error("❌ Błąd dodawania pomysłu:", error);
@@ -835,10 +835,10 @@ app.post("/api/ideas", authMiddleware, async (req: any, res) => {
 	}
 });
 
-// 📤 POST - głosuj na pomysł
-// 📤 POST - głosuj na pomysł
-// 📤 POST - głosuj na pomysł
-// 📤 POST - głosuj na pomysł
+
+
+
+
 app.post("/api/ideas/:id/vote", authMiddleware, async (req: any, res) => {
 	try {
 		const { id } = req.params;
@@ -849,7 +849,7 @@ app.post("/api/ideas/:id/vote", authMiddleware, async (req: any, res) => {
 			return res.status(401).json({ error: "Brak autoryzacji" });
 		}
 
-		// ✅ SPRAWDŹ CZY UŻYTKOWNIK JEST AUTOREM
+
 		const idea = await prisma.idea.findUnique({
 			where: { id: parseInt(id) },
 		});
@@ -858,7 +858,7 @@ app.post("/api/ideas/:id/vote", authMiddleware, async (req: any, res) => {
 			return res.status(404).json({ error: "Nie znaleziono pomysłu" });
 		}
 
-		// ✅ BLOKADA: Autor nie może głosować na swój pomysł
+
 		if (idea.author_id === userId) {
 			return res.status(403).json({
 				error: "Nie możesz głosować na swój własny pomysł",
@@ -866,7 +866,7 @@ app.post("/api/ideas/:id/vote", authMiddleware, async (req: any, res) => {
 			});
 		}
 
-		// ✅ Sprawdź czy już głosował
+
 		const existingVote = await prisma.ideaVote.findUnique({
 			where: {
 				idea_id_user_id: {
@@ -876,7 +876,7 @@ app.post("/api/ideas/:id/vote", authMiddleware, async (req: any, res) => {
 			},
 		});
 
-		// Jeśli głosował na ten sam typ - NIC NIE RÓB
+
 		if (existingVote && existingVote.vote_type === type) {
 			return res.json({
 				message: "Już zagłosowałeś w ten sposób",
@@ -884,7 +884,7 @@ app.post("/api/ideas/:id/vote", authMiddleware, async (req: any, res) => {
 			});
 		}
 
-		// Jeśli głosował na przeciwny typ - usuń stary
+
 		if (existingVote) {
 			await prisma.ideaVote.delete({
 				where: {
@@ -896,7 +896,7 @@ app.post("/api/ideas/:id/vote", authMiddleware, async (req: any, res) => {
 			});
 		}
 
-		// Dodaj nowy głos
+
 		await prisma.ideaVote.create({
 			data: {
 				idea_id: parseInt(id),
@@ -920,7 +920,7 @@ app.post("/api/ideas/:id/vote", authMiddleware, async (req: any, res) => {
 	}
 });
 
-// ✅ FUNKCJA POMOCNICZA
+
 async function getVoteCounts(ideaId: number) {
 	const votes = await prisma.ideaVote.findMany({
 		where: { idea_id: ideaId },
@@ -936,14 +936,14 @@ async function getVoteCounts(ideaId: number) {
 	};
 }
 
-// 📝 PUT - zmień status pomysłu
+
 app.put("/api/ideas/:id/status", authMiddleware, async (req: any, res) => {
 	try {
 		const { id } = req.params;
 		const { status } = req.body;
 		const userRole = req.user?.role;
 
-		// Tylko admin lub koordynator może zmieniać status
+
 		if (userRole !== "admin" && userRole !== "coordinator") {
 			return res.status(403).json({ error: "Brak uprawnień" });
 		}
@@ -959,10 +959,10 @@ app.put("/api/ideas/:id/status", authMiddleware, async (req: any, res) => {
 		res.status(500).json({ error: "Nie udało się zmienić statusu" });
 	}
 });
-// ============================================================
-// CZŁONKOWIE (MEMBERS)
-// ============================================================
-// 📥 GET - pobierz pojedynczy pomysł (opcjonalnie)
+
+
+
+
 app.get("/api/ideas/:id", authMiddleware, async (req: any, res) => {
 	try {
 		const { id } = req.params;
@@ -1001,7 +1001,7 @@ app.get("/api/ideas/:id", authMiddleware, async (req: any, res) => {
 		res.status(500).json({ error: "Nie udało się pobrać pomysłu" });
 	}
 });
-// 📥 GET - pobierz wszystkich członków
+
 app.get("/api/members", authMiddleware, async (req: any, res) => {
 	try {
 		const users = await prisma.user.findMany({
@@ -1032,14 +1032,14 @@ app.get("/api/members", authMiddleware, async (req: any, res) => {
 		const mappedUsers = users.map((user: any) => {
 			const onboarding = user.onboarding_data?.[0] || {};
 
-			// ✅ Pobierz zespoły z team_members
+
 			const teams = user.team_members
 				.map((tm: any) => tm.team?.name)
 				.filter(Boolean);
 
 			const teamString = teams.length > 0 ? teams.join(", ") : "Brak zespołu";
 
-			// Znajdź aktualny urlop
+
 			const today = new Date();
 			today.setHours(0, 0, 0, 0);
 
@@ -1059,7 +1059,7 @@ app.get("/api/members", authMiddleware, async (req: any, res) => {
 				phone: user.phone,
 				province: user.province,
 				status: user.status || "active",
-				team: teamString, // ✅ Zespoły z team_members
+				team: teamString,
 				team_id: teams.length > 0 ? teams.join("-") : "",
 				functional_role: user.functional_role || "Członek",
 				join_date:
@@ -1083,7 +1083,7 @@ app.get("/api/members", authMiddleware, async (req: any, res) => {
 		res.status(500).json({ error: "Nie udało się pobrać członków" });
 	}
 });
-// PROJEKTY
+
 app.get("/api/projects", authMiddleware, projectController.getAllProjects);
 app.get("/api/projects/:id", authMiddleware, projectController.getProjectById);
 app.post("/api/projects", authMiddleware, projectController.createProject);
@@ -1094,10 +1094,10 @@ app.delete(
 	projectController.deleteProject,
 );
 
-// UŻYTKOWNICY
+
 app.get("/api/users", authMiddleware, userController.getAllUsers);
 
-// 📥 GET - pobierz wszystkie zespoły
+
 app.get("/api/teams", authMiddleware, async (req: any, res) => {
 	try {
 		const teams = await prisma.team.findMany({
@@ -1119,7 +1119,7 @@ app.get("/api/teams", authMiddleware, async (req: any, res) => {
 		res.status(500).json({ error: "Nie udało się pobrać zespołów" });
 	}
 });
-// 📤 POST - utwórz nowy zespół
+
 app.post("/api/teams", authMiddleware, async (req: any, res) => {
 	try {
 		const { name, role, description, icon, status, parent_id, email } =
@@ -1137,7 +1137,7 @@ app.post("/api/teams", authMiddleware, async (req: any, res) => {
 			status,
 			parent_id,
 			email,
-		}); // ⭐ DODAJ LOG
+		});
 
 		const team = await prisma.team.create({
 			data: {
@@ -1146,12 +1146,12 @@ app.post("/api/teams", authMiddleware, async (req: any, res) => {
 				description: description || null,
 				icon: icon || "Users",
 				status: status || "active",
-				parent_id: parent_id ? parseInt(parent_id) : null, // ✅ POPRAWIONE
+				parent_id: parent_id ? parseInt(parent_id) : null,
 				email: email || null,
 			},
 		});
 
-		console.log("✅ Utworzono zespół:", team); // ⭐ DODAJ LOG
+		console.log("✅ Utworzono zespół:", team);
 
 		res.status(201).json(team);
 	} catch (error) {
@@ -1159,15 +1159,15 @@ app.post("/api/teams", authMiddleware, async (req: any, res) => {
 		res.status(500).json({ error: "Nie udało się utworzyć zespołu" });
 	}
 });
-// STATYSTYKI
-// backend/src/server.ts - ZASTĄP TEN ENDPOINT:
+
+
 
 app.get("/api/dashboard/stats", authMiddleware, async (req: any, res) => {
 	try {
 		const userId = req.user?.id;
 		const userEmail = req.user?.email;
 
-		// ⭐ 1. STATYSTYKI OGÓLNE
+
 		const totalMembers = await prisma.user.count({
 			where: { is_active: true },
 		});
@@ -1176,7 +1176,7 @@ app.get("/api/dashboard/stats", authMiddleware, async (req: any, res) => {
 			where: { is_active: 1 },
 		});
 
-		// ⭐ 2. NOWE PORADNIKI (z ostatnich 7 dni)
+
 		const sevenDaysAgo = new Date();
 		sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
@@ -1187,7 +1187,7 @@ app.get("/api/dashboard/stats", authMiddleware, async (req: any, res) => {
 			},
 		});
 
-		// ⭐ 3. OGŁOSZENIA (z ostatnich 30 dni)
+
 		const thirtyDaysAgo = new Date();
 		thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
@@ -1197,11 +1197,11 @@ app.get("/api/dashboard/stats", authMiddleware, async (req: any, res) => {
 			},
 		});
 
-		// ⭐ 4. FREKWENCJA Z BAZY FREKWENCJA
+
 		let attendance = "0%";
 		if (userEmail) {
 			try {
-				// ⭐ UŻYJ BAZY FREKWENCJA ZAMIAST EWIDENCJA
+
 				const connection = await mysql.createConnection({
 					host: process.env.FREKWENCJA_DB_HOST || "57.128.253.89",
 					user: process.env.FREKWENCJA_DB_USER || "czarnecki",
@@ -1210,7 +1210,7 @@ app.get("/api/dashboard/stats", authMiddleware, async (req: any, res) => {
 					port: 3306,
 				});
 
-				// ⭐ POPRAWIONE ZAPYTANIE - używamy tabel z SM_Frekwencja
+
 				const [rows] = await connection.execute(
 					`
 					SELECT
@@ -1240,7 +1240,7 @@ app.get("/api/dashboard/stats", authMiddleware, async (req: any, res) => {
 					"❌ Błąd pobierania frekwencji z SM_Frekwencja:",
 					dbError,
 				);
-				// Fallback - pobierz z głównej bazy
+
 				try {
 					const user = await prisma.user.findUnique({
 						where: { id: parseInt(userId) },
@@ -1271,7 +1271,7 @@ app.get("/api/dashboard/stats", authMiddleware, async (req: any, res) => {
 	}
 });
 
-// POWIADOMIENIA - POBIERANIE
+
 app.get(
 	"/api/dashboard/notifications",
 	authMiddleware,
@@ -1286,9 +1286,9 @@ app.get(
 
 			const limit = parseInt(req.query.limit as string) || 20;
 
-			// ✅ WSZYSCY użytkownicy (w tym admin) widzą TYLKO swoje powiadomienia
+
 			const notifications = await prisma.notification.findMany({
-				where: { user_id: userId }, // ⭐ TYLKO DLA ZALOGOWANEGO UŻYTKOWNIKA
+				where: { user_id: userId },
 				orderBy: { created_at: "desc" },
 				take: limit,
 			});
@@ -1319,7 +1319,7 @@ app.get(
 	},
 );
 
-// POWIADOMIENIA - OZNACZ JAKO PRZECZYTANE
+
 app.put(
 	"/api/dashboard/notifications/:id/read",
 	authMiddleware,
@@ -1336,11 +1336,11 @@ app.put(
 				`📨 Oznaczanie powiadomienia ${id} jako przeczytane dla użytkownika ${userId}`,
 			);
 
-			// ⭐ SPRAWDŹ CZY POWIADOMIENIE ISTNIEJE I NALEŻY DO UŻYTKOWNIKA
+
 			const notification = await prisma.notification.findFirst({
 				where: {
 					id: id,
-					user_id: userId, // ⭐ TYLKO POWIADOMIENIA UŻYTKOWNIKA
+					user_id: userId,
 				},
 			});
 
@@ -1354,7 +1354,7 @@ app.put(
 				});
 			}
 
-			// ⭐ ZAKTUALIZUJ
+
 			const updated = await prisma.notification.update({
 				where: { id: id },
 				data: {
@@ -1383,7 +1383,7 @@ app.put(
 	},
 );
 
-// POWIADOMIENIA - OZNACZ WSZYSTKIE
+
 app.put(
 	"/api/dashboard/notifications/read-all",
 	authMiddleware,
@@ -1398,7 +1398,7 @@ app.put(
 				`📨 Oznaczanie wszystkich powiadomień jako przeczytane dla użytkownika ${userId}`,
 			);
 
-			// ⭐ TYLKO DLA ZALOGOWANEGO UŻYTKOWNIKA
+
 			const result = await prisma.notification.updateMany({
 				where: {
 					user_id: userId,
@@ -1423,12 +1423,12 @@ app.put(
 		}
 	},
 );
-// ============================================================
-// ⭐ PORADNIKI - Z OBSŁUGĄ PLIKÓW
-// ============================================================
 
-// 📥 GET - pobierz wszystkie poradniki
-// 📥 GET - pobierz wszystkie poradniki
+
+
+
+
+
 app.get("/api/tutorials", authMiddleware, async (req: any, res) => {
 	try {
 		const tutorials = await prisma.guide.findMany({
@@ -1437,7 +1437,7 @@ app.get("/api/tutorials", authMiddleware, async (req: any, res) => {
 		});
 
 		const mappedTutorials = tutorials.map((t: any) => {
-			// Bezpieczne parsowanie JSON - sprawdź czy to string
+
 			let attachments = [];
 			let functionalRoles = [];
 
@@ -1445,7 +1445,7 @@ app.get("/api/tutorials", authMiddleware, async (req: any, res) => {
 				if (t.attachments && typeof t.attachments === "string") {
 					attachments = JSON.parse(t.attachments);
 				} else if (t.attachments && typeof t.attachments === "object") {
-					attachments = t.attachments; // już jest obiektem
+					attachments = t.attachments;
 				}
 			} catch (e) {
 				console.warn(
@@ -1462,7 +1462,7 @@ app.get("/api/tutorials", authMiddleware, async (req: any, res) => {
 					t.functional_roles &&
 					typeof t.functional_roles === "object"
 				) {
-					functionalRoles = t.functional_roles; // już jest obiektem
+					functionalRoles = t.functional_roles;
 				}
 			} catch (e) {
 				console.warn(
@@ -1496,7 +1496,7 @@ app.get("/api/tutorials", authMiddleware, async (req: any, res) => {
 	}
 });
 
-// 📤 POST - utwórz poradnik z plikami
+
 app.post(
 	"/api/tutorials",
 	authMiddleware,
@@ -1520,14 +1520,14 @@ app.post(
 				return res.status(400).json({ error: "Tytuł jest wymagany" });
 			}
 
-			// Zapisz załączniki
+
 			const attachments: any[] = [];
 			const files = req.files as Express.Multer.File[];
 			if (files && files.length > 0) {
 				for (const file of files) {
 					attachments.push({
 						id: generateId(),
-						name: Buffer.from(file.originalname, "latin1").toString("utf8"), // <-- POPRAWKA
+						name: Buffer.from(file.originalname, "latin1").toString("utf8"),
 						url: `/uploads/tutorials/${file.filename}`,
 						size: `${(file.size / (1024 * 1024)).toFixed(1)} MB`,
 						mimeType: file.mimetype,
@@ -1584,28 +1584,28 @@ app.post(
 		}
 	},
 );
-// ============================================================
-// APLIKACJE (APPLICATIONS) - DODAJ TEN ENDPOINT
-// ============================================================
 
-// ============================================================
-// APLIKACJE (APPLICATIONS)
-// ============================================================
 
-// 📥 GET - pobierz wszystkie zgłoszenia na wakaty
-// 📥 GET - pobierz zgłoszenia na wakaty
+
+
+
+
+
+
+
+
 app.get("/api/applications", authMiddleware, async (req: any, res) => {
 	try {
 		const userId = req.user?.id;
 		const userRole = req.user?.role;
 
-		// ✅ ZWYKŁY UŻYTKOWNIK widzi tylko swoje zgłoszenia
+
 		let whereCondition = {};
 		if (userRole === "admin" || userRole === "coordinator") {
-			// Admin i koordynator widzą wszystkie
+
 			whereCondition = {};
 		} else {
-			// Zwykły użytkownik widzi tylko swoje
+
 			whereCondition = { user_id: userId };
 		}
 
@@ -1653,7 +1653,7 @@ app.get("/api/applications", authMiddleware, async (req: any, res) => {
 
 		console.log(`✅ Znaleziono ${applications.length} zgłoszeń`);
 
-		// Mapuj dane
+
 		const mappedApplications = applications.map((app: any) => {
 			const answers: Record<string, string> = {};
 
@@ -1695,16 +1695,16 @@ app.get("/api/applications", authMiddleware, async (req: any, res) => {
 		});
 	}
 });
-// ============================================================
-// POWIADOMIENIA EMAIL O ZGŁOSZENIU
-// ============================================================
+
+
+
 
 app.post("/api/vacancies/:id/notify", authMiddleware, async (req: any, res) => {
 	try {
 		const { id } = req.params;
 		const { applicantName, applicantEmail } = req.body;
 
-		// Pobierz wakat i osobę kontaktową
+
 		const vacancy = await prisma.vacancy.findUnique({
 			where: { id: parseInt(id) },
 			include: {
@@ -1728,7 +1728,7 @@ app.post("/api/vacancies/:id/notify", authMiddleware, async (req: any, res) => {
 			return res.json({ message: "Brak emaila kontaktowego" });
 		}
 
-		// Tutaj możesz dodać wysyłkę emaila przez nodemailer lub inny serwis
+
 		console.log(`
       📧 Powiadomienie email:
       Do: ${contactEmail}
@@ -1736,16 +1736,16 @@ app.post("/api/vacancies/:id/notify", authMiddleware, async (req: any, res) => {
       Wiadomość: ${applicantName} (${applicantEmail}) zgłosił/a się na stanowisko.
     `);
 
-		// Symulacja wysyłki
-		// await sendEmail({
-		//   to: contactEmail,
-		//   subject: `Nowe zgłoszenie na stanowisko "${vacancy.title}"`,
-		//   html: `
-		//     <h1>Nowe zgłoszenie</h1>
-		//     <p>${applicantName} zgłosił/a się na stanowisko "${vacancy.title}".</p>
-		//     <p>Email: ${applicantEmail}</p>
-		//   `,
-		// });
+
+
+
+
+
+
+
+
+
+
 
 		res.json({ message: "Powiadomienie wysłane" });
 	} catch (error) {
@@ -1753,7 +1753,7 @@ app.post("/api/vacancies/:id/notify", authMiddleware, async (req: any, res) => {
 		res.status(500).json({ error: "Nie udało się wysłać powiadomienia" });
 	}
 });
-// 📥 GET - pobierz zgłoszenia na konkretny wakat
+
 app.get(
 	"/api/vacancies/:id/applications",
 	authMiddleware,
@@ -1763,7 +1763,7 @@ app.get(
 			const userId = req.user?.id;
 			const userRole = req.user?.role;
 
-			// Sprawdź czy użytkownik ma dostęp (admin lub koordynator)
+
 			if (userRole !== "admin" && userRole !== "coordinator") {
 				return res.status(403).json({ error: "Brak uprawnień" });
 			}
@@ -1831,7 +1831,7 @@ app.get(
 	},
 );
 
-// 📝 PUT - zaktualizuj status zgłoszenia
+
 app.put(
 	"/api/applications/:id/status",
 	authMiddleware,
@@ -1841,7 +1841,7 @@ app.put(
 			const { status } = req.body;
 			const userRole = req.user?.role;
 
-			// Tylko admin i koordynator mogą zmieniać status
+
 			if (userRole !== "admin" && userRole !== "coordinator") {
 				return res.status(403).json({ error: "Brak uprawnień" });
 			}
@@ -1868,7 +1868,7 @@ app.put(
 		}
 	},
 );
-// 📝 PUT - aktualizuj poradnik z plikami
+
 app.put(
 	"/api/tutorials/:id",
 	authMiddleware,
@@ -1896,14 +1896,14 @@ app.put(
 				functionalRoles,
 			} = tutorialData;
 
-			// Zapisz nowe pliki
+
 			const newAttachments: any[] = [];
 			const files = req.files as Express.Multer.File[];
 			if (files && files.length > 0) {
 				for (const file of files) {
 					newAttachments.push({
 						id: generateId(),
-						name: Buffer.from(file.originalname, "latin1").toString("utf8"), // <-- POPRAWKA
+						name: Buffer.from(file.originalname, "latin1").toString("utf8"),
 						url: `/uploads/tutorials/${file.filename}`,
 						size: `${(file.size / (1024 * 1024)).toFixed(1)} MB`,
 						mimeType: file.mimetype,
@@ -1966,7 +1966,7 @@ app.put(
 	},
 );
 
-// 🗑️ DELETE - usuń poradnik (razem z plikami)
+
 app.delete("/api/tutorials/:id", authMiddleware, async (req: any, res) => {
 	try {
 		const id = parseInt(req.params.id);
@@ -1997,7 +1997,7 @@ app.delete("/api/tutorials/:id", authMiddleware, async (req: any, res) => {
 	}
 });
 
-// 🗑️ DELETE - usuń pojedynczy załącznik
+
 app.delete(
 	"/api/tutorials/attachments/:id",
 	authMiddleware,
@@ -2046,8 +2046,8 @@ app.delete(
 	},
 );
 
-// 📥 GET - pobierz plik
-// 📥 GET - pobierz plik
+
+
 app.get("/api/uploads/tutorials/:filename", async (req: any, res) => {
 	try {
 		const { filename } = req.params;
@@ -2057,7 +2057,7 @@ app.get("/api/uploads/tutorials/:filename", async (req: any, res) => {
 			return res.status(404).json({ error: "Nie znaleziono pliku" });
 		}
 
-		// ⭐ DODAJ POPRAWNE NAGŁÓWKI
+
 		const mimeType = getMimeType(filename);
 		res.setHeader("Content-Type", mimeType);
 		const encodedFileName = encodeURIComponent(filename);
@@ -2072,7 +2072,7 @@ app.get("/api/uploads/tutorials/:filename", async (req: any, res) => {
 	}
 });
 
-// ⭐ DODAJ FUNKCJĘ DO OKREŚLANIA TYPU MIME
+
 function getMimeType(filename: string): string {
 	const ext = path.extname(filename).toLowerCase();
 	const mimeTypes: Record<string, string> = {
@@ -2098,11 +2098,11 @@ function getMimeType(filename: string): string {
 	};
 	return mimeTypes[ext] || "application/octet-stream";
 }
-// ============================================================
-// WAKATY (VACANCIES)
-// ============================================================
 
-// 📥 GET - pobierz wszystkie wakaty
+
+
+
+
 app.get("/api/vacancies", authMiddleware, async (req: any, res) => {
 	try {
 		const vacancies = await prisma.vacancy.findMany({
@@ -2147,7 +2147,7 @@ app.get("/api/vacancies", authMiddleware, async (req: any, res) => {
 	}
 });
 
-// 📤 POST - utwórz nowy wakat
+
 app.post("/api/vacancies", authMiddleware, async (req: any, res) => {
 	try {
 		const {
@@ -2198,7 +2198,7 @@ app.post("/api/vacancies", authMiddleware, async (req: any, res) => {
 			},
 		});
 
-		// Dodaj pytania jeśli są
+
 		if (questions && questions.length > 0) {
 			await prisma.vacancyQuestion.createMany({
 				data: questions.map((q: any) => ({
@@ -2219,7 +2219,7 @@ app.post("/api/vacancies", authMiddleware, async (req: any, res) => {
 	}
 });
 
-// 📝 PUT - aktualizuj wakat
+
 app.put("/api/vacancies/:id", authMiddleware, async (req: any, res) => {
 	try {
 		const { id } = req.params;
@@ -2266,7 +2266,7 @@ app.put("/api/vacancies/:id", authMiddleware, async (req: any, res) => {
 			},
 		});
 
-		// Aktualizuj pytania (usuń stare i dodaj nowe)
+
 		if (questions) {
 			await prisma.vacancyQuestion.deleteMany({
 				where: { vacancy_id: parseInt(id) },
@@ -2290,7 +2290,7 @@ app.put("/api/vacancies/:id", authMiddleware, async (req: any, res) => {
 	}
 });
 
-// 🗑️ DELETE - usuń wakat (soft delete)
+
 app.delete("/api/vacancies/:id", authMiddleware, async (req: any, res) => {
 	try {
 		const { id } = req.params;
@@ -2307,8 +2307,8 @@ app.delete("/api/vacancies/:id", authMiddleware, async (req: any, res) => {
 	}
 });
 
-// 📤 POST - zgłoś się na wakat
-// 📤 POST - zgłoś się na wakat
+
+
 app.post("/api/vacancies/:id/apply", authMiddleware, async (req: any, res) => {
 	try {
 		const { id } = req.params;
@@ -2319,7 +2319,7 @@ app.post("/api/vacancies/:id/apply", authMiddleware, async (req: any, res) => {
 			return res.status(401).json({ error: "Brak autoryzacji" });
 		}
 
-		// Sprawdź czy wakat istnieje i jest aktywny
+
 		const vacancy = await prisma.vacancy.findUnique({
 			where: {
 				id: parseInt(id),
@@ -2331,7 +2331,7 @@ app.post("/api/vacancies/:id/apply", authMiddleware, async (req: any, res) => {
 			return res.status(404).json({ error: "Nie znaleziono wakatu" });
 		}
 
-		// Sprawdź czy już się zgłoszono
+
 		const existingApplication = await prisma.vacancyApplication.findFirst({
 			where: {
 				vacancy_id: parseInt(id),
@@ -2345,7 +2345,7 @@ app.post("/api/vacancies/:id/apply", authMiddleware, async (req: any, res) => {
 			});
 		}
 
-		// 🔥 UTWÓRZ ZGŁOSZENIE
+
 		const application = await prisma.vacancyApplication.create({
 			data: {
 				vacancy_id: parseInt(id),
@@ -2355,9 +2355,9 @@ app.post("/api/vacancies/:id/apply", authMiddleware, async (req: any, res) => {
 			},
 		});
 
-		// 🔥 DODAJ ODPOWIEDZI NA PYTANIA (jeśli są)
+
 		if (answers && Object.keys(answers).length > 0) {
-			// Pobierz pytania dla tego wakatu, żeby sprawdzić które istnieją
+
 			const questions = await prisma.vacancyQuestion.findMany({
 				where: {
 					vacancy_id: parseInt(id),
@@ -2369,7 +2369,7 @@ app.post("/api/vacancies/:id/apply", authMiddleware, async (req: any, res) => {
 
 			const questionIds = questions.map((q: { id: number }) => q.id);
 
-			// Filtruj odpowiedzi tylko dla istniejących pytań
+
 			const validAnswers = Object.entries(answers)
 				.filter(([questionId]) => questionIds.includes(parseInt(questionId)))
 				.map(([questionId, answer]) => ({
@@ -2385,7 +2385,7 @@ app.post("/api/vacancies/:id/apply", authMiddleware, async (req: any, res) => {
 			}
 		}
 
-		// 🔥 ZWROCĘ ODPOWIEDŹ
+
 		res.status(201).json({
 			id: application.id.toString(),
 			vacancyId: application.vacancy_id.toString(),
@@ -2402,7 +2402,7 @@ app.post("/api/vacancies/:id/apply", authMiddleware, async (req: any, res) => {
 		});
 	}
 });
-// 📥 GET - sprawdź czy użytkownik już zgłosił się na wakat
+
 app.get(
 	"/api/vacancies/:id/check-application",
 	authMiddleware,
@@ -2432,7 +2432,7 @@ app.get(
 		}
 	},
 );
-// POWIADOMIENIA - USUŃ
+
 app.delete(
 	"/api/dashboard/notifications/:id",
 	authMiddleware,
@@ -2461,9 +2461,9 @@ app.delete(
 	},
 );
 
-// STRUKTURA
-// STRUKTURA
-// STRUKTURA
+
+
+
 app.get("/api/structure", authMiddleware, async (req: any, res) => {
 	try {
 		console.log("📥 [STRUCTURE] Pobieranie struktury...");
@@ -2478,7 +2478,7 @@ app.get("/api/structure", authMiddleware, async (req: any, res) => {
 			},
 		});
 
-		// ✅ Pobierz wszystkich członków zespołów
+
 		const teamMembers = await prisma.teamMember.findMany({
 			select: {
 				id: true,
@@ -2507,7 +2507,7 @@ app.get("/api/structure", authMiddleware, async (req: any, res) => {
 			},
 		});
 
-		// ⭐ LISTA NAZW FILARÓW (dla których pokazujemy TYLKO liderów)
+
 		const FILAR_NAMES = [
 			"Filar Projektowy",
 			"Filar Konferencyjny",
@@ -2515,7 +2515,7 @@ app.get("/api/structure", authMiddleware, async (req: any, res) => {
 			"Filar Symulacyjny",
 		];
 
-		// ⭐ LISTA NAZW ZESPOŁÓW, KTÓRE POKAZUJEMY WSZYSTKICH (niezależnie od is_leader)
+
 		const ALL_MEMBERS_TEAMS = [
 			"Zarząd",
 			"Siła Młodych",
@@ -2524,7 +2524,7 @@ app.get("/api/structure", authMiddleware, async (req: any, res) => {
 			"Social Media",
 		];
 
-		// Grupowanie osób po team_id
+
 		const peopleByTeam: Record<number, any[]> = {};
 
 		teamMembers.forEach((tm: any) => {
@@ -2534,21 +2534,21 @@ app.get("/api/structure", authMiddleware, async (req: any, res) => {
 
 			const teamName = tm.team?.name || "";
 
-			// ⭐ LOGIKA FILTROWANIA:
-			// 1. Jeśli zespół jest w ALL_MEMBERS_TEAMS → pokaż WSZYSTKICH
-			// 2. Jeśli zespół jest w FILAR_NAMES → pokaż TYLKO liderów (is_leader = true)
-			// 3. Dla reszty → pokaż WSZYSTKICH (domyślnie)
+
+
+
+
 
 			let shouldShow = true;
 
 			if (ALL_MEMBERS_TEAMS.includes(teamName)) {
-				// Wszyscy członkowie (niezależnie od is_leader)
+
 				shouldShow = true;
 			} else if (FILAR_NAMES.includes(teamName)) {
-				// Tylko liderzy (is_leader = 1)
+
 				shouldShow = tm.is_leader === true;
 			}
-			// Dla reszty - wszyscy (domyślnie)
+
 
 			if (shouldShow) {
 				peopleByTeam[tm.team_id].push({
@@ -2564,7 +2564,7 @@ app.get("/api/structure", authMiddleware, async (req: any, res) => {
 			}
 		});
 
-		// Budowanie mapy zespołów
+
 		const teamMap: Record<number, any> = {};
 		teams.forEach((team: any) => {
 			const sortedPeople = (peopleByTeam[team.id] || []).sort(
@@ -2589,7 +2589,7 @@ app.get("/api/structure", authMiddleware, async (req: any, res) => {
 			};
 		});
 
-		// Budowanie drzewa
+
 		const rootTeams: any[] = [];
 		teams.forEach((team: any) => {
 			const node = teamMap[team.id];
@@ -2625,13 +2625,13 @@ app.get("/api/structure", authMiddleware, async (req: any, res) => {
 	}
 });
 app.use("/api", memberRoutes);
-// ============================================================
-// PROFIL UŻYTKOWNIKA
-// ============================================================
 
-// 📥 GET - pobierz profil użytkownika (swój lub innego)
-// 📥 GET - pobierz profil użytkownika (swój lub innego)
-// 📥 GET - pobierz profil użytkownika (swój lub innego)
+
+
+
+
+
+
 app.get("/api/profile", authMiddleware, async (req: any, res) => {
 	try {
 		const userId = req.user?.id;
@@ -2658,18 +2658,18 @@ app.get("/api/profile", authMiddleware, async (req: any, res) => {
 
 		console.log(`✅ Profil pobrany dla: ${user.first_name} ${user.last_name}`);
 
-		// Mapowanie danych
+
 		const teams = user.team_members
 			.map((tm: any) => tm.team?.name)
 			.filter(Boolean);
 		const onboarding = user.onboarding_data?.[0] || {};
 
-		// ✅ FILARY - wszystkie
+
 		const pillars = teams.filter((t: string) => t.includes("Filar"));
 		const pillar = pillars.length > 0 ? pillars[0] : null;
 
-		console.log("🏷️ TEAMS:", teams); // ✅ DODAJ LOG
-		console.log("🏷️ PILLARS:", pillars); // ✅ DODAJ LOG
+		console.log("🏷️ TEAMS:", teams);
+		console.log("🏷️ PILLARS:", pillars);
 
 		const profile = {
 			id: user.id.toString(),
@@ -2678,8 +2678,8 @@ app.get("/api/profile", authMiddleware, async (req: any, res) => {
 			role: mapRoleId(user.role_id),
 			function: user.functional_role || "Członek",
 			team: teams.length > 0 ? teams.join(", ") : user.team || "Brak zespołu",
-			pillar: pillar, // pierwszy filar
-			pillars: pillars, // ✅ WSZYSTKIE FILARY - TO MUSI BYĆ!
+			pillar: pillar,
+			pillars: pillars,
 			province: user.province || "Brak danych",
 			status: user.status || "active",
 			email: user.email || "",
@@ -2719,11 +2719,11 @@ app.get("/api/profile", authMiddleware, async (req: any, res) => {
 		res.status(500).json({ error: "Nie udało się pobrać profilu" });
 	}
 });
-// ============================================================
-// URLOPY (LEAVE)
-// ============================================================
 
-// 📥 GET - pobierz wszystkie urlopy
+
+
+
+
 app.get("/api/leaves", authMiddleware, async (req: any, res) => {
 	try {
 		const userId = req.user?.id;
@@ -2770,12 +2770,12 @@ app.get("/api/leaves", authMiddleware, async (req: any, res) => {
 					? `${user.first_name || ""} ${user.last_name || ""}`.trim()
 					: "Nieznany";
 
-				// ✅ ZARZĄD widzi WSZYSTKIE wnioski
-				// ✅ ADMIN widzi WSZYSTKIE wnioski (tylko podgląd)
-				// ✅ KOORDYNATOR widzi tylko swój zespół
+
+
+
 				let canView = false;
 				if (userRole === "board" || userRole === "admin") {
-					canView = true; // Zarząd i Admin widzą wszystko
+					canView = true;
 				} else if (userRole === "coordinator") {
 					canView =
 						user?.team === userTeam ||
@@ -2792,7 +2792,7 @@ app.get("/api/leaves", authMiddleware, async (req: any, res) => {
 					[];
 
 				const userTeamName =
-					teams.length > 0 ? teams.join(", ") : user?.team || "Brak zespołu"; // ← zmieniona nazwa
+					teams.length > 0 ? teams.join(", ") : user?.team || "Brak zespołu";
 
 				return {
 					id: leave.id.toString(),
@@ -2833,9 +2833,9 @@ app.get("/api/leaves", authMiddleware, async (req: any, res) => {
 	}
 });
 
-// 📤 POST - utwórz nowy wniosek urlopowy
-// 📤 POST - utwórz nowy wniosek urlopowy
-// 📤 POST - utwórz nowy wniosek urlopowy
+
+
+
 
 app.post("/api/leaves", authMiddleware, async (req: any, res) => {
 	try {
@@ -2861,7 +2861,7 @@ app.post("/api/leaves", authMiddleware, async (req: any, res) => {
 				.json({ error: "Data rozpoczęcia i zakończenia są wymagane" });
 		}
 
-		// 1. Pobierz dane użytkownika
+
 		const user = await prisma.user.findUnique({
 			where: { id: userId },
 			select: {
@@ -2869,7 +2869,7 @@ app.post("/api/leaves", authMiddleware, async (req: any, res) => {
 				last_name: true,
 				team: true,
 				team_members: {
-					// ✅ DODAJ
+
 					include: {
 						team: true,
 					},
@@ -2882,7 +2882,7 @@ app.post("/api/leaves", authMiddleware, async (req: any, res) => {
 		const userTeam =
 			teams.length > 0 ? teams.join(", ") : user?.team || "Brak zespołu";
 
-		// 2. Utwórz wniosek urlopowy
+
 		const leave = await prisma.leave.create({
 			data: {
 				user_id: userId,
@@ -2898,28 +2898,28 @@ app.post("/api/leaves", authMiddleware, async (req: any, res) => {
 			},
 		});
 
-		// ✅✅✅ 3. UTWÓRZ POWIADOMIENIE ✅✅✅
+
 		const userName = user
 			? `${user.first_name || ""} ${user.last_name || ""}`.trim()
 			: "Nieznany";
 
-		// 1. Znajdź admina (user_id = 63)
+
 		const admin = await prisma.user.findUnique({
-			where: { id: 63 }, // admin_system
+			where: { id: 63 },
 			select: { id: true },
 		});
 
-		// 2. Znajdź zarząd (user_id = 1 - Maciej, ale on ma teraz role_id = 4)
-		// LUB znajdź pierwszego użytkownika z role_id = 2
+
+
 		const boardMember = await prisma.user.findFirst({
 			where: {
-				role_id: 2, // board (zarząd)
+				role_id: 2,
 			},
 			select: { id: true },
 			orderBy: { id: "asc" },
 		});
 
-		// 4. Utwórz powiadomienie dla ZARZĄDU z target: "board"
+
 		if (boardMember) {
 			const existing = await prisma.notification.findFirst({
 				where: {
@@ -2940,7 +2940,7 @@ app.post("/api/leaves", authMiddleware, async (req: any, res) => {
 						type: "info",
 						read: false,
 						link: `/leave`,
-						target: "board", // ✅ TARGET: board
+						target: "board",
 						created_at: new Date(),
 					},
 				});
@@ -2949,7 +2949,7 @@ app.post("/api/leaves", authMiddleware, async (req: any, res) => {
 
 		console.log("✅ UTOWORZONO URLOP:", leave);
 		console.log(`📨 Wysłano powiadomienia do Admina i Zarządu`);
-		// 5. Zwróć odpowiedź
+
 		res.status(201).json({
 			id: leave.id.toString(),
 			userId: leave.user_id.toString(),
@@ -2976,8 +2976,8 @@ app.post("/api/leaves", authMiddleware, async (req: any, res) => {
 		res.status(500).json({ error: "Nie udało się utworzyć wniosku" });
 	}
 });
-// 📝 PUT - aktualizuj wniosek urlopowy
-// 📝 PUT - aktualizuj wniosek urlopowy
+
+
 app.put("/api/leaves/:id", authMiddleware, async (req: any, res) => {
 	try {
 		const userId = req.user?.id;
@@ -2995,7 +2995,7 @@ app.put("/api/leaves/:id", authMiddleware, async (req: any, res) => {
 			return res.status(404).json({ error: "Nie znaleziono wniosku" });
 		}
 
-		// ✅✅✅ ADMIN + ZARZĄD MOŻE ZATWIERDZAĆ/ODRZUCAĆ ✅✅✅
+
 		const canApprove =
 			userRole === "admin" || userRole === "board" || userRole === "zarząd";
 
@@ -3006,7 +3006,7 @@ app.put("/api/leaves/:id", authMiddleware, async (req: any, res) => {
 			});
 		}
 
-		// ✅ Pobierz dane aktualnego użytkownika
+
 		const currentUser = await prisma.user.findUnique({
 			where: { id: userId },
 			select: {
@@ -3027,7 +3027,7 @@ app.put("/api/leaves/:id", authMiddleware, async (req: any, res) => {
 			status,
 		} = req.body;
 
-		// ✅ ADMIN + ZARZĄD MOŻE ZMIENIAĆ STATUS
+
 		if (status && (status === "approved" || status === "rejected")) {
 			if (!canApprove) {
 				return res.status(403).json({
@@ -3054,7 +3054,7 @@ app.put("/api/leaves/:id", authMiddleware, async (req: any, res) => {
 				status: status || existingLeave.status,
 				...(status === "approved" || status === "rejected"
 					? {
-							// ✅ UŻYJ currentUser zamiast req.user
+
 							approved_by:
 								`${currentUser?.first_name || ""} ${currentUser?.last_name || ""}`.trim() ||
 								"Nieznany",
@@ -3064,7 +3064,7 @@ app.put("/api/leaves/:id", authMiddleware, async (req: any, res) => {
 			},
 		});
 
-		// Powiadomienie o zmianie statusu
+
 		if (status && (status === "approved" || status === "rejected")) {
 			const statusText = status === "approved" ? "zaakceptowany" : "odrzucony";
 			const userName =
@@ -3095,7 +3095,7 @@ app.put("/api/leaves/:id", authMiddleware, async (req: any, res) => {
 	}
 });
 
-// 🗑️ DELETE - usuń wniosek urlopowy
+
 app.delete("/api/leaves/:id", authMiddleware, async (req: any, res) => {
 	console.log(`🔍 [DELETE LEAVE] START - ID: ${req.params.id}`);
 	try {
@@ -3119,21 +3119,21 @@ app.delete("/api/leaves/:id", authMiddleware, async (req: any, res) => {
 			return res.status(404).json({ error: "Nie znaleziono wniosku" });
 		}
 
-		// Sprawdź uprawnienia
+
 		if (userRole !== "admin" && existingLeave.user_id !== userId) {
 			console.log(`🔍 [DELETE LEAVE] Brak uprawnień`);
 			return res.status(403).json({ error: "Brak uprawnień" });
 		}
 
-		// Usuń wniosek
+
 		await prisma.leave.delete({
 			where: { id: leaveId },
 		});
 
 		console.log(`🔍 [DELETE LEAVE] Usunięto z bazy`);
 
-		// ✅ Middleware automatycznie zaloguje DELETE
-		// Ponieważ używamy res.json() z sukcesem
+
+
 		res.status(200).json({
 			success: true,
 			message: "Wniosek urlopowy usunięty",
@@ -3142,8 +3142,8 @@ app.delete("/api/leaves/:id", authMiddleware, async (req: any, res) => {
 	} catch (error) {
 		console.error(`🔍 [DELETE LEAVE] BŁĄD:`, error);
 
-		// ❌ W przypadku błędu - middleware też zaloguje jako error
-		// ponieważ status będzie >= 400
+
+
 		res.status(500).json({
 			error: "Nie udało się usunąć wniosku",
 			details: error instanceof Error ? error.message : "Unknown error",
@@ -3151,8 +3151,8 @@ app.delete("/api/leaves/:id", authMiddleware, async (req: any, res) => {
 	}
 });
 
-// 📥 GET - pobierz status urlopu dla danego użytkownika (czy jest na urlopie)
-// 1. GET - sprawdź swój status urlopu (bez parametru)
+
+
 app.get("/api/leaves/status", authMiddleware, async (req: any, res) => {
 	try {
 		const userId = req.user?.id;
@@ -3180,13 +3180,13 @@ app.get("/api/leaves/status", authMiddleware, async (req: any, res) => {
 	}
 });
 
-// 2. GET - sprawdź status urlopu innego użytkownika (z parametrem)
+
 app.get("/api/leaves/status/:userId", authMiddleware, async (req: any, res) => {
 	try {
 		const userId = parseInt(req.params.userId);
 		if (!userId) return res.status(400).json({ error: "Brak ID użytkownika" });
 
-		// Sprawdź czy użytkownik ma prawo widzieć status innego użytkownika
+
 		const currentUserRole = req.user?.role;
 		if (currentUserRole !== "admin" && currentUserRole !== "coordinator") {
 			return res.status(403).json({ error: "Brak uprawnień" });
@@ -3213,7 +3213,7 @@ app.get("/api/leaves/status/:userId", authMiddleware, async (req: any, res) => {
 		res.status(500).json({ error: "Nie udało się sprawdzić statusu urlopu" });
 	}
 });
-// 📝 PUT - aktualizuj profil
+
 app.put("/api/profile", authMiddleware, async (req: any, res) => {
 	try {
 		const userId = req.user?.id;
@@ -3259,7 +3259,7 @@ app.put("/api/profile", authMiddleware, async (req: any, res) => {
 	}
 });
 
-// 📤 POST - dodaj umiejętność
+
 app.post("/api/profile/skills", authMiddleware, async (req: any, res) => {
 	try {
 		const userId = req.user?.id;
@@ -3284,7 +3284,7 @@ app.post("/api/profile/skills", authMiddleware, async (req: any, res) => {
 	}
 });
 
-// 🗑️ DELETE - usuń umiejętność
+
 app.delete(
 	"/api/profile/skills/:skill",
 	authMiddleware,
@@ -3312,9 +3312,9 @@ app.delete(
 		}
 	},
 );
-// ============================================================
-// ⭐ OBSŁUGA BŁĘDÓW MULTER
-// ============================================================
+
+
+
 app.use(
 	(
 		err: any,
@@ -3325,7 +3325,7 @@ app.use(
 		console.error("❌ Błąd:", err);
 
 		if (err instanceof multer.MulterError) {
-			// Użyj err.message zamiast err.code
+
 			if (err.message.includes("File too large")) {
 				return res
 					.status(400)
@@ -3349,11 +3349,11 @@ app.use(
 		res.status(500).json({ error: err.message || "Wewnętrzny błąd serwera" });
 	},
 );
-// ============================================================
-// SOCIAL MEDIA - API
-// ============================================================
 
-// ---------------------- MEMBERS ----------------------
+
+
+
+
 app.get("/api/social/members", authMiddleware, async (req: any, res) => {
 	try {
 		const members = await prisma.socialMediaMember.findMany({
@@ -3368,7 +3368,7 @@ app.get("/api/social/members", authMiddleware, async (req: any, res) => {
 						province: true,
 						team: true,
 						functional_role: true,
-						status: true, // ⭐ DODAJ STATUS Z TABELI users
+						status: true,
 					},
 				},
 			},
@@ -3385,8 +3385,8 @@ app.get("/api/social/members", authMiddleware, async (req: any, res) => {
 			province: m.user.province || "",
 			team: m.user.team || "",
 			joinDate: m.created_at.toISOString().split("T")[0],
-			status: m.user.status, // ⭐ STATUS Z TABELI users (active, trial, mentor, vacation)
-			// ❌ USUŃ active: m.is_active - to jest niepotrzebne
+			status: m.user.status,
+
 		}));
 
 		res.json(formattedMembers);
@@ -3395,9 +3395,9 @@ app.get("/api/social/members", authMiddleware, async (req: any, res) => {
 		res.status(500).json({ error: "Nie udało się pobrać członków" });
 	}
 });
-// W pliku backend (np. socialMediaRoutes.ts lub server.ts)
 
-// GET - pobierz wszystkich twórców
+
+
 app.get("/api/social/creators", authMiddleware, async (req: any, res) => {
 	try {
 		const creators = await prisma.socialMediaCreator.findMany({
@@ -3427,7 +3427,7 @@ app.get("/api/social/creators", authMiddleware, async (req: any, res) => {
 			team: c.user.team || "",
 			availability: c.availability || "",
 			experience: c.experience || "none",
-			topics: c.topics ? JSON.parse(c.topics) : [], // ⭐ TO JEST KLUCZOWE!
+			topics: c.topics ? JSON.parse(c.topics) : [],
 			active: c.is_active,
 		}));
 
@@ -3441,12 +3441,12 @@ app.get("/api/social/creators", authMiddleware, async (req: any, res) => {
 	}
 });
 
-// POST - dodaj nowego twórcę
+
 app.post("/api/social/creators", authMiddleware, async (req: any, res) => {
 	try {
 		const { user_id, availability, experience, topics } = req.body;
 
-		// Sprawdź czy użytkownik istnieje
+
 		const user = await prisma.user.findUnique({
 			where: { id: parseInt(user_id) },
 		});
@@ -3455,7 +3455,7 @@ app.post("/api/social/creators", authMiddleware, async (req: any, res) => {
 			return res.status(404).json({ error: "Użytkownik nie istnieje" });
 		}
 
-		// Sprawdź czy już jest twórcą
+
 		const existingCreator = await prisma.socialMediaCreator.findUnique({
 			where: { user_id: parseInt(user_id) },
 		});
@@ -3464,15 +3464,15 @@ app.post("/api/social/creators", authMiddleware, async (req: any, res) => {
 			return res.status(400).json({ error: "Ten użytkownik już jest twórcą" });
 		}
 
-		// Utwórz nowego twórcę
+
 		const creator = await prisma.socialMediaCreator.create({
 			data: {
 				user_id: parseInt(user_id),
 				availability: availability,
 				experience: experience || "none",
-				topics: JSON.stringify(topics || []), // ⭐ ZAMIEŃ NA JSON STRING
-				is_active: true, // ⭐ DODAJ - model tego wymaga
-				// ❌ USUŃ created_at i updated_at - Prisma ustawi je automatycznie
+				topics: JSON.stringify(topics || []),
+				is_active: true,
+
 			},
 			include: {
 				user: {
@@ -3511,7 +3511,7 @@ app.post("/api/social/creators", authMiddleware, async (req: any, res) => {
 	}
 });
 
-// ---------------------- PUBLICATIONS ----------------------
+
 app.get("/api/social/publications", authMiddleware, async (req: any, res) => {
 	try {
 		const publications = await prisma.publication.findMany({
@@ -3550,11 +3550,11 @@ app.get("/api/social/publications", authMiddleware, async (req: any, res) => {
 	}
 });
 
-// ---------------------- MATERIALS ----------------------
+
 app.get("/api/social/materials", authMiddleware, async (req: any, res) => {
 	try {
 		const materials = await prisma.material.findMany({
-			// ⭐ UŻYJ "material" z małej
+
 			include: {
 				responsible: {
 					select: {
@@ -3589,7 +3589,7 @@ app.get("/api/social/materials", authMiddleware, async (req: any, res) => {
 	}
 });
 
-// ---------------------- TASKS ----------------------
+
 app.get("/api/social/tasks", authMiddleware, async (req: any, res) => {
 	try {
 		const tasks = await prisma.socialTask.findMany({
@@ -3626,7 +3626,7 @@ app.get("/api/social/tasks", authMiddleware, async (req: any, res) => {
 	}
 });
 
-// ---------------------- CONTACTS ----------------------
+
 app.get("/api/social/contacts", authMiddleware, async (req: any, res) => {
 	try {
 		const contacts = await prisma.mediaContact.findMany({
@@ -3664,12 +3664,12 @@ app.get("/api/social/contacts", authMiddleware, async (req: any, res) => {
 	}
 });
 
-// ============================================================
-// SOCIAL MEDIA - CRUD OPERATIONS
-// ============================================================
 
-// ---------------------- MEMBERS ----------------------
-// POST - Dodaj członka
+
+
+
+
+
 app.post("/api/social/members", authMiddleware, async (req: any, res) => {
 	try {
 		const { user_id, role } = req.body;
@@ -3678,7 +3678,7 @@ app.post("/api/social/members", authMiddleware, async (req: any, res) => {
 			return res.status(400).json({ error: "user_id i role są wymagane" });
 		}
 
-		// Sprawdź czy użytkownik istnieje
+
 		const user = await prisma.user.findUnique({
 			where: { id: parseInt(user_id) },
 		});
@@ -3687,7 +3687,7 @@ app.post("/api/social/members", authMiddleware, async (req: any, res) => {
 			return res.status(404).json({ error: "Użytkownik nie istnieje" });
 		}
 
-		// Sprawdź czy już jest członkiem
+
 		const existing = await prisma.socialMediaMember.findUnique({
 			where: { user_id: parseInt(user_id) },
 		});
@@ -3740,8 +3740,8 @@ app.post("/api/social/members", authMiddleware, async (req: any, res) => {
 	}
 });
 
-// ---------------------- PUBLICATIONS ----------------------
-// POST - Dodaj publikację
+
+
 app.post("/api/social/publications", authMiddleware, async (req: any, res) => {
 	try {
 		const {
@@ -3802,7 +3802,7 @@ app.post("/api/social/publications", authMiddleware, async (req: any, res) => {
 	}
 });
 
-// PUT - Aktualizuj publikację
+
 app.put(
 	"/api/social/publications/:id",
 	authMiddleware,
@@ -3863,7 +3863,7 @@ app.put(
 	},
 );
 
-// DELETE - Usuń publikację
+
 app.delete(
 	"/api/social/publications/:id",
 	authMiddleware,
@@ -3880,15 +3880,15 @@ app.delete(
 		}
 	},
 );
-// backend/src/server.ts - DODAJ TEN ENDPOINT
 
-// ============================================================
-// ONBOARDING - ZAPIS DANYCH
-// ============================================================
 
-// ============================================================
-// ONBOARDING - ZAPIS DANYCH
-// ============================================================
+
+
+
+
+
+
+
 
 app.post("/api/onboarding/save", authMiddleware, async (req: any, res) => {
 	try {
@@ -3927,7 +3927,7 @@ app.post("/api/onboarding/save", authMiddleware, async (req: any, res) => {
 			Array.isArray(pillarIds),
 		);
 
-		// ⭐ SPRAWDŹ CZY JUŻ ISTNIEJE ⭐
+
 		const existing = await prisma.onboarding_data.findFirst({
 			where: { user_id: userId },
 			orderBy: { created_at: "desc" },
@@ -3935,7 +3935,7 @@ app.post("/api/onboarding/save", authMiddleware, async (req: any, res) => {
 
 		let onboarding;
 
-		// ⭐ PRZYGOTUJ DANE ⭐
+
 		const data = {
 			first_name: firstName || "",
 			last_name: lastName || "",
@@ -3955,7 +3955,7 @@ app.post("/api/onboarding/save", authMiddleware, async (req: any, res) => {
 		};
 
 		if (existing) {
-			// ⭐ AKTUALIZUJ ⭐
+
 			onboarding = await prisma.onboarding_data.update({
 				where: { id: existing.id },
 				data: {
@@ -3967,7 +3967,7 @@ app.post("/api/onboarding/save", authMiddleware, async (req: any, res) => {
 				`✅ [ONBOARDING] Zaktualizowano onboarding dla użytkownika ${userId}`,
 			);
 		} else {
-			// ⭐ UTWÓRZ NOWY ⭐
+
 			onboarding = await prisma.onboarding_data.create({
 				data: {
 					user_id: userId,
@@ -3980,7 +3980,7 @@ app.post("/api/onboarding/save", authMiddleware, async (req: any, res) => {
 			);
 		}
 
-		// ⭐ ZAKTUALIZUJ RÓWNIEŻ DANE UŻYTKOWNIKA ⭐
+
 		await prisma.user.update({
 			where: { id: userId },
 			data: {
@@ -3996,14 +3996,14 @@ app.post("/api/onboarding/save", authMiddleware, async (req: any, res) => {
 
 		console.log(`✅ [ONBOARDING] Zaktualizowano dane użytkownika ${userId}`);
 
-		// ⭐⭐⭐ ZAPIS DO TEAM_MEMBERS ⭐⭐⭐
+
 		if (pillarIds && Array.isArray(pillarIds) && pillarIds.length > 0) {
 			console.log(
 				`📋 [ONBOARDING] Dodawanie użytkownika ${userId} do filarów:`,
 				pillarIds,
 			);
 
-			// SPRAWDŹ CZY TEAM ID ISTNIEJĄ
+
 			const existingTeams = await prisma.team.findMany({
 				where: {
 					id: { in: pillarIds },
@@ -4013,14 +4013,14 @@ app.post("/api/onboarding/save", authMiddleware, async (req: any, res) => {
 			const existingTeamIds = existingTeams.map((t: any) => t.id);
 			console.log("🔍 [ONBOARDING] Istniejące team ID:", existingTeamIds);
 
-			// FILTRUJ TYLKO ISTNIEJĄCE
+
 			const validPillarIds = pillarIds.filter((id: number) =>
 				existingTeamIds.includes(id),
 			);
 			console.log("🔍 [ONBOARDING] Valid pillarIds:", validPillarIds);
 
 			if (validPillarIds.length > 0) {
-				// Pobierz istniejące członkostwa użytkownika
+
 				const existingMemberships = await prisma.teamMember.findMany({
 					where: {
 						user_id: userId,
@@ -4037,7 +4037,7 @@ app.post("/api/onboarding/save", authMiddleware, async (req: any, res) => {
 					existingMembershipIds,
 				);
 
-				// Dodaj tylko te, których jeszcze nie ma
+
 				const toAdd = validPillarIds.filter(
 					(id: number) => !existingMembershipIds.includes(id),
 				);
@@ -4072,21 +4072,21 @@ app.post("/api/onboarding/save", authMiddleware, async (req: any, res) => {
 			);
 		}
 
-		// ============================================================
-		// ✅✅✅ UTWÓRZ POWIADOMIENIE POWITALNE DLA UŻYTKOWNIKA ✅✅✅
-		// ============================================================
+
+
+
 		try {
 			const fullName = `${firstName || ""} ${lastName || ""}`.trim();
 
 			console.log(`📨 [ONBOARDING] Tworzenie powiadomienia dla ${fullName}...`);
 
-			// Sprawdź czy powiadomienie już istnieje (unikamy duplikatów)
+
 			const existingNotification = await prisma.notification.findFirst({
 				where: {
 					user_id: userId,
 					title: "🎉 Witaj w panelu członka Siły Młodych!",
 					created_at: {
-						gte: new Date(Date.now() - 60000), // ostatnia minuta
+						gte: new Date(Date.now() - 60000),
 					},
 				},
 			});
@@ -4096,7 +4096,7 @@ app.post("/api/onboarding/save", authMiddleware, async (req: any, res) => {
 					`⏭️ [ONBOARDING] Powiadomienie już istnieje dla użytkownika ${userId}`,
 				);
 			} else {
-				// Utwórz powiadomienie
+
 				const notification = await prisma.notification.create({
 					data: {
 						user_id: userId,
@@ -4115,14 +4115,14 @@ app.post("/api/onboarding/save", authMiddleware, async (req: any, res) => {
 				);
 			}
 		} catch (notificationError) {
-			// ⚠️ NIE BLOKUJ PROCESU - powiadomienie to tylko dodatek
+
 			console.error(
 				"⚠️ [ONBOARDING] Błąd tworzenia powiadomienia:",
 				notificationError,
 			);
-			// Kontynuuj - nie przerywamy zapisu onboardingu
+
 		}
-		// ============================================================
+
 
 		res.status(200).json({
 			success: true,
@@ -4141,7 +4141,7 @@ app.post("/api/onboarding/save", authMiddleware, async (req: any, res) => {
 		});
 	}
 });
-// backend/src/server.ts
+
 app.get("/api/social/members/check", authMiddleware, async (req: any, res) => {
 	try {
 		const userId = req.user?.id;
@@ -4160,8 +4160,8 @@ app.get("/api/social/members/check", authMiddleware, async (req: any, res) => {
 	}
 });
 
-// ---------------------- MATERIALS ----------------------
-// POST - Dodaj materiał
+
+
 app.post("/api/social/materials", authMiddleware, async (req: any, res) => {
 	try {
 		const { name, description, responsible_id, deadline, priority, stage } =
@@ -4213,7 +4213,7 @@ app.post("/api/social/materials", authMiddleware, async (req: any, res) => {
 	}
 });
 
-// PUT - Aktualizuj materiał
+
 app.put("/api/social/materials/:id", authMiddleware, async (req: any, res) => {
 	try {
 		const { id } = req.params;
@@ -4267,7 +4267,7 @@ app.put("/api/social/materials/:id", authMiddleware, async (req: any, res) => {
 	}
 });
 
-// DELETE - Usuń materiał
+
 app.delete(
 	"/api/social/materials/:id",
 	authMiddleware,
@@ -4285,8 +4285,8 @@ app.delete(
 	},
 );
 
-// ---------------------- TASKS ----------------------
-// POST - Dodaj zadanie
+
+
 app.post("/api/social/tasks", authMiddleware, async (req: any, res) => {
 	try {
 		const { name, description, responsible_id, deadline, status } = req.body;
@@ -4335,7 +4335,7 @@ app.post("/api/social/tasks", authMiddleware, async (req: any, res) => {
 	}
 });
 
-// PUT - Aktualizuj zadanie
+
 app.put("/api/social/tasks/:id", authMiddleware, async (req: any, res) => {
 	try {
 		const { id } = req.params;
@@ -4380,7 +4380,7 @@ app.put("/api/social/tasks/:id", authMiddleware, async (req: any, res) => {
 	}
 });
 
-// DELETE - Usuń zadanie
+
 app.delete("/api/social/tasks/:id", authMiddleware, async (req: any, res) => {
 	try {
 		const { id } = req.params;
@@ -4394,8 +4394,8 @@ app.delete("/api/social/tasks/:id", authMiddleware, async (req: any, res) => {
 	}
 });
 
-// ---------------------- CONTACTS ----------------------
-// POST - Dodaj kontakt
+
+
 app.post("/api/social/contacts", authMiddleware, async (req: any, res) => {
 	try {
 		const { name, channel, responsible_id, email, phone, notes } = req.body;
@@ -4446,7 +4446,7 @@ app.post("/api/social/contacts", authMiddleware, async (req: any, res) => {
 	}
 });
 
-// PUT - Aktualizuj kontakt
+
 app.put("/api/social/contacts/:id", authMiddleware, async (req: any, res) => {
 	try {
 		const { id } = req.params;
@@ -4493,7 +4493,7 @@ app.put("/api/social/contacts/:id", authMiddleware, async (req: any, res) => {
 	}
 });
 
-// DELETE - Usuń kontakt
+
 app.delete(
 	"/api/social/contacts/:id",
 	authMiddleware,
@@ -4511,9 +4511,9 @@ app.delete(
 	},
 );
 
-// ============================================================
-// FUNKCJA POMOCNICZA - domyślne uprawnienia
-// ============================================================
+
+
+
 
 function getDefaultPermissions(role: string): string[] {
 	const defaults: Record<string, string[]> = {
@@ -4594,11 +4594,11 @@ function getDefaultPermissions(role: string): string[] {
 	return defaults[role] || [];
 }
 
-// ============================================================
-// ADMIN - ZARZĄDZANIE UPRAWNIENIAMI (z bazą danych)
-// ============================================================
 
-// 📥 GET - pobierz uprawnienia dla konkretnej roli
+
+
+
+
 app.get(
 	"/api/admin/permissions/:role",
 	authMiddleware,
@@ -4606,7 +4606,7 @@ app.get(
 		try {
 			const { role } = req.params;
 
-			// Pobierz rolę z bazy
+
 			const roleData = await prisma.roles.findFirst({
 				where: {
 					name: role,
@@ -4619,7 +4619,7 @@ app.get(
 			});
 
 			if (!roleData) {
-				// Jeśli rola nie istnieje w bazie, użyj domyślnych
+
 				const defaultPermissions = getDefaultPermissions(role);
 				return res.json({
 					role,
@@ -4628,7 +4628,7 @@ app.get(
 				});
 			}
 
-			// Parsuj permissions z JSON
+
 			let permissions: string[] = [];
 			try {
 				permissions =
@@ -4646,7 +4646,7 @@ app.get(
 			});
 		} catch (error) {
 			console.error("❌ Błąd pobierania uprawnień:", error);
-			// Fallback do domyślnych
+
 			const defaultPermissions = getDefaultPermissions(req.params.role);
 			res.json({
 				role: req.params.role,
@@ -4657,12 +4657,12 @@ app.get(
 	},
 );
 
-// 📥 GET - pobierz wszystkie role z uprawnieniami (dla admina)
+
 app.get("/api/admin/roles", authMiddleware, async (req: any, res) => {
 	try {
 		const userRole = req.user?.role;
 
-		// Tylko admin może pobierać wszystkie role
+
 		if (userRole !== "admin") {
 			return res.status(403).json({ error: "Brak uprawnień" });
 		}
@@ -4679,7 +4679,7 @@ app.get("/api/admin/roles", authMiddleware, async (req: any, res) => {
 			},
 		});
 
-		// Przetwórz dane
+
 		const formattedRoles = roles.map((r: any) => {
 			let permissions: string[] = [];
 			try {
@@ -4705,7 +4705,7 @@ app.get("/api/admin/roles", authMiddleware, async (req: any, res) => {
 	}
 });
 
-// 📝 PUT - zaktualizuj uprawnienia roli
+
 app.put(
 	"/api/admin/roles/:id/permissions",
 	authMiddleware,
@@ -4715,12 +4715,12 @@ app.put(
 			const roleId = parseInt(req.params.id);
 			const { permissions } = req.body;
 
-			// Tylko admin może zarządzać uprawnieniami
+
 			if (userRole !== "admin") {
 				return res.status(403).json({ error: "Brak uprawnień" });
 			}
 
-			// Sprawdź czy rola istnieje
+
 			const existing = await prisma.roles.findUnique({
 				where: { id: roleId },
 			});
@@ -4729,7 +4729,7 @@ app.put(
 				return res.status(404).json({ error: "Rola nie istnieje" });
 			}
 
-			// Zaktualizuj uprawnienia
+
 			const updated = await prisma.roles.update({
 				where: { id: roleId },
 				data: {
@@ -4744,7 +4744,7 @@ app.put(
 				},
 			});
 
-			// Parsuj permissions z JSON
+
 			let parsedPermissions: string[] = [];
 			try {
 				parsedPermissions =
@@ -4772,7 +4772,7 @@ app.put(
 	},
 );
 
-// 📤 POST - utwórz nową rolę (dla admina)
+
 app.post("/api/admin/roles", authMiddleware, async (req: any, res) => {
 	try {
 		const userRole = req.user?.role;
@@ -4786,7 +4786,7 @@ app.post("/api/admin/roles", authMiddleware, async (req: any, res) => {
 			return res.status(400).json({ error: "Nazwa roli jest wymagana" });
 		}
 
-		// Sprawdź czy rola już istnieje
+
 		const existing = await prisma.roles.findFirst({
 			where: { name },
 		});
@@ -4836,7 +4836,7 @@ app.post("/api/admin/roles", authMiddleware, async (req: any, res) => {
 	}
 });
 
-// 🗑️ DELETE - usuń rolę (dla admina)
+
 app.delete("/api/admin/roles/:id", authMiddleware, async (req: any, res) => {
 	try {
 		const userRole = req.user?.role;
@@ -4846,7 +4846,7 @@ app.delete("/api/admin/roles/:id", authMiddleware, async (req: any, res) => {
 			return res.status(403).json({ error: "Brak uprawnień" });
 		}
 
-		// Sprawdź czy rola istnieje
+
 		const existing = await prisma.roles.findUnique({
 			where: { id: roleId },
 		});
@@ -4855,7 +4855,7 @@ app.delete("/api/admin/roles/:id", authMiddleware, async (req: any, res) => {
 			return res.status(404).json({ error: "Rola nie istnieje" });
 		}
 
-		// Nie pozwól usunąć admina
+
 		if (existing.name === "admin") {
 			return res.status(400).json({ error: "Nie można usunąć roli admin" });
 		}
@@ -4873,16 +4873,16 @@ app.delete("/api/admin/roles/:id", authMiddleware, async (req: any, res) => {
 		res.status(500).json({ error: "Nie udało się usunąć roli" });
 	}
 });
-// ============================================================
-// ADMIN - ZARZĄDZANIE ZESPOŁAMI I CZŁONKAMI
-// ============================================================
 
-// 📥 GET - pobierz wszystkie zespoły z członkami (dla admina)
+
+
+
+
 app.get("/api/admin/teams", authMiddleware, async (req: any, res) => {
 	try {
 		const userRole = req.user?.role;
 
-		// Tylko admin
+
 		if (userRole !== "admin") {
 			return res.status(403).json({ error: "Brak uprawnień" });
 		}
@@ -4943,7 +4943,7 @@ app.get("/api/admin/teams", authMiddleware, async (req: any, res) => {
 	}
 });
 
-// 📝 PUT - edytuj zespół
+
 app.put("/api/admin/teams/:id", authMiddleware, async (req: any, res) => {
 	try {
 		const userRole = req.user?.role;
@@ -4984,7 +4984,7 @@ app.put("/api/admin/teams/:id", authMiddleware, async (req: any, res) => {
 		res.status(500).json({ error: "Nie udało się edytować zespołu" });
 	}
 });
-// 📤 POST - dodaj nowy zespół
+
 app.post("/api/admin/teams", authMiddleware, async (req: any, res) => {
 	try {
 		const userRole = req.user?.role;
@@ -5028,7 +5028,7 @@ app.post("/api/admin/teams", authMiddleware, async (req: any, res) => {
 		res.status(500).json({ error: "Nie udało się utworzyć zespołu" });
 	}
 });
-// 🗑️ DELETE - usuń zespół (soft delete)
+
 app.delete("/api/admin/teams/:id", authMiddleware, async (req: any, res) => {
 	try {
 		const userRole = req.user?.role;
@@ -5038,7 +5038,7 @@ app.delete("/api/admin/teams/:id", authMiddleware, async (req: any, res) => {
 			return res.status(403).json({ error: "Brak uprawnień" });
 		}
 
-		// Sprawdź czy zespół istnieje
+
 		const team = await prisma.team.findUnique({
 			where: { id: teamId },
 		});
@@ -5047,7 +5047,7 @@ app.delete("/api/admin/teams/:id", authMiddleware, async (req: any, res) => {
 			return res.status(404).json({ error: "Zespół nie istnieje" });
 		}
 
-		// Soft delete - zmień status na inactive
+
 		await prisma.team.update({
 			where: { id: teamId },
 			data: { status: "inactive" },
@@ -5060,7 +5060,7 @@ app.delete("/api/admin/teams/:id", authMiddleware, async (req: any, res) => {
 	}
 });
 
-// 📤 POST - dodaj członka do zespołu
+
 app.post("/api/admin/team-members", authMiddleware, async (req: any, res) => {
 	try {
 		const userRole = req.user?.role;
@@ -5075,7 +5075,7 @@ app.post("/api/admin/team-members", authMiddleware, async (req: any, res) => {
 			return res.status(400).json({ error: "team_id i user_id są wymagane" });
 		}
 
-		// Sprawdź czy użytkownik istnieje
+
 		const user = await prisma.user.findUnique({
 			where: { id: parseInt(user_id) },
 		});
@@ -5084,7 +5084,7 @@ app.post("/api/admin/team-members", authMiddleware, async (req: any, res) => {
 			return res.status(404).json({ error: "Użytkownik nie istnieje" });
 		}
 
-		// Sprawdź czy zespół istnieje
+
 		const team = await prisma.team.findUnique({
 			where: { id: parseInt(team_id) },
 		});
@@ -5093,7 +5093,7 @@ app.post("/api/admin/team-members", authMiddleware, async (req: any, res) => {
 			return res.status(404).json({ error: "Zespół nie istnieje" });
 		}
 
-		// Sprawdź czy już jest w zespole
+
 		const existing = await prisma.teamMember.findFirst({
 			where: {
 				team_id: parseInt(team_id),
@@ -5146,7 +5146,7 @@ app.post("/api/admin/team-members", authMiddleware, async (req: any, res) => {
 	}
 });
 
-// 🗑️ DELETE - usuń członka z zespołu
+
 app.delete(
 	"/api/admin/team-members/:id",
 	authMiddleware,
@@ -5181,7 +5181,7 @@ app.delete(
 	},
 );
 
-// 📝 PUT - zmień rolę członka w zespole
+
 app.put(
 	"/api/admin/team-members/:id",
 	authMiddleware,
@@ -5235,7 +5235,7 @@ app.put(
 	},
 );
 
-// 📥 GET - pobierz wszystkich użytkowników (bez admina) do dodawania do zespołów
+
 app.get("/api/admin/available-users", authMiddleware, async (req: any, res) => {
 	try {
 		const userRole = req.user?.role;
@@ -5247,7 +5247,7 @@ app.get("/api/admin/available-users", authMiddleware, async (req: any, res) => {
 		const users = await prisma.user.findMany({
 			where: {
 				is_active: true,
-				// Pomijamy admina (user z role_id = 1)
+
 				role_id: { not: 1 },
 			},
 			select: {
@@ -5284,16 +5284,16 @@ app.get("/api/admin/available-users", authMiddleware, async (req: any, res) => {
 		res.status(500).json({ error: "Nie udało się pobrać użytkowników" });
 	}
 });
-// ============================================================
-// ADMIN - LOGI SYSTEMOWE
-// ============================================================
 
-// 📥 GET - pobierz logi z paginacją
+
+
+
+
 app.get("/api/admin/logs", authMiddleware, async (req: any, res) => {
 	try {
 		const userRole = req.user?.role;
 
-		// Tylko admin może przeglądać logi
+
 		if (userRole !== "admin") {
 			return res.status(403).json({ error: "Brak uprawnień" });
 		}
@@ -5307,7 +5307,7 @@ app.get("/api/admin/logs", authMiddleware, async (req: any, res) => {
 
 		const skip = (page - 1) * limit;
 
-		// Buduj warunki where
+
 		let where: any = {};
 
 		if (category && category !== "all") {
@@ -5328,7 +5328,7 @@ app.get("/api/admin/logs", authMiddleware, async (req: any, res) => {
 			];
 		}
 
-		// Pobierz logi
+
 		const logs = await prisma.systemLog.findMany({
 			where,
 			orderBy: { created_at: "desc" },
@@ -5336,7 +5336,7 @@ app.get("/api/admin/logs", authMiddleware, async (req: any, res) => {
 			take: limit,
 		});
 
-		// Policz total
+
 		const total = await prisma.systemLog.count({ where });
 
 		res.json({
@@ -5354,9 +5354,9 @@ app.get("/api/admin/logs", authMiddleware, async (req: any, res) => {
 		res.status(500).json({ error: "Nie udało się pobrać logów" });
 	}
 });
-// ============================================================
-// START SERWERA
-// ============================================================
+
+
+
 setTimeout(async () => {
 	console.log(
 		"🔄 [STARTUP] Uruchamiam synchronizację frekwencji przy starcie...",
@@ -5380,9 +5380,9 @@ setTimeout(async () => {
 	}
 }, 5000);
 
-// ============================================================
-// START SERWERA
-// ============================================================
+
+
+
 app.listen(port, () => {
 	console.log(`🚀 Serwer działa na porcie ${port}`);
 	console.log(`📁 Katalog uploadów: ${uploadDir}`);

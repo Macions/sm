@@ -15,9 +15,9 @@ import {
 } from "lucide-react";
 import styles from "./Dashboard.module.css";
 
-// ---------------------------------------------------------------------------
-// Typy
-// ---------------------------------------------------------------------------
+
+
+
 
 type Notification = {
 	id: string;
@@ -47,8 +47,8 @@ type User = {
 	id: string | number;
 	firstName: string;
 	lastName?: string;
-	first_name?: string;    // ✅ DODANE
-	last_name?: string;     // ✅ DODANE
+	first_name?: string;
+	last_name?: string;
 	role: string;
 	team: string;
 	status: string;
@@ -59,9 +59,9 @@ type User = {
 	createdAt?: string;
 };
 
-// ---------------------------------------------------------------------------
-// Komponent
-// ---------------------------------------------------------------------------
+
+
+
 
 export default function Dashboard() {
 	const navigate = useNavigate();
@@ -72,19 +72,19 @@ export default function Dashboard() {
 	const [stats, setStats] = useState<DashboardStats | null>(null);
 	const [notifications, setNotifications] = useState<Notification[]>([]);
 
-	// ===== POBIERANIE DANYCH Z BACKENDU =====
-	// ===== POBIERANIE DANYCH Z BACKENDU =====
+
+
 	useEffect(() => {
 		const fetchDashboardData = async () => {
 			try {
 				setLoading(true);
 				setError(null);
 
-				// Pobierz token
+
 				const token = localStorage.getItem("accessToken");
 				console.log("🔑 Token:", token ? "Jest" : "Brak");
 
-				// Pobierz dane użytkownika
+
 				const userRes = await fetch("/api/profile", {
 					headers: {
 						Authorization: `Bearer ${token}`,
@@ -98,19 +98,19 @@ export default function Dashboard() {
 				const userData = await userRes.json();
 				console.log("📊 Profil z API:", userData);
 
-				// ✅ PRAWIDŁOWE MAPOWANIE - używamy pól z API
+
 				setUser({
 					id: userData.id,
-					firstName: userData.firstName || "Użytkowniku", // ✅ first_name z API
+					firstName: userData.firstName || "Użytkowniku",
 					lastName: userData.last_name || "",
 					first_name: userData.first_name,
 					last_name: userData.last_name,
 					role: userData.role || "member",
-					team: userData.team || "—", // ✅ team z API
-					status: userData.status || "active", // ✅ Jeśli API zwraca status
+					team: userData.team || "—",
+					status: userData.status || "active",
 					username: userData.username,
 					email: userData.email,
-					// ✅ Jeśli nie masz joinDate w API, użyj created_at lub dzisiejszej daty
+
 					joinDate:
 						userData.joinDate ||
 						userData.created_at ||
@@ -119,7 +119,7 @@ export default function Dashboard() {
 					createdAt: userData.created_at,
 				});
 
-				// Pobierz statystyki
+
 				const statsRes = await fetch("/api/dashboard/stats", {
 					headers: {
 						Authorization: `Bearer ${token}`,
@@ -133,7 +133,7 @@ export default function Dashboard() {
 				const statsData = await statsRes.json();
 				setStats(statsData);
 
-				// Pobierz powiadomienia
+
 				const notifRes = await fetch("/api/dashboard/notifications?limit=4", {
 					headers: {
 						Authorization: `Bearer ${token}`,
@@ -204,13 +204,13 @@ export default function Dashboard() {
 		},
 	];
 
-	// ===== FUNKCJE POMOCNICZE =====
+
 	const getGreeting = () => {
 		const hour = new Date().getHours();
 		if (hour >= 4 && hour < 21) return "Dzień dobry";
 		return "Dobry wieczór";
 	};
-	// ===== OBLICZANIE STAŻU =====
+
 	const getMembershipDuration = (
 		joinDate: string | null | undefined,
 		isTrial: boolean,
@@ -251,7 +251,7 @@ export default function Dashboard() {
 		return "od dzisiaj! 🎉";
 	};
 
-	// ===== TŁUMACZENIE STATUSU =====
+
 	const translateStatus = (status: string): string => {
 		const statusMap: Record<string, string> = {
 			active: "Aktywny",
@@ -275,7 +275,7 @@ export default function Dashboard() {
 				return "#6B7280";
 		}
 	};
-	// ===== TŁUMACZENIE ROLI =====
+
 	const translateRole = (role: string): string => {
 		const roleMap: Record<string, string> = {
 			admin: "Administrator",
@@ -297,7 +297,7 @@ export default function Dashboard() {
 		}
 	};
 
-	// ===== ŁADOWANIE =====
+
 	if (loading) {
 		return (
 			<div className={styles.dashboard}>
@@ -309,7 +309,7 @@ export default function Dashboard() {
 		);
 	}
 
-	// ===== BŁĄD =====
+
 	if (error) {
 		return (
 			<div className={styles.dashboard}>
@@ -329,8 +329,8 @@ export default function Dashboard() {
 		user?.isTrial || false,
 	);
 
-	// ===== STATYSTYKI =====
-	// ===== STATYSTYKI =====
+
+
 	const statsData = stats
 		? [
 			{
@@ -352,12 +352,13 @@ export default function Dashboard() {
 			{
 				id: "attendance",
 				label: "Twoja frekwencja",
+				subtext: "(na podstawie systemu frekwencji)",
 				value: stats.attendance,
 				icon: <CalendarCheck size={24} />,
 				color: "#10B981",
 				bgColor: "#ECFDF5",
 			},
-			// ===== ZAMIAST OGŁOSZEŃ - "JESTEŚ Z NAMI" =====
+
 			...(membershipDuration
 				? [
 					{
@@ -384,7 +385,7 @@ export default function Dashboard() {
 
 	return (
 		<>
-			{/* Karta powitalna z logo */}
+			{}
 			<div className={styles.welcomeCard}>
 				<div className={styles.welcomeCard__content}>
 					<img
@@ -420,7 +421,7 @@ export default function Dashboard() {
 				</div>
 			</div>
 
-			{/* Karty statystyk */}
+			{}
 			<div className={styles.stats}>
 				{statsData.map((stat) => (
 					<div key={stat.id} className={styles.statCard}>
@@ -448,9 +449,9 @@ export default function Dashboard() {
 				))}
 			</div>
 
-			{/* Sekcja powiadomień i szybkich akcji */}
+			{}
 			<div className={styles.bottomSection}>
-				{/* Powiadomienia */}
+				{}
 				<div className={styles.notifications}>
 					<h2 className={styles.sectionTitle}>
 						<Bell size={20} />
@@ -481,7 +482,7 @@ export default function Dashboard() {
 					</div>
 				</div>
 
-				{/* Szybkie akcje */}
+				{}
 				<div className={styles.quickActions}>
 					<h2 className={styles.sectionTitle}>Szybkie akcje</h2>
 					<div className={styles.quickActions__grid}>

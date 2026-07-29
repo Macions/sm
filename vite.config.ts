@@ -12,7 +12,7 @@ const isGitHubPages = process.env.GITHUB_PAGES === 'true' || process.env.NODE_EN
 export default defineConfig({
 	plugins: [react()],
 
-	// ⭐ DYNAMICZNY BASE - działa i lokalnie i na GitHub Pages
+
 	base: isGitHubPages ? '/sm/' : '/',
 
 	resolve: {

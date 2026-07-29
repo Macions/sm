@@ -49,15 +49,15 @@ import {
 	Settings,
 	Tag,
 	FileText,
-	FormInput, // DODAJ
-	MessageSquare, // DODAJ
+	FormInput,
+	MessageSquare,
 	FileCheck,
 } from "lucide-react";
 import styles from "./Vacancies.module.css";
 
-// ---------------------------------------------------------------------------
-// TYPY
-// ---------------------------------------------------------------------------
+
+
+
 
 type VacancyStatus = "active" | "recruiting" | "filled";
 
@@ -75,7 +75,7 @@ type FormQuestion = {
 	question: string;
 	type: "text" | "number" | "textarea" | "select" | "checkbox";
 	required: boolean;
-	options?: string[]; // dla typu select
+	options?: string[];
 };
 
 type Vacancy = {
@@ -106,13 +106,13 @@ type Vacancy = {
 		url: string;
 		uploadedAt: string;
 	}[];
-	// NOWE POLA DLA REKRUTACJI
+
 	recruitment: {
 		type: RecruitmentType;
-		formUrl?: string; // dla typu "form"
-		messengerContact?: string; // dla typu "messenger"
-		questions?: FormQuestion[]; // dla typu "internal"
-		deadline: string; // data i godzina zakończenia rekrutacji
+		formUrl?: string;
+		messengerContact?: string;
+		questions?: FormQuestion[];
+		deadline: string;
 	};
 };
 
@@ -128,18 +128,18 @@ type Application = {
 	answers?: Record<string, string>;
 };
 
-// ---------------------------------------------------------------------------
-// DANE PRZYKŁADOWE
-// ---------------------------------------------------------------------------
+
+
+
 const DEFAULT_PILLARS = [
 	"Filar Projektowy",
 	"Filar Konferencyjny",
 	"Filar Symulacyjny",
 	"Filar Rzeczniczy",
 ];
-// ---------------------------------------------------------------------------
-// MAPOWANIE I IKONY
-// ---------------------------------------------------------------------------
+
+
+
 
 const STATUS_LABELS: Record<VacancyStatus, string> = {
 	active: "Aktywny",
@@ -159,7 +159,7 @@ const STATUS_ICONS: Record<VacancyStatus, React.ReactNode> = {
 	filled: <Check size={14} />,
 };
 
-// Mapowanie nazw ikon na komponenty
+
 const ICON_MAP: Record<
 	string,
 	React.ComponentType<{ size?: number; className?: string }>
@@ -216,9 +216,9 @@ const ICON_LABELS: Record<string, string> = {
 	Tag: "Tag",
 };
 
-// ---------------------------------------------------------------------------
-// KOMPONENT KARTY WAKATU
-// ---------------------------------------------------------------------------
+
+
+
 
 interface VacancyCardProps {
 	vacancy: Vacancy;
@@ -293,7 +293,7 @@ function VacancyCard({
 							{vacancy.applicants?.length || 0} zgłoszeń
 						</span>
 					</div>
-					{/* Informacja o rekrutacji */}
+					{}
 					{vacancy.recruitment && (
 						<div className={styles.vacancyCard__recruitment}>
 							{vacancy.recruitment.deadline && (
@@ -356,12 +356,12 @@ function VacancyCard({
 							</button>
 						</>
 					)}
-					{/* ⭐ POPRAWA: Warunek wyświetlania */}
+					{}
 					{!isFilled && !hasApplied && (
 						<button
 							className={styles.vacancyCard__applyBtn}
 							onClick={() => onApply(vacancy)}
-							// ⭐ POPRAWA: disabled tylko jeśli nie rekrutuje
+
 							disabled={isFilled}
 						>
 							<Send size={14} />
@@ -413,7 +413,7 @@ function VacancyCard({
 						{vacancy.applicants?.length || 0} zgłoszeń
 					</span>
 				</div>
-				{/* Informacja o rekrutacji */}
+				{}
 				{vacancy.recruitment && (
 					<div className={styles.vacancyCard__recruitment}>
 						{vacancy.recruitment.deadline && (
@@ -478,12 +478,12 @@ function VacancyCard({
 								</button>
 							</>
 						)}
-						{/* ⭐ POPRAWA: Warunek wyświetlania */}
+						{}
 						{!isFilled && !hasApplied && (
 							<button
 								className={styles.vacancyCard__applyBtn}
 								onClick={() => onApply(vacancy)}
-								// ⭐ POPRAWA: disabled tylko jeśli nie rekrutuje
+
 								disabled={isFilled}
 							>
 								<Send size={14} />
@@ -502,9 +502,9 @@ function VacancyCard({
 		</div>
 	);
 }
-// ---------------------------------------------------------------------------
-// MODAL ZGŁOSZENIA KANDYDATURY
-// ---------------------------------------------------------------------------
+
+
+
 
 interface ApplyModalProps {
 	isOpen: boolean;
@@ -556,7 +556,7 @@ function ApplyModal({ isOpen, vacancy, onClose, onSubmit }: ApplyModalProps) {
 			return;
 		}
 
-		// USUŃ window.confirm
+
 		onSubmit(vacancy, answers, message);
 		onClose();
 	};
@@ -586,7 +586,7 @@ function ApplyModal({ isOpen, vacancy, onClose, onSubmit }: ApplyModalProps) {
 				)}
 				<form onSubmit={handleSubmit} className={styles.modal__form}>
 					<div className={styles.modal__body}>
-						{/* Informacje o rekrutacji */}
+						{}
 						<div className={styles.modal__section}>
 							<div className={styles.modal__infoGrid}>
 								<div className={styles.modal__infoItem}>
@@ -617,7 +617,7 @@ function ApplyModal({ isOpen, vacancy, onClose, onSubmit }: ApplyModalProps) {
 							</div>
 						</div>
 
-						{/* Dla typu "form" - przekierowanie */}
+						{}
 						{vacancy.recruitment.type === "form" &&
 							vacancy.recruitment.formUrl && (
 								<div className={styles.modal__section}>
@@ -647,7 +647,7 @@ function ApplyModal({ isOpen, vacancy, onClose, onSubmit }: ApplyModalProps) {
 								</div>
 							)}
 
-						{/* Dla typu "messenger" - kontakt */}
+						{}
 						{vacancy.recruitment.type === "messenger" &&
 							vacancy.recruitment.messengerContact && (
 								<div className={styles.modal__section}>
@@ -672,10 +672,10 @@ function ApplyModal({ isOpen, vacancy, onClose, onSubmit }: ApplyModalProps) {
 								</div>
 							)}
 
-						{/* Dla typu "internal" - formularz z pytaniami */}
+						{}
 						{vacancy.recruitment.type === "internal" && (
 							<>
-								{/* Pytania */}
+								{}
 								{questions.length > 0 && (
 									<div className={styles.modal__section}>
 										<h3 className={styles.modal__sectionTitle}>
@@ -796,7 +796,7 @@ function ApplyModal({ isOpen, vacancy, onClose, onSubmit }: ApplyModalProps) {
 									</div>
 								)}
 
-								{/* Wiadomość */}
+								{}
 								<div className={styles.modal__section}>
 									<h3 className={styles.modal__sectionTitle}>Wiadomość</h3>
 									<div className={styles.modal__field}>
@@ -816,7 +816,7 @@ function ApplyModal({ isOpen, vacancy, onClose, onSubmit }: ApplyModalProps) {
 						)}
 					</div>
 
-					{/* Przyciski - tylko dla typu "internal" */}
+					{}
 					{vacancy.recruitment.type === "internal" && (
 						<div className={styles.modal__actions}>
 							<div className={styles.modal__actionsRight}>
@@ -839,9 +839,9 @@ function ApplyModal({ isOpen, vacancy, onClose, onSubmit }: ApplyModalProps) {
 		</div>
 	);
 }
-// ---------------------------------------------------------------------------
-// MODAL SZCZEGÓŁÓW WAKATU
-// ---------------------------------------------------------------------------
+
+
+
 
 interface VacancyDetailModalProps {
 	isOpen: boolean;
@@ -851,7 +851,7 @@ interface VacancyDetailModalProps {
 	onApply: (vacancy: Vacancy) => void;
 	onOpenApply?: (vacancy: Vacancy) => void;
 	hasApplied?: boolean;
-	applications?: Application[]; // <-- DODAJ
+	applications?: Application[];
 }
 
 function VacancyDetailModal({
@@ -865,7 +865,7 @@ function VacancyDetailModal({
 	applications = [],
 }: VacancyDetailModalProps) {
 	if (!isOpen || !vacancy) return null;
-	// ⭐ DODAJ TE ZABEZPIECZENIA
+
 	const responsibilities = Array.isArray(vacancy.responsibilities)
 		? vacancy.responsibilities
 		: [];
@@ -997,7 +997,7 @@ function VacancyDetailModal({
 							</div>
 						</div>
 					</div>
-					{/* Informacje o rekrutacji */}
+					{}
 					{vacancy.recruitment && (
 						<div className={styles.modal__section}>
 							<h3 className={styles.modal__sectionTitle}>Rekrutacja</h3>
@@ -1104,7 +1104,7 @@ function VacancyDetailModal({
 								)}
 						</div>
 					)}
-					{/* Załączniki */}
+					{}
 					{vacancy.attachments && vacancy.attachments.length > 0 && (
 						<div className={styles.modal__section}>
 							<h3 className={styles.modal__sectionTitle}>
@@ -1162,7 +1162,7 @@ function VacancyDetailModal({
 									.filter((app) => app.vacancyId === vacancy.id)
 									.map((app) => (
 										<div key={app.id} className={styles.applicationCard}>
-											{/* Główny wiersz z danymi */}
+											{}
 											<div className={styles.applicationRow}>
 												<div className={styles.applicationUser}>
 													<div className={styles.applicationAvatar}>
@@ -1215,13 +1215,13 @@ function VacancyDetailModal({
 												</div>
 											</div>
 
-											{/* Rozwijane szczegóły */}
+											{}
 											<div
 												id={`app-details-${app.id}`}
 												className={styles.applicationDetails}
 												style={{ display: "none" }}
 											>
-												{/* Wiadomość */}
+												{}
 												{app.message && (
 													<div className={styles.applicationMessage}>
 														<div className={styles.applicationMessageLabel}>
@@ -1231,7 +1231,7 @@ function VacancyDetailModal({
 													</div>
 												)}
 
-												{/* Odpowiedzi na pytania */}
+												{}
 												{app.answers && Object.keys(app.answers).length > 0 && (
 													<div className={styles.applicationAnswers}>
 														<div className={styles.applicationAnswersLabel}>
@@ -1274,7 +1274,7 @@ function VacancyDetailModal({
 													</div>
 												)}
 
-												{/* Przyciski akcji */}
+												{}
 												<div className={styles.applicationActions}>
 													<button className={styles.applicationActionAccept}>
 														<Check size={14} />
@@ -1323,15 +1323,15 @@ function VacancyDetailModal({
 	);
 }
 
-// ---------------------------------------------------------------------------
-// MODAL DODAWANIA/EDYCJI WAKATU (ULEPSZONA WERSJA)
-// ---------------------------------------------------------------------------
+
+
+
 
 interface VacancyFormModalProps {
 	isOpen: boolean;
 	vacancy: Vacancy | null;
 	currentUser: User;
-	teams: string[]; // <-- DODAJ
+	teams: string[];
 	pillars: string[];
 	onClose: () => void;
 	onSave: (vacancy: Vacancy) => void;
@@ -1367,7 +1367,7 @@ function VacancyFormModal({
 			},
 			status: "active",
 			recruitment: {
-				// <-- DODAJ
+
 				type: "internal",
 				deadline: "",
 				questions: [],
@@ -1399,14 +1399,14 @@ function VacancyFormModal({
 	const isEdit = !!vacancy;
 	const canManage =
 		currentUser.role === "admin" || currentUser.role === "coordinator";
-	// Funkcja do generowania emaila z imienia i nazwiska
+
 	const generateEmail = (name: string): string => {
 		if (!name.trim()) return "";
 		const parts = name.trim().split(/\s+/);
 		if (parts.length < 2) return "";
 		const firstName = parts[0].toLowerCase();
 		const lastName = parts.slice(1).join("").toLowerCase();
-		// Usuń polskie znaki
+
 		const normalize = (str: string) => {
 			return str.replace(/[ąćęłńóśźż]/g, (char) => {
 				const map: Record<string, string> = {
@@ -1425,28 +1425,28 @@ function VacancyFormModal({
 		};
 		return `${normalize(firstName)}.${normalize(lastName)}@silamlodych.pl`;
 	};
-	// Funkcja do formatowania rozmiaru pliku
+
 	const formatFileSize = (bytes: number): string => {
 		if (bytes < 1024) return bytes + " B";
 		if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + " KB";
 		return (bytes / (1024 * 1024)).toFixed(1) + " MB";
 	};
 
-	// Funkcja do obsługi dodawania pliku
+
 	const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
 		const files = e.target.files;
 		if (!files || files.length === 0) return;
 
 		const file = files[0];
 
-		// Sprawdź rozmiar (max 10MB)
+
 		if (file.size > 10 * 1024 * 1024) {
 			alert("Maksymalny rozmiar pliku to 10MB!");
 			e.target.value = "";
 			return;
 		}
 
-		// Tworzenie URL dla podglądu
+
 		const fileUrl = URL.createObjectURL(file);
 
 		const newAttachment = {
@@ -1459,18 +1459,18 @@ function VacancyFormModal({
 		};
 
 		setAttachments([...attachments, newAttachment]);
-		e.target.value = ""; // Reset input
+		e.target.value = "";
 	};
 
-	// Funkcja do usuwania załącznika
+
 	const removeAttachment = (id: string) => {
 		const attachment = attachments.find((a) => a.id === id);
 		if (attachment) {
-			URL.revokeObjectURL(attachment.url); // Zwolnij pamięć
+			URL.revokeObjectURL(attachment.url);
 		}
 		setAttachments(attachments.filter((a) => a.id !== id));
 	};
-	// Filtruj członków po wpisanej frazie
+
 	const filterMembers = (search: string) => {
 		if (!search.trim()) {
 			setContactSuggestions([]);
@@ -1577,7 +1577,7 @@ function VacancyFormModal({
 			filledBy: vacancy?.filledBy,
 			attachments: attachments,
 			recruitment: {
-				// <-- DODAJ
+
 				type: formData.recruitment?.type || "internal",
 				formUrl: formData.recruitment?.formUrl,
 				messengerContact: formData.recruitment?.messengerContact,
@@ -1600,7 +1600,7 @@ function VacancyFormModal({
 		}
 	};
 
-	// Grupowanie ikon dla lepszego wyboru
+
 	const iconCategories = {
 		Stanowiska: ["Briefcase", "Target", "Award", "Sparkles", "Star"],
 		"Media i Social": [
@@ -1648,7 +1648,7 @@ function VacancyFormModal({
 
 				<form onSubmit={handleSubmit} className={styles.modal__form}>
 					<div className={styles.modal__body}>
-						{/* Podstawowe informacje */}
+						{}
 						<div className={styles.modal__section}>
 							<h3 className={styles.modal__sectionTitle}>
 								Podstawowe informacje
@@ -1748,7 +1748,7 @@ function VacancyFormModal({
 							</div>
 						</div>
 
-						{/* Zakres obowiązków */}
+						{}
 						<div className={styles.modal__section}>
 							<h3 className={styles.modal__sectionTitle}>
 								Zakres obowiązków{" "}
@@ -1837,7 +1837,7 @@ function VacancyFormModal({
 							</div>
 						</div>
 
-						{/* Wymagania */}
+						{}
 						<div className={styles.modal__section}>
 							<h3 className={styles.modal__sectionTitle}>
 								Wymagania <span className={styles.modal__required}>*</span>
@@ -1919,7 +1919,7 @@ function VacancyFormModal({
 							</div>
 						</div>
 
-						{/* Mile widziane */}
+						{}
 						<div className={styles.modal__section}>
 							<h3 className={styles.modal__sectionTitle}>Mile widziane</h3>
 							<div className={styles.modal__field}>
@@ -1988,7 +1988,7 @@ function VacancyFormModal({
 							</div>
 						</div>
 
-						{/* Informacje organizacyjne */}
+						{}
 						<div className={styles.modal__section}>
 							<h3 className={styles.modal__sectionTitle}>
 								Informacje organizacyjne
@@ -2005,7 +2005,7 @@ function VacancyFormModal({
 										onChange={(e) => {
 											const value = e.target.value;
 											if (value === "other") {
-												setShowCustomTeam(true); // <-- Używamy osobnego stanu
+												setShowCustomTeam(true);
 												setFormData({
 													...formData,
 													team: "",
@@ -2017,7 +2017,7 @@ function VacancyFormModal({
 													.replace(/[^a-z0-9]/g, "-")
 													.replace(/-+/g, "-")
 													.replace(/^-|-$/g, "");
-												setShowCustomTeam(false); // <-- Używamy osobnego stanu
+												setShowCustomTeam(false);
 												setFormData({
 													...formData,
 													team: value,
@@ -2025,7 +2025,7 @@ function VacancyFormModal({
 												});
 											}
 										}}
-										required
+										
 									>
 										<option value="">Wybierz zespół...</option>
 										{teams.map((t) => (
@@ -2033,6 +2033,9 @@ function VacancyFormModal({
 												{t}
 											</option>
 										))}
+										<option key="inny" value="Inny">
+												Inny
+											</option>
 										<option value="other">Inny zespół</option>
 									</select>
 								</div>
@@ -2150,7 +2153,7 @@ function VacancyFormModal({
 							</div>
 						</div>
 
-						{/* Osoba kontaktowa */}
+						{}
 						<div className={styles.modal__section}>
 							<h3 className={styles.modal__sectionTitle}>Osoba kontaktowa</h3>
 							<p className={styles.modal__sectionDescription}>
@@ -2172,7 +2175,7 @@ function VacancyFormModal({
 												const value = e.target.value;
 												setContactSearch(value);
 
-												// Generuj email automatycznie
+
 												const email = generateEmail(value);
 
 												setFormData({
@@ -2184,7 +2187,7 @@ function VacancyFormModal({
 													},
 												});
 
-												// Filtruj sugestie
+
 												filterMembers(value);
 
 												if (errors.contactName)
@@ -2196,7 +2199,7 @@ function VacancyFormModal({
 												}
 											}}
 											onBlur={() => {
-												// Opóźnij zamknięcie, żeby zdążyć kliknąć
+
 												setTimeout(() => {
 													setShowSuggestions(false);
 												}, 200);
@@ -2206,7 +2209,7 @@ function VacancyFormModal({
 											autoComplete="off"
 										/>
 
-										{/* Lista sugestii */}
+										{}
 										{showSuggestions && contactSuggestions.length > 0 && (
 											<ul className={styles.contactSuggestions}>
 												{contactSuggestions.map((member) => (
@@ -2214,7 +2217,7 @@ function VacancyFormModal({
 														key={member.id}
 														className={styles.contactSuggestionItem}
 														onMouseDown={(e) => {
-															e.preventDefault(); // Zapobiega blurowi przed kliknięciem
+															e.preventDefault();
 															const email = generateEmail(member.name);
 															setFormData({
 																...formData,
@@ -2284,7 +2287,7 @@ function VacancyFormModal({
 								</div>
 							</div>
 						</div>
-						{/* Załączniki */}
+						{}
 						<div className={styles.modal__section}>
 							<h3 className={styles.modal__sectionTitle}>Załączniki</h3>
 							<p className={styles.modal__sectionDescription}>
@@ -2293,7 +2296,7 @@ function VacancyFormModal({
 							</p>
 
 							<div className={styles.attachmentsArea}>
-								{/* Przycisk dodawania */}
+								{}
 								<div className={styles.attachmentUpload}>
 									<label
 										htmlFor="file-upload"
@@ -2311,7 +2314,7 @@ function VacancyFormModal({
 									/>
 								</div>
 
-								{/* Lista załączników */}
+								{}
 								{attachments.length > 0 && (
 									<div className={styles.attachmentsList}>
 										{attachments.map((file) => (
@@ -2339,7 +2342,7 @@ function VacancyFormModal({
 													>
 														<Eye size={16} />
 													</a>
-													{canManage && ( // <-- ZMIEŃ z canEdit na canManage
+													{canManage && (
 														<button
 															type="button"
 															className={`${styles.attachmentActionBtn} ${styles.attachmentActionBtnDanger}`}
@@ -2356,7 +2359,7 @@ function VacancyFormModal({
 								)}
 							</div>
 						</div>
-						{/* Informacje o rekrutacji */}
+						{}
 						<div className={styles.modal__section}>
 							<h3 className={styles.modal__sectionTitle}>
 								Informacje o rekrutacji
@@ -2420,7 +2423,7 @@ function VacancyFormModal({
 								</div>
 							</div>
 
-							{/* Opcje dla typu "form" */}
+							{}
 							{formData.recruitment?.type === "form" && (
 								<div className={styles.modal__field}>
 									<label className={styles.modal__label}>
@@ -2448,7 +2451,7 @@ function VacancyFormModal({
 								</div>
 							)}
 
-							{/* Opcje dla typu "messenger" */}
+							{}
 							{formData.recruitment?.type === "messenger" && (
 								<div className={styles.modal__field}>
 									<label className={styles.modal__label}>
@@ -2480,7 +2483,7 @@ function VacancyFormModal({
 								</div>
 							)}
 
-							{/* Opcje dla typu "internal" */}
+							{}
 							{formData.recruitment?.type === "internal" && (
 								<div className={styles.modal__field}>
 									<label className={styles.modal__label}>
@@ -2516,7 +2519,7 @@ function VacancyFormModal({
 											});
 										}}
 										onUpdate={(id, updates) => {
-											// Implementacja aktualizacji pytania
+
 											setFormData({
 												...formData,
 												recruitment: {
@@ -2536,7 +2539,7 @@ function VacancyFormModal({
 							)}
 						</div>
 
-						{/* Podgląd */}
+						{}
 						<div className={styles.modal__section}>
 							<h3 className={styles.modal__sectionTitle}>Podgląd wakatu</h3>
 							<div className={styles.modal__preview}>
@@ -2619,9 +2622,9 @@ function VacancyFormModal({
 	);
 }
 
-// ---------------------------------------------------------------------------
-// KOMPONENT ZARZĄDZANIA PYTANIAMI
-// ---------------------------------------------------------------------------
+
+
+
 
 interface QuestionManagerProps {
 	questions: FormQuestion[];
@@ -2667,7 +2670,7 @@ function QuestionManager({
 
 	return (
 		<div className={styles.questionManager}>
-			{/* Lista pytań */}
+			{}
 			{questions.length > 0 && (
 				<div className={styles.questionsList}>
 					{questions.map((q) => (
@@ -2691,7 +2694,7 @@ function QuestionManager({
 								)}
 							</div>
 
-							{/* ⭐ TUTAJ DODAJ TEN KOD - po questionInfo, przed zamykającym div */}
+							{}
 							{!disabled && (
 								<div className={styles.questionActions}>
 									<button
@@ -2719,7 +2722,7 @@ function QuestionManager({
 								</div>
 							)}
 
-							{/* Formularz edycji - ⭐ TUŻ POD przyciskami */}
+							{}
 							{editingId === q.id && (
 								<div className={styles.editQuestionForm}>
 									<div className={styles.formField}>
@@ -2827,7 +2830,7 @@ function QuestionManager({
 					))}
 				</div>
 			)}
-			{/* Przycisk dodawania */}
+			{}
 			{!disabled && (
 				<button
 					type="button"
@@ -2839,7 +2842,7 @@ function QuestionManager({
 				</button>
 			)}
 
-			{/* Formularz dodawania pytania */}
+			{}
 			{showAddForm && !disabled && (
 				<div className={styles.addQuestionForm}>
 					<div className={styles.formField}>
@@ -2919,13 +2922,13 @@ function QuestionManager({
 		</div>
 	);
 }
-// ---------------------------------------------------------------------------
-// GŁÓWNY KOMPONENT
-// ---------------------------------------------------------------------------
 
-// ---------------------------------------------------------------------------
-// GŁÓWNY KOMPONENT
-// ---------------------------------------------------------------------------
+
+
+
+
+
+
 
 export default function Vacancies({ title }: { title?: string }) {
 	const [vacancies, setVacancies] = useState<Vacancy[]>([]);
@@ -2951,7 +2954,7 @@ export default function Vacancies({ title }: { title?: string }) {
 		vacancy: Vacancy | null;
 	}>({ isOpen: false, vacancy: null });
 
-	// ✅ DODAJ currentUser jako state
+
 	const [currentUser, setCurrentUser] = useState<User>({
 		id: "",
 		name: "",
@@ -2959,24 +2962,24 @@ export default function Vacancies({ title }: { title?: string }) {
 		teamId: "",
 	});
 
-	// ✅ UŻYJ hasPermission
+
 	const canManage =
 		hasPermission(currentUser?.role, "canEditVacancies") ||
 		hasPermission(currentUser?.role, "canDeleteVacancies");
 	const canEdit = hasPermission(currentUser?.role, "canEditVacancies");
 	const canDelete = hasPermission(currentUser?.role, "canDeleteVacancies");
 
-	// Unikalne zespoły i filary dla filtrów
+
 	const teams = useMemo(() => {
 		const unique = new Set(vacancies.map((v) => v.team));
 		return Array.from(unique).sort();
 	}, [vacancies]);
 
-	// Filary - połączenie stałej listy z tymi z wakatów
+
 	const pillars = useMemo(() => {
 		return [...DEFAULT_PILLARS].sort();
 	}, []);
-	// ✅ NOWY useEffect - pobieranie z backendu
+
 	useEffect(() => {
 		const fetchData = async () => {
 			try {
@@ -2989,7 +2992,7 @@ export default function Vacancies({ title }: { title?: string }) {
 					return;
 				}
 
-				// 1. Pobierz profil użytkownika
+
 				const userResponse = await fetch("/api/profile", {
 					headers: { Authorization: `Bearer ${token}` },
 				});
@@ -3005,7 +3008,7 @@ export default function Vacancies({ title }: { title?: string }) {
 					});
 				}
 
-				// 2. Pobierz członków (do sugestii w formularzu)
+
 				const membersResponse = await fetch("/api/members", {
 					headers: { Authorization: `Bearer ${token}` },
 				});
@@ -3024,7 +3027,7 @@ export default function Vacancies({ title }: { title?: string }) {
 					setMembers(mappedMembers);
 				}
 
-				// 3. Pobierz wakaty z backendu
+
 				const vacanciesResponse = await fetch("/api/vacancies", {
 					headers: {
 						Authorization: `Bearer ${token}`,
@@ -3115,7 +3118,7 @@ export default function Vacancies({ title }: { title?: string }) {
 					setVacancies([]);
 				}
 
-				// 4. Pobierz zgłoszenia (applications)
+
 				const applicationsResponse = await fetch("/api/applications", {
 					headers: {
 						Authorization: `Bearer ${token}`,
@@ -3153,7 +3156,7 @@ export default function Vacancies({ title }: { title?: string }) {
 
 		fetchData();
 	}, []);
-	// Sprawdzanie terminów
+
 	useEffect(() => {
 		const checkDeadlines = () => {
 			const now = new Date();
@@ -3183,7 +3186,7 @@ export default function Vacancies({ title }: { title?: string }) {
 		return () => clearInterval(interval);
 	}, [vacancies]);
 
-	// Reszta kodu pozostaje BEZ ZMIAN...
+
 	const filteredVacancies = useMemo(() => {
 		return vacancies
 			.filter((vacancy) => {
@@ -3223,7 +3226,7 @@ export default function Vacancies({ title }: { title?: string }) {
 		(v) => v.status === "active",
 	).length;
 
-	// ... reszta funkcji pozostaje bez zmian
+
 	const handleViewVacancy = (vacancy: Vacancy) => {
 		setSelectedVacancy(vacancy);
 		setIsDetailOpen(true);
@@ -3255,7 +3258,7 @@ export default function Vacancies({ title }: { title?: string }) {
 				return;
 			}
 
-			// ✅ DODAJ - usuń domyślną wiadomość
+
 			const finalMessage =
 				message && message.trim() !== "" ? message : undefined;
 
@@ -3265,7 +3268,7 @@ export default function Vacancies({ title }: { title?: string }) {
 				userId: currentUser.id,
 				userName: currentUser.name,
 				userEmail: "jan.kowalski@silamlodych.pl",
-				message: finalMessage, // ✅ użyj finalMessage
+				message: finalMessage,
 				appliedAt: new Date().toISOString().split("T")[0],
 				status: "pending",
 				answers: answers,
@@ -3284,8 +3287,8 @@ export default function Vacancies({ title }: { title?: string }) {
 			});
 			setVacancies(updatedVacancies);
 
-			// ✅ Wyślij do backendu - bez domyślnej wiadomości
-			// ✅ Wyślij do backendu
+
+
 			try {
 				console.log(
 					"📤 Wysyłam zgłoszenie do:",
@@ -3313,7 +3316,7 @@ export default function Vacancies({ title }: { title?: string }) {
 				if (!response.ok) {
 					const errorText = await response.text();
 					console.warn("⚠️ Backend zwrócił błąd:", response.status, errorText);
-					// ⚠️ NIE RZUCAJ BŁĘDU - tylko ostrzeżenie
+
 				} else {
 					const result = await response.json();
 					console.log("✅ Zapisano w backendzie:", result);
@@ -3366,7 +3369,7 @@ export default function Vacancies({ title }: { title?: string }) {
 			toast.success(`Wakat "${vacancy.title}" został usunięty.`);
 		} catch (error) {
 			console.error("Błąd usuwania:", error);
-			// Usuń lokalnie nawet jeśli backend nie działa
+
 			setVacancies(vacancies.filter((v) => v.id !== vacancy.id));
 			toast.success(`Wakat "${vacancy.title}" został usunięty lokalnie.`);
 		}
@@ -3393,7 +3396,7 @@ export default function Vacancies({ title }: { title?: string }) {
 				toast.success(`Wakat "${vacancy.title}" został dodany!`);
 			}
 
-			// Spróbuj zapisać w backendzie
+
 			try {
 				const url = isEdit ? `/api/vacancies/${vacancy.id}` : "/api/vacancies";
 				const method = isEdit ? "PUT" : "POST";
@@ -3508,7 +3511,7 @@ export default function Vacancies({ title }: { title?: string }) {
 	};
 	return (
 		<div className={styles.vacancies}>
-			{/* ... reszta JSX pozostaje bez zmian ... */}
+			{}
 			<h1>{title ?? "Wakaty"}</h1>
 			<div className={styles.header}>
 				<div className={styles.header__left}>
@@ -3538,7 +3541,7 @@ export default function Vacancies({ title }: { title?: string }) {
 				)}
 			</div>
 
-			{/* Filtry */}
+			{}
 			<div className={styles.filters}>
 				<div className={styles.filters__search}>
 					<Search size={18} className={styles.filters__searchIcon} />
@@ -3626,7 +3629,7 @@ export default function Vacancies({ title }: { title?: string }) {
 				</div>
 			</div>
 
-			{/* Lista wakatów */}
+			{}
 			<div
 				className={`${styles.vacanciesGrid} ${viewMode === "list" ? styles.vacanciesGridList : ""}`}
 			>
@@ -3676,7 +3679,7 @@ export default function Vacancies({ title }: { title?: string }) {
 				)}
 			</div>
 
-			{/* Modale */}
+			{}
 			<VacancyDetailModal
 				isOpen={isDetailOpen}
 				vacancy={selectedVacancy}

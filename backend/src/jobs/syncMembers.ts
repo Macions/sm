@@ -1,6 +1,6 @@
-// backend/src/jobs/syncMembers.ts
 
-// ⭐ DODAJ TO NA POCZĄTKU PLIKU ⭐
+
+
 import dotenv from "dotenv";
 dotenv.config();
 
@@ -9,15 +9,15 @@ import mysql from "mysql2/promise";
 
 const prisma = new PrismaClient();
 
-// ============================================================
-// KONFIGURACJA POŁĄCZENIA Z ZEWNĘTRZNĄ BAZĄ (SM_Ewidencja)
-// ============================================================
+
+
+
 
 console.log("📋 [SYNC] Ładowanie konfiguracji z .env...");
 console.log("📋 [SYNC] EWIDENCJA_DB_HOST:", process.env.EWIDENCJA_DB_HOST);
 console.log("📋 [SYNC] EWIDENCJA_DB_USER:", process.env.EWIDENCJA_DB_USER);
 
-// ⭐ UŻYJ ZMIENNYCH ŚRODOWISKOWYCH ⭐
+
 const externalDb = mysql.createPool({
 	host: process.env.EWIDENCJA_DB_HOST || "57.128.253.89",
 	user: process.env.EWIDENCJA_DB_USER || "czarnecki",
@@ -27,25 +27,25 @@ const externalDb = mysql.createPool({
 	connectionLimit: 10,
 });
 
-// ============================================================
-// ⭐ FUNKCJA DO GENEROWANIA EMAILA ⭐
-// ============================================================
+
+
+
 
 function generateEmail(firstname: string, lastname: string): string {
-	// Pobierz pierwsze imię (jeśli jest więcej niż jedno)
+
 	let firstName = firstname?.trim() || "";
 	if (firstName.includes(" ")) {
-		firstName = firstName.split(" ")[0]; // Weź pierwsze imię
+		firstName = firstName.split(" ")[0];
 	}
 
-	// Nazwisko
+
 	const lastName = lastname?.trim() || "";
 
-	// Przygotuj dane
+
 	const first = firstName.toLowerCase();
 	const last = lastName.toLowerCase();
 
-	// Usuń polskie znaki
+
 	const polishMap: Record<string, string> = {
 		ą: "a",
 		ć: "c",
@@ -77,18 +77,18 @@ function generateEmail(firstname: string, lastname: string): string {
 	const cleanFirst = removePolish(first);
 	const cleanLast = removePolish(last);
 
-	// Wygeneruj email: imie.nazwisko@silamlodych.pl
+
 	let email = `${cleanFirst}.${cleanLast}@silamlodych.pl`;
 
-	// Sprawdź czy są jakieś dziwne znaki (np. myślniki, apostrofy)
+
 	email = email.replace(/[^a-z0-9.@_-]/g, "");
 
 	return email;
 }
 
-// ============================================================
-// ⭐ MAPOWANIE STATUSÓW ⭐
-// ============================================================
+
+
+
 
 function mapStatus(statusText: string): {
 	status: string;
@@ -150,9 +150,9 @@ function mapStatus(statusText: string): {
 	return { status: "trial", isTrial: true, isActive: true, shouldSkip: false };
 }
 
-// ============================================================
-// GŁÓWNA FUNKCJA SYNCHRONIZACJI
-// ============================================================
+
+
+
 
 export async function syncMembers() {
 	console.log("🔄 [SYNC] Rozpoczynam synchronizację członków...");
@@ -185,7 +185,7 @@ export async function syncMembers() {
 			return;
 		}
 
-		// Logowanie statystyk statusów
+
 		const statusStats: Record<string, number> = {};
 		for (const member of rows) {
 			const status = member.status || "unknown";
@@ -227,15 +227,15 @@ export async function syncMembers() {
 		let skippedRezygnacja = 0;
 		let duplicateEmails = 0;
 
-		// ⭐ ZBIÓR UŻYWANYCH EMAILI (do wykrywania duplikatów) ⭐
+
 		const usedEmails = new Set<string>();
 
 		for (const member of rows) {
 			try {
-				// ⭐ GENERUJ EMAIL Z IMIENIA I NAZWISKA ⭐
+
 				const generatedEmail = generateEmail(member.firstname, member.lastname);
 
-				// Sprawdź czy email już był użyty w tej sesji
+
 				if (usedEmails.has(generatedEmail)) {
 					duplicateEmails++;
 					console.log(
@@ -259,7 +259,7 @@ export async function syncMembers() {
 
 				const userData = {
 					username: generatedEmail.split("@")[0] || generatedEmail,
-					email: generatedEmail, // ⭐ UŻYJ GENEROWANEGO EMAILA ⭐
+					email: generatedEmail,
 					first_name: member.firstname?.trim() || "",
 					last_name: member.lastname?.trim() || "",
 					phone: member.phone?.trim() || null,

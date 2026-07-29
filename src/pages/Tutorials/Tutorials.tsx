@@ -22,9 +22,9 @@ import {
 } from "lucide-react";
 import styles from "./Tutorials.module.css";
 
-// ---------------------------------------------------------------------------
-// TYPY
-// ---------------------------------------------------------------------------
+
+
+
 
 type TutorialCategory =
 	| "new_member"
@@ -52,19 +52,19 @@ type Tutorial = {
 		name: string;
 		url: string;
 		size: string;
-		file?: File; // DODANE - dla nowych plików
-		id?: string; // DODANE - ID pliku z backendu
+		file?: File;
+		id?: string;
 	}[];
 	isNew?: boolean;
 	isUpdated?: boolean;
-	functionalRoles?: string[]; // Dla kategorii "functional" - lista stanowisk
+	functionalRoles?: string[];
 };
 
 type User = {
 	id: string;
 	name: string;
 	role: "admin" | "coordinator" | "functional" | "member";
-	functionalRole?: string; // np. "Prezes", "Wiceprezes", "Koordynator Filaru Projektowego"
+	functionalRole?: string;
 };
 
 const isNewTutorial = (updatedAt: string): boolean => {
@@ -79,15 +79,15 @@ const isUpdatedTutorial = (
 	createdAt: string | undefined,
 	updatedAt: string,
 ): boolean => {
-	// Jeśli nie ma createdAt, używamy updatedAt
+
 	if (!createdAt) return false;
 	const createDate = new Date(createdAt);
 	const updateDate = new Date(updatedAt);
 	return updateDate > createDate;
 };
-// ---------------------------------------------------------------------------
-// DANE PRZYKŁADOWE
-// ---------------------------------------------------------------------------
+
+
+
 
 const MOCK_USER: User = {
 	id: "1",
@@ -262,9 +262,9 @@ const MOCK_TUTORIALS: Tutorial[] = [
 	},
 ];
 
-// ---------------------------------------------------------------------------
-// MAPOWANIE NA TEKSTY
-// ---------------------------------------------------------------------------
+
+
+
 
 const CATEGORY_LABELS: Record<TutorialCategory, string> = {
 	new_member: "Dla nowych członków",
@@ -288,12 +288,12 @@ const CATEGORY_ICONS: Record<TutorialCategory, React.ReactNode> = {
 	functional: <UserCheck size={16} />,
 };
 
-// const ACCESS_LABELS: Record<TutorialAccess, string> = {
-//     all: "Dla wszystkich",
-//     coordinator: "Dla koordynatorów",
-//     functional: "Dla osób funkcyjnych",
-//     board: "Dla zarządu",
-// };
+
+
+
+
+
+
 
 const ACCESS_COLORS: Record<TutorialAccess, string> = {
 	all: styles.accessAll,
@@ -301,16 +301,16 @@ const ACCESS_COLORS: Record<TutorialAccess, string> = {
 	functional: styles.accessFunctional,
 	board: styles.accessBoard,
 };
-// ---------------------------------------------------------------------------
-// FUNKCJA POBIERANIA PLIKÓW
-// ---------------------------------------------------------------------------
+
+
+
 
 const downloadFile = async (url: string, fileName: string) => {
 	try {
-		// ⭐ DODAJ /api przed URL (to jest kluczowe!)
+
 		const fullUrl = url.startsWith("/uploads") ? `/api${url}` : url;
 
-		console.log("📥 Pobieranie:", fullUrl); // Debug - zobaczysz w konsoli
+		console.log("📥 Pobieranie:", fullUrl);
 
 		const token = localStorage.getItem("accessToken");
 		const response = await fetch(fullUrl, {
@@ -324,7 +324,7 @@ const downloadFile = async (url: string, fileName: string) => {
 		}
 
 		const blob = await response.blob();
-		console.log("📦 Rozmiar pliku:", blob.size, "Typ:", blob.type); // Debug
+		console.log("📦 Rozmiar pliku:", blob.size, "Typ:", blob.type);
 
 		const downloadUrl = window.URL.createObjectURL(blob);
 		const link = document.createElement("a");
@@ -342,9 +342,9 @@ const downloadFile = async (url: string, fileName: string) => {
 		alert("Nie udało się pobrać pliku");
 	}
 };
-// ---------------------------------------------------------------------------
-// KOMPONENT KARTY PORADNIKA
-// ---------------------------------------------------------------------------
+
+
+
 
 interface TutorialCardProps {
 	tutorial: Tutorial;
@@ -371,7 +371,7 @@ function TutorialCard({
 		});
 	};
 
-	// TERAZ DZIAŁA - funkcje są zdefiniowane na górze pliku
+
 	const isNew = isNewTutorial(tutorial.updatedAt);
 	const isUpdated = isUpdatedTutorial(tutorial.createdAt, tutorial.updatedAt);
 
@@ -512,9 +512,9 @@ function TutorialCard({
 	);
 }
 
-// ---------------------------------------------------------------------------
-// MODAL PODGLĄDU/EDYCJI
-// ---------------------------------------------------------------------------
+
+
+
 
 interface TutorialModalProps {
 	isOpen: boolean;
@@ -588,8 +588,8 @@ function TutorialModal({
 
 	if (!isOpen) return null;
 
-	// ⭐ POPRAWIONA FUNKCJA - wysyła pliki jako FormData
-	// ⭐ POPRAWIONA FUNKCJA - wysyła pliki jako FormData
+
+
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
 		if (!onSave || isViewOnly) return;
@@ -625,12 +625,12 @@ function TutorialModal({
 			const formDataToSend = new FormData();
 			formDataToSend.append("data", JSON.stringify(tutorialData));
 
-			// ⭐ DODAJEMY NOWE PLIKI - POPRAWNIE
+
 			(formData.attachments || [])
 				.filter(
 					(att) =>
 						att.file && typeof att.file === "object" && "name" in att.file,
-				) // Sprawdzamy czy to File
+				)
 				.forEach((attachment) => {
 					if (attachment.file) {
 						formDataToSend.append("files", attachment.file);
@@ -665,9 +665,9 @@ function TutorialModal({
 			setLoading(false);
 		}
 	};
-	// ⭐ POPRAWIONA FUNKCJA - dodaje plik do formData
+
 	const handleFileUpload = (file: File) => {
-		// Sprawdź rozmiar (max 10MB)
+
 		if (file.size > 10 * 1024 * 1024) {
 			alert("Plik jest za duży. Maksymalny rozmiar: 10MB");
 			return;
@@ -675,12 +675,12 @@ function TutorialModal({
 
 		const sizeInMB = (file.size / (1024 * 1024)).toFixed(1);
 
-		// Dodaj plik bezpośrednio do formData
+
 		const newAttachmentObj = {
 			name: file.name,
-			url: URL.createObjectURL(file), // Tymczasowy URL do podglądu
+			url: URL.createObjectURL(file),
 			size: sizeInMB + " MB",
-			file: file, // ⭐ Przechowaj referencję do pliku
+			file: file,
 		};
 
 		setFormData((prev) => ({
@@ -691,11 +691,11 @@ function TutorialModal({
 		setNewAttachment({ name: "", url: "", size: "" });
 	};
 
-	// ⭐ POPRAWIONA FUNKCJA - usuwa załącznik
+
 	const removeAttachment = async (index: number) => {
 		const attachment = formData.attachments?.[index];
 
-		// Jeśli ma ID - usuń z backendu
+
 		if (attachment?.id) {
 			try {
 				const token = localStorage.getItem("accessToken");
@@ -719,14 +719,14 @@ function TutorialModal({
 			}
 		}
 
-		// Usuń z listy
+
 		setFormData({
 			...formData,
 			attachments: formData.attachments?.filter((_, i) => i !== index) || [],
 		});
 	};
 
-	// ⭐ POPRAWIONA FUNKCJA - dodaje link
+
 	const addAttachment = () => {
 		if (newAttachment.name.trim() && newAttachment.url.trim()) {
 			setFormData({
@@ -781,7 +781,7 @@ function TutorialModal({
 		});
 	};
 
-	// Reszta JSX pozostaje taka sama, ale z drobnymi zmianami:
+
 	return (
 		<div className={styles.modalOverlay} onClick={onClose}>
 			<div
@@ -956,7 +956,7 @@ function TutorialModal({
 						<div className={styles.modal__field}>
 							<label className={styles.modal__label}>Załączniki</label>
 
-							{/* Wskaźnik uploadu */}
+							{}
 							{isUploading && (
 								<div className={styles.modal__progress}>
 									<div
@@ -1057,7 +1057,7 @@ function TutorialModal({
 								</div>
 							)}
 
-							{/* Lista załączników */}
+							{}
 							{formData.attachments && formData.attachments.length > 0 && (
 								<div className={styles.modal__fileList}>
 									{formData.attachments.map((file, index) => (
@@ -1137,9 +1137,9 @@ function TutorialModal({
 	);
 }
 
-// ---------------------------------------------------------------------------
-// GŁÓWNY KOMPONENT
-// ---------------------------------------------------------------------------
+
+
+
 
 export default function Tutorials() {
 	const [loading, setLoading] = useState(true);
@@ -1155,7 +1155,7 @@ export default function Tutorials() {
 	const [isModalOpen, setIsModalOpen] = useState(false);
 	const [editingTutorial, setEditingTutorial] = useState<Tutorial | null>(null);
 
-	// W głównym komponencie Tutorials, po currentUser:
+
 
 	const canManageTutorials = hasPermission(
 		currentUser?.role,
@@ -1167,7 +1167,7 @@ export default function Tutorials() {
 				setLoading(true);
 				const token = localStorage.getItem("accessToken");
 
-				// 1. Pobierz dane użytkownika
+
 				const userResponse = await fetch("/api/profile", {
 					headers: {
 						Authorization: `Bearer ${token}`,
@@ -1182,7 +1182,7 @@ export default function Tutorials() {
 				const userData = await userResponse.json();
 				console.log("📊 Dane użytkownika z API:", userData);
 
-				// Mapuj dane z API na typ User
+
 				const mappedUser: User = {
 					id: userData.id,
 					name:
@@ -1194,9 +1194,9 @@ export default function Tutorials() {
 
 				setCurrentUser(mappedUser);
 				console.log("✅ Zmapowany użytkownik:", mappedUser);
-				console.log("🔍 Rola użytkownika:", mappedUser.role); // ✅ TUTAJ LOGUJ
+				console.log("🔍 Rola użytkownika:", mappedUser.role);
 
-				// 2. Pobierz poradniki
+
 				const tutorialsResponse = await fetch("/api/tutorials", {
 					headers: {
 						Authorization: `Bearer ${token}`,
@@ -1274,7 +1274,7 @@ export default function Tutorials() {
 		setIsModalOpen(true);
 	};
 
-	// ⭐ ZMIEŃ tę funkcję - dodaj obsługę błędów i odświeżanie
+
 	const handleDeleteTutorial = async (id: string) => {
 		if (!window.confirm("Czy na pewno chcesz usunąć ten poradnik?")) return;
 
@@ -1292,7 +1292,7 @@ export default function Tutorials() {
 				throw new Error("Błąd usuwania");
 			}
 
-			// ✅ Odśwież listę po usunięciu
+
 			const fetchResponse = await fetch("/api/tutorials", {
 				headers: {
 					Authorization: `Bearer ${token}`,
@@ -1307,16 +1307,16 @@ export default function Tutorials() {
 		}
 	};
 
-	// Tutorials.tsx - ZASTĄP funkcję handleSaveTutorial
 
-	// ⭐ ZMIEŃ tę funkcję w głównym komponencie Tutorials
+
+
 	const handleSaveTutorial = async (savedTutorial: Tutorial) => {
 		console.log("✅ Otrzymano zapisany poradnik:", savedTutorial);
 
 		try {
 			const token = localStorage.getItem("accessToken");
 
-			// ✅ Odśwież listę poradników z backendu
+
 			const response = await fetch("/api/tutorials", {
 				headers: {
 					Authorization: `Bearer ${token}`,
@@ -1335,7 +1335,7 @@ export default function Tutorials() {
 		} catch (error) {
 			console.error("❌ Błąd odświeżania:", error);
 
-			// ⭐ Na wypadek błędu - dodaj/zaktualizuj lokalnie
+
 			setTutorials((prev) => {
 				const exists = prev.some((t) => t.id === savedTutorial.id);
 				if (exists) {
@@ -1365,14 +1365,14 @@ export default function Tutorials() {
 			<div className={styles.tutorials}>
 				<div className={styles.loadingState}>
 					<div className={styles.loadingSpinner}></div>
-					{/* <p>Ładowanie...</p> */}
+					{}
 				</div>
 			</div>
 		);
 	}
 	return (
 		<div className={styles.tutorials}>
-			{/* Nagłówek */}
+			{}
 			<div className={styles.header}>
 				<div className={styles.header__left}>
 					<h1 className={styles.header__title}>Poradniki</h1>
@@ -1391,7 +1391,7 @@ export default function Tutorials() {
 				)}
 			</div>
 
-			{/* Kategorie - szybki dostęp */}
+			{}
 			<div className={styles.categories}>
 				<button
 					className={`${styles.categories__item} ${selectedCategory === "all" ? styles.categories__itemActive : ""}`}
@@ -1419,7 +1419,7 @@ export default function Tutorials() {
 				})}
 			</div>
 
-			{/* Filtry */}
+			{}
 			<div className={styles.filters}>
 				<div className={styles.filters__search}>
 					<Search size={18} className={styles.filters__searchIcon} />
@@ -1466,17 +1466,17 @@ export default function Tutorials() {
 				</div>
 			</div>
 
-			{/* Lista poradników */}
-			{/* Lista poradników */}
+			{}
+			{}
 			<div className={styles.tutorialsGrid}>
 				{loading ? (
-					// ⭐ POKAŻ ŁADOWANIE
+
 					<div className={styles.loadingState}>
 						<div className={styles.loadingSpinner}></div>
 						<p>Ładowanie poradników...</p>
 					</div>
 				) : filteredTutorials.length === 0 ? (
-					// ⭐ POKAŻ BRAK PORADNIKÓW
+
 					<div className={styles.emptyState}>
 						<BookOpen size={48} className={styles.emptyState__icon} />
 						<h3 className={styles.emptyState__title}>Brak poradników</h3>
@@ -1501,7 +1501,7 @@ export default function Tutorials() {
 							)}
 					</div>
 				) : (
-					// ⭐ POKAŻ LISTĘ
+
 					filteredTutorials.map((tutorial) => (
 						<TutorialCard
 							key={tutorial.id}
@@ -1515,7 +1515,7 @@ export default function Tutorials() {
 				)}
 			</div>
 
-			{/* Modal edycji/dodawania */}
+			{}
 			<TutorialModal
 				isOpen={isModalOpen}
 				tutorial={editingTutorial}

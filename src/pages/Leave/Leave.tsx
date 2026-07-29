@@ -27,9 +27,9 @@ import {
 } from "lucide-react";
 import styles from "./Leave.module.css";
 
-// ---------------------------------------------------------------------------
-// TYPY
-// ---------------------------------------------------------------------------
+
+
+
 
 type LeaveStatus = "pending" | "approved" | "rejected" | "cancelled";
 type LeaveType = "vacation";
@@ -83,17 +83,17 @@ type User = {
 	team?: string;
 };
 
-// ---------------------------------------------------------------------------
-// DANE PRZYKŁADOWE
-// ---------------------------------------------------------------------------
 
-// const MOCK_USER: User = {
-// 	id: "1",
-// 	name: "Jan Kowalski",
-// 	role: "admin",
-// 	teamId: "board",
-// 	team: "Zarząd",
-// };
+
+
+
+
+
+
+
+
+
+
 
 const TEAMS = [
 	"Filar Projektowy",
@@ -107,129 +107,129 @@ const TEAMS = [
 	"Sąd Koleżeński",
 ];
 
-// const MOCK_LEAVES: LeaveRequest[] = [
-// 	{
-// 		id: "1",
-// 		userId: "4",
-// 		userName: "Adrian Wróblewski",
-// 		userTeam: "Filar Konferencji i Debat",
-// 		type: "vacation",
-// 		scope: "all",
-// 		startDate: "2026-08-01",
-// 		endDate: "2026-08-14",
-// 		reason: "",
-// 		reasonVisibility: "private",
-// 		status: "approved",
-// 		createdAt: "2026-07-15T10:30:00",
-// 		approvedBy: "Maksym Marczak",
-// 		approvedAt: "2026-07-16T09:00:00",
-// 	},
-// 	{
-// 		id: "2",
-// 		userId: "6",
-// 		userName: "Igor Piskórz",
-// 		userTeam: "Filar Symulacyjny",
-// 		type: "vacation",
-// 		scope: "team",
-// 		affectedTeams: ["Filar Symulacyjny"],
-// 		startDate: "2026-07-20",
-// 		endDate: "2026-07-22",
-// 		reason: "",
-// 		reasonVisibility: "private",
-// 		status: "pending",
-// 		createdAt: "2026-07-19T08:15:00",
-// 	},
-// 	{
-// 		id: "3",
-// 		userId: "7",
-// 		userName: "Maja Melerska",
-// 		userTeam: "Social Media",
-// 		type: "vacation",
-// 		scope: "all",
-// 		startDate: "2026-07-25",
-// 		endDate: "2026-07-25",
-// 		reason: "",
-// 		reasonVisibility: "private",
-// 		status: "pending",
-// 		createdAt: "2026-07-18T14:20:00",
-// 	},
-// 	{
-// 		id: "4",
-// 		userId: "3",
-// 		userName: "Zosia Wartacz",
-// 		userTeam: "Filar Projektowy",
-// 		type: "vacation",
-// 		scope: "team",
-// 		affectedTeams: ["Filar Projektowy", "Filar Konferencji i Debat"],
-// 		startDate: "2026-08-15",
-// 		endDate: "2026-08-22",
-// 		reason: "",
-// 		reasonVisibility: "private",
-// 		status: "pending",
-// 		createdAt: "2026-07-17T11:45:00",
-// 	},
-// 	{
-// 		id: "5",
-// 		userId: "5",
-// 		userName: "Jan Augustynak",
-// 		userTeam: "Filar Rzeczniczy",
-// 		type: "vacation",
-// 		scope: "all",
-// 		startDate: "2026-07-28",
-// 		endDate: "2026-07-29",
-// 		reason: "",
-// 		reasonVisibility: "coordinators",
-// 		status: "rejected",
-// 		createdAt: "2026-07-14T09:00:00",
-// 		approvedBy: "Maksym Marczak",
-// 		approvedAt: "2026-07-15T10:00:00",
-// 		comments: [
-// 			{
-// 				id: "c1",
-// 				author: "Maksym Marczak",
-// 				content:
-// 					"Szkolenie nie jest w tym terminie. Proszę o przesunięcie lub wybór innego terminu.",
-// 				createdAt: "2026-07-15T10:00:00",
-// 			},
-// 		],
-// 	},
-// 	{
-// 		id: "6",
-// 		userId: "2",
-// 		userName: "Krzysztof Korbut",
-// 		userTeam: "Zarząd",
-// 		type: "vacation",
-// 		scope: "all",
-// 		startDate: "2026-09-01",
-// 		endDate: "2026-09-07",
-// 		reason: "",
-// 		reasonVisibility: "private",
-// 		status: "cancelled",
-// 		createdAt: "2026-07-10T13:30:00",
-// 		approvedBy: "Maksym Marczak",
-// 		approvedAt: "2026-07-11T08:30:00",
-// 	},
-// 	{
-// 		id: "7",
-// 		userId: "8",
-// 		userName: "Maja Kądziela",
-// 		userTeam: "Zespół TikToka",
-// 		type: "vacation",
-// 		scope: "all",
-// 		startDate: "2026-07-18",
-// 		endDate: "2026-07-19",
-// 		reason: "",
-// 		reasonVisibility: "private",
-// 		status: "approved",
-// 		createdAt: "2026-07-18T06:00:00",
-// 		approvedBy: "Jakub Patrowicz",
-// 		approvedAt: "2026-07-18T08:00:00",
-// 	},
-// ];
 
-// ---------------------------------------------------------------------------
-// MAPOWANIE NA TEKSTY
-// ---------------------------------------------------------------------------
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 const TYPE_LABELS: Record<LeaveType, string> = {
 	vacation: "Urlop wypoczynkowy",
@@ -265,33 +265,33 @@ const SCOPE_LABELS: Record<LeaveScope, string> = {
 	team: "Konkretny zespół/filar",
 };
 
-// ---------------------------------------------------------------------------
-// FUNKCJE POMOCNICZE
-// ---------------------------------------------------------------------------
 
-// const isCurrentlyOnLeave = (
-// 	userId: string,
-// 	leaves: LeaveRequest[],
-// ): { onLeave: boolean; endDate?: string } => {
-// 	const today = new Date();
-// 	today.setHours(0, 0, 0, 0);
 
-// 	const activeLeave = leaves.find(
-// 		(l) =>
-// 			l.userId === userId &&
-// 			l.status === "approved" &&
-// 			new Date(l.startDate) <= today &&
-// 			new Date(l.endDate) >= today,
-// 	);
 
-// 	return {
-// 		onLeave: !!activeLeave,
-// 		endDate: activeLeave?.endDate,
-// 	};
-// };
-// ---------------------------------------------------------------------------
-// KOMPONENT KARTY WNIOSKU
-// ---------------------------------------------------------------------------
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 interface LeaveCardProps {
 	leave: LeaveRequest;
@@ -475,7 +475,7 @@ function LeaveCard({
 				)}
 
 				<div className={styles.leaveCard__actions}>
-					{/* Pokaż szczegóły TYLKO jeśli są komentarze lub załączniki */}
+					{}
 					{(leave.comments && leave.comments.length > 0) ||
 						(leave.attachments && leave.attachments.length > 0) ? (
 						<button
@@ -495,8 +495,8 @@ function LeaveCard({
 							)}
 						</button>
 					) : (
-						// ⭐ JEŚLI NIC NIE MA - NIE WYŚWIETLAJ PRZYCISKU
-						<div style={{ height: "32px" }} /> // albo po prostu null
+
+						<div style={{ height: "32px" }} />
 					)}
 
 					<div className={styles.leaveCard__actionButtons}>
@@ -546,8 +546,8 @@ function LeaveCard({
 							</>
 						)}
 
-						{/* ⭐ NOWA LOGIKA - TYLKO ADMIN LUB AUTOR (JEŚLI PENDING) */}
-						{/* ⭐ EDYCJA I USUWANIE - TYLKO ADMIN */}
+						{}
+						{}
 						{currentUser.role === "admin" && (
 							<>
 								<button
@@ -573,9 +573,9 @@ function LeaveCard({
 	);
 }
 
-// ---------------------------------------------------------------------------
-// KALENDARZ
-// ---------------------------------------------------------------------------
+
+
+
 
 interface CalendarViewProps {
 	leaves: LeaveRequest[];
@@ -679,9 +679,9 @@ function CalendarView({ leaves, currentUser, canManage }: CalendarViewProps) {
 	);
 }
 
-// ---------------------------------------------------------------------------
-// MODAL WNIOSKU
-// ---------------------------------------------------------------------------
+
+
+
 
 interface LeaveModalProps {
 	isOpen: boolean;
@@ -717,9 +717,9 @@ function LeaveModal({
 			comments: [],
 		},
 	);
-	const [userTeams, setUserTeams] = useState<string[]>([]); // <-- DODAJ
+	const [userTeams, setUserTeams] = useState<string[]>([]);
 	const [loadingTeams, setLoadingTeams] = useState(false);
-	// Pobieranie zespołów użytkownika
+
 	useEffect(() => {
 		const fetchUserTeams = async () => {
 			if (!isOpen || !currentUser) return;
@@ -728,7 +728,7 @@ function LeaveModal({
 				setLoadingTeams(true);
 				const token = localStorage.getItem("accessToken");
 
-				// ✅ Pobierz PROFIL użytkownika (zwraca pillars)
+
 				const response = await fetch("/api/profile", {
 					headers: {
 						Authorization: `Bearer ${token}`,
@@ -743,11 +743,11 @@ function LeaveModal({
 				const userData = await response.json();
 				console.log("📊 Dane z /api/profile:", userData);
 
-				// ✅ POBIERZ FILARY z odpowiedzi
-				// Backend zwraca: pillars: ["Filar Projektowy", "Filar Konferencyjny"]
+
+
 				const teams = userData.pillars || [];
 
-				// Jeśli nie ma pillarów, użyj pojedynczego zespołu
+
 				if (teams.length === 0 && userData.team) {
 					setUserTeams([userData.team]);
 				} else {
@@ -757,7 +757,7 @@ function LeaveModal({
 				console.log("✅ Zespoły użytkownika:", teams);
 			} catch (error) {
 				console.error("❌ Błąd pobierania zespołów:", error);
-				// Fallback - użyj zespołu z currentUser
+
 				if (currentUser.team) {
 					setUserTeams([currentUser.team]);
 				}
@@ -772,13 +772,13 @@ function LeaveModal({
 		if (leave) {
 			setFormData({
 				...leave,
-				// Upewnij się że wszystkie pola są
+
 				affectedTeams: leave.affectedTeams || [],
 				attachments: leave.attachments || [],
 				comments: leave.comments || [],
 			});
 		} else {
-			// Reset do domyślnych
+
 			setFormData({
 				userId: currentUser.id,
 				userName: currentUser.name,
@@ -795,7 +795,7 @@ function LeaveModal({
 				comments: [],
 			});
 		}
-	}, [leave, currentUser]); // ✅ ZALEŻNOŚCI
+	}, [leave, currentUser]);
 	const [newAttachment, setNewAttachment] = useState({
 		name: "",
 		url: "",
@@ -806,12 +806,12 @@ function LeaveModal({
 	if (!isOpen) return null;
 
 	const isEdit = !!leave;
-	// ⭐ NOWA LOGIKA - TYLKO ADMIN MOŻE EDYTOWAĆ WSZYSTKIE WNIOSKI
-	// Użytkownik może edytować TYLKO swoje własne wnioski, i to tylko jeśli są w statusie "pending"
+
+
 	const canEdit =
 		!isViewOnly &&
-		(currentUser.role === "admin" || // Admin edytuje wszystko
-			(!leave && currentUser.role !== "admin")); // ← TYLKO TWORZENIE NOWEGO
+		(currentUser.role === "admin" ||
+			(!leave && currentUser.role !== "admin"));
 
 	const canViewReason =
 		!isViewOnly ||
@@ -819,27 +819,27 @@ function LeaveModal({
 		currentUser.role === "coordinator" ||
 		currentUser.id === leave?.userId;
 
-	// W LeaveModal - przed handleSubmit
-	// ============================================================
-	// ⭐ FUNKCJA WALIDUJĄCA DATY
-	// ============================================================
+
+
+
+
 
 	const validateDates = (
 		startDate: string,
 		endDate: string,
 	): { valid: boolean; error: string } => {
 		const today = new Date();
-		today.setHours(0, 0, 0, 0); // Reset czasu do północy
+		today.setHours(0, 0, 0, 0);
 
-		// 🔥 KONWERSJA NA OBIEKTY DATE
+
 		const start = new Date(startDate);
 		const end = new Date(endDate);
 
-		// Reset czasu do północy dla porównania
+
 		start.setHours(0, 0, 0, 0);
 		end.setHours(0, 0, 0, 0);
 
-		// ✅ SPRAWDŹ CZY DATA ROZPOCZĘCIA NIE JEST WCZEŚNIEJSZA NIŻ DZISIAJ
+
 		if (start < today) {
 			return {
 				valid: false,
@@ -847,7 +847,7 @@ function LeaveModal({
 			};
 		}
 
-		// ✅ SPRAWDŹ CZY DATA ZAKOŃCZENIA NIE JEST WCZEŚNIEJSZA NIŻ ROZPOCZĘCIE
+
 		if (end < start) {
 			return {
 				valid: false,
@@ -859,15 +859,15 @@ function LeaveModal({
 		return { valid: true, error: "" };
 	};
 
-	// ============================================================
-	// ⭐ ZMODYFIKOWANA FUNKCJA handleSubmit
-	// ============================================================
+
+
+
 
 	const handleSubmit = (e: React.FormEvent) => {
 		e.preventDefault();
 
 		if (onSave && canEdit) {
-			// ✅ WALIDUJ DATY
+
 			const validation = validateDates(
 				formData.startDate || "",
 				formData.endDate || "",
@@ -875,10 +875,10 @@ function LeaveModal({
 
 			if (!validation.valid) {
 				toast.error(validation.error);
-				return; // ⭐ PRZERYWAMY ZAPIS
+				return;
 			}
 
-			// Reszta kodu zapisu...
+
 			const saveData: LeaveRequest = {
 				id: leave?.id || `leave-${Date.now()}`,
 				userId: formData.userId || currentUser.id,
@@ -1080,7 +1080,7 @@ function LeaveModal({
 							)}
 						</div>
 					)}
-					{/* W sekcji z datami - ZMIEŃ NA TO: */}
+					{}
 					<div className={styles.modal__row}>
 						<div className={styles.modal__field}>
 							<label className={styles.modal__label}>Data rozpoczęcia *</label>
@@ -1097,7 +1097,7 @@ function LeaveModal({
 									setFormData({
 										...formData,
 										startDate: newStartDate,
-										// ⭐ AUTOMATYCZNIE ZERUJ END DATE JESLI JEST WCZEŚNIEJSZA
+
 										endDate:
 											formData.endDate &&
 												new Date(formData.endDate) < new Date(newStartDate)
@@ -1107,7 +1107,7 @@ function LeaveModal({
 								}}
 								required
 								disabled={!canEdit || isViewOnly}
-								min={new Date().toISOString().split("T")[0]} // ⭐ DODAJ TO!
+								min={new Date().toISOString().split("T")[0]}
 							/>
 						</div>
 						<div className={styles.modal__field}>
@@ -1127,7 +1127,7 @@ function LeaveModal({
 								disabled={!canEdit || isViewOnly}
 								min={
 									formData.startDate || new Date().toISOString().split("T")[0]
-								} // ⭐ DODAJ TO!
+								}
 							/>
 						</div>
 					</div>
@@ -1297,9 +1297,9 @@ function LeaveModal({
 	);
 }
 
-// ---------------------------------------------------------------------------
-// GŁÓWNY KOMPONENT
-// ---------------------------------------------------------------------------
+
+
+
 
 export default function Leave({ title }: { title?: string }) {
 	const [leaves, setLeaves] = useState<LeaveRequest[]>([]);
@@ -1357,7 +1357,7 @@ export default function Leave({ title }: { title?: string }) {
 	const canViewAll = hasPermission(currentUser?.role, "canViewAllLeaves");
 	const canManage = canApprove || canReject;
 	const filteredLeaves = useMemo(() => {
-		// Zabezpieczenie - jeśli nie ma użytkownika, zwróć pustą tablicę
+
 		if (!currentUser) return [];
 
 		return leaves.filter((leave) => {
@@ -1395,7 +1395,7 @@ export default function Leave({ title }: { title?: string }) {
 				setLoading(true);
 				const token = localStorage.getItem("accessToken");
 
-				// 1. Pobierz dane użytkownika z API
+
 				const userResponse = await fetch("/api/profile", {
 					headers: { Authorization: `Bearer ${token}` },
 				});
@@ -1406,7 +1406,7 @@ export default function Leave({ title }: { title?: string }) {
 				console.log("📊 Dane użytkownika z API:", userData);
 				console.log("📊 Rola z API:", userData.role);
 
-				// Mapuj dane z API na typ User
+
 				const mappedUser = {
 					id: userData.id,
 					name:
@@ -1420,7 +1420,7 @@ export default function Leave({ title }: { title?: string }) {
 				setCurrentUser(mappedUser);
 				console.log("✅ Zmapowany użytkownik:", mappedUser);
 
-				// 2. Pobierz urlopy
+
 				const leavesResponse = await fetch("/api/leaves", {
 					headers: { Authorization: `Bearer ${token}` },
 				});
@@ -1438,7 +1438,7 @@ export default function Leave({ title }: { title?: string }) {
 		};
 
 		fetchAllData();
-	}, []); // ✅ TYLKO JEDEN useEffect
+	}, []);
 
 	const handleAddLeave = () => {
 		setEditingLeave(null);
@@ -1451,13 +1451,13 @@ export default function Leave({ title }: { title?: string }) {
 	};
 
 	const handleViewLeave = (leave: LeaveRequest) => {
-		console.log("📋 Viewing leave:", leave); // ✅ DODAJ LOG
+		console.log("📋 Viewing leave:", leave);
 		setViewingLeave(leave);
 		setIsViewModalOpen(true);
 	};
 
 	const handleDeleteLeave = (id: string) => {
-		// ⭐ UŻYJ ConfirmDialog ZAMIAST window.confirm
+
 		showConfirm(
 			"Usuń wniosek urlopowy",
 			"Czy na pewno chcesz usunąć ten wniosek? Tej operacji nie można cofnąć.",
@@ -1481,7 +1481,7 @@ export default function Leave({ title }: { title?: string }) {
 						const data = await response.json();
 						console.log('🔍 [FRONTEND] Odpowiedź:', data);
 
-						// ⭐ USUŃ Z LISTY TYLKO PO POTWIERDZENIU Z API
+
 						setLeaves(leaves.filter((l) => l.id !== id));
 						toast.success('Wniosek usunięty!');
 					} else {
@@ -1523,13 +1523,13 @@ export default function Leave({ title }: { title?: string }) {
 		const actionText = status === "approved" ? "zatwierdzić" : "odrzucić";
 		const actionLabel = status === "approved" ? "Zaakceptuj" : "Odrzuć";
 
-		// ✅ UŻYJ REACTOWEGO DIALOGU
+
 		showConfirm(
 			`${actionLabel} wniosek`,
 			`Czy na pewno chcesz ${actionText} ten wniosek urlopowy?`,
 			actionLabel,
 			async () => {
-				// Tu kod który był wcześniej
+
 				try {
 					const token = localStorage.getItem("accessToken");
 					toast.loading(`Zmiana statusu...`);
@@ -1604,7 +1604,7 @@ export default function Leave({ title }: { title?: string }) {
 			const url = isEdit ? `/api/leaves/${leave.id}` : "/api/leaves";
 			const method = isEdit ? "PUT" : "POST";
 
-			// ⭐ PRZYGOTUJ DANE DO WYSŁANIA - TYLKO TE POLA KTÓRE MA BACKEND
+
 			const payload = {
 				type: leave.type || "vacation",
 				scope: leave.scope || "all",
@@ -1637,7 +1637,7 @@ export default function Leave({ title }: { title?: string }) {
 			const data = await response.json();
 			console.log("✅ Otrzymane dane z API:", data);
 
-			// ⭐ DODAJ BRAKUJĄCE POLA DO OBIEKTU (jeśli backend nie zwraca wszystkiego)
+
 			const savedLeave = {
 				...leave,
 				id: data.id || leave.id,
@@ -1671,7 +1671,7 @@ export default function Leave({ title }: { title?: string }) {
 		setSelectedType("all");
 	};
 
-	// ✅ Użyj filteredLeaves zamiast leaves
+
 	const getStatusCount = (status: LeaveStatus) => {
 		return filteredLeaves.filter((l) => l.status === status).length;
 	};
@@ -1692,14 +1692,14 @@ export default function Leave({ title }: { title?: string }) {
 			<div className={styles.leave}>
 				<div className={styles.loading}>
 					<div className={styles.loading__spinner}></div>
-					{/* ❌ USUŃ "Ładowanie..." */}
+					{}
 				</div>
 			</div>
 		);
 	}
 	return (
 		<div className={styles.leave}>
-			{/* Nagłówek */}
+			{}
 			<div className={styles.header}>
 				<div className={styles.header__left}>
 					<h1 className={styles.header__title}>
@@ -1718,7 +1718,7 @@ export default function Leave({ title }: { title?: string }) {
 				</div>
 			</div>
 
-			{/* Statusy - szybki dostęp */}
+			{}
 			<div className={styles.statuses}>
 				<button
 					className={`${styles.statuses__item} ${selectedStatus === "all" ? styles.statuses__itemActive : ""}`}
@@ -1744,7 +1744,7 @@ export default function Leave({ title }: { title?: string }) {
 				})}
 			</div>
 
-			{/* Filtry */}
+			{}
 			<div className={styles.filters}>
 				<div className={styles.filters__search}>
 					<Search size={18} className={styles.filters__searchIcon} />
@@ -1793,7 +1793,7 @@ export default function Leave({ title }: { title?: string }) {
 				</div>
 			</div>
 
-			{/* Lista/Kalendarz */}
+			{}
 			{viewMode === "list" ? (
 				<div className={styles.leavesGrid}>
 					{filteredLeaves.length === 0 ? (
@@ -1846,7 +1846,7 @@ export default function Leave({ title }: { title?: string }) {
 				/>
 			)}
 
-			{/* Modal edycji/dodawania */}
+			{}
 			<LeaveModal
 				isOpen={isModalOpen}
 				leave={editingLeave}
@@ -1859,7 +1859,7 @@ export default function Leave({ title }: { title?: string }) {
 				onSave={handleSaveLeave}
 			/>
 
-			{/* Modal podglądu */}
+			{}
 			<LeaveModal
 				isOpen={isViewModalOpen}
 				leave={viewingLeave}

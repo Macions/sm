@@ -23,9 +23,9 @@ interface HeaderProps {
 	userId?: string;
 }
 
-// ---------------------------------------------------------------------------
-// TYPY POWIADOMIEŃ
-// ---------------------------------------------------------------------------
+
+
+
 
 type NotificationType = "info" | "success" | "warning" | "error";
 
@@ -40,9 +40,9 @@ interface Notification {
 	time?: string;
 }
 
-// ---------------------------------------------------------------------------
-// KOMPONENT
-// ---------------------------------------------------------------------------
+
+
+
 
 export default function Header({
 	title,
@@ -59,13 +59,13 @@ export default function Header({
 	const [visibleCount, setVisibleCount] = useState(15);
 	const dropdownRef = useRef<HTMLDivElement>(null);
 
-	// ===== POBIERANIE POWIADOMIEŃ Z BACKENDU =====
+
 	const fetchNotifications = async () => {
 		try {
 			setLoading(true);
 			const token = localStorage.getItem("accessToken");
 
-			// ✅ Użyj tego samego endpointu
+
 			const response = await fetch("/api/dashboard/notifications?limit=20", {
 				headers: {
 					Authorization: `Bearer ${token}`,
@@ -78,9 +78,9 @@ export default function Header({
 			}
 
 			const data = await response.json();
-			console.log("📊 Powiadomienia w Header:", data); // ✅ Debug
+			console.log("📊 Powiadomienia w Header:", data);
 
-			// ✅ Upewnij się że dane mają pole 'time'
+
 			setNotifications(data);
 		} catch (error) {
 			console.error("Błąd ładowania powiadomień:", error);
@@ -89,7 +89,7 @@ export default function Header({
 		}
 	};
 
-	// ===== OZNACZANIE JAKO PRZECZYTANE =====
+
 	const markAsRead = async (id: string) => {
 		try {
 			const token = localStorage.getItem("accessToken");
@@ -102,7 +102,7 @@ export default function Header({
 				},
 			});
 
-			// Aktualizuj lokalny stan
+
 			setNotifications((prev) =>
 				prev.map((n) => (n.id === id ? { ...n, read: true } : n)),
 			);
@@ -111,7 +111,7 @@ export default function Header({
 		}
 	};
 
-	// ===== OZNACZANIE WSZYSTKICH JAKO PRZECZYTANE =====
+
 	const markAllAsRead = async () => {
 		try {
 			const token = localStorage.getItem("accessToken");
@@ -130,7 +130,7 @@ export default function Header({
 		}
 	};
 
-	// ===== USUWANIE POWIADOMIENIA =====
+
 	const deleteNotification = async (id: string) => {
 		try {
 			const token = localStorage.getItem("accessToken");
@@ -149,14 +149,14 @@ export default function Header({
 		}
 	};
 
-	// ===== ŁADOWANIE PRZY STARCIE =====
+
 	useEffect(() => {
 		fetchNotifications();
 	}, []);
 
-	// ===== RESZTA KODU (formatTime, filtrowanie, itd.) =====
-	// ===== RESZTA KODU (formatTime, filtrowanie, itd.) =====
-	// Header.tsx - znajdź funkcję formatTime i zaktualizuj:
+
+
+
 
 	const formatTime = (createdAt: Date | string | undefined): string => {
 		if (!createdAt) return "przed chwilą";
@@ -173,7 +173,7 @@ export default function Header({
 		const diffHour = Math.floor(diffMin / 60);
 		const diffDay = Math.floor(diffHour / 24);
 
-		// ✅ POPRAWIONE WARUNKI
+
 		if (diffMin < 1) return "przed chwilą";
 		if (diffMin < 60) return `${diffMin} min temu`;
 		if (diffHour < 24) return `${diffHour} godz. temu`;
@@ -192,7 +192,7 @@ export default function Header({
 	const displayedNotifications = filteredNotifications.slice(0, visibleCount);
 	const hasMore = filteredNotifications.length > visibleCount;
 
-	// Zamknij dropdown gdy klikniesz poza nim
+
 	useEffect(() => {
 		const handleClickOutside = (event: MouseEvent) => {
 			if (
@@ -209,7 +209,7 @@ export default function Header({
 	const toggleNotifications = () => {
 		setIsNotificationsOpen(!isNotificationsOpen);
 		if (!isNotificationsOpen) {
-			fetchNotifications(); // Odśwież przy otwarciu
+			fetchNotifications();
 		}
 	};
 
@@ -273,7 +273,7 @@ export default function Header({
 						)}
 					</button>
 
-					{/* Dropdown powiadomień */}
+					{}
 					{isNotificationsOpen && (
 						<div className={styles.notificationsDropdown}>
 							<div className={styles.notificationsDropdown__header}>
@@ -338,7 +338,7 @@ export default function Header({
 													<div className={styles.notification__footer}>
 														<span className={styles.notification__time}>
 															<Clock size={12} />
-															{notification.time || "przed chwilą"}  {/* ⭐ UŻYJ time z API */}
+															{notification.time || "przed chwilą"}  {}
 														</span>
 														{!notification.read && (
 															<span className={styles.notification__unreadDot}>

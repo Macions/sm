@@ -21,7 +21,7 @@
 	border: 1px solid #e2e8f0;
 }
 
-/* ===== NAGŁÓWEK ===== */
+
 .header {
 	text-align: center;
 	margin-bottom: 32px;
@@ -41,7 +41,7 @@
 	line-height: 1.6;
 }
 
-/* ===== PROGRESS ===== */
+
 .progress {
 	margin-bottom: 32px;
 }
@@ -68,14 +68,14 @@
 	color: #94a3b8;
 }
 
-/* ===== FORMULARZ ===== */
+
 .form {
 	display: flex;
 	flex-direction: column;
 	gap: 32px;
 }
 
-/* ===== KROKI ===== */
+
 .step {
 	animation: fadeIn 0.3s ease;
 }
@@ -108,7 +108,7 @@
 	margin: 0 0 24px 0;
 }
 
-/* ===== POLA FORMULARZA ===== */
+
 .form__grid {
 	display: grid;
 	grid-template-columns: 1fr 1fr;
@@ -187,7 +187,7 @@
 	color: #d97706;
 }
 
-/* ===== OBSZARY ROZWOJU ===== */
+
 .areas__grid {
 	display: grid;
 	grid-template-columns: 1fr 1fr 1fr;
@@ -225,7 +225,7 @@
 	background: #e0e7ff;
 }
 
-/* ===== TAGS ===== */
+
 .tags__input {
 	display: flex;
 	gap: 8px;
@@ -287,7 +287,7 @@
 	color: #dc2626;
 }
 
-/* ===== PODSUMOWANIE ===== */
+
 .summary {
 	display: flex;
 	flex-direction: column;
@@ -353,7 +353,7 @@
 	line-height: 1.6;
 }
 
-/* ===== NAWIGACJA ===== */
+
 .navigation {
 	display: flex;
 	justify-content: space-between;
@@ -412,7 +412,7 @@
 	box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3);
 }
 
-/* ===== RESPONSYWNOŚĆ ===== */
+
 @media (max-width: 768px) {
 	.container {
 		padding: 24px 16px;
@@ -459,7 +459,7 @@
 	}
 }
 
-/* ===== CHECKBOX ===== */
+
 .form__checkbox {
 	display: flex;
 	align-items: center;
@@ -542,7 +542,7 @@
 	}
 }
 
-/* Onboarding.module.css - dodaj */
+
 .pillars__grid {
 	display: grid;
 	grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
@@ -590,7 +590,7 @@
 	margin-top: 6px;
 }
 
-/* Onboarding.module.css - dodaj na końcu */
+
 
 .spinner {
 	display: inline-block;

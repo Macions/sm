@@ -1,4 +1,4 @@
-// A:\sm system\sm\backend\src\services\structure.service.ts
+
 
 import pool from "../config/db";
 
@@ -28,7 +28,7 @@ export interface TeamNode {
 export class StructureService {
     async getFullStructure(): Promise<TeamNode> {
         try {
-            // Pobierz wszystkie zespoły
+
             const [teams]: any = await pool.query(`
                 SELECT 
                     id, 
@@ -43,7 +43,7 @@ export class StructureService {
                 ORDER BY parent_id, id
             `);
 
-            // Pobierz wszystkich członków z ich danymi
+
             const [members]: any = await pool.query(`
                 SELECT 
                     tm.team_id,
@@ -62,7 +62,7 @@ export class StructureService {
                 ORDER BY tm.is_leader DESC, u.last_name
             `);
 
-            // Stwórz mapę zespołów
+
             const teamMap: Record<number, any> = {};
             const teamChildren: Record<number, number[]> = {};
 
@@ -86,7 +86,7 @@ export class StructureService {
                 teamChildren[parentId].push(team.id);
             });
 
-            // Dodaj członków do zespołów
+
             members.forEach((member: any) => {
                 if (teamMap[member.team_id]) {
                     teamMap[member.team_id].people.push({
@@ -102,7 +102,7 @@ export class StructureService {
                 }
             });
 
-            // Zbuduj drzewo
+
             const buildTree = (parentId: number): TeamNode[] => {
                 const childIds = teamChildren[parentId] || [];
                 return childIds.map((id: number) => {
@@ -112,14 +112,14 @@ export class StructureService {
                 });
             };
 
-            // Zwróć główny węzeł (organizacja)
+
             const root = teamMap[1];
             if (root) {
                 root.children = buildTree(1);
                 return root;
             }
 
-            // Fallback - jeśli nie ma roota
+
             return {
                 id: "organization",
                 name: "Siła Młodych",
