@@ -30,22 +30,25 @@ export async function syncAttendance() {
 		console.log("📋 [ATTENDANCE] Tabele w SM_Frekwencja:", tables);
 
 		// ⭐ POBIERZ FREKWENCJĘ (dostosuj nazwy tabel)
+		// backend/src/jobs/syncAttendance.ts
+
+		// ZMIEŃ NAZWY TABEL na rzeczywiste z bazy SM_Frekwencja:
 		const [rows] = await connection.execute(`
-            SELECT
-                m.email,
-                ROUND(
-                    SUM(CASE WHEN a.status = 'present' THEN 1 ELSE 0 END)
-                    /
-                    COUNT(a.id)
-                    * 100,
-                    2
-                ) AS attendance_percentage
-            FROM members m
-            LEFT JOIN attendance a
-                ON a.member_id = m.id
-            GROUP BY m.id, m.email
-            HAVING attendance_percentage IS NOT NULL
-        `);
+    SELECT
+        m.email,
+        ROUND(
+            SUM(CASE WHEN a.status = 'present' THEN 1 ELSE 0 END)
+            /
+            COUNT(a.id)
+            * 100,
+            2
+        ) AS attendance_percentage
+    FROM att_members m  -- ⭐ ZMIENIONE na att_members
+    LEFT JOIN att_attendance a  -- ⭐ ZMIENIONE na att_attendance
+        ON a.member_id = m.id
+    GROUP BY m.id, m.email
+    HAVING attendance_percentage IS NOT NULL
+`);
 
 		const attendanceData = rows as Array<{
 			email: string;
