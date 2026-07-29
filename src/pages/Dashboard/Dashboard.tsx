@@ -14,7 +14,6 @@ import {
 	AlertCircle,
 } from "lucide-react";
 import styles from "./Dashboard.module.css";
-import logo from "../../assets/images/sm-logo.png";
 
 // ---------------------------------------------------------------------------
 // Typy
@@ -45,19 +44,19 @@ type DashboardStats = {
 };
 
 type User = {
-    id: string | number;
-    firstName: string;
-    lastName?: string;
-    first_name?: string;    // ✅ DODANE
-    last_name?: string;     // ✅ DODANE
-    role: string;
-    team: string;
-    status: string;
-    username?: string;
-    email?: string;
-    joinDate?: string;
-    isTrial?: boolean;
-    createdAt?: string;
+	id: string | number;
+	firstName: string;
+	lastName?: string;
+	first_name?: string;    // ✅ DODANE
+	last_name?: string;     // ✅ DODANE
+	role: string;
+	team: string;
+	status: string;
+	username?: string;
+	email?: string;
+	joinDate?: string;
+	isTrial?: boolean;
+	createdAt?: string;
 };
 
 // ---------------------------------------------------------------------------
@@ -334,53 +333,53 @@ export default function Dashboard() {
 	// ===== STATYSTYKI =====
 	const statsData = stats
 		? [
-				{
-					id: "members",
-					label: "Członkowie SM",
-					value: stats.members.toString(),
-					icon: <Users size={24} />,
-					color: "#4A6FE8",
-					bgColor: "#EFEBFD",
-				},
-				{
-					id: "projects",
-					label: "Aktywne projekty",
-					value: stats.projects.toString(),
-					icon: <FolderKanban size={24} />,
-					color: "#2ECC71",
-					bgColor: "#ECFDF5",
-				},
-				{
-					id: "attendance",
-					label: "Twoja frekwencja",
-					value: stats.attendance,
-					icon: <CalendarCheck size={24} />,
-					color: "#10B981",
-					bgColor: "#ECFDF5",
-				},
-				// ===== ZAMIAST OGŁOSZEŃ - "JESTEŚ Z NAMI" =====
-				...(membershipDuration
-					? [
-							{
-								id: "membership",
-								label: "Jesteś z nami",
-								value: membershipDuration,
-								icon: <CalendarCheck size={24} />,
-								color: "#4A6FE8",
-								bgColor: "#EFEBFD",
-							},
-						]
-					: []),
-				{
-					id: "guides",
-					label: "Nowe poradniki",
-					value: stats.newGuides.toString(),
-					subtext: "aktualizacje",
-					icon: <BookOpen size={24} />,
-					color: "#17C3B2",
-					bgColor: "#F0FDFA",
-				},
-			]
+			{
+				id: "members",
+				label: "Członkowie SM",
+				value: stats.members.toString(),
+				icon: <Users size={24} />,
+				color: "#4A6FE8",
+				bgColor: "#EFEBFD",
+			},
+			{
+				id: "projects",
+				label: "Aktywne projekty",
+				value: stats.projects.toString(),
+				icon: <FolderKanban size={24} />,
+				color: "#2ECC71",
+				bgColor: "#ECFDF5",
+			},
+			{
+				id: "attendance",
+				label: "Twoja frekwencja",
+				value: stats.attendance,
+				icon: <CalendarCheck size={24} />,
+				color: "#10B981",
+				bgColor: "#ECFDF5",
+			},
+			// ===== ZAMIAST OGŁOSZEŃ - "JESTEŚ Z NAMI" =====
+			...(membershipDuration
+				? [
+					{
+						id: "membership",
+						label: "Jesteś z nami",
+						value: membershipDuration,
+						icon: <CalendarCheck size={24} />,
+						color: "#4A6FE8",
+						bgColor: "#EFEBFD",
+					},
+				]
+				: []),
+			{
+				id: "guides",
+				label: "Nowe poradniki",
+				value: stats.newGuides.toString(),
+				subtext: "aktualizacje",
+				icon: <BookOpen size={24} />,
+				color: "#17C3B2",
+				bgColor: "#F0FDFA",
+			},
+		]
 		: [];
 
 	return (
@@ -389,7 +388,7 @@ export default function Dashboard() {
 			<div className={styles.welcomeCard}>
 				<div className={styles.welcomeCard__content}>
 					<img
-						src={logo}
+						src="/sm/assets/images/sm-logo.png"
 						alt="Siła Młodych logo"
 						className={styles.welcomeCard__logo}
 					/>

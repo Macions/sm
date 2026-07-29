@@ -411,7 +411,7 @@ export default function Onboarding({
 			// alert("✅ Onboarding zakończony! Za chwilę zostaniesz przeniesiony na dashboard.");
 
 			// Przekieruj od razu (backend sam tworzy powiadomienie)
-			window.location.href = "/dashboard";
+			navigate("/dashboard");
 		} catch (error) {
 			console.error("❌ Błąd zapisu onboardingu:", error);
 			alert(

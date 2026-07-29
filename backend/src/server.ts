@@ -532,6 +532,13 @@ app.get(
 			}
 
 			console.log(`🔍 Sprawdzam onboarding dla użytkownika ${userId}`);
+			console.log(`👤 Rola użytkownika: ${req.user?.role}`);
+
+			// ⭐ ADMIN POBIERA ONBOARDING
+			if (req.user?.role === "admin") {
+				console.log(`👑 Admin ${userId} - pomijam onboarding, zwracam true`);
+				return res.json({ completed: true });
+			}
 
 			const onboarding = await prisma.onboarding_data.findFirst({
 				where: { user_id: userId },
@@ -543,7 +550,6 @@ app.get(
 				return res.json({ completed: false });
 			}
 
-			// ⭐ NAJPROSTSZE ROZWIĄZANIE - działa na wszystko ⭐
 			const isCompleted = !!onboarding.completed;
 
 			console.log(`📋 Użytkownik ${userId} - completed: ${isCompleted}`);
@@ -3887,7 +3893,24 @@ app.post("/api/onboarding/save", authMiddleware, async (req: any, res) => {
 		});
 	}
 });
+// backend/src/server.ts
+app.get("/api/social/members/check", authMiddleware, async (req: any, res) => {
+	try {
+		const userId = req.user?.id;
+		if (!userId) {
+			return res.status(401).json({ error: "Brak autoryzacji" });
+		}
 
+		const member = await prisma.socialMediaMember.findFirst({
+			where: { user_id: userId }
+		});
+
+		res.json({ isMember: !!member });
+	} catch (error) {
+		console.error("❌ Błąd sprawdzania członkostwa social media:", error);
+		res.status(500).json({ error: "Błąd serwera" });
+	}
+});
 
 // ---------------------- MATERIALS ----------------------
 // POST - Dodaj materiał

@@ -6,11 +6,14 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+// ⭐ WYKRYWA CZY JESTEŚMY NA GITHUB PAGES
+const isGitHubPages = process.env.GITHUB_PAGES === 'true' || process.env.NODE_ENV === 'production';
+
 export default defineConfig({
 	plugins: [react()],
 
-	// ⭐ DODAJ BASE - NAZWA TWOJEGO REPOZYTORIUM ⭐
-	base: '/sm/', // ⬅️ TO JEST NAJWAŻNIEJSZE!
+	// ⭐ DYNAMICZNY BASE - działa i lokalnie i na GitHub Pages
+	base: isGitHubPages ? '/sm/' : '/',
 
 	resolve: {
 		alias: {
@@ -22,14 +25,13 @@ export default defineConfig({
 		allowedHosts: ["turbine-protector-aluminum.ngrok-free.dev"],
 		proxy: {
 			"/api": {
-				target: "https://sm-backend-po9k.onrender.com", // ⬅️ TWÓJ URL
+				target: "https://sm-backend-po9k.onrender.com",
 				changeOrigin: true,
 				secure: false,
 			},
 		},
 	},
 
-	// ⭐ OPCJONALNIE - skonfiguruj build ⭐
 	build: {
 		outDir: 'dist',
 		assetsDir: 'assets',
@@ -40,4 +42,7 @@ export default defineConfig({
 			},
 		},
 	},
+	define: {
+		'process.env.VITE_API_URL': JSON.stringify('https://sm-backend-po9k.onrender.com')
+	}
 });

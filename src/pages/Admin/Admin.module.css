@@ -2833,3 +2833,20 @@
         border-top: 1px solid #f1f4f9;
     }
 }
+
+.addMemberForm__input {
+    flex: 1;
+    min-width: 150px;
+    padding: 8px 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    font-size: 14px;
+    background: white;
+    transition: border-color 0.2s;
+}
+
+.addMemberForm__input:focus {
+    outline: none;
+    border-color: #4A6FE8;
+    box-shadow: 0 0 0 3px rgba(74, 111, 232, 0.1);
+}

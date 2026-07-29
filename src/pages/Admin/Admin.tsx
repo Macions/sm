@@ -1223,15 +1223,16 @@ function StructureManagement({
                                                         </option>
                                                     ))}
                                             </select>
-                                            <select
+
+                                            {/* ⭐ ZMIENIONO NA INPUT TEXT ⭐ */}
+                                            <input
+                                                type="text"
                                                 value={selectedRole}
                                                 onChange={(e) => setSelectedRole(e.target.value)}
-                                                className={styles.addMemberForm__select}
-                                            >
-                                                <option value="Członek">Członek</option>
-                                                <option value="Koordynator">Koordynator</option>
-                                                <option value="Specjalista">Specjalista</option>
-                                            </select>
+                                                placeholder="Rola w zespole (np. Koordynator, Specjalista)"
+                                                className={styles.addMemberForm__input}
+                                            />
+
                                             <label className={styles.addMemberForm__leader}>
                                                 <input
                                                     type="checkbox"
@@ -1251,6 +1252,7 @@ function StructureManagement({
                                                 onClick={() => {
                                                     setIsAddingMember(null);
                                                     setSelectedUser("");
+                                                    setSelectedRole("Członek");
                                                     setIsLeader(false);
                                                 }}
                                             >

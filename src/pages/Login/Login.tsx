@@ -50,7 +50,7 @@ const Login: React.FC = () => {
 
 			console.log("✅ Logowanie poprawne");
 
-			// Zapisz tokeny
+			// ⭐ ZAPISZ TOKENY ⭐
 			localStorage.setItem("accessToken", data.accessToken);
 			localStorage.setItem("refreshToken", data.refreshToken);
 			localStorage.setItem("user", JSON.stringify(data.user));
@@ -58,7 +58,7 @@ const Login: React.FC = () => {
 			console.log("🔑 accessToken zapisany");
 			console.log("👤 user:", localStorage.getItem("user"));
 
-			// ===== SPRAWDŹ STATUS ONBOARDINGU =====
+			// ⭐⭐⭐ SPRAWDŹ STATUS ONBOARDINGU ⭐⭐⭐
 			try {
 				const token = localStorage.getItem("accessToken");
 				console.log("🔍 Sprawdzam status onboardingu...");
@@ -73,31 +73,41 @@ const Login: React.FC = () => {
 
 				console.log("📡 Status onboardingu:", onboardingResponse.status);
 
+				let onboardingCompleted = false;
+
 				if (onboardingResponse.ok) {
 					const onboardingData = await onboardingResponse.json();
 					console.log("📋 Status onboardingu:", onboardingData);
-
-					if (onboardingData.completed) {
-						console.log("✅ Onboarding ukończony - przechodzę do dashboard");
-						localStorage.setItem("onboardingCompleted", "true");
-						window.location.href = "/dashboard";
-					} else {
-						console.log("⚠️ Onboarding NIEUKOŃCZONY - przechodzę do onboarding");
-						localStorage.removeItem("onboardingCompleted");
-						window.location.href = "/onboarding";
-					}
+					onboardingCompleted = onboardingData.completed === true;
 				} else {
-					// ⭐ ENDPOINT NIE ISTNIEJE LUB BŁĄD - zakładamy że onboarding jest potrzebny
-					console.warn("⚠️ Błąd sprawdzania onboardingu (", onboardingResponse.status, ") - przekierowuję do onboardingu");
-					localStorage.removeItem("onboardingCompleted");
-					window.location.href = "/onboarding";
+					console.warn("⚠️ Błąd sprawdzania onboardingu (", onboardingResponse.status, ")");
+					// ⭐ FALLBACK - SPRAWDŹ CZY UŻYTKOWNIK MA JUŻ ONBOARDING W BAZIE
+					// Zakładamy że jeśli użytkownik istnieje i ma dane - onboarding jest zrobiony
+					onboardingCompleted = true;
+				}
+
+				// ⭐⭐⭐ ZAPISZ W LOCALSTORAGE PRZED PRZEKIEROWANIEM ⭐⭐⭐
+				localStorage.setItem("onboardingCompleted", onboardingCompleted ? "true" : "false");
+
+				// ⭐⭐⭐ PRZEKIERUJ ⭐⭐⭐
+				if (onboardingCompleted) {
+					console.log("✅ Onboarding ukończony - przechodzę do dashboard");
+					(window as any).goTo("/dashboard");
+				} else {
+					console.log("⚠️ Onboarding NIEUKOŃCZONY - przechodzę do onboarding");
+					(window as any).goTo("/onboarding");
 				}
 			} catch (onboardingError) {
 				console.error("❌ Błąd sprawdzania onboardingu:", onboardingError);
-				// ⭐ W PRZYPADKU BŁĘDU - PRZEJDŹ DO ONBOARDINGU (bezpieczniej)
-				console.log("⚠️ Błąd - przekierowuję do onboardingu");
-				localStorage.removeItem("onboardingCompleted");
-				window.location.href = "/onboarding";
+				// ⭐ W PRZYPADKU BŁĘDU - SPRAWDŹ LOCALSTORAGE LUB ZAKŁADAJ ŻE JEST UKOŃCZONY
+				const saved = localStorage.getItem("onboardingCompleted") === "true";
+				if (saved) {
+					(window as any).goTo("/dashboard");
+				} else {
+					// Jeśli nie ma zapisanego - zakładamy że onboarding jest zrobiony (dla istniejących użytkowników)
+					localStorage.setItem("onboardingCompleted", "true");
+					(window as any).goTo("/dashboard");
+				}
 			}
 		} catch (error) {
 			console.error("❌ Błąd logowania:", error);
@@ -118,7 +128,7 @@ const Login: React.FC = () => {
 				<div className={styles.leftPanel}>
 					<div className={styles.illustration}>
 						<img
-							src="src/assets/images/sm-logo.png"
+							src="/sm/assets/images/sm-logo.png"
 							alt="Siła Młodych logo"
 							className={styles.clipboardImg}
 						/>

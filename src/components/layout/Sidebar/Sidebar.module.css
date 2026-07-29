@@ -22,6 +22,7 @@
 	overflow-y: auto;
 	transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 	overflow-x: hidden;
+	max-width: 100vw;
 }
 
 /* ⬇️ STAN ZWIJANIA */
@@ -218,7 +219,6 @@
     border-radius: 15px;
 }
 
-
 /* ---------------------------------- Responsywność ---------------------------------- */
 
 @media (max-width: 1200px) {
@@ -316,58 +316,205 @@
 	}
 }
 
+/* ============================================================
+   ⭐ RESPONSYWNOŚĆ MOBILNA - DOLNY PASEK Z IKONAMI ⭐
+   ============================================================ */
+
 @media (max-width: 480px) {
+	/* Sidebar znika całkowicie */
 	.sidebar {
-		width: 200px;
-		padding: 20px 14px;
-		border-radius: 0 16px 16px 0;
+		display: none !important;
 	}
+}
 
-	.sidebarCollapsed {
-		width: 56px;
-		padding: 20px 8px;
-	}
+/* ⭐ Mobilny dolny pasek nawigacji - pokazuje się TYLKO na mobile */
+.mobileBottomNav {
+	display: none;
+	position: fixed;
+	bottom: 0;
+	left: 0;
+	right: 0;
+	background: linear-gradient(
+		180deg,
+		var(--purple-800, #3b2196) 0%,
+		var(--purple-900, #2e1a6b) 100%
+	);
+	padding: 10px 4px env(safe-area-inset-bottom);
+	border-top: 1px solid rgba(255, 255, 255, 0.1);
+	z-index: 1000;
+	justify-content: space-around;
+	align-items: flex-start;
+	box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.3);
+	overflow-y: auto;
+	max-height: 80px;
+}
 
-	.logo {
-		margin-bottom: 28px;
+/* Pokaż tylko na mobile (max-width: 480px) */
+@media (max-width: 480px) {
+	.mobileBottomNav {
+		display: flex !important;
 		gap: 10px;
+		padding: 4px 5px;
 	}
+}
 
-	.logo__mark {
-		width: 34px;
-		height: 34px;
-		font-size: 16px;
-		border-radius: 10px;
+/* Przycisk w dolnym pasku - IKONA + LABEL */
+.mobileNav__item {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: flex-start;
+	gap: 2px;
+	padding: 6px 4px;
+	border: none;
+	background: transparent;
+	color: rgba(255, 255, 255, 0.55);
+	cursor: pointer;
+	transition: all 0.2s ease;
+	border-radius: 8px;
+	min-width: 44px;
+	position: relative;
+	flex: 1;
+	max-width: 70px;
+}
+
+.mobileNav__item svg {
+	width: 22px;
+	height: 22px;
+	transition: all 0.2s ease;
+	flex-shrink: 0;
+}
+
+/* ⭐ LABEL - widoczny na mobile */
+.mobileNav__item .mobileNav__label {
+	display: block;
+	font-size: 8px;
+	text-align: center;
+	line-height: 1.2;
+	color: rgba(255, 255, 255, 0.5);
+	transition: all 0.2s ease;
+	max-width: 60px;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	word-break: break-all;
+}
+
+/* Aktywny label - jaśniejszy */
+.mobileNav__item.active .mobileNav__label {
+	color: #fff;
+}
+
+/* Aktywny stan - podświetlona ikona */
+.mobileNav__item.active {
+	color: #fff;
+}
+
+.mobileNav__item.active svg {
+	color: #fff;
+	filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.3));
+}
+
+/* Aktywny stan - kropka pod ikoną */
+.mobileNav__item.active::after {
+	content: '';
+	position: absolute;
+	bottom: 0px;
+	left: 50%;
+	transform: translateX(-50%);
+	width: 4px;
+	height: 4px;
+	border-radius: 50%;
+	background: #fff;
+	box-shadow: 0 0 8px rgba(255, 255, 255, 0.5);
+}
+
+/* Przycisk wylogowania na mobile - czerwony odcień */
+.mobileNav__item.logoutBtn {
+	color: rgba(255, 100, 100, 0.7);
+}
+
+.mobileNav__item.logoutBtn.active {
+	color: #ff6b6b;
+}
+
+.mobileNav__item.logoutBtn.active::after {
+	background: #ff6b6b;
+	box-shadow: 0 0 8px rgba(255, 100, 100, 0.5);
+}
+/* ---------------------------------- Przycisk zwijania/rozwijania ---------------------------------- */
+
+.toggleBtn {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 40px;
+	height: 40px;
+	border: none;
+	border-radius: 50%;
+	background: rgba(255, 255, 255, 0.1);
+	color: #fff;
+	cursor: pointer;
+	transition: all 0.2s ease;
+	flex-shrink: 0;
+}
+
+.toggleBtn:hover {
+	background: rgba(255, 255, 255, 0.2);
+	transform: scale(1.05);
+}
+
+.toggleBtn:active {
+	transform: scale(0.95);
+}
+
+.toggleBtn svg {
+	width: 20px;
+	height: 20px;
+	transition: transform 0.3s ease;
+}
+
+/* Ukryj na mobile */
+@media (max-width: 480px) {
+	.toggleBtn {
+		display: none !important;
 	}
+}
+/* ---------------------------------- Przycisk zwijania/rozwijania ---------------------------------- */
 
-	.logo__text {
-		font-size: 15px;
-	}
+.toggleBtn {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 40px;
+	height: 40px;
+	border: none;
+	border-radius: 50%;
+	background: rgba(255, 255, 255, 0.1);
+	color: #fff;
+	cursor: pointer;
+	transition: all 0.2s ease;
+	flex-shrink: 0;
+}
 
-	.nav__item {
-		padding: 10px 14px;
-		font-size: 13px;
-		gap: 10px;
-		border-radius: 999px;
-	}
+.toggleBtn:hover {
+	background: rgba(255, 255, 255, 0.2);
+	transform: scale(1.05);
+}
 
-	.nav__itemCollapsed {
-		padding: 10px;
-	}
+.toggleBtn:active {
+	transform: scale(0.95);
+}
 
-	.nav__item svg {
-		width: 16px;
-		height: 16px;
-	}
+.toggleBtn svg {
+	width: 20px;
+	height: 20px;
+	transition: transform 0.3s ease;
+}
 
-	.nav__item.active::before {
-		left: -4px;
-		height: 20px;
-		width: 3px;
-	}
-
-	.footer {
-		font-size: 10px;
-		padding-top: 16px;
+/* ⭐ UKRYJ NA MOBILE ⭐ */
+@media (max-width: 480px) {
+	.toggleBtn {
+		display: none !important;
 	}
 }
