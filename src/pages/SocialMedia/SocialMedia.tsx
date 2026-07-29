@@ -26,9 +26,6 @@ import {
 } from "lucide-react";
 import styles from "./SocialMedia.module.css";
 
-
-
-
 type EditMode = "publication" | "task" | "contact" | null;
 type SocialRole =
 	| "instagram"
@@ -51,9 +48,6 @@ type PublicationStatus =
 type TaskStatus = "pending" | "in_progress" | "done";
 type MaterialStage = "ideas" | "recording" | "editing" | "approval" | "ready";
 
-
-
-
 interface MaterialFormData {
 	name: string;
 	description: string;
@@ -75,7 +69,6 @@ interface CreatorFormData {
 	user_id: string;
 	availability: string;
 	experience: "none" | "beginner" | "intermediate" | "advanced";
-
 }
 
 interface AddCreatorModalProps {
@@ -84,7 +77,6 @@ interface AddCreatorModalProps {
 	onSave: (data: CreatorFormData) => void;
 	availableUsers: any[];
 }
-
 
 interface CreatorsSectionProps {
 	creators: ContentCreator[];
@@ -103,11 +95,8 @@ interface TeamMember {
 	province: string;
 	team: string;
 	joinDate: string;
-	status: 'active' | 'trial' | 'mentor' | 'vacation';
+	status: "active" | "trial" | "mentor" | "vacation";
 }
-
-
-
 
 interface AddMaterialModalProps {
 	isOpen: boolean;
@@ -279,7 +268,6 @@ function EditMaterialModal({
 		priority: "medium",
 		stage: "ideas",
 	});
-
 
 	useEffect(() => {
 		if (material) {
@@ -461,7 +449,6 @@ function EditPublicationModal({
 		description: "",
 	});
 
-
 	useEffect(() => {
 		if (publication) {
 			const responsible = teamMembers.find(
@@ -638,7 +625,6 @@ function EditPublicationModal({
 	);
 }
 
-
 interface EditTaskModalProps {
 	isOpen: boolean;
 	task: Task | null;
@@ -792,7 +778,6 @@ function EditTaskModal({
 		</div>
 	);
 }
-
 
 interface EditContactModalProps {
 	isOpen: boolean;
@@ -1012,10 +997,6 @@ interface MediaContact {
 	createdAt: string;
 }
 
-
-
-
-
 interface MemberFormData {
 	user_id: string;
 	role: SocialRole;
@@ -1048,10 +1029,6 @@ interface ContactFormData {
 	notes: string;
 }
 
-
-
-
-
 interface TeamSectionProps {
 	members: TeamMember[];
 	canManage: boolean;
@@ -1081,10 +1058,6 @@ interface ContactsSectionProps {
 	onEditContact?: (contact: MediaContact) => void;
 	onDeleteContact?: (id: string) => void;
 }
-
-
-
-
 
 const ROLE_ICONS: Record<SocialRole, React.ReactNode> = {
 	instagram: <FaInstagram size={16} />,
@@ -1160,14 +1133,6 @@ const TASK_STATUS_LABELS: Record<TaskStatus, string> = {
 	done: "Zakończone",
 };
 
-
-
-
-
-
-
-
-
 interface AddMemberModalProps {
 	isOpen: boolean;
 	onClose: () => void;
@@ -1185,13 +1150,11 @@ function AddCreatorModal({
 		user_id: "",
 		availability: "",
 		experience: "beginner",
-
 	});
 
 	const [searchTerm, setSearchTerm] = useState("");
 	const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 	const dropdownRef = useRef<HTMLDivElement>(null);
-
 
 	const filteredUsers = useMemo(() => {
 		const users = availableUsers.filter((user) => user.role !== "admin");
@@ -1201,7 +1164,7 @@ function AddCreatorModal({
 		return users.filter(
 			(user) =>
 				(user.name || "").toLowerCase().includes(term) ||
-				(user.email || "").toLowerCase().includes(term)
+				(user.email || "").toLowerCase().includes(term),
 		);
 	}, [availableUsers, searchTerm]);
 
@@ -1210,10 +1173,12 @@ function AddCreatorModal({
 		? `${selectedUser.name} (${selectedUser.email})`
 		: searchTerm;
 
-
 	useEffect(() => {
 		const handleClickOutside = (event: MouseEvent) => {
-			if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+			if (
+				dropdownRef.current &&
+				!dropdownRef.current.contains(event.target as Node)
+			) {
 				setIsDropdownOpen(false);
 			}
 		};
@@ -1310,10 +1275,11 @@ function AddCreatorModal({
 											return (
 												<div
 													key={user.id}
-													className={`${styles.searchableSelect__item} ${formData.user_id === user.id
-														? styles.searchableSelect__itemSelected
-														: ""
-														}`}
+													className={`${styles.searchableSelect__item} ${
+														formData.user_id === user.id
+															? styles.searchableSelect__itemSelected
+															: ""
+													}`}
 													onClick={() => handleSelectUser(user.id)}
 												>
 													<span className={styles.searchableSelect__itemName}>
@@ -1357,7 +1323,11 @@ function AddCreatorModal({
 							onChange={(e) =>
 								setFormData({
 									...formData,
-									experience: e.target.value as "none" | "beginner" | "intermediate" | "advanced",
+									experience: e.target.value as
+										| "none"
+										| "beginner"
+										| "intermediate"
+										| "advanced",
 								})
 							}
 						>
@@ -1399,7 +1369,6 @@ function AddMemberModal({
 	const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 	const dropdownRef = useRef<HTMLDivElement>(null);
 
-
 	const filteredUsers = useMemo(() => {
 		if (!searchTerm.trim()) return availableUsers;
 
@@ -1411,14 +1380,11 @@ function AddMemberModal({
 		);
 	}, [availableUsers, searchTerm]);
 
-
 	const selectedUser = availableUsers.find((u) => u.id === formData.user_id);
-
 
 	const inputValue = selectedUser
 		? `${selectedUser.name} (${selectedUser.email})`
 		: searchTerm;
-
 
 	useEffect(() => {
 		const handleClickOutside = (event: MouseEvent) => {
@@ -1456,7 +1422,6 @@ function AddMemberModal({
 		setSearchTerm(value);
 		setIsDropdownOpen(true);
 
-
 		if (formData.user_id) {
 			setFormData({ ...formData, user_id: "" });
 		}
@@ -1488,7 +1453,6 @@ function AddMemberModal({
 									value={inputValue}
 									onChange={handleInputChange}
 									onFocus={() => {
-
 										if (!formData.user_id) {
 											setIsDropdownOpen(true);
 										}
@@ -1524,10 +1488,11 @@ function AddMemberModal({
 											return (
 												<div
 													key={user.id}
-													className={`${styles.searchableSelect__item} ${formData.user_id === user.id
-														? styles.searchableSelect__itemSelected
-														: ""
-														}`}
+													className={`${styles.searchableSelect__item} ${
+														formData.user_id === user.id
+															? styles.searchableSelect__itemSelected
+															: ""
+													}`}
 													onClick={() => handleSelectUser(user.id)}
 												>
 													<span className={styles.searchableSelect__itemName}>
@@ -1759,7 +1724,6 @@ function AddPublicationModal({
 	);
 }
 
-
 interface AddTaskModalProps {
 	isOpen: boolean;
 	onClose: () => void;
@@ -1896,7 +1860,6 @@ function AddTaskModal({
 		</div>
 	);
 }
-
 
 interface AddContactModalProps {
 	isOpen: boolean;
@@ -2040,11 +2003,6 @@ function AddContactModal({
 	);
 }
 
-
-
-
-
-
 function TeamSection({ members, canManage, onAddMember }: TeamSectionProps) {
 	const [searchTerm, setSearchTerm] = useState("");
 	const [selectedRole, setSelectedRole] = useState<SocialRole | "all">("all");
@@ -2168,12 +2126,12 @@ function TeamSection({ members, canManage, onAddMember }: TeamSectionProps) {
 						<div className={styles.teamCard__status}>
 							<span
 								className={
-									member.status === 'vacation'
+									member.status === "vacation"
 										? styles.statusVacation
 										: styles.statusActive
 								}
 							>
-								{member.status === 'vacation' ? 'Urlop' : 'Aktywny'}
+								{member.status === "vacation" ? "Urlop" : "Aktywny"}
 							</span>
 						</div>
 					</div>
@@ -2183,8 +2141,11 @@ function TeamSection({ members, canManage, onAddMember }: TeamSectionProps) {
 	);
 }
 
-
-function CreatorsSection({ creators, canManage, onAddCreator }: CreatorsSectionProps) {
+function CreatorsSection({
+	creators,
+	canManage,
+	onAddCreator,
+}: CreatorsSectionProps) {
 	const [searchTerm, setSearchTerm] = useState("");
 
 	const filteredCreators = useMemo(() => {
@@ -2259,7 +2220,6 @@ function CreatorsSection({ creators, canManage, onAddCreator }: CreatorsSectionP
 								{creator.experience === "intermediate" && "Średniozaawansowany"}
 								{creator.experience === "advanced" && "Zaawansowany"}
 							</div>
-
 						</div>
 					</div>
 				))}
@@ -2267,8 +2227,6 @@ function CreatorsSection({ creators, canManage, onAddCreator }: CreatorsSectionP
 		</section>
 	);
 }
-
-
 
 function PublicationsSection({
 	publications,
@@ -2425,8 +2383,6 @@ function PublicationsSection({
 	);
 }
 
-
-
 function MaterialsBoard({
 	materials,
 	canManage = false,
@@ -2447,16 +2403,15 @@ function MaterialsBoard({
 	};
 
 	const getStatusLabel = (status: string): string => {
-		if (status === 'vacation') {
-			return 'Urlop';
+		if (status === "vacation") {
+			return "Urlop";
 		}
 
-		return 'Aktywny';
+		return "Aktywny";
 	};
 
-
 	const getStatusClass = (status: string): string => {
-		if (status === 'vacation') {
+		if (status === "vacation") {
 			return styles.statusVacation;
 		}
 		return styles.statusActive;
@@ -2536,9 +2491,9 @@ function MaterialsBoard({
 										<span>
 											<Calendar size={12} />
 											{new Date(material.deadline).toLocaleDateString("pl-PL", {
-												day: '2-digit',
-												month: '2-digit',
-												year: 'numeric'
+												day: "2-digit",
+												month: "2-digit",
+												year: "numeric",
 											})}
 										</span>
 									</div>
@@ -2558,7 +2513,6 @@ function MaterialsBoard({
 		</section>
 	);
 }
-
 
 function TasksSection({
 	tasks,
@@ -2635,12 +2589,13 @@ function TasksSection({
 							<h3 className={styles.taskCard__title}>{task.name}</h3>
 							<div className={styles.taskCard__actions}>
 								<span
-									className={`${styles.taskCard__status} ${task.status === "done"
-										? styles.taskStatusDone
-										: task.status === "in_progress"
-											? styles.taskStatusInProgress
-											: styles.taskStatusPending
-										}`}
+									className={`${styles.taskCard__status} ${
+										task.status === "done"
+											? styles.taskStatusDone
+											: task.status === "in_progress"
+												? styles.taskStatusInProgress
+												: styles.taskStatusPending
+									}`}
 								>
 									{TASK_STATUS_LABELS[task.status]}
 								</span>
@@ -2687,7 +2642,6 @@ function TasksSection({
 		</section>
 	);
 }
-
 
 function ContactsSection({
 	contacts,
@@ -2774,10 +2728,6 @@ function ContactsSection({
 		</section>
 	);
 }
-
-
-
-
 
 export default function SocialMedia({ title }: { title?: string }) {
 	const [members, setMembers] = useState<TeamMember[]>([]);
@@ -2909,8 +2859,8 @@ export default function SocialMedia({ title }: { title?: string }) {
 		title: "",
 		message: "",
 		confirmText: "Potwierdź",
-		onConfirm: () => { },
-		onCancel: () => { },
+		onConfirm: () => {},
+		onCancel: () => {},
 	});
 	useEffect(() => {
 		const fetchAllData = async () => {
@@ -2977,9 +2927,6 @@ export default function SocialMedia({ title }: { title?: string }) {
 		fetchAllData();
 	}, []);
 
-
-
-
 	const handleEditPublication = (publication: Publication) => {
 		setEditingPublication(publication);
 		setIsEditPublicationModalOpen(true);
@@ -2994,7 +2941,6 @@ export default function SocialMedia({ title }: { title?: string }) {
 		setEditingContact(contact);
 		setIsEditContactModalOpen(true);
 	};
-
 
 	const handleUpdatePublication = async (
 		id: string,
@@ -3084,7 +3030,6 @@ export default function SocialMedia({ title }: { title?: string }) {
 		});
 	};
 
-
 	const handleDeletePublication = (id: string) => {
 		showConfirm(
 			"Usuń publikację",
@@ -3172,9 +3117,7 @@ export default function SocialMedia({ title }: { title?: string }) {
 
 			const newMember = await response.json();
 
-
 			setMembers([...members, newMember]);
-
 
 			const membersResponse = await fetch("/api/social/members", {
 				headers: { Authorization: `Bearer ${token}` },
@@ -3432,7 +3375,6 @@ export default function SocialMedia({ title }: { title?: string }) {
 				onSave={handleUpdateContact}
 				teamMembers={members}
 			/>
-
 		</div>
 	);
 }
