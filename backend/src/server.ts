@@ -6,7 +6,9 @@ import { PrismaClient } from "@prisma/client";
 import { ProjectController } from "./controllers/project.controller";
 import { UserController } from "./controllers/user.controller";
 import { authMiddleware } from "./middleware/auth.middleware";
+import mysql from "mysql2/promise";
 import memberRoutes from "./routes/member.routes";
+import { syncAttendance } from "./jobs/syncAttendance";
 import cron from "node-cron";
 import { updateLeaveStatus } from "./jobs/updateLeaveStatus";
 import bcrypt from "bcrypt";
@@ -17,6 +19,29 @@ import multer from "multer";
 import { syncMembers } from "./jobs/syncMembers";
 
 updateLeaveStatus();
+
+cron.schedule("0 7,14,21 * * *", async () => {
+	console.log("🔄 [CRON] Uruchamiam synchronizację frekwencji...");
+	try {
+		await syncAttendance();
+		console.log("✅ [CRON] Synchronizacja frekwencji zakończona");
+	} catch (error) {
+		console.error("❌ [CRON] Błąd synchronizacji frekwencji:", error);
+	}
+});
+
+// Opcjonalnie - uruchom przy starcie serwera (po 10 sekundach)
+setTimeout(async () => {
+	console.log(
+		"🔄 [STARTUP] Uruchamiam synchronizację frekwencji przy starcie...",
+	);
+	try {
+		await syncAttendance();
+		console.log("✅ [STARTUP] Synchronizacja frekwencji zakończona");
+	} catch (error) {
+		console.error("❌ [STARTUP] Błąd synchronizacji frekwencji:", error);
+	}
+}, 10000);
 cron.schedule("1 0 * * *", async () => {
 	console.log("⏰ [CRON] Uruchamiam codzienny job aktualizacji statusów...");
 	await updateLeaveStatus();
@@ -115,7 +140,7 @@ app.post("/api/auth/google", async (req, res) => {
 			console.log(`❌ Użytkownik ${payload.email} nie istnieje w systemie`);
 			return res.status(403).json({
 				error:
-					"To konto Google nie jest zarejestrowane w systemie Siły Młodych. Skontaktuj się z administratorem.",
+					"To konto Google nie jest zarejestrowane w systemie Siły Młodych. Użyj innego.",
 			});
 		}
 
@@ -1141,23 +1166,101 @@ app.post("/api/teams", authMiddleware, async (req: any, res) => {
 	}
 });
 // STATYSTYKI
+// backend/src/server.ts - ZASTĄP TEN ENDPOINT:
+
 app.get("/api/dashboard/stats", authMiddleware, async (req: any, res) => {
 	try {
+		const userId = req.user?.id;
+		const userEmail = req.user?.email;
+
+		// ⭐ 1. STATYSTYKI OGÓLNE - zdefiniuj zmienne!
 		const totalMembers = await prisma.user.count({
-			where: {
-				is_active: true,
-			},
+			where: { is_active: true },
 		});
+
 		const totalProjects = await prisma.project.count({
 			where: { is_active: 1 },
 		});
 
+		// ⭐ 2. NOWE PORADNIKI (z ostatnich 7 dni)
+		const sevenDaysAgo = new Date();
+		sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+		const newGuides = await prisma.guide.count({
+			where: {
+				is_published: 1,
+				created_at: { gte: sevenDaysAgo },
+			},
+		});
+
+		// ⭐ 3. OGŁOSZENIA (z ostatnich 30 dni)
+		const thirtyDaysAgo = new Date();
+		thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+		const announcements = await prisma.notification.count({
+			where: {
+				created_at: { gte: thirtyDaysAgo },
+			},
+		});
+
+		// ⭐ 4. FREKWENCJA
+		let attendance = "0%";
+		if (userEmail) {
+			try {
+				const connection = await mysql.createConnection({
+					host: process.env.EXTERNAL_DB_HOST || "57.128.253.89",
+					user: process.env.EXTERNAL_DB_USER || "czarnecki",
+					password: process.env.EXTERNAL_DB_PASSWORD || "",
+					database: process.env.EXTERNAL_DB_NAME || "SM_Ewidencja",
+					port: parseInt(process.env.EXTERNAL_DB_PORT || "3306"),
+				});
+
+				const [rows] = await connection.execute(
+					`
+					SELECT
+						ROUND(
+							SUM(CASE WHEN aa.status = 'present' THEN 1 ELSE 0 END)
+							/
+							COUNT(aa.id)
+							* 100,
+							2
+						) AS attendance_percentage
+					FROM att_members am
+					LEFT JOIN att_attendance aa ON aa.member_id = am.id
+					WHERE am.email = ?
+					GROUP BY am.id, am.email
+					`,
+					[userEmail],
+				);
+
+				await connection.end();
+
+				const result = rows as Array<{ attendance_percentage: number }>;
+				if (result.length > 0 && result[0].attendance_percentage !== null) {
+					attendance = `${result[0].attendance_percentage.toFixed(1)}%`;
+				}
+			} catch (dbError) {
+				console.error("❌ Błąd pobierania frekwencji z SM_Ewidencja:", dbError);
+				// Fallback - pobierz z głównej bazy
+				const user = await prisma.user.findUnique({
+					where: { id: parseInt(userId) },
+					select: { attendance_percentage: true },
+				});
+				if (
+					user?.attendance_percentage !== null &&
+					user?.attendance_percentage !== undefined
+				) {
+					attendance = `${Number(user.attendance_percentage).toFixed(1)}%`;
+				}
+			}
+		}
+
 		res.json({
 			members: totalMembers,
 			projects: totalProjects,
-			attendance: "95%",
-			announcements: 0,
-			newGuides: 0,
+			attendance: attendance,
+			announcements: announcements,
+			newGuides: newGuides,
 		});
 	} catch (error) {
 		console.error("❌ Błąd statystyk:", error);
@@ -5251,14 +5354,7 @@ app.get("/api/admin/logs", authMiddleware, async (req: any, res) => {
 // ============================================================
 // START SERWERA
 // ============================================================
-app.listen(port, () => {
-	console.log(`🚀 Serwer działa na porcie ${port}`);
-	console.log(`📁 Katalog uploadów: ${uploadDir}`);
-	console.log(
-		`📋 Dostępne modele:`,
-		Object.keys(prisma).filter((key: string) => !key.startsWith("_")),
-	);
-});
+
 setTimeout(async () => {
 	console.log(
 		"🔄 [STARTUP] Uruchamiam synchronizację członków przy starcie serwera...",
