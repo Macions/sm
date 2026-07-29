@@ -9,8 +9,38 @@ const Login: React.FC = () => {
 	const [password, setPassword] = useState("");
 	const [loading, setLoading] = useState(false);
 	const [error, setError] = useState<string | null>(null);
+	// const [debugLogs, setDebugLogs] = useState<string[]>([]);
 
 	const navigate = useNavigate();
+
+	// Funkcja do dodawania logów z timestamp
+	// const console.log = (message: string, data?: any) => {
+	// 	const timestamp = new Date().toISOString();
+	// 	const logEntry = data
+	// 		? `[${timestamp}] ${message}: ${JSON.stringify(data, null, 2)}`
+	// 		: `[${timestamp}] ${message}`;
+	// 	console.log(logEntry);
+	// 	setDebugLogs(prev => [...prev, logEntry]);
+	// };
+
+	// Funkcja do eksportu logów do pliku
+	// const exportLogs = () => {
+	// 	if (debugLogs.length === 0) {
+	// 		alert("Brak logów do wyeksportowania");
+	// 		return;
+	// 	}
+
+	// 	const logText = debugLogs.join("\n");
+	// 	const blob = new Blob([logText], { type: "text/plain" });
+	// 	const url = URL.createObjectURL(blob);
+	// 	const a = document.createElement("a");
+	// 	a.href = url;
+	// 	a.download = `onboarding-debug-${new Date().toISOString()}.txt`;
+	// 	a.click();
+	// 	URL.revokeObjectURL(url);
+
+	// 	console.log("📁 Logi wyeksportowane do pliku");
+	// };
 
 	const getGreeting = () => {
 		const hour = new Date().getHours();
@@ -25,10 +55,12 @@ const Login: React.FC = () => {
 		setLoading(true);
 		setError(null);
 
-		console.log("🚀 Próba logowania");
-		console.log("Email:", email);
+		console.log("🚀 === ROZPOCZĘCIE PROCESU LOGOWANIA ===");
+		console.log("📧 Email:", email);
 
 		try {
+			console.log("📡 Wysyłanie zapytania do /api/auth/login");
+
 			const response = await fetch("/api/auth/login", {
 				method: "POST",
 				headers: {
@@ -40,28 +72,38 @@ const Login: React.FC = () => {
 				}),
 			});
 
-			console.log("📡 Status odpowiedzi:", response.status);
+			console.log("📡 Status odpowiedzi login:", response.status);
 
 			const data = await response.json();
 
 			if (!response.ok) {
+				console.log("❌ Błąd logowania:", data);
 				throw new Error(data.error || "Błąd logowania");
 			}
 
 			console.log("✅ Logowanie poprawne");
+			console.log("📦 Dane odpowiedzi:", {
+				hasAccessToken: !!data.accessToken,
+				hasRefreshToken: !!data.refreshToken,
+				user: data.user
+			});
 
 			// ⭐ ZAPISZ TOKENY ⭐
 			localStorage.setItem("accessToken", data.accessToken);
 			localStorage.setItem("refreshToken", data.refreshToken);
 			localStorage.setItem("user", JSON.stringify(data.user));
 
-			console.log("🔑 accessToken zapisany");
-			console.log("👤 user:", localStorage.getItem("user"));
+			console.log("💾 Tokeny zapisane w localStorage");
+			console.log("👤 User zapisany:", data.user);
 
 			// ⭐⭐⭐ SPRAWDŹ STATUS ONBOARDINGU ⭐⭐⭐
+			console.log("🔍 === ROZPOCZĘCIE SPRAWDZANIA ONBOARDINGU ===");
+
 			try {
 				const token = localStorage.getItem("accessToken");
-				console.log("🔍 Sprawdzam status onboardingu...");
+				console.log("🔑 Token do sprawdzenia onboardingu:", token ? "Jest (długość: " + token.length + ")" : "BRAK");
+
+				console.log("📡 Wysyłanie zapytania do /api/auth/onboarding-status");
 
 				const onboardingResponse = await fetch("/api/auth/onboarding-status", {
 					method: "GET",
@@ -71,46 +113,72 @@ const Login: React.FC = () => {
 					},
 				});
 
-				console.log("📡 Status onboardingu:", onboardingResponse.status);
+				console.log("📡 Status odpowiedzi onboarding-status:", onboardingResponse.status);
 
 				let onboardingCompleted = false;
+				let rawResponse = null;
 
 				if (onboardingResponse.ok) {
-					const onboardingData = await onboardingResponse.json();
-					console.log("📋 Status onboardingu:", onboardingData);
-					onboardingCompleted = onboardingData.completed === true;
+					rawResponse = await onboardingResponse.json();
+					console.log("📋 Pełna odpowiedź API onboarding-status:", rawResponse);
+					onboardingCompleted = rawResponse.completed === true;
+					console.log(`📊 onboardingCompleted = ${onboardingCompleted} (typ: ${typeof onboardingCompleted})`);
 				} else {
-					console.warn("⚠️ Błąd sprawdzania onboardingu (", onboardingResponse.status, ")");
-					// ⭐ FALLBACK - SPRAWDŹ CZY UŻYTKOWNIK MA JUŻ ONBOARDING W BAZIE
-					// Zakładamy że jeśli użytkownik istnieje i ma dane - onboarding jest zrobiony
-					onboardingCompleted = true;
+					const errorText = await onboardingResponse.text();
+					console.log(`⚠️ Błąd sprawdzania onboardingu (${onboardingResponse.status}):`, errorText);
+					console.log("⚠️ Ustawiam onboardingCompleted = false (domyślnie)");
+					onboardingCompleted = false;
 				}
 
-				// ⭐⭐⭐ ZAPISZ W LOCALSTORAGE PRZED PRZEKIEROWANIEM ⭐⭐⭐
+				// ⭐⭐⭐ ZAPISZ W LOCALSTORAGE ⭐⭐⭐
 				localStorage.setItem("onboardingCompleted", onboardingCompleted ? "true" : "false");
+				console.log(`💾 Zapisano w localStorage onboardingCompleted = ${onboardingCompleted ? "true" : "false"}`);
 
-				// ⭐⭐⭐ PRZEKIERUJ ⭐⭐⭐
+				// ⭐⭐⭐ SPRAWDŹ CO JEST W LOCALSTORAGE ⭐⭐⭐
+				const savedToken = localStorage.getItem("accessToken");
+				const savedUser = localStorage.getItem("user");
+				const savedOnboarding = localStorage.getItem("onboardingCompleted");
+				console.log("📦 Stan localStorage po zapisie:", {
+					accessToken: savedToken ? `Jest (długość: ${savedToken.length})` : "BRAK",
+					user: savedUser ? JSON.parse(savedUser) : "BRAK",
+					onboardingCompleted: savedOnboarding
+				});
+
+				// ⭐⭐⭐ PRZEKIEROWANIE - TERAZ BEZ RZECZYWISTEGO PRZEKIEROWANIA ⭐⭐⭐
+				console.log("🎯 === DECYZJA O PRZEKIEROWANIU ===");
+				console.log(`🎯 onboardingCompleted = ${onboardingCompleted}`);
+
 				if (onboardingCompleted) {
-					console.log("✅ Onboarding ukończony - przechodzę do dashboard");
-					(window as any).goTo("/dashboard");
+					// console.log("✅ Onboarding UKOŃCZONY - docelowo: /dashboard");
+					// console.log("🔄 [DEBUG] Przekierowanie NASTĄPIŁOBY do /dashboard");
+					// ⭐ ODKOMENTUJ DLA TESTOWANIA Z RZECZYWISTYM PRZEKIEROWANIEM ⭐
+					navigate("/dashboard");
 				} else {
-					console.log("⚠️ Onboarding NIEUKOŃCZONY - przechodzę do onboarding");
-					(window as any).goTo("/onboarding");
+					// console.log("⚠️ Onboarding NIEUKOŃCZONY - docelowo: /onboarding");
+					// console.log("🔄 [DEBUG] Przekierowanie NASTĄPIŁOBY do /onboarding");
+					// ⭐ ODKOMENTUJ DLA TESTOWANIA Z RZECZYWISTYM PRZEKIEROWANIEM ⭐
+					navigate("/onboarding");
 				}
+
+				console.log("📋 === PODSUMOWANIE ===");
+				console.log("1. Login: ✅ Pomyślny");
+				console.log(`2. Onboarding status: ${onboardingCompleted ? "UKOŃCZONY" : "NIEUKOŃCZONY"}`);
+				console.log(`3. localStorage onboardingCompleted: ${localStorage.getItem("onboardingCompleted")}`);
+				console.log(`4. Docelowa ścieżka: ${onboardingCompleted ? "/dashboard" : "/onboarding"}`);
+				console.log("📋 === KONIEC PROCESU ===");
+
 			} catch (onboardingError) {
-				console.error("❌ Błąd sprawdzania onboardingu:", onboardingError);
-				// ⭐ W PRZYPADKU BŁĘDU - SPRAWDŹ LOCALSTORAGE LUB ZAKŁADAJ ŻE JEST UKOŃCZONY
-				const saved = localStorage.getItem("onboardingCompleted") === "true";
-				if (saved) {
-					(window as any).goTo("/dashboard");
-				} else {
-					// Jeśli nie ma zapisanego - zakładamy że onboarding jest zrobiony (dla istniejących użytkowników)
-					localStorage.setItem("onboardingCompleted", "true");
-					(window as any).goTo("/dashboard");
-				}
+				console.log("❌ BŁĄD podczas sprawdzania onboardingu:", onboardingError);
+				console.log("⚠️ Ustawiam onboardingCompleted = false (fallback)");
+				localStorage.setItem("onboardingCompleted", "false");
+				console.log("💾 Zapisano onboardingCompleted = false w localStorage");
+				console.log("🔄 [DEBUG] Przekierowanie NASTĄPIŁOBY do /onboarding (fallback)");
+				// ⭐ ODKOMENTUJ DLA TESTOWANIA Z RZECZYWISTYM PRZEKIEROWANIEM ⭐
+				// navigate("/onboarding");
 			}
+
 		} catch (error) {
-			console.error("❌ Błąd logowania:", error);
+			console.log("❌ BŁĄD logowania:", error);
 			setError(
 				error instanceof Error
 					? error.message
@@ -118,6 +186,7 @@ const Login: React.FC = () => {
 			);
 		} finally {
 			setLoading(false);
+			console.log("⏱️ Proces logowania zakończony");
 		}
 	};
 

@@ -1365,7 +1365,7 @@ export default function Tutorials() {
 			<div className={styles.tutorials}>
 				<div className={styles.loadingState}>
 					<div className={styles.loadingSpinner}></div>
-					<p>Ładowanie...</p>
+					{/* <p>Ładowanie...</p> */}
 				</div>
 			</div>
 		);

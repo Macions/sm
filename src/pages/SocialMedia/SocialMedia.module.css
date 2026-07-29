@@ -2391,22 +2391,48 @@
 	color: #6b7280;
 	margin-left: 8px;
 }
+
 .board__cardMeta {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    font-size: 12px;
-    color: #6b7280;
-    max-width: 100%;
-    overflow: hidden;
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	font-size: 12px;
+	color: #6b7280;
+	max-width: 100%;
+	overflow: hidden;
 }
 
 .board__cardMeta span {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    white-space: nowrap;
-    max-width: 100%;
-    overflow: hidden;
-    text-overflow: ellipsis;
+	display: flex;
+	align-items: center;
+	gap: 4px;
+	white-space: nowrap;
+	max-width: 100%;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+/* SocialMedia.module.css - dodaj na końcu */
+
+.loadingContainer {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	min-height: 400px;
+	width: 100%;
+}
+
+.loading__spinner {
+	width: 40px;
+	height: 40px;
+	border: 3px solid #e5e7eb;
+	border-top-color: #4A6FE8;
+	border-radius: 50%;
+	animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+	to {
+		transform: rotate(360deg);
+	}
 }

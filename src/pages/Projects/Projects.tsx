@@ -1250,6 +1250,8 @@ export default function Projects() {
 	const [isIdeaModalOpen, setIsIdeaModalOpen] = useState(false);
 	const [ideas, setIdeas] = useState<Idea[]>([]);
 	const [activeTab, setActiveTab] = useState<"projects" | "ideas">("projects");
+	// W komponencie Projects, po dodaniu pomysłu, dodaj reload i otwórz zakładkę "pomysły"
+
 	const handleSubmitIdea = async (idea: {
 		title: string;
 		description: string;
@@ -1269,7 +1271,7 @@ export default function Projects() {
 				body: JSON.stringify({
 					title: idea.title,
 					description: idea.description,
-					pillar: idea.pillar, // ✅ Przekazuj nazwę filaru
+					pillar: idea.pillar,
 					authorId: currentUser?.id,
 					authorName: currentUser?.name,
 				}),
@@ -1281,7 +1283,7 @@ export default function Projects() {
 				const errorText = await response.text();
 				console.error("❌ Błąd odpowiedzi:", response.status, errorText);
 
-				// ✅ Jeśli backend nie działa, zapisz lokalnie (fallback)
+				// Fallback - zapisz lokalnie
 				const newIdea: Idea = {
 					id: `idea-${Date.now()}`,
 					title: idea.title,
@@ -1291,8 +1293,8 @@ export default function Projects() {
 					authorName: currentUser?.name || "Nieznany",
 					status: "pending",
 					votes: 0,
-					upvotes: 0, // ✅ liczba
-					downvotes: 0, // ✅ liczba
+					upvotes: 0,
+					downvotes: 0,
 					createdAt: new Date().toISOString(),
 					currentUserVote: null,
 				};
@@ -1301,23 +1303,35 @@ export default function Projects() {
 					icon: "⚠️",
 					duration: 4000,
 				});
-
+				setIsIdeaModalOpen(false);
 				return;
 			}
 
 			const newIdea = await response.json();
 			console.log("✅ Nowy pomysł z backendu:", newIdea);
 
-			// ✅ DODAJ DO BAZY (backend)
+			// ✅ DODAJ DO LISTY
 			setIdeas([newIdea, ...ideas]);
 			toast.success("Pomysł został zgłoszony!");
 
 			// ✅ ZAMKNIJ MODAL
 			setIsIdeaModalOpen(false);
+
+			// ⭐⭐⭐ DODAJ TO - PRZEŁADUJ STRONĘ I OTWÓRZ ZAKŁADKĘ "POMYSŁY" ⭐⭐⭐
+			console.log("🔄 Przeładowuję stronę i otwieram zakładkę pomysły...");
+
+			// Zapisz w sessionStorage że mamy otworzyć zakładkę pomysły
+			sessionStorage.setItem("openIdeasTab", "true");
+
+			// Przeładuj stronę po krótkim opóźnieniu (żeby toast zdążył się pokazać)
+			setTimeout(() => {
+				window.location.reload();
+			}, 1500);
+
 		} catch (error) {
 			console.error("❌ Błąd:", error);
 
-			// ✅ FALLBACK - zapisz lokalnie jeśli backend nie działa
+			// Fallback - zapisz lokalnie
 			const newIdea: Idea = {
 				id: `idea-${Date.now()}`,
 				title: idea.title,
@@ -1327,8 +1341,8 @@ export default function Projects() {
 				authorName: currentUser?.name || "Nieznany",
 				status: "pending",
 				votes: 0,
-				upvotes: 0, // ✅ liczba
-				downvotes: 0, // ✅ liczba
+				upvotes: 0,
+				downvotes: 0,
 				createdAt: new Date().toISOString(),
 				currentUserVote: null,
 			};
@@ -1337,6 +1351,13 @@ export default function Projects() {
 				icon: "⚠️",
 				duration: 4000,
 			});
+			setIsIdeaModalOpen(false);
+
+			// ⭐⭐⭐ DODAJ TO - PRZEŁADUJ STRONĘ I OTWÓRZ ZAKŁADKĘ "POMYSŁY" ⭐⭐⭐
+			sessionStorage.setItem("openIdeasTab", "true");
+			setTimeout(() => {
+				window.location.reload();
+			}, 1500);
 		}
 	};
 
@@ -1575,6 +1596,17 @@ export default function Projects() {
 		};
 
 		fetchIdeas();
+	}, []);
+	// ⭐⭐⭐ DODAJ TEN useEffect - ODTWORZENIE ZAKŁADKI PO RELOADZIE ⭐⭐⭐
+	useEffect(() => {
+		// Sprawdź czy mamy otworzyć zakładkę pomysły
+		const shouldOpenIdeas = sessionStorage.getItem("openIdeasTab") === "true";
+		if (shouldOpenIdeas) {
+			console.log("📋 Otwieram zakładkę pomysły po reloadzie");
+			setActiveTab("ideas");
+			// Wyczyść flagę
+			sessionStorage.removeItem("openIdeasTab");
+		}
 	}, []);
 	useEffect(() => {
 		const fetchProjects = async () => {

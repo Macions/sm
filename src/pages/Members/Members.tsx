@@ -41,6 +41,28 @@ import {
 } from "lucide-react";
 import styles from "./Members.module.css";
 
+
+// ---------------------------------------------------------------------------
+// MAPOWANIE AREAS Z ANGIELSKIEGO NA POLSKI
+// ---------------------------------------------------------------------------
+
+const AREA_LABELS: Record<string, string> = {
+	projects: "Projekty",
+	conferences: "Konferencje i debaty",
+	advocacy: "Rzecznictwo",
+	simulations: "Symulacje",
+	social_media: "Social Media",
+	graphics: "Grafika",
+	editing: "Montaż",
+	it: "IT",
+	event_organization: "Organizacja wydarzeń",
+};
+
+// Funkcja do mapowania listy obszarów
+const mapAreas = (areas: string[]): string[] => {
+	if (!areas || !Array.isArray(areas)) return [];
+	return areas.map((area) => AREA_LABELS[area] || area);
+};
 // ---------------------------------------------------------------------------
 // TYPY
 // ---------------------------------------------------------------------------
@@ -1168,7 +1190,7 @@ function ProfileModal({
 													{(formData.interests || currentMember.interests).map(
 														(item) => (
 															<span key={item} className={styles.modal__tag}>
-																{item}
+																{AREA_LABELS[item] || item}
 																<button
 																	type="button"
 																	className={styles.modal__removeTag}
@@ -1193,7 +1215,7 @@ function ProfileModal({
 											</>
 										) : (
 											<div className={styles.modal__tags}>
-												{currentMember.interests.map((item) => (
+												{mapAreas(currentMember.interests).map((item) => (
 													<span key={item} className={styles.modal__tag}>
 														{item}
 													</span>
@@ -1332,7 +1354,7 @@ function ProfileModal({
 													{(formData.smAreas || currentMember.smAreas).map(
 														(item) => (
 															<span key={item} className={styles.modal__tag}>
-																{item}
+																{AREA_LABELS[item] || item}
 																<button
 																	type="button"
 																	className={styles.modal__removeTag}
@@ -1357,7 +1379,7 @@ function ProfileModal({
 											</>
 										) : (
 											<div className={styles.modal__tags}>
-												{currentMember.smAreas.map((item) => (
+												{mapAreas(currentMember.smAreas).map((item) => (
 													<span key={item} className={styles.modal__tag}>
 														{item}
 													</span>
@@ -2008,90 +2030,90 @@ export default function Members({ title }: { title?: string }) {
 						interests:
 							hasOnboardingData && onboarding.development_areas
 								? (() => {
-										try {
-											return JSON.parse(onboarding.development_areas);
-										} catch (e) {
-											return [];
-										}
-									})()
+									try {
+										return JSON.parse(onboarding.development_areas);
+									} catch (e) {
+										return [];
+									}
+								})()
 								: [],
 						skills:
 							hasOnboardingData && onboarding.skills
 								? (() => {
-										try {
-											return JSON.parse(onboarding.skills);
-										} catch (e) {
-											return [];
-										}
-									})()
+									try {
+										return JSON.parse(onboarding.skills);
+									} catch (e) {
+										return [];
+									}
+								})()
 								: [],
 						smAreas:
 							hasOnboardingData && onboarding.development_areas
 								? (() => {
-										try {
-											return JSON.parse(onboarding.development_areas);
-										} catch (e) {
-											return [];
-										}
-									})()
+									try {
+										return JSON.parse(onboarding.development_areas);
+									} catch (e) {
+										return [];
+									}
+								})()
 								: [],
 						email: user.email || "",
 						phone: user.phone || "",
 						joinDate: user.join_date
 							? new Date(user.join_date).toISOString().split("T")[0]
 							: user.created_at?.split("T")[0] ||
-								new Date().toISOString().split("T")[0],
+							new Date().toISOString().split("T")[0],
 						contacts: {
 							salaContacts:
 								hasOnboardingData && onboarding.sala_contacts
 									? (() => {
-											try {
-												return JSON.parse(onboarding.sala_contacts);
-											} catch (e) {
-												return [];
-											}
-										})()
+										try {
+											return JSON.parse(onboarding.sala_contacts);
+										} catch (e) {
+											return [];
+										}
+									})()
 									: [],
 							mpContacts:
 								hasOnboardingData && onboarding.mp_contacts
 									? (() => {
-											try {
-												return JSON.parse(onboarding.mp_contacts);
-											} catch (e) {
-												return [];
-											}
-										})()
+										try {
+											return JSON.parse(onboarding.mp_contacts);
+										} catch (e) {
+											return [];
+										}
+									})()
 									: [],
 							otherContacts: [
 								...(hasOnboardingData && onboarding.institution_contacts
 									? (() => {
-											try {
-												return JSON.parse(onboarding.institution_contacts);
-											} catch (e) {
-												return [];
-											}
-										})()
+										try {
+											return JSON.parse(onboarding.institution_contacts);
+										} catch (e) {
+											return [];
+										}
+									})()
 									: []),
 								...(hasOnboardingData && onboarding.other_contacts
 									? (() => {
-											try {
-												return JSON.parse(onboarding.other_contacts);
-											} catch (e) {
-												return [];
-											}
-										})()
+										try {
+											return JSON.parse(onboarding.other_contacts);
+										} catch (e) {
+											return [];
+										}
+									})()
 									: []),
 							],
 						},
 						trainingAreas:
 							hasOnboardingData && onboarding.skills
 								? (() => {
-										try {
-											return JSON.parse(onboarding.skills);
-										} catch (e) {
-											return [];
-										}
-									})()
+									try {
+										return JSON.parse(onboarding.skills);
+									} catch (e) {
+										return [];
+									}
+								})()
 								: [],
 						contributionInfo: {
 							status: "paid",
@@ -2469,7 +2491,7 @@ export default function Members({ title }: { title?: string }) {
 			<div className={styles.members}>
 				<div className={styles.loadingState}>
 					<div className={styles.loadingSpinner}></div>
-					<p>Ładowanie...</p>
+					{/* <p>Ładowanie...</p> */}
 				</div>
 			</div>
 		);
@@ -2564,10 +2586,10 @@ export default function Members({ title }: { title?: string }) {
 					{(selectedProvince !== "all" ||
 						selectedTeam !== "all" ||
 						searchTerm) && (
-						<button className={styles.filters__reset} onClick={clearFilters}>
-							Wyczyść filtry
-						</button>
-					)}
+							<button className={styles.filters__reset} onClick={clearFilters}>
+								Wyczyść filtry
+							</button>
+						)}
 				</div>
 			</div>
 
@@ -2647,8 +2669,8 @@ export default function Members({ title }: { title?: string }) {
 						<h3 className={styles.emptyState__title}>Brak członków</h3>
 						<p className={styles.emptyState__description}>
 							{searchTerm ||
-							selectedProvince !== "all" ||
-							selectedTeam !== "all"
+								selectedProvince !== "all" ||
+								selectedTeam !== "all"
 								? "Nie znaleziono członków spełniających kryteria wyszukiwania."
 								: "Nie ma jeszcze żadnych członków w organizacji."}
 						</p>

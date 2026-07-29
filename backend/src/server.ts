@@ -2469,7 +2469,7 @@ app.get("/api/profile", authMiddleware, async (req: any, res) => {
 				? JSON.parse(onboarding.development_areas)
 				: [],
 			skills: onboarding.skills ? JSON.parse(onboarding.skills) : [],
-			availability: onboarding.availability || "Uzgodnij z koordynatorem",
+			availability: onboarding.availability || "Nie ustawiono",
 			description: onboarding.description || "",
 			contacts: {
 				salaContacts: onboarding.sala_contacts
