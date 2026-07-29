@@ -5,13 +5,13 @@ import mysql from "mysql2/promise";
 
 const prisma = new PrismaClient();
 
-// Konfiguracja zewnętrznej bazy SM_Ewidencja
-const EXTERNAL_DB_CONFIG = {
-	host: process.env.EXTERNAL_DB_HOST || "57.128.253.89",
-	user: process.env.EXTERNAL_DB_USER || "czarnecki",
-	password: process.env.EXTERNAL_DB_PASSWORD || "",
-	database: process.env.EXTERNAL_DB_NAME || "SM_Ewidencja",
-	port: parseInt(process.env.EXTERNAL_DB_PORT || "3306"),
+// ⭐ KONFIGURACJA BAZY FREKWENCJA
+const FREKWENCJA_DB_CONFIG = {
+	host: process.env.FREKWENCJA_DB_HOST || "57.128.253.89",
+	user: process.env.FREKWENCJA_DB_USER || "czarnecki",
+	password: process.env.FREKWENCJA_DB_PASSWORD || "",
+	database: process.env.FREKWENCJA_DB_NAME || "SM_Frekwencja",
+	port: 3306,
 };
 
 export async function syncAttendance() {
@@ -21,27 +21,29 @@ export async function syncAttendance() {
 	let connection: mysql.Connection | null = null;
 
 	try {
-		// 1. Połączenie z zewnętrzną bazą
-		console.log("📡 [ATTENDANCE] Łączenie z SM_Ewidencja...");
-		connection = await mysql.createConnection(EXTERNAL_DB_CONFIG);
-		console.log("✅ [ATTENDANCE] Połączono z SM_Ewidencja");
+		console.log("📡 [ATTENDANCE] Łączenie z SM_Frekwencja...");
+		connection = await mysql.createConnection(FREKWENCJA_DB_CONFIG);
+		console.log("✅ [ATTENDANCE] Połączono z SM_Frekwencja");
 
-		// 2. Pobranie frekwencji z zewnętrznej bazy
-		console.log("📊 [ATTENDANCE] Pobieranie frekwencji...");
+		// ⭐ SPRAWDŹ TABELE W BAZIE FREKWENCJA
+		const [tables] = await connection.execute("SHOW TABLES");
+		console.log("📋 [ATTENDANCE] Tabele w SM_Frekwencja:", tables);
+
+		// ⭐ POBIERZ FREKWENCJĘ (dostosuj nazwy tabel)
 		const [rows] = await connection.execute(`
             SELECT
-                am.email,
+                m.email,
                 ROUND(
-                    SUM(CASE WHEN aa.status = 'present' THEN 1 ELSE 0 END)
+                    SUM(CASE WHEN a.status = 'present' THEN 1 ELSE 0 END)
                     /
-                    COUNT(aa.id)
+                    COUNT(a.id)
                     * 100,
                     2
                 ) AS attendance_percentage
-            FROM att_members am
-            LEFT JOIN att_attendance aa
-                ON aa.member_id = am.id
-            GROUP BY am.id, am.email
+            FROM members m
+            LEFT JOIN attendance a
+                ON a.member_id = m.id
+            GROUP BY m.id, m.email
             HAVING attendance_percentage IS NOT NULL
         `);
 
@@ -58,14 +60,13 @@ export async function syncAttendance() {
 			return;
 		}
 
-		// 3. Aktualizacja frekwencji w głównej bazie
+		// ⭐ AKTUALIZACJA W GŁÓWNEJ BAZIE (przez Prisma)
 		console.log("🔄 [ATTENDANCE] Aktualizacja frekwencji użytkowników...");
 		let updatedCount = 0;
 		let skippedCount = 0;
 
 		for (const record of attendanceData) {
 			try {
-				// Sprawdź czy użytkownik istnieje
 				const user = await prisma.user.findUnique({
 					where: { email: record.email },
 					select: { id: true },
@@ -76,7 +77,6 @@ export async function syncAttendance() {
 					continue;
 				}
 
-				// Aktualizuj frekwencję
 				await prisma.user.update({
 					where: { email: record.email },
 					data: {
@@ -107,7 +107,7 @@ export async function syncAttendance() {
 	} finally {
 		if (connection) {
 			await connection.end();
-			console.log("🔌 [ATTENDANCE] Zamknięto połączenie z SM_Ewidencja");
+			console.log("🔌 [ATTENDANCE] Zamknięto połączenie z SM_Frekwencja");
 		}
 		await prisma.$disconnect();
 	}

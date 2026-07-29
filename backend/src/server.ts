@@ -19,7 +19,13 @@ import multer from "multer";
 import { syncMembers } from "./jobs/syncMembers";
 
 updateLeaveStatus();
-
+const FREKWENCJA_DB_CONFIG = {
+	host: process.env.FREKWENCJA_DB_HOST || "57.128.253.89",
+	user: process.env.FREKWENCJA_DB_USER || "czarnecki",
+	password: process.env.FREKWENCJA_DB_PASSWORD || "",
+	database: process.env.FREKWENCJA_DB_NAME || "SM_Frekwencja",
+	port: 3306,
+};
 cron.schedule("0 7,14,21 * * *", async () => {
 	console.log("🔄 [CRON] Uruchamiam synchronizację frekwencji...");
 	try {
@@ -1173,7 +1179,7 @@ app.get("/api/dashboard/stats", authMiddleware, async (req: any, res) => {
 		const userId = req.user?.id;
 		const userEmail = req.user?.email;
 
-		// ⭐ 1. STATYSTYKI OGÓLNE - zdefiniuj zmienne!
+		// ⭐ 1. STATYSTYKI OGÓLNE
 		const totalMembers = await prisma.user.count({
 			where: { is_active: true },
 		});
@@ -1203,32 +1209,34 @@ app.get("/api/dashboard/stats", authMiddleware, async (req: any, res) => {
 			},
 		});
 
-		// ⭐ 4. FREKWENCJA
+		// ⭐ 4. FREKWENCJA Z BAZY FREKWENCJA
 		let attendance = "0%";
 		if (userEmail) {
 			try {
+				// ⭐ UŻYJ BAZY FREKWENCJA ZAMIAST EWIDENCJA
 				const connection = await mysql.createConnection({
-					host: process.env.EXTERNAL_DB_HOST || "57.128.253.89",
-					user: process.env.EXTERNAL_DB_USER || "czarnecki",
-					password: process.env.EXTERNAL_DB_PASSWORD || "",
-					database: process.env.EXTERNAL_DB_NAME || "SM_Ewidencja",
-					port: parseInt(process.env.EXTERNAL_DB_PORT || "3306"),
+					host: process.env.FREKWENCJA_DB_HOST || "57.128.253.89",
+					user: process.env.FREKWENCJA_DB_USER || "czarnecki",
+					password: process.env.FREKWENCJA_DB_PASSWORD || "",
+					database: process.env.FREKWENCJA_DB_NAME || "SM_Frekwencja",
+					port: 3306,
 				});
 
+				// ⭐ POPRAWIONE ZAPYTANIE - używamy tabel z SM_Frekwencja
 				const [rows] = await connection.execute(
 					`
 					SELECT
 						ROUND(
-							SUM(CASE WHEN aa.status = 'present' THEN 1 ELSE 0 END)
+							SUM(CASE WHEN a.status = 'present' THEN 1 ELSE 0 END)
 							/
-							COUNT(aa.id)
+							COUNT(a.id)
 							* 100,
 							2
 						) AS attendance_percentage
-					FROM att_members am
-					LEFT JOIN att_attendance aa ON aa.member_id = am.id
-					WHERE am.email = ?
-					GROUP BY am.id, am.email
+					FROM members m
+					LEFT JOIN attendance a ON a.member_id = m.id
+					WHERE m.email = ?
+					GROUP BY m.id, m.email
 					`,
 					[userEmail],
 				);
@@ -1240,17 +1248,24 @@ app.get("/api/dashboard/stats", authMiddleware, async (req: any, res) => {
 					attendance = `${result[0].attendance_percentage.toFixed(1)}%`;
 				}
 			} catch (dbError) {
-				console.error("❌ Błąd pobierania frekwencji z SM_Ewidencja:", dbError);
+				console.error(
+					"❌ Błąd pobierania frekwencji z SM_Frekwencja:",
+					dbError,
+				);
 				// Fallback - pobierz z głównej bazy
-				const user = await prisma.user.findUnique({
-					where: { id: parseInt(userId) },
-					select: { attendance_percentage: true },
-				});
-				if (
-					user?.attendance_percentage !== null &&
-					user?.attendance_percentage !== undefined
-				) {
-					attendance = `${Number(user.attendance_percentage).toFixed(1)}%`;
+				try {
+					const user = await prisma.user.findUnique({
+						where: { id: parseInt(userId) },
+						select: { attendance_percentage: true },
+					});
+					if (
+						user?.attendance_percentage !== null &&
+						user?.attendance_percentage !== undefined
+					) {
+						attendance = `${Number(user.attendance_percentage).toFixed(1)}%`;
+					}
+				} catch (fallbackError) {
+					console.error("❌ Błąd fallback frekwencji:", fallbackError);
 				}
 			}
 		}
