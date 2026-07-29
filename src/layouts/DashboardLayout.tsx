@@ -1,4 +1,4 @@
-// frontend/src/layouts/DashboardLayout.tsx
+
 
 import { useState, useEffect } from "react";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
@@ -24,7 +24,7 @@ export default function DashboardLayout() {
 					return;
 				}
 
-				// 1. Pobierz profil
+
 				const response = await fetch("/api/profile", {
 					headers: { Authorization: `Bearer ${token}` },
 				});
@@ -40,15 +40,15 @@ export default function DashboardLayout() {
 				console.log("📋 role:", userData.role);
 				setCurrentUser(userData);
 
-				// 2. Sprawdź dostęp do Social Media
+
 				let hasSocialAccess = false;
 
-				// ⭐ ADMIN - zawsze ma dostęp
+
 				if (userData.role === "admin") {
 					hasSocialAccess = true;
 					console.log("✅ Admin - dostęp do Social Media");
 				}
-				// ⭐ SPRAWDŹ PRZEZ ENDPOINT /api/social/members/check
+
 				else {
 					try {
 						console.log("🔍 Sprawdzam przez /api/social/members/check...");
@@ -59,7 +59,7 @@ export default function DashboardLayout() {
 						if (socialCheck.ok) {
 							const checkData = await socialCheck.json();
 							console.log("📊 Wynik check:", checkData);
-							// ⭐ ZAKŁADAMY ŻE ENDPOINT ZWRACA { isMember: true/false }
+
 							hasSocialAccess = checkData.isMember === true || checkData.isSocialMember === true;
 							console.log(`📊 hasSocialAccess: ${hasSocialAccess}`);
 						} else {
@@ -86,7 +86,7 @@ export default function DashboardLayout() {
 		checkSocialMediaAccess();
 	}, []);
 
-	// Ustawianie aktywnego elementu na podstawie URL
+
 	useEffect(() => {
 		const path = location.pathname.replace("/", "") || "dashboard";
 		setActiveNav(path);

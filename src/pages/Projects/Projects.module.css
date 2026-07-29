@@ -849,7 +849,7 @@
 		justify-content: center;
 	}
 }
-/* Projects.module.css - dodaj na końcu */
+
 
 .teamSelector {
 	border: 1px solid var(--border-color, #e2e8f0);
@@ -976,7 +976,7 @@
 	text-align: right;
 }
 
-/* Projects.module.css */
+
 
 .roleAdmin {
 	background: #dbeafe;
@@ -996,7 +996,7 @@
 	border: 1px solid #d1d5db;
 }
 
-/* Projects.module.css */
+
 
 .teamSelector__info {
 	padding: 12px;
@@ -1016,7 +1016,7 @@
 	color: #064e3b;
 }
 
-/* Statusy dla pomysłów */
+
 .statusPending {
 	background: #fbbf24;
 	color: #1a1a2e;
@@ -1037,7 +1037,7 @@
 	color: #ffffff;
 }
 
-/* Karta pomysłu */
+
 .ideaCard {
 	background: #1a1a2e;
 	border-radius: 12px;
@@ -1680,7 +1680,7 @@
 	font-weight: 500;
 }
 
-/* Projects.module.css */
+
 .ideaCard__coordinatorInfo {
 	display: flex;
 	flex-wrap: wrap;
@@ -1768,7 +1768,7 @@
 	color: var(--gray-500, #6b7280);
 }
 
-/* Responsywność */
+
 @media (max-width: 768px) {
 	.coordinatorStats {
 		gap: 12px 16px;
@@ -1825,11 +1825,11 @@
 }
 
 .ideaCard__header {
-	flex-shrink: 0; /* nie kurczy się */
+	flex-shrink: 0; 
 }
 
 .ideaCard__description {
-	flex: 1; /* wypełnia dostępne miejsce */
+	flex: 1; 
 }
 
 .ideaCard__meta {
@@ -1840,7 +1840,7 @@
 	display: flex;
 	align-items: center;
 	gap: 50px;
-	margin-top: auto; /* ← WYPYCHA NA DÓŁ */
+	margin-top: auto; 
 	padding-top: 12px;
 	border-top: 1px solid var(--gray-200, #e2e8f0);
 	width: 100%;

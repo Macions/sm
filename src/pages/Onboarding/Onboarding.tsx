@@ -20,9 +20,9 @@ import {
 } from "lucide-react";
 import styles from "./Onboarding.module.css";
 
-// ---------------------------------------------------------------------------
-// TYPY
-// ---------------------------------------------------------------------------
+
+
+
 
 type DevelopmentArea =
 	| "projects"
@@ -38,33 +38,33 @@ type DevelopmentArea =
 type ExperienceLevel = "none" | "beginner" | "intermediate" | "advanced";
 
 interface OnboardingData {
-	// Podstawowe dane
+
 	firstName: string;
 	lastName: string;
 	email: string;
 	phone: string;
 	province: string;
-	joinMonth?: number; // <-- DODAJ
-	joinYear?: number; // <-- DODAJ
+	joinMonth?: number;
+	joinYear?: number;
 	isTrial?: boolean;
 
-	// Zainteresowania i rozwój
+
 	developmentAreas: DevelopmentArea[];
 	skills: string[];
 	experience: ExperienceLevel;
 	availability: string;
 	description: string;
 
-	// Kontakty (prywatne)
+
 	salaContacts: string[];
 	mpContacts: string[];
 	institutionContacts: string[];
 	otherContacts: string[];
 }
 
-// ---------------------------------------------------------------------------
-// DANE
-// ---------------------------------------------------------------------------
+
+
+
 
 const DEVELOPMENT_AREA_LABELS: Record<DevelopmentArea, string> = {
 	projects: "Projekty",
@@ -116,50 +116,50 @@ const PROVINCES = [
 	"Zachodniopomorskie",
 ];
 
-// ---------------------------------------------------------------------------
-// KOMPONENT
-// ---------------------------------------------------------------------------
+
+
+
 
 interface OnboardingProps {
 	onComplete: (data: OnboardingData) => void;
 	initialData?: Partial<OnboardingData>;
 }
-// ============================================================
-// ⭐ FORMATOWANIE NUMERU TELEFONU ⭐
-// ============================================================
+
+
+
 
 const formatPhoneNumber = (rawPhone: string | null | undefined): string => {
 	if (!rawPhone) return "";
 
-	// Wyciągnij tylko cyfry
+
 	const digits = rawPhone.toString().replace(/\D/g, "");
 
-	// Jeśli nie ma cyfr - zwróć puste
+
 	if (!digits) return "";
 
-	// Sprawdź czy numer zaczyna się od 48 (prefix Polski)
+
 	let number = digits;
 
-	// Jeśli zaczyna się od 48, usuń 48 z przodu
+
 	if (number.startsWith("48")) {
 		number = number.substring(2);
 	}
 
-	// Jeśli numer ma 9 cyfr (bez prefixu) - to standardowy polski numer
+
 	if (number.length === 9) {
-		// Format: 123 123 123
+
 		const part1 = number.substring(0, 3);
 		const part2 = number.substring(3, 6);
 		const part3 = number.substring(6, 9);
 		return `+48 ${part1} ${part2} ${part3}`;
 	}
 
-	// Jeśli ma mniej niż 9 cyfr - zwróć same cyfry z +48
+
 	if (number.length < 9 && number.length > 0) {
 		return `+48 ${number}`;
 	}
 
-	// Jeśli ma więcej niż 9 cyfr (np. 11 cyfr) - weź ostatnie 9
+
 	if (number.length > 9) {
 		const last9 = number.substring(number.length - 9);
 		const part1 = last9.substring(0, 3);
@@ -168,7 +168,7 @@ const formatPhoneNumber = (rawPhone: string | null | undefined): string => {
 		return `+48 ${part1} ${part2} ${part3}`;
 	}
 
-	// Fallback - zwróć z +48
+
 	return `+48 ${digits}`;
 };
 
@@ -176,9 +176,9 @@ export default function Onboarding({
 	onComplete,
 	initialData = {},
 }: OnboardingProps) {
-	// ============================================================
-	// ⭐ SPRAWDZANIE STATUSU ONBOARDINGU - DOSTOSOWANE DO TWOJEGO ENDPOINTU ⭐
-	// ============================================================
+
+
+
 	const navigate = useNavigate();
 	const [isLoading, setIsLoading] = useState(true);
 	const [hasCompletedOnboarding, setHasCompletedOnboarding] = useState(false);
@@ -205,7 +205,7 @@ export default function Onboarding({
 	const [newMpContact, setNewMpContact] = useState("");
 	const [newInstitutionContact, setNewInstitutionContact] = useState("");
 	const [newOtherContact, setNewOtherContact] = useState("");
-	const [isEmailManuallyEdited, setIsEmailManuallyEdited] = useState(false); // <-- DODAJ
+	const [isEmailManuallyEdited, setIsEmailManuallyEdited] = useState(false);
 	const [isSubmitting, setIsSubmitting] = useState(false);
 
 	const totalSteps = 4;
@@ -216,7 +216,7 @@ export default function Onboarding({
 	const handleInputChange = (field: keyof OnboardingData, value: any) => {
 		setFormData((prev) => ({ ...prev, [field]: value }));
 
-		// Jeśli użytkownik ręcznie zmienił email - zapamiętaj to
+
 		if (field === "email") {
 			setIsEmailManuallyEdited(true);
 		}
@@ -231,7 +231,7 @@ export default function Onboarding({
 				}
 
 				console.log("🔍 Sprawdzanie statusu onboardingu...");
-				// ⭐ UŻYJ TWOJEGO ENDPOINTU ⭐
+
 				const response = await fetch("/api/auth/onboarding-status", {
 					headers: {
 						Authorization: `Bearer ${token}`,
@@ -243,7 +243,7 @@ export default function Onboarding({
 					const data = await response.json();
 					console.log("📋 Status onboardingu:", data);
 
-					// ⭐ TWOJ ENDPOINT ZWRACA { completed: boolean } ⭐
+
 					if (data.completed === true) {
 						console.log("✅ Użytkownik już przeszedł onboarding - przekierowanie na dashboard");
 						setHasCompletedOnboarding(true);
@@ -289,7 +289,7 @@ export default function Onboarding({
 		fetchPillars();
 	}, []);
 
-	// useEffect 3: Pobieranie danych z localStorage (WKLEJAMY)
+
 	useEffect(() => {
 		const userData = localStorage.getItem("user");
 		if (userData) {
@@ -324,7 +324,7 @@ export default function Onboarding({
 		}
 	}, []);
 
-	// useEffect 4: Pobieranie profilu z API (WKLEJAMY)
+
 	useEffect(() => {
 		const fetchUserProfile = async () => {
 			try {
@@ -356,7 +356,7 @@ export default function Onboarding({
 		}
 	}, [formData.phone]);
 
-	// useEffect 5: Generowanie emaila (WKLEJAMY)
+
 	useEffect(() => {
 		if (formData.firstName.trim() && formData.lastName.trim()) {
 			const normalize = (str: string) => {
@@ -396,7 +396,7 @@ export default function Onboarding({
 			}
 		}
 	}, [formData.firstName, formData.lastName, isEmailManuallyEdited]);
-	// ⭐ Jeśli trwa sprawdzanie - pokaż loader
+
 	if (isLoading) {
 		return (
 			<div className={styles.onboarding}>
@@ -410,19 +410,19 @@ export default function Onboarding({
 	}
 
 	if (hasCompletedOnboarding) {
-		return null; // Przekierowanie zostało już wykonane
+		return null;
 	}
 
 
 
-	// Onboarding.tsx - dodaj stan dla filaru
 
-	// Dodaj useEffect do pobierania filarów
-	// Onboarding.tsx - useEffect do pobierania filarów
-	// ✅ ZOSTAW TYLKO TEN JEDEN (przed toggleDevelopmentArea):
-	// Onboarding.tsx - useEffect do pobierania filarów
 
-	// Onboarding.tsx - dodaj przed toggleDevelopmentArea
+
+
+
+
+
+
 	const togglePillar = (pillarId: number) => {
 		setSelectedPillars(prev => {
 			if (prev.includes(pillarId)) {
@@ -461,7 +461,7 @@ export default function Onboarding({
 	) => {
 		setList(list.filter((i) => i !== item));
 	};
-	// ===== OBLICZANIE STAŻU =====
+
 	const getMembershipDuration = (
 		joinDate: string | null,
 		isTrial: boolean,
@@ -493,8 +493,8 @@ export default function Onboarding({
 		}
 		return "mniej niż miesiąc";
 	};
-	// ZMIEŃ w handleSubmit:
-	// Onboarding.tsx - w handleSubmit
+
+
 
 	const handleSubmit = async () => {
 		console.log("🚀 [SUBMIT] START");
@@ -548,14 +548,14 @@ export default function Onboarding({
 			console.log("✅ [response] sukces:", result);
 
 
-			// ⭐⭐⭐ AKTUALIZUJ LOCALSTORAGE ⭐⭐⭐
+
 			console.log("💾 [Onboarding] Aktualizuję localStorage onboardingCompleted = true");
 			localStorage.setItem("onboardingCompleted", "true");
 			console.log("📋 [Onboarding] localStorage po aktualizacji:", localStorage.getItem("onboardingCompleted"));
 
-			// ============================================================
-			// ✅✅✅ UTWÓRZ POWIADOMIENIE POWITALNE (przez API) ✅✅✅
-			// ============================================================
+
+
+
 			try {
 				console.log("📨 [ONBOARDING] Tworzę powiadomienie powitalne...");
 
@@ -581,7 +581,7 @@ export default function Onboarding({
 			} catch (welcomeError) {
 				console.error("⚠️ [ONBOARDING] Błąd tworzenia powiadomienia:", welcomeError);
 			}
-			// ============================================================
+
 
 			console.log("🚀 [ONBOARDING] Przekierowuję na dashboard...");
 			navigate("/dashboard");
@@ -593,7 +593,7 @@ export default function Onboarding({
 				(error instanceof Error ? error.message : "Nieznany błąd"),
 			);
 		} finally {
-			// ⭐ ODKOMENTUJ PO ZAKOŃCZENIU
+
 			setIsSubmitting(false);
 		}
 	};
@@ -606,7 +606,7 @@ export default function Onboarding({
 					formData.lastName.trim() &&
 					formData.email.trim() &&
 					formData.province &&
-					selectedPillars.length > 0 // ⬅️ DODAJ
+					selectedPillars.length > 0
 				);
 			case 2:
 				return formData.developmentAreas.length > 0;
@@ -641,18 +641,18 @@ export default function Onboarding({
 		}
 		return { firstName: "", lastName: "" };
 	};
-	// Na początku komponentu, po deklaracji stanów:
-	// Onboarding.tsx - znajdź ten useEffect i ZASTĄP GO:
 
-	// Onboarding.tsx - znajdź ten useEffect i ZMIEŃ:
 
-	// Onboarding.tsx - ZMIEŃ useEffect
-	// const navigate = useNavigate();
+
+
+
+
+
 
 	return (
 		<div className={styles.onboarding}>
 			<div className={styles.container}>
-				{/* Nagłówek */}
+				{}
 				<div className={styles.header}>
 					<h1 className={styles.title}>Witaj w Sile Młodych!</h1>
 					<p className={styles.subtitle}>
@@ -661,7 +661,7 @@ export default function Onboarding({
 					</p>
 				</div>
 
-				{/* Progress */}
+				{}
 				<div className={styles.progress}>
 					<div className={styles.progress__bar}>
 						<div
@@ -676,9 +676,9 @@ export default function Onboarding({
 					</div>
 				</div>
 
-				{/* Formularz */}
+				{}
 				<div className={styles.form}>
-					{/* Krok 1: Dane podstawowe */}
+					{}
 					{step === 1 && (
 						<div className={styles.step}>
 							<h2 className={styles.step__title}>
@@ -768,7 +768,7 @@ export default function Onboarding({
 									))}
 								</select>
 							</div>
-							{/* Wybór filarów - checkboxy */}
+							{}
 							<div className={styles.form__field}>
 								<label className={styles.form__label}>
 									Filar/y w których działasz *
@@ -835,7 +835,7 @@ export default function Onboarding({
 								</div>
 							</div>
 
-							{/* Okres próbny */}
+							{}
 							<div className={styles.form__field}>
 								<label className={styles.form__checkbox}>
 									<input
@@ -857,7 +857,7 @@ export default function Onboarding({
 						</div>
 					)}
 
-					{/* Krok 2: Zainteresowania i rozwój */}
+					{}
 					{step === 2 && (
 						<div className={styles.step}>
 							<h2 className={styles.step__title}>
@@ -1002,7 +1002,7 @@ export default function Onboarding({
 						</div>
 					)}
 
-					{/* Krok 3: Kontakty prywatne */}
+					{}
 					{step === 3 && (
 						<div className={styles.step}>
 							<h2 className={styles.step__title}>
@@ -1262,7 +1262,7 @@ export default function Onboarding({
 						</div>
 					)}
 
-					{/* Krok 4: Podsumowanie */}
+					{}
 					{step === 4 && (
 						<div className={styles.step}>
 							<h2 className={styles.step__title}>
@@ -1292,7 +1292,7 @@ export default function Onboarding({
 												{formData.email}
 											</span>
 										</div>
-										{/* W podsumowaniu - dodaj po województwie */}
+										{}
 										<div>
 											<span className={styles.summary__label}>Filar/y</span>
 											<div className={styles.summary__tags}>
@@ -1460,7 +1460,7 @@ export default function Onboarding({
 						</div>
 					)}
 
-					{/* Przyciski nawigacji */}
+					{}
 					<div className={styles.navigation}>
 						<button
 							type="button"
@@ -1486,7 +1486,7 @@ export default function Onboarding({
 								type="button"
 								className={`${styles.nav__btn} ${styles.nav__btnSubmit}`}
 								onClick={handleSubmit}
-								disabled={!isStepValid() || isSubmitting} // ⭐ DODAJ isSubmitting
+								disabled={!isStepValid() || isSubmitting}
 							>
 								{isSubmitting ? (
 									<>

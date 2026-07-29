@@ -1,4 +1,4 @@
-// A:\sm system\sm\backend\src\services\onboarding.service.ts
+
 
 import pool from "../config/db";
 
@@ -17,8 +17,8 @@ export interface OnboardingData {
 	mpContacts: string[];
 	institutionContacts: string[];
 	otherContacts: string[];
-	joinDate?: string | null; // <-- DODAJ
-	isTrial?: boolean; // <-- DODAJ
+	joinDate?: string | null;
+	isTrial?: boolean;
 }
 
 export class OnboardingService {
@@ -31,14 +31,14 @@ export class OnboardingService {
 		try {
 			await connection.beginTransaction();
 
-			// Sprawdź czy użytkownik już wypełnił onboarding
+
 			const [existing]: any[] = await connection.query(
 				"SELECT id FROM onboarding_data WHERE user_id = ?",
 				[userId],
 			);
 
 			if (existing.length > 0) {
-				// Aktualizuj istniejące dane
+
 				await connection.query(
 					`UPDATE onboarding_data 
                      SET first_name = ?, last_name = ?, email = ?, phone = ?, 
@@ -67,7 +67,7 @@ export class OnboardingService {
 					],
 				);
 			} else {
-				// Wstaw nowe dane
+
 				await connection.query(
 					`INSERT INTO onboarding_data 
                      (user_id, first_name, last_name, email, phone, province, 
@@ -94,7 +94,7 @@ export class OnboardingService {
 				);
 			}
 
-			// Zaktualizuj dane użytkownika - DODAJ join_date i is_trial
+
 			await connection.query(
 				`UPDATE users 
 				 SET first_name = ?, last_name = ?, email = ?, phone = ?, province = ?,
@@ -147,7 +147,7 @@ export class OnboardingService {
 			mpContacts: JSON.parse(row.mp_contacts || "[]"),
 			institutionContacts: JSON.parse(row.institution_contacts || "[]"),
 			otherContacts: JSON.parse(row.other_contacts || "[]"),
-			joinDate: null, // onboarding_data nie ma tych kolumn
+			joinDate: null,
 			isTrial: false,
 		};
 	}

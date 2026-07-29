@@ -1,4 +1,4 @@
-// backend/src/controllers/member.controller.ts
+
 
 import { Request, Response } from "express";
 import { PrismaClient } from "@prisma/client";
@@ -6,9 +6,9 @@ import bcrypt from "bcrypt";
 
 const prisma = new PrismaClient() as any;
 
-// ============================================================
-// FUNKCJE POMOCNICZE
-// ============================================================
+
+
+
 
 function mapRoleId(roleId: number | null): string {
 	const roleMap: Record<number, string> = {
@@ -20,14 +20,14 @@ function mapRoleId(roleId: number | null): string {
 	return roleMap[roleId || 4] || "member";
 }
 
-// ============================================================
-// KONTROLERY
-// ============================================================
 
-// 📥 GET - pobierz wszystkich członków
-// backend/src/controllers/member.controller.ts
 
-// member.controller.ts
+
+
+
+
+
+
 export const getMembers = async (req: Request, res: Response) => {
 	try {
 		const members = await prisma.user.findMany({
@@ -46,7 +46,7 @@ export const getMembers = async (req: Request, res: Response) => {
 				status: true,
 				join_date: true,
 				functional_role: true,
-				// ⭐ DODAJ TO:
+
 				onboarding_data: {
 					select: {
 						development_areas: true,
@@ -83,7 +83,7 @@ export const getMembers = async (req: Request, res: Response) => {
 			},
 		});
 
-		// Mapuj dane - weź pierwszy (najnowszy) rekord onboarding_data
+
 		const mappedMembers = members.map((member: any) => ({
 			...member,
 			onboarding_data: member.onboarding_data[0] || null,
@@ -95,7 +95,7 @@ export const getMembers = async (req: Request, res: Response) => {
 		res.status(500).json({ error: "Nie udało się pobrać członków" });
 	}
 };
-// 📥 GET - pobierz pojedynczego członka
+
 export const getMemberById = async (req: Request, res: Response) => {
 	try {
 		const { id } = req.params;
@@ -172,9 +172,9 @@ export const getMemberById = async (req: Request, res: Response) => {
 			smAreas: developmentAreas,
 			email: user.email || "",
 			phone: user.phone || "",
-			// W mapowaniu danych (około linii 1420)
+
 			joinDate: user.join_date
-				? new Date(user.join_date).toISOString().split("T")[0] // ✅ format YYYY-MM-DD
+				? new Date(user.join_date).toISOString().split("T")[0]
 				: new Date().toISOString().split("T")[0],
 			contacts: {
 				salaContacts: salaContacts,
@@ -196,8 +196,8 @@ export const getMemberById = async (req: Request, res: Response) => {
 	}
 };
 
-// 📤 POST - utwórz nowego członka
-// 📤 POST - utwórz nowego członka
+
+
 export const createMember = async (req: Request, res: Response) => {
 	try {
 		console.log("📥 [createMember] - START");
@@ -221,7 +221,7 @@ export const createMember = async (req: Request, res: Response) => {
 			contributionInfo,
 		} = req.body;
 
-		// Walidacja
+
 		if (!firstName || !lastName || !email) {
 			console.log("❌ [createMember] - Brak wymaganych pól");
 			return res.status(400).json({
@@ -229,7 +229,7 @@ export const createMember = async (req: Request, res: Response) => {
 			});
 		}
 
-		// Sprawdź czy email istnieje
+
 		const existingUser = await prisma.user.findUnique({
 			where: { email: email },
 		});
@@ -237,7 +237,7 @@ export const createMember = async (req: Request, res: Response) => {
 		if (existingUser) {
 			console.log("❌ [createMember] - Email już istnieje:", email);
 
-			// Sprawdź czy jest już w zespole
+
 			const existingTeamMember = await prisma.teamMember.findFirst({
 				where: {
 					user_id: existingUser.id,
@@ -253,7 +253,7 @@ export const createMember = async (req: Request, res: Response) => {
 				});
 			}
 
-			// Jeśli nie jest w zespole, dodaj go do zespołu
+
 			if (team) {
 				const teamRecord = await prisma.team.findFirst({
 					where: { name: team },
@@ -269,10 +269,10 @@ export const createMember = async (req: Request, res: Response) => {
 						},
 					});
 
-					// Zwróć zaktualizowanego użytkownika
+
 					return res.status(200).json({
 						message: `Użytkownik został dodany do zespołu "${team}"`,
-						// ... dane użytkownika
+
 					});
 				}
 			}
@@ -282,7 +282,7 @@ export const createMember = async (req: Request, res: Response) => {
 			});
 		}
 
-		// Generuj unikalny username
+
 		let username = email.split("@")[0];
 		let counter = 1;
 		let userExists = await prisma.user.findUnique({
@@ -297,7 +297,7 @@ export const createMember = async (req: Request, res: Response) => {
 			counter++;
 		}
 
-		// Znajdź ID zespołu
+
 		let teamId = null;
 		if (team) {
 			const teamRecord = await prisma.team.findFirst({
@@ -308,7 +308,7 @@ export const createMember = async (req: Request, res: Response) => {
 			}
 		}
 
-		// ✅ Tworzenie użytkownika z zespołem - TYLKO TUTAJ
+
 		const user = await prisma.user.create({
 			data: {
 				first_name: firstName,
@@ -324,7 +324,7 @@ export const createMember = async (req: Request, res: Response) => {
 				username: username,
 				password_hash: await bcrypt.hash("temporary123", 10),
 				is_active: true,
-				// ✅ TYLKO TUTAJ - dodaj do zespołu podczas tworzenia
+
 				team_members: teamId
 					? {
 							create: {
@@ -337,15 +337,15 @@ export const createMember = async (req: Request, res: Response) => {
 			},
 		});
 
-		// ❌ USUŃ TEN BLOK - to duplikat!:
-		// if (team) {
-		//     const teamRecord = await prisma.team.findFirst({ where: { name: team } });
-		//     if (teamRecord) {
-		//         await prisma.teamMember.create({ ... });
-		//     }
-		// }
 
-		// Tworzenie wpisu w onboarding_data
+
+
+
+
+
+
+
+
 		await prisma.onboarding_data.create({
 			data: {
 				first_name: firstName,
@@ -369,7 +369,7 @@ export const createMember = async (req: Request, res: Response) => {
 			},
 		});
 
-		// Mapowanie danych
+
 		const mappedMember = {
 			id: user.id.toString(),
 			firstName: user.first_name,
@@ -410,7 +410,7 @@ export const createMember = async (req: Request, res: Response) => {
 	}
 };
 
-// 📝 PUT - aktualizuj członka
+
 export const updateMember = async (req: Request, res: Response) => {
 	try {
 		const { id } = req.params;
@@ -446,7 +446,7 @@ export const updateMember = async (req: Request, res: Response) => {
 			return res.status(404).json({ error: "Nie znaleziono użytkownika" });
 		}
 
-		// Aktualizacja użytkownika
+
 		const user = await prisma.user.update({
 			where: { id: userId },
 			data: {
@@ -462,7 +462,7 @@ export const updateMember = async (req: Request, res: Response) => {
 			},
 		});
 
-		// Aktualizacja lub utworzenie wpisu w onboarding_data
+
 		const existingOnboarding = await prisma.onboarding_data.findFirst({
 			where: { user_id: userId },
 		});
@@ -541,7 +541,7 @@ export const updateMember = async (req: Request, res: Response) => {
 	}
 };
 
-// 🗑️ DELETE - usuń członka (soft delete)
+
 export const deleteMember = async (req: Request, res: Response) => {
 	try {
 		const { id } = req.params;
@@ -559,10 +559,10 @@ export const deleteMember = async (req: Request, res: Response) => {
 			return res.status(404).json({ error: "Nie znaleziono użytkownika" });
 		}
 
-		// ✅ ZMIEŃ 0 na false
+
 		await prisma.user.update({
 			where: { id: userId },
-			data: { is_active: false }, // Boolean - false
+			data: { is_active: false },
 		});
 
 		res.status(204).send();

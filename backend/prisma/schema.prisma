@@ -18,7 +18,7 @@ model User {
   created_at            DateTime             @default(now()) @db.Timestamp(0)
   team                  String?              @db.VarChar(100)
   status                String?              @default("active") @db.VarChar(50)
-  previous_status       String?              @default("active") @db.VarChar(50) // ⭐ DODAJ TĘ LINIĘ
+  previous_status       String?              @default("active") @db.VarChar(50)
   province              String?              @db.VarChar(100)
   phone                 String?              @db.VarChar(20)
   avatar                String?              @db.VarChar(255)
@@ -61,7 +61,7 @@ model SocialMediaCreator {
   user         User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
   availability String   @db.Text
   experience   String   @default("none") @db.VarChar(50)
-  topics       String?  @db.LongText // ⭐ ZMIEŃ NA STRING (przechowuj jako JSON string)
+  topics       String?  @db.LongText
   is_active    Boolean  @default(true)
   created_at   DateTime @default(now())
   updated_at   DateTime @updatedAt
@@ -202,9 +202,9 @@ model roles {
   id          Int      @id @default(autoincrement())
   name        String   @unique(map: "name") @db.VarChar(50)
   description String?  @db.Text
-  permissions String?  @db.LongText // ⭐ DODAJ TĘ LINIĘ - JSON z uprawnieniami
+  permissions String?  @db.LongText
   created_at  DateTime @default(now()) @db.Timestamp(0)
-  updated_at  DateTime @default(now()) @db.Timestamp(0) // ⭐ OPCJONALNIE - DODAJ TĘ LINIĘ
+  updated_at  DateTime @default(now()) @db.Timestamp(0)
   users       User[]
 
   @@map("roles")
@@ -413,7 +413,7 @@ enum idea_votes_vote_type {
 model SocialMediaMember {
   id         Int      @id @default(autoincrement())
   user_id    Int      @unique
-  role       String // "instagram", "tiktok", "manager", "graphic", "editor", "photographer", "content_creator"
+  role       String
   is_active  Boolean  @default(true)
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
@@ -426,9 +426,9 @@ model SocialMediaMember {
 model ContentCreator {
   id           Int      @id @default(autoincrement())
   user_id      Int      @unique
-  availability String // "Weekendy, wieczory", "Codziennie", itp.
-  experience   String // "none", "beginner", "intermediate", "advanced"
-  topics       String // JSON array of topics
+  availability String
+  experience   String
+  topics       String
   is_active    Boolean  @default(true)
   created_at   DateTime @default(now())
   updated_at   DateTime @updatedAt
@@ -441,11 +441,11 @@ model ContentCreator {
 model Publication {
   id             Int      @id @default(autoincrement())
   title          String
-  platform       String // "instagram", "tiktok", "facebook", "youtube"
-  type           String // "reel", "post", "story", "graphic", "video"
+  platform       String
+  type           String
   responsible_id Int
   due_date       DateTime
-  status         String // "idea", "preparation", "editing", "approval", "scheduled", "published"
+  status         String
   description    String?
   created_at     DateTime @default(now())
   updated_at     DateTime @updatedAt
@@ -479,7 +479,7 @@ model SocialTask {
   description    String?
   responsible_id Int
   deadline       DateTime
-  status         String // "pending", "in_progress", "done"
+  status         String
   created_at     DateTime @default(now())
   updated_at     DateTime @updatedAt
 
@@ -491,7 +491,7 @@ model SocialTask {
 model MediaContact {
   id             Int      @id @default(autoincrement())
   name           String
-  channel        String // "TVN", "Prasa", "Radio", "Portal", "Inne"
+  channel        String
   responsible_id Int
   email          String?
   phone          String?

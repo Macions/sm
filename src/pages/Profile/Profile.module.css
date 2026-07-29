@@ -2,14 +2,14 @@
    PROFILE.MODULE.CSS
    ======================================== */
 
-/* ===== GŁÓWNY KONTENER ===== */
+
 .profile {
     width: 100%;
     margin: 0 auto;
     min-height: 100vh;
 }
 
-/* ===== NAGŁÓWEK ===== */
+
 .header {
     display: flex;
     justify-content: space-between;
@@ -96,7 +96,7 @@
     background: #e2e8f0;
 }
 
-/* ===== NAWIGACJA ===== */
+
 .navigation {
     display: flex;
     gap: 4px;
@@ -139,14 +139,14 @@
     color: #6d28d9;
 }
 
-/* ===== GŁÓWNA ZAWARTOŚĆ ===== */
+
 .content {
     display: flex;
     flex-direction: column;
     gap: 24px;
 }
 
-/* ===== KARTA PROFILOWA ===== */
+
 .profileCard {
     background: white;
     border-radius: 16px;
@@ -275,7 +275,7 @@
     line-height: 1.6;
 }
 
-/* ===== SEKCJE ===== */
+
 .sections {
     display: flex;
     flex-direction: column;
@@ -373,7 +373,7 @@
     padding: 2px 0;
 }
 
-/* ===== OBSZARY ROZWOJU ===== */
+
 .section__field {
     margin-top: 16px;
 }
@@ -430,7 +430,7 @@
     background: #f8fafc;
 }
 
-/* ===== UMIEJĘTNOŚCI ===== */
+
 .section__skills {
     display: flex;
     flex-wrap: wrap;
@@ -504,7 +504,7 @@
     box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.1);
 }
 
-/* ===== DANE PRYWATNE ===== */
+
 .section__privateNote {
     display: flex;
     align-items: center;
@@ -540,7 +540,7 @@
     color: #dc2626;
 }
 
-/* ===== URLOPY ===== */
+
 .section__leaveWarning {
     display: flex;
     align-items: center;
@@ -628,7 +628,7 @@
     background: #ede9fe;
 }
 
-/* ===== RESPONSYWNOŚĆ ===== */
+
 @media (max-width: 1024px) {
     .profileCard__header {
         flex-direction: column;
@@ -738,7 +738,7 @@
     font-style: italic;
 }
 
-/* Profile.module.css */
+
 
 .loading {
     display: flex;
@@ -757,7 +757,7 @@
     animation: spin 0.8s linear infinite;
 }
 
-/* LUB wersja z kółkami (bez tekstu) */
+
 .loadingContainer {
     display: flex;
     justify-content: center;

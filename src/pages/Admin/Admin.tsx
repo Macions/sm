@@ -84,7 +84,7 @@ function LogsManagement() {
     const [selectedAction, setSelectedAction] = useState<string>("all");
     const [selectedStatus, setSelectedStatus] = useState<string>("all");
 
-    // Przyjazne nazwy kategorii
+
     const categoryLabels: Record<string, string> = {
         USER: 'Użytkownicy',
         TEAM: 'Zespoły',
@@ -99,7 +99,7 @@ function LogsManagement() {
         AUTH: 'Logowanie'
     };
 
-    // Przyjazne nazwy akcji
+
     const actionLabels: Record<string, string> = {
         CREATE: 'Dodanie',
         UPDATE: 'Modyfikacja',
@@ -110,19 +110,19 @@ function LogsManagement() {
         REJECT: 'Odrzucenie'
     };
 
-    // Przyjazne opisy statusów
+
     const statusLabels: Record<string, { label: string; icon: string; color: string }> = {
         success: { label: 'Powodzenie', icon: '✓', color: '#059669' },
         error: { label: 'Błąd', icon: '✗', color: '#dc2626' },
         warning: { label: 'Ostrzeżenie', icon: '⚠', color: '#d97706' }
     };
 
-    // Funkcja do generowania przyjaznego opisu akcji
+
     const getHumanReadableDescription = (log: SystemLog): string => {
         const action = actionLabels[log.action_type] || log.action_type;
         const category = categoryLabels[log.category] || log.category;
 
-        // Specjalne przypadki dla bardziej szczegółowych opisów
+
         if (log.category === 'LEAVE' && log.action_type === 'CREATE') {
             return `Zgłoszono nowy wniosek urlopowy przez ${log.user_name}`;
         }
@@ -154,25 +154,25 @@ function LogsManagement() {
             return `Użytkownik ${log.user_name} wylogował się z systemu`;
         }
 
-        // Domyślny opis
+
         return `${action} w kategorii ${category.toLowerCase()}`;
     };
 
-    // Funkcja do wyciągania czytelnych zmian
+
     const getReadableChanges = (log: SystemLog): string | null => {
         if (!log.changes) return null;
 
         try {
             const changes = typeof log.changes === 'string' ? JSON.parse(log.changes) : log.changes;
 
-            // Dla urlopów - pokaż daty
+
             if (log.category === 'LEAVE' && changes.startDate && changes.endDate) {
                 const start = new Date(changes.startDate).toLocaleDateString('pl-PL');
                 const end = new Date(changes.endDate).toLocaleDateString('pl-PL');
                 return `Okres: ${start} - ${end}`;
             }
 
-            // Dla profilu - pokaż co było zmieniane
+
             if (log.category === 'USER' && log.action_type === 'UPDATE') {
                 const fields: string[] = [];
                 if (changes.firstName) fields.push(`imię na "${changes.firstName}"`);
@@ -184,12 +184,12 @@ function LogsManagement() {
                 return `Zmieniono: ${fields.join(', ')}`;
             }
 
-            // Dla zespołów
+
             if (log.category === 'TEAM' && changes.name) {
                 return `Nazwa zespołu: "${changes.name}"`;
             }
 
-            // Ogólnie - pokaż pierwsze 3 klucze
+
             const keys = Object.keys(changes);
             if (keys.length === 0) return null;
             if (keys.length <= 3) {
@@ -201,7 +201,7 @@ function LogsManagement() {
         }
     };
 
-    // Funkcja do formatowania daty
+
     const formatDateTime = (date: string) => {
         const d = new Date(date);
         return d.toLocaleString('pl-PL', {
@@ -213,7 +213,7 @@ function LogsManagement() {
         });
     };
 
-    // Funkcja do formatowania daty z czasem względnym
+
     const getRelativeTime = (date: string) => {
         const now = new Date();
         const then = new Date(date);
@@ -297,7 +297,7 @@ function LogsManagement() {
                 </button>
             </div>
 
-            {/* Filtry */}
+            {}
             <div className={styles.logsFilters}>
                 <div className={styles.logsFilters__search}>
                     <input
@@ -353,7 +353,7 @@ function LogsManagement() {
                 </div>
             </div>
 
-            {/* Lista logów */}
+            {}
             {loading ? (
                 <div className={styles.logsLoading}>Ładowanie historii...</div>
             ) : logs.length === 0 ? (
@@ -428,7 +428,7 @@ function LogsManagement() {
                         })}
                     </div>
 
-                    {/* Paginacja */}
+                    {}
                     <div className={styles.pagination}>
                         <div className={styles.pagination__info}>
                             Wyświetlono {(page - 1) * limit + 1} - {Math.min(page * limit, total)} z {total} wpisów
@@ -755,10 +755,10 @@ function StructureManagement({
         onCancel: () => { },
     });
 
-    // Ref do śledzenia zespołu który był edytowany
-    // const lastEditedTeamIdRef = useRef<string | null>(null);
 
-    // Reset formularza
+
+
+
     const resetTeamForm = () => {
         setTeamForm({
             name: "",
@@ -775,7 +775,7 @@ function StructureManagement({
         setIsLeader(false);
     };
 
-    // Dodawanie zespołu
+
     const handleAddTeam = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
@@ -800,7 +800,7 @@ function StructureManagement({
         }
     };
 
-    // Edycja zespołu
+
     const handleEditTeam = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!editingTeam) return;
@@ -822,7 +822,7 @@ function StructureManagement({
             const teamId = editingTeam.id;
             resetTeamForm();
             await onRefresh();
-            // Po odświeżeniu, wróć do tego zespołu
+
             onTeamUpdated(teamId);
         } catch (error) {
             console.error("❌ Błąd:", error);
@@ -830,7 +830,7 @@ function StructureManagement({
         }
     };
 
-    // Usuwanie zespołu - z ConfirmDialog
+
     const showDeleteTeamConfirm = (teamId: string, teamName: string) => {
         setConfirmDialog({
             isOpen: true,
@@ -863,7 +863,7 @@ function StructureManagement({
         });
     };
 
-    // Usuwanie członka z zespołu - z ConfirmDialog
+
     const showRemoveMemberConfirm = (memberId: string, memberName: string, teamId: string) => {
         setConfirmDialog({
             isOpen: true,
@@ -897,7 +897,7 @@ function StructureManagement({
         });
     };
 
-    // Dodawanie członka do zespołu
+
     const handleAddMember = async (teamId: string) => {
         if (!selectedUser) {
             toast.error("Wybierz użytkownika");
@@ -934,7 +934,7 @@ function StructureManagement({
         }
     };
 
-    // Zmiana roli członka
+
     const handleChangeMemberRole = async (memberId: string, isLeader: boolean, teamId: string) => {
         try {
             const token = localStorage.getItem("accessToken");
@@ -958,7 +958,7 @@ function StructureManagement({
         }
     };
 
-    // Start edycji zespołu
+
     const startEditTeam = (team: Team) => {
         setTeamForm({
             name: team.name,
@@ -1008,7 +1008,7 @@ function StructureManagement({
                 )}
             </div>
 
-            {/* Formularz dodawania/edycji zespołu - Modal */}
+            {}
             {(isAddingTeam || editingTeam) && (
                 <div className={styles.modalOverlay} onClick={() => {
                     if (isAddingTeam) setIsAddingTeam(false);
@@ -1105,7 +1105,7 @@ function StructureManagement({
                 </div>
             )}
 
-            {/* Lista zespołów */}
+            {}
             <div className={styles.teamsGrid}>
                 {teams.map((team) => (
                     <div key={team.id} id={`team-${team.id}`} className={styles.teamCard}>
@@ -1152,7 +1152,7 @@ function StructureManagement({
                                 </span>
                             </div>
 
-                            {/* Lista członków */}
+                            {}
                             <div className={styles.teamCard__members}>
                                 {team.members.map((member) => (
                                     <div key={member.id} className={styles.memberItem}>
@@ -1204,7 +1204,7 @@ function StructureManagement({
                                 ))}
                             </div>
 
-                            {/* Dodawanie członka */}
+                            {}
                             {canManage && (
                                 <div className={styles.teamCard__addMember}>
                                     {isAddingMember === team.id ? (
@@ -1224,7 +1224,7 @@ function StructureManagement({
                                                     ))}
                                             </select>
 
-                                            {/* ⭐ ZMIENIONO NA INPUT TEXT ⭐ */}
+                                            {}
                                             <input
                                                 type="text"
                                                 value={selectedRole}
@@ -1346,7 +1346,7 @@ export default function Admin({ title }: { title?: string }) {
     const [currentUser, setCurrentUser] = useState<any>(null);
     const [scrollToTeamId, setScrollToTeamId] = useState<string | null>(null);
 
-    // ===== POBIERANIE DANYCH Z BACKENDU =====
+
     const fetchData = async () => {
         try {
             setLoading(true);
@@ -1414,7 +1414,7 @@ export default function Admin({ title }: { title?: string }) {
         }
     };
 
-    // ===== ODSWIEŻANIE =====
+
     const handleRefresh = async () => {
         setRefreshing(true);
         await fetchData();
@@ -1422,7 +1422,7 @@ export default function Admin({ title }: { title?: string }) {
         toast.success("Dane odświeżone");
     };
 
-    // ===== AKTUALIZACJA UPRAWNIEŃ =====
+
     const handleUpdatePermissions = async (roleId: string, permissions: Permission[]) => {
         try {
             const success = await updateRolePermissions(roleId, permissions);
@@ -1446,7 +1446,7 @@ export default function Admin({ title }: { title?: string }) {
         }
     };
 
-    // ===== SKOK DO ZESPOŁU PO ODSWIEŻENIU =====
+
     const handleTeamUpdated = (teamId: string) => {
         setScrollToTeamId(teamId);
     };
@@ -1456,7 +1456,7 @@ export default function Admin({ title }: { title?: string }) {
             const element = document.getElementById(`team-${scrollToTeamId}`);
             if (element) {
                 element.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                // Podświetlenie zespołu
+
                 element.style.transition = 'background-color 0.5s';
                 element.style.backgroundColor = '#dbeafe';
                 setTimeout(() => {

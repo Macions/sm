@@ -1,4 +1,4 @@
-// A:\sm system\sm\backend\src\controllers\onboarding.controller.ts
+
 
 import { Request, Response } from "express";
 import { OnboardingService } from "../services/onboarding.service";
@@ -11,7 +11,7 @@ export class OnboardingController {
 			const userId = (req as any).user?.id;
 			const data = req.body;
 
-			// Walidacja
+
 			if (!data.firstName || !data.lastName || !data.email || !data.province) {
 				return res.status(400).json({
 					error: "Imię, nazwisko, email i województwo są wymagane",

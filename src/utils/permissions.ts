@@ -1,4 +1,4 @@
-// src/utils/permissions.ts
+
 
 export type UserRole = "admin" | "board" | "zarząd" | "coordinator" | "member";
 
@@ -86,9 +86,9 @@ export const DEFAULT_PERMISSIONS: Record<UserRole, Permission[]> = {
 	],
 };
 
-// ============================================================
-// CACHE
-// ============================================================
+
+
+
 
 let permissionsCache: Record<string, Permission[]> = {};
 
@@ -96,7 +96,7 @@ export function clearPermissionsCache(): void {
 	permissionsCache = {};
 }
 
-// W permissions.ts, w fetchPermissions:
+
 
 export async function fetchPermissions(role: string): Promise<Permission[]> {
 	console.log(`🔍 [fetchPermissions] Pobieranie uprawnień dla roli: "${role}"`);
@@ -147,11 +147,11 @@ export async function getCachedPermissions(role: string): Promise<Permission[]> 
 	return permissions;
 }
 
-// ============================================================
-// FUNKCJE SYNCHRONICZNE
-// ============================================================
 
-// src/utils/permissions.ts
+
+
+
+
 
 export function hasPermission(
 	role: string | undefined,
@@ -159,16 +159,16 @@ export function hasPermission(
 ): boolean {
 	if (!role) return false;
 
-	// ⭐ NAJPIERW SPRAWDŹ CACHE
+
 	const permissions = permissionsCache[role];
 	if (permissions) {
 		return permissions.includes(permission);
 	}
 
-	// ⭐ JAK NIE MA W CACHE - UŻYJ DEFAULTOWYCH UPRAWNIEŃ
+
 	const defaultPerms = DEFAULT_PERMISSIONS[role as UserRole];
 	if (defaultPerms) {
-		// ⭐ ZAPISZ DO CACHE
+
 		permissionsCache[role] = defaultPerms;
 		return defaultPerms.includes(permission);
 	}
@@ -180,9 +180,9 @@ export function getPermissionsSync(role: string): Permission[] {
 	return permissionsCache[role] || [];
 }
 
-// ============================================================
-// FUNKCJE ASYNCHRONICZNE
-// ============================================================
+
+
+
 
 export async function canManageLeaves(role: string | undefined): Promise<boolean> {
 	if (!role) return false;
@@ -252,9 +252,9 @@ export async function canViewStructure(role: string | undefined): Promise<boolea
 	return permissions.includes("canViewStructure");
 }
 
-// ============================================================
-// AKTUALIZACJA UPRAWNIEŃ (dla admina)
-// ============================================================
+
+
+
 
 export async function updateRolePermissions(
 	roleId: string,
@@ -284,5 +284,4 @@ export async function updateRolePermissions(
 	}
 }
 
-// ✅ NIE DODAWAJ TEGO - już masz export type na początku!
-// export type { UserRole, Permission };
+

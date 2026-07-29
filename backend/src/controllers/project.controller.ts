@@ -1,4 +1,4 @@
-// src/controllers/project.controller.ts
+
 import { Request, Response } from "express";
 import { ProjectService } from "../services/project.service";
 import { AuthRequest } from "../middleware/auth.middleware";
@@ -21,7 +21,7 @@ export class ProjectController {
 	async getProjectById(req: Request<{ id: string }>, res: Response) {
 		try {
 			const idParam = req.params.id;
-			// ✅ Konwersja na number
+
 			const id = typeof idParam === "string" ? parseInt(idParam, 10) : NaN;
 
 			if (isNaN(id)) {
@@ -76,7 +76,7 @@ export class ProjectController {
 	async updateProject(req: AuthRequest, res: Response) {
 		try {
 			const idParam = req.params.id;
-			// ✅ Konwersja na number
+
 			const id = typeof idParam === "string" ? parseInt(idParam, 10) : NaN;
 
 			if (isNaN(id)) {

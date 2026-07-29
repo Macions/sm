@@ -151,7 +151,7 @@
 	font-weight: 500;
 }
 
-/* ---------------------------------- Responsywność ---------------------------------- */
+
 
 @media (max-width: 980px) {
 	.topbar__search {
@@ -260,7 +260,7 @@
 	position: relative;
 }
 
-/* ===== DROPDOWN ===== */
+
 .notificationsDropdown {
 	position: absolute;
 	top: calc(100% + 12px);
@@ -290,7 +290,7 @@
 	}
 }
 
-/* ===== HEADER ===== */
+
 .notificationsDropdown__header {
 	display: flex;
 	justify-content: space-between;
@@ -350,7 +350,7 @@
 	color: var(--text-dark, #201a3b);
 }
 
-/* ===== LISTA ===== */
+
 .notificationsDropdown__list {
 	flex: 1;
 	overflow-y: auto;
@@ -371,7 +371,7 @@
 	border-radius: 4px;
 }
 
-/* ===== POJEDYNCZE POWIADOMIENIE ===== */
+
 .notification {
 	display: flex;
 	align-items: flex-start;
@@ -390,7 +390,7 @@
 	background: var(--purple-50, #f6f4fe);
 }
 
-/* ===== NIEODCZYTANE ===== */
+
 .notification__unread {
 	background: var(--purple-50, #f6f4fe);
 	border-left: 3px solid var(--purple-700, #4c2cc7);
@@ -400,7 +400,7 @@
 	background: var(--purple-100, #efebfd);
 }
 
-/* ===== IKONA ===== */
+
 .notification__icon {
 	display: flex;
 	align-items: center;
@@ -428,7 +428,7 @@
 	color: #dc2626;
 }
 
-/* ===== TREŚĆ ===== */
+
 .notification__content {
 	flex: 1;
 	min-width: 0;
@@ -498,7 +498,7 @@
 	border-radius: 10px;
 }
 
-/* ===== EMPTY STATE ===== */
+
 .notificationsDropdown__empty {
 	display: flex;
 	flex-direction: column;
@@ -514,7 +514,7 @@
 	font-weight: 500;
 }
 
-/* ===== FOOTER ===== */
+
 .notificationsDropdown__footer {
 	padding: 12px 20px;
 	border-top: 1px solid var(--border-soft, #eceaf4);
@@ -538,7 +538,7 @@
 	background: var(--purple-50, #f6f4fe);
 }
 
-/* ===== RESPONSYWNOŚĆ ===== */
+
 @media (max-width: 768px) {
 	.notificationsDropdown {
 		position: fixed;
@@ -585,7 +585,7 @@
 	position: relative;
 }
 
-/* ===== DROPDOWN ===== */
+
 .notificationsDropdown {
 	position: absolute;
 	top: calc(100% + 12px);
@@ -615,7 +615,7 @@
 	}
 }
 
-/* ===== HEADER ===== */
+
 .notificationsDropdown__header {
 	display: flex;
 	justify-content: space-between;
@@ -675,7 +675,7 @@
 	color: var(--text-dark, #201a3b);
 }
 
-/* ===== LISTA ===== */
+
 .notificationsDropdown__list {
 	flex: 1;
 	overflow-y: auto;
@@ -696,7 +696,7 @@
 	border-radius: 4px;
 }
 
-/* ===== POJEDYNCZE POWIADOMIENIE ===== */
+
 .notification {
 	display: flex;
 	align-items: flex-start;
@@ -715,7 +715,7 @@
 	background: var(--purple-50, #f6f4fe);
 }
 
-/* ===== NIEODCZYTANE ===== */
+
 .notification__unread {
 	background: var(--purple-50, #f6f4fe);
 	border-left: 3px solid var(--purple-700, #4c2cc7);
@@ -725,7 +725,7 @@
 	background: var(--purple-100, #efebfd);
 }
 
-/* ===== IKONA ===== */
+
 .notification__icon {
 	display: flex;
 	align-items: center;
@@ -753,7 +753,7 @@
 	color: #dc2626;
 }
 
-/* ===== TREŚĆ ===== */
+
 .notification__content {
 	flex: 1;
 	min-width: 0;
@@ -832,7 +832,7 @@
 	border-radius: 10px;
 }
 
-/* ===== EMPTY STATE ===== */
+
 .notificationsDropdown__empty {
 	display: flex;
 	flex-direction: column;
@@ -848,7 +848,7 @@
 	font-weight: 500;
 }
 
-/* ===== LOAD MORE ===== */
+
 .notificationsDropdown__loadMore {
 	display: flex;
 	align-items: center;
@@ -870,7 +870,7 @@
 	background: var(--purple-50, #f6f4fe);
 }
 
-/* ===== RESPONSYWNOŚĆ ===== */
+
 @media (max-width: 768px) {
 	.notificationsDropdown {
 		position: fixed;

@@ -3,7 +3,7 @@
    Motyw: fiolet, jasne tło, karty
    ========================================================================== */
 
-/* ---------------------------------- Powitanie ---------------------------------- */
+
 
 .welcome {
 	margin-bottom: 32px;
@@ -77,7 +77,7 @@
 	}
 }
 
-/* ---------------------------------- Karty statystyk ---------------------------------- */
+
 
 .stats {
 	display: grid;
@@ -147,7 +147,7 @@
 	font-weight: 500;
 }
 
-/* ---------------------------------- Sekcja dolna ---------------------------------- */
+
 
 .bottomSection {
 	display: grid;
@@ -155,7 +155,7 @@
 	gap: 28px;
 }
 
-/* ---------------------------------- Powiadomienia ---------------------------------- */
+
 
 .notifications {
 	background: var(--card-bg, #ffffff);
@@ -224,7 +224,7 @@
 	font-weight: 500;
 }
 
-/* ---------------------------------- Szybkie akcje ---------------------------------- */
+
 
 .quickActions {
 	background: var(--card-bg, #ffffff);
@@ -314,7 +314,7 @@
 	z-index: 1;
 }
 
-/* ---------------------------------- Responsywność ---------------------------------- */
+
 
 @media (max-width: 1200px) {
 	.stats {
@@ -533,7 +533,7 @@
 	}
 }
 
-/* ---------------------------------- Karta powitalna z logo ---------------------------------- */
+
 
 .welcomeCard {
 	background: var(--card-bg, #ffffff);
@@ -630,7 +630,7 @@
 	}
 }
 
-/* ---------------------------------- Responsywność dla karty powitalnej ---------------------------------- */
+
 
 @media (max-width: 768px) {
 	.welcomeCard {
@@ -713,7 +713,7 @@
 	}
 }
 
-/* ===== ŁADOWANIE ===== */
+
 .loading {
 	display: flex;
 	flex-direction: column;
@@ -738,7 +738,7 @@
 	}
 }
 
-/* ===== BŁĄD ===== */
+
 .error {
 	display: flex;
 	flex-direction: column;
@@ -777,7 +777,7 @@
 	transform: translateY(-2px);
 }
 
-/* ===== EMPTY STATE POWIADOMIEŃ ===== */
+
 .notifications__empty {
 	padding: 24px;
 	text-align: center;

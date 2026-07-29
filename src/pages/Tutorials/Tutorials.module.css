@@ -2,8 +2,8 @@
    GŁÓWNY KONTENER
    -------------------------------------------------------------------------- */
 .tutorials {
-    /* padding: 24px 32px; */
-    /* max-width: 1440px; */
+    
+    
     margin: 0 auto;
     width: 100%;
 }
@@ -1069,15 +1069,15 @@
    TUTORIALS.MODULE.CSS
    ======================================== */
 
-/* ===== GŁÓWNY KONTENER ===== */
+
 .tutorials {
-    /* max-width: 1200px; */
+    
     margin: 0 auto;
-    /* padding: 32px 24px; */
+    
     min-height: 100vh;
 }
 
-/* ===== NAGŁÓWEK ===== */
+
 .header {
     display: flex;
     justify-content: space-between;
@@ -1139,7 +1139,7 @@
     box-shadow: 0 6px 20px rgba(124, 58, 237, 0.35);
 }
 
-/* ===== KATEGORIE ===== */
+
 .categories {
     display: flex;
     flex-wrap: wrap;
@@ -1198,7 +1198,7 @@
     color: white;
 }
 
-/* ===== FILTRY ===== */
+
 .filters {
     display: flex;
     gap: 16px;
@@ -1302,7 +1302,7 @@
     color: #0f172a;
 }
 
-/* ===== KARTA PORADNIKA ===== */
+
 .tutorialCard {
     background: white;
     border-radius: 16px;
@@ -1603,7 +1603,7 @@
     color: #dc2626;
 }
 
-/* ===== MODAL ===== */
+
 .modalOverlay {
     position: fixed;
     inset: 0;
@@ -1936,7 +1936,7 @@
     box-shadow: 0 6px 20px rgba(124, 58, 237, 0.35);
 }
 
-/* ===== EMPTY STATE ===== */
+
 .emptyState {
     text-align: center;
     padding: 64px 24px;
@@ -1984,14 +1984,14 @@
     box-shadow: 0 6px 20px rgba(124, 58, 237, 0.35);
 }
 
-/* ===== GRID ===== */
+
 .tutorialsGrid {
     display: grid;
     grid-template-columns: 1fr;
     gap: 20px;
 }
 
-/* ===== ANIMACJE ===== */
+
 @keyframes fadeIn {
     from {
         opacity: 0;
@@ -2014,7 +2014,7 @@
     }
 }
 
-/* ===== RESPONSYWNOŚĆ ===== */
+
 @media (max-width: 768px) {
     .tutorials {
         padding: 16px;
@@ -2098,7 +2098,7 @@
     }
 }
 
-/* ===== ZAŁĄCZNIKI - NOWE STYLE ===== */
+
 
 .modal__attachmentToggle {
     display: flex;
@@ -2133,7 +2133,7 @@
     background: #e0e7ff;
 }
 
-/* Dropzone */
+
 .modal__dropzone {
     border: 2px dashed #e2e8f0;
     border-radius: 12px;
@@ -2182,7 +2182,7 @@
     color: #94a3b8;
 }
 
-/* Podgląd pliku przed dodaniem */
+
 .modal__filePreview {
     display: flex;
     align-items: center;
@@ -2222,7 +2222,7 @@
     background: #fee2e2;
 }
 
-/* Input dla linków */
+
 .modal__linkInput {
     display: flex;
     flex-direction: column;
@@ -2234,7 +2234,7 @@
     min-width: 120px;
 }
 
-/* Lista załączników */
+
 .modal__fileList {
     display: flex;
     flex-direction: column;
@@ -2275,7 +2275,7 @@
     background: #fee2e2;
 }
 
-/* ===== PRZYCISK "DODAJ LINK" - wersja z inputami ===== */
+
 .modal__linkInput {
     display: flex;
     gap: 8px;
@@ -2325,7 +2325,7 @@
     box-shadow: none;
 }
 
-/* ===== PRZYCISK "DODAJ PLIK" - podobny do dodawania linku ===== */
+
 .modal__dropzone .modal__addBtn {
     display: flex;
     align-items: center;
@@ -2364,7 +2364,7 @@
     box-shadow: none;
 }
 
-/* ===== RESPONSYWNOŚĆ dla obu przycisków ===== */
+
 @media (max-width: 768px) {
     .modal__linkInput {
         flex-direction: column;
@@ -2380,7 +2380,7 @@
     }
 }
 
-/* Loading state */
+
 .loadingState {
     display: flex;
     flex-direction: column;
@@ -2402,7 +2402,7 @@
 }
 
 .loadingState p {
-    color: #64748b;
+    color:
     font-size: 1rem;
 }
 

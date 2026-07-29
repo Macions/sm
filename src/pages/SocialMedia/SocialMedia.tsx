@@ -21,14 +21,14 @@ import {
 	Phone,
 	Camera,
 	X,
-	Edit, // ⭐ DODAJ
+	Edit,
 	Trash2,
 } from "lucide-react";
 import styles from "./SocialMedia.module.css";
 
-// ---------------------------------------------------------------------------
-// TYPY
-// ---------------------------------------------------------------------------
+
+
+
 type EditMode = "publication" | "task" | "contact" | null;
 type SocialRole =
 	| "instagram"
@@ -51,9 +51,9 @@ type PublicationStatus =
 type TaskStatus = "pending" | "in_progress" | "done";
 type MaterialStage = "ideas" | "recording" | "editing" | "approval" | "ready";
 
-// ---------------------------------------------------------------------------
-// INTERFEJSY
-// ---------------------------------------------------------------------------
+
+
+
 interface MaterialFormData {
 	name: string;
 	description: string;
@@ -62,7 +62,7 @@ interface MaterialFormData {
 	priority: "low" | "medium" | "high";
 	stage: MaterialStage;
 }
-// ⭐ DODAJ TYP DLA EDYCJI MATERIAŁU
+
 interface EditMaterialModalProps {
 	isOpen: boolean;
 	material: Material | null;
@@ -75,7 +75,7 @@ interface CreatorFormData {
 	user_id: string;
 	availability: string;
 	experience: "none" | "beginner" | "intermediate" | "advanced";
-	// topics: string[];
+
 }
 
 interface AddCreatorModalProps {
@@ -85,7 +85,7 @@ interface AddCreatorModalProps {
 	availableUsers: any[];
 }
 
-// ⭐ ZAKTUALIZUJ interfejs CreatorsSection
+
 interface CreatorsSectionProps {
 	creators: ContentCreator[];
 	canManage: boolean;
@@ -103,12 +103,12 @@ interface TeamMember {
 	province: string;
 	team: string;
 	joinDate: string;
-	status: 'active' | 'trial' | 'mentor' | 'vacation'; // ⭐ ZMIEŃ z active: boolean na status
+	status: 'active' | 'trial' | 'mentor' | 'vacation';
 }
-// frontend/src/pages/SocialMedia/SocialMedia.tsx
-// DODAJ PO INNYCH MODALACH
 
-// ---------- MODAL DODAWANIA MATERIAŁU ----------
+
+
+
 interface AddMaterialModalProps {
 	isOpen: boolean;
 	onClose: () => void;
@@ -263,7 +263,7 @@ function AddMaterialModal({
 		</div>
 	);
 }
-// ---------- MODAL EDYCJI MATERIAŁU ----------
+
 function EditMaterialModal({
 	isOpen,
 	material,
@@ -280,7 +280,7 @@ function EditMaterialModal({
 		stage: "ideas",
 	});
 
-	// ⭐ WYPEŁNIJ FORMULARZ DANYMI MATERIAŁU
+
 	useEffect(() => {
 		if (material) {
 			const responsible = teamMembers.find(
@@ -441,8 +441,8 @@ interface MaterialsBoardProps {
 	materials: Material[];
 	canManage?: boolean;
 	onAddMaterial?: () => void;
-	onEditMaterial?: (material: Material) => void; // ⭐ DODAJ
-	onDeleteMaterial?: (id: string) => void; // ⭐ DODAJ
+	onEditMaterial?: (material: Material) => void;
+	onDeleteMaterial?: (id: string) => void;
 }
 function EditPublicationModal({
 	isOpen,
@@ -461,7 +461,7 @@ function EditPublicationModal({
 		description: "",
 	});
 
-	// ⭐ WYPEŁNIJ FORMULARZ DANYMI PUBLIKACJI
+
 	useEffect(() => {
 		if (publication) {
 			const responsible = teamMembers.find(
@@ -501,7 +501,7 @@ function EditPublicationModal({
 					</button>
 				</div>
 				<form onSubmit={handleSubmit} className={styles.modal__form}>
-					{/* ⭐ TAKI SAM FORMULARZ JAK W AddPublicationModal */}
+					{}
 					<div className={styles.modal__field}>
 						<label className={styles.modal__label}>Tytuł *</label>
 						<input
@@ -638,7 +638,7 @@ function EditPublicationModal({
 	);
 }
 
-// ---------- MODAL EDYCJI ZADANIA ----------
+
 interface EditTaskModalProps {
 	isOpen: boolean;
 	task: Task | null;
@@ -793,7 +793,7 @@ function EditTaskModal({
 	);
 }
 
-// ---------- MODAL EDYCJI KONTAKTU ----------
+
 interface EditContactModalProps {
 	isOpen: boolean;
 	contact: MediaContact | null;
@@ -1012,9 +1012,9 @@ interface MediaContact {
 	createdAt: string;
 }
 
-// ---------------------------------------------------------------------------
-// TYPY DLA FORMULARZY
-// ---------------------------------------------------------------------------
+
+
+
 
 interface MemberFormData {
 	user_id: string;
@@ -1048,9 +1048,9 @@ interface ContactFormData {
 	notes: string;
 }
 
-// ---------------------------------------------------------------------------
-// INTERFEJSY DLA SEKCJI
-// ---------------------------------------------------------------------------
+
+
+
 
 interface TeamSectionProps {
 	members: TeamMember[];
@@ -1062,29 +1062,29 @@ interface PublicationsSectionProps {
 	publications: Publication[];
 	canManage: boolean;
 	onAddPublication?: () => void;
-	onEditPublication?: (publication: Publication) => void; // ⭐ DODAJ
-	onDeletePublication?: (id: string) => void; // ⭐ DODAJ
+	onEditPublication?: (publication: Publication) => void;
+	onDeletePublication?: (id: string) => void;
 }
 
 interface TasksSectionProps {
 	tasks: Task[];
 	canManage: boolean;
 	onAddTask?: () => void;
-	onEditTask?: (task: Task) => void; // ⭐ DODAJ
-	onDeleteTask?: (id: string) => void; // ⭐ DODAJ
+	onEditTask?: (task: Task) => void;
+	onDeleteTask?: (id: string) => void;
 }
 
 interface ContactsSectionProps {
 	contacts: MediaContact[];
 	canManage: boolean;
 	onAddContact?: () => void;
-	onEditContact?: (contact: MediaContact) => void; // ⭐ DODAJ
-	onDeleteContact?: (id: string) => void; // ⭐ DODAJ
+	onEditContact?: (contact: MediaContact) => void;
+	onDeleteContact?: (id: string) => void;
 }
 
-// ---------------------------------------------------------------------------
-// MAPOWANIA
-// ---------------------------------------------------------------------------
+
+
+
 
 const ROLE_ICONS: Record<SocialRole, React.ReactNode> = {
 	instagram: <FaInstagram size={16} />,
@@ -1160,14 +1160,14 @@ const TASK_STATUS_LABELS: Record<TaskStatus, string> = {
 	done: "Zakończone",
 };
 
-// ============================================================
-// MODALE
-// ============================================================
 
-// ---------- MODAL DODAWANIA CZŁONKA ----------
-// ---------- MODAL DODAWANIA CZŁONKA ----------
-// ---------- MODAL DODAWANIA CZŁONKA ----------
-// ---------- MODAL DODAWANIA CZŁONKA ----------
+
+
+
+
+
+
+
 interface AddMemberModalProps {
 	isOpen: boolean;
 	onClose: () => void;
@@ -1179,20 +1179,20 @@ function AddCreatorModal({
 	isOpen,
 	onClose,
 	onSave,
-	availableUsers, // ⭐ TERAZ availableUsers zamiast teamMembers
+	availableUsers,
 }: AddCreatorModalProps) {
 	const [formData, setFormData] = useState<CreatorFormData>({
 		user_id: "",
 		availability: "",
 		experience: "beginner",
-		// topics: [],
+
 	});
-	// const [topicInput, setTopicInput] = useState("");
+
 	const [searchTerm, setSearchTerm] = useState("");
 	const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 	const dropdownRef = useRef<HTMLDivElement>(null);
 
-	// ⭐ FILTRUJ UŻYTKOWNIKÓW (pomiń adminów)
+
 	const filteredUsers = useMemo(() => {
 		const users = availableUsers.filter((user) => user.role !== "admin");
 
@@ -1210,7 +1210,7 @@ function AddCreatorModal({
 		? `${selectedUser.name} (${selectedUser.email})`
 		: searchTerm;
 
-	// Zamknij dropdown po kliknięciu poza
+
 	useEffect(() => {
 		const handleClickOutside = (event: MouseEvent) => {
 			if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
@@ -1262,7 +1262,7 @@ function AddCreatorModal({
 					</button>
 				</div>
 				<form onSubmit={handleSubmit} className={styles.modal__form}>
-					{/* Wybór użytkownika */}
+					{}
 					<div className={styles.modal__field}>
 						<label className={styles.modal__label}>Użytkownik *</label>
 						<div className={styles.searchableSelect} ref={dropdownRef}>
@@ -1333,7 +1333,7 @@ function AddCreatorModal({
 						</div>
 					</div>
 
-					{/* Dostępność */}
+					{}
 					<div className={styles.modal__field}>
 						<label className={styles.modal__label}>Dostępność *</label>
 						<input
@@ -1348,7 +1348,7 @@ function AddCreatorModal({
 						/>
 					</div>
 
-					{/* Doświadczenie */}
+					{}
 					<div className={styles.modal__field}>
 						<label className={styles.modal__label}>Doświadczenie</label>
 						<select
@@ -1399,7 +1399,7 @@ function AddMemberModal({
 	const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 	const dropdownRef = useRef<HTMLDivElement>(null);
 
-	// ⭐ FILTRUJ UŻYTKOWNIKÓW PO SZUKANIU
+
 	const filteredUsers = useMemo(() => {
 		if (!searchTerm.trim()) return availableUsers;
 
@@ -1411,15 +1411,15 @@ function AddMemberModal({
 		);
 	}, [availableUsers, searchTerm]);
 
-	// ⭐ ZNAJDŹ WYBRANEGO UŻYTKOWNIKA
+
 	const selectedUser = availableUsers.find((u) => u.id === formData.user_id);
 
-	// ⭐ WARTOŚĆ DO WYŚWIETLENIA W POLU - jeśli wybrany, pokaż jego nazwę
+
 	const inputValue = selectedUser
 		? `${selectedUser.name} (${selectedUser.email})`
 		: searchTerm;
 
-	// ⭐ ZAMKNIJ DROPDOWN PO KLIKNIĘCIU POZA
+
 	useEffect(() => {
 		const handleClickOutside = (event: MouseEvent) => {
 			if (
@@ -1447,7 +1447,7 @@ function AddMemberModal({
 
 	const handleSelectUser = (userId: string) => {
 		setFormData({ ...formData, user_id: userId });
-		setSearchTerm(""); // ⭐ Czyścimy searchTerm
+		setSearchTerm("");
 		setIsDropdownOpen(false);
 	};
 
@@ -1456,7 +1456,7 @@ function AddMemberModal({
 		setSearchTerm(value);
 		setIsDropdownOpen(true);
 
-		// ⭐ Jeśli użytkownik zaczyna pisać, odznacz wybranego użytkownika
+
 		if (formData.user_id) {
 			setFormData({ ...formData, user_id: "" });
 		}
@@ -1485,10 +1485,10 @@ function AddMemberModal({
 									type="text"
 									className={styles.searchableSelect__input}
 									placeholder="Szukaj użytkownika..."
-									value={inputValue} // ⭐ UŻYJ inputValue
-									onChange={handleInputChange} // ⭐ UŻYJ handleInputChange
+									value={inputValue}
+									onChange={handleInputChange}
 									onFocus={() => {
-										// ⭐ Jeśli nie ma wybranego użytkownika, otwórz dropdown
+
 										if (!formData.user_id) {
 											setIsDropdownOpen(true);
 										}
@@ -1498,7 +1498,7 @@ function AddMemberModal({
 									<button
 										type="button"
 										className={styles.searchableSelect__clear}
-										onClick={handleClearSelection} // ⭐ UŻYJ handleClearSelection
+										onClick={handleClearSelection}
 										title="Wyczyść wybór"
 									>
 										<X size={14} />
@@ -1506,7 +1506,7 @@ function AddMemberModal({
 								)}
 							</div>
 
-							{/* ⭐ LISTA ROZWIJANA - pokaż tylko jeśli nie ma wybranego użytkownika */}
+							{}
 							{isDropdownOpen && !selectedUser && (
 								<div className={styles.searchableSelect__dropdown}>
 									{filteredUsers.length === 0 ? (
@@ -1577,7 +1577,7 @@ function AddMemberModal({
 		</div>
 	);
 }
-// ---------- MODAL DODAWANIA PUBLIKACJI ----------
+
 interface AddPublicationModalProps {
 	isOpen: boolean;
 	onClose: () => void;
@@ -1759,7 +1759,7 @@ function AddPublicationModal({
 	);
 }
 
-// ---------- MODAL DODAWANIA ZADANIA ----------
+
 interface AddTaskModalProps {
 	isOpen: boolean;
 	onClose: () => void;
@@ -1897,7 +1897,7 @@ function AddTaskModal({
 	);
 }
 
-// ---------- MODAL DODAWANIA KONTAKTU ----------
+
 interface AddContactModalProps {
 	isOpen: boolean;
 	onClose: () => void;
@@ -2040,11 +2040,11 @@ function AddContactModal({
 	);
 }
 
-// ============================================================
-// SEKCJE
-// ============================================================
 
-// ---------- SEKCJA ZESPOŁU ----------
+
+
+
+
 function TeamSection({ members, canManage, onAddMember }: TeamSectionProps) {
 	const [searchTerm, setSearchTerm] = useState("");
 	const [selectedRole, setSelectedRole] = useState<SocialRole | "all">("all");
@@ -2170,7 +2170,7 @@ function TeamSection({ members, canManage, onAddMember }: TeamSectionProps) {
 								className={
 									member.status === 'vacation'
 										? styles.statusVacation
-										: styles.statusActive  // lub brak klasy dla domyślnego stylu
+										: styles.statusActive
 								}
 							>
 								{member.status === 'vacation' ? 'Urlop' : 'Aktywny'}
@@ -2183,7 +2183,7 @@ function TeamSection({ members, canManage, onAddMember }: TeamSectionProps) {
 	);
 }
 
-// ---------- SEKCJA TWÓRCÓW ROLEK ----------
+
 function CreatorsSection({ creators, canManage, onAddCreator }: CreatorsSectionProps) {
 	const [searchTerm, setSearchTerm] = useState("");
 
@@ -2204,7 +2204,7 @@ function CreatorsSection({ creators, canManage, onAddCreator }: CreatorsSectionP
 						Osoby, które chcą regularnie nagrywać materiały wideo.
 					</p>
 				</div>
-				{/* ⭐ DODAJ PRZYCISK */}
+				{}
 				{canManage && (
 					<button className={styles.section__addBtn} onClick={onAddCreator}>
 						<Plus size={18} />
@@ -2268,8 +2268,8 @@ function CreatorsSection({ creators, canManage, onAddCreator }: CreatorsSectionP
 	);
 }
 
-// ---------- SEKCJA PUBLIKACJI ----------
-// ---------- SEKCJA PUBLIKACJI ----------
+
+
 function PublicationsSection({
 	publications,
 	canManage,
@@ -2425,14 +2425,14 @@ function PublicationsSection({
 	);
 }
 
-// ---------- SEKCJA MATERIAŁÓW ----------
-// ---------- SEKCJA MATERIAŁÓW ----------
+
+
 function MaterialsBoard({
 	materials,
 	canManage = false,
 	onAddMaterial,
-	onEditMaterial, // ⭐ DODAJ
-	onDeleteMaterial, // ⭐ DODAJ
+	onEditMaterial,
+	onDeleteMaterial,
 }: MaterialsBoardProps) {
 	const stages: MaterialStage[] = [
 		"ideas",
@@ -2445,21 +2445,21 @@ function MaterialsBoard({
 	const getMaterialsByStage = (stage: MaterialStage) => {
 		return materials.filter((m) => m.stage === stage);
 	};
-	// Funkcja do wyświetlania etykiety statusu
+
 	const getStatusLabel = (status: string): string => {
 		if (status === 'vacation') {
 			return 'Urlop';
 		}
-		// Dla 'active', 'trial', 'mentor' - wszystkie pokazują "Aktywny"
+
 		return 'Aktywny';
 	};
 
-	// Funkcja do określania klasy CSS
+
 	const getStatusClass = (status: string): string => {
 		if (status === 'vacation') {
-			return styles.statusVacation; // Możesz dodać osobny styl dla urlopu
+			return styles.statusVacation;
 		}
-		return styles.statusActive; // Dla wszystkich aktywnych
+		return styles.statusActive;
 	};
 	const getPriorityColor = (priority: string) => {
 		switch (priority) {
@@ -2559,7 +2559,7 @@ function MaterialsBoard({
 	);
 }
 
-// ---------- SEKCJA ZADAŃ ----------
+
 function TasksSection({
 	tasks,
 	canManage,
@@ -2688,13 +2688,13 @@ function TasksSection({
 	);
 }
 
-// ---------- SEKCJA KONTAKTÓW ----------
+
 function ContactsSection({
 	contacts,
 	canManage,
 	onAddContact,
-	onEditContact, // ⭐ DODAJ
-	onDeleteContact, // ⭐ DODAJ
+	onEditContact,
+	onDeleteContact,
 }: ContactsSectionProps) {
 	return (
 		<section className={styles.section}>
@@ -2775,9 +2775,9 @@ function ContactsSection({
 	);
 }
 
-// ============================================================
-// GŁÓWNY KOMPONENT
-// ============================================================
+
+
+
 
 export default function SocialMedia({ title }: { title?: string }) {
 	const [members, setMembers] = useState<TeamMember[]>([]);
@@ -2876,7 +2876,7 @@ export default function SocialMedia({ title }: { title?: string }) {
 		useState(false);
 	const [isEditTaskModalOpen, setIsEditTaskModalOpen] = useState(false);
 	const [isEditContactModalOpen, setIsEditContactModalOpen] = useState(false);
-	// Pobierz wszystkie dane
+
 	const handleAddMaterial = async (data: MaterialFormData) => {
 		try {
 			const token = localStorage.getItem("accessToken");
@@ -2977,9 +2977,9 @@ export default function SocialMedia({ title }: { title?: string }) {
 		fetchAllData();
 	}, []);
 
-	// ============================================================
-	// FUNKCJE ZAPISU
-	// ============================================================
+
+
+
 	const handleEditPublication = (publication: Publication) => {
 		setEditingPublication(publication);
 		setIsEditPublicationModalOpen(true);
@@ -2995,7 +2995,7 @@ export default function SocialMedia({ title }: { title?: string }) {
 		setIsEditContactModalOpen(true);
 	};
 
-	// ⭐ FUNKCJE ZAPISU EDYCJI
+
 	const handleUpdatePublication = async (
 		id: string,
 		data: PublicationFormData,
@@ -3083,8 +3083,8 @@ export default function SocialMedia({ title }: { title?: string }) {
 			},
 		});
 	};
-	// ⭐ FUNKCJE USUWANIA
-	// ⭐ FUNKCJE USUWANIA - Z showConfirm
+
+
 	const handleDeletePublication = (id: string) => {
 		showConfirm(
 			"Usuń publikację",
@@ -3172,10 +3172,10 @@ export default function SocialMedia({ title }: { title?: string }) {
 
 			const newMember = await response.json();
 
-			// ⭐ DODAJ NOWEGO CZŁONKA DO LISTY (ale to może nie działać jeśli dane są niekompletne)
+
 			setMembers([...members, newMember]);
 
-			// ⭐ LEPIEJ - pobierz świeżą listę z API
+
 			const membersResponse = await fetch("/api/social/members", {
 				headers: { Authorization: `Bearer ${token}` },
 			});
@@ -3266,7 +3266,7 @@ export default function SocialMedia({ title }: { title?: string }) {
 
 	return (
 		<div className={styles.socialMedia}>
-			{/* Nagłówek */}
+			{}
 			<div className={styles.header}>
 				<div className={styles.header__left}>
 					<h1 className={styles.header__title}>{title ?? "Social Media"}</h1>
@@ -3278,26 +3278,26 @@ export default function SocialMedia({ title }: { title?: string }) {
 				</div>
 			</div>
 
-			{/* Zespół */}
+			{}
 			<TeamSection
 				members={members}
 				canManage={canManage}
 				onAddMember={() => setIsMemberModalOpen(true)}
 			/>
-			{/* Twórcy rolek */}
+			{}
 			<CreatorsSection
 				creators={creators}
 				canManage={canManage}
 				onAddCreator={() => setIsCreatorModalOpen(true)}
 			/>
 
-			{/* Tablica materiałów */}
+			{}
 			<MaterialsBoard
 				materials={materials}
 				canManage={canManage}
 				onAddMaterial={() => setIsMaterialModalOpen(true)}
-				onEditMaterial={handleEditMaterial} // ⭐ DODAJ
-				onDeleteMaterial={handleDeleteMaterial} // ⭐ DODAJ
+				onEditMaterial={handleEditMaterial}
+				onDeleteMaterial={handleDeleteMaterial}
 			/>
 			<EditMaterialModal
 				isOpen={isEditMaterialModalOpen}
@@ -3319,36 +3319,36 @@ export default function SocialMedia({ title }: { title?: string }) {
 				isOpen={isCreatorModalOpen}
 				onClose={() => setIsCreatorModalOpen(false)}
 				onSave={handleAddCreator}
-				availableUsers={availableUsers} // ⭐ przekazujemy listę członków SM
+				availableUsers={availableUsers}
 			/>
-			{/* Planowanie publikacji */}
+			{}
 			<PublicationsSection
 				publications={publications}
 				canManage={canManage}
 				onAddPublication={() => setIsPublicationModalOpen(true)}
-				onEditPublication={handleEditPublication} // ⭐ DODAJ
-				onDeletePublication={handleDeletePublication} // ⭐ DODAJ
+				onEditPublication={handleEditPublication}
+				onDeletePublication={handleDeletePublication}
 			/>
 
-			{/* Zadania */}
+			{}
 			<TasksSection
 				tasks={tasks}
 				canManage={canManage}
 				onAddTask={() => setIsTaskModalOpen(true)}
-				onEditTask={handleEditTask} // ⭐ DODAJ
-				onDeleteTask={handleDeleteTask} // ⭐ DODAJ
+				onEditTask={handleEditTask}
+				onDeleteTask={handleDeleteTask}
 			/>
 
-			{/* Współprace */}
+			{}
 			<ContactsSection
 				contacts={contacts}
 				canManage={canManage}
 				onAddContact={() => setIsContactModalOpen(true)}
-				onEditContact={handleEditContact} // ⭐ DODAJ
-				onDeleteContact={handleDeleteContact} // ⭐ DODAJ
+				onEditContact={handleEditContact}
+				onDeleteContact={handleDeleteContact}
 			/>
 
-			{/* Informacje organizacyjne */}
+			{}
 			<section className={styles.section}>
 				<div className={styles.infoBox}>
 					<div className={styles.infoBox__icon}>

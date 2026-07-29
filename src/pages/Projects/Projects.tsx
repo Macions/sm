@@ -29,13 +29,13 @@ import {
 } from "lucide-react";
 import styles from "./Projects.module.css";
 
-// ---------------------------------------------------------------------------
-// TYPY
-// ---------------------------------------------------------------------------
+
+
+
 type IdeaStatus = "pending" | "approved" | "rejected" | "in_progress";
 type ProjectStatus = "planning" | "in_progress" | "promotion";
-// Poprawne mapowanie - klucz to wartość z API, wartość to wyświetlana nazwa
-// Na górze pliku, przed ROLE_COLORS:
+
+
 const ROLE_LABELS: Record<string, string> = {
 	admin: "Administrator",
 	coordinator: "Koordynator",
@@ -104,7 +104,7 @@ type Project = {
 	pillar: ProjectPillar;
 	status: ProjectStatus;
 	estimated_end: string;
-	team: string[]; // Lista ID użytkowników
+	team: string[];
 	coordinator_id: string | number;
 	created_at: string;
 	updated_at: string;
@@ -115,12 +115,12 @@ type User = {
 	email: string;
 	role: "admin" | "coordinator" | "member";
 	pillar?: ProjectPillar | null;
-	pillars?: string[]; // ✅ DODAJ
+	pillars?: string[];
 };
 
-// ---------------------------------------------------------------------------
-// DANE PRZYKŁADOWE
-// ---------------------------------------------------------------------------
+
+
+
 
 const MOCK_PROJECTS: Project[] = [
 	{
@@ -189,9 +189,9 @@ const MOCK_PROJECTS: Project[] = [
 		updated_at: "2026-07-05",
 	},
 ];
-// ---------------------------------------------------------------------------
-// MAPOWANIE NA TEKSTY
-// ---------------------------------------------------------------------------
+
+
+
 
 const IDEA_STATUS_LABELS: Record<IdeaStatus, string> = {
 	pending: "Oczekuje",
@@ -238,16 +238,16 @@ const STATUS_ICONS: Record<ProjectStatus, React.ReactNode> = {
 	promotion: <CheckCircle size={14} />,
 };
 
-// ---------------------------------------------------------------------------
-// KOMPONENT KARTY PROJEKTU
-// ---------------------------------------------------------------------------
+
+
+
 
 interface ProjectCardProps {
 	project: Project;
 	onEdit: (project: Project) => void;
 	onDelete: (id: string) => void;
 	canEdit: boolean;
-	users: User[]; // ✅ DODAJ
+	users: User[];
 }
 
 function ProjectCard({
@@ -262,40 +262,40 @@ function ProjectCard({
 		name: project.name,
 		coordinator_id: project.coordinator_id,
 		users: users.length,
-		// ✅ SPRAWDŹ CZY IGA JEST W USERS
+
 		foundUser: users.find((u) => u.id === project.coordinator_id?.toString()),
 	});
 	const [isExpanded, setIsExpanded] = useState(false);
 
-	// ✅ DODAJ TUTAJ funkcje pomocnicze:
+
 	const getCoordinatorName = (coordinatorId: string) => {
 		if (!coordinatorId) return "Brak";
 		const user = users.find((u) => u.id === coordinatorId);
 		return user ? user.name : "Brak";
 	};
 
-	// W ProjectCard - zmień funkcję getTeamMemberName
+
 	const getTeamMemberName = (member: string) => {
-		// Jeśli to już jest imię i nazwisko (zawiera spację) - zwróć je
+
 		if (member.includes(' ')) {
 			return member;
 		}
 
-		// Jeśli to ID (liczba) - spróbuj znaleźć użytkownika
+
 		if (/^\d+$/.test(member)) {
 			const user = users.find((u) => u.id === member);
 			if (user) {
 				return user.name;
 			}
-			// ⭐ ZMIEŃ FALLBACK - pokaż tylko ID bez "Użytkownik"
+
 			return `ID: ${member}`;
 		}
 		return member;
 	};
 
-	// ✅ Liczenie rzeczywistych członków
+
 	const teamMembers = project.team.filter(
-		(member) => /^\d+$/.test(member) && member !== "63", // ← POMIŃ ADMINA
+		(member) => /^\d+$/.test(member) && member !== "63",
 	);
 	const displayTeamCount = teamMembers.length;
 	const formatDate = (dateString: string) => {
@@ -305,7 +305,7 @@ function ProjectCard({
 			const date = new Date(dateString);
 			if (isNaN(date.getTime())) return "Nieprawidłowa data";
 
-			// Formatuj jako DD.MM.YYYY
+
 			const day = String(date.getDate()).padStart(2, "0");
 			const month = String(date.getMonth() + 1).padStart(2, "0");
 			const year = date.getFullYear();
@@ -341,7 +341,7 @@ function ProjectCard({
 				<p className={styles.projectCard__description}>{project.description}</p>
 
 				<div className={styles.projectCard__meta}>
-					{/* ✅ DODAJ to pole z datą */}
+					{}
 					<div className={styles.projectCard__metaItem}>
 						<Calendar size={14} />
 						<span>
@@ -423,16 +423,16 @@ function ProjectCard({
 	);
 }
 
-// ---------------------------------------------------------------------------
-// MODAL DODAWANIA/EDYCJI PROJEKTU
-// ---------------------------------------------------------------------------
+
+
+
 
 interface ProjectModalProps {
 	isOpen: boolean;
 	project: Project | null;
 	onClose: () => void;
 	onSave: (project: Project) => void;
-	users: User[]; // ✅ Dodaj users jako prop
+	users: User[];
 }
 
 function ProjectModal({
@@ -454,7 +454,7 @@ function ProjectModal({
 		},
 	);
 
-	// ✅ DODAJ TEN useEffect - aktualizuje formularz gdy zmienia się project
+
 	useEffect(() => {
 		if (project) {
 			setFormData({
@@ -470,7 +470,7 @@ function ProjectModal({
 				updated_at: project.updated_at || "",
 			});
 		} else {
-			// Resetuj formularz gdy nie ma projektu (dodawanie)
+
 			setFormData({
 				name: "",
 				description: "",
@@ -585,7 +585,7 @@ function ProjectModal({
 						<input
 							type="date"
 							className={styles.modal__input}
-							value={formData.estimated_end || ""} // ✅ Zmiana nazwy pola
+							value={formData.estimated_end || ""}
 							onChange={(e) =>
 								setFormData({ ...formData, estimated_end: e.target.value })
 							}
@@ -606,7 +606,7 @@ function ProjectModal({
 							{users.map((user) => (
 								<option key={user.id} value={user.id}>
 									{user.name} ({ROLE_LABELS[user.role] || user.role}){" "}
-									{/* ✅ Tłumaczenie */}
+									{}
 								</option>
 							))}
 						</select>
@@ -637,13 +637,13 @@ function ProjectModal({
 		</div>
 	);
 }
-// ---------------------------------------------------------------------------
-// KOMPONENT WYBORU ZESPOŁU
-// ---------------------------------------------------------------------------
 
-// ---------------------------------------------------------------------------
-// KOMPONENT WYBORU ZESPOŁU
-// ---------------------------------------------------------------------------
+
+
+
+
+
+
 
 interface TeamSelectorProps {
 	users: User[];
@@ -675,13 +675,13 @@ function TeamSelector({
 			return users.filter((u) => u.pillar === pillar);
 		}
 		if (filter === "all") {
-			return users; // Wszyscy użytkownicy
+			return users;
 		}
-		// filter === "custom" - pokaż wszystkich do ręcznego wyboru
+
 		return users;
 	}, [users, filter, pillar]);
 
-	// W TeamSelector, w onTeamChange:
+
 	const toggleUser = (userId: string) => {
 		console.log("🔄 Toggle user:", userId);
 		console.log("📋 Current team:", selectedTeam);
@@ -714,7 +714,7 @@ function TeamSelector({
 					className={`${styles.teamSelector__option} ${filter === "all" ? styles.teamSelector__optionActive : ""}`}
 					onClick={() => {
 						setFilter("all");
-						// ✅ Automatycznie zaznacz wszystkich
+
 						const allIds = users.map((u) => u.id);
 						onTeamChange(allIds);
 					}}
@@ -728,7 +728,7 @@ function TeamSelector({
 						className={`${styles.teamSelector__option} ${filter === "pillar" ? styles.teamSelector__optionActive : ""}`}
 						onClick={() => {
 							setFilter("pillar");
-							// ✅ Automatycznie zaznacz z filaru
+
 							const pillarIds = users
 								.filter((u) => u.pillar === pillar)
 								.map((u) => u.id);
@@ -749,7 +749,7 @@ function TeamSelector({
 				</button>
 			</div>
 
-			{/* ✅ Pokaż listę TYLKO gdy wybrano "Wybierz ręcznie" */}
+			{}
 			{filter === "custom" && (
 				<>
 					<div className={styles.teamSelector__actions}>
@@ -825,14 +825,14 @@ function TeamSelector({
 		</div>
 	);
 }
-// Dodaj tę funkcję przed komponentem Projects
-// API zwraca ID filaru (np. "project", "conference" itp.)
+
+
 const mapPillar = (pillar: string): ProjectPillar => {
-	// Jeśli to już jest ID, zwróć je
+
 	if (["project", "conference", "advocacy", "simulation"].includes(pillar)) {
 		return pillar as ProjectPillar;
 	}
-	// Jeśli to polska nazwa, zmapuj na ID
+
 	const mapping: Record<string, ProjectPillar> = {
 		"Filar Projektowy": "project",
 		"Filar Konferencyjny": "conference",
@@ -841,11 +841,11 @@ const mapPillar = (pillar: string): ProjectPillar => {
 	};
 	return mapping[pillar] || "project";
 };
-// ---------------------------------------------------------------------------
-// GŁÓWNY KOMPONENT
-// ---------------------------------------------------------------------------
 
-// W Projects, dodaj te funkcje:
+
+
+
+
 
 const ROLE_COLORS: Record<string, string> = {
 	admin: "roleAdmin",
@@ -894,7 +894,7 @@ function IdeaModal({ isOpen, onClose, onSubmit, pillars }: IdeaModalProps) {
 		{ value: "", label: "Wybierz filar..." },
 		...pillars.map((p) => ({
 			value: p,
-			label: p, // ✅ Używamy nazwy z bazy
+			label: p,
 		})),
 	];
 
@@ -986,7 +986,7 @@ function IdeaModal({ isOpen, onClose, onSubmit, pillars }: IdeaModalProps) {
 		</div>
 	);
 }
-// Przed export default function Projects, dodaj:
+
 
 interface IdeaCardProps {
 	idea: Idea;
@@ -1005,7 +1005,7 @@ function IdeaCard({
 	canManage,
 	pillars,
 }: IdeaCardProps) {
-	// ✅ SPRAWDŹ JAKI GŁOS MA UŻYTKOWNIK
+
 	const userVote = idea.currentUserVote || null;
 
 	const formatDate = (date: string) => {
@@ -1046,9 +1046,9 @@ function IdeaCard({
 	const pillarLabel = pillars.includes(idea.pillar)
 		? idea.pillar
 		: PILLAR_LABELS_FALLBACK[idea.pillar] || idea.pillar;
-	// ✅ Czy przycisk UP jest aktywny?
+
 	const isUpActive = userVote === "up";
-	// ✅ Czy przycisk DOWN jest aktywny?
+
 	const isDownActive = userVote === "down";
 	const isAuthor = idea.authorId === currentUser.id;
 	return (
@@ -1082,9 +1082,9 @@ function IdeaCard({
 				</span>
 			</div>
 
-			{/* ✅ ZAWSZE POKAZUJ GŁOSY - W JEDNEJ LINII */}
+			{}
 			<div className={styles.ideaCard__votes}>
-				{/* Autor - widzi swoje głosy, ale nie może głosować */}
+				{}
 				{isAuthor ? (
 					<>
 						<span className={styles.voteCount}>
@@ -1104,10 +1104,10 @@ function IdeaCard({
 						</span>
 					</>
 				) : (
-					// Inni użytkownicy - mogą głosować (tylko gdy pending)
+
 					<>
 						{idea.status === "pending" ? (
-							// Przyciski do głosowania
+
 							<>
 								<button
 									className={`${styles.voteBtn} ${styles.voteUp} ${isUpActive ? styles.voteUpActive : ""}`}
@@ -1130,7 +1130,7 @@ function IdeaCard({
 								</span>
 							</>
 						) : (
-							// Pomysł zaakceptowany/odrzucony - tylko liczby, bez przycisków
+
 							<>
 								<span className={styles.voteCount}>
 									<ThumbsUp size={16} />
@@ -1150,7 +1150,7 @@ function IdeaCard({
 			</div>
 			{idea.status === "pending" && (
 				<div className={styles.ideaCard__actions}>
-					{/* Admin - może zarządzać wszystkim */}
+					{}
 					{currentUser?.role === "admin" && (
 						<>
 							<button
@@ -1170,7 +1170,7 @@ function IdeaCard({
 						</>
 					)}
 
-					{/* Koordynator - tylko swój filar */}
+					{}
 					{currentUser?.role === "coordinator" &&
 						currentUser.pillars?.includes(idea.pillar) && (
 							<>
@@ -1200,7 +1200,7 @@ export default function Projects() {
 	const [users, setUsers] = useState<User[]>([]);
 	const [pillars, setPillars] = useState<string[]>([]);
 	const [currentUser, setCurrentUser] = useState<User | null>(() => {
-		// ✅ Inicjalizuj od razu z localStorage
+
 		const userStr = localStorage.getItem("user");
 		if (userStr) {
 			try {
@@ -1218,7 +1218,7 @@ export default function Projects() {
 		}
 		return null;
 	});
-	// Dodaj useEffect do synchronizacji z localStorage
+
 	useEffect(() => {
 		const userStr = localStorage.getItem("user");
 		if (userStr) {
@@ -1250,7 +1250,7 @@ export default function Projects() {
 	const [isIdeaModalOpen, setIsIdeaModalOpen] = useState(false);
 	const [ideas, setIdeas] = useState<Idea[]>([]);
 	const [activeTab, setActiveTab] = useState<"projects" | "ideas">("projects");
-	// W komponencie Projects, po dodaniu pomysłu, dodaj reload i otwórz zakładkę "pomysły"
+
 
 	const handleSubmitIdea = async (idea: {
 		title: string;
@@ -1283,7 +1283,7 @@ export default function Projects() {
 				const errorText = await response.text();
 				console.error("❌ Błąd odpowiedzi:", response.status, errorText);
 
-				// Fallback - zapisz lokalnie
+
 				const newIdea: Idea = {
 					id: `idea-${Date.now()}`,
 					title: idea.title,
@@ -1310,20 +1310,20 @@ export default function Projects() {
 			const newIdea = await response.json();
 			console.log("✅ Nowy pomysł z backendu:", newIdea);
 
-			// ✅ DODAJ DO LISTY
+
 			setIdeas([newIdea, ...ideas]);
 			toast.success("Pomysł został zgłoszony!");
 
-			// ✅ ZAMKNIJ MODAL
+
 			setIsIdeaModalOpen(false);
 
-			// ⭐⭐⭐ DODAJ TO - PRZEŁADUJ STRONĘ I OTWÓRZ ZAKŁADKĘ "POMYSŁY" ⭐⭐⭐
+
 			console.log("🔄 Przeładowuję stronę i otwieram zakładkę pomysły...");
 
-			// Zapisz w sessionStorage że mamy otworzyć zakładkę pomysły
+
 			sessionStorage.setItem("openIdeasTab", "true");
 
-			// Przeładuj stronę po krótkim opóźnieniu (żeby toast zdążył się pokazać)
+
 			setTimeout(() => {
 				window.location.reload();
 			}, 1500);
@@ -1331,7 +1331,7 @@ export default function Projects() {
 		} catch (error) {
 			console.error("❌ Błąd:", error);
 
-			// Fallback - zapisz lokalnie
+
 			const newIdea: Idea = {
 				id: `idea-${Date.now()}`,
 				title: idea.title,
@@ -1353,7 +1353,7 @@ export default function Projects() {
 			});
 			setIsIdeaModalOpen(false);
 
-			// ⭐⭐⭐ DODAJ TO - PRZEŁADUJ STRONĘ I OTWÓRZ ZAKŁADKĘ "POMYSŁY" ⭐⭐⭐
+
 			sessionStorage.setItem("openIdeasTab", "true");
 			setTimeout(() => {
 				window.location.reload();
@@ -1365,17 +1365,17 @@ export default function Projects() {
 		try {
 			const token = localStorage.getItem("accessToken");
 
-			// Znajdź aktualny stan pomysłu
+
 			const currentIdea = ideas.find((i) => i.id === ideaId);
 			if (!currentIdea) return;
 
-			// Sprawdź czy użytkownik już głosował
+
 			if (currentIdea.currentUserVote === type) {
 				toast.info("Już zagłosowałeś w ten sposób");
 				return;
 			}
 
-			// OPTIMISTIC UPDATE
+
 			setIdeas((prevIdeas) =>
 				prevIdeas.map((i) => {
 					if (i.id === ideaId) {
@@ -1383,19 +1383,19 @@ export default function Projects() {
 						let newDownvotes = i.downvotes;
 						let newVotes = i.votes;
 
-						// Jeśli zmienia głos z down na up
+
 						if (i.currentUserVote === "down" && type === "up") {
 							newDownvotes--;
 							newUpvotes++;
 							newVotes += 2;
 						}
-						// Jeśli zmienia głos z up na down
+
 						else if (i.currentUserVote === "up" && type === "down") {
 							newUpvotes--;
 							newDownvotes++;
 							newVotes -= 2;
 						}
-						// Jeśli głosuje pierwszy raz
+
 						else {
 							if (type === "up") {
 								newUpvotes++;
@@ -1418,7 +1418,7 @@ export default function Projects() {
 				}),
 			);
 
-			// Wyślij do backendu
+
 			const response = await fetch(`/api/ideas/${ideaId}/vote`, {
 				method: "POST",
 				headers: {
@@ -1456,13 +1456,13 @@ export default function Projects() {
 			const updatedIdea = await response.json();
 			console.log("📦 Odpowiedź z API po zmianie statusu:", updatedIdea);
 
-			// ✅ ZAKTUALIZUJ TYLKO STATUS, nie nadpisuj całego obiektu
+
 			setIdeas(
 				ideas.map((i: Idea) => {
 					if (i.id === ideaId) {
 						return {
-							...i, // zachowaj wszystkie istniejące dane
-							status: status, // zaktualizuj tylko status
+							...i,
+							status: status,
 						};
 					}
 					return i;
@@ -1475,7 +1475,7 @@ export default function Projects() {
 			toast.error("Nie udało się zmienić statusu");
 		}
 	};
-	// Pobieranie filarów z bazy (tabela teams)
+
 	useEffect(() => {
 		const fetchPillars = async () => {
 			try {
@@ -1495,12 +1495,12 @@ export default function Projects() {
 					const data = await response.json();
 					console.log("📦 Surowe dane z API /api/teams:", data);
 
-					// ✅ Filtruj tylko filary (zawierają "Filar" w nazwie)
+
 					const pillarNames = data
 						.filter(
 							(team: any) =>
 								team.name?.includes("Filar") &&
-								team.name !== "Filary organizacji", // ← wyklucz
+								team.name !== "Filary organizacji",
 						)
 						.map((team: any) => team.name);
 
@@ -1517,7 +1517,7 @@ export default function Projects() {
 				}
 			} catch (error) {
 				console.error("❌ Błąd pobierania filarów:", error);
-				// Fallback
+
 				const fallback = [
 					"Filar Projektowy",
 					"Filar Konferencyjny",
@@ -1531,7 +1531,7 @@ export default function Projects() {
 
 		fetchPillars();
 	}, []);
-	// Dodaj ten useEffect obok innych useEffect (około linii 1250):
+
 	useEffect(() => {
 		const fetchIdeas = async () => {
 			try {
@@ -1565,7 +1565,7 @@ export default function Projects() {
 				console.log("📦 Surowe dane pomysłów:", data);
 				console.log("📊 Liczba pomysłów:", data.length);
 
-				// Wyświetl filary w pomysłach
+
 				const pillarsInIdeas = data.map((i: any) => i.pillar);
 				console.log("🏷️ Filary w pomysłach:", pillarsInIdeas);
 				console.log("🏷️ Unikalne filary w pomysłach:", [
@@ -1597,14 +1597,14 @@ export default function Projects() {
 
 		fetchIdeas();
 	}, []);
-	// ⭐⭐⭐ DODAJ TEN useEffect - ODTWORZENIE ZAKŁADKI PO RELOADZIE ⭐⭐⭐
+
 	useEffect(() => {
-		// Sprawdź czy mamy otworzyć zakładkę pomysły
+
 		const shouldOpenIdeas = sessionStorage.getItem("openIdeasTab") === "true";
 		if (shouldOpenIdeas) {
 			console.log("📋 Otwieram zakładkę pomysły po reloadzie");
 			setActiveTab("ideas");
-			// Wyczyść flagę
+
 			sessionStorage.removeItem("openIdeasTab");
 		}
 	}, []);
@@ -1643,7 +1643,7 @@ export default function Projects() {
 					console.log("📋 Klucze projektu:", Object.keys(data[0]));
 					console.log("👤 coordinator_id:", data[0].coordinator_id);
 				}
-				// Wyświetl jakie filary są w projektach
+
 				const pillarsInProjects = data.map((p: any) => p.pillar);
 				console.log("🏷️ Filary w projektach:", pillarsInProjects);
 				console.log("🏷️ Unikalne filary w projektach:", [
@@ -1676,8 +1676,8 @@ export default function Projects() {
 
 		fetchProjects();
 	}, []);
-	// Pobieranie użytkowników
-	// W Projects.tsx - znajdź fetchUsers
+
+
 	useEffect(() => {
 		const fetchUsers = async () => {
 			try {
@@ -1697,9 +1697,9 @@ export default function Projects() {
 						console.log("📋 Klucze użytkownika:", Object.keys(data[0]));
 					}
 
-					// ✅ MAPUJ UŻYTKOWNIKÓW Z PILLAREM
+
 					const mappedUsers = data
-						.filter((user: any) => user.id !== 63 && user.id !== "63") // ← POMIŃ ADMINA
+						.filter((user: any) => user.id !== 63 && user.id !== "63")
 						.map((user: any) => ({
 							id: user.id.toString(),
 							name:
@@ -1726,7 +1726,7 @@ export default function Projects() {
 							name:
 								currentUserData.name ||
 								`${currentUserData.first_name || ""} ${currentUserData.last_name || ""}`.trim() ||
-								"Nieznany", // ✅ POPRAWA
+								"Nieznany",
 							email: currentUserData.email,
 							role: currentUserData.role || "member",
 							pillar: currentUserData.pillar || null,
@@ -1735,7 +1735,7 @@ export default function Projects() {
 				}
 			} catch (error) {
 				console.error("❌ Błąd pobierania użytkowników:", error);
-				// Fallback
+
 			}
 		};
 
@@ -1744,7 +1744,7 @@ export default function Projects() {
 	const canManageProject = (project: Project) => {
 		if (currentUser?.role === "admin") return true;
 		if (currentUser?.role === "coordinator") {
-			// ✅ Zamień ID filaru na polską nazwę
+
 			const pillarName =
 				PILLAR_LABELS_FALLBACK[project.pillar as ProjectPillar] ||
 				project.pillar;
@@ -1762,9 +1762,9 @@ export default function Projects() {
 	const canManageProjects =
 		currentUser?.role === "admin" || currentUser?.role === "coordinator";
 
-	// Dodaj:
-	// ✅ OSOBNY FETCH DLA OBECNEGO UŻYTKOWNIKA
-	// ✅ OSOBNY FETCH DLA OBECNEGO UŻYTKOWNIKA
+
+
+
 	useEffect(() => {
 		const fetchCurrentUser = async () => {
 			try {
@@ -1780,7 +1780,7 @@ export default function Projects() {
 					const data = await response.json();
 					console.log("👤 Profil użytkownika:", data);
 					console.log("🏷️ Filar użytkownika:", data.pillar);
-					console.log("🏷️ WSZYSTKIE filary:", data.pillars); // ✅ DODAJ
+					console.log("🏷️ WSZYSTKIE filary:", data.pillars);
 
 					setCurrentUser({
 						id: data.id.toString(),
@@ -1788,7 +1788,7 @@ export default function Projects() {
 						email: data.email,
 						role: data.role,
 						pillar: data.pillar || null,
-						pillars: data.pillars || [], // ✅ DODAJ - TO JEST KLUCZOWE!
+						pillars: data.pillars || [],
 					});
 				}
 			} catch (error) {
@@ -1813,12 +1813,12 @@ export default function Projects() {
 		});
 	}, [projects, searchTerm, selectedPillar, selectedStatus]);
 
-	// ✅ DODAJ TUTAJ:
+
 	const coordinatorStats = useMemo(() => {
 		if (currentUser?.role !== "coordinator" || !currentUser.pillars?.length)
 			return null;
 
-		// ✅ Pobierz WSZYSTKIE filary koordynatora
+
 		const pillarIdeas = ideas.filter((i) =>
 			currentUser.pillars?.includes(i.pillar),
 		);
@@ -1832,7 +1832,7 @@ export default function Projects() {
 			pending,
 			approved,
 			rejected,
-			pillars: currentUser.pillars, // ✅ wszystkie filary
+			pillars: currentUser.pillars,
 		};
 	}, [ideas, currentUser]);
 
@@ -1851,14 +1851,14 @@ export default function Projects() {
 				idea.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
 				idea.description.toLowerCase().includes(searchTerm.toLowerCase());
 
-			// Porównaj jako string
+
 			const matchesPillar =
 				selectedPillar === "all" || idea.pillar === selectedPillar;
 
 			return matchesSearch && matchesPillar;
 		});
 	}, [ideas, searchTerm, selectedPillar]);
-	// ZMIEŃ tę funkcję (około linii 450):
+
 	const handleDeleteProject = async (id: string) => {
 		if (!window.confirm("Czy na pewno chcesz usunąć ten projekt?")) {
 			return;
@@ -1879,7 +1879,7 @@ export default function Projects() {
 				throw new Error(`HTTP error! status: ${response.status}`);
 			}
 
-			// ✅ Usuń projekt z listy po pomyślnym usunięciu z API
+
 			setProjects(projects.filter((p) => p.id !== id));
 			console.log(`✅ Projekt ${id} został usunięty`);
 		} catch (error) {
@@ -1888,7 +1888,7 @@ export default function Projects() {
 		}
 	};
 
-	// W Projects.tsx, zaktualizuj handleSaveProject
+
 	const handleSaveProject = async (project: Project) => {
 		console.log("📤 Team przed wysyłką:", project.team);
 		console.log("📤 Team jako string:", project.team.join(", "));
@@ -1898,7 +1898,7 @@ export default function Projects() {
 			const url = isEdit ? `/api/projects/${project.id}` : "/api/projects";
 			const method = isEdit ? "PUT" : "POST";
 
-			// ✅ coordinator_id jako NUMBER
+
 			const payload = {
 				name: project.name,
 				description: project.description,
@@ -1909,13 +1909,13 @@ export default function Projects() {
 				estimated_end: project.estimated_end,
 			};
 
-			// ✅ DODAJ TE LOGI:
+
 			console.log("📤 Team przed wysyłką:", project.team);
 			console.log("📤 Team jako string:", project.team.join(", "));
 			console.log("📤 Liczba członków:", project.team.length);
 			console.log("📤 Cały payload:", payload);
 
-			console.log("📤 Wysyłane dane:", payload); // ✅ Debug
+			console.log("📤 Wysyłane dane:", payload);
 
 			const response = await fetch(url, {
 				method,
@@ -1932,7 +1932,7 @@ export default function Projects() {
 
 			const savedProject = await response.json();
 
-			// ✅ Mapuj odpowiedź z API na strukturę frontendu
+
 			const mappedProject = {
 				id: savedProject.id,
 				name: savedProject.name,
@@ -1965,7 +1965,7 @@ export default function Projects() {
 		setSelectedPillar("all");
 		setSelectedStatus("all");
 	};
-	// Na końcu efektów, dodaj useEffect który pokaże podsumowanie:
+
 	useEffect(() => {
 		console.log("📊 PODSUMOWANIE DANYCH:");
 		console.log("📋 Filary:", pillars);
@@ -1974,13 +1974,13 @@ export default function Projects() {
 		console.log("📋 Pomysły:", ideas.length);
 		console.log("👤 Aktualny użytkownik:", currentUser);
 	}, [pillars, projects, users, ideas, currentUser]);
-	// const getStatusCount = (status: ProjectStatus) => {
-	//     return projects.filter((p) => p.status === status).length;
-	// };
+
+
+
 
 	return (
 		<div className={styles.projects}>
-			{/* Nagłówek */}
+			{}
 			<div className={styles.header}>
 				<div className={styles.header__left}>
 					<h1 className={styles.header__title}>Aktualne projekty</h1>
@@ -1991,7 +1991,7 @@ export default function Projects() {
 					</p>
 				</div>
 				<div className={styles.header__actions}>
-					{/* ✅ DODAJ PRZYCISK DLA WSZYSTKICH UŻYTKOWNIKÓW */}
+					{}
 					<button
 						className={styles.header__ideaBtn}
 						onClick={() => setIsIdeaModalOpen(true)}
@@ -2010,8 +2010,8 @@ export default function Projects() {
 					)}
 				</div>
 			</div>
-			{/* Statystyki */}
-			{/* Statystyki */}
+			{}
+			{}
 			<div className={styles.stats}>
 				<div className={styles.stats__item}>
 					<span className={styles.stats__number}>{projects.length}</span>
@@ -2027,7 +2027,7 @@ export default function Projects() {
 				))}
 			</div>
 
-			{/* ✅ DODAJ TUTAJ - STATYSTYKI DLA KOORDYNATORA */}
+			{}
 			{canManageProjects &&
 				coordinatorStats &&
 				currentUser?.role === "coordinator" && (
@@ -2074,7 +2074,7 @@ export default function Projects() {
 					</div>
 				)}
 
-			{/* Zakładki */}
+			{}
 			<div className={styles.tabs}>
 				<button
 					className={`${styles.tab} ${activeTab === "projects" ? styles.tabActive : ""}`}
@@ -2095,7 +2095,7 @@ export default function Projects() {
 					</span>
 				</button>
 			</div>
-			{/* Filtry */}
+			{}
 			<div className={styles.filters}>
 				<div className={styles.filters__search}>
 					<Search size={18} className={styles.filters__searchIcon} />
@@ -2158,9 +2158,9 @@ export default function Projects() {
 				</div>
 			</div>
 
-			{/* Lista - wybierz aktywną zakładkę */}
+			{}
 			{activeTab === "projects" ? (
-				/* Lista projektów */
+				
 				<div className={styles.projectsGrid}>
 					{filteredProjects.length === 0 ? (
 						<div className={styles.emptyState}>
@@ -2202,7 +2202,7 @@ export default function Projects() {
 					)}
 				</div>
 			) : (
-				/* Lista pomysłów */
+				
 				<div className={styles.ideasGrid}>
 					{filteredIdeas.length === 0 ? (
 						<div className={styles.emptyState}>
@@ -2235,7 +2235,7 @@ export default function Projects() {
 					)}
 				</div>
 			)}
-			{/* Modale */}
+			{}
 			<ProjectModal
 				isOpen={isModalOpen}
 				project={editingProject}
@@ -2255,5 +2255,5 @@ export default function Projects() {
 				pillars={pillars}
 			/>
 		</div>
-	); // 👈 TO JEST WAŻNE - zamyka return
-} // 👈 TO ZAMYKA KOMPONENT
+	);
+}

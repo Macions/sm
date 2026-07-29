@@ -1,4 +1,4 @@
-// A:\sm system\sm\backend\src\controllers\structure.controller.ts
+
 
 import { Request, Response } from "express";
 import { StructureService } from "../services/structure.service";
@@ -20,23 +20,23 @@ export class StructureController {
 
     async getTeamById(req: Request, res: Response) {
         try {
-            // Pobierz id i upewnij się, że to string
+
             const idParam = req.params.id;
 
-            // Walidacja - jeśli to tablica, weź pierwszy element
+
             const idString = Array.isArray(idParam) ? idParam[0] : idParam;
 
-            // Sprawdź czy id istnieje
+
             if (!idString) {
                 return res.status(400).json({
                     error: "Brak identyfikatora zespołu"
                 });
             }
 
-            // Konwersja na liczbę
+
             const id = parseInt(idString, 10);
 
-            // Sprawdź czy konwersja się powiodła
+
             if (isNaN(id)) {
                 return res.status(400).json({
                     error: "Nieprawidłowy identyfikator zespołu"

@@ -1,7 +1,7 @@
-// backend/src/services/project.service.ts
+
 import { PrismaClient } from "@prisma/client";
 
-// ✅ NIE importuj typu Project - zdefiniuj go samodzielnie lub użyj Prisma.ProjectGetPayload
+
 type Project = {
 	id: number;
 	name: string;
@@ -13,7 +13,7 @@ type Project = {
 	estimated_end: Date | null;
 	created_at: Date;
 	updated_at: Date;
-	is_active: number; // ✅ DODANE
+	is_active: number;
 };
 
 const prisma = new PrismaClient();
@@ -29,7 +29,7 @@ export interface ProjectResponse {
 	estimated_end: string | null;
 	created_at: string;
 	updated_at: string;
-	is_active: number; // ✅ DODANE
+	is_active: number;
 }
 
 export class ProjectService {
@@ -41,7 +41,7 @@ export class ProjectService {
 			});
 
 			console.log("✅ Znaleziono aktywnych projektów:", projects.length);
-			return projects.map((p: any) => this.toResponse(p)); // ✅ Użyj "any"
+			return projects.map((p: any) => this.toResponse(p));
 		} catch (error) {
 			console.error("❌ Błąd pobierania projektów:", error);
 			throw new Error("Nie udało się pobrać projektów");
@@ -66,7 +66,7 @@ export class ProjectService {
 				where: { pillar },
 				orderBy: { created_at: "desc" },
 			});
-			return projects.map((p: any) => this.toResponse(p)); // ✅ Użyj "any"
+			return projects.map((p: any) => this.toResponse(p));
 		} catch (error) {
 			console.error("❌ Błąd pobierania projektów dla filaru:", error);
 			throw new Error("Nie udało się pobrać projektów dla filaru");
@@ -79,7 +79,7 @@ export class ProjectService {
 				where: { status },
 				orderBy: { created_at: "desc" },
 			});
-			return projects.map((p: any) => this.toResponse(p)); // ✅ Użyj "any"
+			return projects.map((p: any) => this.toResponse(p));
 		} catch (error) {
 			console.error("❌ Błąd pobierania projektów dla statusu:", error);
 			throw new Error("Nie udało się pobrać projektów dla statusu");
@@ -153,7 +153,7 @@ export class ProjectService {
 		}
 	}
 
-	private toResponse(p: any): ProjectResponse { // ✅ Użyj "any"
+	private toResponse(p: any): ProjectResponse {
 		return {
 			id: p.id.toString(),
 			name: p.name,

@@ -3,7 +3,7 @@
    Motyw: fioletowy, nowoczesny
    ========================================================================== */
 
-/* === GLOBALNE NAPRAWY SCROLLA === */
+
 html,
 body {
 	height: 100%;
@@ -20,7 +20,7 @@ body {
 	overflow-x: hidden;
 }
 
-/* === GŁÓWNY KONTENER === */
+
 .structure {
 	padding: 20px 24px 40px;
 	width: 100%;
@@ -29,7 +29,7 @@ body {
 	overflow-x: auto;
 }
 
-/* ---------------------------------- Nagłówek ---------------------------------- */
+
 .header {
 	display: flex;
 	align-items: flex-start;
@@ -84,7 +84,7 @@ body {
 	font-weight: 500;
 }
 
-/* ---------------------------------- Wyszukiwarka ---------------------------------- */
+
 .searchWrapper {
 	margin-bottom: 28px;
 }
@@ -156,7 +156,7 @@ body {
 	color: var(--purple-700, #4c2cc7);
 }
 
-/* ---------------------------------- Tree Container ---------------------------------- */
+
 .treeContainer {
 	display: flex;
 	flex-direction: column;
@@ -166,7 +166,7 @@ body {
 	min-width: fit-content;
 }
 
-/* ---------------------------------- Główny węzeł (root) ---------------------------------- */
+
 .nodeRoot {
 	background: linear-gradient(135deg,
 			var(--purple-700, #4c2cc7),
@@ -213,7 +213,7 @@ body {
 	color: #fff !important;
 }
 
-/* ---------------------------------- TreeNode ---------------------------------- */
+
 .treeNode {
 	display: flex;
 	flex-direction: column;
@@ -223,7 +223,7 @@ body {
 	flex: 0 1 auto;
 }
 
-/* ---------------------------------- Node Card ---------------------------------- */
+
 .nodeCard {
 	background: var(--card-bg, #ffffff);
 	border-radius: var(--radius-lg, 20px);
@@ -390,7 +390,7 @@ body {
 	transform: scale(0.9);
 }
 
-/* ---------------------------------- Highlight (wyszukiwanie) ---------------------------------- */
+
 .nodeHighlighted {
 	border-color: var(--purple-600, #5c3ae8) !important;
 	box-shadow:
@@ -415,7 +415,7 @@ body {
 	}
 }
 
-/* ---------------------------------- People List ---------------------------------- */
+
 .peopleList {
 	margin-top: 12px;
 	width: 100%;
@@ -519,7 +519,7 @@ body {
 	color: var(--text-muted, #8b7cc2);
 }
 
-/* ---------------------------------- Children Container (linie łączące) ---------------------------------- */
+
 .childrenContainer {
 	display: flex;
 	flex-direction: row;
@@ -534,7 +534,7 @@ body {
 	animation: slideDown 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* Linia pionowa od rodzica do dzieci */
+
 .childrenContainer::before {
 	content: "";
 	position: absolute;
@@ -548,7 +548,7 @@ body {
 			var(--purple-400, #9a85d8));
 }
 
-/* Linia pozioma łącząca dzieci */
+
 .childrenContainer::after {
 	content: "";
 	position: absolute;
@@ -560,7 +560,7 @@ body {
 	z-index: 0;
 }
 
-/* Pionowe linie do każdego dziecka */
+
 .childrenContainer .treeNode {
 	position: relative;
 }
@@ -577,7 +577,7 @@ body {
 	z-index: 0;
 }
 
-/* ---------------------------------- Głębsze poziomy (mniejsze karty) ---------------------------------- */
+
 .childrenContainer .childrenContainer .nodeCard {
 	max-width: 340px;
 	padding: 14px 16px;
@@ -602,9 +602,9 @@ body {
 	height: 18px;
 }
 
-/* ---------------------------------- Responsywność ---------------------------------- */
 
-/* Tablety - horyzontalne przewijanie */
+
+
 @media (max-width: 1024px) {
 	.structure {
 		padding: 16px 20px 30px;
@@ -647,7 +647,7 @@ body {
 	}
 }
 
-/* Tablety pionowo */
+
 @media (max-width: 820px) {
 	.header {
 		flex-direction: column;
@@ -681,7 +681,7 @@ body {
 	}
 }
 
-/* Telefony */
+
 @media (max-width: 480px) {
 	.structure {
 		padding: 12px 14px 20px;
@@ -806,7 +806,7 @@ body {
 		font-size: 10px;
 	}
 
-	/* Głębsze poziomy na telefonie */
+	
 	.childrenContainer .childrenContainer .nodeCard {
 		max-width: 100%;
 	}
@@ -816,7 +816,7 @@ body {
 	}
 }
 
-/* Małe telefony */
+
 @media (max-width: 380px) {
 	.structure {
 		padding: 8px 10px 16px;
@@ -878,7 +878,7 @@ body {
 	scrollbar-color: var(--purple-300, #b8a5e8) var(--bg-app, #f1f1f7);
 }
 
-/* Chrome, Edge, Safari, iOS Safari */
+
 ::-webkit-scrollbar {
 	width: 8px;
 	height: 8px;
@@ -897,7 +897,7 @@ body {
 	background-color: var(--purple-400, #9b7de0);
 }
 
-/* ---------------------------------- Drag Hint ---------------------------------- */
+
 .dragHint {
 	display: none;
 	align-items: center;
@@ -948,7 +948,7 @@ body {
 	}
 }
 
-/* Pokaż drag hint tylko na urządzeniach z touch/tablet */
+
 @media (hover: none) and (pointer: coarse) {
 	.dragHint {
 		display: flex;
@@ -965,9 +965,9 @@ body {
    Struktura SM - Nieskończona Mapa
    ========================================================================== */
 
-/* ... (reszta stylów z poprzedniej wersji) ... */
 
-/* ---------------------------------- Mapa ---------------------------------- */
+
+
 .mapContainer {
 	position: relative;
 	width: 100%;
@@ -985,7 +985,7 @@ body {
 	cursor: grabbing;
 }
 
-/* Siatka tła */
+
 .mapGrid {
 	position: absolute;
 	top: 0;
@@ -1013,7 +1013,7 @@ body {
 	box-shadow: 0 0 20px rgba(92, 58, 232, 0.2);
 }
 
-/* Zawartość mapy */
+
 .mapContent {
 	position: absolute;
 	top: 50%;
@@ -1029,7 +1029,7 @@ body {
 	padding: 40px;
 }
 
-/* ---------------------------------- Sterowanie mapą ---------------------------------- */
+
 .mapControls {
 	position: absolute;
 	bottom: 30px;
@@ -1088,7 +1088,7 @@ body {
 	border-left: 1px solid var(--border-soft, #e0d9f5);
 }
 
-/* ---------------------------------- Drag Hint ---------------------------------- */
+
 .dragHint {
 	display: none;
 	align-items: center;
@@ -1139,7 +1139,7 @@ body {
 	}
 }
 
-/* ---------------------------------- Responsywność dla mapy ---------------------------------- */
+
 @media (max-width: 1024px) {
 	.mapContainer {
 		height: 500px;
@@ -1194,7 +1194,7 @@ body {
 	}
 }
 
-/* Pokaż drag hint na urządzeniach mobilnych */
+
 @media (hover: none) and (pointer: coarse) {
 	.dragHint {
 		display: flex;
@@ -1257,7 +1257,7 @@ body {
 	height: 850px;
 }
 
-/* Monit - wersja bez tła z długą strzałką */
+
 .promptWrapper {
 	position: relative;
 	margin-bottom: 20px;
@@ -1327,7 +1327,7 @@ body {
 	filter: drop-shadow(0 2px 4px rgba(124, 58, 237, 0.2));
 }
 
-/* Alternatywny wariant - strzałka z prawej strony */
+
 .promptContainerAlt {
 	display: flex;
 	align-items: center;
@@ -1366,7 +1366,7 @@ body {
 	animation: arrowPulseRight 2s ease-in-out infinite;
 }
 
-/* Animacje */
+
 @keyframes promptFloat {
 
 	0%,
@@ -1407,7 +1407,7 @@ body {
 	}
 }
 
-/* Responsywność */
+
 @media (max-width: 768px) {
 	.promptText {
 		font-size: 13px;
@@ -1423,7 +1423,7 @@ body {
 	}
 }
 
-/* Dodaj w footerze */
+
 .nodeCard__footer {
 	display: flex;
 	justify-content: space-between;
@@ -1477,7 +1477,7 @@ body {
 	white-space: nowrap;
 }
 
-/* Dla węzła głównego (root) - jaśniejszy kolor */
+
 .nodeRoot .nodeCard__email {
 	background: rgba(255, 255, 255, 0.15);
 	color: rgba(255, 255, 255, 0.9);
@@ -1489,7 +1489,7 @@ body {
 	border-color: rgba(255, 255, 255, 0.3);
 }
 
-/* Responsywność */
+
 @media (max-width: 768px) {
 	.nodeCard__footerLeft {
 		flex-direction: column;

@@ -2,16 +2,16 @@
    SOCIALMEDIA.MODULE.CSS
    ======================================== */
 
-/* ===== GŁÓWNY KONTENER ===== */
+
 .socialMedia {
-	/* max-width: 1400px; */
+	
 	width: 100%;
 	margin: 0 auto;
-	/* padding: 32px 24px; */
+	
 	min-height: 100vh;
 }
 
-/* ===== NAGŁÓWEK ===== */
+
 .header {
 	display: flex;
 	justify-content: space-between;
@@ -28,7 +28,7 @@
 .header__title {
 	font-size: 28px;
 	font-weight: 700;
-	color: #0f172a;
+	color:
 	margin: 0 0 8px 0;
 	display: flex;
 	align-items: center;
@@ -39,19 +39,19 @@
 	content: "";
 	width: 4px;
 	height: 32px;
-	background: linear-gradient(180deg, #7c3aed, #6d28d9);
+	background: linear-gradient(180deg,
 	border-radius: 4px;
 }
 
 .header__subtitle {
 	font-size: 16px;
-	color: #64748b;
+	color:
 	margin: 0;
 	max-width: 700px;
 	line-height: 1.6;
 }
 
-/* ===== SEKCJE ===== */
+
 .section {
 	margin-bottom: 48px;
 }
@@ -72,13 +72,13 @@
 .section__title {
 	font-size: 22px;
 	font-weight: 600;
-	color: #0f172a;
+	color:
 	margin: 0 0 4px 0;
 }
 
 .section__subtitle {
 	font-size: 14px;
-	color: #64748b;
+	color:
 	margin: 0;
 }
 
@@ -87,7 +87,7 @@
 	align-items: center;
 	gap: 6px;
 	padding: 8px 16px;
-	background: linear-gradient(135deg, #7c3aed, #6d28d9);
+	background: linear-gradient(135deg,
 	color: white;
 	border: none;
 	border-radius: 10px;
@@ -104,7 +104,7 @@
 	box-shadow: 0 6px 20px rgba(124, 58, 237, 0.3);
 }
 
-/* ===== FILTRY SEKCJI ===== */
+
 .section__filters {
 	display: flex;
 	gap: 12px;
@@ -123,33 +123,33 @@
 	left: 12px;
 	top: 50%;
 	transform: translateY(-50%);
-	color: #94a3b8;
+	color:
 }
 
 .section__searchInput {
 	width: 100%;
 	padding: 8px 12px 8px 36px;
-	border: 2px solid #e2e8f0;
+	border: 2px solid
 	border-radius: 10px;
 	font-size: 14px;
 	background: white;
 	transition: all 0.2s;
-	color: #0f172a;
+	color:
 }
 
 .section__searchInput:focus {
 	outline: none;
-	border-color: #7c3aed;
+	border-color:
 	box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.1);
 }
 
 .section__select {
 	padding: 8px 12px;
-	border: 2px solid #e2e8f0;
+	border: 2px solid
 	border-radius: 10px;
 	font-size: 14px;
 	background: white;
-	color: #0f172a;
+	color:
 	cursor: pointer;
 	min-width: 150px;
 	transition: all 0.2s;
@@ -157,10 +157,10 @@
 
 .section__select:focus {
 	outline: none;
-	border-color: #7c3aed;
+	border-color:
 }
 
-/* ===== ZESPÓŁ - KARTY ===== */
+
 .teamGrid {
 	display: grid;
 	grid-template-columns: repeat(auto-fill, minmax(450px, 1fr));
@@ -174,7 +174,7 @@
 	padding: 16px 20px;
 	background: white;
 	border-radius: 12px;
-	border: 1px solid #e2e8f0;
+	border: 1px solid
 	transition: all 0.2s;
 }
 
@@ -187,7 +187,7 @@
 	width: 48px;
 	height: 48px;
 	border-radius: 50%;
-	background: linear-gradient(135deg, #7c3aed, #6d28d9);
+	background: linear-gradient(135deg,
 	color: white;
 	display: flex;
 	align-items: center;
@@ -208,7 +208,7 @@
 .teamCard__name {
 	font-size: 16px;
 	font-weight: 600;
-	color: #0f172a;
+	color:
 	margin: 0;
 }
 
@@ -217,7 +217,7 @@
 	align-items: center;
 	gap: 4px;
 	font-size: 13px;
-	color: #7c3aed;
+	color:
 	font-weight: 500;
 }
 
@@ -225,7 +225,7 @@
 	display: flex;
 	gap: 12px;
 	font-size: 13px;
-	color: #64748b;
+	color:
 	margin-top: 4px;
 }
 
@@ -243,7 +243,7 @@
 
 .teamCard__link {
 	padding: 4px;
-	color: #64748b;
+	color:
 	border-radius: 4px;
 	transition: all 0.2s;
 	display: flex;
@@ -251,8 +251,8 @@
 }
 
 .teamCard__link:hover {
-	color: #7c3aed;
-	background: #f1f5f9;
+	color:
+	background:
 }
 
 .teamCard__status {
@@ -262,8 +262,8 @@
 .statusActive {
 	display: inline-block;
 	padding: 2px 10px;
-	background: #d1fae5;
-	color: #059669;
+	background:
+	color:
 	border-radius: 12px;
 	font-size: 12px;
 	font-weight: 500;
@@ -272,14 +272,14 @@
 .statusInactive {
 	display: inline-block;
 	padding: 2px 10px;
-	background: #f3f4f6;
-	color: #6b7280;
+	background:
+	color:
 	border-radius: 12px;
 	font-size: 12px;
 	font-weight: 500;
 }
 
-/* ===== TWÓRCY ROLEK ===== */
+
 .creatorsGrid {
 	display: grid;
 	grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
@@ -292,7 +292,7 @@
 	padding: 16px 20px;
 	background: white;
 	border-radius: 12px;
-	border: 1px solid #e2e8f0;
+	border: 1px solid
 	transition: all 0.2s;
 }
 
@@ -304,7 +304,7 @@
 	width: 44px;
 	height: 44px;
 	border-radius: 50%;
-	background: linear-gradient(135deg, #7c3aed, #6d28d9);
+	background: linear-gradient(135deg,
 	color: white;
 	display: flex;
 	align-items: center;
@@ -321,7 +321,7 @@
 .creatorCard__name {
 	font-size: 16px;
 	font-weight: 600;
-	color: #0f172a;
+	color:
 	margin: 0;
 }
 
@@ -329,7 +329,7 @@
 	display: flex;
 	gap: 12px;
 	font-size: 13px;
-	color: #64748b;
+	color:
 	margin-top: 4px;
 }
 
@@ -344,7 +344,7 @@
 	align-items: center;
 	gap: 4px;
 	font-size: 13px;
-	color: #475569;
+	color:
 	margin-top: 4px;
 }
 
@@ -353,7 +353,7 @@
 	align-items: center;
 	gap: 4px;
 	font-size: 13px;
-	color: #475569;
+	color:
 	margin-top: 2px;
 }
 
@@ -366,13 +366,13 @@
 
 .creatorCard__topic {
 	padding: 2px 10px;
-	background: #f1f5f9;
-	color: #475569;
+	background:
+	color:
 	border-radius: 12px;
 	font-size: 12px;
 }
 
-/* ===== PUBLIKACJE ===== */
+
 .publicationsGrid {
 	display: grid;
 	grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
@@ -382,7 +382,7 @@
 .publicationCard {
 	background: white;
 	border-radius: 12px;
-	border: 1px solid #e2e8f0;
+	border: 1px solid
 	overflow: hidden;
 	transition: all 0.2s;
 }
@@ -396,14 +396,14 @@
 	justify-content: space-between;
 	align-items: center;
 	padding: 14px 16px;
-	background: #f8fafc;
-	border-bottom: 1px solid #f1f5f9;
+	background:
+	border-bottom: 1px solid
 }
 
 .publicationCard__title {
 	font-size: 15px;
 	font-weight: 600;
-	color: #0f172a;
+	color:
 	margin: 0;
 }
 
@@ -415,33 +415,33 @@
 }
 
 .statusIdea {
-	background: #fef3c7;
-	color: #d97706;
+	background:
+	color:
 }
 
 .statusPreparation {
-	background: #dbeafe;
-	color: #1d4ed8;
+	background:
+	color:
 }
 
 .statusEditing {
-	background: #fce4ec;
-	color: #dc2626;
+	background:
+	color:
 }
 
 .statusApproval {
-	background: #fef3c7;
-	color: #d97706;
+	background:
+	color:
 }
 
 .statusScheduled {
-	background: #e0e7ff;
-	color: #4f46e5;
+	background:
+	color:
 }
 
 .statusPublished {
-	background: #d1fae5;
-	color: #059669;
+	background:
+	color:
 }
 
 .publicationCard__body {
@@ -453,7 +453,7 @@
 	flex-wrap: wrap;
 	gap: 12px;
 	font-size: 13px;
-	color: #475569;
+	color:
 }
 
 .publicationCard__meta span {
@@ -464,12 +464,12 @@
 
 .publicationCard__description {
 	font-size: 14px;
-	color: #64748b;
+	color:
 	margin: 8px 0 0 0;
 	line-height: 1.5;
 }
 
-/* ===== TABLICA MATERIAŁÓW ===== */
+
 .board {
 	display: grid;
 	grid-template-columns: repeat(5, 1fr);
@@ -479,7 +479,7 @@
 .board__column {
 	background: white;
 	border-radius: 12px;
-	border: 1px solid #e2e8f0;
+	border: 1px solid
 	overflow: hidden;
 }
 
@@ -488,23 +488,23 @@
 	justify-content: space-between;
 	align-items: center;
 	padding: 12px 14px;
-	background: #f8fafc;
-	border-bottom: 1px solid #f1f5f9;
+	background:
+	border-bottom: 1px solid
 }
 
 .board__columnTitle {
 	font-size: 14px;
 	font-weight: 600;
-	color: #0f172a;
+	color:
 	margin: 0;
 }
 
 .board__columnCount {
 	padding: 2px 8px;
-	background: #e2e8f0;
+	background:
 	border-radius: 10px;
 	font-size: 12px;
-	color: #475569;
+	color:
 	font-weight: 500;
 }
 
@@ -518,21 +518,21 @@
 
 .board__card {
 	padding: 12px;
-	background: #f8fafc;
+	background:
 	border-radius: 8px;
-	border: 1px solid #f1f5f9;
+	border: 1px solid
 }
 
 .board__cardTitle {
 	font-size: 14px;
 	font-weight: 600;
-	color: #0f172a;
+	color:
 	margin: 0 0 4px 0;
 }
 
 .board__cardDescription {
 	font-size: 13px;
-	color: #64748b;
+	color:
 	margin: 0 0 8px 0;
 }
 
@@ -540,7 +540,7 @@
 	display: flex;
 	gap: 12px;
 	font-size: 12px;
-	color: #64748b;
+	color:
 }
 
 .board__cardMeta span {
@@ -559,21 +559,21 @@
 }
 
 .priorityHigh {
-	background: #fee2e2;
-	color: #dc2626;
+	background:
+	color:
 }
 
 .priorityMedium {
-	background: #fef3c7;
-	color: #d97706;
+	background:
+	color:
 }
 
 .priorityLow {
-	background: #dbeafe;
-	color: #1d4ed8;
+	background:
+	color:
 }
 
-/* ===== ZADANIA ===== */
+
 .tasksGrid {
 	display: grid;
 	grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
@@ -583,7 +583,7 @@
 .taskCard {
 	background: white;
 	border-radius: 12px;
-	border: 1px solid #e2e8f0;
+	border: 1px solid
 	padding: 16px 20px;
 	transition: all 0.2s;
 }
@@ -602,7 +602,7 @@
 .taskCard__title {
 	font-size: 15px;
 	font-weight: 600;
-	color: #0f172a;
+	color:
 	margin: 0;
 }
 
@@ -614,18 +614,18 @@
 }
 
 .taskStatusPending {
-	background: #fef3c7;
-	color: #d97706;
+	background:
+	color:
 }
 
 .taskStatusInProgress {
-	background: #dbeafe;
-	color: #1d4ed8;
+	background:
+	color:
 }
 
 .taskStatusDone {
-	background: #d1fae5;
-	color: #059669;
+	background:
+	color:
 }
 
 .taskCard__body {
@@ -638,7 +638,7 @@
 	display: flex;
 	gap: 12px;
 	font-size: 13px;
-	color: #475569;
+	color:
 }
 
 .taskCard__meta span {
@@ -649,12 +649,12 @@
 
 .taskCard__description {
 	font-size: 14px;
-	color: #64748b;
+	color:
 	margin: 0;
 	line-height: 1.5;
 }
 
-/* ===== WSPÓŁPRACE ===== */
+
 .contactsGrid {
 	display: grid;
 	grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
@@ -664,7 +664,7 @@
 .contactCard {
 	background: white;
 	border-radius: 12px;
-	border: 1px solid #e2e8f0;
+	border: 1px solid
 	padding: 16px 20px;
 	transition: all 0.2s;
 }
@@ -683,16 +683,16 @@
 .contactCard__name {
 	font-size: 16px;
 	font-weight: 600;
-	color: #0f172a;
+	color:
 	margin: 0;
 }
 
 .contactCard__channel {
 	padding: 2px 10px;
-	background: #f1f5f9;
+	background:
 	border-radius: 12px;
 	font-size: 12px;
-	color: #475569;
+	color:
 }
 
 .contactCard__body {
@@ -706,7 +706,7 @@
 	align-items: center;
 	gap: 6px;
 	font-size: 14px;
-	color: #475569;
+	color:
 }
 
 .contactCard__link {
@@ -714,37 +714,37 @@
 	align-items: center;
 	gap: 6px;
 	font-size: 14px;
-	color: #7c3aed;
+	color:
 	text-decoration: none;
 	transition: all 0.2s;
 }
 
 .contactCard__link:hover {
-	color: #6d28d9;
+	color:
 	text-decoration: underline;
 }
 
 .contactCard__notes {
 	font-size: 14px;
-	color: #64748b;
+	color:
 	margin: 4px 0 0 0;
 	line-height: 1.5;
 }
 
-/* ===== INFORMACJE ORGANIZACYJNE ===== */
+
 .infoBox {
 	display: flex;
 	gap: 20px;
 	padding: 24px 28px;
-	background: linear-gradient(135deg, #f5f3ff, #ede9fe);
+	background: linear-gradient(135deg,
 	border-radius: 16px;
-	border: 1px solid #ddd6fe;
+	border: 1px solid
 	align-items: flex-start;
 }
 
 .infoBox__icon {
 	flex-shrink: 0;
-	color: #7c3aed;
+	color:
 }
 
 .infoBox__content {
@@ -754,18 +754,18 @@
 .infoBox__title {
 	font-size: 18px;
 	font-weight: 600;
-	color: #0f172a;
+	color:
 	margin: 0 0 8px 0;
 }
 
 .infoBox__text {
 	font-size: 15px;
-	color: #475569;
+	color:
 	margin: 0;
 	line-height: 1.7;
 }
 
-/* ===== RESPONSYWNOŚĆ ===== */
+
 @media (max-width: 1024px) {
 	.board {
 		grid-template-columns: repeat(3, 1fr);
@@ -847,8 +847,8 @@
 	}
 }
 
-/* frontend/src/pages/SocialMedia/SocialMedia.module.css */
-/* DODAJ TE STYLE NA KOŃCU PLIKU */
+
+
 
 .teamCard__contact {
 	display: flex;
@@ -868,19 +868,19 @@
 	gap: 4px;
 	align-items: center;
 	justify-content: center;
-	color: #64748b;
+	color:
 	transition: color 0.2s;
 	text-decoration: none;
 	padding: 2px;
 }
 
 .teamCard__link:hover {
-	color: #3b82f6;
+	color:
 }
 
 .teamCard__email {
 	font-size: 12px;
-	color: #64748b;
+	color:
 	word-break: break-all;
 	max-width: 180px;
 	white-space: nowrap;
@@ -890,7 +890,7 @@
 
 .teamCard__phone {
 	font-size: 12px;
-	color: #64748b;
+	color:
 	word-break: break-all;
 	max-width: 120px;
 	white-space: nowrap;
@@ -927,7 +927,7 @@
 }
 
 .modal {
-	background: #ffffff;
+	background:
 	border-radius: 12px;
 	padding: 24px;
 	max-width: 600px;
@@ -956,13 +956,13 @@
 	align-items: center;
 	margin-bottom: 20px;
 	padding-bottom: 16px;
-	border-bottom: 1px solid #e2e8f0;
+	border-bottom: 1px solid
 }
 
 .modal__title {
 	font-size: 20px;
 	font-weight: 600;
-	color: #1e293b;
+	color:
 	margin: 0;
 }
 
@@ -970,7 +970,7 @@
 	background: none;
 	border: none;
 	cursor: pointer;
-	color: #94a3b8;
+	color:
 	padding: 4px;
 	transition: color 0.2s;
 	display: flex;
@@ -979,7 +979,7 @@
 }
 
 .modal__close:hover {
-	color: #1e293b;
+	color:
 }
 
 .modal__form {
@@ -997,49 +997,49 @@
 .modal__label {
 	font-size: 14px;
 	font-weight: 500;
-	color: #334155;
+	color:
 }
 
 .modal__input {
 	padding: 10px 12px;
-	border: 1px solid #e2e8f0;
+	border: 1px solid
 	border-radius: 8px;
 	font-size: 14px;
 	transition:
 		border-color 0.2s,
 		box-shadow 0.2s;
 	width: 100%;
-	background: #ffffff;
-	color: #1e293b;
+	background:
+	color:
 }
 
 .modal__input:focus {
 	outline: none;
-	border-color: #3b82f6;
+	border-color:
 	box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
 .modal__input::placeholder {
-	color: #94a3b8;
+	color:
 }
 
 .modal__select {
 	padding: 10px 12px;
-	border: 1px solid #e2e8f0;
+	border: 1px solid
 	border-radius: 8px;
 	font-size: 14px;
-	background: #ffffff;
+	background:
 	transition:
 		border-color 0.2s,
 		box-shadow 0.2s;
 	width: 100%;
-	color: #1e293b;
+	color:
 	appearance: auto;
 }
 
 .modal__select:focus {
 	outline: none;
-	border-color: #3b82f6;
+	border-color:
 	box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
@@ -1061,15 +1061,15 @@
 	gap: 12px;
 	margin-top: 8px;
 	padding-top: 16px;
-	border-top: 1px solid #e2e8f0;
+	border-top: 1px solid
 }
 
 .modal__btnCancel {
 	padding: 10px 20px;
-	border: 1px solid #e2e8f0;
+	border: 1px solid
 	border-radius: 8px;
-	background: #ffffff;
-	color: #64748b;
+	background:
+	color:
 	font-size: 14px;
 	font-weight: 500;
 	cursor: pointer;
@@ -1077,16 +1077,16 @@
 }
 
 .modal__btnCancel:hover {
-	background: #f1f5f9;
-	border-color: #cbd5e1;
+	background:
+	border-color:
 }
 
 .modal__btnSave {
 	padding: 10px 24px;
 	border: none;
 	border-radius: 8px;
-	background: #3b82f6;
-	color: #ffffff;
+	background:
+	color:
 	font-size: 14px;
 	font-weight: 500;
 	cursor: pointer;
@@ -1094,7 +1094,7 @@
 }
 
 .modal__btnSave:hover {
-	background: #2563eb;
+	background:
 }
 
 .modal__btnSave:disabled {
@@ -1102,9 +1102,9 @@
 	cursor: not-allowed;
 }
 
-/* ----------------------------- */
-/* Style dla listy załączników   */
-/* ----------------------------- */
+
+
+
 
 .modal__fileInput {
 	display: grid;
@@ -1115,10 +1115,10 @@
 
 .modal__addBtn {
 	padding: 10px 14px;
-	border: 1px solid #e2e8f0;
+	border: 1px solid
 	border-radius: 8px;
-	background: #f8fafc;
-	color: #3b82f6;
+	background:
+	color:
 	cursor: pointer;
 	transition: all 0.2s;
 	display: flex;
@@ -1127,8 +1127,8 @@
 }
 
 .modal__addBtn:hover {
-	background: #eff6ff;
-	border-color: #3b82f6;
+	background:
+	border-color:
 }
 
 .modal__fileList {
@@ -1143,10 +1143,10 @@
 	align-items: center;
 	gap: 8px;
 	padding: 8px 12px;
-	background: #f8fafc;
+	background:
 	border-radius: 6px;
 	font-size: 13px;
-	color: #334155;
+	color:
 }
 
 .modal__fileItem span {
@@ -1155,14 +1155,14 @@
 
 .modal__fileSize {
 	font-size: 12px;
-	color: #94a3b8;
+	color:
 }
 
 .modal__removeFile {
 	background: none;
 	border: none;
 	cursor: pointer;
-	color: #ef4444;
+	color:
 	padding: 2px;
 	display: flex;
 	align-items: center;
@@ -1170,17 +1170,17 @@
 }
 
 .modal__removeFile:hover {
-	color: #dc2626;
+	color:
 }
 
-/* ----------------------------- */
-/* Style dla podglądu (view only) */
-/* ----------------------------- */
+
+
+
 
 .modalView .modal__input,
 .modalView .modal__select,
 .modalView .modal__textarea {
-	background: #f1f5f9;
+	background:
 	cursor: default;
 }
 
@@ -1195,10 +1195,10 @@
 	align-items: center;
 	gap: 8px;
 	padding: 8px 12px;
-	background: #f8fafc;
+	background:
 	border-radius: 6px;
 	font-size: 13px;
-	color: #334155;
+	color:
 }
 
 .modal__fileItemView span {
@@ -1209,7 +1209,7 @@
 	background: none;
 	border: none;
 	cursor: pointer;
-	color: #3b82f6;
+	color:
 	padding: 4px;
 	display: flex;
 	align-items: center;
@@ -1217,12 +1217,12 @@
 }
 
 .modal__downloadBtn:hover {
-	color: #2563eb;
+	color:
 }
 
-/* ----------------------------- */
-/* Style dla komentarzy w modalu */
-/* ----------------------------- */
+
+
+
 
 .modal__comments {
 	display: flex;
@@ -1233,9 +1233,9 @@
 
 .modal__comment {
 	padding: 12px 16px;
-	background: #f8fafc;
+	background:
 	border-radius: 8px;
-	border-left: 3px solid #3b82f6;
+	border-left: 3px solid
 }
 
 .modal__commentHeader {
@@ -1247,18 +1247,18 @@
 }
 
 .modal__commentHeader strong {
-	color: #1e293b;
+	color:
 }
 
 .modal__commentDate {
 	font-size: 12px;
-	color: #94a3b8;
+	color:
 }
 
 .modal__comment p {
 	margin: 0;
 	font-size: 14px;
-	color: #334155;
+	color:
 }
 
 .modal__commentInput {
@@ -1275,8 +1275,8 @@
 	padding: 10px 16px;
 	border: none;
 	border-radius: 8px;
-	background: #3b82f6;
-	color: #ffffff;
+	background:
+	color:
 	font-size: 13px;
 	font-weight: 500;
 	cursor: pointer;
@@ -1288,7 +1288,7 @@
 }
 
 .modal__addCommentBtn:hover {
-	background: #2563eb;
+	background:
 }
 
 .modal__addCommentBtn:disabled {
@@ -1296,9 +1296,9 @@
 	cursor: not-allowed;
 }
 
-/* ----------------------------- */
-/* Style dla statusu w modalu    */
-/* ----------------------------- */
+
+
+
 
 .modal__approval {
 	display: flex;
@@ -1310,20 +1310,20 @@
 }
 
 .modal__approvalApproved {
-	background: #f0fdf4;
-	color: #16a34a;
-	border: 1px solid #bbf7d0;
+	background:
+	color:
+	border: 1px solid
 }
 
 .modal__approvalRejected {
-	background: #fef2f2;
-	color: #dc2626;
-	border: 1px solid #fecaca;
+	background:
+	color:
+	border: 1px solid
 }
 
-/* ----------------------------- */
-/* Responsywność                 */
-/* ----------------------------- */
+
+
+
 
 @media (max-width: 640px) {
 	.modal {
@@ -1380,24 +1380,24 @@
 	width: 100%;
 	padding: 10px 12px;
 	padding-right: 36px;
-	border: 1px solid #e2e8f0;
+	border: 1px solid
 	border-radius: 8px;
 	font-size: 14px;
 	transition:
 		border-color 0.2s,
 		box-shadow 0.2s;
-	background: #ffffff;
-	color: #1e293b;
+	background:
+	color:
 }
 
 .searchableSelect__input:focus {
 	outline: none;
-	border-color: #3b82f6;
+	border-color:
 	box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
 .searchableSelect__input::placeholder {
-	color: #94a3b8;
+	color:
 }
 
 .searchableSelect__clear {
@@ -1406,7 +1406,7 @@
 	background: none;
 	border: none;
 	cursor: pointer;
-	color: #94a3b8;
+	color:
 	padding: 4px;
 	display: flex;
 	align-items: center;
@@ -1416,8 +1416,8 @@
 }
 
 .searchableSelect__clear:hover {
-	background: #f1f5f9;
-	color: #64748b;
+	background:
+	color:
 }
 
 .searchableSelect__dropdown {
@@ -1427,8 +1427,8 @@
 	right: 0;
 	max-height: 200px;
 	overflow-y: auto;
-	background: #ffffff;
-	border: 1px solid #e2e8f0;
+	background:
+	border: 1px solid
 	border-radius: 8px;
 	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 	z-index: 10;
@@ -1440,7 +1440,7 @@
 	padding: 10px 12px;
 	cursor: pointer;
 	transition: background 0.2s;
-	border-bottom: 1px solid #f1f5f9;
+	border-bottom: 1px solid
 }
 
 .searchableSelect__item:last-child {
@@ -1448,29 +1448,29 @@
 }
 
 .searchableSelect__item:hover {
-	background: #f8fafc;
+	background:
 }
 
 .searchableSelect__itemSelected {
-	background: #eff6ff;
+	background:
 }
 
 .searchableSelect__itemName {
 	font-size: 14px;
 	font-weight: 500;
-	color: #1e293b;
+	color:
 }
 
 .searchableSelect__itemEmail {
 	font-size: 12px;
-	/* color: #94a3b8; */
+	
 	margin-top: 2px;
 }
 
 .searchableSelect__empty {
 	padding: 12px;
 	text-align: center;
-	color: #94a3b8;
+	color:
 	font-size: 14px;
 }
 
@@ -1479,20 +1479,20 @@
 	flex-direction: column;
 	margin-top: 8px;
 	padding: 10px 12px;
-	background: #f8fafc;
+	background:
 	border-radius: 8px;
-	border: 1px solid #e2e8f0;
+	border: 1px solid
 }
 
 .searchableSelect__selectedName {
 	font-size: 14px;
 	font-weight: 500;
-	color: #1e293b;
+	color:
 }
 
 .searchableSelect__selectedEmail {
 	font-size: 12px;
-	/* color: #94a3b8; */
+	
 	margin-top: 2px;
 }
 
@@ -1515,28 +1515,28 @@
 	width: 100%;
 	padding: 12px 16px;
 	padding-right: 40px;
-	border: 2px solid #e2e8f0;
+	border: 2px solid
 	border-radius: 10px;
 	font-size: 15px;
 	transition:
 		border-color 0.2s,
 		box-shadow 0.2s;
-	background: #ffffff !important;
-	/* ⭐ BIAŁE TŁO */
-	color: #1e293b;
+	background:
+	
+	color:
 	outline: none;
 	height: 48px;
 	box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
 }
 
 .searchableSelect__input:focus {
-	border-color: #3b82f6;
+	border-color:
 	box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
-	background: #ffffff !important;
+	background:
 }
 
 .searchableSelect__input::placeholder {
-	/* color: #94a3b8; */
+	
 	font-size: 14px;
 }
 
@@ -1546,7 +1546,7 @@
 	background: none;
 	border: none;
 	cursor: pointer;
-	/* color: #94a3b8; */
+	
 	padding: 4px;
 	display: flex;
 	align-items: center;
@@ -1558,8 +1558,8 @@
 }
 
 .searchableSelect__clear:hover {
-	background: #f1f5f9;
-	color: #475569;
+	background:
+	color:
 }
 
 .searchableSelect__dropdown {
@@ -1569,8 +1569,8 @@
 	right: 0;
 	max-height: 240px;
 	overflow-y: auto;
-	background: #ffffff;
-	border: 2px solid #e2e8f0;
+	background:
+	border: 2px solid
 	border-radius: 10px;
 	box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
 	z-index: 1000;
@@ -1582,12 +1582,12 @@
 }
 
 .searchableSelect__dropdown::-webkit-scrollbar-track {
-	background: #f1f5f9;
+	background:
 	border-radius: 4px;
 }
 
 .searchableSelect__dropdown::-webkit-scrollbar-thumb {
-	background: #cbd5e1;
+	background:
 	border-radius: 4px;
 }
 
@@ -1602,33 +1602,33 @@
 }
 
 .searchableSelect__item:hover {
-	background: #f1f5f9;
+	background:
 }
 
 .searchableSelect__itemSelected {
-	background: #eff6ff;
+	background:
 }
 
 .searchableSelect__itemSelected:hover {
-	background: #dbeafe;
+	background:
 }
 
 .searchableSelect__itemName {
 	font-size: 14px;
 	font-weight: 500;
-	color: #1e293b;
+	color:
 }
 
 .searchableSelect__itemEmail {
 	font-size: 12px;
-	/* color: #94a3b8; */
+	
 	margin-top: 2px;
 }
 
 .searchableSelect__empty {
 	padding: 16px;
 	text-align: center;
-	/* color: #94a3b8; */
+	
 	font-size: 14px;
 }
 
@@ -1637,20 +1637,20 @@
 	flex-direction: column;
 	margin-top: 10px;
 	padding: 12px 16px;
-	background: #f8fafc;
+	background:
 	border-radius: 8px;
-	border: 1px solid #e2e8f0;
+	border: 1px solid
 }
 
 .searchableSelect__selectedName {
 	font-size: 14px;
 	font-weight: 500;
-	color: #1e293b;
+	color:
 }
 
 .searchableSelect__selectedEmail {
 	font-size: 13px;
-	color: #64748b;
+	color:
 	margin-top: 2px;
 }
 
@@ -1658,7 +1658,7 @@
    STYLE DLA PRZYCISKÓW EDYCJI I USUWANIA
    ============================================================ */
 
-/* ---------- Przyciski w kartach publikacji ---------- */
+
 .publicationCard__actions {
 	display: flex;
 	align-items: center;
@@ -1681,24 +1681,24 @@
 }
 
 .publicationCard__editBtn {
-	color: #3b82f6;
+	color:
 }
 
 .publicationCard__editBtn:hover {
-	background: #eff6ff;
-	color: #2563eb;
+	background:
+	color:
 }
 
 .publicationCard__deleteBtn {
-	color: #ef4444;
+	color:
 }
 
 .publicationCard__deleteBtn:hover {
-	background: #fef2f2;
-	color: #dc2626;
+	background:
+	color:
 }
 
-/* ---------- Przyciski w kartach zadań ---------- */
+
 .taskCard__actions {
 	display: flex;
 	align-items: center;
@@ -1721,24 +1721,24 @@
 }
 
 .taskCard__editBtn {
-	color: #3b82f6;
+	color:
 }
 
 .taskCard__editBtn:hover {
-	background: #eff6ff;
-	color: #2563eb;
+	background:
+	color:
 }
 
 .taskCard__deleteBtn {
-	color: #ef4444;
+	color:
 }
 
 .taskCard__deleteBtn:hover {
-	background: #fef2f2;
-	color: #dc2626;
+	background:
+	color:
 }
 
-/* ---------- Przyciski w kartach kontaktów ---------- */
+
 .contactCard__actions {
 	display: flex;
 	align-items: center;
@@ -1761,21 +1761,21 @@
 }
 
 .contactCard__editBtn {
-	color: #3b82f6;
+	color:
 }
 
 .contactCard__editBtn:hover {
-	background: #eff6ff;
-	color: #2563eb;
+	background:
+	color:
 }
 
 .contactCard__deleteBtn {
-	color: #ef4444;
+	color:
 }
 
 .contactCard__deleteBtn:hover {
-	background: #fef2f2;
-	color: #dc2626;
+	background:
+	color:
 }
 
 /* ============================================================
@@ -1790,7 +1790,7 @@
 	align-items: flex-start;
 	gap: 12px;
 	padding-bottom: 12px;
-	border-bottom: 1px solid #f1f5f9;
+	border-bottom: 1px solid
 }
 
 .publicationCard__title,
@@ -1800,7 +1800,7 @@
 	margin: 0;
 	font-size: 16px;
 	font-weight: 600;
-	color: #1e293b;
+	color:
 }
 
 .publicationCard__status {
@@ -1813,38 +1813,38 @@
 	white-space: nowrap;
 }
 
-/* Statusy publikacji */
+
 .statusIdea {
-	background: #fef3c7;
-	color: #92400e;
+	background:
+	color:
 }
 
 .statusPreparation {
-	background: #dbeafe;
-	color: #1e40af;
+	background:
+	color:
 }
 
 .statusEditing {
-	background: #ede9fe;
-	color: #5b21b6;
+	background:
+	color:
 }
 
 .statusApproval {
-	background: #fce4ec;
-	color: #9a3412;
+	background:
+	color:
 }
 
 .statusScheduled {
-	background: #ccfbf1;
-	color: #065f46;
+	background:
+	color:
 }
 
 .statusPublished {
-	background: #dcfce7;
-	color: #166534;
+	background:
+	color:
 }
 
-/* Statusy zadań */
+
 .taskCard__status {
 	display: inline-flex;
 	align-items: center;
@@ -1856,21 +1856,21 @@
 }
 
 .taskStatusPending {
-	background: #fef3c7;
-	color: #92400e;
+	background:
+	color:
 }
 
 .taskStatusInProgress {
-	background: #dbeafe;
-	color: #1e40af;
+	background:
+	color:
 }
 
 .taskStatusDone {
-	background: #dcfce7;
-	color: #166534;
+	background:
+	color:
 }
 
-/* Kanał kontaktu */
+
 .contactCard__channel {
 	display: inline-flex;
 	align-items: center;
@@ -1878,8 +1878,8 @@
 	border-radius: 20px;
 	font-size: 12px;
 	font-weight: 500;
-	background: #f1f5f9;
-	color: #475569;
+	background:
+	color:
 	white-space: nowrap;
 }
 
@@ -1898,7 +1898,7 @@
 .board__cardTitle {
 	font-size: 14px;
 	font-weight: 600;
-	color: #1a1a2e;
+	color:
 	margin: 0;
 	flex: 1;
 }
@@ -1923,19 +1923,19 @@
 	border: none;
 	border-radius: 6px;
 	background: transparent;
-	color: #8b8fa7;
+	color:
 	cursor: pointer;
 	transition: all 0.2s ease;
 }
 
 .board__cardEditBtn:hover {
-	background: #eef2ff;
-	color: #4f46e5;
+	background:
+	color:
 }
 
 .board__cardDeleteBtn:hover {
-	background: #fef2f2;
-	color: #ef4444;
+	background:
+	color:
 }
 
 /* ============================================================
@@ -1957,7 +1957,7 @@
 	border: none;
 	border-radius: 6px;
 	background: transparent;
-	color: #8b8fa7;
+	color:
 	cursor: pointer;
 	transition: all 0.2s ease;
 }
@@ -1965,15 +1965,15 @@
 .publicationCard__editBtn:hover,
 .taskCard__editBtn:hover,
 .contactCard__editBtn:hover {
-	background: #eef2ff;
-	color: #4f46e5;
+	background:
+	color:
 }
 
 .publicationCard__deleteBtn:hover,
 .taskCard__deleteBtn:hover,
 .contactCard__deleteBtn:hover {
-	background: #fef2f2;
-	color: #ef4444;
+	background:
+	color:
 }
 
 /* ============================================================
@@ -2007,17 +2007,17 @@
 .searchableSelect__input {
 	width: 100%;
 	padding: 10px 36px 10px 14px;
-	border: 1px solid #d1d5db;
+	border: 1px solid
 	border-radius: 8px;
 	font-size: 14px;
-	background: #fff;
-	color: #1a1a2e;
+	background:
+	color:
 	transition: border-color 0.2s ease;
 }
 
 .searchableSelect__input:focus {
 	outline: none;
-	border-color: #4f46e5;
+	border-color:
 	box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
 }
 
@@ -2031,15 +2031,15 @@
 	height: 20px;
 	border: none;
 	background: transparent;
-	color: #9ca3af;
+	color:
 	cursor: pointer;
 	border-radius: 50%;
 	transition: all 0.2s ease;
 }
 
 .searchableSelect__clear:hover {
-	background: #f3f4f6;
-	color: #4b5563;
+	background:
+	color:
 }
 
 .searchableSelect__dropdown {
@@ -2049,8 +2049,8 @@
 	right: 0;
 	max-height: 200px;
 	overflow-y: auto;
-	background: #fff;
-	border: 1px solid #d1d5db;
+	background:
+	border: 1px solid
 	border-radius: 8px;
 	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 	z-index: 100;
@@ -2061,21 +2061,21 @@
 	cursor: pointer;
 	transition: background 0.15s ease;
 	font-size: 14px;
-	color: #1a1a2e;
+	color:
 }
 
 .searchableSelect__item:hover {
-	background: #f3f4f6;
+	background:
 }
 
 .searchableSelect__itemSelected {
-	background: #eef2ff;
-	color: #4f46e5;
+	background:
+	color:
 }
 
 .searchableSelect__empty {
 	padding: 12px 14px;
-	color: #9ca3af;
+	color:
 	font-size: 14px;
 	text-align: center;
 }
@@ -2100,7 +2100,7 @@
 }
 
 .modal {
-	background: #fff;
+	background:
 	border-radius: 16px;
 	max-width: 560px;
 	width: 100%;
@@ -2133,7 +2133,7 @@
 .modal__title {
 	font-size: 20px;
 	font-weight: 700;
-	color: #1a1a2e;
+	color:
 	margin: 0;
 }
 
@@ -2146,14 +2146,14 @@
 	border: none;
 	border-radius: 50%;
 	background: transparent;
-	color: #6b7280;
+	color:
 	cursor: pointer;
 	transition: all 0.2s ease;
 }
 
 .modal__close:hover {
-	background: #f3f4f6;
-	color: #1a1a2e;
+	background:
+	color:
 }
 
 .modal__form {
@@ -2171,22 +2171,22 @@
 .modal__label {
 	font-size: 13px;
 	font-weight: 500;
-	color: #374151;
+	color:
 }
 
 .modal__input {
 	padding: 10px 14px;
-	border: 1px solid #d1d5db;
+	border: 1px solid
 	border-radius: 8px;
 	font-size: 14px;
-	color: #1a1a2e;
+	color:
 	transition: border-color 0.2s ease;
-	background: #fff;
+	background:
 }
 
 .modal__input:focus {
 	outline: none;
-	border-color: #4f46e5;
+	border-color:
 	box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
 }
 
@@ -2198,11 +2198,11 @@
 
 .modal__select {
 	padding: 10px 14px;
-	border: 1px solid #d1d5db;
+	border: 1px solid
 	border-radius: 8px;
 	font-size: 14px;
-	color: #1a1a2e;
-	background: #fff;
+	color:
+	background:
 	transition: border-color 0.2s ease;
 	appearance: none;
 	cursor: pointer;
@@ -2210,7 +2210,7 @@
 
 .modal__select:focus {
 	outline: none;
-	border-color: #4f46e5;
+	border-color:
 	box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
 }
 
@@ -2226,15 +2226,15 @@
 	gap: 12px;
 	margin-top: 8px;
 	padding-top: 16px;
-	border-top: 1px solid #f3f4f6;
+	border-top: 1px solid
 }
 
 .modal__btnCancel {
 	padding: 10px 20px;
-	border: 1px solid #d1d5db;
+	border: 1px solid
 	border-radius: 8px;
 	background: transparent;
-	color: #6b7280;
+	color:
 	font-size: 14px;
 	font-weight: 500;
 	cursor: pointer;
@@ -2242,16 +2242,16 @@
 }
 
 .modal__btnCancel:hover {
-	background: #f3f4f6;
-	color: #1a1a2e;
+	background:
+	color:
 }
 
 .modal__btnSave {
 	padding: 10px 24px;
 	border: none;
 	border-radius: 8px;
-	background: #4f46e5;
-	color: #fff;
+	background:
+	color:
 	font-size: 14px;
 	font-weight: 600;
 	cursor: pointer;
@@ -2259,7 +2259,7 @@
 }
 
 .modal__btnSave:hover {
-	background: #4338ca;
+	background:
 	transform: translateY(-1px);
 	box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
 }
@@ -2295,10 +2295,10 @@
 	}
 }
 
-/* Status URLOP */
+
 .statusVacation {
-	background-color: #f59e0b;
-	/* pomarańczowy */
+	background-color:
+	
 	color: white;
 	padding: 4px 12px;
 	border-radius: 12px;
@@ -2307,10 +2307,10 @@
 	display: inline-block;
 }
 
-/* Status AKTYWNY (dla active, trial, mentor) */
+
 .statusActive {
-	background-color: #10b981;
-	/* zielony */
+	background-color:
+	
 	color: white;
 	padding: 4px 12px;
 	border-radius: 12px;
@@ -2319,7 +2319,7 @@
 	display: inline-block;
 }
 
-/* Tags input dla tematów */
+
 .tagsInput {
 	display: flex;
 	flex-direction: column;
@@ -2334,14 +2334,14 @@
 .tagsInput__input {
 	flex: 1;
 	padding: 8px 12px;
-	border: 1px solid #d1d5db;
+	border: 1px solid
 	border-radius: 6px;
 	font-size: 14px;
 }
 
 .tagsInput__addBtn {
 	padding: 8px 12px;
-	background-color: #3b82f6;
+	background-color:
 	color: white;
 	border: none;
 	border-radius: 6px;
@@ -2352,7 +2352,7 @@
 }
 
 .tagsInput__addBtn:hover {
-	background-color: #2563eb;
+	background-color:
 }
 
 .tagsInput__tags {
@@ -2365,7 +2365,7 @@
 	display: flex;
 	align-items: center;
 	gap: 4px;
-	background-color: #e5e7eb;
+	background-color:
 	padding: 4px 8px;
 	border-radius: 12px;
 	font-size: 12px;
@@ -2378,17 +2378,17 @@
 	display: flex;
 	align-items: center;
 	padding: 0;
-	color: #6b7280;
+	color:
 }
 
 .tagsInput__remove:hover {
-	color: #ef4444;
+	color:
 }
 
-/* Style dla dropdown w searchableSelect */
+
 .searchableSelect__itemEmail {
 	font-size: 12px;
-	color: #6b7280;
+	color:
 	margin-left: 8px;
 }
 
@@ -2397,7 +2397,7 @@
 	flex-wrap: wrap;
 	gap: 8px;
 	font-size: 12px;
-	color: #6b7280;
+	color:
 	max-width: 100%;
 	overflow: hidden;
 }
@@ -2412,7 +2412,7 @@
 	text-overflow: ellipsis;
 }
 
-/* SocialMedia.module.css - dodaj na końcu */
+
 
 .loadingContainer {
 	display: flex;
@@ -2425,8 +2425,8 @@
 .loading__spinner {
 	width: 40px;
 	height: 40px;
-	border: 3px solid #e5e7eb;
-	border-top-color: #4A6FE8;
+	border: 3px solid
+	border-top-color:
 	border-radius: 50%;
 	animation: spin 0.8s linear infinite;
 }

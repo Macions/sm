@@ -1,4 +1,4 @@
-// backend/src/middleware/auth.middleware.ts
+
 import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 
@@ -12,7 +12,7 @@ export interface AuthRequest extends Request {
 	};
 }
 
-// ⭐ LISTA PUBLICZNYCH ENDPOINTÓW
+
 const PUBLIC_ENDPOINTS = [
 	"/api/auth/login",
 	"/api/auth/google",
@@ -24,7 +24,7 @@ const PUBLIC_ENDPOINTS = [
 	"/api/status",
 ];
 
-// ⭐ FUNKCJA SPRAWDZAJĄCA
+
 const isPublicPath = (path: string): boolean => {
 	return PUBLIC_ENDPOINTS.some(
 		(endpoint) => path === endpoint || path.startsWith(endpoint),
@@ -36,7 +36,7 @@ export const authMiddleware = (
 	res: Response,
 	next: NextFunction,
 ) => {
-	// ⭐ SPRAWDŹ CZY TO PUBLICZNY ENDPOINT
+
 	if (isPublicPath(req.path)) {
 		console.log(
 			`🔓 Publiczny endpoint: ${req.method} ${req.path} - pomijam autoryzację`,
@@ -44,7 +44,7 @@ export const authMiddleware = (
 		return next();
 	}
 
-	// Reszta kodu - wymaga autoryzacji
+
 	const token = req.headers.authorization?.split(" ")[1];
 
 	if (!token) {
