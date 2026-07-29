@@ -12,15 +12,43 @@ export interface AuthRequest extends Request {
 	};
 }
 
-// ✅ DODAJ 'export' przed funkcją
+// ⭐ LISTA PUBLICZNYCH ENDPOINTÓW
+const PUBLIC_ENDPOINTS = [
+	"/api/auth/login",
+	"/api/auth/google",
+	"/api/auth/register",
+	"/api/auth/refresh-token",
+	"/api/auth/forgot-password",
+	"/api/auth/reset-password",
+	"/api/health",
+	"/api/status",
+];
+
+// ⭐ FUNKCJA SPRAWDZAJĄCA
+const isPublicPath = (path: string): boolean => {
+	return PUBLIC_ENDPOINTS.some(
+		(endpoint) => path === endpoint || path.startsWith(endpoint),
+	);
+};
+
 export const authMiddleware = (
 	req: AuthRequest,
 	res: Response,
 	next: NextFunction,
 ) => {
+	// ⭐ SPRAWDŹ CZY TO PUBLICZNY ENDPOINT
+	if (isPublicPath(req.path)) {
+		console.log(
+			`🔓 Publiczny endpoint: ${req.method} ${req.path} - pomijam autoryzację`,
+		);
+		return next();
+	}
+
+	// Reszta kodu - wymaga autoryzacji
 	const token = req.headers.authorization?.split(" ")[1];
 
 	if (!token) {
+		console.log(`❌ Brak tokenu dla: ${req.method} ${req.path}`);
 		return res.status(401).json({ error: "Brak tokenu autoryzacyjnego" });
 	}
 
@@ -31,11 +59,14 @@ export const authMiddleware = (
 			email: decoded.email,
 			role: decoded.role,
 		};
+		console.log(
+			`✅ Autoryzacja dla: ${req.method} ${req.path} - użytkownik: ${decoded.email}`,
+		);
 		next();
 	} catch (error) {
+		console.log(`❌ Błąd autoryzacji dla: ${req.method} ${req.path}`);
 		return res.status(401).json({ error: "Nieprawidłowy token" });
 	}
 };
 
-// ✅ Opcjonalnie - dodaj alias dla kompatybilności
 export const authenticateToken = authMiddleware;
