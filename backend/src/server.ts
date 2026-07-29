@@ -1,6 +1,7 @@
 // backend/src/server.ts
 import express from "express";
 import cors from "cors";
+import { OAuth2Client } from "google-auth-library";
 import { PrismaClient } from "@prisma/client";
 import { ProjectController } from "./controllers/project.controller";
 import { UserController } from "./controllers/user.controller";
@@ -20,12 +21,28 @@ cron.schedule("1 0 * * *", async () => {
 	console.log("⏰ [CRON] Uruchamiam codzienny job aktualizacji statusów...");
 	await updateLeaveStatus();
 });
-
+const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 cron.schedule("0 3 */2 * *", async () => {
 	console.log("🔄 [CRON] Uruchamiam synchronizację członków z SM_Ewidencja...");
 	await syncMembers();
 	console.log("✅ [CRON] Synchronizacja członków zakończona");
 });
+const PUBLIC_ENDPOINTS = [
+	"/api/auth/login",
+	"/api/auth/google", // ⭐ TO JEST KLUCZOWE!
+	"/api/auth/register",
+	"/api/auth/refresh-token",
+	"/api/auth/forgot-password",
+	"/api/auth/reset-password",
+	"/api/health",
+	"/api/status",
+	"/uploads", // Pliki statyczne
+];
+const isPublicPath = (path: string): boolean => {
+	return PUBLIC_ENDPOINTS.some(
+		(endpoint) => path === endpoint || path.startsWith(endpoint),
+	);
+};
 type LogActionType =
 	| "CREATE"
 	| "UPDATE"
@@ -58,6 +75,92 @@ const JWT_SECRET =
 
 const prisma = new PrismaClient() as any;
 
+app.use(cors());
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+app.post("/api/auth/google", async (req, res) => {
+	try {
+		console.log("=== GOOGLE AUTH START ===");
+		const { credential } = req.body;
+
+		if (!credential) {
+			console.log("❌ Brak credential");
+			return res.status(401).json({
+				error: "Brak tokenu autoryzacyjnego",
+			});
+		}
+
+		const ticket = await googleClient.verifyIdToken({
+			idToken: credential,
+			audience: process.env.GOOGLE_CLIENT_ID,
+		});
+
+		const payload = ticket.getPayload();
+
+		if (!payload?.email) {
+			return res.status(400).json({
+				error: "Nie udało się pobrać danych Google",
+			});
+		}
+
+		console.log("📧 Email z Google:", payload.email);
+
+		// ⭐ SPRAWDŹ CZY UŻYTKOWNIK ISTNIEJE
+		const user = await prisma.user.findUnique({
+			where: { email: payload.email },
+		});
+
+		if (!user) {
+			console.log(`❌ Użytkownik ${payload.email} nie istnieje w systemie`);
+			return res.status(403).json({
+				error:
+					"To konto Google nie jest zarejestrowane w systemie Siły Młodych. Skontaktuj się z administratorem.",
+			});
+		}
+
+		console.log(
+			`✅ Znaleziono użytkownika: ${user.first_name} ${user.last_name}`,
+		);
+
+		// ⭐ GENERUJ TOKEN JWT
+		const token = jwt.sign(
+			{
+				id: user.id,
+				email: user.email,
+				role: mapRoleId(user.role_id),
+				first_name: user.first_name,
+				last_name: user.last_name,
+			},
+			JWT_SECRET,
+			{ expiresIn: "24h" },
+		);
+
+		const refreshToken = jwt.sign({ id: user.id }, JWT_SECRET, {
+			expiresIn: "7d",
+		});
+
+		res.json({
+			accessToken: token,
+			refreshToken: refreshToken,
+			user: {
+				id: user.id,
+				email: user.email,
+				first_name: user.first_name,
+				last_name: user.last_name,
+				role: mapRoleId(user.role_id),
+				team: user.team,
+				status: user.status,
+			},
+			onboardingCompleted: true,
+		});
+	} catch (error) {
+		console.error("❌ Google OAuth error:", error);
+		res.status(500).json({
+			error: "Błąd logowania Google",
+		});
+	}
+});
 // ============================================================
 // ⭐ KONFIGURACJA MULTER DO OBSŁUGI PLIKÓW
 // ============================================================
@@ -255,7 +358,33 @@ const upload = multer({
 // ⭐ MIDDLEWARE - AUTOMATYCZNIE LOGUJE WSZYSTKIE OPERACJE ZAPISU
 // ============================================================
 
+// ============================================================
+// MIDDLEWARE
+// ============================================================
+
+// ⭐ STATYCZNE PLIKI (do pobierania załączników)
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+
+// ============================================================
+// MIDDLEWARE - z wyjątkiem dla publicznych endpointów
+// ============================================================
+
 app.use(async (req: any, res: any, next: any) => {
+	// ⭐⭐⭐ DODANY WARUNEK - POMIJAMY PUBLICZNE ENDPOINTY ⭐⭐⭐
+	const publicPaths = [
+		"/api/auth/google",
+		"/api/auth/login",
+		"/api/auth/register",
+		"/api/auth/refresh-token",
+	];
+	if (publicPaths.some((p) => req.path === p || req.path.startsWith(p))) {
+		console.log(
+			`🔓 [MIDDLEWARE] Pomijam publiczny endpoint: ${req.method} ${req.path}`,
+		);
+		return next();
+	}
+
+	// Reszta kodu middleware (bez zmian)
 	console.log(`🔍 [MIDDLEWARE] ${req.method} ${req.originalUrl}`);
 
 	const originalJson = res.json;
@@ -345,16 +474,6 @@ app.use(async (req: any, res: any, next: any) => {
 
 	next();
 });
-// ============================================================
-// MIDDLEWARE
-// ============================================================
-app.use(cors());
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-
-// ⭐ STATYCZNE PLIKI (do pobierania załączników)
-app.use("/uploads", express.static(path.join(__dirname, "uploads")));
-
 // ============================================================
 // FUNKCJE POMOCNICZE
 // ============================================================
@@ -557,7 +676,6 @@ app.get(
 			console.log(`   - typ: ${typeof onboarding.completed}`);
 
 			res.json({ completed: isCompleted });
-
 		} catch (error) {
 			console.error("❌ Błąd sprawdzania onboardingu:", error);
 			res.json({ completed: false });
@@ -930,11 +1048,11 @@ app.get("/api/members", authMiddleware, async (req: any, res) => {
 					user.created_at.toISOString().split("T")[0],
 				vacation: activeLeave
 					? {
-						startDate: activeLeave.start_date.toISOString().split("T")[0],
-						endDate: activeLeave.end_date.toISOString().split("T")[0],
-						type: activeLeave.scope === "team" ? "team" : "organization",
-						teamId: activeLeave.affected_teams || undefined,
-					}
+							startDate: activeLeave.start_date.toISOString().split("T")[0],
+							endDate: activeLeave.end_date.toISOString().split("T")[0],
+							type: activeLeave.scope === "team" ? "team" : "organization",
+							teamId: activeLeave.affected_teams || undefined,
+						}
 					: null,
 				onboarding_data: onboarding,
 			};
@@ -1448,7 +1566,7 @@ app.get("/api/applications", authMiddleware, async (req: any, res) => {
 				userId: app.user_id.toString(),
 				userName: app.user
 					? `${app.user.first_name || ""} ${app.user.last_name || ""}`.trim() ||
-					"Nieznany"
+						"Nieznany"
 					: "Nieznany",
 				userEmail: app.user?.email || "",
 				message: app.message || "",
@@ -1587,7 +1705,7 @@ app.get(
 					userId: app.user_id.toString(),
 					userName: app.user
 						? `${app.user.first_name || ""} ${app.user.last_name || ""}`.trim() ||
-						"Nieznany"
+							"Nieznany"
 						: "Nieznany",
 					userEmail: app.user?.email || "",
 					message: app.message || "",
@@ -2830,12 +2948,12 @@ app.put("/api/leaves/:id", authMiddleware, async (req: any, res) => {
 				status: status || existingLeave.status,
 				...(status === "approved" || status === "rejected"
 					? {
-						// ✅ UŻYJ currentUser zamiast req.user
-						approved_by:
-							`${currentUser?.first_name || ""} ${currentUser?.last_name || ""}`.trim() ||
-							"Nieznany",
-						approved_at: new Date(),
-					}
+							// ✅ UŻYJ currentUser zamiast req.user
+							approved_by:
+								`${currentUser?.first_name || ""} ${currentUser?.last_name || ""}`.trim() ||
+								"Nieznany",
+							approved_at: new Date(),
+						}
 					: {}),
 			},
 		});
@@ -3698,7 +3816,10 @@ app.post("/api/onboarding/save", authMiddleware, async (req: any, res) => {
 
 		console.log("🔍 [ONBOARDING] pillarIds:", pillarIds);
 		console.log("🔍 [ONBOARDING] typeof pillarIds:", typeof pillarIds);
-		console.log("🔍 [ONBOARDING] Array.isArray(pillarIds):", Array.isArray(pillarIds));
+		console.log(
+			"🔍 [ONBOARDING] Array.isArray(pillarIds):",
+			Array.isArray(pillarIds),
+		);
 
 		// ⭐ SPRAWDŹ CZY JUŻ ISTNIEJE ⭐
 		const existing = await prisma.onboarding_data.findFirst({
@@ -3771,20 +3892,25 @@ app.post("/api/onboarding/save", authMiddleware, async (req: any, res) => {
 
 		// ⭐⭐⭐ ZAPIS DO TEAM_MEMBERS ⭐⭐⭐
 		if (pillarIds && Array.isArray(pillarIds) && pillarIds.length > 0) {
-			console.log(`📋 [ONBOARDING] Dodawanie użytkownika ${userId} do filarów:`, pillarIds);
+			console.log(
+				`📋 [ONBOARDING] Dodawanie użytkownika ${userId} do filarów:`,
+				pillarIds,
+			);
 
 			// SPRAWDŹ CZY TEAM ID ISTNIEJĄ
 			const existingTeams = await prisma.team.findMany({
 				where: {
-					id: { in: pillarIds }
+					id: { in: pillarIds },
 				},
-				select: { id: true }
+				select: { id: true },
 			});
 			const existingTeamIds = existingTeams.map((t: any) => t.id);
 			console.log("🔍 [ONBOARDING] Istniejące team ID:", existingTeamIds);
 
 			// FILTRUJ TYLKO ISTNIEJĄCE
-			const validPillarIds = pillarIds.filter((id: number) => existingTeamIds.includes(id));
+			const validPillarIds = pillarIds.filter((id: number) =>
+				existingTeamIds.includes(id),
+			);
 			console.log("🔍 [ONBOARDING] Valid pillarIds:", validPillarIds);
 
 			if (validPillarIds.length > 0) {
@@ -3797,11 +3923,18 @@ app.post("/api/onboarding/save", authMiddleware, async (req: any, res) => {
 					select: { team_id: true },
 				});
 
-				const existingMembershipIds = existingMemberships.map((m: any) => m.team_id);
-				console.log("🔍 [ONBOARDING] Istniejące członkostwa:", existingMembershipIds);
+				const existingMembershipIds = existingMemberships.map(
+					(m: any) => m.team_id,
+				);
+				console.log(
+					"🔍 [ONBOARDING] Istniejące członkostwa:",
+					existingMembershipIds,
+				);
 
 				// Dodaj tylko te, których jeszcze nie ma
-				const toAdd = validPillarIds.filter((id: number) => !existingMembershipIds.includes(id));
+				const toAdd = validPillarIds.filter(
+					(id: number) => !existingMembershipIds.includes(id),
+				);
 				console.log("🔍 [ONBOARDING] Do dodania:", toAdd);
 
 				if (toAdd.length > 0) {
@@ -3813,15 +3946,24 @@ app.post("/api/onboarding/save", authMiddleware, async (req: any, res) => {
 							is_leader: false,
 						})),
 					});
-					console.log(`✅ [ONBOARDING] Dodano ${result.count} rekordów do team_members`);
+					console.log(
+						`✅ [ONBOARDING] Dodano ${result.count} rekordów do team_members`,
+					);
 				} else {
-					console.log(`⏭️ [ONBOARDING] Użytkownik ${userId} już jest we wszystkich wybranych filarach`);
+					console.log(
+						`⏭️ [ONBOARDING] Użytkownik ${userId} już jest we wszystkich wybranych filarach`,
+					);
 				}
 			} else {
-				console.log(`⚠️ [ONBOARDING] Żadne z podanych ID nie istnieje w tabeli teams`);
+				console.log(
+					`⚠️ [ONBOARDING] Żadne z podanych ID nie istnieje w tabeli teams`,
+				);
 			}
 		} else {
-			console.log(`⚠️ [ONBOARDING] Brak pillarIds lub nieprawidłowy format:`, pillarIds);
+			console.log(
+				`⚠️ [ONBOARDING] Brak pillarIds lub nieprawidłowy format:`,
+				pillarIds,
+			);
 		}
 
 		// ============================================================
@@ -3902,7 +4044,7 @@ app.get("/api/social/members/check", authMiddleware, async (req: any, res) => {
 		}
 
 		const member = await prisma.socialMediaMember.findFirst({
-			where: { user_id: userId }
+			where: { user_id: userId },
 		});
 
 		res.json({ isMember: !!member });
