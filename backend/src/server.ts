@@ -5357,7 +5357,17 @@ app.get("/api/admin/logs", authMiddleware, async (req: any, res) => {
 // ============================================================
 // START SERWERA
 // ============================================================
-
+setTimeout(async () => {
+	console.log(
+		"🔄 [STARTUP] Uruchamiam synchronizację frekwencji przy starcie...",
+	);
+	try {
+		await syncAttendance();
+		console.log("✅ [STARTUP] Synchronizacja frekwencji zakończona");
+	} catch (error) {
+		console.error("❌ [STARTUP] Błąd synchronizacji frekwencji:", error);
+	}
+}, 10000);
 setTimeout(async () => {
 	console.log(
 		"🔄 [STARTUP] Uruchamiam synchronizację członków przy starcie serwera...",
