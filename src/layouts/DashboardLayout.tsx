@@ -15,7 +15,6 @@ export default function DashboardLayout() {
 	const [loading, setLoading] = useState(true);
 	const [currentUser, setCurrentUser] = useState<any>(null);
 
-	// ⭐ TYLKO JEDEN useEffect
 	useEffect(() => {
 		const checkSocialMediaAccess = async () => {
 			try {
@@ -25,38 +24,59 @@ export default function DashboardLayout() {
 					return;
 				}
 
-				// Pobierz profil
+				// 1. Pobierz profil
 				const response = await fetch("/api/profile", {
 					headers: { Authorization: `Bearer ${token}` },
 				});
 
-				if (response.ok) {
-					const userData = await response.json();
-					setCurrentUser(userData);
+				if (!response.ok) {
+					console.error("❌ Błąd pobierania profilu:", response.status);
+					setLoading(false);
+					return;
+				}
 
-					// ⭐ SPRAWDŹ UPRAWNIENIA
-					// Admin zawsze ma dostęp do wszystkiego
-					if (userData.role === "admin") {
-						setIsSocialMember(true);
-					}
-					// Sprawdź czy użytkownik jest w social_media_members
-					else if (userData.isSocialMember === true) {
-						setIsSocialMember(true);
-					}
-					// Jeśli nie ma pola isSocialMember - sprawdź przez osobny endpoint
-					else {
-						try {
-							const socialCheck = await fetch("/api/social/members/check", {
-								headers: { Authorization: `Bearer ${token}` },
-							});
-							setIsSocialMember(socialCheck.ok);
-						} catch {
-							setIsSocialMember(false);
+				const userData = await response.json();
+				console.log("📋 Profil użytkownika:", userData);
+				console.log("📋 role:", userData.role);
+				setCurrentUser(userData);
+
+				// 2. Sprawdź dostęp do Social Media
+				let hasSocialAccess = false;
+
+				// ⭐ ADMIN - zawsze ma dostęp
+				if (userData.role === "admin") {
+					hasSocialAccess = true;
+					console.log("✅ Admin - dostęp do Social Media");
+				}
+				// ⭐ SPRAWDŹ PRZEZ ENDPOINT /api/social/members/check
+				else {
+					try {
+						console.log("🔍 Sprawdzam przez /api/social/members/check...");
+						const socialCheck = await fetch("/api/social/members/check", {
+							headers: { Authorization: `Bearer ${token}` },
+						});
+
+						if (socialCheck.ok) {
+							const checkData = await socialCheck.json();
+							console.log("📊 Wynik check:", checkData);
+							// ⭐ ZAKŁADAMY ŻE ENDPOINT ZWRACA { isMember: true/false }
+							hasSocialAccess = checkData.isMember === true || checkData.isSocialMember === true;
+							console.log(`📊 hasSocialAccess: ${hasSocialAccess}`);
+						} else {
+							console.log(`❌ /api/social/members/check zwrócił ${socialCheck.status}`);
+							hasSocialAccess = false;
 						}
+					} catch (error) {
+						console.error("❌ Błąd sprawdzania:", error);
+						hasSocialAccess = false;
 					}
 				}
+
+				console.log(`🎯 Ostateczny wynik: hasSocialAccess = ${hasSocialAccess}`);
+				setIsSocialMember(hasSocialAccess);
+
 			} catch (error) {
-				console.error("❌ Błąd sprawdzania uprawnień:", error);
+				console.error("❌ Błąd:", error);
 				setIsSocialMember(false);
 			} finally {
 				setLoading(false);
@@ -107,8 +127,12 @@ export default function DashboardLayout() {
 	};
 
 	if (loading) {
-		return <div className={styles.loading}>Ładowanie...</div>;
-	}
+	return (
+		<div className={styles.loadingContainer}>
+			<div className={styles.loading__spinner}></div>
+		</div>
+	);
+}
 
 	return (
 		<div
@@ -119,7 +143,7 @@ export default function DashboardLayout() {
 				onSelect={handleNavSelect}
 				collapsed={sidebarCollapsed}
 				isSocialMember={isSocialMember}
-				userRole={currentUser?.role} // ⭐ PRZEKAŻ ROLĘ
+				userRole={currentUser?.role}
 			/>
 			<main className={styles.main}>
 				<Header

@@ -176,6 +176,12 @@ export default function Onboarding({
 	onComplete,
 	initialData = {},
 }: OnboardingProps) {
+	// ============================================================
+	// ⭐ SPRAWDZANIE STATUSU ONBOARDINGU - DOSTOSOWANE DO TWOJEGO ENDPOINTU ⭐
+	// ============================================================
+	const navigate = useNavigate();
+	const [isLoading, setIsLoading] = useState(true);
+	const [hasCompletedOnboarding, setHasCompletedOnboarding] = useState(false);
 	const [step, setStep] = useState(1);
 	const [formData, setFormData] = useState<OnboardingData>({
 		firstName: initialData.firstName || "",
@@ -200,8 +206,12 @@ export default function Onboarding({
 	const [newInstitutionContact, setNewInstitutionContact] = useState("");
 	const [newOtherContact, setNewOtherContact] = useState("");
 	const [isEmailManuallyEdited, setIsEmailManuallyEdited] = useState(false); // <-- DODAJ
+	const [isSubmitting, setIsSubmitting] = useState(false);
 
 	const totalSteps = 4;
+
+	const [selectedPillars, setSelectedPillars] = useState<number[]>([]);
+	const [pillars, setPillars] = useState<{ id: number; name: string }[]>([]);
 
 	const handleInputChange = (field: keyof OnboardingData, value: any) => {
 		setFormData((prev) => ({ ...prev, [field]: value }));
@@ -211,14 +221,47 @@ export default function Onboarding({
 			setIsEmailManuallyEdited(true);
 		}
 	};
-	// Onboarding.tsx - dodaj stan dla filaru
-	const [selectedPillars, setSelectedPillars] = useState<number[]>([]);
-	const [pillars, setPillars] = useState<{ id: number, name: string }[]>([]);
+	useEffect(() => {
+		const checkOnboardingStatus = async () => {
+			try {
+				const token = localStorage.getItem("accessToken");
+				if (!token) {
+					setIsLoading(false);
+					return;
+				}
 
-	// Dodaj useEffect do pobierania filarów
-	// Onboarding.tsx - useEffect do pobierania filarów
-	// ✅ ZOSTAW TYLKO TEN JEDEN (przed toggleDevelopmentArea):
-	// Onboarding.tsx - useEffect do pobierania filarów
+				console.log("🔍 Sprawdzanie statusu onboardingu...");
+				// ⭐ UŻYJ TWOJEGO ENDPOINTU ⭐
+				const response = await fetch("/api/auth/onboarding-status", {
+					headers: {
+						Authorization: `Bearer ${token}`,
+						"Content-Type": "application/json",
+					},
+				});
+
+				if (response.ok) {
+					const data = await response.json();
+					console.log("📋 Status onboardingu:", data);
+
+					// ⭐ TWOJ ENDPOINT ZWRACA { completed: boolean } ⭐
+					if (data.completed === true) {
+						console.log("✅ Użytkownik już przeszedł onboarding - przekierowanie na dashboard");
+						setHasCompletedOnboarding(true);
+						navigate("/dashboard");
+						return;
+					}
+				} else {
+					console.warn("⚠️ Nie udało się sprawdzić statusu onboardingu:", response.status);
+				}
+			} catch (error) {
+				console.error("❌ Błąd sprawdzania statusu onboardingu:", error);
+			} finally {
+				setIsLoading(false);
+			}
+		};
+
+		checkOnboardingStatus();
+	}, [navigate]);
 	useEffect(() => {
 		const fetchPillars = async () => {
 			try {
@@ -232,9 +275,7 @@ export default function Onboarding({
 
 				if (response.ok) {
 					const data = await response.json();
-					// ⭐ FILTRUJ TYLKO "Filar" (liczba pojedyncza) - NIE "Filary"
 					const pillarsList = data.filter((team: any) => {
-						// Sprawdź czy nazwa zawiera "Filar" ale NIE zawiera "Filary"
 						return team.name.includes("Filar") && !team.name.includes("Filary");
 					});
 					setPillars(pillarsList);
@@ -247,6 +288,139 @@ export default function Onboarding({
 
 		fetchPillars();
 	}, []);
+
+	// useEffect 3: Pobieranie danych z localStorage (WKLEJAMY)
+	useEffect(() => {
+		const userData = localStorage.getItem("user");
+		if (userData) {
+			try {
+				const user = JSON.parse(userData);
+				console.log("📋 Dane użytkownika z localStorage:", user);
+
+				const phoneValue =
+					user.phone ||
+					user.phone_number ||
+					user.telefon ||
+					user.tel ||
+					user.mobile ||
+					"";
+
+				if (user.first_name && !formData.firstName) {
+					handleInputChange("firstName", user.first_name);
+				}
+				if (user.last_name && !formData.lastName) {
+					handleInputChange("lastName", user.last_name);
+				}
+				if (user.email && !formData.email) {
+					handleInputChange("email", user.email);
+				}
+				if (phoneValue && !formData.phone) {
+					const formattedPhone = formatPhoneNumber(phoneValue);
+					handleInputChange("phone", formattedPhone);
+				}
+			} catch (e) {
+				console.error("Błąd parsowania user data:", e);
+			}
+		}
+	}, []);
+
+	// useEffect 4: Pobieranie profilu z API (WKLEJAMY)
+	useEffect(() => {
+		const fetchUserProfile = async () => {
+			try {
+				const token = localStorage.getItem("accessToken");
+				if (!token) return;
+
+				console.log("📱 [Onboarding] Pobieram profil z API...");
+				const response = await fetch("/api/profile", {
+					headers: {
+						Authorization: `Bearer ${token}`,
+						"Content-Type": "application/json",
+					},
+				});
+
+				if (response.ok) {
+					const data = await response.json();
+					if (data.phone && !formData.phone) {
+						const formattedPhone = formatPhoneNumber(data.phone);
+						handleInputChange("phone", formattedPhone);
+					}
+				}
+			} catch (error) {
+				console.error("❌ [Onboarding] Błąd pobierania profilu:", error);
+			}
+		};
+
+		if (!formData.phone) {
+			fetchUserProfile();
+		}
+	}, [formData.phone]);
+
+	// useEffect 5: Generowanie emaila (WKLEJAMY)
+	useEffect(() => {
+		if (formData.firstName.trim() && formData.lastName.trim()) {
+			const normalize = (str: string) => {
+				return str
+					.normalize("NFD")
+					.replace(/[\u0300-\u036f]/g, "")
+					.replace(/ł/g, "l")
+					.replace(/Ł/g, "L")
+					.replace(/ą/g, "a")
+					.replace(/Ą/g, "A")
+					.replace(/ć/g, "c")
+					.replace(/Ć/g, "C")
+					.replace(/ę/g, "e")
+					.replace(/Ę/g, "E")
+					.replace(/ń/g, "n")
+					.replace(/Ń/g, "N")
+					.replace(/ó/g, "o")
+					.replace(/Ó/g, "O")
+					.replace(/ś/g, "s")
+					.replace(/Ś/g, "S")
+					.replace(/ź/g, "z")
+					.replace(/Ź/g, "Z")
+					.replace(/ż/g, "z")
+					.replace(/Ż/g, "Z");
+			};
+
+			const fullName = `${formData.firstName.trim()} ${formData.lastName.trim()}`;
+			let emailPart = normalize(fullName.toLowerCase())
+				.replace(/\s+/g, ".")
+				.replace(/\.+/g, ".")
+				.replace(/^\.|\.$/g, "");
+
+			const generatedEmail = `${emailPart}@silamlodych.pl`;
+
+			if (!isEmailManuallyEdited) {
+				setFormData((prev) => ({ ...prev, email: generatedEmail }));
+			}
+		}
+	}, [formData.firstName, formData.lastName, isEmailManuallyEdited]);
+	// ⭐ Jeśli trwa sprawdzanie - pokaż loader
+	if (isLoading) {
+		return (
+			<div className={styles.onboarding}>
+				<div className={styles.container}>
+					<div className={styles.loader}>
+						<p>Sprawdzanie statusu...</p>
+					</div>
+				</div>
+			</div>
+		);
+	}
+
+	if (hasCompletedOnboarding) {
+		return null; // Przekierowanie zostało już wykonane
+	}
+
+
+
+	// Onboarding.tsx - dodaj stan dla filaru
+
+	// Dodaj useEffect do pobierania filarów
+	// Onboarding.tsx - useEffect do pobierania filarów
+	// ✅ ZOSTAW TYLKO TEN JEDEN (przed toggleDevelopmentArea):
+	// Onboarding.tsx - useEffect do pobierania filarów
 
 	// Onboarding.tsx - dodaj przed toggleDevelopmentArea
 	const togglePillar = (pillarId: number) => {
@@ -324,8 +498,12 @@ export default function Onboarding({
 
 	const handleSubmit = async () => {
 		console.log("🚀 [SUBMIT] START");
-		console.log("🔍 [SUBMIT] selectedPillars:", selectedPillars); // ⬅️ TO POWINNO POKAZAĆ TABLICĘ
-		console.log("🔍 [SUBMIT] selectedPillars length:", selectedPillars.length); // ⬅️ POWINNO BYĆ > 0
+		console.log("🔍 [SUBMIT] selectedPillars:", selectedPillars);
+		console.log("🔍 [SUBMIT] selectedPillars length:", selectedPillars.length);
+
+
+		setIsSubmitting(true);
+
 		try {
 			const token = localStorage.getItem("accessToken");
 
@@ -369,6 +547,12 @@ export default function Onboarding({
 			const result = await response.json();
 			console.log("✅ [response] sukces:", result);
 
+
+			// ⭐⭐⭐ AKTUALIZUJ LOCALSTORAGE ⭐⭐⭐
+			console.log("💾 [Onboarding] Aktualizuję localStorage onboardingCompleted = true");
+			localStorage.setItem("onboardingCompleted", "true");
+			console.log("📋 [Onboarding] localStorage po aktualizacji:", localStorage.getItem("onboardingCompleted"));
+
 			// ============================================================
 			// ✅✅✅ UTWÓRZ POWIADOMIENIE POWITALNE (przez API) ✅✅✅
 			// ============================================================
@@ -395,29 +579,22 @@ export default function Onboarding({
 					);
 				}
 			} catch (welcomeError) {
-				// ⚠️ NIE BLOKUJ PROCESU - powiadomienie to tylko dodatek
-				console.error(
-					"⚠️ [ONBOARDING] Błąd tworzenia powiadomienia:",
-					welcomeError,
-				);
-				// Kontynuuj - nie przerywamy przekierowania
+				console.error("⚠️ [ONBOARDING] Błąd tworzenia powiadomienia:", welcomeError);
 			}
 			// ============================================================
 
-			// ⭐ PRZEKIERUJ NA DASHBOARD ⭐
 			console.log("🚀 [ONBOARDING] Przekierowuję na dashboard...");
-
-			// Opcjonalnie: pokaż komunikat sukcesu przed przekierowaniem
-			// alert("✅ Onboarding zakończony! Za chwilę zostaniesz przeniesiony na dashboard.");
-
-			// Przekieruj od razu (backend sam tworzy powiadomienie)
 			navigate("/dashboard");
+
 		} catch (error) {
 			console.error("❌ Błąd zapisu onboardingu:", error);
 			alert(
 				"❌ Wystąpił błąd: " +
 				(error instanceof Error ? error.message : "Nieznany błąd"),
 			);
+		} finally {
+			// ⭐ ODKOMENTUJ PO ZAKOŃCZENIU
+			setIsSubmitting(false);
 		}
 	};
 
@@ -470,139 +647,7 @@ export default function Onboarding({
 	// Onboarding.tsx - znajdź ten useEffect i ZMIEŃ:
 
 	// Onboarding.tsx - ZMIEŃ useEffect
-
-	useEffect(() => {
-		const userData = localStorage.getItem("user");
-		if (userData) {
-			try {
-				const user = JSON.parse(userData);
-				console.log("📋 Dane użytkownika z localStorage:", user);
-				console.log("🔍 Klucze w user:", Object.keys(user));
-
-				// ⭐ SPRAWDŹ WSZYSTKIE MOŻLIWE NAZWY DLA TELEFONU ⭐
-				const phoneValue =
-					user.phone ||
-					user.phone_number ||
-					user.telefon ||
-					user.tel ||
-					user.mobile ||
-					"";
-
-				if (user.first_name && !formData.firstName) {
-					handleInputChange("firstName", user.first_name);
-				}
-				if (user.last_name && !formData.lastName) {
-					handleInputChange("lastName", user.last_name);
-				}
-				if (user.email && !formData.email) {
-					handleInputChange("email", user.email);
-				}
-				if (phoneValue && !formData.phone) {
-					const formattedPhone = formatPhoneNumber(phoneValue);
-					handleInputChange("phone", formattedPhone);
-					console.log(
-						`📱 [Onboarding] Znaleziono numer: ${phoneValue} -> sformatowano: ${formattedPhone}`,
-					);
-				} else {
-					console.log(
-						"📱 [Onboarding] Brak numeru telefonu w danych użytkownika",
-					);
-				}
-			} catch (e) {
-				console.error("Błąd parsowania user data:", e);
-			}
-		} else {
-			console.log("❌ [Onboarding] Brak danych w localStorage");
-		}
-	}, []);
-	// Onboarding.tsx - DODAJ TEN useEffect
-
-	useEffect(() => {
-		const fetchUserProfile = async () => {
-			try {
-				const token = localStorage.getItem("accessToken");
-				if (!token) return;
-
-				console.log("📱 [Onboarding] Pobieram profil z API...");
-
-				const response = await fetch("/api/profile", {
-					headers: {
-						Authorization: `Bearer ${token}`,
-						"Content-Type": "application/json",
-					},
-				});
-
-				if (response.ok) {
-					const data = await response.json();
-					console.log("📋 [Onboarding] Profil z API:", data);
-
-					// ⭐ Pobierz telefon z API ⭐
-					if (data.phone && !formData.phone) {
-						const formattedPhone = formatPhoneNumber(data.phone);
-						handleInputChange("phone", formattedPhone);
-						console.log(
-							`📱 [Onboarding] Ustawiono numer z API: ${data.phone} -> ${formattedPhone}`,
-						);
-					} else {
-						console.log("📱 [Onboarding] Brak numeru telefonu w API");
-					}
-				} else {
-					console.error("❌ [Onboarding] Błąd API:", response.status);
-				}
-			} catch (error) {
-				console.error("❌ [Onboarding] Błąd pobierania profilu:", error);
-			}
-		};
-
-		// Uruchom jeśli nie ma numeru telefonu
-		if (!formData.phone) {
-			fetchUserProfile();
-		}
-	}, [formData.phone]);
-	useEffect(() => {
-		// Generuj email tylko jeśli imię i nazwisko nie są puste
-		if (formData.firstName.trim() && formData.lastName.trim()) {
-			const normalize = (str: string) => {
-				return str
-					.normalize("NFD")
-					.replace(/[\u0300-\u036f]/g, "")
-					.replace(/ł/g, "l")
-					.replace(/Ł/g, "L")
-					.replace(/ą/g, "a")
-					.replace(/Ą/g, "A")
-					.replace(/ć/g, "c")
-					.replace(/Ć/g, "C")
-					.replace(/ę/g, "e")
-					.replace(/Ę/g, "E")
-					.replace(/ń/g, "n")
-					.replace(/Ń/g, "N")
-					.replace(/ó/g, "o")
-					.replace(/Ó/g, "O")
-					.replace(/ś/g, "s")
-					.replace(/Ś/g, "S")
-					.replace(/ź/g, "z")
-					.replace(/Ź/g, "Z")
-					.replace(/ż/g, "z")
-					.replace(/Ż/g, "Z");
-			};
-
-			// Połącz imię i nazwisko, zamień spacje na kropki
-			const fullName = `${formData.firstName.trim()} ${formData.lastName.trim()}`;
-			let emailPart = normalize(fullName.toLowerCase())
-				.replace(/\s+/g, ".") // <-- ZMIEŃ SPACJE NA KROPKI
-				.replace(/\.+/g, ".") // <-- USUŃ PODWÓJNE KROPKI
-				.replace(/^\.|\.$/g, ""); // <-- USUŃ KROPKI NA KOŃCACH
-
-			const generatedEmail = `${emailPart}@silamlodych.pl`;
-
-			// Aktualizuj email tylko jeśli NIE został ręcznie zmieniony
-			if (!isEmailManuallyEdited) {
-				setFormData((prev) => ({ ...prev, email: generatedEmail }));
-			}
-		}
-	}, [formData.firstName, formData.lastName, isEmailManuallyEdited]); // <-- DODAJ isEmailManuallyEdited
-
-	const navigate = useNavigate();
+	// const navigate = useNavigate();
 
 	return (
 		<div className={styles.onboarding}>
@@ -1441,10 +1486,19 @@ export default function Onboarding({
 								type="button"
 								className={`${styles.nav__btn} ${styles.nav__btnSubmit}`}
 								onClick={handleSubmit}
-								disabled={!isStepValid()}
+								disabled={!isStepValid() || isSubmitting} // ⭐ DODAJ isSubmitting
 							>
-								<CheckCircle size={18} />
-								Zakończ
+								{isSubmitting ? (
+									<>
+										<span className={styles.spinner}></span>
+										Zapisywanie...
+									</>
+								) : (
+									<>
+										<CheckCircle size={18} />
+										Zakończ
+									</>
+								)}
 							</button>
 						)}
 					</div>

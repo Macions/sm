@@ -411,10 +411,10 @@ function LeaveCard({
 				{leave.approvedBy && (
 					<div
 						className={`${styles.leaveCard__approval} ${leave.status === "approved"
-								? styles.leaveCard__approvalApproved
-								: leave.status === "rejected"
-									? styles.leaveCard__approvalRejected
-									: ""
+							? styles.leaveCard__approvalApproved
+							: leave.status === "rejected"
+								? styles.leaveCard__approvalRejected
+								: ""
 							}`}
 					>
 						{leave.status === "approved" ? (
@@ -1258,10 +1258,10 @@ function LeaveModal({
 					{leave?.approvedBy && (
 						<div
 							className={`${styles.modal__approval} ${leave.status === "approved"
-									? styles.modal__approvalApproved
-									: leave.status === "rejected"
-										? styles.modal__approvalRejected
-										: ""
+								? styles.modal__approvalApproved
+								: leave.status === "rejected"
+									? styles.modal__approvalRejected
+									: ""
 								}`}
 						>
 							{leave.status === "approved" ? (
@@ -1690,7 +1690,10 @@ export default function Leave({ title }: { title?: string }) {
 	if (loading || !currentUser) {
 		return (
 			<div className={styles.leave}>
-				<div className={styles.loading}>Ładowanie...</div>
+				<div className={styles.loading}>
+					<div className={styles.loading__spinner}></div>
+					{/* ❌ USUŃ "Ładowanie..." */}
+				</div>
 			</div>
 		);
 	}

@@ -151,14 +151,29 @@ export async function getCachedPermissions(role: string): Promise<Permission[]> 
 // FUNKCJE SYNCHRONICZNE
 // ============================================================
 
+// src/utils/permissions.ts
+
 export function hasPermission(
 	role: string | undefined,
 	permission: Permission
 ): boolean {
 	if (!role) return false;
+
+	// ⭐ NAJPIERW SPRAWDŹ CACHE
 	const permissions = permissionsCache[role];
-	if (!permissions) return false;
-	return permissions.includes(permission);
+	if (permissions) {
+		return permissions.includes(permission);
+	}
+
+	// ⭐ JAK NIE MA W CACHE - UŻYJ DEFAULTOWYCH UPRAWNIEŃ
+	const defaultPerms = DEFAULT_PERMISSIONS[role as UserRole];
+	if (defaultPerms) {
+		// ⭐ ZAPISZ DO CACHE
+		permissionsCache[role] = defaultPerms;
+		return defaultPerms.includes(permission);
+	}
+
+	return false;
 }
 
 export function getPermissionsSync(role: string): Permission[] {

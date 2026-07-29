@@ -3257,7 +3257,11 @@ export default function SocialMedia({ title }: { title?: string }) {
 	};
 
 	if (loading) {
-		return <div className={styles.loading}>Ładowanie...</div>;
+		return (
+			<div className={styles.loadingContainer}>
+				<div className={styles.loading__spinner}></div>
+			</div>
+		);
 	}
 
 	return (

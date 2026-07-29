@@ -367,11 +367,8 @@ export default function Profile({ title, userId }: { title?: string; userId?: st
         : user;
     if (loading) {
         return (
-            <div className={styles.profile}>
-                <div className={styles.loading}>
-                    <div className={styles.loading__spinner}></div>
-                    <p>Ładowanie profilu...</p>
-                </div>
+            <div className={styles.loadingContainer}>
+                <div className={styles.loading__spinner}></div>
             </div>
         );
     }

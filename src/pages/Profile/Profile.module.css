@@ -737,3 +737,46 @@
     color: #9ca3af;
     font-style: italic;
 }
+
+/* Profile.module.css */
+
+.loading {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 400px;
+    width: 100%;
+}
+
+.loading__spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid #e5e7eb;
+    border-top-color: #4A6FE8;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+/* LUB wersja z kółkami (bez tekstu) */
+.loadingContainer {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 400px;
+    width: 100%;
+}
+
+.loadingContainer .loading__spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid #e5e7eb;
+    border-top-color: #4A6FE8;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}

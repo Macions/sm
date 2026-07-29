@@ -1595,6 +1595,7 @@
 		padding: 4px 10px;
 	}
 }
+
 /* Walidacja dat */
 .modal__validation {
 	margin-top: 8px;
@@ -1620,4 +1621,29 @@
 	padding: 8px 12px;
 	border-radius: 6px;
 	font-size: 13px;
+}
+
+/* Leave.module.css - dodaj na końcu */
+
+.loading {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	min-height: 400px;
+	width: 100%;
+}
+
+.loading__spinner {
+	width: 40px;
+	height: 40px;
+	border: 3px solid #e5e7eb;
+	border-top-color: #4A6FE8;
+	border-radius: 50%;
+	animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+	to {
+		transform: rotate(360deg);
+	}
 }
