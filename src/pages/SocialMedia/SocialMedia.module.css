@@ -28,7 +28,7 @@
 .header__title {
 	font-size: 28px;
 	font-weight: 700;
-	color:
+	color: #0f172a;
 	margin: 0 0 8px 0;
 	display: flex;
 	align-items: center;
@@ -39,13 +39,13 @@
 	content: "";
 	width: 4px;
 	height: 32px;
-	background: linear-gradient(180deg,
+	background: linear-gradient(180deg, #7c3aed, #6d28d9);
 	border-radius: 4px;
 }
 
 .header__subtitle {
 	font-size: 16px;
-	color:
+	color: #64748b;
 	margin: 0;
 	max-width: 700px;
 	line-height: 1.6;
@@ -72,13 +72,13 @@
 .section__title {
 	font-size: 22px;
 	font-weight: 600;
-	color:
+	color: #0f172a;
 	margin: 0 0 4px 0;
 }
 
 .section__subtitle {
 	font-size: 14px;
-	color:
+	color: #64748b;
 	margin: 0;
 }
 
@@ -87,7 +87,7 @@
 	align-items: center;
 	gap: 6px;
 	padding: 8px 16px;
-	background: linear-gradient(135deg,
+	background: linear-gradient(135deg, #7c3aed, #6d28d9);
 	color: white;
 	border: none;
 	border-radius: 10px;
@@ -123,33 +123,33 @@
 	left: 12px;
 	top: 50%;
 	transform: translateY(-50%);
-	color:
+	color: #94a3b8;
 }
 
 .section__searchInput {
 	width: 100%;
 	padding: 8px 12px 8px 36px;
-	border: 2px solid
+	border: 2px solid #e2e8f0;
 	border-radius: 10px;
 	font-size: 14px;
 	background: white;
 	transition: all 0.2s;
-	color:
+	color: #0f172a;
 }
 
 .section__searchInput:focus {
 	outline: none;
-	border-color:
+	border-color: #7c3aed;
 	box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.1);
 }
 
 .section__select {
 	padding: 8px 12px;
-	border: 2px solid
+	border: 2px solid #e2e8f0;
 	border-radius: 10px;
 	font-size: 14px;
 	background: white;
-	color:
+	color: #0f172a;
 	cursor: pointer;
 	min-width: 150px;
 	transition: all 0.2s;
@@ -157,7 +157,7 @@
 
 .section__select:focus {
 	outline: none;
-	border-color:
+	border-color: #7c3aed;
 }
 
 
@@ -174,7 +174,7 @@
 	padding: 16px 20px;
 	background: white;
 	border-radius: 12px;
-	border: 1px solid
+	border: 1px solid #e2e8f0;
 	transition: all 0.2s;
 }
 
@@ -187,7 +187,7 @@
 	width: 48px;
 	height: 48px;
 	border-radius: 50%;
-	background: linear-gradient(135deg,
+	background: linear-gradient(135deg, #7c3aed, #6d28d9);
 	color: white;
 	display: flex;
 	align-items: center;
@@ -208,7 +208,7 @@
 .teamCard__name {
 	font-size: 16px;
 	font-weight: 600;
-	color:
+	color: #0f172a;
 	margin: 0;
 }
 
@@ -217,7 +217,7 @@
 	align-items: center;
 	gap: 4px;
 	font-size: 13px;
-	color:
+	color: #7c3aed;
 	font-weight: 500;
 }
 
@@ -225,7 +225,7 @@
 	display: flex;
 	gap: 12px;
 	font-size: 13px;
-	color:
+	color: #64748b;
 	margin-top: 4px;
 }
 
@@ -243,7 +243,7 @@
 
 .teamCard__link {
 	padding: 4px;
-	color:
+	color: #64748b;
 	border-radius: 4px;
 	transition: all 0.2s;
 	display: flex;
@@ -251,8 +251,8 @@
 }
 
 .teamCard__link:hover {
-	color:
-	background:
+	color: #7c3aed;
+	background: #f1f5f9;
 }
 
 .teamCard__status {
@@ -262,8 +262,8 @@
 .statusActive {
 	display: inline-block;
 	padding: 2px 10px;
-	background:
-	color:
+	background: #d1fae5;
+	color: #059669;
 	border-radius: 12px;
 	font-size: 12px;
 	font-weight: 500;
@@ -272,8 +272,8 @@
 .statusInactive {
 	display: inline-block;
 	padding: 2px 10px;
-	background:
-	color:
+	background: #f3f4f6;
+	color: #6b7280;
 	border-radius: 12px;
 	font-size: 12px;
 	font-weight: 500;
@@ -292,7 +292,7 @@
 	padding: 16px 20px;
 	background: white;
 	border-radius: 12px;
-	border: 1px solid
+	border: 1px solid #e2e8f0;
 	transition: all 0.2s;
 }
 
@@ -304,7 +304,7 @@
 	width: 44px;
 	height: 44px;
 	border-radius: 50%;
-	background: linear-gradient(135deg,
+	background: linear-gradient(135deg, #7c3aed, #6d28d9);
 	color: white;
 	display: flex;
 	align-items: center;
@@ -321,7 +321,7 @@
 .creatorCard__name {
 	font-size: 16px;
 	font-weight: 600;
-	color:
+	color: #0f172a;
 	margin: 0;
 }
 
@@ -329,7 +329,7 @@
 	display: flex;
 	gap: 12px;
 	font-size: 13px;
-	color:
+	color: #64748b;
 	margin-top: 4px;
 }
 
@@ -344,7 +344,7 @@
 	align-items: center;
 	gap: 4px;
 	font-size: 13px;
-	color:
+	color: #475569;
 	margin-top: 4px;
 }
 
@@ -353,7 +353,7 @@
 	align-items: center;
 	gap: 4px;
 	font-size: 13px;
-	color:
+	color: #475569;
 	margin-top: 2px;
 }
 
@@ -366,8 +366,8 @@
 
 .creatorCard__topic {
 	padding: 2px 10px;
-	background:
-	color:
+	background: #f1f5f9;
+	color: #475569;
 	border-radius: 12px;
 	font-size: 12px;
 }
@@ -382,7 +382,7 @@
 .publicationCard {
 	background: white;
 	border-radius: 12px;
-	border: 1px solid
+	border: 1px solid #e2e8f0;
 	overflow: hidden;
 	transition: all 0.2s;
 }
@@ -396,14 +396,14 @@
 	justify-content: space-between;
 	align-items: center;
 	padding: 14px 16px;
-	background:
-	border-bottom: 1px solid
+	background: #f8fafc;
+	border-bottom: 1px solid #f1f5f9;
 }
 
 .publicationCard__title {
 	font-size: 15px;
 	font-weight: 600;
-	color:
+	color: #0f172a;
 	margin: 0;
 }
 
@@ -415,33 +415,33 @@
 }
 
 .statusIdea {
-	background:
-	color:
+	background: #fef3c7;
+	color: #d97706;
 }
 
 .statusPreparation {
-	background:
-	color:
+	background: #dbeafe;
+	color: #1d4ed8;
 }
 
 .statusEditing {
-	background:
-	color:
+	background: #fce4ec;
+	color: #dc2626;
 }
 
 .statusApproval {
-	background:
-	color:
+	background: #fef3c7;
+	color: #d97706;
 }
 
 .statusScheduled {
-	background:
-	color:
+	background: #e0e7ff;
+	color: #4f46e5;
 }
 
 .statusPublished {
-	background:
-	color:
+	background: #d1fae5;
+	color: #059669;
 }
 
 .publicationCard__body {
@@ -453,7 +453,7 @@
 	flex-wrap: wrap;
 	gap: 12px;
 	font-size: 13px;
-	color:
+	color: #475569;
 }
 
 .publicationCard__meta span {
@@ -464,7 +464,7 @@
 
 .publicationCard__description {
 	font-size: 14px;
-	color:
+	color: #64748b;
 	margin: 8px 0 0 0;
 	line-height: 1.5;
 }
@@ -479,7 +479,7 @@
 .board__column {
 	background: white;
 	border-radius: 12px;
-	border: 1px solid
+	border: 1px solid #e2e8f0;
 	overflow: hidden;
 }
 
@@ -488,23 +488,23 @@
 	justify-content: space-between;
 	align-items: center;
 	padding: 12px 14px;
-	background:
-	border-bottom: 1px solid
+	background: #f8fafc;
+	border-bottom: 1px solid #f1f5f9;
 }
 
 .board__columnTitle {
 	font-size: 14px;
 	font-weight: 600;
-	color:
+	color: #0f172a;
 	margin: 0;
 }
 
 .board__columnCount {
 	padding: 2px 8px;
-	background:
+	background: #e2e8f0;
 	border-radius: 10px;
 	font-size: 12px;
-	color:
+	color: #475569;
 	font-weight: 500;
 }
 
@@ -518,21 +518,21 @@
 
 .board__card {
 	padding: 12px;
-	background:
+	background: #f8fafc;
 	border-radius: 8px;
-	border: 1px solid
+	border: 1px solid #f1f5f9;
 }
 
 .board__cardTitle {
 	font-size: 14px;
 	font-weight: 600;
-	color:
+	color: #0f172a;
 	margin: 0 0 4px 0;
 }
 
 .board__cardDescription {
 	font-size: 13px;
-	color:
+	color: #64748b;
 	margin: 0 0 8px 0;
 }
 
@@ -540,7 +540,7 @@
 	display: flex;
 	gap: 12px;
 	font-size: 12px;
-	color:
+	color: #64748b;
 }
 
 .board__cardMeta span {
@@ -559,18 +559,18 @@
 }
 
 .priorityHigh {
-	background:
-	color:
+	background: #fee2e2;
+	color: #dc2626;
 }
 
 .priorityMedium {
-	background:
-	color:
+	background: #fef3c7;
+	color: #d97706;
 }
 
 .priorityLow {
-	background:
-	color:
+	background: #dbeafe;
+	color: #1d4ed8;
 }
 
 
@@ -583,7 +583,7 @@
 .taskCard {
 	background: white;
 	border-radius: 12px;
-	border: 1px solid
+	border: 1px solid #e2e8f0;
 	padding: 16px 20px;
 	transition: all 0.2s;
 }
@@ -602,7 +602,7 @@
 .taskCard__title {
 	font-size: 15px;
 	font-weight: 600;
-	color:
+	color: #0f172a;
 	margin: 0;
 }
 
@@ -614,18 +614,18 @@
 }
 
 .taskStatusPending {
-	background:
-	color:
+	background: #fef3c7;
+	color: #d97706;
 }
 
 .taskStatusInProgress {
-	background:
-	color:
+	background: #dbeafe;
+	color: #1d4ed8;
 }
 
 .taskStatusDone {
-	background:
-	color:
+	background: #d1fae5;
+	color: #059669;
 }
 
 .taskCard__body {
@@ -638,7 +638,7 @@
 	display: flex;
 	gap: 12px;
 	font-size: 13px;
-	color:
+	color: #475569;
 }
 
 .taskCard__meta span {
@@ -649,7 +649,7 @@
 
 .taskCard__description {
 	font-size: 14px;
-	color:
+	color: #64748b;
 	margin: 0;
 	line-height: 1.5;
 }
@@ -664,7 +664,7 @@
 .contactCard {
 	background: white;
 	border-radius: 12px;
-	border: 1px solid
+	border: 1px solid #e2e8f0;
 	padding: 16px 20px;
 	transition: all 0.2s;
 }
@@ -683,16 +683,16 @@
 .contactCard__name {
 	font-size: 16px;
 	font-weight: 600;
-	color:
+	color: #0f172a;
 	margin: 0;
 }
 
 .contactCard__channel {
 	padding: 2px 10px;
-	background:
+	background: #f1f5f9;
 	border-radius: 12px;
 	font-size: 12px;
-	color:
+	color: #475569;
 }
 
 .contactCard__body {
@@ -706,7 +706,7 @@
 	align-items: center;
 	gap: 6px;
 	font-size: 14px;
-	color:
+	color: #475569;
 }
 
 .contactCard__link {
@@ -714,19 +714,19 @@
 	align-items: center;
 	gap: 6px;
 	font-size: 14px;
-	color:
+	color: #7c3aed;
 	text-decoration: none;
 	transition: all 0.2s;
 }
 
 .contactCard__link:hover {
-	color:
+	color: #6d28d9;
 	text-decoration: underline;
 }
 
 .contactCard__notes {
 	font-size: 14px;
-	color:
+	color: #64748b;
 	margin: 4px 0 0 0;
 	line-height: 1.5;
 }
@@ -736,15 +736,15 @@
 	display: flex;
 	gap: 20px;
 	padding: 24px 28px;
-	background: linear-gradient(135deg,
+	background: linear-gradient(135deg, #f5f3ff, #ede9fe);
 	border-radius: 16px;
-	border: 1px solid
+	border: 1px solid #ddd6fe;
 	align-items: flex-start;
 }
 
 .infoBox__icon {
 	flex-shrink: 0;
-	color:
+	color: #7c3aed;
 }
 
 .infoBox__content {
@@ -754,13 +754,13 @@
 .infoBox__title {
 	font-size: 18px;
 	font-weight: 600;
-	color:
+	color: #0f172a;
 	margin: 0 0 8px 0;
 }
 
 .infoBox__text {
 	font-size: 15px;
-	color:
+	color: #475569;
 	margin: 0;
 	line-height: 1.7;
 }
@@ -868,19 +868,19 @@
 	gap: 4px;
 	align-items: center;
 	justify-content: center;
-	color:
+	color: #64748b;
 	transition: color 0.2s;
 	text-decoration: none;
 	padding: 2px;
 }
 
 .teamCard__link:hover {
-	color:
+	color: #3b82f6;
 }
 
 .teamCard__email {
 	font-size: 12px;
-	color:
+	color: #64748b;
 	word-break: break-all;
 	max-width: 180px;
 	white-space: nowrap;
@@ -890,7 +890,7 @@
 
 .teamCard__phone {
 	font-size: 12px;
-	color:
+	color: #64748b;
 	word-break: break-all;
 	max-width: 120px;
 	white-space: nowrap;
@@ -927,7 +927,7 @@
 }
 
 .modal {
-	background:
+	background: #ffffff;
 	border-radius: 12px;
 	padding: 24px;
 	max-width: 600px;
@@ -956,13 +956,13 @@
 	align-items: center;
 	margin-bottom: 20px;
 	padding-bottom: 16px;
-	border-bottom: 1px solid
+	border-bottom: 1px solid #e2e8f0;
 }
 
 .modal__title {
 	font-size: 20px;
 	font-weight: 600;
-	color:
+	color: #1e293b;
 	margin: 0;
 }
 
@@ -970,7 +970,7 @@
 	background: none;
 	border: none;
 	cursor: pointer;
-	color:
+	color: #94a3b8;
 	padding: 4px;
 	transition: color 0.2s;
 	display: flex;
@@ -979,7 +979,7 @@
 }
 
 .modal__close:hover {
-	color:
+	color: #1e293b;
 }
 
 .modal__form {
@@ -997,49 +997,49 @@
 .modal__label {
 	font-size: 14px;
 	font-weight: 500;
-	color:
+	color: #334155;
 }
 
 .modal__input {
 	padding: 10px 12px;
-	border: 1px solid
+	border: 1px solid #e2e8f0;
 	border-radius: 8px;
 	font-size: 14px;
 	transition:
 		border-color 0.2s,
 		box-shadow 0.2s;
 	width: 100%;
-	background:
-	color:
+	background: #ffffff;
+	color: #1e293b;
 }
 
 .modal__input:focus {
 	outline: none;
-	border-color:
+	border-color: #3b82f6;
 	box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
 .modal__input::placeholder {
-	color:
+	color: #94a3b8;
 }
 
 .modal__select {
 	padding: 10px 12px;
-	border: 1px solid
+	border: 1px solid #e2e8f0;
 	border-radius: 8px;
 	font-size: 14px;
-	background:
+	background: #ffffff;
 	transition:
 		border-color 0.2s,
 		box-shadow 0.2s;
 	width: 100%;
-	color:
+	color: #1e293b;
 	appearance: auto;
 }
 
 .modal__select:focus {
 	outline: none;
-	border-color:
+	border-color: #3b82f6;
 	box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
@@ -1061,15 +1061,15 @@
 	gap: 12px;
 	margin-top: 8px;
 	padding-top: 16px;
-	border-top: 1px solid
+	border-top: 1px solid #e2e8f0;
 }
 
 .modal__btnCancel {
 	padding: 10px 20px;
-	border: 1px solid
+	border: 1px solid #e2e8f0;
 	border-radius: 8px;
-	background:
-	color:
+	background: #ffffff;
+	color: #64748b;
 	font-size: 14px;
 	font-weight: 500;
 	cursor: pointer;
@@ -1077,16 +1077,16 @@
 }
 
 .modal__btnCancel:hover {
-	background:
-	border-color:
+	background: #f1f5f9;
+	border-color: #cbd5e1;
 }
 
 .modal__btnSave {
 	padding: 10px 24px;
 	border: none;
 	border-radius: 8px;
-	background:
-	color:
+	background: #3b82f6;
+	color: #ffffff;
 	font-size: 14px;
 	font-weight: 500;
 	cursor: pointer;
@@ -1094,7 +1094,7 @@
 }
 
 .modal__btnSave:hover {
-	background:
+	background: #2563eb;
 }
 
 .modal__btnSave:disabled {
@@ -1115,10 +1115,10 @@
 
 .modal__addBtn {
 	padding: 10px 14px;
-	border: 1px solid
+	border: 1px solid #e2e8f0;
 	border-radius: 8px;
-	background:
-	color:
+	background: #f8fafc;
+	color: #3b82f6;
 	cursor: pointer;
 	transition: all 0.2s;
 	display: flex;
@@ -1127,8 +1127,8 @@
 }
 
 .modal__addBtn:hover {
-	background:
-	border-color:
+	background: #eff6ff;
+	border-color: #3b82f6;
 }
 
 .modal__fileList {
@@ -1143,10 +1143,10 @@
 	align-items: center;
 	gap: 8px;
 	padding: 8px 12px;
-	background:
+	background: #f8fafc;
 	border-radius: 6px;
 	font-size: 13px;
-	color:
+	color: #334155;
 }
 
 .modal__fileItem span {
@@ -1155,14 +1155,14 @@
 
 .modal__fileSize {
 	font-size: 12px;
-	color:
+	color: #94a3b8;
 }
 
 .modal__removeFile {
 	background: none;
 	border: none;
 	cursor: pointer;
-	color:
+	color: #ef4444;
 	padding: 2px;
 	display: flex;
 	align-items: center;
@@ -1170,7 +1170,7 @@
 }
 
 .modal__removeFile:hover {
-	color:
+	color: #dc2626;
 }
 
 
@@ -1180,7 +1180,7 @@
 .modalView .modal__input,
 .modalView .modal__select,
 .modalView .modal__textarea {
-	background:
+	background: #f1f5f9;
 	cursor: default;
 }
 
@@ -1195,10 +1195,10 @@
 	align-items: center;
 	gap: 8px;
 	padding: 8px 12px;
-	background:
+	background: #f8fafc;
 	border-radius: 6px;
 	font-size: 13px;
-	color:
+	color: #334155;
 }
 
 .modal__fileItemView span {
@@ -1209,7 +1209,7 @@
 	background: none;
 	border: none;
 	cursor: pointer;
-	color:
+	color: #3b82f6;
 	padding: 4px;
 	display: flex;
 	align-items: center;
@@ -1217,7 +1217,7 @@
 }
 
 .modal__downloadBtn:hover {
-	color:
+	color: #2563eb;
 }
 
 
@@ -1233,9 +1233,9 @@
 
 .modal__comment {
 	padding: 12px 16px;
-	background:
+	background: #f8fafc;
 	border-radius: 8px;
-	border-left: 3px solid
+	border-left: 3px solid #3b82f6;
 }
 
 .modal__commentHeader {
@@ -1247,18 +1247,18 @@
 }
 
 .modal__commentHeader strong {
-	color:
+	color: #1e293b;
 }
 
 .modal__commentDate {
 	font-size: 12px;
-	color:
+	color: #94a3b8;
 }
 
 .modal__comment p {
 	margin: 0;
 	font-size: 14px;
-	color:
+	color: #334155;
 }
 
 .modal__commentInput {
@@ -1275,8 +1275,8 @@
 	padding: 10px 16px;
 	border: none;
 	border-radius: 8px;
-	background:
-	color:
+	background: #3b82f6;
+	color: #ffffff;
 	font-size: 13px;
 	font-weight: 500;
 	cursor: pointer;
@@ -1288,7 +1288,7 @@
 }
 
 .modal__addCommentBtn:hover {
-	background:
+	background: #2563eb;
 }
 
 .modal__addCommentBtn:disabled {
@@ -1310,15 +1310,15 @@
 }
 
 .modal__approvalApproved {
-	background:
-	color:
-	border: 1px solid
+	background: #f0fdf4;
+	color: #16a34a;
+	border: 1px solid #bbf7d0;
 }
 
 .modal__approvalRejected {
-	background:
-	color:
-	border: 1px solid
+	background: #fef2f2;
+	color: #dc2626;
+	border: 1px solid #fecaca;
 }
 
 
@@ -1380,24 +1380,24 @@
 	width: 100%;
 	padding: 10px 12px;
 	padding-right: 36px;
-	border: 1px solid
+	border: 1px solid #e2e8f0;
 	border-radius: 8px;
 	font-size: 14px;
 	transition:
 		border-color 0.2s,
 		box-shadow 0.2s;
-	background:
-	color:
+	background: #ffffff;
+	color: #1e293b;
 }
 
 .searchableSelect__input:focus {
 	outline: none;
-	border-color:
+	border-color: #3b82f6;
 	box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
 .searchableSelect__input::placeholder {
-	color:
+	color: #94a3b8;
 }
 
 .searchableSelect__clear {
@@ -1406,7 +1406,7 @@
 	background: none;
 	border: none;
 	cursor: pointer;
-	color:
+	color: #94a3b8;
 	padding: 4px;
 	display: flex;
 	align-items: center;
@@ -1416,8 +1416,8 @@
 }
 
 .searchableSelect__clear:hover {
-	background:
-	color:
+	background: #f1f5f9;
+	color: #64748b;
 }
 
 .searchableSelect__dropdown {
@@ -1427,8 +1427,8 @@
 	right: 0;
 	max-height: 200px;
 	overflow-y: auto;
-	background:
-	border: 1px solid
+	background: #ffffff;
+	border: 1px solid #e2e8f0;
 	border-radius: 8px;
 	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 	z-index: 10;
@@ -1440,7 +1440,7 @@
 	padding: 10px 12px;
 	cursor: pointer;
 	transition: background 0.2s;
-	border-bottom: 1px solid
+	border-bottom: 1px solid #f1f5f9;
 }
 
 .searchableSelect__item:last-child {
@@ -1448,17 +1448,17 @@
 }
 
 .searchableSelect__item:hover {
-	background:
+	background: #f8fafc;
 }
 
 .searchableSelect__itemSelected {
-	background:
+	background: #eff6ff;
 }
 
 .searchableSelect__itemName {
 	font-size: 14px;
 	font-weight: 500;
-	color:
+	color: #1e293b;
 }
 
 .searchableSelect__itemEmail {
@@ -1470,7 +1470,7 @@
 .searchableSelect__empty {
 	padding: 12px;
 	text-align: center;
-	color:
+	color: #94a3b8;
 	font-size: 14px;
 }
 
@@ -1479,15 +1479,15 @@
 	flex-direction: column;
 	margin-top: 8px;
 	padding: 10px 12px;
-	background:
+	background: #f8fafc;
 	border-radius: 8px;
-	border: 1px solid
+	border: 1px solid #e2e8f0;
 }
 
 .searchableSelect__selectedName {
 	font-size: 14px;
 	font-weight: 500;
-	color:
+	color: #1e293b;
 }
 
 .searchableSelect__selectedEmail {
@@ -1515,24 +1515,24 @@
 	width: 100%;
 	padding: 12px 16px;
 	padding-right: 40px;
-	border: 2px solid
+	border: 2px solid #e2e8f0;
 	border-radius: 10px;
 	font-size: 15px;
 	transition:
 		border-color 0.2s,
 		box-shadow 0.2s;
-	background:
+	background: #ffffff !important;
 	
-	color:
+	color: #1e293b;
 	outline: none;
 	height: 48px;
 	box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
 }
 
 .searchableSelect__input:focus {
-	border-color:
+	border-color: #3b82f6;
 	box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
-	background:
+	background: #ffffff !important;
 }
 
 .searchableSelect__input::placeholder {
@@ -1558,8 +1558,8 @@
 }
 
 .searchableSelect__clear:hover {
-	background:
-	color:
+	background: #f1f5f9;
+	color: #475569;
 }
 
 .searchableSelect__dropdown {
@@ -1569,8 +1569,8 @@
 	right: 0;
 	max-height: 240px;
 	overflow-y: auto;
-	background:
-	border: 2px solid
+	background: #ffffff;
+	border: 2px solid #e2e8f0;
 	border-radius: 10px;
 	box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
 	z-index: 1000;
@@ -1582,12 +1582,12 @@
 }
 
 .searchableSelect__dropdown::-webkit-scrollbar-track {
-	background:
+	background: #f1f5f9;
 	border-radius: 4px;
 }
 
 .searchableSelect__dropdown::-webkit-scrollbar-thumb {
-	background:
+	background: #cbd5e1;
 	border-radius: 4px;
 }
 
@@ -1602,21 +1602,21 @@
 }
 
 .searchableSelect__item:hover {
-	background:
+	background: #f1f5f9;
 }
 
 .searchableSelect__itemSelected {
-	background:
+	background: #eff6ff;
 }
 
 .searchableSelect__itemSelected:hover {
-	background:
+	background: #dbeafe;
 }
 
 .searchableSelect__itemName {
 	font-size: 14px;
 	font-weight: 500;
-	color:
+	color: #1e293b;
 }
 
 .searchableSelect__itemEmail {
@@ -1637,20 +1637,20 @@
 	flex-direction: column;
 	margin-top: 10px;
 	padding: 12px 16px;
-	background:
+	background: #f8fafc;
 	border-radius: 8px;
-	border: 1px solid
+	border: 1px solid #e2e8f0;
 }
 
 .searchableSelect__selectedName {
 	font-size: 14px;
 	font-weight: 500;
-	color:
+	color: #1e293b;
 }
 
 .searchableSelect__selectedEmail {
 	font-size: 13px;
-	color:
+	color: #64748b;
 	margin-top: 2px;
 }
 
@@ -1681,21 +1681,21 @@
 }
 
 .publicationCard__editBtn {
-	color:
+	color: #3b82f6;
 }
 
 .publicationCard__editBtn:hover {
-	background:
-	color:
+	background: #eff6ff;
+	color: #2563eb;
 }
 
 .publicationCard__deleteBtn {
-	color:
+	color: #ef4444;
 }
 
 .publicationCard__deleteBtn:hover {
-	background:
-	color:
+	background: #fef2f2;
+	color: #dc2626;
 }
 
 
@@ -1721,21 +1721,21 @@
 }
 
 .taskCard__editBtn {
-	color:
+	color: #3b82f6;
 }
 
 .taskCard__editBtn:hover {
-	background:
-	color:
+	background: #eff6ff;
+	color: #2563eb;
 }
 
 .taskCard__deleteBtn {
-	color:
+	color: #ef4444;
 }
 
 .taskCard__deleteBtn:hover {
-	background:
-	color:
+	background: #fef2f2;
+	color: #dc2626;
 }
 
 
@@ -1761,21 +1761,21 @@
 }
 
 .contactCard__editBtn {
-	color:
+	color: #3b82f6;
 }
 
 .contactCard__editBtn:hover {
-	background:
-	color:
+	background: #eff6ff;
+	color: #2563eb;
 }
 
 .contactCard__deleteBtn {
-	color:
+	color: #ef4444;
 }
 
 .contactCard__deleteBtn:hover {
-	background:
-	color:
+	background: #fef2f2;
+	color: #dc2626;
 }
 
 /* ============================================================
@@ -1790,7 +1790,7 @@
 	align-items: flex-start;
 	gap: 12px;
 	padding-bottom: 12px;
-	border-bottom: 1px solid
+	border-bottom: 1px solid #f1f5f9;
 }
 
 .publicationCard__title,
@@ -1800,7 +1800,7 @@
 	margin: 0;
 	font-size: 16px;
 	font-weight: 600;
-	color:
+	color: #1e293b;
 }
 
 .publicationCard__status {
@@ -1815,33 +1815,33 @@
 
 
 .statusIdea {
-	background:
-	color:
+	background: #fef3c7;
+	color: #92400e;
 }
 
 .statusPreparation {
-	background:
-	color:
+	background: #dbeafe;
+	color: #1e40af;
 }
 
 .statusEditing {
-	background:
-	color:
+	background: #ede9fe;
+	color: #5b21b6;
 }
 
 .statusApproval {
-	background:
-	color:
+	background: #fce4ec;
+	color: #9a3412;
 }
 
 .statusScheduled {
-	background:
-	color:
+	background: #ccfbf1;
+	color: #065f46;
 }
 
 .statusPublished {
-	background:
-	color:
+	background: #dcfce7;
+	color: #166534;
 }
 
 
@@ -1856,18 +1856,18 @@
 }
 
 .taskStatusPending {
-	background:
-	color:
+	background: #fef3c7;
+	color: #92400e;
 }
 
 .taskStatusInProgress {
-	background:
-	color:
+	background: #dbeafe;
+	color: #1e40af;
 }
 
 .taskStatusDone {
-	background:
-	color:
+	background: #dcfce7;
+	color: #166534;
 }
 
 
@@ -1878,8 +1878,8 @@
 	border-radius: 20px;
 	font-size: 12px;
 	font-weight: 500;
-	background:
-	color:
+	background: #f1f5f9;
+	color: #475569;
 	white-space: nowrap;
 }
 
@@ -1898,7 +1898,7 @@
 .board__cardTitle {
 	font-size: 14px;
 	font-weight: 600;
-	color:
+	color: #1a1a2e;
 	margin: 0;
 	flex: 1;
 }
@@ -1923,19 +1923,19 @@
 	border: none;
 	border-radius: 6px;
 	background: transparent;
-	color:
+	color: #8b8fa7;
 	cursor: pointer;
 	transition: all 0.2s ease;
 }
 
 .board__cardEditBtn:hover {
-	background:
-	color:
+	background: #eef2ff;
+	color: #4f46e5;
 }
 
 .board__cardDeleteBtn:hover {
-	background:
-	color:
+	background: #fef2f2;
+	color: #ef4444;
 }
 
 /* ============================================================
@@ -1957,7 +1957,7 @@
 	border: none;
 	border-radius: 6px;
 	background: transparent;
-	color:
+	color: #8b8fa7;
 	cursor: pointer;
 	transition: all 0.2s ease;
 }
@@ -1965,15 +1965,15 @@
 .publicationCard__editBtn:hover,
 .taskCard__editBtn:hover,
 .contactCard__editBtn:hover {
-	background:
-	color:
+	background: #eef2ff;
+	color: #4f46e5;
 }
 
 .publicationCard__deleteBtn:hover,
 .taskCard__deleteBtn:hover,
 .contactCard__deleteBtn:hover {
-	background:
-	color:
+	background: #fef2f2;
+	color: #ef4444;
 }
 
 /* ============================================================
@@ -2007,17 +2007,17 @@
 .searchableSelect__input {
 	width: 100%;
 	padding: 10px 36px 10px 14px;
-	border: 1px solid
+	border: 1px solid #d1d5db;
 	border-radius: 8px;
 	font-size: 14px;
-	background:
-	color:
+	background: #fff;
+	color: #1a1a2e;
 	transition: border-color 0.2s ease;
 }
 
 .searchableSelect__input:focus {
 	outline: none;
-	border-color:
+	border-color: #4f46e5;
 	box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
 }
 
@@ -2031,15 +2031,15 @@
 	height: 20px;
 	border: none;
 	background: transparent;
-	color:
+	color: #9ca3af;
 	cursor: pointer;
 	border-radius: 50%;
 	transition: all 0.2s ease;
 }
 
 .searchableSelect__clear:hover {
-	background:
-	color:
+	background: #f3f4f6;
+	color: #4b5563;
 }
 
 .searchableSelect__dropdown {
@@ -2049,8 +2049,8 @@
 	right: 0;
 	max-height: 200px;
 	overflow-y: auto;
-	background:
-	border: 1px solid
+	background: #fff;
+	border: 1px solid #d1d5db;
 	border-radius: 8px;
 	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 	z-index: 100;
@@ -2061,21 +2061,21 @@
 	cursor: pointer;
 	transition: background 0.15s ease;
 	font-size: 14px;
-	color:
+	color: #1a1a2e;
 }
 
 .searchableSelect__item:hover {
-	background:
+	background: #f3f4f6;
 }
 
 .searchableSelect__itemSelected {
-	background:
-	color:
+	background: #eef2ff;
+	color: #4f46e5;
 }
 
 .searchableSelect__empty {
 	padding: 12px 14px;
-	color:
+	color: #9ca3af;
 	font-size: 14px;
 	text-align: center;
 }
@@ -2100,7 +2100,7 @@
 }
 
 .modal {
-	background:
+	background: #fff;
 	border-radius: 16px;
 	max-width: 560px;
 	width: 100%;
@@ -2133,7 +2133,7 @@
 .modal__title {
 	font-size: 20px;
 	font-weight: 700;
-	color:
+	color: #1a1a2e;
 	margin: 0;
 }
 
@@ -2146,14 +2146,14 @@
 	border: none;
 	border-radius: 50%;
 	background: transparent;
-	color:
+	color: #6b7280;
 	cursor: pointer;
 	transition: all 0.2s ease;
 }
 
 .modal__close:hover {
-	background:
-	color:
+	background: #f3f4f6;
+	color: #1a1a2e;
 }
 
 .modal__form {
@@ -2171,22 +2171,22 @@
 .modal__label {
 	font-size: 13px;
 	font-weight: 500;
-	color:
+	color: #374151;
 }
 
 .modal__input {
 	padding: 10px 14px;
-	border: 1px solid
+	border: 1px solid #d1d5db;
 	border-radius: 8px;
 	font-size: 14px;
-	color:
+	color: #1a1a2e;
 	transition: border-color 0.2s ease;
-	background:
+	background: #fff;
 }
 
 .modal__input:focus {
 	outline: none;
-	border-color:
+	border-color: #4f46e5;
 	box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
 }
 
@@ -2198,11 +2198,11 @@
 
 .modal__select {
 	padding: 10px 14px;
-	border: 1px solid
+	border: 1px solid #d1d5db;
 	border-radius: 8px;
 	font-size: 14px;
-	color:
-	background:
+	color: #1a1a2e;
+	background: #fff;
 	transition: border-color 0.2s ease;
 	appearance: none;
 	cursor: pointer;
@@ -2210,7 +2210,7 @@
 
 .modal__select:focus {
 	outline: none;
-	border-color:
+	border-color: #4f46e5;
 	box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
 }
 
@@ -2226,15 +2226,15 @@
 	gap: 12px;
 	margin-top: 8px;
 	padding-top: 16px;
-	border-top: 1px solid
+	border-top: 1px solid #f3f4f6;
 }
 
 .modal__btnCancel {
 	padding: 10px 20px;
-	border: 1px solid
+	border: 1px solid #d1d5db;
 	border-radius: 8px;
 	background: transparent;
-	color:
+	color: #6b7280;
 	font-size: 14px;
 	font-weight: 500;
 	cursor: pointer;
@@ -2242,16 +2242,16 @@
 }
 
 .modal__btnCancel:hover {
-	background:
-	color:
+	background: #f3f4f6;
+	color: #1a1a2e;
 }
 
 .modal__btnSave {
 	padding: 10px 24px;
 	border: none;
 	border-radius: 8px;
-	background:
-	color:
+	background: #4f46e5;
+	color: #fff;
 	font-size: 14px;
 	font-weight: 600;
 	cursor: pointer;
@@ -2259,7 +2259,7 @@
 }
 
 .modal__btnSave:hover {
-	background:
+	background: #4338ca;
 	transform: translateY(-1px);
 	box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
 }
@@ -2297,7 +2297,7 @@
 
 
 .statusVacation {
-	background-color:
+	background-color: #f59e0b;
 	
 	color: white;
 	padding: 4px 12px;
@@ -2309,7 +2309,7 @@
 
 
 .statusActive {
-	background-color:
+	background-color: #10b981;
 	
 	color: white;
 	padding: 4px 12px;
@@ -2334,14 +2334,14 @@
 .tagsInput__input {
 	flex: 1;
 	padding: 8px 12px;
-	border: 1px solid
+	border: 1px solid #d1d5db;
 	border-radius: 6px;
 	font-size: 14px;
 }
 
 .tagsInput__addBtn {
 	padding: 8px 12px;
-	background-color:
+	background-color: #3b82f6;
 	color: white;
 	border: none;
 	border-radius: 6px;
@@ -2352,7 +2352,7 @@
 }
 
 .tagsInput__addBtn:hover {
-	background-color:
+	background-color: #2563eb;
 }
 
 .tagsInput__tags {
@@ -2365,7 +2365,7 @@
 	display: flex;
 	align-items: center;
 	gap: 4px;
-	background-color:
+	background-color: #e5e7eb;
 	padding: 4px 8px;
 	border-radius: 12px;
 	font-size: 12px;
@@ -2378,17 +2378,17 @@
 	display: flex;
 	align-items: center;
 	padding: 0;
-	color:
+	color: #6b7280;
 }
 
 .tagsInput__remove:hover {
-	color:
+	color: #ef4444;
 }
 
 
 .searchableSelect__itemEmail {
 	font-size: 12px;
-	color:
+	color: #6b7280;
 	margin-left: 8px;
 }
 
@@ -2397,7 +2397,7 @@
 	flex-wrap: wrap;
 	gap: 8px;
 	font-size: 12px;
-	color:
+	color: #6b7280;
 	max-width: 100%;
 	overflow: hidden;
 }
@@ -2425,8 +2425,8 @@
 .loading__spinner {
 	width: 40px;
 	height: 40px;
-	border: 3px solid
-	border-top-color:
+	border: 3px solid #e5e7eb;
+	border-top-color: #4A6FE8;
 	border-radius: 50%;
 	animation: spin 0.8s linear infinite;
 }
