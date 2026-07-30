@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { hasPermission } from "../../utils/permissions";
+import { logger } from "@/utils/logger";
 import {
 	BookOpen,
 	Search,
@@ -15,8 +16,6 @@ import {
 	UserCheck,
 	Calendar,
 	Tag,
-	ChevronDown,
-	ChevronRight,
 	BadgeCheck,
 	File,
 } from "lucide-react";
@@ -114,7 +113,7 @@ const downloadFile = async (url: string, fileName: string) => {
 	try {
 		const fullUrl = url.startsWith("/uploads") ? `/api${url}` : url;
 
-		console.log("📥 Pobieranie:", fullUrl);
+		logger.debug("📥 Pobieranie:", fullUrl);
 
 		const token = localStorage.getItem("accessToken");
 		const response = await fetch(fullUrl, {
@@ -128,7 +127,7 @@ const downloadFile = async (url: string, fileName: string) => {
 		}
 
 		const blob = await response.blob();
-		console.log("📦 Rozmiar pliku:", blob.size, "Typ:", blob.type);
+		logger.debug("📦 Rozmiar pliku:", blob.size, "Typ:", blob.type);
 
 		const downloadUrl = window.URL.createObjectURL(blob);
 		const link = document.createElement("a");
@@ -142,7 +141,7 @@ const downloadFile = async (url: string, fileName: string) => {
 			window.URL.revokeObjectURL(downloadUrl);
 		}, 1000);
 	} catch (error) {
-		console.error("❌ Błąd pobierania:", error);
+		logger.error("❌ Błąd pobierania:", error);
 		alert("Nie udało się pobrać pliku");
 	}
 };
@@ -162,7 +161,7 @@ function TutorialCard({
 	canEdit,
 	canView,
 }: TutorialCardProps) {
-	const [isExpanded, setIsExpanded] = useState(false);
+	const [isExpanded] = useState(false);
 
 	const formatDate = (date: string) => {
 		return new Date(date).toLocaleDateString("pl-PL", {
@@ -339,7 +338,7 @@ function TutorialModal({
 			functionalRoles: [],
 		},
 	);
-	const [loading, setLoading] = useState(false);
+	const [_loading, setLoading] = useState(false);
 	const [newAttachment, setNewAttachment] = useState<{
 		name: string;
 		url: string;
@@ -354,7 +353,6 @@ function TutorialModal({
 	const [attachmentType, setAttachmentType] = useState<"file" | "link">("file");
 	const [isDragging, setIsDragging] = useState(false);
 	const [isUploading, setIsUploading] = useState(false);
-	const canEdit = !isViewOnly && !!tutorial;
 
 	useEffect(() => {
 		if (tutorial) {
@@ -451,7 +449,7 @@ function TutorialModal({
 			onSave(savedTutorial);
 			onClose();
 		} catch (error) {
-			console.error("❌ Błąd zapisu:", error);
+			logger.error("❌ Błąd zapisu:", error);
 			alert("Nie udało się zapisać: " + (error as Error).message);
 		} finally {
 			setIsUploading(false);
@@ -502,7 +500,7 @@ function TutorialModal({
 					throw new Error("Nie udało się usunąć pliku");
 				}
 			} catch (error) {
-				console.error("❌ Błąd usuwania pliku:", error);
+				logger.error("❌ Błąd usuwania pliku:", error);
 				alert("Nie udało się usunąć pliku");
 				return;
 			}
@@ -742,7 +740,6 @@ function TutorialModal({
 						<div className={styles.modal__field}>
 							<label className={styles.modal__label}>Załączniki</label>
 
-							{}
 							{isUploading && (
 								<div className={styles.modal__progress}>
 									<div
@@ -843,7 +840,6 @@ function TutorialModal({
 								</div>
 							)}
 
-							{}
 							{formData.attachments && formData.attachments.length > 0 && (
 								<div className={styles.modal__fileList}>
 									{formData.attachments.map((file, index) => (
@@ -937,10 +933,9 @@ export default function Tutorials() {
 	const [isModalOpen, setIsModalOpen] = useState(false);
 	const [editingTutorial, setEditingTutorial] = useState<Tutorial | null>(null);
 
-	const canManageTutorials = hasPermission(
-		currentUser?.role,
-		"canManageGuides",
-	);
+	const canManageTutorials = currentUser
+		? hasPermission(currentUser.role, "canManageGuides")
+		: false;
 	useEffect(() => {
 		const fetchUserAndTutorials = async () => {
 			try {
@@ -959,7 +954,7 @@ export default function Tutorials() {
 				}
 
 				const userData = await userResponse.json();
-				console.log("📊 Dane użytkownika z API:", userData);
+				logger.debug("📊 Dane użytkownika z API:", userData);
 
 				const mappedUser: User = {
 					id: userData.id,
@@ -971,8 +966,8 @@ export default function Tutorials() {
 				};
 
 				setCurrentUser(mappedUser);
-				console.log("✅ Zmapowany użytkownik:", mappedUser);
-				console.log("🔍 Rola użytkownika:", mappedUser.role);
+				logger.debug("✅ Zmapowany użytkownik:", mappedUser);
+				logger.debug("🔍 Rola użytkownika:", mappedUser.role);
 
 				const tutorialsResponse = await fetch("/api/tutorials", {
 					headers: {
@@ -988,7 +983,7 @@ export default function Tutorials() {
 				const tutorialsData = await tutorialsResponse.json();
 				setTutorials(tutorialsData);
 			} catch (error) {
-				console.error("❌ Błąd:", error);
+				logger.error("❌ Błąd:", error);
 				setTutorials([]);
 			} finally {
 				setLoading(false);
@@ -1009,6 +1004,7 @@ export default function Tutorials() {
 			hasPermission(currentUser?.role, "canManageGuides")
 		) {
 			if (tutorial.functionalRoles) {
+				if (!currentUser) return false;
 				return tutorial.functionalRoles.includes(
 					currentUser.functionalRole || "",
 				);
@@ -1077,13 +1073,13 @@ export default function Tutorials() {
 			const allTutorials = await fetchResponse.json();
 			setTutorials(allTutorials);
 		} catch (error) {
-			console.error("❌ Błąd usuwania:", error);
+			logger.error("❌ Błąd usuwania:", error);
 			alert("Nie udało się usunąć poradnika");
 		}
 	};
 
 	const handleSaveTutorial = async (savedTutorial: Tutorial) => {
-		console.log("✅ Otrzymano zapisany poradnik:", savedTutorial);
+		logger.debug("✅ Otrzymano zapisany poradnik:", savedTutorial);
 
 		try {
 			const token = localStorage.getItem("accessToken");
@@ -1102,9 +1098,9 @@ export default function Tutorials() {
 			const allTutorials = await response.json();
 			setTutorials(allTutorials);
 
-			console.log("✅ Odświeżono listę poradników");
+			logger.debug("✅ Odświeżono listę poradników");
 		} catch (error) {
-			console.error("❌ Błąd odświeżania:", error);
+			logger.error("❌ Błąd odświeżania:", error);
 
 			setTutorials((prev) => {
 				const exists = prev.some((t) => t.id === savedTutorial.id);
@@ -1135,14 +1131,12 @@ export default function Tutorials() {
 			<div className={styles.tutorials}>
 				<div className={styles.loadingState}>
 					<div className={styles.loadingSpinner}></div>
-					{}
 				</div>
 			</div>
 		);
 	}
 	return (
 		<div className={styles.tutorials}>
-			{}
 			<div className={styles.header}>
 				<div className={styles.header__left}>
 					<h1 className={styles.header__title}>Poradniki</h1>
@@ -1161,7 +1155,6 @@ export default function Tutorials() {
 				)}
 			</div>
 
-			{}
 			<div className={styles.categories}>
 				<button
 					className={`${styles.categories__item} ${selectedCategory === "all" ? styles.categories__itemActive : ""}`}
@@ -1189,7 +1182,6 @@ export default function Tutorials() {
 				})}
 			</div>
 
-			{}
 			<div className={styles.filters}>
 				<div className={styles.filters__search}>
 					<Search size={18} className={styles.filters__searchIcon} />
@@ -1236,8 +1228,6 @@ export default function Tutorials() {
 				</div>
 			</div>
 
-			{}
-			{}
 			<div className={styles.tutorialsGrid}>
 				{loading ? (
 					<div className={styles.loadingState}>
@@ -1282,7 +1272,6 @@ export default function Tutorials() {
 				)}
 			</div>
 
-			{}
 			<TutorialModal
 				isOpen={isModalOpen}
 				tutorial={editingTutorial}

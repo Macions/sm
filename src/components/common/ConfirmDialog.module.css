@@ -1,10 +1,7 @@
 .overlay {
 	position: fixed;
-	top: 0;
-	left: 0;
-	right: 0;
-	bottom: 0;
-	background: rgba(0, 0, 0, 0.5);
+	inset: 0;
+	background: rgb(0 0 0 / 50%);
 	display: flex;
 	align-items: center;
 	justify-content: center;
@@ -18,7 +15,7 @@
 	padding: 24px;
 	max-width: 400px;
 	width: 90%;
-	box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+	box-shadow: 0 20px 60px rgb(0 0 0 / 30%);
 	animation: slideUp 0.2s ease;
 }
 
@@ -26,13 +23,13 @@
 	font-size: 18px;
 	font-weight: 600;
 	color: #1a1a2e;
-	margin: 0 0 8px 0;
+	margin: 0 0 8px;
 }
 
 .message {
 	font-size: 14px;
 	color: #4b5563;
-	margin: 0 0 24px 0;
+	margin: 0 0 24px;
 	line-height: 1.5;
 }
 
@@ -78,6 +75,7 @@
 	from {
 		opacity: 0;
 	}
+
 	to {
 		opacity: 1;
 	}
@@ -88,6 +86,7 @@
 		transform: translateY(20px);
 		opacity: 0;
 	}
+
 	to {
 		transform: translateY(0);
 		opacity: 1;

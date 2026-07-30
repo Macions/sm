@@ -1,8 +1,10 @@
 import { useEffect } from "react";
+import { logger } from "@/utils/logger";
 import toast from "react-hot-toast";
 import { hasPermission } from "../../utils/permissions";
 import { useState, useMemo } from "react";
 import { ConfirmDialog } from "../../components/common/ConfirmDialog";
+
 import {
 	Calendar,
 	Search,
@@ -26,10 +28,6 @@ import {
 	AlertCircle,
 } from "lucide-react";
 import styles from "./Leave.module.css";
-
-
-
-
 
 type LeaveStatus = "pending" | "approved" | "rejected" | "cancelled";
 type LeaveType = "vacation";
@@ -83,154 +81,6 @@ type User = {
 	team?: string;
 };
 
-
-
-
-
-
-
-
-
-
-
-
-
-const TEAMS = [
-	"Filar Projektowy",
-	"Filar Konferencji i Debat",
-	"Filar Rzeczniczy",
-	"Filar Symulacyjny",
-	"Social Media",
-	"Zespół TikToka",
-	"Zarząd",
-	"Komisja Rewizyjna",
-	"Sąd Koleżeński",
-];
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 const TYPE_LABELS: Record<LeaveType, string> = {
 	vacation: "Urlop wypoczynkowy",
 };
@@ -264,34 +114,6 @@ const SCOPE_LABELS: Record<LeaveScope, string> = {
 	all: "Cała organizacja SM",
 	team: "Konkretny zespół/filar",
 };
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 interface LeaveCardProps {
 	leave: LeaveRequest;
@@ -410,12 +232,13 @@ function LeaveCard({
 
 				{leave.approvedBy && (
 					<div
-						className={`${styles.leaveCard__approval} ${leave.status === "approved"
-							? styles.leaveCard__approvalApproved
-							: leave.status === "rejected"
-								? styles.leaveCard__approvalRejected
-								: ""
-							}`}
+						className={`${styles.leaveCard__approval} ${
+							leave.status === "approved"
+								? styles.leaveCard__approvalApproved
+								: leave.status === "rejected"
+									? styles.leaveCard__approvalRejected
+									: ""
+						}`}
 					>
 						{leave.status === "approved" ? (
 							<CheckCircle size={14} />
@@ -475,9 +298,8 @@ function LeaveCard({
 				)}
 
 				<div className={styles.leaveCard__actions}>
-					{}
 					{(leave.comments && leave.comments.length > 0) ||
-						(leave.attachments && leave.attachments.length > 0) ? (
+					(leave.attachments && leave.attachments.length > 0) ? (
 						<button
 							className={styles.leaveCard__expandBtn}
 							onClick={() => setIsExpanded(!isExpanded)}
@@ -495,7 +317,6 @@ function LeaveCard({
 							)}
 						</button>
 					) : (
-
 						<div style={{ height: "32px" }} />
 					)}
 
@@ -546,8 +367,6 @@ function LeaveCard({
 							</>
 						)}
 
-						{}
-						{}
 						{currentUser.role === "admin" && (
 							<>
 								<button
@@ -573,24 +392,17 @@ function LeaveCard({
 	);
 }
 
-
-
-
-
 interface CalendarViewProps {
 	leaves: LeaveRequest[];
-	currentUser: User;
-	canManage: boolean;
 }
 
-function CalendarView({ leaves, currentUser, canManage }: CalendarViewProps) {
+function CalendarView({ leaves }: CalendarViewProps) {
 	const [currentMonth, setCurrentMonth] = useState(new Date());
 
 	const getDaysInMonth = (date: Date) => {
 		const year = date.getFullYear();
 		const month = date.getMonth();
 		const days = [];
-		const firstDay = new Date(year, month, 1);
 		const lastDay = new Date(year, month + 1, 0);
 
 		for (let d = 1; d <= lastDay.getDate(); d++) {
@@ -679,10 +491,6 @@ function CalendarView({ leaves, currentUser, canManage }: CalendarViewProps) {
 	);
 }
 
-
-
-
-
 interface LeaveModalProps {
 	isOpen: boolean;
 	leave: LeaveRequest | null;
@@ -728,7 +536,6 @@ function LeaveModal({
 				setLoadingTeams(true);
 				const token = localStorage.getItem("accessToken");
 
-
 				const response = await fetch("/api/profile", {
 					headers: {
 						Authorization: `Bearer ${token}`,
@@ -741,12 +548,9 @@ function LeaveModal({
 				}
 
 				const userData = await response.json();
-				console.log("📊 Dane z /api/profile:", userData);
-
-
+				logger.debug("📊 Dane z /api/profile:", userData);
 
 				const teams = userData.pillars || [];
-
 
 				if (teams.length === 0 && userData.team) {
 					setUserTeams([userData.team]);
@@ -754,9 +558,9 @@ function LeaveModal({
 					setUserTeams(teams);
 				}
 
-				console.log("✅ Zespoły użytkownika:", teams);
+				logger.debug("✅ Zespoły użytkownika:", teams);
 			} catch (error) {
-				console.error("❌ Błąd pobierania zespołów:", error);
+				logger.error("❌ Błąd pobierania zespołów:", error);
 
 				if (currentUser.team) {
 					setUserTeams([currentUser.team]);
@@ -778,7 +582,6 @@ function LeaveModal({
 				comments: leave.comments || [],
 			});
 		} else {
-
 			setFormData({
 				userId: currentUser.id,
 				userName: currentUser.name,
@@ -801,28 +604,15 @@ function LeaveModal({
 		url: "",
 		size: "",
 	});
-	const [newComment, setNewComment] = useState("");
-	const [showReason, setShowReason] = useState(!isViewOnly);
 	if (!isOpen) return null;
 
 	const isEdit = !!leave;
 
-
 	const canEdit =
 		!isViewOnly &&
 		(currentUser.role === "admin" ||
-			(!leave && currentUser.role !== "admin"));
-
-	const canViewReason =
-		!isViewOnly ||
-		currentUser.role === "admin" ||
-		currentUser.role === "coordinator" ||
-		currentUser.id === leave?.userId;
-
-
-
-
-
+			currentUser.role === "coordinator" ||
+			!leave);
 
 	const validateDates = (
 		startDate: string,
@@ -831,14 +621,11 @@ function LeaveModal({
 		const today = new Date();
 		today.setHours(0, 0, 0, 0);
 
-
 		const start = new Date(startDate);
 		const end = new Date(endDate);
 
-
 		start.setHours(0, 0, 0, 0);
 		end.setHours(0, 0, 0, 0);
-
 
 		if (start < today) {
 			return {
@@ -846,7 +633,6 @@ function LeaveModal({
 				error: "Data rozpoczęcia nie może być wcześniejsza niż dzisiejsza data",
 			};
 		}
-
 
 		if (end < start) {
 			return {
@@ -859,15 +645,10 @@ function LeaveModal({
 		return { valid: true, error: "" };
 	};
 
-
-
-
-
 	const handleSubmit = (e: React.FormEvent) => {
 		e.preventDefault();
 
 		if (onSave && canEdit) {
-
 			const validation = validateDates(
 				formData.startDate || "",
 				formData.endDate || "",
@@ -877,7 +658,6 @@ function LeaveModal({
 				toast.error(validation.error);
 				return;
 			}
-
 
 			const saveData: LeaveRequest = {
 				id: leave?.id || `leave-${Date.now()}`,
@@ -919,22 +699,6 @@ function LeaveModal({
 			...formData,
 			attachments: formData.attachments?.filter((_, i) => i !== index) || [],
 		});
-	};
-
-	const addComment = () => {
-		if (newComment.trim()) {
-			const comment = {
-				id: `c${Date.now()}`,
-				author: currentUser.name,
-				content: newComment.trim(),
-				createdAt: new Date().toISOString(),
-			};
-			setFormData({
-				...formData,
-				comments: [...(formData.comments || []), comment],
-			});
-			setNewComment("");
-		}
 	};
 
 	const toggleTeam = (team: string) => {
@@ -1080,7 +844,7 @@ function LeaveModal({
 							)}
 						</div>
 					)}
-					{}
+
 					<div className={styles.modal__row}>
 						<div className={styles.modal__field}>
 							<label className={styles.modal__label}>Data rozpoczęcia *</label>
@@ -1100,7 +864,7 @@ function LeaveModal({
 
 										endDate:
 											formData.endDate &&
-												new Date(formData.endDate) < new Date(newStartDate)
+											new Date(formData.endDate) < new Date(newStartDate)
 												? ""
 												: formData.endDate,
 									});
@@ -1257,12 +1021,13 @@ function LeaveModal({
 
 					{leave?.approvedBy && (
 						<div
-							className={`${styles.modal__approval} ${leave.status === "approved"
-								? styles.modal__approvalApproved
-								: leave.status === "rejected"
-									? styles.modal__approvalRejected
-									: ""
-								}`}
+							className={`${styles.modal__approval} ${
+								leave.status === "approved"
+									? styles.modal__approvalApproved
+									: leave.status === "rejected"
+										? styles.modal__approvalRejected
+										: ""
+							}`}
 						>
 							{leave.status === "approved" ? (
 								<CheckCircle size={16} />
@@ -1297,43 +1062,20 @@ function LeaveModal({
 	);
 }
 
-
-
-
-
 export default function Leave({ title }: { title?: string }) {
 	const [leaves, setLeaves] = useState<LeaveRequest[]>([]);
 	const [loading, setLoading] = useState(true);
-	const [notifications, setNotifications] = useState<Notification[]>([
-		{
-			id: "n1",
-			title: "Nowy wniosek urlopowy",
-			message: "Igor Piskórz zgłosił urlop od 20.07.2026 do 22.07.2026",
-			createdAt: "2026-07-19T08:15:00",
-			read: false,
-			type: "leave",
-		},
-		{
-			id: "n2",
-			title: "Wniosek zaakceptowany",
-			message:
-				"Wniosek Adriana Wróblewskiego został zaakceptowany przez Maksyma Marczaka",
-			createdAt: "2026-07-16T09:00:00",
-			read: true,
-			type: "approval",
-		},
-	]);
 	const [searchTerm, setSearchTerm] = useState("");
 	const [selectedStatus, setSelectedStatus] = useState<LeaveStatus | "all">(
 		"all",
 	);
+	const [_notifications, _setNotifications] = useState<Notification[]>([]);
 	const [selectedType, setSelectedType] = useState<LeaveType | "all">("all");
 	const [isModalOpen, setIsModalOpen] = useState(false);
 	const [isViewModalOpen, setIsViewModalOpen] = useState(false);
 	const [editingLeave, setEditingLeave] = useState<LeaveRequest | null>(null);
 	const [viewingLeave, setViewingLeave] = useState<LeaveRequest | null>(null);
 	const [viewMode, setViewMode] = useState<"list" | "calendar">("list");
-	const [showNotifications, setShowNotifications] = useState(false);
 	const [currentUser, setCurrentUser] = useState<User | null>(null);
 	const [confirmDialog, setConfirmDialog] = useState<{
 		isOpen: boolean;
@@ -1347,17 +1089,19 @@ export default function Leave({ title }: { title?: string }) {
 		title: "",
 		message: "",
 		confirmText: "Potwierdź",
-		onConfirm: () => { },
-		onCancel: () => { },
+		onConfirm: () => {},
+		onCancel: () => {},
 	});
-	const unreadCount = notifications.filter((n) => !n.read).length;
 
-	const canApprove = hasPermission(currentUser?.role, "canApproveLeaves");
-	const canReject = hasPermission(currentUser?.role, "canRejectLeaves");
-	const canViewAll = hasPermission(currentUser?.role, "canViewAllLeaves");
+	const canApprove = currentUser
+		? hasPermission(currentUser.role, "canApproveLeaves")
+		: false;
+	const canReject = currentUser
+		? hasPermission(currentUser.role, "canRejectLeaves")
+		: false;
+
 	const canManage = canApprove || canReject;
 	const filteredLeaves = useMemo(() => {
-
 		if (!currentUser) return [];
 
 		return leaves.filter((leave) => {
@@ -1395,7 +1139,6 @@ export default function Leave({ title }: { title?: string }) {
 				setLoading(true);
 				const token = localStorage.getItem("accessToken");
 
-
 				const userResponse = await fetch("/api/profile", {
 					headers: { Authorization: `Bearer ${token}` },
 				});
@@ -1403,9 +1146,8 @@ export default function Leave({ title }: { title?: string }) {
 				if (!userResponse.ok) throw new Error("Błąd pobierania profilu");
 
 				const userData = await userResponse.json();
-				console.log("📊 Dane użytkownika z API:", userData);
-				console.log("📊 Rola z API:", userData.role);
-
+				logger.debug("📊 Dane użytkownika z API:", userData);
+				logger.debug("📊 Rola z API:", userData.role);
 
 				const mappedUser = {
 					id: userData.id,
@@ -1418,8 +1160,7 @@ export default function Leave({ title }: { title?: string }) {
 				};
 
 				setCurrentUser(mappedUser);
-				console.log("✅ Zmapowany użytkownik:", mappedUser);
-
+				logger.debug("✅ Zmapowany użytkownik:", mappedUser);
 
 				const leavesResponse = await fetch("/api/leaves", {
 					headers: { Authorization: `Bearer ${token}` },
@@ -1430,7 +1171,7 @@ export default function Leave({ title }: { title?: string }) {
 				const leavesData = await leavesResponse.json();
 				setLeaves(leavesData);
 			} catch (error) {
-				console.error("❌ Błąd:", error);
+				logger.error("❌ Błąd:", error);
 				toast.error("Nie udało się pobrać danych");
 			} finally {
 				setLoading(false);
@@ -1451,48 +1192,46 @@ export default function Leave({ title }: { title?: string }) {
 	};
 
 	const handleViewLeave = (leave: LeaveRequest) => {
-		console.log("📋 Viewing leave:", leave);
+		logger.debug("📋 Viewing leave:", leave);
 		setViewingLeave(leave);
 		setIsViewModalOpen(true);
 	};
 
 	const handleDeleteLeave = (id: string) => {
-
 		showConfirm(
 			"Usuń wniosek urlopowy",
 			"Czy na pewno chcesz usunąć ten wniosek? Tej operacji nie można cofnąć.",
 			"Usuń",
 			async () => {
 				try {
-					const token = localStorage.getItem('accessToken');
-					console.log(`🔍 [FRONTEND] Usuwanie wniosku: ${id}`);
+					const token = localStorage.getItem("accessToken");
+					logger.debug(`🔍 [FRONTEND] Usuwanie wniosku: ${id}`);
 
 					const response = await fetch(`/api/leaves/${id}`, {
-						method: 'DELETE',
+						method: "DELETE",
 						headers: {
 							Authorization: `Bearer ${token}`,
-							'Content-Type': 'application/json',
+							"Content-Type": "application/json",
 						},
 					});
 
-					console.log(`🔍 [FRONTEND] Status odpowiedzi: ${response.status}`);
+					logger.debug(`🔍 [FRONTEND] Status odpowiedzi: ${response.status}`);
 
 					if (response.ok) {
 						const data = await response.json();
-						console.log('🔍 [FRONTEND] Odpowiedź:', data);
-
+						logger.debug("🔍 [FRONTEND] Odpowiedź:", data);
 
 						setLeaves(leaves.filter((l) => l.id !== id));
-						toast.success('Wniosek usunięty!');
+						toast.success("Wniosek usunięty!");
 					} else {
 						const error = await response.json();
-						toast.error(error.error || 'Nie udało się usunąć wniosku');
+						toast.error(error.error || "Nie udało się usunąć wniosku");
 					}
 				} catch (error) {
-					console.error('🔍 [FRONTEND] Błąd:', error);
-					toast.error('Wystąpił błąd podczas usuwania');
+					logger.error("🔍 [FRONTEND] Błąd:", error);
+					toast.error("Wystąpił błąd podczas usuwania");
 				}
-			}
+			},
 		);
 	};
 	const showConfirm = (
@@ -1523,13 +1262,11 @@ export default function Leave({ title }: { title?: string }) {
 		const actionText = status === "approved" ? "zatwierdzić" : "odrzucić";
 		const actionLabel = status === "approved" ? "Zaakceptuj" : "Odrzuć";
 
-
 		showConfirm(
 			`${actionLabel} wniosek`,
 			`Czy na pewno chcesz ${actionText} ten wniosek urlopowy?`,
 			actionLabel,
 			async () => {
-
 				try {
 					const token = localStorage.getItem("accessToken");
 					toast.loading(`Zmiana statusu...`);
@@ -1549,21 +1286,19 @@ export default function Leave({ title }: { title?: string }) {
 						return;
 					}
 
-					const updatedLeave = await response.json();
-
 					setLeaves((prevLeaves) =>
 						prevLeaves.map((l) =>
 							l.id === id
 								? {
-									...l,
-									status,
-									approvedBy:
-										status === "pending" ? undefined : currentUser?.name,
-									approvedAt:
-										status === "pending"
-											? undefined
-											: new Date().toISOString(),
-								}
+										...l,
+										status,
+										approvedBy:
+											status === "pending" ? undefined : currentUser?.name,
+										approvedAt:
+											status === "pending"
+												? undefined
+												: new Date().toISOString(),
+									}
 								: l,
 						),
 					);
@@ -1581,7 +1316,7 @@ export default function Leave({ title }: { title?: string }) {
 							read: false,
 							type: status === "approved" ? "approval" : "rejection",
 						};
-						setNotifications((prev) => [notification, ...prev]);
+						_setNotifications((prev) => [notification, ...prev]);
 					}
 
 					toast.dismiss();
@@ -1589,7 +1324,7 @@ export default function Leave({ title }: { title?: string }) {
 						`Wniosek ${status === "approved" ? "zaakceptowany" : "odrzucony"}!`,
 					);
 				} catch (error) {
-					console.error("❌ Błąd:", error);
+					logger.error("❌ Błąd:", error);
 					toast.dismiss();
 					toast.error("Wystąpił błąd podczas zmiany statusu");
 				}
@@ -1604,7 +1339,6 @@ export default function Leave({ title }: { title?: string }) {
 			const url = isEdit ? `/api/leaves/${leave.id}` : "/api/leaves";
 			const method = isEdit ? "PUT" : "POST";
 
-
 			const payload = {
 				type: leave.type || "vacation",
 				scope: leave.scope || "all",
@@ -1617,7 +1351,7 @@ export default function Leave({ title }: { title?: string }) {
 				status: leave.status || "pending",
 			};
 
-			console.log("📤 Wysyłam dane do API:", { url, method, payload });
+			logger.debug("📤 Wysyłam dane do API:", { url, method, payload });
 
 			const response = await fetch(url, {
 				method,
@@ -1630,21 +1364,23 @@ export default function Leave({ title }: { title?: string }) {
 
 			if (!response.ok) {
 				const errorText = await response.text();
-				console.error("❌ Błąd odpowiedzi:", response.status, errorText);
+				logger.error("❌ Błąd odpowiedzi:", response.status, errorText);
 				throw new Error(`Błąd zapisu: ${response.status} ${errorText}`);
 			}
 
 			const data = await response.json();
-			console.log("✅ Otrzymane dane z API:", data);
-
+			logger.debug("✅ Otrzymane dane z API:", data);
 
 			const savedLeave = {
 				...leave,
 				id: data.id || leave.id,
-				userId: data.userId || leave.userId || currentUser.id,
-				userName: data.userName || leave.userName || currentUser.name,
+				userId: data.userId || leave.userId || currentUser!.id,
+				userName: data.userName || leave.userName || currentUser!.name,
 				userTeam:
-					data.userTeam || leave.userTeam || currentUser.team || "Brak zespołu",
+					data.userTeam ||
+					leave.userTeam ||
+					currentUser!.team ||
+					"Brak zespołu",
 				createdAt: data.createdAt || new Date().toISOString(),
 				approvedBy: data.approvedBy || leave.approvedBy,
 				approvedAt: data.approvedAt || leave.approvedAt,
@@ -1660,7 +1396,7 @@ export default function Leave({ title }: { title?: string }) {
 				toast.success("Wniosek wysłany!");
 			}
 		} catch (error) {
-			console.error("❌ Błąd:", error);
+			logger.error("❌ Błąd:", error);
 			toast.error("Nie udało się zapisać wniosku");
 		}
 	};
@@ -1671,35 +1407,23 @@ export default function Leave({ title }: { title?: string }) {
 		setSelectedType("all");
 	};
 
-
 	const getStatusCount = (status: LeaveStatus) => {
 		return filteredLeaves.filter((l) => l.status === status).length;
 	};
 
 	const totalLeaves = filteredLeaves.length;
 
-	const markNotificationAsRead = (id: string) => {
-		setNotifications(
-			notifications.map((n) => (n.id === id ? { ...n, read: true } : n)),
-		);
-	};
-
-	const markAllAsRead = () => {
-		setNotifications(notifications.map((n) => ({ ...n, read: true })));
-	};
 	if (loading || !currentUser) {
 		return (
 			<div className={styles.leave}>
 				<div className={styles.loading}>
 					<div className={styles.loading__spinner}></div>
-					{}
 				</div>
 			</div>
 		);
 	}
 	return (
 		<div className={styles.leave}>
-			{}
 			<div className={styles.header}>
 				<div className={styles.header__left}>
 					<h1 className={styles.header__title}>
@@ -1718,7 +1442,6 @@ export default function Leave({ title }: { title?: string }) {
 				</div>
 			</div>
 
-			{}
 			<div className={styles.statuses}>
 				<button
 					className={`${styles.statuses__item} ${selectedStatus === "all" ? styles.statuses__itemActive : ""}`}
@@ -1744,7 +1467,6 @@ export default function Leave({ title }: { title?: string }) {
 				})}
 			</div>
 
-			{}
 			<div className={styles.filters}>
 				<div className={styles.filters__search}>
 					<Search size={18} className={styles.filters__searchIcon} />
@@ -1786,14 +1508,13 @@ export default function Leave({ title }: { title?: string }) {
 					{(selectedStatus !== "all" ||
 						selectedType !== "all" ||
 						searchTerm) && (
-							<button className={styles.filters__reset} onClick={clearFilters}>
-								Wyczyść filtry
-							</button>
-						)}
+						<button className={styles.filters__reset} onClick={clearFilters}>
+							Wyczyść filtry
+						</button>
+					)}
 				</div>
 			</div>
 
-			{}
 			{viewMode === "list" ? (
 				<div className={styles.leavesGrid}>
 					{filteredLeaves.length === 0 ? (
@@ -1802,8 +1523,8 @@ export default function Leave({ title }: { title?: string }) {
 							<h3 className={styles.emptyState__title}>Brak wniosków</h3>
 							<p className={styles.emptyState__description}>
 								{searchTerm ||
-									selectedStatus !== "all" ||
-									selectedType !== "all"
+								selectedStatus !== "all" ||
+								selectedType !== "all"
 									? "Nie znaleziono wniosków spełniających kryteria wyszukiwania."
 									: "Nie ma jeszcze żadnych wniosków urlopowych."}
 							</p>
@@ -1817,11 +1538,15 @@ export default function Leave({ title }: { title?: string }) {
 						</div>
 					) : (
 						filteredLeaves.map((leave) => {
-							const canViewReason =
-								currentUser?.role === "admin" ||
-								currentUser?.role === "coordinator" ||
-								currentUser?.id === leave.userId ||
-								leave.reasonVisibility === "coordinators";
+							const canViewReason = (() => {
+								if (!currentUser) return false;
+								return (
+									currentUser.role === "admin" ||
+									currentUser.role === "coordinator" ||
+									currentUser.id === leave.userId ||
+									leave.reasonVisibility === "coordinators"
+								);
+							})();
 							return (
 								<LeaveCard
 									key={leave.id}
@@ -1839,14 +1564,9 @@ export default function Leave({ title }: { title?: string }) {
 					)}
 				</div>
 			) : (
-				<CalendarView
-					leaves={filteredLeaves}
-					currentUser={currentUser}
-					canManage={canManage}
-				/>
+				<CalendarView leaves={filteredLeaves} />
 			)}
 
-			{}
 			<LeaveModal
 				isOpen={isModalOpen}
 				leave={editingLeave}
@@ -1859,7 +1579,6 @@ export default function Leave({ title }: { title?: string }) {
 				onSave={handleSaveLeave}
 			/>
 
-			{}
 			<LeaveModal
 				isOpen={isViewModalOpen}
 				leave={viewingLeave}

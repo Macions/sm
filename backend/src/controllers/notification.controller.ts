@@ -1,12 +1,11 @@
-
 import { Request, Response } from "express";
 import { PrismaClient } from "@prisma/client";
 import { AuthRequest } from "../middleware/auth.middleware";
+import { logger } from "../utils/logger";
 
 const prisma = new PrismaClient();
 
 export class NotificationController {
-
 	async getNotifications(req: AuthRequest, res: Response) {
 		try {
 			const userId = req.user?.id;
@@ -20,15 +19,14 @@ export class NotificationController {
 
 			res.json(notifications);
 		} catch (error) {
-			console.error("❌ Błąd pobierania powiadomień:", error);
+			logger.error("❌ Błąd pobierania powiadomień:", error);
 			res.status(500).json({ error: "Nie udało się pobrać powiadomień" });
 		}
 	}
 
-
 	async markAsRead(req: AuthRequest, res: Response) {
 		try {
-			const id = parseInt(req.params.id);
+			const id = parseInt(String(req.params.id));
 			const userId = req.user?.id;
 
 			await prisma.notification.updateMany({
@@ -41,11 +39,10 @@ export class NotificationController {
 
 			res.status(200).json({ message: "Oznaczono jako przeczytane" });
 		} catch (error) {
-			console.error("❌ Błąd oznaczania:", error);
+			logger.error("❌ Błąd oznaczania:", error);
 			res.status(500).json({ error: "Nie udało się oznaczyć" });
 		}
 	}
-
 
 	async markAllAsRead(req: AuthRequest, res: Response) {
 		try {
@@ -61,15 +58,14 @@ export class NotificationController {
 
 			res.status(200).json({ message: "Wszystkie oznaczone jako przeczytane" });
 		} catch (error) {
-			console.error("❌ Błąd oznaczania wszystkich:", error);
+			logger.error("❌ Błąd oznaczania wszystkich:", error);
 			res.status(500).json({ error: "Nie udało się oznaczyć wszystkich" });
 		}
 	}
 
-
 	async deleteNotification(req: AuthRequest, res: Response) {
 		try {
-			const id = parseInt(req.params.id);
+			const id = parseInt(String(req.params.id));
 			const userId = req.user?.id;
 
 			await prisma.notification.deleteMany({
@@ -81,7 +77,7 @@ export class NotificationController {
 
 			res.status(200).json({ message: "Usunięto powiadomienie" });
 		} catch (error) {
-			console.error("❌ Błąd usuwania:", error);
+			logger.error("❌ Błąd usuwania:", error);
 			res.status(500).json({ error: "Nie udało się usunąć" });
 		}
 	}

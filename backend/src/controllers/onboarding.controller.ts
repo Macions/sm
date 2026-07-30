@@ -1,7 +1,6 @@
-
-
 import { Request, Response } from "express";
 import { OnboardingService } from "../services/onboarding.service";
+import { logger } from "../utils/logger";
 
 const onboardingService = new OnboardingService();
 
@@ -10,7 +9,6 @@ export class OnboardingController {
 		try {
 			const userId = (req as any).user?.id;
 			const data = req.body;
-
 
 			if (!data.firstName || !data.lastName || !data.email || !data.province) {
 				return res.status(400).json({
@@ -31,7 +29,7 @@ export class OnboardingController {
 				completed: true,
 			});
 		} catch (error) {
-			console.error("Error in saveOnboardingData:", error);
+			logger.error("Error in saveOnboardingData:", error);
 			res.status(500).json({
 				error: "Nie udało się zapisać danych onboardingowych",
 			});
@@ -51,7 +49,7 @@ export class OnboardingController {
 
 			res.json(data);
 		} catch (error) {
-			console.error("Error in getOnboardingData:", error);
+			logger.error("Error in getOnboardingData:", error);
 			res.status(500).json({
 				error: "Nie udało się pobrać danych onboardingowych",
 			});
@@ -66,7 +64,7 @@ export class OnboardingController {
 
 			res.json({ completed });
 		} catch (error) {
-			console.error("Error in checkOnboardingStatus:", error);
+			logger.error("Error in checkOnboardingStatus:", error);
 			res.status(500).json({
 				error: "Nie udało się sprawdzić statusu onboardingu",
 			});

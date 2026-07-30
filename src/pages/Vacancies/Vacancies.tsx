@@ -2,6 +2,7 @@ import toast from "react-hot-toast";
 import { ConfirmDialog } from "../../components/common/ConfirmDialog";
 import { useState, useMemo, useEffect } from "react";
 import { hasPermission } from "../../utils/permissions";
+import { logger } from "@/utils/logger";
 
 import {
 	Briefcase,
@@ -37,7 +38,6 @@ import {
 	Code,
 	Music,
 	Palette,
-	FileWarning,
 	AlertCircle,
 	Smartphone,
 	Zap,
@@ -54,10 +54,6 @@ import {
 	FileCheck,
 } from "lucide-react";
 import styles from "./Vacancies.module.css";
-
-
-
-
 
 type VacancyStatus = "active" | "recruiting" | "filled";
 
@@ -128,18 +124,12 @@ type Application = {
 	answers?: Record<string, string>;
 };
 
-
-
-
 const DEFAULT_PILLARS = [
 	"Filar Projektowy",
 	"Filar Konferencyjny",
 	"Filar Symulacyjny",
 	"Filar Rzeczniczy",
 ];
-
-
-
 
 const STATUS_LABELS: Record<VacancyStatus, string> = {
 	active: "Aktywny",
@@ -158,7 +148,6 @@ const STATUS_ICONS: Record<VacancyStatus, React.ReactNode> = {
 	recruiting: <Clock size={14} />,
 	filled: <Check size={14} />,
 };
-
 
 const ICON_MAP: Record<
 	string,
@@ -216,10 +205,6 @@ const ICON_LABELS: Record<string, string> = {
 	Tag: "Tag",
 };
 
-
-
-
-
 interface VacancyCardProps {
 	vacancy: Vacancy;
 	currentUser: User;
@@ -244,7 +229,6 @@ function VacancyCard({
 	const IconComponent = ICON_MAP[vacancy.icon] || Briefcase;
 	const canManage = currentUser.role === "admin";
 	const isFilled = vacancy.status === "filled";
-	const isRecruiting = vacancy.status === "recruiting";
 
 	const formatDate = (date: string) => {
 		return new Date(date).toLocaleDateString("pl-PL", {
@@ -293,7 +277,7 @@ function VacancyCard({
 							{vacancy.applicants?.length || 0} zgłoszeń
 						</span>
 					</div>
-					{}
+
 					{vacancy.recruitment && (
 						<div className={styles.vacancyCard__recruitment}>
 							{vacancy.recruitment.deadline && (
@@ -356,12 +340,11 @@ function VacancyCard({
 							</button>
 						</>
 					)}
-					{}
+
 					{!isFilled && !hasApplied && (
 						<button
 							className={styles.vacancyCard__applyBtn}
 							onClick={() => onApply(vacancy)}
-
 							disabled={isFilled}
 						>
 							<Send size={14} />
@@ -413,7 +396,7 @@ function VacancyCard({
 						{vacancy.applicants?.length || 0} zgłoszeń
 					</span>
 				</div>
-				{}
+
 				{vacancy.recruitment && (
 					<div className={styles.vacancyCard__recruitment}>
 						{vacancy.recruitment.deadline && (
@@ -478,12 +461,11 @@ function VacancyCard({
 								</button>
 							</>
 						)}
-						{}
+
 						{!isFilled && !hasApplied && (
 							<button
 								className={styles.vacancyCard__applyBtn}
 								onClick={() => onApply(vacancy)}
-
 								disabled={isFilled}
 							>
 								<Send size={14} />
@@ -502,9 +484,6 @@ function VacancyCard({
 		</div>
 	);
 }
-
-
-
 
 interface ApplyModalProps {
 	isOpen: boolean;
@@ -556,7 +535,6 @@ function ApplyModal({ isOpen, vacancy, onClose, onSubmit }: ApplyModalProps) {
 			return;
 		}
 
-
 		onSubmit(vacancy, answers, message);
 		onClose();
 	};
@@ -586,7 +564,6 @@ function ApplyModal({ isOpen, vacancy, onClose, onSubmit }: ApplyModalProps) {
 				)}
 				<form onSubmit={handleSubmit} className={styles.modal__form}>
 					<div className={styles.modal__body}>
-						{}
 						<div className={styles.modal__section}>
 							<div className={styles.modal__infoGrid}>
 								<div className={styles.modal__infoItem}>
@@ -617,7 +594,6 @@ function ApplyModal({ isOpen, vacancy, onClose, onSubmit }: ApplyModalProps) {
 							</div>
 						</div>
 
-						{}
 						{vacancy.recruitment.type === "form" &&
 							vacancy.recruitment.formUrl && (
 								<div className={styles.modal__section}>
@@ -647,7 +623,6 @@ function ApplyModal({ isOpen, vacancy, onClose, onSubmit }: ApplyModalProps) {
 								</div>
 							)}
 
-						{}
 						{vacancy.recruitment.type === "messenger" &&
 							vacancy.recruitment.messengerContact && (
 								<div className={styles.modal__section}>
@@ -672,10 +647,8 @@ function ApplyModal({ isOpen, vacancy, onClose, onSubmit }: ApplyModalProps) {
 								</div>
 							)}
 
-						{}
 						{vacancy.recruitment.type === "internal" && (
 							<>
-								{}
 								{questions.length > 0 && (
 									<div className={styles.modal__section}>
 										<h3 className={styles.modal__sectionTitle}>
@@ -796,7 +769,6 @@ function ApplyModal({ isOpen, vacancy, onClose, onSubmit }: ApplyModalProps) {
 									</div>
 								)}
 
-								{}
 								<div className={styles.modal__section}>
 									<h3 className={styles.modal__sectionTitle}>Wiadomość</h3>
 									<div className={styles.modal__field}>
@@ -816,7 +788,6 @@ function ApplyModal({ isOpen, vacancy, onClose, onSubmit }: ApplyModalProps) {
 						)}
 					</div>
 
-					{}
 					{vacancy.recruitment.type === "internal" && (
 						<div className={styles.modal__actions}>
 							<div className={styles.modal__actionsRight}>
@@ -840,9 +811,6 @@ function ApplyModal({ isOpen, vacancy, onClose, onSubmit }: ApplyModalProps) {
 	);
 }
 
-
-
-
 interface VacancyDetailModalProps {
 	isOpen: boolean;
 	vacancy: Vacancy | null;
@@ -859,7 +827,6 @@ function VacancyDetailModal({
 	vacancy,
 	currentUser,
 	onClose,
-	onApply,
 	onOpenApply,
 	hasApplied = false,
 	applications = [],
@@ -997,7 +964,7 @@ function VacancyDetailModal({
 							</div>
 						</div>
 					</div>
-					{}
+
 					{vacancy.recruitment && (
 						<div className={styles.modal__section}>
 							<h3 className={styles.modal__sectionTitle}>Rekrutacja</h3>
@@ -1104,7 +1071,7 @@ function VacancyDetailModal({
 								)}
 						</div>
 					)}
-					{}
+
 					{vacancy.attachments && vacancy.attachments.length > 0 && (
 						<div className={styles.modal__section}>
 							<h3 className={styles.modal__sectionTitle}>
@@ -1162,7 +1129,6 @@ function VacancyDetailModal({
 									.filter((app) => app.vacancyId === vacancy.id)
 									.map((app) => (
 										<div key={app.id} className={styles.applicationCard}>
-											{}
 											<div className={styles.applicationRow}>
 												<div className={styles.applicationUser}>
 													<div className={styles.applicationAvatar}>
@@ -1215,13 +1181,11 @@ function VacancyDetailModal({
 												</div>
 											</div>
 
-											{}
 											<div
 												id={`app-details-${app.id}`}
 												className={styles.applicationDetails}
 												style={{ display: "none" }}
 											>
-												{}
 												{app.message && (
 													<div className={styles.applicationMessage}>
 														<div className={styles.applicationMessageLabel}>
@@ -1231,7 +1195,6 @@ function VacancyDetailModal({
 													</div>
 												)}
 
-												{}
 												{app.answers && Object.keys(app.answers).length > 0 && (
 													<div className={styles.applicationAnswers}>
 														<div className={styles.applicationAnswersLabel}>
@@ -1274,7 +1237,6 @@ function VacancyDetailModal({
 													</div>
 												)}
 
-												{}
 												<div className={styles.applicationActions}>
 													<button className={styles.applicationActionAccept}>
 														<Check size={14} />
@@ -1323,10 +1285,6 @@ function VacancyDetailModal({
 	);
 }
 
-
-
-
-
 interface VacancyFormModalProps {
 	isOpen: boolean;
 	vacancy: Vacancy | null;
@@ -1367,7 +1325,6 @@ function VacancyFormModal({
 			},
 			status: "active",
 			recruitment: {
-
 				type: "internal",
 				deadline: "",
 				questions: [],
@@ -1392,7 +1349,10 @@ function VacancyFormModal({
 		}[]
 	>(vacancy?.attachments || []);
 	const [showSuggestions, setShowSuggestions] = useState(false);
-	const [contactSearch, setContactSearch] = useState("");
+	const [_contactSearch, setContactSearch] = useState("");
+	const [contactSuggestions, setContactSuggestions] = useState<
+		{ id: string; name: string; email: string }[]
+	>([]);
 
 	if (!isOpen) return null;
 
@@ -1432,20 +1392,17 @@ function VacancyFormModal({
 		return (bytes / (1024 * 1024)).toFixed(1) + " MB";
 	};
 
-
 	const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
 		const files = e.target.files;
 		if (!files || files.length === 0) return;
 
 		const file = files[0];
 
-
 		if (file.size > 10 * 1024 * 1024) {
 			alert("Maksymalny rozmiar pliku to 10MB!");
 			e.target.value = "";
 			return;
 		}
-
 
 		const fileUrl = URL.createObjectURL(file);
 
@@ -1461,7 +1418,6 @@ function VacancyFormModal({
 		setAttachments([...attachments, newAttachment]);
 		e.target.value = "";
 	};
-
 
 	const removeAttachment = (id: string) => {
 		const attachment = attachments.find((a) => a.id === id);
@@ -1577,7 +1533,6 @@ function VacancyFormModal({
 			filledBy: vacancy?.filledBy,
 			attachments: attachments,
 			recruitment: {
-
 				type: formData.recruitment?.type || "internal",
 				formUrl: formData.recruitment?.formUrl,
 				messengerContact: formData.recruitment?.messengerContact,
@@ -1599,7 +1554,6 @@ function VacancyFormModal({
 			}
 		}
 	};
-
 
 	const iconCategories = {
 		Stanowiska: ["Briefcase", "Target", "Award", "Sparkles", "Star"],
@@ -1648,7 +1602,6 @@ function VacancyFormModal({
 
 				<form onSubmit={handleSubmit} className={styles.modal__form}>
 					<div className={styles.modal__body}>
-						{}
 						<div className={styles.modal__section}>
 							<h3 className={styles.modal__sectionTitle}>
 								Podstawowe informacje
@@ -1748,7 +1701,6 @@ function VacancyFormModal({
 							</div>
 						</div>
 
-						{}
 						<div className={styles.modal__section}>
 							<h3 className={styles.modal__sectionTitle}>
 								Zakres obowiązków{" "}
@@ -1837,7 +1789,6 @@ function VacancyFormModal({
 							</div>
 						</div>
 
-						{}
 						<div className={styles.modal__section}>
 							<h3 className={styles.modal__sectionTitle}>
 								Wymagania <span className={styles.modal__required}>*</span>
@@ -1919,7 +1870,6 @@ function VacancyFormModal({
 							</div>
 						</div>
 
-						{}
 						<div className={styles.modal__section}>
 							<h3 className={styles.modal__sectionTitle}>Mile widziane</h3>
 							<div className={styles.modal__field}>
@@ -1988,7 +1938,6 @@ function VacancyFormModal({
 							</div>
 						</div>
 
-						{}
 						<div className={styles.modal__section}>
 							<h3 className={styles.modal__sectionTitle}>
 								Informacje organizacyjne
@@ -2025,7 +1974,6 @@ function VacancyFormModal({
 												});
 											}
 										}}
-										
 									>
 										<option value="">Wybierz zespół...</option>
 										{teams.map((t) => (
@@ -2034,8 +1982,8 @@ function VacancyFormModal({
 											</option>
 										))}
 										<option key="inny" value="Inny">
-												Inny
-											</option>
+											Inny
+										</option>
 										<option value="other">Inny zespół</option>
 									</select>
 								</div>
@@ -2153,7 +2101,6 @@ function VacancyFormModal({
 							</div>
 						</div>
 
-						{}
 						<div className={styles.modal__section}>
 							<h3 className={styles.modal__sectionTitle}>Osoba kontaktowa</h3>
 							<p className={styles.modal__sectionDescription}>
@@ -2175,7 +2122,6 @@ function VacancyFormModal({
 												const value = e.target.value;
 												setContactSearch(value);
 
-
 												const email = generateEmail(value);
 
 												setFormData({
@@ -2186,7 +2132,6 @@ function VacancyFormModal({
 														phone: formData.contactPerson?.phone || "",
 													},
 												});
-
 
 												filterMembers(value);
 
@@ -2199,7 +2144,6 @@ function VacancyFormModal({
 												}
 											}}
 											onBlur={() => {
-
 												setTimeout(() => {
 													setShowSuggestions(false);
 												}, 200);
@@ -2209,7 +2153,6 @@ function VacancyFormModal({
 											autoComplete="off"
 										/>
 
-										{}
 										{showSuggestions && contactSuggestions.length > 0 && (
 											<ul className={styles.contactSuggestions}>
 												{contactSuggestions.map((member) => (
@@ -2287,7 +2230,7 @@ function VacancyFormModal({
 								</div>
 							</div>
 						</div>
-						{}
+
 						<div className={styles.modal__section}>
 							<h3 className={styles.modal__sectionTitle}>Załączniki</h3>
 							<p className={styles.modal__sectionDescription}>
@@ -2296,7 +2239,6 @@ function VacancyFormModal({
 							</p>
 
 							<div className={styles.attachmentsArea}>
-								{}
 								<div className={styles.attachmentUpload}>
 									<label
 										htmlFor="file-upload"
@@ -2314,7 +2256,6 @@ function VacancyFormModal({
 									/>
 								</div>
 
-								{}
 								{attachments.length > 0 && (
 									<div className={styles.attachmentsList}>
 										{attachments.map((file) => (
@@ -2359,7 +2300,7 @@ function VacancyFormModal({
 								)}
 							</div>
 						</div>
-						{}
+
 						<div className={styles.modal__section}>
 							<h3 className={styles.modal__sectionTitle}>
 								Informacje o rekrutacji
@@ -2423,7 +2364,6 @@ function VacancyFormModal({
 								</div>
 							</div>
 
-							{}
 							{formData.recruitment?.type === "form" && (
 								<div className={styles.modal__field}>
 									<label className={styles.modal__label}>
@@ -2451,7 +2391,6 @@ function VacancyFormModal({
 								</div>
 							)}
 
-							{}
 							{formData.recruitment?.type === "messenger" && (
 								<div className={styles.modal__field}>
 									<label className={styles.modal__label}>
@@ -2483,7 +2422,6 @@ function VacancyFormModal({
 								</div>
 							)}
 
-							{}
 							{formData.recruitment?.type === "internal" && (
 								<div className={styles.modal__field}>
 									<label className={styles.modal__label}>
@@ -2519,7 +2457,6 @@ function VacancyFormModal({
 											});
 										}}
 										onUpdate={(id, updates) => {
-
 											setFormData({
 												...formData,
 												recruitment: {
@@ -2539,7 +2476,6 @@ function VacancyFormModal({
 							)}
 						</div>
 
-						{}
 						<div className={styles.modal__section}>
 							<h3 className={styles.modal__sectionTitle}>Podgląd wakatu</h3>
 							<div className={styles.modal__preview}>
@@ -2563,12 +2499,12 @@ function VacancyFormModal({
 										>
 											{
 												STATUS_ICONS[
-												(formData.status as VacancyStatus) || "active"
+													(formData.status as VacancyStatus) || "active"
 												]
 											}
 											{
 												STATUS_LABELS[
-												(formData.status as VacancyStatus) || "active"
+													(formData.status as VacancyStatus) || "active"
 												]
 											}
 										</span>
@@ -2622,10 +2558,6 @@ function VacancyFormModal({
 	);
 }
 
-
-
-
-
 interface QuestionManagerProps {
 	questions: FormQuestion[];
 	onAdd: (question: FormQuestion) => void;
@@ -2670,7 +2602,6 @@ function QuestionManager({
 
 	return (
 		<div className={styles.questionManager}>
-			{}
 			{questions.length > 0 && (
 				<div className={styles.questionsList}>
 					{questions.map((q) => (
@@ -2694,7 +2625,6 @@ function QuestionManager({
 								)}
 							</div>
 
-							{}
 							{!disabled && (
 								<div className={styles.questionActions}>
 									<button
@@ -2722,7 +2652,6 @@ function QuestionManager({
 								</div>
 							)}
 
-							{}
 							{editingId === q.id && (
 								<div className={styles.editQuestionForm}>
 									<div className={styles.formField}>
@@ -2830,7 +2759,7 @@ function QuestionManager({
 					))}
 				</div>
 			)}
-			{}
+
 			{!disabled && (
 				<button
 					type="button"
@@ -2842,7 +2771,6 @@ function QuestionManager({
 				</button>
 			)}
 
-			{}
 			{showAddForm && !disabled && (
 				<div className={styles.addQuestionForm}>
 					<div className={styles.formField}>
@@ -2923,13 +2851,6 @@ function QuestionManager({
 	);
 }
 
-
-
-
-
-
-
-
 export default function Vacancies({ title }: { title?: string }) {
 	const [vacancies, setVacancies] = useState<Vacancy[]>([]);
 	const [applications, setApplications] = useState<Application[]>([]);
@@ -2948,12 +2869,11 @@ export default function Vacancies({ title }: { title?: string }) {
 	const [editingVacancy, setEditingVacancy] = useState<Vacancy | null>(null);
 	const [isApplyOpen, setIsApplyOpen] = useState(false);
 	const [applyingVacancy, setApplyingVacancy] = useState<Vacancy | null>(null);
-	const [applicationMessage, setApplicationMessage] = useState("");
+
 	const [confirmDialog, setConfirmDialog] = useState<{
 		isOpen: boolean;
 		vacancy: Vacancy | null;
 	}>({ isOpen: false, vacancy: null });
-
 
 	const [currentUser, setCurrentUser] = useState<User>({
 		id: "",
@@ -2962,19 +2882,14 @@ export default function Vacancies({ title }: { title?: string }) {
 		teamId: "",
 	});
 
-
 	const canManage =
 		hasPermission(currentUser?.role, "canEditVacancies") ||
 		hasPermission(currentUser?.role, "canDeleteVacancies");
-	const canEdit = hasPermission(currentUser?.role, "canEditVacancies");
-	const canDelete = hasPermission(currentUser?.role, "canDeleteVacancies");
-
 
 	const teams = useMemo(() => {
 		const unique = new Set(vacancies.map((v) => v.team));
 		return Array.from(unique).sort();
 	}, [vacancies]);
-
 
 	const pillars = useMemo(() => {
 		return [...DEFAULT_PILLARS].sort();
@@ -2987,11 +2902,10 @@ export default function Vacancies({ title }: { title?: string }) {
 				const token = localStorage.getItem("accessToken");
 
 				if (!token) {
-					console.warn("⚠️ Brak tokenu - przekierowanie do logowania");
+					logger.warn("⚠️ Brak tokenu - przekierowanie do logowania");
 					setLoading(false);
 					return;
 				}
-
 
 				const userResponse = await fetch("/api/profile", {
 					headers: { Authorization: `Bearer ${token}` },
@@ -3007,7 +2921,6 @@ export default function Vacancies({ title }: { title?: string }) {
 						teamId: userData.teamId || "",
 					});
 				}
-
 
 				const membersResponse = await fetch("/api/members", {
 					headers: { Authorization: `Bearer ${token}` },
@@ -3027,7 +2940,6 @@ export default function Vacancies({ title }: { title?: string }) {
 					setMembers(mappedMembers);
 				}
 
-
 				const vacanciesResponse = await fetch("/api/vacancies", {
 					headers: {
 						Authorization: `Bearer ${token}`,
@@ -3037,7 +2949,7 @@ export default function Vacancies({ title }: { title?: string }) {
 
 				if (vacanciesResponse.ok) {
 					const data = await vacanciesResponse.json();
-					console.log("📦 Dane wakatów z backendu:", data);
+					logger.debug("📦 Dane wakatów z backendu:", data);
 
 					const mapped = (Array.isArray(data) ? data : []).map((v: any) => ({
 						id: v.id?.toString() || `vac-${Date.now()}`,
@@ -3064,13 +2976,13 @@ export default function Vacancies({ title }: { title?: string }) {
 						pillar: v.pillar || "",
 						contactPerson: v.contact_person
 							? {
-								name:
-									`${v.contact_person.first_name || ""} ${v.contact_person.last_name || ""}`.trim() ||
-									v.contact_person.name ||
-									"",
-								email: v.contact_person.email || "",
-								phone: v.contact_person.phone || "",
-							}
+									name:
+										`${v.contact_person.first_name || ""} ${v.contact_person.last_name || ""}`.trim() ||
+										v.contact_person.name ||
+										"",
+									email: v.contact_person.email || "",
+									phone: v.contact_person.phone || "",
+								}
 							: { name: "", email: "", phone: "" },
 						createdAt: v.created_at
 							? new Date(v.created_at).toISOString().split("T")[0]
@@ -3099,25 +3011,24 @@ export default function Vacancies({ title }: { title?: string }) {
 							messengerContact: v.recruitment_messenger_contact || "",
 							questions: Array.isArray(v.questions)
 								? v.questions.map((q: any) => ({
-									id: q.id?.toString() || `q-${Date.now()}`,
-									question: q.question || "",
-									type: (q.type as FormQuestion["type"]) || "text",
-									required: q.required || false,
-									options: Array.isArray(q.options)
-										? q.options
-										: q.options
-											? JSON.parse(q.options)
-											: [],
-								}))
+										id: q.id?.toString() || `q-${Date.now()}`,
+										question: q.question || "",
+										type: (q.type as FormQuestion["type"]) || "text",
+										required: q.required || false,
+										options: Array.isArray(q.options)
+											? q.options
+											: q.options
+												? JSON.parse(q.options)
+												: [],
+									}))
 								: [],
 						},
 					}));
 					setVacancies(mapped);
 				} else {
-					console.warn("⚠️ Błąd pobierania wakatów:", vacanciesResponse.status);
+					logger.warn("⚠️ Błąd pobierania wakatów:", vacanciesResponse.status);
 					setVacancies([]);
 				}
-
 
 				const applicationsResponse = await fetch("/api/applications", {
 					headers: {
@@ -3146,7 +3057,7 @@ export default function Vacancies({ title }: { title?: string }) {
 					setApplications(mappedApps);
 				}
 			} catch (error) {
-				console.error("❌ Błąd pobierania danych:", error);
+				logger.error("❌ Błąd pobierania danych:", error);
 				setVacancies([]);
 				setApplications([]);
 			} finally {
@@ -3186,7 +3097,6 @@ export default function Vacancies({ title }: { title?: string }) {
 		return () => clearInterval(interval);
 	}, [vacancies]);
 
-
 	const filteredVacancies = useMemo(() => {
 		return vacancies
 			.filter((vacancy) => {
@@ -3222,10 +3132,7 @@ export default function Vacancies({ title }: { title?: string }) {
 			});
 	}, [vacancies, searchTerm, selectedTeam, selectedPillar, selectedStatus]);
 
-	const activeCount = vacancies.filter(
-		(v) => v.status === "active",
-	).length;
-
+	const activeCount = vacancies.filter((v) => v.status === "active").length;
 
 	const handleViewVacancy = (vacancy: Vacancy) => {
 		setSelectedVacancy(vacancy);
@@ -3258,7 +3165,6 @@ export default function Vacancies({ title }: { title?: string }) {
 				return;
 			}
 
-
 			const finalMessage =
 				message && message.trim() !== "" ? message : undefined;
 
@@ -3287,14 +3193,12 @@ export default function Vacancies({ title }: { title?: string }) {
 			});
 			setVacancies(updatedVacancies);
 
-
-
 			try {
-				console.log(
+				logger.debug(
 					"📤 Wysyłam zgłoszenie do:",
 					`/api/vacancies/${vacancy.id}/apply`,
 				);
-				console.log("📦 Dane:", {
+				logger.debug("📦 Dane:", {
 					message: finalMessage || "",
 					answers: answers || {},
 				});
@@ -3311,18 +3215,17 @@ export default function Vacancies({ title }: { title?: string }) {
 					}),
 				});
 
-				console.log("📥 Status odpowiedzi:", response.status);
+				logger.debug("📥 Status odpowiedzi:", response.status);
 
 				if (!response.ok) {
 					const errorText = await response.text();
-					console.warn("⚠️ Backend zwrócił błąd:", response.status, errorText);
-
+					logger.warn("⚠️ Backend zwrócił błąd:", response.status, errorText);
 				} else {
 					const result = await response.json();
-					console.log("✅ Zapisano w backendzie:", result);
+					logger.debug("✅ Zapisano w backendzie:", result);
 				}
 			} catch (error) {
-				console.warn("⚠️ Backend niedostępny, zapisano lokalnie:", error);
+				logger.warn("⚠️ Backend niedostępny, zapisano lokalnie:", error);
 			}
 
 			toast.success(
@@ -3332,7 +3235,7 @@ export default function Vacancies({ title }: { title?: string }) {
 			setIsApplyOpen(false);
 			setApplyingVacancy(null);
 		} catch (error) {
-			console.error("Błąd zgłaszania:", error);
+			logger.error("Błąd zgłaszania:", error);
 			toast.error("Nie udało się zgłosić na wakat");
 		}
 	};
@@ -3368,7 +3271,7 @@ export default function Vacancies({ title }: { title?: string }) {
 			setVacancies(vacancies.filter((v) => v.id !== vacancy.id));
 			toast.success(`Wakat "${vacancy.title}" został usunięty.`);
 		} catch (error) {
-			console.error("Błąd usuwania:", error);
+			logger.error("Błąd usuwania:", error);
 
 			setVacancies(vacancies.filter((v) => v.id !== vacancy.id));
 			toast.success(`Wakat "${vacancy.title}" został usunięty lokalnie.`);
@@ -3395,7 +3298,6 @@ export default function Vacancies({ title }: { title?: string }) {
 				setVacancies([newVacancy, ...vacancies]);
 				toast.success(`Wakat "${vacancy.title}" został dodany!`);
 			}
-
 
 			try {
 				const url = isEdit ? `/api/vacancies/${vacancy.id}` : "/api/vacancies";
@@ -3427,10 +3329,10 @@ export default function Vacancies({ title }: { title?: string }) {
 					}),
 				});
 			} catch (error) {
-				console.warn("⚠️ Backend niedostępny, zapisano lokalnie");
+				logger.warn("⚠️ Backend niedostępny, zapisano lokalnie");
 			}
 		} catch (error) {
-			console.error("Błąd zapisywania:", error);
+			logger.error("Błąd zapisywania:", error);
 			toast.error("Nie udało się zapisać wakatu");
 		}
 	};
@@ -3502,16 +3404,19 @@ export default function Vacancies({ title }: { title?: string }) {
 			</div>
 		);
 	}
-	const getWakatLabel = (count) => {
+	const getWakatLabel = (count: number) => {
 		if (count === 1) return "aktywny wakat";
-		if (count % 10 >= 2 && count % 10 <= 4 && (count % 100 < 12 || count % 100 > 14)) {
+		if (
+			count % 10 >= 2 &&
+			count % 10 <= 4 &&
+			(count % 100 < 12 || count % 100 > 14)
+		) {
 			return "aktywne wakaty";
 		}
 		return "aktywnych wakatów";
 	};
 	return (
 		<div className={styles.vacancies}>
-			{}
 			<h1>{title ?? "Wakaty"}</h1>
 			<div className={styles.header}>
 				<div className={styles.header__left}>
@@ -3541,7 +3446,6 @@ export default function Vacancies({ title }: { title?: string }) {
 				)}
 			</div>
 
-			{}
 			<div className={styles.filters}>
 				<div className={styles.filters__search}>
 					<Search size={18} className={styles.filters__searchIcon} />
@@ -3622,14 +3526,13 @@ export default function Vacancies({ title }: { title?: string }) {
 						selectedPillar !== "all" ||
 						selectedStatus !== "all" ||
 						searchTerm) && (
-							<button className={styles.filters__reset} onClick={clearFilters}>
-								Wyczyść filtry
-							</button>
-						)}
+						<button className={styles.filters__reset} onClick={clearFilters}>
+							Wyczyść filtry
+						</button>
+					)}
 				</div>
 			</div>
 
-			{}
 			<div
 				className={`${styles.vacanciesGrid} ${viewMode === "list" ? styles.vacanciesGridList : ""}`}
 			>
@@ -3639,9 +3542,9 @@ export default function Vacancies({ title }: { title?: string }) {
 						<h3 className={styles.emptyState__title}>Brak wakatów</h3>
 						<p className={styles.emptyState__description}>
 							{searchTerm ||
-								selectedTeam !== "all" ||
-								selectedPillar !== "all" ||
-								selectedStatus !== "all"
+							selectedTeam !== "all" ||
+							selectedPillar !== "all" ||
+							selectedStatus !== "all"
 								? "Nie znaleziono wakatów spełniających kryteria wyszukiwania."
 								: canManage
 									? "Nie ma jeszcze żadnych wakatów. Kliknij 'Dodaj wakat' aby utworzyć pierwszy."
@@ -3679,7 +3582,6 @@ export default function Vacancies({ title }: { title?: string }) {
 				)}
 			</div>
 
-			{}
 			<VacancyDetailModal
 				isOpen={isDetailOpen}
 				vacancy={selectedVacancy}

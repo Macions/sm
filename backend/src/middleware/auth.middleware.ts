@@ -1,6 +1,6 @@
-
 import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
+import { logger } from "../utils/logger";
 
 const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key";
 
@@ -11,7 +11,6 @@ export interface AuthRequest extends Request {
 		role: string;
 	};
 }
-
 
 const PUBLIC_ENDPOINTS = [
 	"/api/auth/login",
@@ -24,7 +23,6 @@ const PUBLIC_ENDPOINTS = [
 	"/api/status",
 ];
 
-
 const isPublicPath = (path: string): boolean => {
 	return PUBLIC_ENDPOINTS.some(
 		(endpoint) => path === endpoint || path.startsWith(endpoint),
@@ -36,19 +34,17 @@ export const authMiddleware = (
 	res: Response,
 	next: NextFunction,
 ) => {
-
 	if (isPublicPath(req.path)) {
-		console.log(
+		logger.debug(
 			`🔓 Publiczny endpoint: ${req.method} ${req.path} - pomijam autoryzację`,
 		);
 		return next();
 	}
 
-
 	const token = req.headers.authorization?.split(" ")[1];
 
 	if (!token) {
-		console.log(`❌ Brak tokenu dla: ${req.method} ${req.path}`);
+		logger.debug(`❌ Brak tokenu dla: ${req.method} ${req.path}`);
 		return res.status(401).json({ error: "Brak tokenu autoryzacyjnego" });
 	}
 
@@ -59,12 +55,12 @@ export const authMiddleware = (
 			email: decoded.email,
 			role: decoded.role,
 		};
-		console.log(
+		logger.debug(
 			`✅ Autoryzacja dla: ${req.method} ${req.path} - użytkownik: ${decoded.email}`,
 		);
 		next();
 	} catch (error) {
-		console.log(`❌ Błąd autoryzacji dla: ${req.method} ${req.path}`);
+		logger.debug(`❌ Błąd autoryzacji dla: ${req.method} ${req.path}`);
 		return res.status(401).json({ error: "Nieprawidłowy token" });
 	}
 };

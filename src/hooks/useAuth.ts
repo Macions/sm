@@ -28,7 +28,7 @@ export function useAuth() {
                     setIsAuthenticated(true);
                 }
             } catch (error) {
-                console.error('Błąd ładowania użytkownika:', error);
+                logger.error('Błąd ładowania użytkownika:', error);
             } finally {
                 setLoading(false);
             }

@@ -1,5 +1,5 @@
-
 import api from "./api";
+import { logger } from "../utils/logger";
 
 export interface Member {
 	id: string;
@@ -46,28 +46,25 @@ export interface User {
 }
 
 class MemberService {
-
 	async getMembers(): Promise<Member[]> {
 		try {
 			const response = await api.get("/api/users");
 			return response.data.map((user: any) => this.mapToMember(user));
 		} catch (error) {
-			console.error("❌ Błąd pobierania członków:", error);
+			logger.error("❌ Błąd pobierania członków:", error);
 			throw error;
 		}
 	}
-
 
 	async getMemberById(id: string): Promise<Member> {
 		try {
 			const response = await api.get(`/api/users/${id}`);
 			return this.mapToMember(response.data);
 		} catch (error) {
-			console.error("❌ Błąd pobierania członka:", error);
+			logger.error("❌ Błąd pobierania członka:", error);
 			throw error;
 		}
 	}
-
 
 	async createMember(data: Partial<Member>, password: string): Promise<Member> {
 		try {
@@ -96,15 +93,14 @@ class MemberService {
 			});
 			return this.mapToMember(response.data);
 		} catch (error) {
-			console.error("❌ Błąd tworzenia członka:", error);
+			logger.error("❌ Błąd tworzenia członka:", error);
 			throw error;
 		}
 	}
 
-
 	async updateMember(id: string, data: Partial<Member>): Promise<Member> {
 		try {
-			const isActive = data.status === "inactive" ? 0 : 1;
+			const isActive = data.status === "active" ? 1 : 0;
 			const response = await api.put(`/api/users/${id}`, {
 				first_name: data.firstName,
 				last_name: data.lastName,
@@ -124,7 +120,7 @@ class MemberService {
 			});
 			return this.mapToMember(response.data);
 		} catch (error) {
-			console.error("❌ Błąd aktualizacji członka:", error);
+			logger.error("❌ Błąd aktualizacji członka:", error);
 			throw error;
 		}
 	}
@@ -133,11 +129,10 @@ class MemberService {
 		try {
 			await api.delete(`/api/users/${id}`);
 		} catch (error) {
-			console.error("❌ Błąd usuwania członka:", error);
+			logger.error("❌ Błąd usuwania członka:", error);
 			throw error;
 		}
 	}
-
 
 	private mapToMember(data: any): Member {
 		return {
@@ -164,13 +159,12 @@ class MemberService {
 		};
 	}
 
-	private mapStatus(
-		status: string | null,
-	): "trial" | "full" | "mentor" | "inactive" {
+	private mapStatus(status: string | null): "active" | "trial" | "mentor" {
 		if (!status) return "trial";
 		if (status === "mentor") return "mentor";
-		if (status === "inactive") return "inactive";
-		if (status === "active" || status === "full") return "active";
+		if (status === "active") return "active";
+		if (status === "full") return "active";
+		if (status === "inactive") return "trial";
 		if (status === "trial") return "trial";
 		return "trial";
 	}

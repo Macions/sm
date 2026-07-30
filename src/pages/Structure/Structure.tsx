@@ -18,9 +18,7 @@ import {
 	ArrowDown,
 } from "lucide-react";
 import styles from "./Structure.module.css";
-
-
-
+import { logger } from "@/utils/logger";
 
 type Person = {
 	id: string;
@@ -29,6 +27,7 @@ type Person = {
 	role: string;
 	email: string;
 	avatar?: string;
+	province?: string;
 };
 
 type Node = {
@@ -43,9 +42,6 @@ type Node = {
 	email?: string;
 };
 
-
-
-
 const ORGANIZATION_DATA: Node = {
 	id: "organization",
 	name: "Siła Młodych",
@@ -57,9 +53,6 @@ const ORGANIZATION_DATA: Node = {
 	children: [],
 };
 
-
-
-
 const countAllPeople = (node: Node): number => {
 	let count = node.people?.length || 0;
 	for (const child of node.children) {
@@ -67,9 +60,6 @@ const countAllPeople = (node: Node): number => {
 	}
 	return count;
 };
-
-
-
 
 interface TreeNodeProps {
 	node: Node;
@@ -246,12 +236,7 @@ function TreeNode({
 	);
 }
 
-
-
-
-
 export default function Structure() {
-
 	const [searchTerm, setSearchTerm] = useState("");
 	const [structureData, setStructureData] = useState<Node | null>(null);
 	const [loading, setLoading] = useState(true);
@@ -267,7 +252,6 @@ export default function Structure() {
 	const MIN_ZOOM = 0.3;
 	const MAX_ZOOM = 2.5;
 	const PAN_BOUNDARY = 10000;
-
 
 	useEffect(() => {
 		const fetchStructure = async () => {
@@ -309,7 +293,7 @@ export default function Structure() {
 
 				setStructureData(convertNode(data));
 			} catch (error) {
-				console.error("Błąd pobierania struktury:", error);
+				logger.error("Błąd pobierania struktury:", error);
 				setStructureData(ORGANIZATION_DATA);
 			} finally {
 				setLoading(false);
@@ -318,7 +302,6 @@ export default function Structure() {
 
 		fetchStructure();
 	}, []);
-
 
 	const totalMembers = useMemo(() => {
 		if (!structureData) return 0;
@@ -354,7 +337,6 @@ export default function Structure() {
 		if (!structureData) return 0;
 		return structureData.children.length;
 	}, [structureData]);
-
 
 	useEffect(() => {
 		const handleTouchMovePinch = (e: TouchEvent) => {
@@ -395,7 +377,6 @@ export default function Structure() {
 		};
 	}, [zoom, lastTouchDistance]);
 
-
 	if (loading) {
 		return (
 			<div className={styles.structure}>
@@ -419,7 +400,6 @@ export default function Structure() {
 			</div>
 		);
 	}
-
 
 	const resetView = () => {
 		setPan({ x: -410, y: -300 });
@@ -524,10 +504,8 @@ export default function Structure() {
 		setIsDragging(false);
 	};
 
-
 	return (
 		<div className={styles.structure}>
-			{}
 			<div className={styles.header}>
 				<div className={styles.header__left}>
 					<h1 className={styles.header__title}>Struktura Siły Młodych</h1>
@@ -558,7 +536,6 @@ export default function Structure() {
 				</div>
 			</div>
 
-			{}
 			<div className={styles.searchWrapper}>
 				<div className={styles.searchBox}>
 					<Search size={18} className={styles.searchBox__icon} />
@@ -580,7 +557,6 @@ export default function Structure() {
 				</div>
 			</div>
 
-			{}
 			<div className={styles.mapControls}>
 				<button
 					onClick={resetView}
@@ -612,7 +588,6 @@ export default function Structure() {
 				</div>
 			</div>
 
-			{}
 			<div
 				className={styles.mapContainer}
 				ref={containerRef}
@@ -647,7 +622,6 @@ export default function Structure() {
 				</div>
 			</div>
 
-			{}
 			<div className={styles.dragHint}>
 				<span className={styles.dragHint__icon}>↔</span>
 				<span>Przeciągnij aby przesuwać mapę • Ctrl + scroll aby zoom</span>

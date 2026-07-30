@@ -38,7 +38,7 @@ api.interceptors.response.use(
       localStorage.removeItem('refreshToken');
       localStorage.removeItem('user');
 
-      navigate("/login");
+      throw new Error('Unauthorized - please login');
     }
     return Promise.reject(error);
   }

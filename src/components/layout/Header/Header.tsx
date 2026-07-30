@@ -1,3 +1,4 @@
+import { safeNavigate } from '@/utils/safeNavigation';
 import { useNavigate } from 'react-router-dom';
 import { useState, useRef, useEffect } from "react";
 import {
@@ -78,12 +79,12 @@ export default function Header({
 			}
 
 			const data = await response.json();
-			console.log("📊 Powiadomienia w Header:", data);
+			logger.debug("📊 Powiadomienia w Header:", data);
 
 
 			setNotifications(data);
 		} catch (error) {
-			console.error("Błąd ładowania powiadomień:", error);
+			logger.error("Błąd ładowania powiadomień:", error);
 		} finally {
 			setLoading(false);
 		}
@@ -107,7 +108,7 @@ export default function Header({
 				prev.map((n) => (n.id === id ? { ...n, read: true } : n)),
 			);
 		} catch (error) {
-			console.error("Błąd oznaczania jako przeczytane:", error);
+			logger.error("Błąd oznaczania jako przeczytane:", error);
 		}
 	};
 
@@ -126,7 +127,7 @@ export default function Header({
 
 			setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
 		} catch (error) {
-			console.error("Błąd oznaczania wszystkich:", error);
+			logger.error("Błąd oznaczania wszystkich:", error);
 		}
 	};
 
@@ -145,7 +146,7 @@ export default function Header({
 
 			setNotifications((prev) => prev.filter((n) => n.id !== id));
 		} catch (error) {
-			console.error("Błąd usuwania powiadomienia:", error);
+			logger.error("Błąd usuwania powiadomienia:", error);
 		}
 	};
 

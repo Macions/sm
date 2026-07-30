@@ -1,22 +1,14 @@
-
-
-
 import dotenv from "dotenv";
 dotenv.config();
-
+import { logger } from "../utils/logger";
 import { PrismaClient } from "@prisma/client";
 import mysql from "mysql2/promise";
 
 const prisma = new PrismaClient();
 
-
-
-
-
-console.log("📋 [SYNC] Ładowanie konfiguracji z .env...");
-console.log("📋 [SYNC] EWIDENCJA_DB_HOST:", process.env.EWIDENCJA_DB_HOST);
-console.log("📋 [SYNC] EWIDENCJA_DB_USER:", process.env.EWIDENCJA_DB_USER);
-
+logger.debug("📋 [SYNC] Ładowanie konfiguracji z .env...");
+logger.debug("📋 [SYNC] EWIDENCJA_DB_HOST:", process.env.EWIDENCJA_DB_HOST);
+logger.debug("📋 [SYNC] EWIDENCJA_DB_USER:", process.env.EWIDENCJA_DB_USER);
 
 const externalDb = mysql.createPool({
 	host: process.env.EWIDENCJA_DB_HOST || "57.128.253.89",
@@ -27,24 +19,16 @@ const externalDb = mysql.createPool({
 	connectionLimit: 10,
 });
 
-
-
-
-
 function generateEmail(firstname: string, lastname: string): string {
-
 	let firstName = firstname?.trim() || "";
 	if (firstName.includes(" ")) {
 		firstName = firstName.split(" ")[0];
 	}
 
-
 	const lastName = lastname?.trim() || "";
-
 
 	const first = firstName.toLowerCase();
 	const last = lastName.toLowerCase();
-
 
 	const polishMap: Record<string, string> = {
 		ą: "a",
@@ -77,18 +61,12 @@ function generateEmail(firstname: string, lastname: string): string {
 	const cleanFirst = removePolish(first);
 	const cleanLast = removePolish(last);
 
-
 	let email = `${cleanFirst}.${cleanLast}@silamlodych.pl`;
-
 
 	email = email.replace(/[^a-z0-9.@_-]/g, "");
 
 	return email;
 }
-
-
-
-
 
 function mapStatus(statusText: string): {
 	status: string;
@@ -144,22 +122,18 @@ function mapStatus(statusText: string): {
 		};
 	}
 
-	console.log(
+	logger.debug(
 		`⚠️ [SYNC] Nieznany status: "${statusText}" - traktuję jako trial`,
 	);
 	return { status: "trial", isTrial: true, isActive: true, shouldSkip: false };
 }
 
-
-
-
-
 export async function syncMembers() {
-	console.log("🔄 [SYNC] Rozpoczynam synchronizację członków...");
+	logger.debug("🔄 [SYNC] Rozpoczynam synchronizację członków...");
 	const startTime = Date.now();
 
 	try {
-		console.log("📥 [SYNC] Pobieranie danych z SM_Ewidencja.members...");
+		logger.debug("📥 [SYNC] Pobieranie danych z SM_Ewidencja.members...");
 
 		const [rows] = (await externalDb.query(`
             SELECT 
@@ -178,22 +152,23 @@ export async function syncMembers() {
               AND lastname != ''
         `)) as any[];
 
-		console.log(`📥 [SYNC] Pobrano ${rows.length} rekordów z zewnętrznej bazy`);
+		logger.debug(
+			`📥 [SYNC] Pobrano ${rows.length} rekordów z zewnętrznej bazy`,
+		);
 
 		if (rows.length === 0) {
-			console.log("⚠️ [SYNC] Brak danych do synchronizacji");
+			logger.debug("⚠️ [SYNC] Brak danych do synchronizacji");
 			return;
 		}
-
 
 		const statusStats: Record<string, number> = {};
 		for (const member of rows) {
 			const status = member.status || "unknown";
 			statusStats[status] = (statusStats[status] || 0) + 1;
 		}
-		console.log("📊 [SYNC] Statystyki statusów w SM_Ewidencja:");
+		logger.debug("📊 [SYNC] Statystyki statusów w SM_Ewidencja:");
 		Object.entries(statusStats).forEach(([status, count]) => {
-			console.log(`   ${status}: ${count}`);
+			logger.debug(`   ${status}: ${count}`);
 		});
 
 		const existingUsers = await prisma.user.findMany({
@@ -217,7 +192,7 @@ export async function syncMembers() {
 			existingUsers.filter((u) => u.email).map((u) => [u.email as string, u]),
 		);
 
-		console.log(
+		logger.debug(
 			`📊 [SYNC] W głównej bazie: ${existingUsers.length} użytkowników`,
 		);
 
@@ -227,18 +202,15 @@ export async function syncMembers() {
 		let skippedRezygnacja = 0;
 		let duplicateEmails = 0;
 
-
 		const usedEmails = new Set<string>();
 
 		for (const member of rows) {
 			try {
-
 				const generatedEmail = generateEmail(member.firstname, member.lastname);
-
 
 				if (usedEmails.has(generatedEmail)) {
 					duplicateEmails++;
-					console.log(
+					logger.debug(
 						`⚠️ [SYNC] Duplikat emaila: ${generatedEmail} (${member.firstname} ${member.lastname}) - pomijam`,
 					);
 					continue;
@@ -249,7 +221,7 @@ export async function syncMembers() {
 
 				if (mapped.shouldSkip) {
 					skippedRezygnacja++;
-					console.log(
+					logger.debug(
 						`⏭️ [SYNC] Pominięto (rezygnacja): ${generatedEmail} (${member.status})`,
 					);
 					continue;
@@ -292,7 +264,7 @@ export async function syncMembers() {
 							},
 						});
 						updated++;
-						console.log(
+						logger.debug(
 							`🔄 [SYNC] Zaktualizowano: ${generatedEmail} | status: ${member.status} -> ${userData.status} | trial: ${userData.is_trial}`,
 						);
 					} else {
@@ -303,12 +275,12 @@ export async function syncMembers() {
 						data: userData,
 					});
 					added++;
-					console.log(
+					logger.debug(
 						`✅ [SYNC] Dodano: ${generatedEmail} (${userData.first_name} ${userData.last_name}) | status: ${userData.status} | trial: ${userData.is_trial}`,
 					);
 				}
 			} catch (error) {
-				console.error(
+				logger.error(
 					`❌ [SYNC] Błąd przetwarzania ${member.firstname} ${member.lastname}:`,
 					error,
 				);
@@ -316,14 +288,14 @@ export async function syncMembers() {
 		}
 
 		const duration = Date.now() - startTime;
-		console.log(`✅ [SYNC] Zakończono w ${duration}ms`);
-		console.log(`📊 [SYNC] Podsumowanie:`);
-		console.log(`   +${added} dodanych`);
-		console.log(`   🔄${updated} zaktualizowanych`);
-		console.log(`   ⏭️${skipped} bez zmian`);
-		console.log(`   ⏭️${skippedRezygnacja} pominiętych (rezygnacja)`);
+		logger.debug(`✅ [SYNC] Zakończono w ${duration}ms`);
+		logger.debug(`📊 [SYNC] Podsumowanie:`);
+		logger.debug(`   +${added} dodanych`);
+		logger.debug(`   🔄${updated} zaktualizowanych`);
+		logger.debug(`   ⏭️${skipped} bez zmian`);
+		logger.debug(`   ⏭️${skippedRezygnacja} pominiętych (rezygnacja)`);
 		if (duplicateEmails > 0) {
-			console.log(`   ⚠️${duplicateEmails} pominiętych (duplikaty emaili)`);
+			logger.debug(`   ⚠️${duplicateEmails} pominiętych (duplikaty emaili)`);
 		}
 
 		try {
@@ -350,19 +322,19 @@ export async function syncMembers() {
 				},
 			});
 		} catch (logError) {
-			console.error("❌ [SYNC] Błąd zapisu logu:", logError);
+			logger.error("❌ [SYNC] Błąd zapisu logu:", logError);
 		}
 	} catch (error) {
-		console.error("❌ [SYNC] Błąd synchronizacji:", error);
+		logger.error("❌ [SYNC] Błąd synchronizacji:", error);
 	}
 }
 
 export async function runSync() {
 	try {
 		await syncMembers();
-		console.log("✅ [SYNC] Synchronizacja zakończona pomyślnie");
+		logger.debug("✅ [SYNC] Synchronizacja zakończona pomyślnie");
 	} catch (error) {
-		console.error("❌ [SYNC] Krytyczny błąd synchronizacji:", error);
+		logger.error("❌ [SYNC] Krytyczny błąd synchronizacji:", error);
 	}
 }
 
@@ -370,7 +342,7 @@ if (require.main === module) {
 	runSync()
 		.then(() => process.exit(0))
 		.catch((error) => {
-			console.error(error);
+			logger.error(error);
 			process.exit(1);
 		});
 }

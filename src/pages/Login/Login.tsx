@@ -1,9 +1,11 @@
 // frontend/src/pages/Login.tsx
 
 import React, { useState } from "react";
+import { safeNavigate } from "@/utils/safeNavigation";
 import { useNavigate } from "react-router-dom";
 import { GoogleLogin } from "@react-oauth/google";
 import styles from "./Login.module.css";
+import { logger } from "@/utils/logger";
 
 const Login: React.FC = () => {
 	const [email, setEmail] = useState("");
@@ -21,16 +23,14 @@ const Login: React.FC = () => {
 		return "Fioletowego dnia!";
 	};
 
-
 	const handleGoogleSuccess = async (credentialResponse: any) => {
-		console.log("🚀 === ROZPOCZĘCIE LOGOWANIA PRZEZ GOOGLE ===");
-		console.log("Pełny credentialResponse:", credentialResponse);
-		console.log("credential:", credentialResponse?.credential);
+		logger.debug("🚀 === ROZPOCZĘCIE LOGOWANIA PRZEZ GOOGLE ===");
+		logger.debug("Pełny credentialResponse:", credentialResponse);
+		logger.debug("credential:", credentialResponse?.credential);
 		setLoading(true);
 		setError(null);
 
 		try {
-
 			const response = await fetch("/api/auth/google", {
 				method: "POST",
 				headers: {
@@ -41,29 +41,27 @@ const Login: React.FC = () => {
 				}),
 			});
 
-			console.log("📡 Status odpowiedzi google login:", response.status);
+			logger.debug("📡 Status odpowiedzi google login:", response.status);
 
 			const data = await response.json();
 
 			if (!response.ok) {
-				console.log("❌ Błąd logowania przez Google:", data);
+				logger.debug("❌ Błąd logowania przez Google:", data);
 
 				throw new Error(data.error || "Błąd logowania przez Google");
 			}
 
-			console.log("✅ Logowanie przez Google poprawne");
-
+			logger.debug("✅ Logowanie przez Google poprawne");
 
 			localStorage.setItem("accessToken", data.accessToken);
 			localStorage.setItem("refreshToken", data.refreshToken);
 			localStorage.setItem("user", JSON.stringify(data.user));
 
-			console.log("💾 Tokeny zapisane w localStorage");
-
+			logger.debug("💾 Tokeny zapisane w localStorage");
 
 			await checkOnboardingStatus();
 		} catch (error) {
-			console.log("❌ BŁĄD logowania przez Google:", error);
+			logger.debug("❌ BŁĄD logowania przez Google:", error);
 			setError(
 				error instanceof Error
 					? error.message
@@ -75,17 +73,16 @@ const Login: React.FC = () => {
 	};
 
 	const handleGoogleError = () => {
-		console.log("❌ Błąd logowania przez Google");
+		logger.debug("❌ Błąd logowania przez Google");
 		setError("Nie udało się zalogować przez Google. Spróbuj ponownie.");
 	};
 
-
 	const checkOnboardingStatus = async () => {
-		console.log("🔍 === ROZPOCZĘCIE SPRAWDZANIA ONBOARDINGU ===");
+		logger.debug("🔍 === ROZPOCZĘCIE SPRAWDZANIA ONBOARDINGU ===");
 
 		try {
 			const token = localStorage.getItem("accessToken");
-			console.log(
+			logger.debug(
 				"🔑 Token do sprawdzenia onboardingu:",
 				token ? "Jest (długość: " + token.length + ")" : "BRAK",
 			);
@@ -98,7 +95,7 @@ const Login: React.FC = () => {
 				},
 			});
 
-			console.log(
+			logger.debug(
 				"📡 Status odpowiedzi onboarding-status:",
 				onboardingResponse.status,
 			);
@@ -107,34 +104,32 @@ const Login: React.FC = () => {
 
 			if (onboardingResponse.ok) {
 				const rawResponse = await onboardingResponse.json();
-				console.log("📋 Pełna odpowiedź API onboarding-status:", rawResponse);
+				logger.debug("📋 Pełna odpowiedź API onboarding-status:", rawResponse);
 				onboardingCompleted = rawResponse.completed === true;
 			} else {
-				console.log(
+				logger.debug(
 					`⚠️ Błąd sprawdzania onboardingu (${onboardingResponse.status})`,
 				);
 				onboardingCompleted = false;
 			}
 
-
 			localStorage.setItem(
 				"onboardingCompleted",
 				onboardingCompleted ? "true" : "false",
 			);
-			console.log(
+			logger.debug(
 				`💾 Zapisano w localStorage onboardingCompleted = ${onboardingCompleted ? "true" : "false"}`,
 			);
 
-
 			if (onboardingCompleted) {
-				navigate("/dashboard");
+				safeNavigate("/dashboard", navigate);
 			} else {
-				navigate("/onboarding");
+				safeNavigate("/onboarding", navigate);
 			}
 		} catch (onboardingError) {
-			console.log("❌ BŁĄD podczas sprawdzania onboardingu:", onboardingError);
+			logger.debug("❌ BŁĄD podczas sprawdzania onboardingu:", onboardingError);
 			localStorage.setItem("onboardingCompleted", "false");
-			navigate("/onboarding");
+			safeNavigate("/onboarding", navigate);
 		}
 	};
 
@@ -143,7 +138,7 @@ const Login: React.FC = () => {
 		setLoading(true);
 		setError(null);
 
-		console.log("🚀 === ROZPOCZĘCIE PROCESU LOGOWANIA ===");
+		logger.debug("🚀 === ROZPOCZĘCIE PROCESU LOGOWANIA ===");
 
 		try {
 			const response = await fetch("/api/auth/login", {
@@ -157,28 +152,26 @@ const Login: React.FC = () => {
 				}),
 			});
 
-			console.log("📡 Status odpowiedzi login:", response.status);
+			logger.debug("📡 Status odpowiedzi login:", response.status);
 
 			const data = await response.json();
 
 			if (!response.ok) {
-				console.log("❌ Błąd logowania:", data);
+				logger.debug("❌ Błąd logowania:", data);
 				throw new Error(data.error || "Błąd logowania");
 			}
 
-			console.log("✅ Logowanie poprawne");
-
+			logger.debug("✅ Logowanie poprawne");
 
 			localStorage.setItem("accessToken", data.accessToken);
 			localStorage.setItem("refreshToken", data.refreshToken);
 			localStorage.setItem("user", JSON.stringify(data.user));
 
-			console.log("💾 Tokeny zapisane w localStorage");
-
+			logger.debug("💾 Tokeny zapisane w localStorage");
 
 			await checkOnboardingStatus();
 		} catch (error) {
-			console.log("❌ BŁĄD logowania:", error);
+			logger.debug("❌ BŁĄD logowania:", error);
 			setError(
 				error instanceof Error
 					? error.message
@@ -186,14 +179,13 @@ const Login: React.FC = () => {
 			);
 		} finally {
 			setLoading(false);
-			console.log("⏱️ Proces logowania zakończony");
+			logger.debug("⏱️ Proces logowania zakończony");
 		}
 	};
-	console.log("GOOGLE CLIENT ID:", import.meta.env.VITE_GOOGLE_CLIENT_ID);
+	logger.debug("GOOGLE CLIENT ID:", import.meta.env.VITE_GOOGLE_CLIENT_ID);
 	return (
 		<div className={styles.loginContainer}>
 			<div className={styles.loginCard}>
-				{}
 				<div className={styles.leftPanel}>
 					<div className={styles.illustration}>
 						<img
@@ -217,16 +209,13 @@ const Login: React.FC = () => {
 					</div>
 				</div>
 
-				{}
 				<div className={styles.rightPanel}>
 					<div className={styles.formContainer}>
 						<h2>Zaloguj się</h2>
 
 						<p className={styles.createAccount}>
 							Nie masz konta w domenie Siły Młodych?{" "}
-							<span className={styles.link}>
-								Skontaktuj się z zespołem IT
-							</span>
+							<span className={styles.link}>Skontaktuj się z zespołem IT</span>
 						</p>
 
 						{error && <div className={styles.errorMessage}>{error}</div>}
@@ -269,17 +258,14 @@ const Login: React.FC = () => {
 							</button>
 						</form>
 
-						{}
 						<div className={styles.divider}>
 							<span>lub</span>
 						</div>
 
-						{}
 						<div className={styles.googleButtonWrapper}>
 							<GoogleLogin
 								onSuccess={handleGoogleSuccess}
 								onError={handleGoogleError}
-
 								theme="outline"
 								size="large"
 								text="signin_with"

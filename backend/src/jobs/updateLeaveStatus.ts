@@ -1,23 +1,17 @@
-
 import { PrismaClient } from "@prisma/client";
-
+import { logger } from "../utils/logger";
 const prisma = new PrismaClient();
 
 export async function updateLeaveStatus() {
 	try {
-		console.log("🔄 [JOB] Sprawdzanie statusów urlopowych...");
+		logger.debug("🔄 [JOB] Sprawdzanie statusów urlopowych...");
 
 		const now = new Date();
 		const today = new Date(
-			Date.UTC(
-				now.getFullYear(),
-				now.getMonth(),
-				now.getDate()
-			)
+			Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()),
 		);
 
-		console.log("📅 TODAY:", today.toISOString());
-
+		logger.debug("📅 TODAY:", today.toISOString());
 
 		const usersOnLeave = await prisma.user.findMany({
 			where: {
@@ -42,9 +36,8 @@ export async function updateLeaveStatus() {
 			},
 		});
 
-		console.log("👥 Użytkownicy aktualnie na urlopie:");
+		logger.debug("👥 Użytkownicy aktualnie na urlopie:");
 		console.table(usersOnLeave);
-
 
 		const usersNotOnLeave = await prisma.user.findMany({
 			where: {
@@ -76,9 +69,8 @@ export async function updateLeaveStatus() {
 			},
 		});
 
-		console.log("🔙 Użytkownicy wracający z urlopu:");
+		logger.debug("🔙 Użytkownicy wracający z urlopu:");
 		console.table(usersNotOnLeave);
-
 
 		for (const user of usersOnLeave) {
 			if (user.status !== "vacation") {
@@ -92,19 +84,17 @@ export async function updateLeaveStatus() {
 					},
 				});
 
-				console.log(
+				logger.debug(
 					`✅ ${updatedUser.first_name} ${updatedUser.last_name}: ${user.status} -> vacation (zapisano poprzedni: ${user.status})`,
 				);
 			} else {
-				console.log(
-					`ℹ️ ${user.first_name} ${user.last_name} już ma status vacation (poprzedni: ${user.previous_status || 'brak'})`,
+				logger.debug(
+					`ℹ️ ${user.first_name} ${user.last_name} już ma status vacation (poprzedni: ${user.previous_status || "brak"})`,
 				);
 			}
 		}
 
-
 		for (const user of usersNotOnLeave) {
-
 			const previousStatus = user.previous_status || "active";
 
 			const updatedUser = await prisma.user.update({
@@ -117,16 +107,15 @@ export async function updateLeaveStatus() {
 				},
 			});
 
-			console.log(
+			logger.debug(
 				`✅ ${updatedUser.first_name} ${updatedUser.last_name}: vacation -> ${previousStatus} (przywrócono)`,
 			);
 		}
 
-		console.log(
+		logger.debug(
 			`📊 [JOB] Zakończono: ${usersOnLeave.length} na urlopie, ${usersNotOnLeave.length} wróciło`,
 		);
-
 	} catch (error) {
-		console.error("❌ [JOB] Błąd aktualizacji statusów:", error);
+		logger.error("❌ [JOB] Błąd aktualizacji statusów:", error);
 	}
 }

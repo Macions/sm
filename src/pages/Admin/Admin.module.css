@@ -27,7 +27,7 @@
     font-size: 28px;
     font-weight: 700;
     color: #0f172a;
-    margin: 0 0 8px 0;
+    margin: 0 0 8px;
     display: flex;
     align-items: center;
     gap: 12px;
@@ -71,7 +71,7 @@
     font-size: 22px;
     font-weight: 600;
     color: #0f172a;
-    margin: 0 0 4px 0;
+    margin: 0 0 4px;
 }
 
 .section__subtitle {
@@ -94,12 +94,12 @@
     cursor: pointer;
     transition: all 0.2s;
     white-space: nowrap;
-    box-shadow: 0 4px 12px rgba(124, 58, 237, 0.2);
+    box-shadow: 0 4px 12px rgb(124 58 237 / 20%);
 }
 
 .section__addBtn:hover {
     transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(124, 58, 237, 0.3);
+    box-shadow: 0 6px 20px rgb(124 58 237 / 30%);
 }
 
 .section__filters {
@@ -137,7 +137,7 @@
 .section__searchInput:focus {
     outline: none;
     border-color: #7c3aed;
-    box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.1);
+    box-shadow: 0 0 0 3px rgb(124 58 237 / 10%);
 }
 
 .section__select {
@@ -173,7 +173,7 @@
 }
 
 .userCard:hover {
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    box-shadow: 0 4px 12px rgb(0 0 0 / 5%);
 }
 
 .userCard__header {
@@ -348,7 +348,7 @@
 }
 
 .roleCard:hover {
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    box-shadow: 0 4px 12px rgb(0 0 0 / 5%);
 }
 
 .roleCard__header {
@@ -411,7 +411,7 @@
     font-size: 13px;
     font-weight: 600;
     color: #475569;
-    margin: 0 0 8px 0;
+    margin: 0 0 8px;
 }
 
 .roleCard__permissions {
@@ -496,7 +496,7 @@
 
 .structure__node:hover {
     border-color: #7c3aed;
-    box-shadow: 0 4px 12px rgba(124, 58, 237, 0.1);
+    box-shadow: 0 4px 12px rgb(124 58 237 / 10%);
 }
 
 .structure__nodeContent {
@@ -533,7 +533,7 @@
 .structure__nodeDescription {
     font-size: 13px;
     color: #64748b;
-    margin: 4px 0 8px 0;
+    margin: 4px 0 8px;
 }
 
 .structure__nodeMeta {
@@ -589,7 +589,7 @@
 }
 
 .documentCard:hover {
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    box-shadow: 0 4px 12px rgb(0 0 0 / 5%);
 }
 
 .documentCard__header {
@@ -700,7 +700,7 @@
 }
 
 .projectCard:hover {
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    box-shadow: 0 4px 12px rgb(0 0 0 / 5%);
 }
 
 .projectCard__header {
@@ -811,7 +811,7 @@
 }
 
 .vacancyCard:hover {
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    box-shadow: 0 4px 12px rgb(0 0 0 / 5%);
 }
 
 .vacancyCard__header {
@@ -930,7 +930,7 @@
 }
 
 .statCard:hover {
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    box-shadow: 0 4px 12px rgb(0 0 0 / 5%);
 }
 
 .statCard__icon {
@@ -1156,7 +1156,7 @@
 }
 
 
-@media (max-width: 768px) {
+@media (width <= 768px) {
     .admin {
         padding: 16px;
     }
@@ -1200,7 +1200,7 @@
     }
 }
 
-@media (max-width: 480px) {
+@media (width <= 480px) {
     .statsGrid {
         grid-template-columns: 1fr;
     }
@@ -1370,7 +1370,7 @@
 
 .structureNode__card:hover {
     border-color: #3b82f6;
-    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.1);
+    box-shadow: 0 2px 8px rgb(59 130 246 / 10%);
 }
 
 .structureNode__root {
@@ -1942,7 +1942,7 @@
 .teamForm__field select:focus {
     outline: none;
     border-color: #3b82f6;
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    box-shadow: 0 0 0 3px rgb(59 130 246 / 10%);
 }
 
 .teamForm__actions {
@@ -1983,7 +1983,7 @@
     background: #e5e7eb;
 }
 
-@media (max-width: 768px) {
+@media (width <= 768px) {
     .teamForm__row {
         grid-template-columns: 1fr;
     }
@@ -1997,11 +1997,8 @@
 
 .modalOverlay {
     position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(0, 0, 0, 0.5);
+    inset: 0;
+    background: rgb(0 0 0 / 50%);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -2016,7 +2013,7 @@
     width: 100%;
     max-height: 90vh;
     overflow-y: auto;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 20px 60px rgb(0 0 0 / 30%);
 }
 
 .modal__header {
@@ -2080,7 +2077,7 @@
 .modal__field select:focus {
     outline: none;
     border-color: #3b82f6;
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    box-shadow: 0 0 0 3px rgb(59 130 246 / 10%);
 }
 
 .modal__row {
@@ -2129,7 +2126,7 @@
     background: #2563eb;
 }
 
-@media (max-width: 640px) {
+@media (width <= 640px) {
     .modal__row {
         grid-template-columns: 1fr;
     }
@@ -2172,7 +2169,7 @@
 .logsFilters__input:focus {
     outline: none;
     border-color: #3b82f6;
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    box-shadow: 0 0 0 3px rgb(59 130 246 / 10%);
 }
 
 .logsFilters__clear {
@@ -2210,7 +2207,7 @@
 .logsFilters__select:focus {
     outline: none;
     border-color: #3b82f6;
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    box-shadow: 0 0 0 3px rgb(59 130 246 / 10%);
 }
 
 
@@ -2231,7 +2228,7 @@
 
 .logItem:hover {
     border-color: #d1d5db;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    box-shadow: 0 2px 8px rgb(0 0 0 / 5%);
 }
 
 .logItem__header {
@@ -2481,7 +2478,7 @@
     color: #6b7280;
 }
 
-@media (max-width: 768px) {
+@media (width <= 768px) {
     .logsFilters {
         flex-direction: column;
     }
@@ -2540,7 +2537,7 @@
 .logsFilters__input:focus {
     outline: none;
     border-color: #4f46e5;
-    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+    box-shadow: 0 0 0 3px rgb(79 70 229 / 10%);
 }
 
 .logsFilters__input::placeholder {
@@ -2590,7 +2587,7 @@
 .logsFilters__select:focus {
     outline: none;
     border-color: #4f46e5;
-    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+    box-shadow: 0 0 0 3px rgb(79 70 229 / 10%);
 }
 
 
@@ -2611,7 +2608,7 @@
 
 .logItem:hover {
     border-color: #cbd5e1;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    box-shadow: 0 2px 8px rgb(0 0 0 / 4%);
 }
 
 .logItem__header {
@@ -2796,7 +2793,7 @@
 }
 
 
-@media (max-width: 768px) {
+@media (width <= 768px) {
     .logsFilters {
         flex-direction: column;
         padding: 14px;
@@ -2848,5 +2845,5 @@
 .addMemberForm__input:focus {
     outline: none;
     border-color: #4A6FE8;
-    box-shadow: 0 0 0 3px rgba(74, 111, 232, 0.1);
+    box-shadow: 0 0 0 3px rgb(74 111 232 / 10%);
 }

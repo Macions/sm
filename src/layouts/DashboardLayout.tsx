@@ -1,6 +1,7 @@
 
 
 import { useState, useEffect } from "react";
+import { safeNavigate } from '@/utils/safeNavigation';
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import Sidebar from "../components/layout/Sidebar/Sidebar";
 import Header from "../components/layout/Header/Header";
@@ -30,14 +31,14 @@ export default function DashboardLayout() {
 				});
 
 				if (!response.ok) {
-					console.error("❌ Błąd pobierania profilu:", response.status);
+					logger.error("❌ Błąd pobierania profilu:", response.status);
 					setLoading(false);
 					return;
 				}
 
 				const userData = await response.json();
-				console.log("📋 Profil użytkownika:", userData);
-				console.log("📋 role:", userData.role);
+				logger.debug("📋 Profil użytkownika:", userData);
+				logger.debug("📋 role:", userData.role);
 				setCurrentUser(userData);
 
 
@@ -46,37 +47,37 @@ export default function DashboardLayout() {
 
 				if (userData.role === "admin") {
 					hasSocialAccess = true;
-					console.log("✅ Admin - dostęp do Social Media");
+					logger.debug("✅ Admin - dostęp do Social Media");
 				}
 
 				else {
 					try {
-						console.log("🔍 Sprawdzam przez /api/social/members/check...");
+						logger.debug("🔍 Sprawdzam przez /api/social/members/check...");
 						const socialCheck = await fetch("/api/social/members/check", {
 							headers: { Authorization: `Bearer ${token}` },
 						});
 
 						if (socialCheck.ok) {
 							const checkData = await socialCheck.json();
-							console.log("📊 Wynik check:", checkData);
+							logger.debug("📊 Wynik check:", checkData);
 
 							hasSocialAccess = checkData.isMember === true || checkData.isSocialMember === true;
-							console.log(`📊 hasSocialAccess: ${hasSocialAccess}`);
+							logger.debug(`📊 hasSocialAccess: ${hasSocialAccess}`);
 						} else {
-							console.log(`❌ /api/social/members/check zwrócił ${socialCheck.status}`);
+							logger.debug(`❌ /api/social/members/check zwrócił ${socialCheck.status}`);
 							hasSocialAccess = false;
 						}
 					} catch (error) {
-						console.error("❌ Błąd sprawdzania:", error);
+						logger.error("❌ Błąd sprawdzania:", error);
 						hasSocialAccess = false;
 					}
 				}
 
-				console.log(`🎯 Ostateczny wynik: hasSocialAccess = ${hasSocialAccess}`);
+				logger.debug(`🎯 Ostateczny wynik: hasSocialAccess = ${hasSocialAccess}`);
 				setIsSocialMember(hasSocialAccess);
 
 			} catch (error) {
-				console.error("❌ Błąd:", error);
+				logger.error("❌ Błąd:", error);
 				setIsSocialMember(false);
 			} finally {
 				setLoading(false);
@@ -94,7 +95,7 @@ export default function DashboardLayout() {
 
 	const handleNavSelect = (key: string) => {
 		setActiveNav(key);
-		navigate(`/${key}`);
+		safeNavigate(`/${key}`, navigate);
 	};
 
 	const toggleSidebar = () => {

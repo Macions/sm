@@ -1,4 +1,5 @@
 import Router from "@/router/Router";
+import { logger } from "@/utils/logger";
 import { Toaster } from "react-hot-toast";
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
@@ -7,16 +8,9 @@ function App() {
 	const navigate = useNavigate();
 
 	useEffect(() => {
-
-
-
-
-
-
-
 		(window as any).__navigate = navigate;
 
-		console.log("🔧 [App] Navigation initialized");
+		logger.debug("🔧 [App] Navigation initialized");
 	}, [navigate]);
 
 	return (

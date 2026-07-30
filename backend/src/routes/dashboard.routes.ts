@@ -1,14 +1,11 @@
-
-
 import { Router } from "express";
 import { authMiddleware } from "../middleware/auth.middleware";
 import db from "../config/db";
+import { logger } from "../utils/logger";
 
 const router = Router();
 
-
 router.use(authMiddleware);
-
 
 router.get("/profile", async (req, res) => {
 	try {
@@ -68,11 +65,10 @@ router.get("/profile", async (req, res) => {
 			isTrial: user.is_trial === 1,
 		});
 	} catch (error) {
-		console.error("Błąd pobierania profilu:", error);
+		logger.error("Błąd pobierania profilu:", error);
 		res.status(500).json({ error: "Błąd serwera" });
 	}
 });
-
 
 router.get("/stats", async (req, res) => {
 	try {
@@ -109,11 +105,10 @@ router.get("/stats", async (req, res) => {
 			newGuides: guidesResult[0]?.count || 0,
 		});
 	} catch (error) {
-		console.error("Błąd pobierania statystyk:", error);
+		logger.error("Błąd pobierania statystyk:", error);
 		res.status(500).json({ error: "Błąd serwera" });
 	}
 });
-
 
 router.get("/notifications", async (req, res) => {
 	try {
@@ -149,17 +144,15 @@ router.get("/notifications", async (req, res) => {
 
 		res.json(notifications);
 	} catch (error) {
-		console.error("Błąd pobierania powiadomień:", error);
+		logger.error("Błąd pobierania powiadomień:", error);
 		res.status(500).json({ error: "Błąd serwera" });
 	}
 });
-
 
 router.put("/notifications/:id/read", async (req, res) => {
 	try {
 		const userId = (req as any).user?.id;
 		const { id } = req.params;
-
 
 		const [existing]: any = await db.query(
 			"SELECT id FROM user_notifications WHERE user_id = ? AND notification_id = ?",
@@ -167,13 +160,11 @@ router.put("/notifications/:id/read", async (req, res) => {
 		);
 
 		if (existing.length > 0) {
-
 			await db.query(
 				"UPDATE user_notifications SET `read` = 1, read_at = NOW() WHERE user_id = ? AND notification_id = ?",
 				[userId, id],
 			);
 		} else {
-
 			await db.query(
 				"INSERT INTO user_notifications (user_id, notification_id, `read`, read_at) VALUES (?, ?, 1, NOW())",
 				[userId, id],
@@ -182,16 +173,14 @@ router.put("/notifications/:id/read", async (req, res) => {
 
 		res.json({ success: true });
 	} catch (error) {
-		console.error("Błąd oznaczania jako przeczytane:", error);
+		logger.error("Błąd oznaczania jako przeczytane:", error);
 		res.status(500).json({ error: "Błąd serwera" });
 	}
 });
 
-
 router.put("/notifications/read-all", async (req, res) => {
 	try {
 		const userId = (req as any).user?.id;
-
 
 		const [notifications]: any = await db.query(
 			`SELECT n.id 
@@ -221,17 +210,15 @@ router.put("/notifications/read-all", async (req, res) => {
 
 		res.json({ success: true });
 	} catch (error) {
-		console.error("Błąd oznaczania wszystkich:", error);
+		logger.error("Błąd oznaczania wszystkich:", error);
 		res.status(500).json({ error: "Błąd serwera" });
 	}
 });
-
 
 router.delete("/notifications/:id", async (req, res) => {
 	try {
 		const userId = (req as any).user?.id;
 		const { id } = req.params;
-
 
 		await db.query(
 			"DELETE FROM user_notifications WHERE user_id = ? AND notification_id = ?",
@@ -240,7 +227,7 @@ router.delete("/notifications/:id", async (req, res) => {
 
 		res.json({ success: true });
 	} catch (error) {
-		console.error("Błąd usuwania powiadomienia:", error);
+		logger.error("Błąd usuwania powiadomienia:", error);
 		res.status(500).json({ error: "Błąd serwera" });
 	}
 });

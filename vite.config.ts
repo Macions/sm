@@ -1,19 +1,26 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import path from "path";
-import { fileURLToPath } from 'url';
+import { fileURLToPath } from "url";
+import { visualizer } from "rollup-plugin-visualizer";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // ⭐ WYKRYWA CZY JESTEŚMY NA GITHUB PAGES
-const isGitHubPages = process.env.GITHUB_PAGES === 'true' || process.env.NODE_ENV === 'production';
+const isGitHubPages =
+	process.env.GITHUB_PAGES === "true" || process.env.NODE_ENV === "production";
 
 export default defineConfig({
-	plugins: [react()],
+	plugins: [
+		react(),
+		visualizer({
+			open: true,
+			filename: "stats.html",
+		}),
+	],
 
-
-	base: isGitHubPages ? '/sm/' : '/',
+	base: isGitHubPages ? "/sm/" : "/",
 
 	resolve: {
 		alias: {
@@ -33,8 +40,8 @@ export default defineConfig({
 	},
 
 	build: {
-		outDir: 'dist',
-		assetsDir: 'assets',
+		outDir: "dist",
+		assetsDir: "assets",
 		sourcemap: false,
 		rollupOptions: {
 			output: {
@@ -43,6 +50,8 @@ export default defineConfig({
 		},
 	},
 	define: {
-		'process.env.VITE_API_URL': JSON.stringify('https://sm-backend-po9k.onrender.com')
-	}
+		"process.env.VITE_API_URL": JSON.stringify(
+			"https://sm-backend-po9k.onrender.com",
+		),
+	},
 });

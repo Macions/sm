@@ -1,14 +1,9 @@
-
-
 import { Request, Response } from "express";
 import { PrismaClient } from "@prisma/client";
+import { logger } from "../utils/logger";
 import bcrypt from "bcrypt";
 
 const prisma = new PrismaClient() as any;
-
-
-
-
 
 function mapRoleId(roleId: number | null): string {
 	const roleMap: Record<number, string> = {
@@ -19,14 +14,6 @@ function mapRoleId(roleId: number | null): string {
 	};
 	return roleMap[roleId || 4] || "member";
 }
-
-
-
-
-
-
-
-
 
 export const getMembers = async (req: Request, res: Response) => {
 	try {
@@ -83,7 +70,6 @@ export const getMembers = async (req: Request, res: Response) => {
 			},
 		});
 
-
 		const mappedMembers = members.map((member: any) => ({
 			...member,
 			onboarding_data: member.onboarding_data[0] || null,
@@ -91,7 +77,7 @@ export const getMembers = async (req: Request, res: Response) => {
 
 		res.json(mappedMembers);
 	} catch (error) {
-		console.error("❌ Błąd pobierania członków:", error);
+		logger.error("❌ Błąd pobierania członków:", error);
 		res.status(500).json({ error: "Nie udało się pobrać członków" });
 	}
 };
@@ -191,17 +177,18 @@ export const getMemberById = async (req: Request, res: Response) => {
 
 		res.json(mappedMember);
 	} catch (error) {
-		console.error("❌ Błąd pobierania członka:", error);
+		logger.error("❌ Błąd pobierania członka:", error);
 		res.status(500).json({ error: "Nie udało się pobrać członka" });
 	}
 };
 
-
-
 export const createMember = async (req: Request, res: Response) => {
 	try {
-		console.log("📥 [createMember] - START");
-		console.log("📥 [createMember] - body:", JSON.stringify(req.body, null, 2));
+		logger.debug("📥 [createMember] - START");
+		logger.debug(
+			"📥 [createMember] - body:",
+			JSON.stringify(req.body, null, 2),
+		);
 
 		const {
 			firstName,
@@ -221,22 +208,19 @@ export const createMember = async (req: Request, res: Response) => {
 			contributionInfo,
 		} = req.body;
 
-
 		if (!firstName || !lastName || !email) {
-			console.log("❌ [createMember] - Brak wymaganych pól");
+			logger.debug("❌ [createMember] - Brak wymaganych pól");
 			return res.status(400).json({
 				error: "Imię, nazwisko i email są wymagane",
 			});
 		}
-
 
 		const existingUser = await prisma.user.findUnique({
 			where: { email: email },
 		});
 
 		if (existingUser) {
-			console.log("❌ [createMember] - Email już istnieje:", email);
-
+			logger.debug("❌ [createMember] - Email już istnieje:", email);
 
 			const existingTeamMember = await prisma.teamMember.findFirst({
 				where: {
@@ -253,7 +237,6 @@ export const createMember = async (req: Request, res: Response) => {
 				});
 			}
 
-
 			if (team) {
 				const teamRecord = await prisma.team.findFirst({
 					where: { name: team },
@@ -269,10 +252,8 @@ export const createMember = async (req: Request, res: Response) => {
 						},
 					});
 
-
 					return res.status(200).json({
 						message: `Użytkownik został dodany do zespołu "${team}"`,
-
 					});
 				}
 			}
@@ -281,7 +262,6 @@ export const createMember = async (req: Request, res: Response) => {
 				error: "Użytkownik z tym emailem już istnieje",
 			});
 		}
-
 
 		let username = email.split("@")[0];
 		let counter = 1;
@@ -297,7 +277,6 @@ export const createMember = async (req: Request, res: Response) => {
 			counter++;
 		}
 
-
 		let teamId = null;
 		if (team) {
 			const teamRecord = await prisma.team.findFirst({
@@ -307,7 +286,6 @@ export const createMember = async (req: Request, res: Response) => {
 				teamId = teamRecord.id;
 			}
 		}
-
 
 		const user = await prisma.user.create({
 			data: {
@@ -337,15 +315,6 @@ export const createMember = async (req: Request, res: Response) => {
 			},
 		});
 
-
-
-
-
-
-
-
-
-
 		await prisma.onboarding_data.create({
 			data: {
 				first_name: firstName,
@@ -368,7 +337,6 @@ export const createMember = async (req: Request, res: Response) => {
 				},
 			},
 		});
-
 
 		const mappedMember = {
 			id: user.id.toString(),
@@ -399,17 +367,16 @@ export const createMember = async (req: Request, res: Response) => {
 			},
 		};
 
-		console.log("✅ [createMember] - SUKCES!");
+		logger.debug("✅ [createMember] - SUKCES!");
 		res.status(201).json(mappedMember);
 	} catch (error) {
-		console.error("❌ [createMember] - BŁĄD:", error);
+		logger.error("❌ [createMember] - BŁĄD:", error);
 		res.status(500).json({
 			error: "Nie udało się utworzyć członka",
 			details: error instanceof Error ? error.message : "Nieznany błąd",
 		});
 	}
 };
-
 
 export const updateMember = async (req: Request, res: Response) => {
 	try {
@@ -446,7 +413,6 @@ export const updateMember = async (req: Request, res: Response) => {
 			return res.status(404).json({ error: "Nie znaleziono użytkownika" });
 		}
 
-
 		const user = await prisma.user.update({
 			where: { id: userId },
 			data: {
@@ -461,7 +427,6 @@ export const updateMember = async (req: Request, res: Response) => {
 				join_date: joinDate ? new Date(joinDate) : undefined,
 			},
 		});
-
 
 		const existingOnboarding = await prisma.onboarding_data.findFirst({
 			where: { user_id: userId },
@@ -536,11 +501,10 @@ export const updateMember = async (req: Request, res: Response) => {
 
 		res.json(mappedMember);
 	} catch (error) {
-		console.error("❌ Błąd aktualizacji członka:", error);
+		logger.error("❌ Błąd aktualizacji członka:", error);
 		res.status(500).json({ error: "Nie udało się zaktualizować członka" });
 	}
 };
-
 
 export const deleteMember = async (req: Request, res: Response) => {
 	try {
@@ -559,7 +523,6 @@ export const deleteMember = async (req: Request, res: Response) => {
 			return res.status(404).json({ error: "Nie znaleziono użytkownika" });
 		}
 
-
 		await prisma.user.update({
 			where: { id: userId },
 			data: { is_active: false },
@@ -567,7 +530,7 @@ export const deleteMember = async (req: Request, res: Response) => {
 
 		res.status(204).send();
 	} catch (error) {
-		console.error("❌ Błąd usuwania członka:", error);
+		logger.error("❌ Błąd usuwania członka:", error);
 		res.status(500).json({ error: "Nie udało się usunąć członka" });
 	}
 };

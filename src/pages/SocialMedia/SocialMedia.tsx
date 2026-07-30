@@ -2,6 +2,7 @@ import { FaInstagram, FaTiktok, FaFacebook, FaYoutube } from "react-icons/fa";
 import toast from "react-hot-toast";
 import { ConfirmDialog } from "../../components/common/ConfirmDialog";
 import { useState, useMemo, useEffect, useRef } from "react";
+import { logger } from "@/utils/logger";
 import {
 	Users,
 	Search,
@@ -26,7 +27,6 @@ import {
 } from "lucide-react";
 import styles from "./SocialMedia.module.css";
 
-type EditMode = "publication" | "task" | "contact" | null;
 type SocialRole =
 	| "instagram"
 	| "tiktok"
@@ -488,7 +488,6 @@ function EditPublicationModal({
 					</button>
 				</div>
 				<form onSubmit={handleSubmit} className={styles.modal__form}>
-					{}
 					<div className={styles.modal__field}>
 						<label className={styles.modal__label}>Tytuł *</label>
 						<input
@@ -1227,7 +1226,6 @@ function AddCreatorModal({
 					</button>
 				</div>
 				<form onSubmit={handleSubmit} className={styles.modal__form}>
-					{}
 					<div className={styles.modal__field}>
 						<label className={styles.modal__label}>Użytkownik *</label>
 						<div className={styles.searchableSelect} ref={dropdownRef}>
@@ -1299,7 +1297,6 @@ function AddCreatorModal({
 						</div>
 					</div>
 
-					{}
 					<div className={styles.modal__field}>
 						<label className={styles.modal__label}>Dostępność *</label>
 						<input
@@ -1314,7 +1311,6 @@ function AddCreatorModal({
 						/>
 					</div>
 
-					{}
 					<div className={styles.modal__field}>
 						<label className={styles.modal__label}>Doświadczenie</label>
 						<select
@@ -1470,7 +1466,6 @@ function AddMemberModal({
 								)}
 							</div>
 
-							{}
 							{isDropdownOpen && !selectedUser && (
 								<div className={styles.searchableSelect__dropdown}>
 									{filteredUsers.length === 0 ? (
@@ -2006,17 +2001,7 @@ function AddContactModal({
 function TeamSection({ members, canManage, onAddMember }: TeamSectionProps) {
 	const [searchTerm, setSearchTerm] = useState("");
 	const [selectedRole, setSelectedRole] = useState<SocialRole | "all">("all");
-	const [editingPublication, setEditingPublication] =
-		useState<Publication | null>(null);
-	const [editingTask, setEditingTask] = useState<Task | null>(null);
-	const [editingContact, setEditingContact] = useState<MediaContact | null>(
-		null,
-	);
 
-	const [isEditPublicationModalOpen, setIsEditPublicationModalOpen] =
-		useState(false);
-	const [isEditTaskModalOpen, setIsEditTaskModalOpen] = useState(false);
-	const [isEditContactModalOpen, setIsEditContactModalOpen] = useState(false);
 	const filteredMembers = useMemo(() => {
 		return members.filter((member) => {
 			const matchesSearch =
@@ -2165,7 +2150,7 @@ function CreatorsSection({
 						Osoby, które chcą regularnie nagrywać materiały wideo.
 					</p>
 				</div>
-				{}
+
 				{canManage && (
 					<button className={styles.section__addBtn} onClick={onAddCreator}>
 						<Plus size={18} />
@@ -2402,20 +2387,6 @@ function MaterialsBoard({
 		return materials.filter((m) => m.stage === stage);
 	};
 
-	const getStatusLabel = (status: string): string => {
-		if (status === "vacation") {
-			return "Urlop";
-		}
-
-		return "Aktywny";
-	};
-
-	const getStatusClass = (status: string): string => {
-		if (status === "vacation") {
-			return styles.statusVacation;
-		}
-		return styles.statusActive;
-	};
 	const getPriorityColor = (priority: string) => {
 		switch (priority) {
 			case "high":
@@ -2737,7 +2708,6 @@ export default function SocialMedia({ title }: { title?: string }) {
 	const [tasks, setTasks] = useState<Task[]>([]);
 	const [contacts, setContacts] = useState<MediaContact[]>([]);
 	const [loading, setLoading] = useState(true);
-	const [currentUser, setCurrentUser] = useState<any>(null);
 	const [canManage, setCanManage] = useState(false);
 	const [isMemberModalOpen, setIsMemberModalOpen] = useState(false);
 	const [isPublicationModalOpen, setIsPublicationModalOpen] = useState(false);
@@ -2775,7 +2745,7 @@ export default function SocialMedia({ title }: { title?: string }) {
 			setCreators([...creators, newCreator]);
 			toast.success("Twórca dodany!");
 		} catch (error) {
-			console.error("❌ Błąd:", error);
+			logger.error("❌ Błąd:", error);
 			toast.error("Nie udało się dodać twórcy");
 		}
 	};
@@ -2795,7 +2765,7 @@ export default function SocialMedia({ title }: { title?: string }) {
 			setMaterials(materials.map((m) => (m.id === id ? updated : m)));
 			toast.success("Materiał zaktualizowany!");
 		} catch (error) {
-			console.error("❌ Błąd:", error);
+			logger.error("❌ Błąd:", error);
 			toast.error("Nie udało się zaktualizować materiału");
 		}
 	};
@@ -2816,7 +2786,7 @@ export default function SocialMedia({ title }: { title?: string }) {
 					setMaterials(materials.filter((m) => m.id !== id));
 					toast.success("Materiał usunięty!");
 				} catch (error) {
-					console.error("❌ Błąd:", error);
+					logger.error("❌ Błąd:", error);
 					toast.error("Nie udało się usunąć materiału");
 				}
 			},
@@ -2843,7 +2813,7 @@ export default function SocialMedia({ title }: { title?: string }) {
 			setMaterials([...materials, newMaterial]);
 			toast.success("Materiał dodany!");
 		} catch (error) {
-			console.error("❌ Błąd:", error);
+			logger.error("❌ Błąd:", error);
 			toast.error("Nie udało się dodać materiału");
 		}
 	};
@@ -2872,7 +2842,6 @@ export default function SocialMedia({ title }: { title?: string }) {
 					headers: { Authorization: `Bearer ${token}` },
 				});
 				const userData = await userRes.json();
-				setCurrentUser(userData);
 				setCanManage(
 					userData.role === "admin" || userData.role === "coordinator",
 				);
@@ -2917,7 +2886,7 @@ export default function SocialMedia({ title }: { title?: string }) {
 				if (contactsRes.ok) setContacts(await contactsRes.json());
 				if (usersRes.ok) setAvailableUsers(await usersRes.json());
 			} catch (error) {
-				console.error("❌ Błąd pobierania danych:", error);
+				logger.error("❌ Błąd pobierania danych:", error);
 				toast.error("Nie udało się pobrać danych");
 			} finally {
 				setLoading(false);
@@ -2961,7 +2930,7 @@ export default function SocialMedia({ title }: { title?: string }) {
 			setPublications(publications.map((p) => (p.id === id ? updated : p)));
 			toast.success("Publikacja zaktualizowana!");
 		} catch (error) {
-			console.error("❌ Błąd:", error);
+			logger.error("❌ Błąd:", error);
 			toast.error("Nie udało się zaktualizować publikacji");
 		}
 	};
@@ -2982,7 +2951,7 @@ export default function SocialMedia({ title }: { title?: string }) {
 			setTasks(tasks.map((t) => (t.id === id ? updated : t)));
 			toast.success("Zadanie zaktualizowane!");
 		} catch (error) {
-			console.error("❌ Błąd:", error);
+			logger.error("❌ Błąd:", error);
 			toast.error("Nie udało się zaktualizować zadania");
 		}
 	};
@@ -3003,7 +2972,7 @@ export default function SocialMedia({ title }: { title?: string }) {
 			setContacts(contacts.map((c) => (c.id === id ? updated : c)));
 			toast.success("Kontakt zaktualizowany!");
 		} catch (error) {
-			console.error("❌ Błąd:", error);
+			logger.error("❌ Błąd:", error);
 			toast.error("Nie udało się zaktualizować kontaktu");
 		}
 	};
@@ -3046,7 +3015,7 @@ export default function SocialMedia({ title }: { title?: string }) {
 					setPublications(publications.filter((p) => p.id !== id));
 					toast.success("Publikacja usunięta!");
 				} catch (error) {
-					console.error("❌ Błąd:", error);
+					logger.error("❌ Błąd:", error);
 					toast.error("Nie udało się usunąć publikacji");
 				}
 			},
@@ -3069,7 +3038,7 @@ export default function SocialMedia({ title }: { title?: string }) {
 					setTasks(tasks.filter((t) => t.id !== id));
 					toast.success("Zadanie usunięte!");
 				} catch (error) {
-					console.error("❌ Błąd:", error);
+					logger.error("❌ Błąd:", error);
 					toast.error("Nie udało się usunąć zadania");
 				}
 			},
@@ -3092,7 +3061,7 @@ export default function SocialMedia({ title }: { title?: string }) {
 					setContacts(contacts.filter((c) => c.id !== id));
 					toast.success("Kontakt usunięty!");
 				} catch (error) {
-					console.error("❌ Błąd:", error);
+					logger.error("❌ Błąd:", error);
 					toast.error("Nie udało się usunąć kontaktu");
 				}
 			},
@@ -3129,7 +3098,7 @@ export default function SocialMedia({ title }: { title?: string }) {
 
 			toast.success("Członek dodany!");
 		} catch (error) {
-			console.error("❌ Błąd:", error);
+			logger.error("❌ Błąd:", error);
 			toast.error(
 				error instanceof Error ? error.message : "Nie udało się dodać członka",
 			);
@@ -3152,7 +3121,7 @@ export default function SocialMedia({ title }: { title?: string }) {
 			setPublications([...publications, newPublication]);
 			toast.success("Publikacja dodana!");
 		} catch (error) {
-			console.error("❌ Błąd:", error);
+			logger.error("❌ Błąd:", error);
 			toast.error("Nie udało się dodać publikacji");
 		}
 	};
@@ -3173,7 +3142,7 @@ export default function SocialMedia({ title }: { title?: string }) {
 			setTasks([...tasks, newTask]);
 			toast.success("Zadanie dodane!");
 		} catch (error) {
-			console.error("❌ Błąd:", error);
+			logger.error("❌ Błąd:", error);
 			toast.error("Nie udało się dodać zadania");
 		}
 	};
@@ -3194,7 +3163,7 @@ export default function SocialMedia({ title }: { title?: string }) {
 			setContacts([...contacts, newContact]);
 			toast.success("Kontakt dodany!");
 		} catch (error) {
-			console.error("❌ Błąd:", error);
+			logger.error("❌ Błąd:", error);
 			toast.error("Nie udało się dodać kontaktu");
 		}
 	};
@@ -3209,7 +3178,6 @@ export default function SocialMedia({ title }: { title?: string }) {
 
 	return (
 		<div className={styles.socialMedia}>
-			{}
 			<div className={styles.header}>
 				<div className={styles.header__left}>
 					<h1 className={styles.header__title}>{title ?? "Social Media"}</h1>
@@ -3221,20 +3189,18 @@ export default function SocialMedia({ title }: { title?: string }) {
 				</div>
 			</div>
 
-			{}
 			<TeamSection
 				members={members}
 				canManage={canManage}
 				onAddMember={() => setIsMemberModalOpen(true)}
 			/>
-			{}
+
 			<CreatorsSection
 				creators={creators}
 				canManage={canManage}
 				onAddCreator={() => setIsCreatorModalOpen(true)}
 			/>
 
-			{}
 			<MaterialsBoard
 				materials={materials}
 				canManage={canManage}
@@ -3264,7 +3230,7 @@ export default function SocialMedia({ title }: { title?: string }) {
 				onSave={handleAddCreator}
 				availableUsers={availableUsers}
 			/>
-			{}
+
 			<PublicationsSection
 				publications={publications}
 				canManage={canManage}
@@ -3273,7 +3239,6 @@ export default function SocialMedia({ title }: { title?: string }) {
 				onDeletePublication={handleDeletePublication}
 			/>
 
-			{}
 			<TasksSection
 				tasks={tasks}
 				canManage={canManage}
@@ -3282,7 +3247,6 @@ export default function SocialMedia({ title }: { title?: string }) {
 				onDeleteTask={handleDeleteTask}
 			/>
 
-			{}
 			<ContactsSection
 				contacts={contacts}
 				canManage={canManage}
@@ -3291,7 +3255,6 @@ export default function SocialMedia({ title }: { title?: string }) {
 				onDeleteContact={handleDeleteContact}
 			/>
 
-			{}
 			<section className={styles.section}>
 				<div className={styles.infoBox}>
 					<div className={styles.infoBox__icon}>

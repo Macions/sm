@@ -7,7 +7,7 @@
 	min-height: 100vh;
 	background: var(--bg-app, #f1f1f7);
 	font-family:
-		"Inter",
+		Inter,
 		"Segoe UI",
 		-apple-system,
 		BlinkMacSystemFont,
@@ -24,19 +24,19 @@
 }
 
 
-@media (max-width: 980px) {
+@media (width <= 980px) {
 	.main {
 		padding: 20px;
 	}
 }
 
-@media (max-width: 768px) {
+@media (width <= 768px) {
 	.main {
 		padding: 16px;
 	}
 }
 
-@media (max-width: 480px) {
+@media (width <= 480px) {
 	.main {
 		padding: 12px;
 	}
@@ -51,7 +51,7 @@
 	min-height: 100vh;
 	background: var(--bg-app, #f1f1f7);
 	font-family:
-		"Inter",
+		Inter,
 		"Segoe UI",
 		-apple-system,
 		BlinkMacSystemFont,
@@ -75,26 +75,26 @@
 }
 
 
-@media (max-width: 980px) {
+@media (width <= 980px) {
 	.main {
 		padding: 20px;
 	}
 }
 
-@media (max-width: 768px) {
+@media (width <= 768px) {
 	.main {
 		padding: 16px;
 	}
 }
 
-@media (max-width: 480px) {
+@media (width <= 480px) {
 	.main {
 		padding: 12px;
 	}
 }
 
 
-@media (max-width: 480px) {
+@media (width <= 480px) {
 	.toggleBtn {
 		display: none !important;
 	}
@@ -110,7 +110,7 @@
 	height: 40px;
 	border: none;
 	border-radius: 50%;
-	background: rgba(255, 255, 255, 0.1);
+	background: rgb(255 255 255 / 10%);
 	color: #fff;
 	cursor: pointer;
 	transition: all 0.2s ease;
@@ -118,7 +118,7 @@
 }
 
 .toggleBtn:hover {
-	background: rgba(255, 255, 255, 0.2);
+	background: rgb(255 255 255 / 20%);
 	transform: scale(1.05);
 }
 
@@ -133,7 +133,7 @@
 }
 
 
-@media (max-width: 480px) {
+@media (width <= 480px) {
 	.toggleBtn {
 		display: none !important;
 	}

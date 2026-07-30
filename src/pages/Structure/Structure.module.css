@@ -16,8 +16,7 @@ body {
 .dashboard,
 .jobie {
 	min-height: 100vh;
-	overflow-y: auto;
-	overflow-x: hidden;
+	overflow: hidden auto;
 }
 
 
@@ -49,7 +48,7 @@ body {
 	font-size: 28px;
 	font-weight: 700;
 	color: var(--purple-900, #2e1a6b);
-	margin: 0 0 6px 0;
+	margin: 0 0 6px;
 	letter-spacing: -0.5px;
 }
 
@@ -93,11 +92,11 @@ body {
 	display: flex;
 	align-items: center;
 	gap: 12px;
-	background: var(--card-bg, #ffffff);
+	background: var(--card-bg, #fff);
 	border-radius: 999px;
 	padding: 12px 20px;
 	border: 2px solid var(--border-soft, #e0d9f5);
-	box-shadow: var(--shadow-card, 0 10px 30px -12px rgba(46, 26, 107, 0.14));
+	box-shadow: var(--shadow-card, 0 10px 30px -12px rgb(46 26 107 / 14%));
 	transition: all 0.25s ease;
 	max-width: 600px;
 }
@@ -105,7 +104,7 @@ body {
 .searchBox:focus-within {
 	border-color: var(--purple-600, #5c3ae8);
 	box-shadow:
-		0 0 0 4px rgba(92, 58, 232, 0.1),
+		0 0 0 4px rgb(92 58 232 / 10%),
 		var(--shadow-card);
 }
 
@@ -178,7 +177,7 @@ body {
 }
 
 .nodeRoot .nodeCard__icon {
-	background: rgba(255, 255, 255, 0.2) !important;
+	background: rgb(255 255 255 / 20%) !important;
 	color: #fff !important;
 }
 
@@ -188,28 +187,28 @@ body {
 
 .nodeRoot .nodeCard__role,
 .nodeRoot .nodeCard__description {
-	color: rgba(255, 255, 255, 0.85) !important;
+	color: rgb(255 255 255 / 85%) !important;
 }
 
 .nodeRoot .nodeCard__count {
-	color: rgba(255, 255, 255, 0.7) !important;
+	color: rgb(255 255 255 / 70%) !important;
 }
 
 .nodeRoot .nodeCard__status {
-	color: rgba(255, 255, 255, 0.8) !important;
-	background: rgba(255, 255, 255, 0.15) !important;
+	color: rgb(255 255 255 / 80%) !important;
+	background: rgb(255 255 255 / 15%) !important;
 }
 
 .nodeRoot .nodeCard__footer {
-	border-top-color: rgba(255, 255, 255, 0.1) !important;
+	border-top-color: rgb(255 255 255 / 10%) !important;
 }
 
 .nodeRoot .nodeCard__toggle {
-	color: rgba(255, 255, 255, 0.7) !important;
+	color: rgb(255 255 255 / 70%) !important;
 }
 
 .nodeRoot .nodeCard__toggle:hover {
-	background: rgba(255, 255, 255, 0.1) !important;
+	background: rgb(255 255 255 / 10%) !important;
 	color: #fff !important;
 }
 
@@ -225,10 +224,10 @@ body {
 
 
 .nodeCard {
-	background: var(--card-bg, #ffffff);
+	background: var(--card-bg, #fff);
 	border-radius: var(--radius-lg, 20px);
 	padding: 16px 20px;
-	box-shadow: var(--shadow-card, 0 12px 32px -12px rgba(46, 26, 107, 0.18));
+	box-shadow: var(--shadow-card, 0 12px 32px -12px rgb(46 26 107 / 18%));
 	border: 1.5px solid var(--border-soft, #e6dfff);
 	cursor: pointer;
 	transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -247,7 +246,7 @@ body {
 
 .nodeCard:hover {
 	transform: translateY(-4px);
-	box-shadow: 0 20px 40px -12px rgba(92, 58, 232, 0.25);
+	box-shadow: 0 20px 40px -12px rgb(92 58 232 / 25%);
 	border-color: var(--purple-300, #b8a5e8);
 }
 
@@ -322,7 +321,6 @@ body {
 }
 
 @keyframes pulse {
-
 	0%,
 	100% {
 		opacity: 1;
@@ -394,23 +392,22 @@ body {
 .nodeHighlighted {
 	border-color: var(--purple-600, #5c3ae8) !important;
 	box-shadow:
-		0 0 0 4px rgba(92, 58, 232, 0.2),
+		0 0 0 4px rgb(92 58 232 / 20%),
 		var(--shadow-card) !important;
 	animation: highlightPulse 2s ease-in-out;
 }
 
 @keyframes highlightPulse {
-
 	0%,
 	100% {
 		box-shadow:
-			0 0 0 4px rgba(92, 58, 232, 0.2),
+			0 0 0 4px rgb(92 58 232 / 20%),
 			var(--shadow-card);
 	}
 
 	50% {
 		box-shadow:
-			0 0 0 8px rgba(92, 58, 232, 0.15),
+			0 0 0 8px rgb(92 58 232 / 15%),
 			var(--shadow-card);
 	}
 }
@@ -522,8 +519,7 @@ body {
 
 .childrenContainer {
 	display: flex;
-	flex-direction: row;
-	flex-wrap: wrap;
+	flex-flow: row wrap;
 	justify-content: center;
 	align-items: flex-start;
 	gap: 30px;
@@ -605,7 +601,7 @@ body {
 
 
 
-@media (max-width: 1024px) {
+@media (width <= 1024px) {
 	.structure {
 		padding: 16px 20px 30px;
 	}
@@ -648,7 +644,7 @@ body {
 }
 
 
-@media (max-width: 820px) {
+@media (width <= 820px) {
 	.header {
 		flex-direction: column;
 		gap: 16px;
@@ -682,7 +678,7 @@ body {
 }
 
 
-@media (max-width: 480px) {
+@media (width <= 480px) {
 	.structure {
 		padding: 12px 14px 20px;
 	}
@@ -817,7 +813,7 @@ body {
 }
 
 
-@media (max-width: 380px) {
+@media (width <= 380px) {
 	.structure {
 		padding: 8px 10px 16px;
 	}
@@ -921,7 +917,6 @@ body {
 }
 
 @keyframes dragShake {
-
 	0%,
 	100% {
 		transform: translateX(0);
@@ -955,7 +950,7 @@ body {
 	}
 }
 
-@media (max-width: 1024px) {
+@media (width <= 1024px) {
 	.dragHint {
 		display: flex;
 	}
@@ -976,7 +971,7 @@ body {
 	border-radius: var(--radius-lg, 20px);
 	background: radial-gradient(ellipse at center, #f8f7fc 0%, #e8e4f5 100%);
 	border: 1px solid var(--border-soft, #e0d9f5);
-	box-shadow: inset 0 2px 20px rgba(46, 26, 107, 0.06);
+	box-shadow: inset 0 2px 20px rgb(46 26 107 / 6%);
 	cursor: grab;
 	margin-bottom: 12px;
 }
@@ -993,8 +988,8 @@ body {
 	width: 100%;
 	height: 100%;
 	background-image:
-		linear-gradient(rgba(92, 58, 232, 0.04) 1px, transparent 1px),
-		linear-gradient(90deg, rgba(92, 58, 232, 0.04) 1px, transparent 1px);
+		linear-gradient(rgb(92 58 232 / 4%) 1px, transparent 1px),
+		linear-gradient(90deg, rgb(92 58 232 / 4%) 1px, transparent 1px);
 	background-size: 60px 60px;
 	pointer-events: none;
 	z-index: 0;
@@ -1010,7 +1005,7 @@ body {
 	background: var(--purple-400, #9a85d8);
 	border-radius: 50%;
 	transform: translate(-50%, -50%);
-	box-shadow: 0 0 20px rgba(92, 58, 232, 0.2);
+	box-shadow: 0 0 20px rgb(92 58 232 / 20%);
 }
 
 
@@ -1037,10 +1032,10 @@ body {
 	display: flex;
 	align-items: center;
 	gap: 8px;
-	background: var(--card-bg, #ffffff);
+	background: var(--card-bg, #fff);
 	padding: 8px 12px;
 	border-radius: var(--radius-pill, 999px);
-	box-shadow: 0 8px 32px -8px rgba(46, 26, 107, 0.2);
+	box-shadow: 0 8px 32px -8px rgb(46 26 107 / 20%);
 	border: 1px solid var(--border-soft, #e0d9f5);
 	z-index: 10;
 }
@@ -1112,7 +1107,6 @@ body {
 }
 
 @keyframes dragShake {
-
 	0%,
 	100% {
 		transform: translateX(0);
@@ -1140,13 +1134,13 @@ body {
 }
 
 
-@media (max-width: 1024px) {
+@media (width <= 1024px) {
 	.mapContainer {
 		height: 500px;
 	}
 }
 
-@media (max-width: 768px) {
+@media (width <= 768px) {
 	.mapContainer {
 		height: 400px;
 		border-radius: var(--radius-md, 16px);
@@ -1174,7 +1168,7 @@ body {
 	}
 }
 
-@media (max-width: 480px) {
+@media (width <= 480px) {
 	.mapContainer {
 		height: 350px;
 		border-radius: var(--radius-sm, 12px);
@@ -1201,7 +1195,7 @@ body {
 	}
 }
 
-@media (max-width: 1024px) {
+@media (width <= 1024px) {
 	.dragHint {
 		display: flex;
 	}
@@ -1280,12 +1274,12 @@ body {
 	font-weight: 500;
 	letter-spacing: 0.3px;
 	text-align: center;
-	background: rgba(255, 255, 255, 0.85);
+	background: rgb(255 255 255 / 85%);
 	backdrop-filter: blur(8px);
 	padding: 8px 20px;
 	border-radius: 20px;
-	box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
-	border: 1px solid rgba(124, 58, 237, 0.15);
+	box-shadow: 0 2px 12px rgb(0 0 0 / 6%);
+	border: 1px solid rgb(124 58 237 / 15%);
 	position: relative;
 	z-index: 2;
 }
@@ -1302,8 +1296,8 @@ body {
 	width: 2px;
 	height: 30px;
 	background: linear-gradient(to bottom,
-			rgba(124, 58, 237, 0.4),
-			rgba(124, 58, 237, 0.8));
+			rgb(124 58 237 / 40%),
+			rgb(124 58 237 / 80%));
 	position: relative;
 }
 
@@ -1316,15 +1310,15 @@ body {
 	width: 2px;
 	height: 20px;
 	background: linear-gradient(to bottom,
-			rgba(124, 58, 237, 0.8),
-			rgba(124, 58, 237, 0.2));
+			rgb(124 58 237 / 80%),
+			rgb(124 58 237 / 20%));
 }
 
 .promptArrowHead {
 	color: #7c3aed;
 	animation: arrowPulse 2s ease-in-out infinite;
 	margin-top: -2px;
-	filter: drop-shadow(0 2px 4px rgba(124, 58, 237, 0.2));
+	filter: drop-shadow(0 2px 4px rgb(124 58 237 / 20%));
 }
 
 
@@ -1339,12 +1333,12 @@ body {
 	color: #6b7280;
 	font-size: 15px;
 	font-weight: 500;
-	background: rgba(255, 255, 255, 0.85);
+	background: rgb(255 255 255 / 85%);
 	backdrop-filter: blur(8px);
 	padding: 8px 18px;
 	border-radius: 20px;
-	box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
-	border: 1px solid rgba(124, 58, 237, 0.15);
+	box-shadow: 0 2px 12px rgb(0 0 0 / 6%);
+	border: 1px solid rgb(124 58 237 / 15%);
 }
 
 .promptArrowRight {
@@ -1357,8 +1351,8 @@ body {
 	width: 40px;
 	height: 2px;
 	background: linear-gradient(to right,
-			rgba(124, 58, 237, 0.8),
-			rgba(124, 58, 237, 0.3));
+			rgb(124 58 237 / 80%),
+			rgb(124 58 237 / 30%));
 }
 
 .promptArrowHeadRight {
@@ -1368,7 +1362,6 @@ body {
 
 
 @keyframes promptFloat {
-
 	0%,
 	100% {
 		transform: translateY(0);
@@ -1380,7 +1373,6 @@ body {
 }
 
 @keyframes arrowPulse {
-
 	0%,
 	100% {
 		transform: translateY(0);
@@ -1394,7 +1386,6 @@ body {
 }
 
 @keyframes arrowPulseRight {
-
 	0%,
 	100% {
 		transform: translateX(0);
@@ -1408,7 +1399,7 @@ body {
 }
 
 
-@media (max-width: 768px) {
+@media (width <= 768px) {
 	.promptText {
 		font-size: 13px;
 		padding: 6px 14px;
@@ -1453,20 +1444,20 @@ body {
 	align-items: center;
 	gap: 6px;
 	padding: 3px 10px;
-	background: rgba(124, 58, 237, 0.08);
+	background: rgb(124 58 237 / 8%);
 	color: var(--purple-700);
 	border-radius: 12px;
 	font-size: 12px;
 	font-weight: 500;
 	text-decoration: none;
 	transition: all 0.2s;
-	border: 1px solid rgba(124, 58, 237, 0.1);
+	border: 1px solid rgb(124 58 237 / 10%);
 }
 
 .nodeCard__email:hover {
-	background: rgba(124, 58, 237, 0.15);
+	background: rgb(124 58 237 / 15%);
 	transform: scale(1.02);
-	border-color: rgba(124, 58, 237, 0.2);
+	border-color: rgb(124 58 237 / 20%);
 }
 
 .nodeCard__email span {
@@ -1479,18 +1470,18 @@ body {
 
 
 .nodeRoot .nodeCard__email {
-	background: rgba(255, 255, 255, 0.15);
-	color: rgba(255, 255, 255, 0.9);
-	border-color: rgba(255, 255, 255, 0.2);
+	background: rgb(255 255 255 / 15%);
+	color: rgb(255 255 255 / 90%);
+	border-color: rgb(255 255 255 / 20%);
 }
 
 .nodeRoot .nodeCard__email:hover {
-	background: rgba(255, 255, 255, 0.25);
-	border-color: rgba(255, 255, 255, 0.3);
+	background: rgb(255 255 255 / 25%);
+	border-color: rgb(255 255 255 / 30%);
 }
 
 
-@media (max-width: 768px) {
+@media (width <= 768px) {
 	.nodeCard__footerLeft {
 		flex-direction: column;
 		align-items: flex-start;
