@@ -1,5 +1,3 @@
-
-
 import pool from "../config/db";
 
 export interface OnboardingData {
@@ -31,14 +29,12 @@ export class OnboardingService {
 		try {
 			await connection.beginTransaction();
 
-
 			const [existing]: any[] = await connection.query(
 				"SELECT id FROM onboarding_data WHERE user_id = ?",
 				[userId],
 			);
 
 			if (existing.length > 0) {
-
 				await connection.query(
 					`UPDATE onboarding_data 
                      SET first_name = ?, last_name = ?, email = ?, phone = ?, 
@@ -67,7 +63,6 @@ export class OnboardingService {
 					],
 				);
 			} else {
-
 				await connection.query(
 					`INSERT INTO onboarding_data 
                      (user_id, first_name, last_name, email, phone, province, 
@@ -93,7 +88,6 @@ export class OnboardingService {
 					],
 				);
 			}
-
 
 			await connection.query(
 				`UPDATE users 

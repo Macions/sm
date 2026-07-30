@@ -1,101 +1,94 @@
-
-import api from './api';
+import api from "./api";
+import { logger } from "../utils/logger";
 
 export interface LoginCredentials {
-    email: string;
-    password: string;
+	email: string;
+	password: string;
 }
 
 export interface RegisterData {
-    email: string;
-    password: string;
-    first_name: string;
-    last_name: string;
-    username?: string;
+	email: string;
+	password: string;
+	first_name: string;
+	last_name: string;
+	username?: string;
 }
 
 export interface AuthResponse {
-    accessToken: string;
-    refreshToken: string;
-    user: {
-        id: string;
-        email: string;
-        first_name: string;
-        last_name: string;
-        role: string;
-        team: string | null;
-        status: string;
-    };
-    onboardingCompleted: boolean;
+	accessToken: string;
+	refreshToken: string;
+	user: {
+		id: string;
+		email: string;
+		first_name: string;
+		last_name: string;
+		role: string;
+		team: string | null;
+		status: string;
+	};
+	onboardingCompleted: boolean;
 }
 
 class AuthService {
+	async login(credentials: LoginCredentials): Promise<AuthResponse> {
+		try {
+			const response = await api.post("/api/auth/login", credentials);
+			const data = response.data;
 
-    async login(credentials: LoginCredentials): Promise<AuthResponse> {
-        try {
-            const response = await api.post('/api/auth/login', credentials);
-            const data = response.data;
+			localStorage.setItem("accessToken", data.accessToken);
+			localStorage.setItem("refreshToken", data.refreshToken);
+			localStorage.setItem("user", JSON.stringify(data.user));
 
+			return data;
+		} catch (error) {
+			logger.error("❌ Błąd logowania:", error);
+			throw error;
+		}
+	}
 
-            localStorage.setItem('accessToken', data.accessToken);
-            localStorage.setItem('refreshToken', data.refreshToken);
-            localStorage.setItem('user', JSON.stringify(data.user));
+	async register(data: RegisterData): Promise<any> {
+		try {
+			const response = await api.post("/api/auth/register", data);
+			return response.data;
+		} catch (error) {
+			logger.error("❌ Błąd rejestracji:", error);
+			throw error;
+		}
+	}
 
-            return data;
-        } catch (error) {
-            console.error('❌ Błąd logowania:', error);
-            throw error;
-        }
-    }
+	logout(): void {
+		localStorage.removeItem("accessToken");
+		localStorage.removeItem("refreshToken");
+		localStorage.removeItem("user");
+		throw new Error("Unauthorized - please login");
+	}
 
+	getCurrentUser(): AuthResponse["user"] | null {
+		const user = localStorage.getItem("user");
+		return user ? JSON.parse(user) : null;
+	}
 
-    async register(data: RegisterData): Promise<any> {
-        try {
-            const response = await api.post('/api/auth/register', data);
-            return response.data;
-        } catch (error) {
-            console.error('❌ Błąd rejestracji:', error);
-            throw error;
-        }
-    }
+	isAuthenticated(): boolean {
+		return !!localStorage.getItem("accessToken");
+	}
 
+	async refreshToken(): Promise<string> {
+		try {
+			const refreshToken = localStorage.getItem("refreshToken");
+			if (!refreshToken) {
+				throw new Error("Brak tokena odświeżania");
+			}
 
-    logout(): void {
-        localStorage.removeItem('accessToken');
-        localStorage.removeItem('refreshToken');
-        localStorage.removeItem('user');
-        navigate("/login");
-    }
-
-
-    getCurrentUser(): AuthResponse['user'] | null {
-        const user = localStorage.getItem('user');
-        return user ? JSON.parse(user) : null;
-    }
-
-
-    isAuthenticated(): boolean {
-        return !!localStorage.getItem('accessToken');
-    }
-
-
-    async refreshToken(): Promise<string> {
-        try {
-            const refreshToken = localStorage.getItem('refreshToken');
-            if (!refreshToken) {
-                throw new Error('Brak tokena odświeżania');
-            }
-
-            const response = await api.post('/api/auth/refresh', { refreshToken });
-            const newToken = response.data.accessToken;
-            localStorage.setItem('accessToken', newToken);
-            return newToken;
-        } catch (error) {
-            console.error('❌ Błąd odświeżania tokena:', error);
-            this.logout();
-            throw error;
-        }
-    }
+			const response = await api.post("/api/auth/refresh", { refreshToken });
+			const newToken = response.data.accessToken;
+			localStorage.setItem("accessToken", newToken);
+			return newToken;
+		} catch (error) {
+			logger.error("❌ Błąd odświeżania tokena:", error);
+			this.logout();
+			throw error;
+		}
+	}
 }
 
 export const authService = new AuthService();

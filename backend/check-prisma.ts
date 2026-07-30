@@ -3,5 +3,5 @@ import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
-console.log('Dostępne modele Prisma:');
-console.log(Object.keys(prisma).filter(key => !key.startsWith('_')));
+logger.debug('Dostępne modele Prisma:');
+logger.debug(Object.keys(prisma).filter(key => !key.startsWith('_')));

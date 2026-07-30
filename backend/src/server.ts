@@ -16,6 +16,7 @@ import jwt from "jsonwebtoken";
 import path from "path";
 import fs from "fs";
 import multer from "multer";
+import { logger } from "./utils/logger";
 import { syncMembers } from "./jobs/syncMembers";
 
 updateLeaveStatus();
@@ -27,24 +28,24 @@ const FREKWENCJA_DB_CONFIG = {
 	port: 3306,
 };
 cron.schedule("0 7,14,21 * * *", async () => {
-	console.log("🔄 [CRON] Uruchamiam synchronizację frekwencji...");
+	logger.debug("🔄 [CRON] Uruchamiam synchronizację frekwencji...");
 	try {
 		await syncAttendance();
-		console.log("✅ [CRON] Synchronizacja frekwencji zakończona");
+		logger.debug("✅ [CRON] Synchronizacja frekwencji zakończona");
 	} catch (error) {
-		console.error("❌ [CRON] Błąd synchronizacji frekwencji:", error);
+		logger.error("❌ [CRON] Błąd synchronizacji frekwencji:", error);
 	}
 });
 
 cron.schedule("1 0 * * *", async () => {
-	console.log("⏰ [CRON] Uruchamiam codzienny job aktualizacji statusów...");
+	logger.debug("⏰ [CRON] Uruchamiam codzienny job aktualizacji statusów...");
 	await updateLeaveStatus();
 });
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 cron.schedule("0 3 */2 * *", async () => {
-	console.log("🔄 [CRON] Uruchamiam synchronizację członków z SM_Ewidencja...");
+	logger.debug("🔄 [CRON] Uruchamiam synchronizację członków z SM_Ewidencja...");
 	await syncMembers();
-	console.log("✅ [CRON] Synchronizacja członków zakończona");
+	logger.debug("✅ [CRON] Synchronizacja członków zakończona");
 });
 const PUBLIC_ENDPOINTS = [
 	"/api/auth/login",
@@ -100,11 +101,11 @@ app.use(express.urlencoded({ extended: true }));
 
 app.post("/api/auth/google", async (req, res) => {
 	try {
-		console.log("=== GOOGLE AUTH START ===");
+		logger.debug("=== GOOGLE AUTH START ===");
 		const { credential } = req.body;
 
 		if (!credential) {
-			console.log("❌ Brak credential");
+			logger.debug("❌ Brak credential");
 			return res.status(401).json({
 				error: "Brak tokenu autoryzacyjnego",
 			});
@@ -123,7 +124,7 @@ app.post("/api/auth/google", async (req, res) => {
 			});
 		}
 
-		console.log("📧 Email z Google:", payload.email);
+		logger.debug("📧 Email z Google:", payload.email);
 
 
 		const user = await prisma.user.findUnique({
@@ -131,14 +132,14 @@ app.post("/api/auth/google", async (req, res) => {
 		});
 
 		if (!user) {
-			console.log(`❌ Użytkownik ${payload.email} nie istnieje w systemie`);
+			logger.debug(`❌ Użytkownik ${payload.email} nie istnieje w systemie`);
 			return res.status(403).json({
 				error:
 					"To konto Google nie jest zarejestrowane w systemie Siły Młodych. Użyj innego.",
 			});
 		}
 
-		console.log(
+		logger.debug(
 			`✅ Znaleziono użytkownika: ${user.first_name} ${user.last_name}`,
 		);
 
@@ -174,7 +175,7 @@ app.post("/api/auth/google", async (req, res) => {
 			onboardingCompleted: true,
 		});
 	} catch (error) {
-		console.error("❌ Google OAuth error:", error);
+		logger.error("❌ Google OAuth error:", error);
 		res.status(500).json({
 			error: "Błąd logowania Google",
 		});
@@ -265,13 +266,13 @@ async function logAction(
 	errorMessage: string | null = null,
 ) {
 	try {
-		console.log(
+		logger.debug(
 			`🔍 [logAction] START - ${actionType} ${category} ${entityName || "unknown"}`,
 		);
 
 
 		if (!prisma.systemLog) {
-			console.warn("⚠️ [logAction] Model systemLog nie istnieje w Prisma!");
+			logger.warn("⚠️ [logAction] Model systemLog nie istnieje w Prisma!");
 			return;
 		}
 
@@ -282,7 +283,7 @@ async function logAction(
 				: req.user?.email || "System";
 		const userRole = req.user?.role || "unknown";
 
-		console.log(
+		logger.debug(
 			`🔍 [logAction] Dane: userId=${userId}, userName=${userName}, userRole=${userRole}`,
 		);
 
@@ -307,7 +308,7 @@ async function logAction(
 			error_message: errorMessage,
 		};
 
-		console.log(
+		logger.debug(
 			`🔍 [logAction] Dane do zapisu:`,
 			JSON.stringify(data, null, 2),
 		);
@@ -316,10 +317,10 @@ async function logAction(
 			data: data,
 		});
 
-		console.log(`✅ [logAction] Zapisano log ID: ${result.id}`);
+		logger.debug(`✅ [logAction] Zapisano log ID: ${result.id}`);
 	} catch (error) {
-		console.error("❌ [logAction] Błąd zapisu loga:", error);
-		console.error(
+		logger.error("❌ [logAction] Błąd zapisu loga:", error);
+		logger.error(
 			"❌ [logAction] Stack:",
 			error instanceof Error ? error.stack : "No stack",
 		);
@@ -397,14 +398,14 @@ app.use(async (req: any, res: any, next: any) => {
 		"/api/auth/refresh-token",
 	];
 	if (publicPaths.some((p) => req.path === p || req.path.startsWith(p))) {
-		console.log(
+		logger.debug(
 			`🔓 [MIDDLEWARE] Pomijam publiczny endpoint: ${req.method} ${req.path}`,
 		);
 		return next();
 	}
 
 
-	console.log(`🔍 [MIDDLEWARE] ${req.method} ${req.originalUrl}`);
+	logger.debug(`🔍 [MIDDLEWARE] ${req.method} ${req.originalUrl}`);
 
 	const originalJson = res.json;
 	const originalStatus = res.status;
@@ -417,14 +418,14 @@ app.use(async (req: any, res: any, next: any) => {
 	let responseSent = false;
 
 	res.status = function (code: number) {
-		console.log(`🔍 [MIDDLEWARE] res.status: ${code}`);
+		logger.debug(`🔍 [MIDDLEWARE] res.status: ${code}`);
 		statusCode = code;
 		return originalStatus.call(this, code);
 	};
 
 	res.json = function (body: any) {
-		console.log(`🔍 [MIDDLEWARE] res.json wywołane`);
-		console.log(`🔍 [MIDDLEWARE] body:`, body);
+		logger.debug(`🔍 [MIDDLEWARE] res.json wywołane`);
+		logger.debug(`🔍 [MIDDLEWARE] body:`, body);
 		responseBody = body;
 		responseSent = true;
 
@@ -433,13 +434,13 @@ app.use(async (req: any, res: any, next: any) => {
 			method,
 		);
 
-		console.log(
+		logger.debug(
 			`🔍 [MIDDLEWARE] method: ${method}, isWriteOperation: ${isWriteOperation}, hasLogged: ${hasLogged}`,
 		);
 
 		if (isWriteOperation && !hasLogged) {
 			hasLogged = true;
-			console.log(`🔍 [MIDDLEWARE] LOGUJĘ!`);
+			logger.debug(`🔍 [MIDDLEWARE] LOGUJĘ!`);
 
 			let actionType: LogActionType = "CREATE";
 			if (method === "PUT" || method === "PATCH") actionType = "UPDATE";
@@ -449,7 +450,7 @@ app.use(async (req: any, res: any, next: any) => {
 			const entityId = getEntityId(responseBody);
 			const entityName = getEntityName(responseBody);
 
-			console.log(
+			logger.debug(
 				`🔍 [MIDDLEWARE] actionType: ${actionType}, category: ${category}, entityId: ${entityId}, entityName: ${entityName}`,
 			);
 
@@ -464,7 +465,7 @@ app.use(async (req: any, res: any, next: any) => {
 			const logStatus = statusCode < 400 ? "success" : "error";
 			const errorMessage = statusCode >= 400 ? `Status ${statusCode}` : null;
 
-			console.log(`🔍 [MIDDLEWARE] Wywołuję logAction...`);
+			logger.debug(`🔍 [MIDDLEWARE] Wywołuję logAction...`);
 			logAction(
 				req,
 				actionType,
@@ -474,7 +475,7 @@ app.use(async (req: any, res: any, next: any) => {
 				changes,
 				logStatus,
 				errorMessage,
-			).catch((err) => console.error("❌ [MIDDLEWARE] Błąd logowania:", err));
+			).catch((err) => logger.error("❌ [MIDDLEWARE] Błąd logowania:", err));
 		}
 
 		return originalJson.call(this, body);
@@ -482,7 +483,7 @@ app.use(async (req: any, res: any, next: any) => {
 
 
 	res.send = function (body: any) {
-		console.log(`🔍 [MIDDLEWARE] res.send wywołane`);
+		logger.debug(`🔍 [MIDDLEWARE] res.send wywołane`);
 		if (!responseSent) {
 			responseBody = body;
 			responseSent = true;
@@ -595,7 +596,7 @@ app.post("/api/auth/login", async (req, res) => {
 			onboardingCompleted: true,
 		});
 	} catch (error) {
-		console.error("❌ Błąd logowania:", error);
+		logger.error("❌ Błąd logowania:", error);
 		res.status(500).json({ error: "Wystąpił błąd podczas logowania" });
 	}
 });
@@ -647,7 +648,7 @@ app.post("/api/auth/register", async (req, res) => {
 			},
 		});
 	} catch (error) {
-		console.error("❌ Błąd rejestracji:", error);
+		logger.error("❌ Błąd rejestracji:", error);
 		res.status(500).json({ error: "Wystąpił błąd podczas rejestracji" });
 	}
 });
@@ -669,12 +670,12 @@ app.get(
 				return res.status(401).json({ error: "Brak autoryzacji" });
 			}
 
-			console.log(`🔍 Sprawdzam onboarding dla użytkownika ${userId}`);
-			console.log(`👤 Rola użytkownika: ${req.user?.role}`);
+			logger.debug(`🔍 Sprawdzam onboarding dla użytkownika ${userId}`);
+			logger.debug(`👤 Rola użytkownika: ${req.user?.role}`);
 
 
 			if (req.user?.role === "admin") {
-				console.log(`👑 Admin ${userId} - pomijam onboarding, zwracam true`);
+				logger.debug(`👑 Admin ${userId} - pomijam onboarding, zwracam true`);
 				return res.json({ completed: true });
 			}
 
@@ -684,19 +685,19 @@ app.get(
 			});
 
 			if (!onboarding) {
-				console.log(`📋 Użytkownik ${userId} NIE ma onboardingu`);
+				logger.debug(`📋 Użytkownik ${userId} NIE ma onboardingu`);
 				return res.json({ completed: false });
 			}
 
 			const isCompleted = !!onboarding.completed;
 
-			console.log(`📋 Użytkownik ${userId} - completed: ${isCompleted}`);
-			console.log(`   - wartość w bazie: ${onboarding.completed}`);
-			console.log(`   - typ: ${typeof onboarding.completed}`);
+			logger.debug(`📋 Użytkownik ${userId} - completed: ${isCompleted}`);
+			logger.debug(`   - wartość w bazie: ${onboarding.completed}`);
+			logger.debug(`   - typ: ${typeof onboarding.completed}`);
 
 			res.json({ completed: isCompleted });
 		} catch (error) {
-			console.error("❌ Błąd sprawdzania onboardingu:", error);
+			logger.error("❌ Błąd sprawdzania onboardingu:", error);
 			res.json({ completed: false });
 		}
 	},
@@ -750,7 +751,7 @@ app.get("/api/ideas", authMiddleware, async (req: any, res) => {
 
 		res.json(mappedIdeas);
 	} catch (error) {
-		console.error("❌ Błąd pobierania pomysłów:", error);
+		logger.error("❌ Błąd pobierania pomysłów:", error);
 		res.status(500).json({ error: "Nie udało się pobrać pomysłów" });
 	}
 });
@@ -763,7 +764,7 @@ app.post("/api/ideas", authMiddleware, async (req: any, res) => {
 		const { title, description, pillar, authorId, authorName } = req.body;
 		const userId = req.user?.id;
 
-		console.log("📥 Otrzymano pomysł:", {
+		logger.debug("📥 Otrzymano pomysł:", {
 			title,
 			description,
 			pillar,
@@ -791,7 +792,7 @@ app.post("/api/ideas", authMiddleware, async (req: any, res) => {
 			},
 		});
 
-		console.log("✅ Utworzono pomysł w bazie:", idea);
+		logger.debug("✅ Utworzono pomysł w bazie:", idea);
 
 
 		try {
@@ -802,10 +803,10 @@ app.post("/api/ideas", authMiddleware, async (req: any, res) => {
 					vote_type: "up",
 				},
 			});
-			console.log(`⬆️ Automatyczny głos UP od autora (user ${userId})`);
+			logger.debug(`⬆️ Automatyczny głos UP od autora (user ${userId})`);
 		} catch (voteError) {
 
-			console.warn("⚠️ Nie udało się dodać automatycznego głosu:", voteError);
+			logger.warn("⚠️ Nie udało się dodać automatycznego głosu:", voteError);
 		}
 
 
@@ -827,7 +828,7 @@ app.post("/api/ideas", authMiddleware, async (req: any, res) => {
 			user_vote: "up",
 		});
 	} catch (error) {
-		console.error("❌ Błąd dodawania pomysłu:", error);
+		logger.error("❌ Błąd dodawania pomysłu:", error);
 		res.status(500).json({
 			error: "Nie udało się dodać pomysłu",
 			details: error instanceof Error ? error.message : "Nieznany błąd",
@@ -912,7 +913,7 @@ app.post("/api/ideas/:id/vote", authMiddleware, async (req: any, res) => {
 			votes: voteCounts,
 		});
 	} catch (error) {
-		console.error("❌ Błąd głosowania:", error);
+		logger.error("❌ Błąd głosowania:", error);
 		res.status(500).json({
 			error: "Nie udało się zagłosować",
 			details: error instanceof Error ? error.message : "Nieznany błąd",
@@ -955,7 +956,7 @@ app.put("/api/ideas/:id/status", authMiddleware, async (req: any, res) => {
 
 		res.json(idea);
 	} catch (error) {
-		console.error("❌ Błąd zmiany statusu:", error);
+		logger.error("❌ Błąd zmiany statusu:", error);
 		res.status(500).json({ error: "Nie udało się zmienić statusu" });
 	}
 });
@@ -997,7 +998,7 @@ app.get("/api/ideas/:id", authMiddleware, async (req: any, res) => {
 			created_at: idea.created_at,
 		});
 	} catch (error) {
-		console.error("❌ Błąd pobierania pomysłu:", error);
+		logger.error("❌ Błąd pobierania pomysłu:", error);
 		res.status(500).json({ error: "Nie udało się pobrać pomysłu" });
 	}
 });
@@ -1079,7 +1080,7 @@ app.get("/api/members", authMiddleware, async (req: any, res) => {
 
 		res.json(mappedUsers);
 	} catch (error) {
-		console.error("❌ Błąd pobierania członków:", error);
+		logger.error("❌ Błąd pobierania członków:", error);
 		res.status(500).json({ error: "Nie udało się pobrać członków" });
 	}
 });
@@ -1115,7 +1116,7 @@ app.get("/api/teams", authMiddleware, async (req: any, res) => {
 
 		res.json(teams);
 	} catch (error) {
-		console.error("❌ Błąd pobierania zespołów:", error);
+		logger.error("❌ Błąd pobierania zespołów:", error);
 		res.status(500).json({ error: "Nie udało się pobrać zespołów" });
 	}
 });
@@ -1129,7 +1130,7 @@ app.post("/api/teams", authMiddleware, async (req: any, res) => {
 			return res.status(400).json({ error: "Nazwa zespołu jest wymagana" });
 		}
 
-		console.log("📥 Tworzenie zespołu - dane:", {
+		logger.debug("📥 Tworzenie zespołu - dane:", {
 			name,
 			role,
 			description,
@@ -1151,11 +1152,11 @@ app.post("/api/teams", authMiddleware, async (req: any, res) => {
 			},
 		});
 
-		console.log("✅ Utworzono zespół:", team);
+		logger.debug("✅ Utworzono zespół:", team);
 
 		res.status(201).json(team);
 	} catch (error) {
-		console.error("❌ Błąd tworzenia zespołu:", error);
+		logger.error("❌ Błąd tworzenia zespołu:", error);
 		res.status(500).json({ error: "Nie udało się utworzyć zespołu" });
 	}
 });
@@ -1236,7 +1237,7 @@ app.get("/api/dashboard/stats", authMiddleware, async (req: any, res) => {
 					attendance = `${result[0].attendance_percentage.toFixed(1)}%`;
 				}
 			} catch (dbError) {
-				console.error(
+				logger.error(
 					"❌ Błąd pobierania frekwencji z SM_Frekwencja:",
 					dbError,
 				);
@@ -1253,7 +1254,7 @@ app.get("/api/dashboard/stats", authMiddleware, async (req: any, res) => {
 						attendance = `${Number(user.attendance_percentage).toFixed(1)}%`;
 					}
 				} catch (fallbackError) {
-					console.error("❌ Błąd fallback frekwencji:", fallbackError);
+					logger.error("❌ Błąd fallback frekwencji:", fallbackError);
 				}
 			}
 		}
@@ -1266,7 +1267,7 @@ app.get("/api/dashboard/stats", authMiddleware, async (req: any, res) => {
 			newGuides: newGuides,
 		});
 	} catch (error) {
-		console.error("❌ Błąd statystyk:", error);
+		logger.error("❌ Błąd statystyk:", error);
 		res.status(500).json({ error: "Nie udało się pobrać statystyk" });
 	}
 });
@@ -1293,7 +1294,7 @@ app.get(
 				take: limit,
 			});
 
-			console.log(
+			logger.debug(
 				`📨 Znaleziono ${notifications.length} powiadomień dla użytkownika ${userId}`,
 			);
 
@@ -1310,7 +1311,7 @@ app.get(
 
 			res.json(mappedNotifications);
 		} catch (error) {
-			console.error("❌ Błąd pobierania powiadomień:", error);
+			logger.error("❌ Błąd pobierania powiadomień:", error);
 			res.status(500).json({
 				error: "Nie udało się pobrać powiadomień",
 				details: error instanceof Error ? error.message : "Unknown error",
@@ -1332,7 +1333,7 @@ app.put(
 				return res.status(401).json({ error: "Brak autoryzacji" });
 			}
 
-			console.log(
+			logger.debug(
 				`📨 Oznaczanie powiadomienia ${id} jako przeczytane dla użytkownika ${userId}`,
 			);
 
@@ -1345,7 +1346,7 @@ app.put(
 			});
 
 			if (!notification) {
-				console.log(
+				logger.debug(
 					`❌ Powiadomienie ${id} nie istnieje lub nie należy do użytkownika ${userId}`,
 				);
 				return res.status(404).json({
@@ -1363,7 +1364,7 @@ app.put(
 				},
 			});
 
-			console.log(`✅ Powiadomienie ${id} oznaczone jako przeczytane`);
+			logger.debug(`✅ Powiadomienie ${id} oznaczone jako przeczytane`);
 
 			res.status(200).json({
 				success: true,
@@ -1374,7 +1375,7 @@ app.put(
 				},
 			});
 		} catch (error) {
-			console.error("❌ Błąd oznaczania:", error);
+			logger.error("❌ Błąd oznaczania:", error);
 			res.status(500).json({
 				error: "Nie udało się oznaczyć",
 				details: error instanceof Error ? error.message : "Unknown error",
@@ -1394,7 +1395,7 @@ app.put(
 				return res.status(401).json({ error: "Brak autoryzacji" });
 			}
 
-			console.log(
+			logger.debug(
 				`📨 Oznaczanie wszystkich powiadomień jako przeczytane dla użytkownika ${userId}`,
 			);
 
@@ -1407,7 +1408,7 @@ app.put(
 				data: { read: true },
 			});
 
-			console.log(`✅ Oznaczono ${result.count} powiadomień jako przeczytane`);
+			logger.debug(`✅ Oznaczono ${result.count} powiadomień jako przeczytane`);
 
 			res.status(200).json({
 				success: true,
@@ -1415,7 +1416,7 @@ app.put(
 				count: result.count,
 			});
 		} catch (error) {
-			console.error("❌ Błąd oznaczania wszystkich:", error);
+			logger.error("❌ Błąd oznaczania wszystkich:", error);
 			res.status(500).json({
 				error: "Nie udało się oznaczyć wszystkich",
 				details: error instanceof Error ? error.message : "Unknown error",
@@ -1448,7 +1449,7 @@ app.get("/api/tutorials", authMiddleware, async (req: any, res) => {
 					attachments = t.attachments;
 				}
 			} catch (e) {
-				console.warn(
+				logger.warn(
 					`⚠️ Nie udało się sparsować attachments dla tutorial ${t.id}:`,
 					e,
 				);
@@ -1465,7 +1466,7 @@ app.get("/api/tutorials", authMiddleware, async (req: any, res) => {
 					functionalRoles = t.functional_roles;
 				}
 			} catch (e) {
-				console.warn(
+				logger.warn(
 					`⚠️ Nie udało się sparsować functional_roles dla tutorial ${t.id}:`,
 					e,
 				);
@@ -1491,7 +1492,7 @@ app.get("/api/tutorials", authMiddleware, async (req: any, res) => {
 
 		res.json(mappedTutorials);
 	} catch (error) {
-		console.error("❌ Błąd pobierania poradników:", error);
+		logger.error("❌ Błąd pobierania poradników:", error);
 		res.status(500).json({ error: "Nie udało się pobrać poradników" });
 	}
 });
@@ -1503,8 +1504,8 @@ app.post(
 	upload.array("files", 5),
 	async (req: any, res) => {
 		try {
-			console.log("📥 POST /tutorials");
-			console.log("📁 Pliki:", req.files?.length || 0);
+			logger.debug("📥 POST /tutorials");
+			logger.debug("📁 Pliki:", req.files?.length || 0);
 
 			let tutorialData;
 			try {
@@ -1568,7 +1569,7 @@ app.post(
 				isUpdated: false,
 			});
 		} catch (error) {
-			console.error("❌ Błąd tworzenia poradnika:", error);
+			logger.error("❌ Błąd tworzenia poradnika:", error);
 
 			const files = req.files as Express.Multer.File[];
 			if (files) {
@@ -1609,7 +1610,7 @@ app.get("/api/applications", authMiddleware, async (req: any, res) => {
 			whereCondition = { user_id: userId };
 		}
 
-		console.log(
+		logger.debug(
 			"📥 Pobieranie zgłoszeń dla użytkownika:",
 			userId,
 			"rola:",
@@ -1651,7 +1652,7 @@ app.get("/api/applications", authMiddleware, async (req: any, res) => {
 			},
 		});
 
-		console.log(`✅ Znaleziono ${applications.length} zgłoszeń`);
+		logger.debug(`✅ Znaleziono ${applications.length} zgłoszeń`);
 
 
 		const mappedApplications = applications.map((app: any) => {
@@ -1688,7 +1689,7 @@ app.get("/api/applications", authMiddleware, async (req: any, res) => {
 
 		res.json(mappedApplications);
 	} catch (error) {
-		console.error("❌ Błąd pobierania zgłoszeń:", error);
+		logger.error("❌ Błąd pobierania zgłoszeń:", error);
 		res.status(500).json({
 			error: "Nie udało się pobrać zgłoszeń",
 			details: error instanceof Error ? error.message : "Nieznany błąd",
@@ -1724,12 +1725,12 @@ app.post("/api/vacancies/:id/notify", authMiddleware, async (req: any, res) => {
 
 		const contactEmail = vacancy.contact_person?.email;
 		if (!contactEmail) {
-			console.warn("⚠️ Brak emaila kontaktowego dla wakatu:", vacancy.id);
+			logger.warn("⚠️ Brak emaila kontaktowego dla wakatu:", vacancy.id);
 			return res.json({ message: "Brak emaila kontaktowego" });
 		}
 
 
-		console.log(`
+		logger.debug(`
       📧 Powiadomienie email:
       Do: ${contactEmail}
       Temat: Nowe zgłoszenie na stanowisko "${vacancy.title}"
@@ -1749,7 +1750,7 @@ app.post("/api/vacancies/:id/notify", authMiddleware, async (req: any, res) => {
 
 		res.json({ message: "Powiadomienie wysłane" });
 	} catch (error) {
-		console.error("❌ Błąd wysyłki powiadomienia:", error);
+		logger.error("❌ Błąd wysyłki powiadomienia:", error);
 		res.status(500).json({ error: "Nie udało się wysłać powiadomienia" });
 	}
 });
@@ -1825,7 +1826,7 @@ app.get(
 
 			res.json(mappedApplications);
 		} catch (error) {
-			console.error("❌ Błąd pobierania zgłoszeń dla wakatu:", error);
+			logger.error("❌ Błąd pobierania zgłoszeń dla wakatu:", error);
 			res.status(500).json({ error: "Nie udało się pobrać zgłoszeń" });
 		}
 	},
@@ -1863,7 +1864,7 @@ app.put(
 				status: application.status,
 			});
 		} catch (error) {
-			console.error("❌ Błąd aktualizacji statusu zgłoszenia:", error);
+			logger.error("❌ Błąd aktualizacji statusu zgłoszenia:", error);
 			res.status(500).json({ error: "Nie udało się zaktualizować statusu" });
 		}
 	},
@@ -1876,8 +1877,8 @@ app.put(
 	async (req: any, res) => {
 		try {
 			const id = parseInt(req.params.id);
-			console.log(`📥 PUT /tutorials/${id}`);
-			console.log("📁 Pliki:", req.files?.length || 0);
+			logger.debug(`📥 PUT /tutorials/${id}`);
+			logger.debug("📁 Pliki:", req.files?.length || 0);
 
 			let tutorialData;
 			try {
@@ -1949,7 +1950,7 @@ app.put(
 				isUpdated: true,
 			});
 		} catch (error) {
-			console.error("❌ Błąd aktualizacji poradnika:", error);
+			logger.error("❌ Błąd aktualizacji poradnika:", error);
 
 			const files = req.files as Express.Multer.File[];
 			if (files) {
@@ -1992,7 +1993,7 @@ app.delete("/api/tutorials/:id", authMiddleware, async (req: any, res) => {
 
 		res.status(204).send();
 	} catch (error) {
-		console.error("❌ Błąd usuwania poradnika:", error);
+		logger.error("❌ Błąd usuwania poradnika:", error);
 		res.status(500).json({ error: "Nie udało się usunąć poradnika" });
 	}
 });
@@ -2006,7 +2007,7 @@ app.delete(
 			const { id } = req.params;
 			const tutorialId = parseInt(req.query.tutorialId as string);
 
-			console.log(`🗑️ Usuwanie załącznika: ${id} z poradnika: ${tutorialId}`);
+			logger.debug(`🗑️ Usuwanie załącznika: ${id} z poradnika: ${tutorialId}`);
 
 			const tutorial = await prisma.guide.findUnique({
 				where: { id: tutorialId },
@@ -2040,7 +2041,7 @@ app.delete(
 
 			res.json({ success: true });
 		} catch (error) {
-			console.error("❌ Błąd usuwania załącznika:", error);
+			logger.error("❌ Błąd usuwania załącznika:", error);
 			res.status(500).json({ error: "Nie udało się usunąć załącznika" });
 		}
 	},
@@ -2067,7 +2068,7 @@ app.get("/api/uploads/tutorials/:filename", async (req: any, res) => {
 		);
 		res.sendFile(filePath);
 	} catch (error) {
-		console.error("❌ Błąd pobierania pliku:", error);
+		logger.error("❌ Błąd pobierania pliku:", error);
 		res.status(500).json({ error: "Nie udało się pobrać pliku" });
 	}
 });
@@ -2142,7 +2143,7 @@ app.get("/api/vacancies", authMiddleware, async (req: any, res) => {
 
 		res.json(vacancies);
 	} catch (error) {
-		console.error("❌ Błąd pobierania wakatów:", error);
+		logger.error("❌ Błąd pobierania wakatów:", error);
 		res.status(500).json({ error: "Nie udało się pobrać wakatów" });
 	}
 });
@@ -2214,7 +2215,7 @@ app.post("/api/vacancies", authMiddleware, async (req: any, res) => {
 
 		res.status(201).json(vacancy);
 	} catch (error) {
-		console.error("❌ Błąd tworzenia wakatu:", error);
+		logger.error("❌ Błąd tworzenia wakatu:", error);
 		res.status(500).json({ error: "Nie udało się utworzyć wakatu" });
 	}
 });
@@ -2285,7 +2286,7 @@ app.put("/api/vacancies/:id", authMiddleware, async (req: any, res) => {
 
 		res.json(vacancy);
 	} catch (error) {
-		console.error("❌ Błąd aktualizacji wakatu:", error);
+		logger.error("❌ Błąd aktualizacji wakatu:", error);
 		res.status(500).json({ error: "Nie udało się zaktualizować wakatu" });
 	}
 });
@@ -2302,7 +2303,7 @@ app.delete("/api/vacancies/:id", authMiddleware, async (req: any, res) => {
 
 		res.status(204).send();
 	} catch (error) {
-		console.error("❌ Błąd usuwania wakatu:", error);
+		logger.error("❌ Błąd usuwania wakatu:", error);
 		res.status(500).json({ error: "Nie udało się usunąć wakatu" });
 	}
 });
@@ -2395,7 +2396,7 @@ app.post("/api/vacancies/:id/apply", authMiddleware, async (req: any, res) => {
 			appliedAt: new Date().toISOString().split("T")[0],
 		});
 	} catch (error) {
-		console.error("❌ Błąd zgłaszania na wakat:", error);
+		logger.error("❌ Błąd zgłaszania na wakat:", error);
 		res.status(500).json({
 			error: "Nie udało się zgłosić na wakat",
 			details: error instanceof Error ? error.message : "Nieznany błąd",
@@ -2427,7 +2428,7 @@ app.get(
 				applicationId: application?.id?.toString() || null,
 			});
 		} catch (error) {
-			console.error("❌ Błąd sprawdzania zgłoszenia:", error);
+			logger.error("❌ Błąd sprawdzania zgłoszenia:", error);
 			res.status(500).json({ error: "Nie udało się sprawdzić zgłoszenia" });
 		}
 	},
@@ -2455,7 +2456,7 @@ app.delete(
 
 			res.status(200).json({ message: "Usunięto powiadomienie" });
 		} catch (error) {
-			console.error("❌ Błąd usuwania:", error);
+			logger.error("❌ Błąd usuwania:", error);
 			res.status(500).json({ error: "Nie udało się usunąć" });
 		}
 	},
@@ -2466,7 +2467,7 @@ app.delete(
 
 app.get("/api/structure", authMiddleware, async (req: any, res) => {
 	try {
-		console.log("📥 [STRUCTURE] Pobieranie struktury...");
+		logger.debug("📥 [STRUCTURE] Pobieranie struktury...");
 
 		const teams = await prisma.team.findMany({
 			select: {
@@ -2620,7 +2621,7 @@ app.get("/api/structure", authMiddleware, async (req: any, res) => {
 
 		res.json(structure);
 	} catch (error) {
-		console.error("❌ [STRUCTURE] Błąd:", error);
+		logger.error("❌ [STRUCTURE] Błąd:", error);
 		res.status(500).json({ error: "Nie udało się pobrać struktury" });
 	}
 });
@@ -2635,10 +2636,10 @@ app.use("/api", memberRoutes);
 app.get("/api/profile", authMiddleware, async (req: any, res) => {
 	try {
 		const userId = req.user?.id;
-		console.log(`📥 Pobieranie profilu dla użytkownika: ${userId}`);
+		logger.debug(`📥 Pobieranie profilu dla użytkownika: ${userId}`);
 
 		if (!userId) {
-			console.log("❌ Brak userId w req.user");
+			logger.debug("❌ Brak userId w req.user");
 			return res.status(401).json({ error: "Brak autoryzacji" });
 		}
 
@@ -2652,11 +2653,11 @@ app.get("/api/profile", authMiddleware, async (req: any, res) => {
 		});
 
 		if (!user) {
-			console.log(`❌ Użytkownik ${userId} nie znaleziony`);
+			logger.debug(`❌ Użytkownik ${userId} nie znaleziony`);
 			return res.status(404).json({ error: "Użytkownik nie znaleziony" });
 		}
 
-		console.log(`✅ Profil pobrany dla: ${user.first_name} ${user.last_name}`);
+		logger.debug(`✅ Profil pobrany dla: ${user.first_name} ${user.last_name}`);
 
 
 		const teams = user.team_members
@@ -2668,8 +2669,8 @@ app.get("/api/profile", authMiddleware, async (req: any, res) => {
 		const pillars = teams.filter((t: string) => t.includes("Filar"));
 		const pillar = pillars.length > 0 ? pillars[0] : null;
 
-		console.log("🏷️ TEAMS:", teams);
-		console.log("🏷️ PILLARS:", pillars);
+		logger.debug("🏷️ TEAMS:", teams);
+		logger.debug("🏷️ PILLARS:", pillars);
 
 		const profile = {
 			id: user.id.toString(),
@@ -2715,7 +2716,7 @@ app.get("/api/profile", authMiddleware, async (req: any, res) => {
 
 		res.json(profile);
 	} catch (error) {
-		console.error("❌ Błąd profilu:", error);
+		logger.error("❌ Błąd profilu:", error);
 		res.status(500).json({ error: "Nie udało się pobrać profilu" });
 	}
 });
@@ -2828,7 +2829,7 @@ app.get("/api/leaves", authMiddleware, async (req: any, res) => {
 
 		res.json(mappedLeaves);
 	} catch (error) {
-		console.error("❌ Błąd pobierania urlopów:", error);
+		logger.error("❌ Błąd pobierania urlopów:", error);
 		res.status(500).json({ error: "Nie udało się pobrać urlopów" });
 	}
 });
@@ -2842,7 +2843,7 @@ app.post("/api/leaves", authMiddleware, async (req: any, res) => {
 		const userId = req.user?.id;
 		if (!userId) return res.status(401).json({ error: "Brak autoryzacji" });
 
-		console.log("📥 OTRZYMANE DANE:", req.body);
+		logger.debug("📥 OTRZYMANE DANE:", req.body);
 
 		const {
 			type,
@@ -2947,8 +2948,8 @@ app.post("/api/leaves", authMiddleware, async (req: any, res) => {
 			}
 		}
 
-		console.log("✅ UTOWORZONO URLOP:", leave);
-		console.log(`📨 Wysłano powiadomienia do Admina i Zarządu`);
+		logger.debug("✅ UTOWORZONO URLOP:", leave);
+		logger.debug(`📨 Wysłano powiadomienia do Admina i Zarządu`);
 
 		res.status(201).json({
 			id: leave.id.toString(),
@@ -2972,7 +2973,7 @@ app.post("/api/leaves", authMiddleware, async (req: any, res) => {
 			comments: [],
 		});
 	} catch (error) {
-		console.error("❌ Błąd tworzenia wniosku:", error);
+		logger.error("❌ Błąd tworzenia wniosku:", error);
 		res.status(500).json({ error: "Nie udało się utworzyć wniosku" });
 	}
 });
@@ -3090,20 +3091,20 @@ app.put("/api/leaves/:id", authMiddleware, async (req: any, res) => {
 
 		res.json(leave);
 	} catch (error) {
-		console.error("❌ Błąd aktualizacji wniosku:", error);
+		logger.error("❌ Błąd aktualizacji wniosku:", error);
 		res.status(500).json({ error: "Nie udało się zaktualizować wniosku" });
 	}
 });
 
 
 app.delete("/api/leaves/:id", authMiddleware, async (req: any, res) => {
-	console.log(`🔍 [DELETE LEAVE] START - ID: ${req.params.id}`);
+	logger.debug(`🔍 [DELETE LEAVE] START - ID: ${req.params.id}`);
 	try {
 		const userId = req.user?.id;
 		const userRole = req.user?.role;
 		const leaveId = parseInt(req.params.id);
 
-		console.log(
+		logger.debug(
 			`🔍 [DELETE LEAVE] userId: ${userId}, userRole: ${userRole}, leaveId: ${leaveId}`,
 		);
 
@@ -3112,16 +3113,16 @@ app.delete("/api/leaves/:id", authMiddleware, async (req: any, res) => {
 			include: { user: true },
 		});
 
-		console.log(`🔍 [DELETE LEAVE] existingLeave:`, existingLeave);
+		logger.debug(`🔍 [DELETE LEAVE] existingLeave:`, existingLeave);
 
 		if (!existingLeave) {
-			console.log(`🔍 [DELETE LEAVE] Nie znaleziono wniosku`);
+			logger.debug(`🔍 [DELETE LEAVE] Nie znaleziono wniosku`);
 			return res.status(404).json({ error: "Nie znaleziono wniosku" });
 		}
 
 
 		if (userRole !== "admin" && existingLeave.user_id !== userId) {
-			console.log(`🔍 [DELETE LEAVE] Brak uprawnień`);
+			logger.debug(`🔍 [DELETE LEAVE] Brak uprawnień`);
 			return res.status(403).json({ error: "Brak uprawnień" });
 		}
 
@@ -3130,7 +3131,7 @@ app.delete("/api/leaves/:id", authMiddleware, async (req: any, res) => {
 			where: { id: leaveId },
 		});
 
-		console.log(`🔍 [DELETE LEAVE] Usunięto z bazy`);
+		logger.debug(`🔍 [DELETE LEAVE] Usunięto z bazy`);
 
 
 
@@ -3140,7 +3141,7 @@ app.delete("/api/leaves/:id", authMiddleware, async (req: any, res) => {
 			id: leaveId,
 		});
 	} catch (error) {
-		console.error(`🔍 [DELETE LEAVE] BŁĄD:`, error);
+		logger.error(`🔍 [DELETE LEAVE] BŁĄD:`, error);
 
 
 
@@ -3175,7 +3176,7 @@ app.get("/api/leaves/status", authMiddleware, async (req: any, res) => {
 			endDate: activeLeave?.end_date?.toISOString().split("T")[0],
 		});
 	} catch (error) {
-		console.error("❌ Błąd sprawdzania statusu urlopu:", error);
+		logger.error("❌ Błąd sprawdzania statusu urlopu:", error);
 		res.status(500).json({ error: "Nie udało się sprawdzić statusu urlopu" });
 	}
 });
@@ -3209,7 +3210,7 @@ app.get("/api/leaves/status/:userId", authMiddleware, async (req: any, res) => {
 			endDate: activeLeave?.end_date?.toISOString().split("T")[0],
 		});
 	} catch (error) {
-		console.error("❌ Błąd sprawdzania statusu urlopu:", error);
+		logger.error("❌ Błąd sprawdzania statusu urlopu:", error);
 		res.status(500).json({ error: "Nie udało się sprawdzić statusu urlopu" });
 	}
 });
@@ -3254,7 +3255,7 @@ app.put("/api/profile", authMiddleware, async (req: any, res) => {
 
 		res.json({ success: true, message: "Profil zaktualizowany" });
 	} catch (error) {
-		console.error("❌ Błąd aktualizacji:", error);
+		logger.error("❌ Błąd aktualizacji:", error);
 		res.status(500).json({ error: "Nie udało się zaktualizować profilu" });
 	}
 });
@@ -3279,7 +3280,7 @@ app.post("/api/profile/skills", authMiddleware, async (req: any, res) => {
 
 		res.json({ success: true, skills });
 	} catch (error) {
-		console.error("❌ Błąd:", error);
+		logger.error("❌ Błąd:", error);
 		res.status(500).json({ error: "Nie udało się dodać umiejętności" });
 	}
 });
@@ -3307,7 +3308,7 @@ app.delete(
 
 			res.json({ success: true, skills });
 		} catch (error) {
-			console.error("❌ Błąd:", error);
+			logger.error("❌ Błąd:", error);
 			res.status(500).json({ error: "Nie udało się usunąć umiejętności" });
 		}
 	},
@@ -3322,7 +3323,7 @@ app.use(
 		res: express.Response,
 		next: express.NextFunction,
 	) => {
-		console.error("❌ Błąd:", err);
+		logger.error("❌ Błąd:", err);
 
 		if (err instanceof multer.MulterError) {
 
@@ -3391,7 +3392,7 @@ app.get("/api/social/members", authMiddleware, async (req: any, res) => {
 
 		res.json(formattedMembers);
 	} catch (error) {
-		console.error("❌ Błąd pobierania członków social media:", error);
+		logger.error("❌ Błąd pobierania członków social media:", error);
 		res.status(500).json({ error: "Nie udało się pobrać członków" });
 	}
 });
@@ -3433,7 +3434,7 @@ app.get("/api/social/creators", authMiddleware, async (req: any, res) => {
 
 		res.json(formattedCreators);
 	} catch (error) {
-		console.error("❌ Błąd pobierania twórców:", error);
+		logger.error("❌ Błąd pobierania twórców:", error);
 		res.status(500).json({
 			error: "Nie udało się pobrać twórców",
 			details: error instanceof Error ? error.message : "Unknown error",
@@ -3506,7 +3507,7 @@ app.post("/api/social/creators", authMiddleware, async (req: any, res) => {
 
 		res.status(201).json(formattedCreator);
 	} catch (error) {
-		console.error("❌ Błąd dodawania twórcy:", error);
+		logger.error("❌ Błąd dodawania twórcy:", error);
 		res.status(500).json({ error: "Nie udało się dodać twórcy" });
 	}
 });
@@ -3545,7 +3546,7 @@ app.get("/api/social/publications", authMiddleware, async (req: any, res) => {
 
 		res.json(formattedPublications);
 	} catch (error) {
-		console.error("❌ Błąd pobierania publikacji:", error);
+		logger.error("❌ Błąd pobierania publikacji:", error);
 		res.status(500).json({ error: "Nie udało się pobrać publikacji" });
 	}
 });
@@ -3584,7 +3585,7 @@ app.get("/api/social/materials", authMiddleware, async (req: any, res) => {
 
 		res.json(formattedMaterials);
 	} catch (error) {
-		console.error("❌ Błąd pobierania materiałów:", error);
+		logger.error("❌ Błąd pobierania materiałów:", error);
 		res.status(500).json({ error: "Nie udało się pobrać materiałów" });
 	}
 });
@@ -3621,7 +3622,7 @@ app.get("/api/social/tasks", authMiddleware, async (req: any, res) => {
 
 		res.json(formattedTasks);
 	} catch (error) {
-		console.error("❌ Błąd pobierania zadań:", error);
+		logger.error("❌ Błąd pobierania zadań:", error);
 		res.status(500).json({ error: "Nie udało się pobrać zadań" });
 	}
 });
@@ -3659,7 +3660,7 @@ app.get("/api/social/contacts", authMiddleware, async (req: any, res) => {
 
 		res.json(formattedContacts);
 	} catch (error) {
-		console.error("❌ Błąd pobierania kontaktów:", error);
+		logger.error("❌ Błąd pobierania kontaktów:", error);
 		res.status(500).json({ error: "Nie udało się pobrać kontaktów" });
 	}
 });
@@ -3735,7 +3736,7 @@ app.post("/api/social/members", authMiddleware, async (req: any, res) => {
 
 		res.status(201).json(formattedMember);
 	} catch (error) {
-		console.error("❌ Błąd dodawania członka:", error);
+		logger.error("❌ Błąd dodawania członka:", error);
 		res.status(500).json({ error: "Nie udało się dodać członka" });
 	}
 });
@@ -3797,7 +3798,7 @@ app.post("/api/social/publications", authMiddleware, async (req: any, res) => {
 
 		res.status(201).json(formattedPublication);
 	} catch (error) {
-		console.error("❌ Błąd dodawania publikacji:", error);
+		logger.error("❌ Błąd dodawania publikacji:", error);
 		res.status(500).json({ error: "Nie udało się dodać publikacji" });
 	}
 });
@@ -3857,7 +3858,7 @@ app.put(
 
 			res.json(formattedPublication);
 		} catch (error) {
-			console.error("❌ Błąd aktualizacji publikacji:", error);
+			logger.error("❌ Błąd aktualizacji publikacji:", error);
 			res.status(500).json({ error: "Nie udało się zaktualizować publikacji" });
 		}
 	},
@@ -3875,7 +3876,7 @@ app.delete(
 			});
 			res.status(204).send();
 		} catch (error) {
-			console.error("❌ Błąd usuwania publikacji:", error);
+			logger.error("❌ Błąd usuwania publikacji:", error);
 			res.status(500).json({ error: "Nie udało się usunąć publikacji" });
 		}
 	},
@@ -3897,8 +3898,8 @@ app.post("/api/onboarding/save", authMiddleware, async (req: any, res) => {
 			return res.status(401).json({ error: "Brak autoryzacji" });
 		}
 
-		console.log(`📝 [ONBOARDING] Zapisywanie danych dla użytkownika ${userId}`);
-		console.log("📝 [ONBOARDING] Dane:", req.body);
+		logger.debug(`📝 [ONBOARDING] Zapisywanie danych dla użytkownika ${userId}`);
+		logger.debug("📝 [ONBOARDING] Dane:", req.body);
 
 		const {
 			firstName,
@@ -3920,9 +3921,9 @@ app.post("/api/onboarding/save", authMiddleware, async (req: any, res) => {
 			pillarIds,
 		} = req.body;
 
-		console.log("🔍 [ONBOARDING] pillarIds:", pillarIds);
-		console.log("🔍 [ONBOARDING] typeof pillarIds:", typeof pillarIds);
-		console.log(
+		logger.debug("🔍 [ONBOARDING] pillarIds:", pillarIds);
+		logger.debug("🔍 [ONBOARDING] typeof pillarIds:", typeof pillarIds);
+		logger.debug(
 			"🔍 [ONBOARDING] Array.isArray(pillarIds):",
 			Array.isArray(pillarIds),
 		);
@@ -3963,7 +3964,7 @@ app.post("/api/onboarding/save", authMiddleware, async (req: any, res) => {
 					updated_at: new Date(),
 				},
 			});
-			console.log(
+			logger.debug(
 				`✅ [ONBOARDING] Zaktualizowano onboarding dla użytkownika ${userId}`,
 			);
 		} else {
@@ -3975,7 +3976,7 @@ app.post("/api/onboarding/save", authMiddleware, async (req: any, res) => {
 					created_at: new Date(),
 				},
 			});
-			console.log(
+			logger.debug(
 				`✅ [ONBOARDING] Utworzono onboarding dla użytkownika ${userId}`,
 			);
 		}
@@ -3994,11 +3995,11 @@ app.post("/api/onboarding/save", authMiddleware, async (req: any, res) => {
 			},
 		});
 
-		console.log(`✅ [ONBOARDING] Zaktualizowano dane użytkownika ${userId}`);
+		logger.debug(`✅ [ONBOARDING] Zaktualizowano dane użytkownika ${userId}`);
 
 
 		if (pillarIds && Array.isArray(pillarIds) && pillarIds.length > 0) {
-			console.log(
+			logger.debug(
 				`📋 [ONBOARDING] Dodawanie użytkownika ${userId} do filarów:`,
 				pillarIds,
 			);
@@ -4011,13 +4012,13 @@ app.post("/api/onboarding/save", authMiddleware, async (req: any, res) => {
 				select: { id: true },
 			});
 			const existingTeamIds = existingTeams.map((t: any) => t.id);
-			console.log("🔍 [ONBOARDING] Istniejące team ID:", existingTeamIds);
+			logger.debug("🔍 [ONBOARDING] Istniejące team ID:", existingTeamIds);
 
 
 			const validPillarIds = pillarIds.filter((id: number) =>
 				existingTeamIds.includes(id),
 			);
-			console.log("🔍 [ONBOARDING] Valid pillarIds:", validPillarIds);
+			logger.debug("🔍 [ONBOARDING] Valid pillarIds:", validPillarIds);
 
 			if (validPillarIds.length > 0) {
 
@@ -4032,7 +4033,7 @@ app.post("/api/onboarding/save", authMiddleware, async (req: any, res) => {
 				const existingMembershipIds = existingMemberships.map(
 					(m: any) => m.team_id,
 				);
-				console.log(
+				logger.debug(
 					"🔍 [ONBOARDING] Istniejące członkostwa:",
 					existingMembershipIds,
 				);
@@ -4041,7 +4042,7 @@ app.post("/api/onboarding/save", authMiddleware, async (req: any, res) => {
 				const toAdd = validPillarIds.filter(
 					(id: number) => !existingMembershipIds.includes(id),
 				);
-				console.log("🔍 [ONBOARDING] Do dodania:", toAdd);
+				logger.debug("🔍 [ONBOARDING] Do dodania:", toAdd);
 
 				if (toAdd.length > 0) {
 					const result = await prisma.teamMember.createMany({
@@ -4052,21 +4053,21 @@ app.post("/api/onboarding/save", authMiddleware, async (req: any, res) => {
 							is_leader: false,
 						})),
 					});
-					console.log(
+					logger.debug(
 						`✅ [ONBOARDING] Dodano ${result.count} rekordów do team_members`,
 					);
 				} else {
-					console.log(
+					logger.debug(
 						`⏭️ [ONBOARDING] Użytkownik ${userId} już jest we wszystkich wybranych filarach`,
 					);
 				}
 			} else {
-				console.log(
+				logger.debug(
 					`⚠️ [ONBOARDING] Żadne z podanych ID nie istnieje w tabeli teams`,
 				);
 			}
 		} else {
-			console.log(
+			logger.debug(
 				`⚠️ [ONBOARDING] Brak pillarIds lub nieprawidłowy format:`,
 				pillarIds,
 			);
@@ -4078,7 +4079,7 @@ app.post("/api/onboarding/save", authMiddleware, async (req: any, res) => {
 		try {
 			const fullName = `${firstName || ""} ${lastName || ""}`.trim();
 
-			console.log(`📨 [ONBOARDING] Tworzenie powiadomienia dla ${fullName}...`);
+			logger.debug(`📨 [ONBOARDING] Tworzenie powiadomienia dla ${fullName}...`);
 
 
 			const existingNotification = await prisma.notification.findFirst({
@@ -4092,7 +4093,7 @@ app.post("/api/onboarding/save", authMiddleware, async (req: any, res) => {
 			});
 
 			if (existingNotification) {
-				console.log(
+				logger.debug(
 					`⏭️ [ONBOARDING] Powiadomienie już istnieje dla użytkownika ${userId}`,
 				);
 			} else {
@@ -4110,13 +4111,13 @@ app.post("/api/onboarding/save", authMiddleware, async (req: any, res) => {
 					},
 				});
 
-				console.log(
+				logger.debug(
 					`✅ [ONBOARDING] Utworzono powiadomienie ID: ${notification.id} dla użytkownika ${userId}`,
 				);
 			}
 		} catch (notificationError) {
 
-			console.error(
+			logger.error(
 				"⚠️ [ONBOARDING] Błąd tworzenia powiadomienia:",
 				notificationError,
 			);
@@ -4130,8 +4131,8 @@ app.post("/api/onboarding/save", authMiddleware, async (req: any, res) => {
 			onboardingId: onboarding.id,
 		});
 	} catch (error) {
-		console.error("❌ [ONBOARDING] Błąd zapisu:", error);
-		console.error(
+		logger.error("❌ [ONBOARDING] Błąd zapisu:", error);
+		logger.error(
 			"❌ [ONBOARDING] Szczegóły:",
 			error instanceof Error ? error.stack : "",
 		);
@@ -4155,7 +4156,7 @@ app.get("/api/social/members/check", authMiddleware, async (req: any, res) => {
 
 		res.json({ isMember: !!member });
 	} catch (error) {
-		console.error("❌ Błąd sprawdzania członkostwa social media:", error);
+		logger.error("❌ Błąd sprawdzania członkostwa social media:", error);
 		res.status(500).json({ error: "Błąd serwera" });
 	}
 });
@@ -4208,7 +4209,7 @@ app.post("/api/social/materials", authMiddleware, async (req: any, res) => {
 
 		res.status(201).json(formattedMaterial);
 	} catch (error) {
-		console.error("❌ Błąd dodawania materiału:", error);
+		logger.error("❌ Błąd dodawania materiału:", error);
 		res.status(500).json({ error: "Nie udało się dodać materiału" });
 	}
 });
@@ -4262,7 +4263,7 @@ app.put("/api/social/materials/:id", authMiddleware, async (req: any, res) => {
 
 		res.json(formattedMaterial);
 	} catch (error) {
-		console.error("❌ Błąd aktualizacji materiału:", error);
+		logger.error("❌ Błąd aktualizacji materiału:", error);
 		res.status(500).json({ error: "Nie udało się zaktualizować materiału" });
 	}
 });
@@ -4279,7 +4280,7 @@ app.delete(
 			});
 			res.status(204).send();
 		} catch (error) {
-			console.error("❌ Błąd usuwania materiału:", error);
+			logger.error("❌ Błąd usuwania materiału:", error);
 			res.status(500).json({ error: "Nie udało się usunąć materiału" });
 		}
 	},
@@ -4330,7 +4331,7 @@ app.post("/api/social/tasks", authMiddleware, async (req: any, res) => {
 
 		res.status(201).json(formattedTask);
 	} catch (error) {
-		console.error("❌ Błąd dodawania zadania:", error);
+		logger.error("❌ Błąd dodawania zadania:", error);
 		res.status(500).json({ error: "Nie udało się dodać zadania" });
 	}
 });
@@ -4375,7 +4376,7 @@ app.put("/api/social/tasks/:id", authMiddleware, async (req: any, res) => {
 
 		res.json(formattedTask);
 	} catch (error) {
-		console.error("❌ Błąd aktualizacji zadania:", error);
+		logger.error("❌ Błąd aktualizacji zadania:", error);
 		res.status(500).json({ error: "Nie udało się zaktualizować zadania" });
 	}
 });
@@ -4389,7 +4390,7 @@ app.delete("/api/social/tasks/:id", authMiddleware, async (req: any, res) => {
 		});
 		res.status(204).send();
 	} catch (error) {
-		console.error("❌ Błąd usuwania zadania:", error);
+		logger.error("❌ Błąd usuwania zadania:", error);
 		res.status(500).json({ error: "Nie udało się usunąć zadania" });
 	}
 });
@@ -4441,7 +4442,7 @@ app.post("/api/social/contacts", authMiddleware, async (req: any, res) => {
 
 		res.status(201).json(formattedContact);
 	} catch (error) {
-		console.error("❌ Błąd dodawania kontaktu:", error);
+		logger.error("❌ Błąd dodawania kontaktu:", error);
 		res.status(500).json({ error: "Nie udało się dodać kontaktu" });
 	}
 });
@@ -4488,7 +4489,7 @@ app.put("/api/social/contacts/:id", authMiddleware, async (req: any, res) => {
 
 		res.json(formattedContact);
 	} catch (error) {
-		console.error("❌ Błąd aktualizacji kontaktu:", error);
+		logger.error("❌ Błąd aktualizacji kontaktu:", error);
 		res.status(500).json({ error: "Nie udało się zaktualizować kontaktu" });
 	}
 });
@@ -4505,7 +4506,7 @@ app.delete(
 			});
 			res.status(204).send();
 		} catch (error) {
-			console.error("❌ Błąd usuwania kontaktu:", error);
+			logger.error("❌ Błąd usuwania kontaktu:", error);
 			res.status(500).json({ error: "Nie udało się usunąć kontaktu" });
 		}
 	},
@@ -4645,7 +4646,7 @@ app.get(
 				fromDefault: false,
 			});
 		} catch (error) {
-			console.error("❌ Błąd pobierania uprawnień:", error);
+			logger.error("❌ Błąd pobierania uprawnień:", error);
 
 			const defaultPermissions = getDefaultPermissions(req.params.role);
 			res.json({
@@ -4700,7 +4701,7 @@ app.get("/api/admin/roles", authMiddleware, async (req: any, res) => {
 
 		res.json(formattedRoles);
 	} catch (error) {
-		console.error("❌ Błąd pobierania ról:", error);
+		logger.error("❌ Błąd pobierania ról:", error);
 		res.status(500).json({ error: "Nie udało się pobrać ról" });
 	}
 });
@@ -4766,7 +4767,7 @@ app.put(
 				},
 			});
 		} catch (error) {
-			console.error("❌ Błąd aktualizacji uprawnień:", error);
+			logger.error("❌ Błąd aktualizacji uprawnień:", error);
 			res.status(500).json({ error: "Nie udało się zaktualizować uprawnień" });
 		}
 	},
@@ -4831,7 +4832,7 @@ app.post("/api/admin/roles", authMiddleware, async (req: any, res) => {
 			},
 		});
 	} catch (error) {
-		console.error("❌ Błąd tworzenia roli:", error);
+		logger.error("❌ Błąd tworzenia roli:", error);
 		res.status(500).json({ error: "Nie udało się utworzyć roli" });
 	}
 });
@@ -4869,7 +4870,7 @@ app.delete("/api/admin/roles/:id", authMiddleware, async (req: any, res) => {
 			message: "Rola usunięta",
 		});
 	} catch (error) {
-		console.error("❌ Błąd usuwania roli:", error);
+		logger.error("❌ Błąd usuwania roli:", error);
 		res.status(500).json({ error: "Nie udało się usunąć roli" });
 	}
 });
@@ -4938,7 +4939,7 @@ app.get("/api/admin/teams", authMiddleware, async (req: any, res) => {
 
 		res.json(formattedTeams);
 	} catch (error) {
-		console.error("❌ Błąd pobierania zespołów:", error);
+		logger.error("❌ Błąd pobierania zespołów:", error);
 		res.status(500).json({ error: "Nie udało się pobrać zespołów" });
 	}
 });
@@ -4980,7 +4981,7 @@ app.put("/api/admin/teams/:id", authMiddleware, async (req: any, res) => {
 			parent_id: team.parent_id?.toString() || null,
 		});
 	} catch (error) {
-		console.error("❌ Błąd edycji zespołu:", error);
+		logger.error("❌ Błąd edycji zespołu:", error);
 		res.status(500).json({ error: "Nie udało się edytować zespołu" });
 	}
 });
@@ -5024,7 +5025,7 @@ app.post("/api/admin/teams", authMiddleware, async (req: any, res) => {
 			members: [],
 		});
 	} catch (error) {
-		console.error("❌ Błąd tworzenia zespołu:", error);
+		logger.error("❌ Błąd tworzenia zespołu:", error);
 		res.status(500).json({ error: "Nie udało się utworzyć zespołu" });
 	}
 });
@@ -5055,7 +5056,7 @@ app.delete("/api/admin/teams/:id", authMiddleware, async (req: any, res) => {
 
 		res.json({ success: true, message: "Zespół usunięty" });
 	} catch (error) {
-		console.error("❌ Błąd usuwania zespołu:", error);
+		logger.error("❌ Błąd usuwania zespołu:", error);
 		res.status(500).json({ error: "Nie udało się usunąć zespołu" });
 	}
 });
@@ -5141,7 +5142,7 @@ app.post("/api/admin/team-members", authMiddleware, async (req: any, res) => {
 			is_leader: teamMember.is_leader || false,
 		});
 	} catch (error) {
-		console.error("❌ Błąd dodawania członka do zespołu:", error);
+		logger.error("❌ Błąd dodawania członka do zespołu:", error);
 		res.status(500).json({ error: "Nie udało się dodać członka do zespołu" });
 	}
 });
@@ -5175,7 +5176,7 @@ app.delete(
 
 			res.json({ success: true, message: "Usunięto członka z zespołu" });
 		} catch (error) {
-			console.error("❌ Błąd usuwania członka z zespołu:", error);
+			logger.error("❌ Błąd usuwania członka z zespołu:", error);
 			res.status(500).json({ error: "Nie udało się usunąć członka z zespołu" });
 		}
 	},
@@ -5229,7 +5230,7 @@ app.put(
 				is_leader: teamMember.is_leader || false,
 			});
 		} catch (error) {
-			console.error("❌ Błąd zmiany roli członka:", error);
+			logger.error("❌ Błąd zmiany roli członka:", error);
 			res.status(500).json({ error: "Nie udało się zmienić roli" });
 		}
 	},
@@ -5280,7 +5281,7 @@ app.get("/api/admin/available-users", authMiddleware, async (req: any, res) => {
 
 		res.json(formattedUsers);
 	} catch (error) {
-		console.error("❌ Błąd pobierania użytkowników:", error);
+		logger.error("❌ Błąd pobierania użytkowników:", error);
 		res.status(500).json({ error: "Nie udało się pobrać użytkowników" });
 	}
 });
@@ -5350,7 +5351,7 @@ app.get("/api/admin/logs", authMiddleware, async (req: any, res) => {
 			limit,
 		});
 	} catch (error) {
-		console.error("❌ Błąd pobierania logów:", error);
+		logger.error("❌ Błąd pobierania logów:", error);
 		res.status(500).json({ error: "Nie udało się pobrać logów" });
 	}
 });
@@ -5358,25 +5359,25 @@ app.get("/api/admin/logs", authMiddleware, async (req: any, res) => {
 
 
 setTimeout(async () => {
-	console.log(
+	logger.debug(
 		"🔄 [STARTUP] Uruchamiam synchronizację frekwencji przy starcie...",
 	);
 	try {
 		await syncAttendance();
-		console.log("✅ [STARTUP] Synchronizacja frekwencji zakończona");
+		logger.debug("✅ [STARTUP] Synchronizacja frekwencji zakończona");
 	} catch (error) {
-		console.error("❌ [STARTUP] Błąd synchronizacji frekwencji:", error);
+		logger.error("❌ [STARTUP] Błąd synchronizacji frekwencji:", error);
 	}
 }, 10000);
 setTimeout(async () => {
-	console.log(
+	logger.debug(
 		"🔄 [STARTUP] Uruchamiam synchronizację członków przy starcie serwera...",
 	);
 	try {
 		await syncMembers();
-		console.log("✅ [STARTUP] Synchronizacja członków zakończona");
+		logger.debug("✅ [STARTUP] Synchronizacja członków zakończona");
 	} catch (error) {
-		console.error("❌ [STARTUP] Błąd synchronizacji:", error);
+		logger.error("❌ [STARTUP] Błąd synchronizacji:", error);
 	}
 }, 5000);
 
@@ -5384,9 +5385,9 @@ setTimeout(async () => {
 
 
 app.listen(port, () => {
-	console.log(`🚀 Serwer działa na porcie ${port}`);
-	console.log(`📁 Katalog uploadów: ${uploadDir}`);
-	console.log(
+	logger.debug(`🚀 Serwer działa na porcie ${port}`);
+	logger.debug(`📁 Katalog uploadów: ${uploadDir}`);
+	logger.debug(
 		`📋 Dostępne modele:`,
 		Object.keys(prisma).filter((key: string) => !key.startsWith("_")),
 	);

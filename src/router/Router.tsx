@@ -13,6 +13,7 @@ import Admin from "../pages/Admin/Admin";
 import Onboarding from "../pages/Onboarding/Onboarding";
 import Profile from "../pages/Profile/Profile";
 import { useState, useEffect } from "react";
+import { logger } from "@/utils/logger";
 
 function AppRoutes() {
 	const [isLoading, setIsLoading] = useState(true);
@@ -21,80 +22,76 @@ function AppRoutes() {
 	const savedOnboarding =
 		localStorage.getItem("onboardingCompleted") === "true";
 	if (savedOnboarding !== onboardingCompleted && !isLoading) {
-		console.log(
+		logger.debug(
 			`🔄 [Router] SYNC - localStorage: ${savedOnboarding}, stan: ${onboardingCompleted} -> aktualizuję`,
 		);
 		setOnboardingCompleted(savedOnboarding);
 	}
 
-	console.log("═══════════════════════════════════════════════════════════");
-	console.log("═══════════════════════════════════════════════════════════");
-	console.log("🚀 [Router] START RENDER");
-	console.log("📂 PATH:", window.location.pathname);
-	console.log("🌍 ORIGIN:", window.location.origin);
-	console.log("📦 STORAGE KEYS:", Object.keys(localStorage));
-	console.log(
+	logger.debug("═══════════════════════════════════════════════════════════");
+	logger.debug("═══════════════════════════════════════════════════════════");
+	logger.debug("🚀 [Router] START RENDER");
+	logger.debug("📂 PATH:", window.location.pathname);
+	logger.debug("🌍 ORIGIN:", window.location.origin);
+	logger.debug("📦 STORAGE KEYS:", Object.keys(localStorage));
+	logger.debug(
 		"🔑 TOKEN RAW:",
 		localStorage.getItem("accessToken")
 			? "Jest (długość: " + localStorage.getItem("accessToken")?.length + ")"
 			: "BRAK",
 	);
-	console.log("👤 USER RAW:", localStorage.getItem("user"));
-	console.log(
+	logger.debug("👤 USER RAW:", localStorage.getItem("user"));
+	logger.debug(
 		"📋 ONBOARDING STATUS Z LOCALSTORAGE:",
 		localStorage.getItem("onboardingCompleted"),
 	);
-	console.log("═══════════════════════════════════════════════════════════");
+	logger.debug("═══════════════════════════════════════════════════════════");
 
 	const isLoggedIn = !!localStorage.getItem("accessToken");
 
-
 	useEffect(() => {
-		console.log(
+		logger.debug(
 			"🔄 [Router] useEffect - WYKONUJE SIĘ (isLoggedIn:",
 			isLoggedIn,
 			")",
 		);
 
 		const checkOnboardingStatus = async () => {
-			console.log("🔍 [Router] checkOnboardingStatus - ROZPOCZĘCIE");
-
+			logger.debug("🔍 [Router] checkOnboardingStatus - ROZPOCZĘCIE");
 
 			const savedOnboarding =
 				localStorage.getItem("onboardingCompleted") === "true";
-			console.log(
+			logger.debug(
 				`📋 [Router] SYNC - localStorage onboardingCompleted = ${savedOnboarding}`,
 			);
 
 			if (savedOnboarding) {
-				console.log(
+				logger.debug(
 					"✅ [Router] SYNC - ustawiam onboardingCompleted = true z localStorage",
 				);
 				setOnboardingCompleted(true);
 			} else {
-				console.log("ℹ️ [Router] SYNC - ustawiam onboardingCompleted = false");
+				logger.debug("ℹ️ [Router] SYNC - ustawiam onboardingCompleted = false");
 				setOnboardingCompleted(false);
 			}
-
 
 			let finalOnboardingStatus = savedOnboarding;
 
 			try {
 				const token = localStorage.getItem("accessToken");
-				console.log(
+				logger.debug(
 					"🔑 [Router] Token w localStorage:",
 					token ? "Jest (długość: " + token.length + ")" : "BRAK",
 				);
 
 				if (!token) {
-					console.log("❌ [Router] BRAK TOKENA - ustawiam isLoading=false");
+					logger.debug("❌ [Router] BRAK TOKENA - ustawiam isLoading=false");
 					setIsLoading(false);
 					return;
 				}
 
-
 				const userStr = localStorage.getItem("user");
-				console.log("👤 [Router] userStr z localStorage:", userStr);
+				logger.debug("👤 [Router] userStr z localStorage:", userStr);
 
 				let userRole = "";
 				let userEmail = "";
@@ -103,42 +100,40 @@ function AppRoutes() {
 				if (userStr) {
 					try {
 						userData = JSON.parse(userStr);
-						console.log("📋 [Router] Sparsowany user:", userData);
+						logger.debug("📋 [Router] Sparsowany user:", userData);
 						userRole = userData.role || "";
 						userEmail = userData.email || "";
-						console.log(
+						logger.debug(
 							`📋 [Router] userRole: "${userRole}", userEmail: "${userEmail}"`,
 						);
 					} catch (e) {
-						console.error("❌ [Router] Błąd parsowania user:", e);
+						logger.error("❌ [Router] Błąd parsowania user:", e);
 					}
 				} else {
-					console.log("⚠️ [Router] Brak user w localStorage");
+					logger.debug("⚠️ [Router] Brak user w localStorage");
 				}
-
 
 				if (
 					userRole === "admin" ||
 					userEmail === "maksym.marczak@silamlodych.pl"
 				) {
-					console.log(
+					logger.debug(
 						`👑 [Router] Wykryto admina lub Maksyma (role: ${userRole}, email: ${userEmail}) - pomijam onboarding`,
 					);
 					finalOnboardingStatus = true;
 					localStorage.setItem("onboardingCompleted", "true");
-					console.log(
+					logger.debug(
 						"💾 [Router] Zapisano onboardingCompleted = true w localStorage",
 					);
 					setOnboardingCompleted(true);
 					setIsLoading(false);
-					console.log("✅ [Router] isLoading = false (admin/Maksym)");
+					logger.debug("✅ [Router] isLoading = false (admin/Maksym)");
 					return;
 				}
 
+				logger.debug("🔍 [Router] Sprawdzam onboarding przez API...");
 
-				console.log("🔍 [Router] Sprawdzam onboarding przez API...");
-
-				console.log(
+				logger.debug(
 					"📡 [Router] Wysyłanie zapytania do /api/auth/onboarding-status",
 				);
 				const response = await fetch("/api/auth/onboarding-status", {
@@ -148,55 +143,54 @@ function AppRoutes() {
 					},
 				});
 
-				console.log("📡 [Router] Status odpowiedzi API:", response.status);
+				logger.debug("📡 [Router] Status odpowiedzi API:", response.status);
 
 				if (response.ok) {
 					const data = await response.json();
-					console.log("📋 [Router] Pełna odpowiedź API:", data);
-					console.log(
+					logger.debug("📋 [Router] Pełna odpowiedź API:", data);
+					logger.debug(
 						`📋 [Router] data.completed = ${data.completed} (typ: ${typeof data.completed})`,
 					);
 
 					const completed = data.completed === true;
-					console.log(`📊 [Router] completed = ${completed}`);
+					logger.debug(`📊 [Router] completed = ${completed}`);
 					finalOnboardingStatus = completed;
 					localStorage.setItem(
 						"onboardingCompleted",
 						completed ? "true" : "false",
 					);
-					console.log(
+					logger.debug(
 						`💾 [Router] Zapisano onboardingCompleted = ${completed ? "true" : "false"} w localStorage`,
 					);
 				} else {
-					console.error(`❌ [Router] Błąd API: status ${response.status}`);
+					logger.error(`❌ [Router] Błąd API: status ${response.status}`);
 					const errorText = await response.text();
-					console.error(`❌ [Router] Błąd API treść:`, errorText);
+					logger.error(`❌ [Router] Błąd API treść:`, errorText);
 
-					console.log("⚠️ [Router] Używam fallback localStorage");
+					logger.debug("⚠️ [Router] Używam fallback localStorage");
 					const fallback =
 						localStorage.getItem("onboardingCompleted") === "true";
-					console.log(`📋 [Router] Fallback z localStorage: ${fallback}`);
+					logger.debug(`📋 [Router] Fallback z localStorage: ${fallback}`);
 					finalOnboardingStatus = fallback;
 				}
 
-
-				console.log(
+				logger.debug(
 					`🎯 [Router] USTAWIAM onboardingCompleted = ${finalOnboardingStatus}`,
 				);
 				setOnboardingCompleted(finalOnboardingStatus);
 			} catch (error) {
-				console.error("❌ [Router] Błąd sprawdzania onboardingu:", error);
-				console.log("⚠️ [Router] Używam fallback localStorage (catch)");
+				logger.error("❌ [Router] Błąd sprawdzania onboardingu:", error);
+				logger.debug("⚠️ [Router] Używam fallback localStorage (catch)");
 				const fallback = localStorage.getItem("onboardingCompleted") === "true";
-				console.log(`📋 [Router] Fallback z localStorage: ${fallback}`);
+				logger.debug(`📋 [Router] Fallback z localStorage: ${fallback}`);
 				finalOnboardingStatus = fallback;
 				setOnboardingCompleted(fallback);
 			} finally {
 				setIsLoading(false);
-				console.log(
+				logger.debug(
 					`✅ [Router] isLoading = false (final) - onboardingCompleted = ${finalOnboardingStatus}`,
 				);
-				console.log(
+				logger.debug(
 					"═══════════════════════════════════════════════════════════",
 				);
 			}
@@ -205,82 +199,81 @@ function AppRoutes() {
 		checkOnboardingStatus();
 	}, [isLoggedIn]);
 
-
 	useEffect(() => {
-		console.log(
+		logger.debug(
 			`🔄 [Router] useEffect2 - isLoading: ${isLoading}, onboardingCompleted: ${onboardingCompleted}`,
 		);
 
 		if (!isLoading && onboardingCompleted) {
 			const loggedIn = !!localStorage.getItem("accessToken");
-			console.log(`📋 [Router] useEffect2 - isLoggedIn: ${loggedIn}`);
+			logger.debug(`📋 [Router] useEffect2 - isLoggedIn: ${loggedIn}`);
 
 			if (loggedIn) {
 				const currentPath = window.location.pathname;
-				console.log(`📋 [Router] useEffect2 - currentPath: ${currentPath}`);
+				logger.debug(`📋 [Router] useEffect2 - currentPath: ${currentPath}`);
 
 				const isOnboardingPath =
 					currentPath.includes("/onboarding") ||
 					currentPath === "/sm/" ||
 					currentPath === "/";
 
-				console.log(
+				logger.debug(
 					`📋 [Router] useEffect2 - isOnboardingPath: ${isOnboardingPath}`,
 				);
 
 				if (isOnboardingPath) {
-					console.log(
+					logger.debug(
 						"✅ [Router] Onboarding ukończony - przekierowuję do dashboard",
 					);
-					console.log("🔄 [Router] window.location.href = /dashboard");
+					logger.debug("🔄 [Router] window.location.href = /dashboard");
 					(window as any).goTo("/dashboard");
 				} else {
-					console.log(
+					logger.debug(
 						`📌 [Router] Jesteśmy na ${currentPath} - nie przekierowuję`,
 					);
 				}
 			}
 		} else {
-			console.log(
+			logger.debug(
 				`📌 [Router] useEffect2 - brak przekierowania (isLoading: ${isLoading}, onboardingCompleted: ${onboardingCompleted})`,
 			);
 		}
 	}, [isLoading, onboardingCompleted]);
 
 	const handleOnboardingComplete = (data: any) => {
-		console.log(
+		logger.debug(
 			"📝 [Router] handleOnboardingComplete - zapisuję dane onboardingu",
 		);
-		console.log("📋 [Router] Dane onboardingu:", data);
+		logger.debug("📋 [Router] Dane onboardingu:", data);
 
 		localStorage.setItem("onboardingData", JSON.stringify(data));
 		localStorage.setItem("onboardingCompleted", "true");
 		setOnboardingCompleted(true);
 
-		console.log(
+		logger.debug(
 			"💾 [Router] Zapisano onboardingData i onboardingCompleted = true",
 		);
-		console.log(
+		logger.debug(
 			"✅ [Router] setOnboardingCompleted(true) - przekierowanie nastąpi",
 		);
 	};
 
-	console.log("═══════════════════════════════════════════════════════════");
-	console.log("📊 [Router] ZMIENNE PRZED RENDEREM:");
-	console.log(`📊 isLoading: ${isLoading}`);
-	console.log(`📊 onboardingCompleted: ${onboardingCompleted}`);
-	console.log(`📊 isLoggedIn: ${isLoggedIn}`);
-	console.log(`📊 currentPath: ${window.location.pathname}`);
-	console.log(
+	logger.debug("═══════════════════════════════════════════════════════════");
+	logger.debug("📊 [Router] ZMIENNE PRZED RENDEREM:");
+	logger.debug(`📊 isLoading: ${isLoading}`);
+	logger.debug(`📊 onboardingCompleted: ${onboardingCompleted}`);
+	logger.debug(`📊 isLoggedIn: ${isLoggedIn}`);
+	logger.debug(`📊 currentPath: ${window.location.pathname}`);
+	logger.debug(
 		"🔐 Token w routerze:",
 		localStorage.getItem("accessToken") ? "Jest" : "BRAK",
 	);
-	console.log("👤 User w routerze:", localStorage.getItem("user"));
-	console.log("✅ Czy zalogowany:", isLoggedIn);
-	console.log("═══════════════════════════════════════════════════════════");
+	logger.debug("👤 User w routerze:", localStorage.getItem("user"));
+	logger.debug("✅ Czy zalogowany:", isLoggedIn);
+	logger.debug("═══════════════════════════════════════════════════════════");
 
 	if (isLoading) {
-		console.log("⏳ [Router] RENDER: Ładowanie...");
+		logger.debug("⏳ [Router] RENDER: Ładowanie...");
 		return (
 			<div
 				style={{
@@ -305,7 +298,7 @@ function AppRoutes() {
 	}
 
 	if (!isLoggedIn) {
-		console.log("🔐 [Router] RENDER: NIEZALOGOWANY -> /login");
+		logger.debug("🔐 [Router] RENDER: NIEZALOGOWANY -> /login");
 		return (
 			<Routes>
 				<Route path="/login" element={<Login />} />
@@ -316,17 +309,16 @@ function AppRoutes() {
 
 	if (isLoggedIn && !onboardingCompleted) {
 		const currentPath = window.location.pathname;
-		console.log(
+		logger.debug(
 			`⚠️ [Router] RENDER: ZALOGOWANY + ONBOARDING NIEUKOŃCZONY (path: ${currentPath})`,
 		);
-
 
 		if (
 			currentPath === "/onboarding" ||
 			currentPath === "/sm/onboarding" ||
 			currentPath.includes("/onboarding")
 		) {
-			console.log(
+			logger.debug(
 				"📌 [Router] RENDER: Jesteśmy już na onboarding - wyświetlam formularz",
 			);
 			return (
@@ -344,7 +336,7 @@ function AppRoutes() {
 			);
 		}
 
-		console.log("⚠️ [Router] RENDER: Przekierowuję do /onboarding");
+		logger.debug("⚠️ [Router] RENDER: Przekierowuję do /onboarding");
 		return (
 			<Routes>
 				<Route
@@ -356,7 +348,7 @@ function AppRoutes() {
 		);
 	}
 
-	console.log(
+	logger.debug(
 		"✅ [Router] RENDER: ZALOGOWANY + ONBOARDING UKOŃCZONY -> Dashboard",
 	);
 	return (

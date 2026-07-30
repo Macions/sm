@@ -15,7 +15,7 @@ window.fetch = function (...args) {
 	const [url, options] = args;
 	if (typeof url === "string" && url.startsWith("/api/")) {
 		const newUrl = `${API_URL}${url}`;
-		console.log(`🔄 [fetch] ${url} -> ${newUrl}`);
+		logger.debug(`🔄 [fetch] ${url} -> ${newUrl}`);
 		return originalFetch(newUrl, options);
 	}
 	return originalFetch(url, options);
@@ -24,7 +24,7 @@ window.fetch = function (...args) {
 
 
 (window as any).goTo = (path: string) => {
-	console.log(`🔄 [goTo] -> ${path}`);
+	logger.debug(`🔄 [goTo] -> ${path}`);
 
 	const hash = path.startsWith("#") ? path : `#${path}`;
 	window.location.hash = hash;

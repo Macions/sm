@@ -1,11 +1,11 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
+import { safeNavigate } from "@/utils/safeNavigation";
+import { useNavigate } from "react-router-dom";
 import { ConfirmDialog } from "../../components/common/ConfirmDialog";
 import toast from "react-hot-toast";
-import {
-	hasPermission,
-	canManageUsers,
-	canManageProjects,
-} from "../../utils/permissions";
+import { hasPermission } from "../../utils/permissions";
+import { logger } from "@/utils/logger";
+
 import {
 	Users,
 	Search,
@@ -16,31 +16,17 @@ import {
 	User,
 	MapPin,
 	Briefcase,
-
 	Star,
 	Clock,
 	CheckCircle,
-
-
-
-
-
 	Edit,
 	Eye,
-
-
-
-
-
 	Umbrella,
-
-
 	Plus,
 	ArrowUpDown,
 	Trash2,
 } from "lucide-react";
 import styles from "./Members.module.css";
-
 
 // ---------------------------------------------------------------------------
 // MAPOWANIE AREAS Z ANGIELSKIEGO NA POLSKI
@@ -113,14 +99,6 @@ type User = {
 	teamId?: string;
 };
 
-// ---------------------------------------------------------------------------
-// DANE PRZYKŁADOWE
-// ---------------------------------------------------------------------------
-
-// ---------------------------------------------------------------------------
-// MAPOWANIE NA TEKSTY
-// ---------------------------------------------------------------------------
-
 const STATUS_LABELS: Record<MemberStatus, string> = {
 	active: "Pełnoprawny członek",
 	trial: "Okres próbny",
@@ -173,17 +151,6 @@ function MemberCard({
 	};
 
 	const isOnVacation = member.status === "vacation";
-
-
-
-
-	const formatDate = (date: string) => {
-		return new Date(date).toLocaleDateString("pl-PL", {
-			year: "numeric",
-			month: "short",
-			day: "numeric",
-		});
-	};
 
 	if (viewMode === "list") {
 		return (
@@ -410,7 +377,6 @@ function ProfileModal({
 		},
 	});
 
-
 	const [newInterest, setNewInterest] = useState("");
 	const [newSkill, setNewSkill] = useState("");
 	const [newArea, setNewArea] = useState("");
@@ -418,7 +384,6 @@ function ProfileModal({
 	const [newMpContact, setNewMpContact] = useState("");
 	const [newOtherContact, setNewOtherContact] = useState("");
 	const [newTrainingArea, setNewTrainingArea] = useState("");
-
 
 	useEffect(() => {
 		if (member) {
@@ -430,7 +395,7 @@ function ProfileModal({
 				team: member.team || "",
 				teamId: member.teamId || "",
 				province: member.province || "",
-				status: (member.status as MemberStatus) || "",
+				status: (member.status as MemberStatus) || "trial",
 				interests: member.interests || [],
 				skills: member.skills || [],
 				smAreas: member.smAreas || [],
@@ -450,7 +415,7 @@ function ProfileModal({
 					status: "paid",
 					arrears: 0,
 				},
-				formData: member.formData || ,
+				formData: member.formData || {},
 			};
 
 			setFormData(newFormData);
@@ -483,14 +448,11 @@ function ProfileModal({
 		}
 	}, [member, isOpen]);
 	useEffect(() => {
-
 		if (isEdit) {
 			const firstName = formData.firstName?.trim() || "";
 			const lastName = formData.lastName?.trim() || "";
 
-
 			if (firstName && lastName) {
-
 				const normalize = (str: string) => {
 					return str
 						.normalize("NFD")
@@ -504,8 +466,6 @@ function ProfileModal({
 
 				const generatedEmail = `${normalize(firstName.toLowerCase())}.${normalize(lastName.toLowerCase())}@silamlodych.pl`;
 
-
-
 				if (!formData.email || formData.email.endsWith("@silamlodych.pl")) {
 					setFormData((prev) => ({
 						...prev,
@@ -518,9 +478,7 @@ function ProfileModal({
 
 	if (!isOpen) return null;
 
-
 	if (!member && !isEdit) return null;
-
 
 	const currentMember = member || {
 		id: "",
@@ -581,14 +539,13 @@ function ProfileModal({
 	const handleSubmit = (e: React.FormEvent) => {
 		e.preventDefault();
 
-
 		if (isEdit && !formData.status) {
 			alert("Wybierz status członka");
 			return;
 		}
 
 		if (onSave && canEdit) {
-			console.log("📝 formData w handleSubmit:", formData);
+			logger.debug("📝 formData w handleSubmit:", formData);
 
 			const saveData: Member = {
 				id: currentMember.id,
@@ -619,7 +576,7 @@ function ProfileModal({
 					? formData.formData || currentMember.formData
 					: undefined,
 			};
-			console.log("📤 saveData:", saveData);
+			logger.debug("📤 saveData:", saveData);
 
 			onSave(saveData);
 		}
@@ -634,37 +591,6 @@ function ProfileModal({
 		});
 	};
 
-	const hasInterests = canEdit
-		? (formData.interests || []).length > 0
-		: (currentMember.interests || []).length > 0;
-
-	const hasSkills = canEdit
-		? (formData.skills || []).length > 0
-		: (currentMember.skills || []).length > 0;
-
-	const hasSmAreas = canEdit
-		? (formData.smAreas || []).length > 0
-		: (currentMember.smAreas || []).length > 0;
-
-	const hasSalaContacts = canEdit
-		? (formData.contacts?.salaContacts || []).length > 0
-		: (currentMember.contacts?.salaContacts || []).length > 0;
-
-	const hasMpContacts = canEdit
-		? (formData.contacts?.mpContacts || []).length > 0
-		: (currentMember.contacts?.mpContacts || []).length > 0;
-
-	const hasOtherContacts = canEdit
-		? (formData.contacts?.otherContacts || []).length > 0
-		: (currentMember.contacts?.otherContacts || []).length > 0;
-
-	const hasTrainingAreas = canEdit
-		? (formData.trainingAreas || []).length > 0
-		: (currentMember.trainingAreas || []).length > 0;
-
-	const hasAnyInterestsData = hasInterests || hasSkills || hasSmAreas;
-	const hasAnyContactData =
-		hasSalaContacts || hasMpContacts || hasOtherContacts || hasTrainingAreas;
 	return (
 		<div className={styles.modalOverlay} onClick={onClose}>
 			<div
@@ -685,13 +611,11 @@ function ProfileModal({
 				</div>
 
 				<form onSubmit={handleSubmit} className={styles.modal__form}>
-					
 					<div className={styles.modal__section}>
 						<h3 className={styles.modal__sectionTitle}>
 							Podstawowe informacje
 						</h3>
 
-						
 						<div className={styles.modal__row}>
 							<div className={styles.modal__field}>
 								<label className={styles.modal__label}>Imię *</label>
@@ -721,7 +645,6 @@ function ProfileModal({
 							</div>
 						</div>
 
-						
 						{isEdit && (
 							<div className={styles.modal__row}>
 								<div className={styles.modal__field}>
@@ -764,7 +687,6 @@ function ProfileModal({
 							</div>
 						)}
 
-						
 						<div className={styles.modal__row}>
 							<div className={styles.modal__field}>
 								<label className={styles.modal__label}>Funkcja</label>
@@ -779,14 +701,11 @@ function ProfileModal({
 								/>
 							</div>
 
-							
 							<div className={styles.modal__field}>
 								<label className={styles.modal__label}>Zespoły</label>
 
-								
 								{canEdit ? (
 									<>
-										
 										<div className={styles.modal__tagInput}>
 											<select
 												className={styles.modal__select}
@@ -829,7 +748,6 @@ function ProfileModal({
 											</select>
 										</div>
 
-										
 										<div className={styles.modal__tags}>
 											{(formData.team || "")
 												.split(", ")
@@ -866,7 +784,6 @@ function ProfileModal({
 												))}
 										</div>
 
-										
 										{showCustomTeam && isEdit && (
 											<div
 												style={{
@@ -1012,7 +929,6 @@ function ProfileModal({
 										)}
 									</>
 								) : (
-									
 									<div className={styles.modal__tags}>
 										{(formData.team || "")
 											.split(", ")
@@ -1027,7 +943,6 @@ function ProfileModal({
 							</div>
 						</div>
 
-						
 						<div className={styles.modal__row}>
 							<div className={styles.modal__field}>
 								<label className={styles.modal__label}>Województwo</label>
@@ -1084,7 +999,6 @@ function ProfileModal({
 							</div>
 						</div>
 
-						
 						<div className={styles.modal__field}>
 							<label className={styles.modal__label}>Data dołączenia</label>
 							<input
@@ -1099,7 +1013,6 @@ function ProfileModal({
 						</div>
 					</div>
 
-					
 					{currentMember.vacation && (
 						<div className={styles.modal__section}>
 							<h3 className={styles.modal__sectionTitle}>Aktualny urlop</h3>
@@ -1118,7 +1031,6 @@ function ProfileModal({
 						</div>
 					)}
 
-					
 					{(() => {
 						const hasInterests = canEdit
 							? (formData.interests || []).length > 0
@@ -1139,7 +1051,6 @@ function ProfileModal({
 									Zainteresowania i umiejętności
 								</h3>
 
-								
 								{(hasInterests || canEdit) && (
 									<div className={styles.modal__field}>
 										<label className={styles.modal__label}>
@@ -1225,7 +1136,6 @@ function ProfileModal({
 									</div>
 								)}
 
-								
 								{(hasSkills || canEdit) && (
 									<div className={styles.modal__field}>
 										<label className={styles.modal__label}>Umiejętności</label>
@@ -1306,7 +1216,6 @@ function ProfileModal({
 									</div>
 								)}
 
-								
 								{(hasSmAreas || canEdit) && (
 									<div className={styles.modal__field}>
 										<label className={styles.modal__label}>
@@ -1392,7 +1301,6 @@ function ProfileModal({
 						);
 					})()}
 
-					
 					{canViewSensitive &&
 						(() => {
 							const hasSalaContacts = canEdit
@@ -1422,7 +1330,6 @@ function ProfileModal({
 											Kontakty i znajomości
 										</h3>
 
-										
 										{(hasSalaContacts || canEdit) && (
 											<div className={styles.modal__field}>
 												<label className={styles.modal__label}>
@@ -1526,7 +1433,6 @@ function ProfileModal({
 											</div>
 										)}
 
-										
 										{(hasMpContacts || canEdit) && (
 											<div className={styles.modal__field}>
 												<label className={styles.modal__label}>
@@ -1630,7 +1536,6 @@ function ProfileModal({
 											</div>
 										)}
 
-										
 										{(hasOtherContacts || canEdit) && (
 											<div className={styles.modal__field}>
 												<label className={styles.modal__label}>
@@ -1734,7 +1639,6 @@ function ProfileModal({
 											</div>
 										)}
 
-										
 										{(hasTrainingAreas || canEdit) && (
 											<div className={styles.modal__field}>
 												<label className={styles.modal__label}>
@@ -1828,7 +1732,6 @@ function ProfileModal({
 										)}
 									</div>
 
-									
 									<div className={styles.modal__section}>
 										<h3 className={styles.modal__sectionTitle}>
 											Informacje o składkach
@@ -1921,6 +1824,8 @@ function ProfileModal({
 // ---------------------------------------------------------------------------
 
 export default function Members({ title }: { title?: string }) {
+	const navigate = useNavigate();
+
 	const [loading, setLoading] = useState(true);
 	const [members, setMembers] = useState<Member[]>([]);
 	const [currentUser, setCurrentUser] = useState<User | null>(null);
@@ -1950,18 +1855,26 @@ export default function Members({ title }: { title?: string }) {
 	>("name");
 	const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
 
-
-
 	useEffect(() => {
 		const fetchAllData = async () => {
 			try {
 				setLoading(true);
 				const token = localStorage.getItem("accessToken");
-
+				if (!token) {
+					logger.warn("Brak tokena - przekierowanie do logowania");
+					safeNavigate("/login", navigate);
+					return;
+				}
 
 				const userResponse = await fetch("/api/profile", {
 					headers: { Authorization: `Bearer ${token}` },
 				});
+
+				if (userResponse.status === 401) {
+					localStorage.removeItem("accessToken");
+					safeNavigate("/login", navigate);
+					return;
+				}
 				if (!userResponse.ok) throw new Error("Błąd profilu");
 				const userData = await userResponse.json();
 
@@ -1974,7 +1887,6 @@ export default function Members({ title }: { title?: string }) {
 					teamId: userData.teamId,
 				});
 
-
 				const teamsResponse = await fetch("/api/teams", {
 					headers: { Authorization: `Bearer ${token}` },
 				});
@@ -1983,23 +1895,44 @@ export default function Members({ title }: { title?: string }) {
 					setTeamsList(teamsData);
 				}
 
-
 				const membersResponse = await fetch("/api/members", {
 					headers: { Authorization: `Bearer ${token}` },
 				});
 				if (!membersResponse.ok) throw new Error("Błąd członków");
 				const membersData = await membersResponse.json();
-				console.log("📦 Dane z backendu:", membersData);
+				logger.debug("📦 Dane z backendu:", membersData);
 
+				interface ApiUser {
+					id: string | number;
+					first_name: string;
+					last_name: string;
+					email: string;
+					phone?: string;
+					role?: string;
+					functional_role?: string;
+					team?: string;
+					team_id?: string;
+					province?: string;
+					status?: string;
+					join_date?: string;
+					created_at?: string;
+					onboarding_data?: {
+						development_areas?: string;
+						skills?: string;
+						sala_contacts?: string;
+						mp_contacts?: string;
+						institution_contacts?: string;
+						other_contacts?: string;
+					};
+				}
 
-				const mappedMembers = membersData.map((user: any) => {
-					const onboarding = user.onboarding_data || ;
-
+				const mappedMembers = membersData.map((user: ApiUser) => {
+					const onboarding = user.onboarding_data || {};
 
 					const teamString = user.team || "Brak zespołu";
 					const teams = user.team ? user.team.split(", ") : [];
 
-					console.log(`🔍 Mapped member:`, {
+					logger.debug(`🔍 Mapped member:`, {
 						id: user.id,
 						firstName: user.first_name,
 						lastName: user.last_name,
@@ -2030,90 +1963,90 @@ export default function Members({ title }: { title?: string }) {
 						interests:
 							hasOnboardingData && onboarding.development_areas
 								? (() => {
-									try {
-										return JSON.parse(onboarding.development_areas);
-									} catch (e) {
-										return [];
-									}
-								})()
+										try {
+											return JSON.parse(onboarding.development_areas);
+										} catch (e) {
+											return [];
+										}
+									})()
 								: [],
 						skills:
 							hasOnboardingData && onboarding.skills
 								? (() => {
-									try {
-										return JSON.parse(onboarding.skills);
-									} catch (e) {
-										return [];
-									}
-								})()
+										try {
+											return JSON.parse(onboarding.skills);
+										} catch (e) {
+											return [];
+										}
+									})()
 								: [],
 						smAreas:
 							hasOnboardingData && onboarding.development_areas
 								? (() => {
-									try {
-										return JSON.parse(onboarding.development_areas);
-									} catch (e) {
-										return [];
-									}
-								})()
+										try {
+											return JSON.parse(onboarding.development_areas);
+										} catch (e) {
+											return [];
+										}
+									})()
 								: [],
 						email: user.email || "",
 						phone: user.phone || "",
 						joinDate: user.join_date
 							? new Date(user.join_date).toISOString().split("T")[0]
 							: user.created_at?.split("T")[0] ||
-							new Date().toISOString().split("T")[0],
+								new Date().toISOString().split("T")[0],
 						contacts: {
 							salaContacts:
 								hasOnboardingData && onboarding.sala_contacts
 									? (() => {
-										try {
-											return JSON.parse(onboarding.sala_contacts);
-										} catch (e) {
-											return [];
-										}
-									})()
+											try {
+												return JSON.parse(onboarding.sala_contacts);
+											} catch (e) {
+												return [];
+											}
+										})()
 									: [],
 							mpContacts:
 								hasOnboardingData && onboarding.mp_contacts
 									? (() => {
-										try {
-											return JSON.parse(onboarding.mp_contacts);
-										} catch (e) {
-											return [];
-										}
-									})()
+											try {
+												return JSON.parse(onboarding.mp_contacts);
+											} catch (e) {
+												return [];
+											}
+										})()
 									: [],
 							otherContacts: [
 								...(hasOnboardingData && onboarding.institution_contacts
 									? (() => {
-										try {
-											return JSON.parse(onboarding.institution_contacts);
-										} catch (e) {
-											return [];
-										}
-									})()
+											try {
+												return JSON.parse(onboarding.institution_contacts);
+											} catch (e) {
+												return [];
+											}
+										})()
 									: []),
 								...(hasOnboardingData && onboarding.other_contacts
 									? (() => {
-										try {
-											return JSON.parse(onboarding.other_contacts);
-										} catch (e) {
-											return [];
-										}
-									})()
+											try {
+												return JSON.parse(onboarding.other_contacts);
+											} catch (e) {
+												return [];
+											}
+										})()
 									: []),
 							],
 						},
 						trainingAreas:
 							hasOnboardingData && onboarding.skills
 								? (() => {
-									try {
-										return JSON.parse(onboarding.skills);
-									} catch (e) {
-										return [];
-									}
-								})()
+										try {
+											return JSON.parse(onboarding.skills);
+										} catch (e) {
+											return [];
+										}
+									})()
 								: [],
 						contributionInfo: {
 							status: "paid",
@@ -2123,14 +2056,14 @@ export default function Members({ title }: { title?: string }) {
 					};
 				});
 
-				console.log("📊 Wszyscy członkowie po mapowaniu:", mappedMembers);
-				console.log(
+				logger.debug("📊 Wszyscy członkowie po mapowaniu:", mappedMembers);
+				logger.debug(
 					"🏷️ Lista zespołów:",
 					mappedMembers.map((m: any) => m.team),
 				);
 				setMembers(mappedMembers);
 			} catch (error) {
-				console.error("❌ Błąd:", error);
+				logger.error("❌ Błąd:", error);
 				setMembers([]);
 			} finally {
 				setLoading(false);
@@ -2138,9 +2071,9 @@ export default function Members({ title }: { title?: string }) {
 		};
 
 		fetchAllData();
-	}, []);
+	}, [navigate]);
 
-	const handleAddMember = () => {
+	const handleAddMember = useCallback(() => {
 		const newMember: Partial<Member> = {
 			id: `member-${Date.now()}`,
 			firstName: "",
@@ -2169,128 +2102,142 @@ export default function Members({ title }: { title?: string }) {
 		};
 		setNewMemberData(newMember);
 		setIsAddMemberOpen(true);
-	};
+	}, []);
 
-	const handleAddNewMember = async (member: Member) => {
-		if (!member.status) {
-			toast.error("Wybierz status członka");
-			return;
-		}
-		if (!member.email) {
-			toast.error("Podaj adres email");
-			return;
-		}
-		if (!member.firstName || !member.lastName) {
-			toast.error("Imię i nazwisko są wymagane");
-			return;
-		}
+	const handleAddNewMember = useCallback(
+		async (member: Member) => {
+			if (!member.status) {
+				toast.error("Wybierz status członka");
+				return;
+			}
+			if (!member.email) {
+				toast.error("Podaj adres email");
+				return;
+			}
+			if (!member.firstName || !member.lastName) {
+				toast.error("Imię i nazwisko są wymagane");
+				return;
+			}
 
-		try {
-			const token = localStorage.getItem("accessToken");
-
-
-			let teamName = member.team;
-			if (teamName && !teamsList.some((t) => t.name === teamName)) {
-
-				if (!teamName || !teamName.trim()) {
-					toast.error("Nazwa nowego zespołu jest wymagana");
+			try {
+				const token = localStorage.getItem("accessToken");
+				if (!token) {
+					logger.warn("Brak tokena - przekierowanie do logowania");
+					safeNavigate("/login", navigate);
 					return;
 				}
 
-				const teamData = {
-					name: teamName.trim(),
-					role: customTeamRole || "Zespół",
-					description: customTeamDescription || null,
-					icon: customTeamIcon || "Users",
-					status: "active",
-					parent_id: customTeamParent ? parseInt(customTeamParent) : null,
-					email: customTeamEmail || null,
-				};
+				let teamName = member.team;
+				if (teamName && !teamsList.some((t) => t.name === teamName)) {
+					if (!teamName || !teamName.trim()) {
+						toast.error("Nazwa nowego zespołu jest wymagana");
+						return;
+					}
 
-				const createTeamResponse = await fetch("/api/teams", {
+					const teamData = {
+						name: teamName.trim(),
+						role: customTeamRole || "Zespół",
+						description: customTeamDescription || null,
+						icon: customTeamIcon || "Users",
+						status: "active",
+						parent_id: customTeamParent ? parseInt(customTeamParent) : null,
+						email: customTeamEmail || null,
+					};
+
+					const createTeamResponse = await fetch("/api/teams", {
+						method: "POST",
+						headers: {
+							Authorization: `Bearer ${token}`,
+							"Content-Type": "application/json",
+						},
+						body: JSON.stringify(teamData),
+					});
+
+					if (!createTeamResponse.ok) {
+						const errorText = await createTeamResponse.text();
+						throw new Error(
+							`Błąd tworzenia zespołu: ${createTeamResponse.status} - ${errorText}`,
+						);
+					}
+
+					const newTeam = await createTeamResponse.json();
+					setTeamsList([...teamsList, newTeam]);
+					toast.success(`Nowy zespół "${teamName}" został utworzony!`);
+
+					setCustomTeamName("");
+					setCustomTeamRole("Zespół");
+					setCustomTeamDescription("");
+					setCustomTeamIcon("Users");
+					setCustomTeamParent("");
+					setCustomTeamEmail("");
+				}
+
+				const response = await fetch("/api/members", {
 					method: "POST",
 					headers: {
 						Authorization: `Bearer ${token}`,
 						"Content-Type": "application/json",
 					},
-					body: JSON.stringify(teamData),
+					body: JSON.stringify(member),
 				});
 
-				if (!createTeamResponse.ok) {
-					const errorText = await createTeamResponse.text();
-					throw new Error(
-						`Błąd tworzenia zespołu: ${createTeamResponse.status} - ${errorText}`,
-					);
+				if (!response.ok) {
+					const errorText = await response.text();
+					let errorMessage = "Nie udało się dodać członka";
+					try {
+						const errorData = JSON.parse(errorText);
+						if (errorData.error) {
+							errorMessage = errorData.error;
+						}
+					} catch (e) {
+						errorMessage = errorText || "Nie udało się dodać członka";
+					}
+
+					if (
+						errorMessage.includes("już istnieje") ||
+						errorMessage.includes("już jest przypisany")
+					) {
+						toast.error(errorMessage);
+					} else {
+						toast.error(errorMessage);
+					}
+					throw new Error(errorMessage);
 				}
 
-				const newTeam = await createTeamResponse.json();
-				setTeamsList([...teamsList, newTeam]);
-				toast.success(`Nowy zespół "${teamName}" został utworzony!`);
-
-
+				const savedMember = await response.json();
+				setMembers([savedMember, ...members]);
+				setIsAddMemberOpen(false);
+				setNewMemberData(null);
+				setShowCustomTeam(false);
 				setCustomTeamName("");
 				setCustomTeamRole("Zespół");
 				setCustomTeamDescription("");
 				setCustomTeamIcon("Users");
 				setCustomTeamParent("");
 				setCustomTeamEmail("");
+				toast.success(
+					`Członek ${member.firstName} ${member.lastName} został dodany!`,
+				);
+			} catch (error) {
+				logger.error("❌ Błąd dodawania członka:", error);
+				toast.error(
+					error instanceof Error
+						? error.message
+						: "Nie udało się dodać członka",
+				);
 			}
-
-
-			const response = await fetch("/api/members", {
-				method: "POST",
-				headers: {
-					Authorization: `Bearer ${token}`,
-					"Content-Type": "application/json",
-				},
-				body: JSON.stringify(member),
-			});
-
-			if (!response.ok) {
-				const errorText = await response.text();
-				let errorMessage = "Nie udało się dodać członka";
-				try {
-					const errorData = JSON.parse(errorText);
-					if (errorData.error) {
-						errorMessage = errorData.error;
-					}
-				} catch (e) {
-					errorMessage = errorText || "Nie udało się dodać członka";
-				}
-
-
-				if (
-					errorMessage.includes("już istnieje") ||
-					errorMessage.includes("już jest przypisany")
-				) {
-					toast.error(errorMessage);
-				} else {
-					toast.error(errorMessage);
-				}
-				throw new Error(errorMessage);
-			}
-
-			const savedMember = await response.json();
-			setMembers([savedMember, ...members]);
-			setIsAddMemberOpen(false);
-			setNewMemberData(null);
-			setShowCustomTeam(false);
-			setCustomTeamName("");
-			setCustomTeamRole("Zespół");
-			setCustomTeamDescription("");
-			setCustomTeamIcon("Users");
-			setCustomTeamParent("");
-			setCustomTeamEmail("");
-			toast.success(
-				`Członek ${member.firstName} ${member.lastName} został dodany!`,
-			);
-		} catch (error) {
-			console.error("❌ Błąd dodawania członka:", error);
-			toast.error(
-				error instanceof Error ? error.message : "Nie udało się dodać członka",
-			);
-		}
-	};
+		},
+		[
+			teamsList,
+			customTeamRole,
+			customTeamDescription,
+			customTeamIcon,
+			customTeamParent,
+			customTeamEmail,
+			members,
+			navigate,
+		],
+	);
 
 	const provinces = useMemo(() => {
 		const unique = new Set(
@@ -2300,7 +2247,6 @@ export default function Members({ title }: { title?: string }) {
 		);
 		return Array.from(unique).sort();
 	}, [members]);
-
 
 	const parentTeams = useMemo(() => {
 		const allowedParentIds = [1, 4, 7];
@@ -2314,10 +2260,8 @@ export default function Members({ title }: { title?: string }) {
 	const teams = useMemo(() => {
 		const allTeams = new Set<string>();
 		members.forEach((member) => {
-
 			const teamList = member.team.split(", ");
 			teamList.forEach((team) => {
-
 				if (team && team !== "Brak zespołu") {
 					allTeams.add(team);
 				}
@@ -2331,12 +2275,11 @@ export default function Members({ title }: { title?: string }) {
 		member: Member | null;
 	}>({ isOpen: false, member: null });
 
-	const handleDeleteMember = (member: Member) => {
+	const handleDeleteMember = useCallback((member: Member) => {
 		setConfirmDialog({ isOpen: true, member });
-	};
+	}, []);
 
-
-	const confirmDelete = async () => {
+	const confirmDelete = useCallback(async () => {
 		const member = confirmDialog.member;
 		if (!member) return;
 
@@ -2344,6 +2287,11 @@ export default function Members({ title }: { title?: string }) {
 
 		try {
 			const token = localStorage.getItem("accessToken");
+			if (!token) {
+				logger.warn("Brak tokena - przekierowanie do logowania");
+				safeNavigate("/login", navigate);
+				return;
+			}
 			const response = await fetch(`/api/members/${member.id}`, {
 				method: "DELETE",
 				headers: {
@@ -2362,15 +2310,14 @@ export default function Members({ title }: { title?: string }) {
 				`Członek ${member.firstName} ${member.lastName} został usunięty.`,
 			);
 		} catch (error) {
-			console.error("❌ Błąd usuwania członka:", error);
+			logger.error("❌ Błąd usuwania członka:", error);
 			toast.error("Nie udało się usunąć członka");
 		}
-	};
+	}, [confirmDialog.member, members, navigate]);
 
-
-	const cancelDelete = () => {
+	const cancelDelete = useCallback(() => {
 		setConfirmDialog({ isOpen: false, member: null });
-	};
+	}, []);
 	const filteredMembers = useMemo(() => {
 		return members
 			.filter((member) => {
@@ -2403,7 +2350,6 @@ export default function Members({ title }: { title?: string }) {
 				const matchesProvince =
 					selectedProvince === "all" || member.province === selectedProvince;
 
-
 				const matchesTeam =
 					selectedTeam === "all" ||
 					member.team.split(", ").includes(selectedTeam);
@@ -2432,73 +2378,80 @@ export default function Members({ title }: { title?: string }) {
 			});
 	}, [members, searchTerm, selectedProvince, selectedTeam, sortBy, sortOrder]);
 
-	const handleViewMember = (member: Member) => {
+	const handleViewMember = useCallback((member: Member) => {
 		setSelectedMember(member);
 		setIsProfileOpen(true);
-	};
+	}, []);
 
-
-	const handleEditMember = (member: Member) => {
+	const handleEditMember = useCallback((member: Member) => {
 		setSelectedMember(member);
 		setIsEditOpen(true);
-	};
+	}, []);
 
-	const handleSaveMember = async (updatedMember: Member) => {
-		try {
-			const token = localStorage.getItem("accessToken");
+	const handleSaveMember = useCallback(
+		async (updatedMember: Member) => {
+			try {
+				const token = localStorage.getItem("accessToken");
+				if (!token) {
+					logger.warn("Brak tokena - przekierowanie do logowania");
+					safeNavigate("/login", navigate);
+					return;
+				}
+				const response = await fetch(`/api/members/${updatedMember.id}`, {
+					method: "PUT",
+					headers: {
+						Authorization: `Bearer ${token}`,
+						"Content-Type": "application/json",
+					},
+					body: JSON.stringify(updatedMember),
+				});
 
-			const response = await fetch(`/api/members/${updatedMember.id}`, {
-				method: "PUT",
-				headers: {
-					Authorization: `Bearer ${token}`,
-					"Content-Type": "application/json",
-				},
-				body: JSON.stringify(updatedMember),
-			});
+				if (!response.ok) {
+					throw new Error("Błąd aktualizacji członka");
+				}
 
-			if (!response.ok) {
-				throw new Error("Błąd aktualizacji członka");
+				const savedMember = await response.json();
+				setMembers(
+					members.map((m) => (m.id === savedMember.id ? savedMember : m)),
+				);
+				setIsEditOpen(false);
+				setSelectedMember(null);
+				toast.success("Dane członka zostały zaktualizowane!");
+			} catch (error) {
+				toast.error("Nie udało się zaktualizować danych");
 			}
+		},
+		[members, navigate],
+	);
 
-			const savedMember = await response.json();
-			setMembers(
-				members.map((m) => (m.id === savedMember.id ? savedMember : m)),
-			);
-			setIsEditOpen(false);
-			setSelectedMember(null);
-			toast.success("Dane członka zostały zaktualizowane!");
-		} catch (error) {
-			toast.error("Nie udało się zaktualizować danych");
-		}
-	};
-
-	const clearFilters = () => {
+	const clearFilters = useCallback(() => {
 		setSearchTerm("");
 		setSelectedProvince("all");
 		setSelectedTeam("all");
-	};
+	}, []);
 
-	const toggleSort = (field: "name" | "function" | "province" | "status") => {
-		if (sortBy === field) {
-			setSortOrder(sortOrder === "asc" ? "desc" : "asc");
-		} else {
-			setSortBy(field);
-			setSortOrder("asc");
-		}
-	};
+	const toggleSort = useCallback(
+		(field: "name" | "function" | "province" | "status") => {
+			if (sortBy === field) {
+				setSortOrder(sortOrder === "asc" ? "desc" : "asc");
+			} else {
+				setSortBy(field);
+				setSortOrder("asc");
+			}
+		},
+		[sortBy, sortOrder],
+	);
 	if (loading || !currentUser) {
 		return (
 			<div className={styles.members}>
 				<div className={styles.loadingState}>
 					<div className={styles.loadingSpinner}></div>
-					
 				</div>
 			</div>
 		);
 	}
 	return (
 		<div className={styles.members}>
-			
 			<div className={styles.header}>
 				<div className={styles.header__left}>
 					<h1 className={styles.header__title}>
@@ -2508,7 +2461,7 @@ export default function Members({ title }: { title?: string }) {
 						{members.length} członków w organizacji
 					</p>
 				</div>
-				
+
 				{hasPermission(currentUser?.role, "canEditUsers") && (
 					<button className={styles.header__addBtn} onClick={handleAddMember}>
 						<Plus size={18} />
@@ -2517,7 +2470,6 @@ export default function Members({ title }: { title?: string }) {
 				)}
 			</div>
 
-			
 			<div className={styles.filters}>
 				<div className={styles.filters__search}>
 					<Search size={18} className={styles.filters__searchIcon} />
@@ -2586,14 +2538,13 @@ export default function Members({ title }: { title?: string }) {
 					{(selectedProvince !== "all" ||
 						selectedTeam !== "all" ||
 						searchTerm) && (
-							<button className={styles.filters__reset} onClick={clearFilters}>
-								Wyczyść filtry
-							</button>
-						)}
+						<button className={styles.filters__reset} onClick={clearFilters}>
+							Wyczyść filtry
+						</button>
+					)}
 				</div>
 			</div>
 
-			
 			<div className={styles.sorting}>
 				<span className={styles.sorting__label}>Sortuj według:</span>
 				<button
@@ -2654,7 +2605,6 @@ export default function Members({ title }: { title?: string }) {
 				</button>
 			</div>
 
-			
 			<div
 				className={`${styles.membersGrid} ${viewMode === "list" ? styles.membersGridList : ""}`}
 			>
@@ -2669,8 +2619,8 @@ export default function Members({ title }: { title?: string }) {
 						<h3 className={styles.emptyState__title}>Brak członków</h3>
 						<p className={styles.emptyState__description}>
 							{searchTerm ||
-								selectedProvince !== "all" ||
-								selectedTeam !== "all"
+							selectedProvince !== "all" ||
+							selectedTeam !== "all"
 								? "Nie znaleziono członków spełniających kryteria wyszukiwania."
 								: "Nie ma jeszcze żadnych członków w organizacji."}
 						</p>
@@ -2689,7 +2639,7 @@ export default function Members({ title }: { title?: string }) {
 					))
 				)}
 			</div>
-			
+
 			<ProfileModal
 				isOpen={isAddMemberOpen}
 				member={newMemberData as Member}
@@ -2720,7 +2670,6 @@ export default function Members({ title }: { title?: string }) {
 				setCustomTeamEmail={setCustomTeamEmail}
 			/>
 
-			
 			<ProfileModal
 				isOpen={isProfileOpen}
 				member={selectedMember}

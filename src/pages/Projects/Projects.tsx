@@ -1,5 +1,8 @@
 import { useState, useMemo, useEffect } from "react";
+import { safeNavigate } from "@/utils/safeNavigation";
+import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
+import { logger } from "@/utils/logger";
 import {
 	Plus,
 	Edit,
@@ -29,12 +32,8 @@ import {
 } from "lucide-react";
 import styles from "./Projects.module.css";
 
-
-
-
 type IdeaStatus = "pending" | "approved" | "rejected" | "in_progress";
 type ProjectStatus = "planning" | "in_progress" | "promotion";
-
 
 const ROLE_LABELS: Record<string, string> = {
 	admin: "Administrator",
@@ -118,10 +117,6 @@ type User = {
 	pillars?: string[];
 };
 
-
-
-
-
 const MOCK_PROJECTS: Project[] = [
 	{
 		id: "1",
@@ -190,9 +185,6 @@ const MOCK_PROJECTS: Project[] = [
 	},
 ];
 
-
-
-
 const IDEA_STATUS_LABELS: Record<IdeaStatus, string> = {
 	pending: "Oczekuje",
 	approved: "Zaakceptowany",
@@ -238,10 +230,6 @@ const STATUS_ICONS: Record<ProjectStatus, React.ReactNode> = {
 	promotion: <CheckCircle size={14} />,
 };
 
-
-
-
-
 interface ProjectCardProps {
 	project: Project;
 	onEdit: (project: Project) => void;
@@ -257,7 +245,7 @@ function ProjectCard({
 	canEdit,
 	users,
 }: ProjectCardProps) {
-	console.log("🔍 ProjectCard - projekt:", {
+	logger.debug("🔍 ProjectCard - projekt:", {
 		id: project.id,
 		name: project.name,
 		coordinator_id: project.coordinator_id,
@@ -267,20 +255,16 @@ function ProjectCard({
 	});
 	const [isExpanded, setIsExpanded] = useState(false);
 
-
 	const getCoordinatorName = (coordinatorId: string) => {
 		if (!coordinatorId) return "Brak";
 		const user = users.find((u) => u.id === coordinatorId);
 		return user ? user.name : "Brak";
 	};
 
-
 	const getTeamMemberName = (member: string) => {
-
-		if (member.includes(' ')) {
+		if (member.includes(" ")) {
 			return member;
 		}
-
 
 		if (/^\d+$/.test(member)) {
 			const user = users.find((u) => u.id === member);
@@ -293,7 +277,6 @@ function ProjectCard({
 		return member;
 	};
 
-
 	const teamMembers = project.team.filter(
 		(member) => /^\d+$/.test(member) && member !== "63",
 	);
@@ -304,7 +287,6 @@ function ProjectCard({
 		try {
 			const date = new Date(dateString);
 			if (isNaN(date.getTime())) return "Nieprawidłowa data";
-
 
 			const day = String(date.getDate()).padStart(2, "0");
 			const month = String(date.getMonth() + 1).padStart(2, "0");
@@ -341,7 +323,6 @@ function ProjectCard({
 				<p className={styles.projectCard__description}>{project.description}</p>
 
 				<div className={styles.projectCard__meta}>
-					{}
 					<div className={styles.projectCard__metaItem}>
 						<Calendar size={14} />
 						<span>
@@ -364,7 +345,9 @@ function ProjectCard({
 					<Tag size={14} />
 					<span>
 						Koordynator:{" "}
-						<strong>{getCoordinatorName(project.coordinator_id)}</strong>
+						<strong>
+							{getCoordinatorName(String(project.coordinator_id))}
+						</strong>
 					</span>
 				</div>
 
@@ -423,10 +406,6 @@ function ProjectCard({
 	);
 }
 
-
-
-
-
 interface ProjectModalProps {
 	isOpen: boolean;
 	project: Project | null;
@@ -454,7 +433,6 @@ function ProjectModal({
 		},
 	);
 
-
 	useEffect(() => {
 		if (project) {
 			setFormData({
@@ -470,7 +448,6 @@ function ProjectModal({
 				updated_at: project.updated_at || "",
 			});
 		} else {
-
 			setFormData({
 				name: "",
 				description: "",
@@ -606,7 +583,6 @@ function ProjectModal({
 							{users.map((user) => (
 								<option key={user.id} value={user.id}>
 									{user.name} ({ROLE_LABELS[user.role] || user.role}){" "}
-									{}
 								</option>
 							))}
 						</select>
@@ -637,13 +613,6 @@ function ProjectModal({
 		</div>
 	);
 }
-
-
-
-
-
-
-
 
 interface TeamSelectorProps {
 	users: User[];
@@ -681,18 +650,17 @@ function TeamSelector({
 		return users;
 	}, [users, filter, pillar]);
 
-
 	const toggleUser = (userId: string) => {
-		console.log("🔄 Toggle user:", userId);
-		console.log("📋 Current team:", selectedTeam);
+		logger.debug("🔄 Toggle user:", userId);
+		logger.debug("📋 Current team:", selectedTeam);
 
 		if (selectedTeam.includes(userId)) {
 			const newTeam = selectedTeam.filter((id) => id !== userId);
-			console.log("➖ After remove:", newTeam);
+			logger.debug("➖ After remove:", newTeam);
 			onTeamChange(newTeam);
 		} else {
 			const newTeam = [...selectedTeam, userId];
-			console.log("➕ After add:", newTeam);
+			logger.debug("➕ After add:", newTeam);
 			onTeamChange(newTeam);
 		}
 	};
@@ -749,7 +717,6 @@ function TeamSelector({
 				</button>
 			</div>
 
-			{}
 			{filter === "custom" && (
 				<>
 					<div className={styles.teamSelector__actions}>
@@ -826,9 +793,7 @@ function TeamSelector({
 	);
 }
 
-
 const mapPillar = (pillar: string): ProjectPillar => {
-
 	if (["project", "conference", "advocacy", "simulation"].includes(pillar)) {
 		return pillar as ProjectPillar;
 	}
@@ -841,11 +806,6 @@ const mapPillar = (pillar: string): ProjectPillar => {
 	};
 	return mapping[pillar] || "project";
 };
-
-
-
-
-
 
 const ROLE_COLORS: Record<string, string> = {
 	admin: "roleAdmin",
@@ -987,7 +947,6 @@ function IdeaModal({ isOpen, onClose, onSubmit, pillars }: IdeaModalProps) {
 	);
 }
 
-
 interface IdeaCardProps {
 	idea: Idea;
 	currentUser: User;
@@ -1002,10 +961,8 @@ function IdeaCard({
 	currentUser,
 	onVote,
 	onStatusChange,
-	canManage,
 	pillars,
 }: IdeaCardProps) {
-
 	const userVote = idea.currentUserVote || null;
 
 	const formatDate = (date: string) => {
@@ -1082,9 +1039,7 @@ function IdeaCard({
 				</span>
 			</div>
 
-			{}
 			<div className={styles.ideaCard__votes}>
-				{}
 				{isAuthor ? (
 					<>
 						<span className={styles.voteCount}>
@@ -1104,10 +1059,8 @@ function IdeaCard({
 						</span>
 					</>
 				) : (
-
 					<>
 						{idea.status === "pending" ? (
-
 							<>
 								<button
 									className={`${styles.voteBtn} ${styles.voteUp} ${isUpActive ? styles.voteUpActive : ""}`}
@@ -1130,7 +1083,6 @@ function IdeaCard({
 								</span>
 							</>
 						) : (
-
 							<>
 								<span className={styles.voteCount}>
 									<ThumbsUp size={16} />
@@ -1150,7 +1102,6 @@ function IdeaCard({
 			</div>
 			{idea.status === "pending" && (
 				<div className={styles.ideaCard__actions}>
-					{}
 					{currentUser?.role === "admin" && (
 						<>
 							<button
@@ -1170,9 +1121,9 @@ function IdeaCard({
 						</>
 					)}
 
-					{}
-					{currentUser?.role === "coordinator" &&
-						currentUser.pillars?.includes(idea.pillar) && (
+					{(currentUser?.role === "coordinator" &&
+						currentUser?.pillars?.includes(idea.pillar)) ||
+						(false && (
 							<>
 								<button
 									className={`${styles.ideaCard__actionBtn} ${styles.ideaCard__actionBtnSuccess}`}
@@ -1189,18 +1140,18 @@ function IdeaCard({
 									Odrzuć
 								</button>
 							</>
-						)}
+						))}
 				</div>
 			)}
 		</div>
 	);
 }
 export default function Projects() {
+	const navigate = useNavigate();
 	const [projects, setProjects] = useState<Project[]>([]);
 	const [users, setUsers] = useState<User[]>([]);
 	const [pillars, setPillars] = useState<string[]>([]);
 	const [currentUser, setCurrentUser] = useState<User | null>(() => {
-
 		const userStr = localStorage.getItem("user");
 		if (userStr) {
 			try {
@@ -1251,7 +1202,6 @@ export default function Projects() {
 	const [ideas, setIdeas] = useState<Idea[]>([]);
 	const [activeTab, setActiveTab] = useState<"projects" | "ideas">("projects");
 
-
 	const handleSubmitIdea = async (idea: {
 		title: string;
 		description: string;
@@ -1260,7 +1210,7 @@ export default function Projects() {
 		try {
 			const token = localStorage.getItem("accessToken");
 
-			console.log("📤 Wysyłam pomysł do backendu:", idea);
+			logger.debug("📤 Wysyłam pomysł do backendu:", idea);
 
 			const response = await fetch("/api/ideas", {
 				method: "POST",
@@ -1277,12 +1227,11 @@ export default function Projects() {
 				}),
 			});
 
-			console.log("📥 Status odpowiedzi:", response.status);
+			logger.debug("📥 Status odpowiedzi:", response.status);
 
 			if (!response.ok) {
 				const errorText = await response.text();
-				console.error("❌ Błąd odpowiedzi:", response.status, errorText);
-
+				logger.error("❌ Błąd odpowiedzi:", response.status, errorText);
 
 				const newIdea: Idea = {
 					id: `idea-${Date.now()}`,
@@ -1300,7 +1249,6 @@ export default function Projects() {
 				};
 				setIdeas([newIdea, ...ideas]);
 				toast.error("Pomysł zapisany lokalnie (backend niedostępny)", {
-					icon: "⚠️",
 					duration: 4000,
 				});
 				setIsIdeaModalOpen(false);
@@ -1308,29 +1256,22 @@ export default function Projects() {
 			}
 
 			const newIdea = await response.json();
-			console.log("✅ Nowy pomysł z backendu:", newIdea);
-
+			logger.debug("✅ Nowy pomysł z backendu:", newIdea);
 
 			setIdeas([newIdea, ...ideas]);
 			toast.success("Pomysł został zgłoszony!");
 
-
 			setIsIdeaModalOpen(false);
 
-
-			console.log("🔄 Przeładowuję stronę i otwieram zakładkę pomysły...");
-
+			logger.debug("🔄 Przeładowuję stronę i otwieram zakładkę pomysły...");
 
 			sessionStorage.setItem("openIdeasTab", "true");
-
 
 			setTimeout(() => {
 				window.location.reload();
 			}, 1500);
-
 		} catch (error) {
-			console.error("❌ Błąd:", error);
-
+			logger.error("❌ Błąd:", error);
 
 			const newIdea: Idea = {
 				id: `idea-${Date.now()}`,
@@ -1348,11 +1289,9 @@ export default function Projects() {
 			};
 			setIdeas([newIdea, ...ideas]);
 			toast.error("Pomysł zapisany lokalnie (backend niedostępny)", {
-				icon: "⚠️",
 				duration: 4000,
 			});
 			setIsIdeaModalOpen(false);
-
 
 			sessionStorage.setItem("openIdeasTab", "true");
 			setTimeout(() => {
@@ -1365,16 +1304,16 @@ export default function Projects() {
 		try {
 			const token = localStorage.getItem("accessToken");
 
-
 			const currentIdea = ideas.find((i) => i.id === ideaId);
 			if (!currentIdea) return;
 
-
 			if (currentIdea.currentUserVote === type) {
-				toast.info("Już zagłosowałeś w ten sposób");
+				toast("Już zagłosowałeś w ten sposób", {
+					icon: "ℹ️",
+					duration: 3000,
+				});
 				return;
 			}
-
 
 			setIdeas((prevIdeas) =>
 				prevIdeas.map((i) => {
@@ -1383,20 +1322,15 @@ export default function Projects() {
 						let newDownvotes = i.downvotes;
 						let newVotes = i.votes;
 
-
 						if (i.currentUserVote === "down" && type === "up") {
 							newDownvotes--;
 							newUpvotes++;
 							newVotes += 2;
-						}
-
-						else if (i.currentUserVote === "up" && type === "down") {
+						} else if (i.currentUserVote === "up" && type === "down") {
 							newUpvotes--;
 							newDownvotes++;
 							newVotes -= 2;
-						}
-
-						else {
+						} else {
 							if (type === "up") {
 								newUpvotes++;
 								newVotes++;
@@ -1418,7 +1352,6 @@ export default function Projects() {
 				}),
 			);
 
-
 			const response = await fetch(`/api/ideas/${ideaId}/vote`, {
 				method: "POST",
 				headers: {
@@ -1434,7 +1367,7 @@ export default function Projects() {
 
 			toast.success(type === "up" ? "Głos oddany!" : "Głos oddany!");
 		} catch (error) {
-			console.error("❌ Błąd:", error);
+			logger.error("❌ Błąd:", error);
 			toast.error("Nie udało się zagłosować");
 		}
 	};
@@ -1454,8 +1387,7 @@ export default function Projects() {
 			if (!response.ok) throw new Error("Błąd zmiany statusu");
 
 			const updatedIdea = await response.json();
-			console.log("📦 Odpowiedź z API po zmianie statusu:", updatedIdea);
-
+			logger.debug("📦 Odpowiedź z API po zmianie statusu:", updatedIdea);
 
 			setIdeas(
 				ideas.map((i: Idea) => {
@@ -1471,7 +1403,7 @@ export default function Projects() {
 
 			toast.success(`Status zmieniony na: ${IDEA_STATUS_LABELS[status]}`);
 		} catch (error) {
-			console.error("Błąd:", error);
+			logger.error("Błąd:", error);
 			toast.error("Nie udało się zmienić statusu");
 		}
 	};
@@ -1480,7 +1412,7 @@ export default function Projects() {
 		const fetchPillars = async () => {
 			try {
 				const token = localStorage.getItem("accessToken");
-				console.log("🔍 Pobieranie filarów z API...");
+				logger.debug("🔍 Pobieranie filarów z API...");
 
 				const response = await fetch("/api/teams", {
 					headers: {
@@ -1489,12 +1421,11 @@ export default function Projects() {
 					},
 				});
 
-				console.log("📥 Status odpowiedzi /api/teams:", response.status);
+				logger.debug("📥 Status odpowiedzi /api/teams:", response.status);
 
 				if (response.ok) {
 					const data = await response.json();
-					console.log("📦 Surowe dane z API /api/teams:", data);
-
+					logger.debug("📦 Surowe dane z API /api/teams:", data);
 
 					const pillarNames = data
 						.filter(
@@ -1504,19 +1435,19 @@ export default function Projects() {
 						)
 						.map((team: any) => team.name);
 
-					console.log("📋 Przefiltrowane filary z bazy:", pillarNames);
-					console.log("📊 Liczba filarów:", pillarNames.length);
+					logger.debug("📋 Przefiltrowane filary z bazy:", pillarNames);
+					logger.debug("📊 Liczba filarów:", pillarNames.length);
 
 					setPillars(pillarNames);
 				} else {
-					console.warn(
+					logger.warn(
 						"⚠️ Odpowiedź nie OK:",
 						response.status,
 						response.statusText,
 					);
 				}
 			} catch (error) {
-				console.error("❌ Błąd pobierania filarów:", error);
+				logger.error("❌ Błąd pobierania filarów:", error);
 
 				const fallback = [
 					"Filar Projektowy",
@@ -1524,7 +1455,7 @@ export default function Projects() {
 					"Filar Rzeczniczy",
 					"Filar Symulacyjny",
 				];
-				console.log("📋 Używam fallback filarów:", fallback);
+				logger.debug("📋 Używam fallback filarów:", fallback);
 				setPillars(fallback);
 			}
 		};
@@ -1536,10 +1467,10 @@ export default function Projects() {
 		const fetchIdeas = async () => {
 			try {
 				const token = localStorage.getItem("accessToken");
-				console.log("🔍 Pobieranie pomysłów z API...");
+				logger.debug("🔍 Pobieranie pomysłów z API...");
 
 				if (!token) {
-					console.warn("⚠️ Brak tokenu, używam danych przykładowych");
+					logger.warn("⚠️ Brak tokenu, używam danych przykładowych");
 					setIdeas(MOCK_IDEAS);
 					return;
 				}
@@ -1551,10 +1482,10 @@ export default function Projects() {
 					},
 				});
 
-				console.log("📥 Status odpowiedzi /api/ideas:", response.status);
+				logger.debug("📥 Status odpowiedzi /api/ideas:", response.status);
 
 				if (!response.ok) {
-					console.warn(
+					logger.warn(
 						`⚠️ Błąd API (${response.status}), używam danych przykładowych`,
 					);
 					setIdeas(MOCK_IDEAS);
@@ -1562,13 +1493,12 @@ export default function Projects() {
 				}
 
 				const data = await response.json();
-				console.log("📦 Surowe dane pomysłów:", data);
-				console.log("📊 Liczba pomysłów:", data.length);
-
+				logger.debug("📦 Surowe dane pomysłów:", data);
+				logger.debug("📊 Liczba pomysłów:", data.length);
 
 				const pillarsInIdeas = data.map((i: any) => i.pillar);
-				console.log("🏷️ Filary w pomysłach:", pillarsInIdeas);
-				console.log("🏷️ Unikalne filary w pomysłach:", [
+				logger.debug("🏷️ Filary w pomysłach:", pillarsInIdeas);
+				logger.debug("🏷️ Unikalne filary w pomysłach:", [
 					...new Set(pillarsInIdeas),
 				]);
 
@@ -1587,10 +1517,10 @@ export default function Projects() {
 					currentUserVote: idea.user_vote || null,
 				}));
 
-				console.log("✅ Zamapowane pomysły:", mappedIdeas);
+				logger.debug("✅ Zamapowane pomysły:", mappedIdeas);
 				setIdeas(mappedIdeas);
 			} catch (error) {
-				console.error("❌ Błąd pobierania pomysłów:", error);
+				logger.error("❌ Błąd pobierania pomysłów:", error);
 				setIdeas(MOCK_IDEAS);
 			}
 		};
@@ -1599,10 +1529,9 @@ export default function Projects() {
 	}, []);
 
 	useEffect(() => {
-
 		const shouldOpenIdeas = sessionStorage.getItem("openIdeasTab") === "true";
 		if (shouldOpenIdeas) {
-			console.log("📋 Otwieram zakładkę pomysły po reloadzie");
+			logger.debug("📋 Otwieram zakładkę pomysły po reloadzie");
 			setActiveTab("ideas");
 
 			sessionStorage.removeItem("openIdeasTab");
@@ -1612,7 +1541,7 @@ export default function Projects() {
 		const fetchProjects = async () => {
 			try {
 				const token = localStorage.getItem("accessToken");
-				console.log("🔍 Pobieranie projektów z API...");
+				logger.debug("🔍 Pobieranie projektów z API...");
 
 				const response = await fetch("/api/projects", {
 					headers: {
@@ -1621,13 +1550,13 @@ export default function Projects() {
 					},
 				});
 
-				console.log("📥 Status odpowiedzi /api/projects:", response.status);
+				logger.debug("📥 Status odpowiedzi /api/projects:", response.status);
 
 				if (response.status === 401) {
-					console.warn(
+					logger.warn(
 						"⚠️ Token wygasł lub nieprawidłowy - przekierowanie do login",
 					);
-					navigate("/login");
+					safeNavigate("/login", navigate);
 					return;
 				}
 
@@ -1636,17 +1565,17 @@ export default function Projects() {
 				}
 
 				const data = await response.json();
-				console.log("📦 Surowe dane z API /api/projects:", data);
-				console.log("📊 Liczba projektów:", data.length);
+				logger.debug("📦 Surowe dane z API /api/projects:", data);
+				logger.debug("📊 Liczba projektów:", data.length);
 				if (data.length > 0) {
-					console.log("📋 Pierwszy projekt:", data[0]);
-					console.log("📋 Klucze projektu:", Object.keys(data[0]));
-					console.log("👤 coordinator_id:", data[0].coordinator_id);
+					logger.debug("📋 Pierwszy projekt:", data[0]);
+					logger.debug("📋 Klucze projektu:", Object.keys(data[0]));
+					logger.debug("👤 coordinator_id:", data[0].coordinator_id);
 				}
 
 				const pillarsInProjects = data.map((p: any) => p.pillar);
-				console.log("🏷️ Filary w projektach:", pillarsInProjects);
-				console.log("🏷️ Unikalne filary w projektach:", [
+				logger.debug("🏷️ Filary w projektach:", pillarsInProjects);
+				logger.debug("🏷️ Unikalne filary w projektach:", [
 					...new Set(pillarsInProjects),
 				]);
 
@@ -1654,7 +1583,7 @@ export default function Projects() {
 					id: apiProject.id,
 					name: apiProject.name,
 					description: apiProject.description || "",
-					pillar: mapPillar(apiProject.pillar),
+					pillar: mapPillar(String(apiProject.pillar)),
 					status: apiProject.status as ProjectStatus,
 					estimated_end: apiProject.estimated_end,
 					coordinator_id: apiProject.coordinator_id?.toString() || "",
@@ -1665,18 +1594,17 @@ export default function Projects() {
 					updated_at: apiProject.updated_at,
 				}));
 
-				console.log("✅ Zamapowane projekty:", mappedProjects);
+				logger.debug("✅ Zamapowane projekty:", mappedProjects);
 				setProjects(mappedProjects);
 			} catch (error) {
-				console.error("❌ Błąd ładowania projektów:", error);
-				console.log("📋 Używam MOCK_PROJECTS jako fallback");
+				logger.error("❌ Błąd ładowania projektów:", error);
+				logger.debug("📋 Używam MOCK_PROJECTS jako fallback");
 				setProjects(MOCK_PROJECTS);
 			}
 		};
 
 		fetchProjects();
 	}, []);
-
 
 	useEffect(() => {
 		const fetchUsers = async () => {
@@ -1691,12 +1619,11 @@ export default function Projects() {
 
 				if (response.ok) {
 					const data = await response.json();
-					console.log("📦 Surowe dane użytkowników:", data);
+					logger.debug("📦 Surowe dane użytkowników:", data);
 					if (data.length > 0) {
-						console.log("👤 Pierwszy użytkownik:", data[0]);
-						console.log("📋 Klucze użytkownika:", Object.keys(data[0]));
+						logger.debug("👤 Pierwszy użytkownik:", data[0]);
+						logger.debug("📋 Klucze użytkownika:", Object.keys(data[0]));
 					}
-
 
 					const mappedUsers = data
 						.filter((user: any) => user.id !== 63 && user.id !== "63")
@@ -1718,8 +1645,8 @@ export default function Projects() {
 						(u: any) => u.id === currentUser?.id,
 					);
 					if (currentUserData) {
-						console.log("👤 Obecny użytkownik z API:", currentUserData);
-						console.log("🏷️ Jego filar:", currentUserData.pillar);
+						logger.debug("👤 Obecny użytkownik z API:", currentUserData);
+						logger.debug("🏷️ Jego filar:", currentUserData.pillar);
 
 						setCurrentUser({
 							id: currentUserData.id.toString(),
@@ -1734,8 +1661,7 @@ export default function Projects() {
 					}
 				}
 			} catch (error) {
-				console.error("❌ Błąd pobierania użytkowników:", error);
-
+				logger.error("❌ Błąd pobierania użytkowników:", error);
 			}
 		};
 
@@ -1744,11 +1670,10 @@ export default function Projects() {
 	const canManageProject = (project: Project) => {
 		if (currentUser?.role === "admin") return true;
 		if (currentUser?.role === "coordinator") {
-
 			const pillarName =
 				PILLAR_LABELS_FALLBACK[project.pillar as ProjectPillar] ||
 				project.pillar;
-			console.log("🔍 Porównanie:", {
+			logger.debug("🔍 Porównanie:", {
 				projectPillar: project.pillar,
 				pillarName: pillarName,
 				userPillars: currentUser.pillars,
@@ -1761,9 +1686,6 @@ export default function Projects() {
 
 	const canManageProjects =
 		currentUser?.role === "admin" || currentUser?.role === "coordinator";
-
-
-
 
 	useEffect(() => {
 		const fetchCurrentUser = async () => {
@@ -1778,9 +1700,9 @@ export default function Projects() {
 
 				if (response.ok) {
 					const data = await response.json();
-					console.log("👤 Profil użytkownika:", data);
-					console.log("🏷️ Filar użytkownika:", data.pillar);
-					console.log("🏷️ WSZYSTKIE filary:", data.pillars);
+					logger.debug("👤 Profil użytkownika:", data);
+					logger.debug("🏷️ Filar użytkownika:", data.pillar);
+					logger.debug("🏷️ WSZYSTKIE filary:", data.pillars);
 
 					setCurrentUser({
 						id: data.id.toString(),
@@ -1792,7 +1714,7 @@ export default function Projects() {
 					});
 				}
 			} catch (error) {
-				console.error("❌ Błąd pobierania profilu:", error);
+				logger.error("❌ Błąd pobierania profilu:", error);
 			}
 		};
 
@@ -1803,7 +1725,10 @@ export default function Projects() {
 			const matchesSearch =
 				project.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
 				project.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-				project.coordinator_id.toLowerCase().includes(searchTerm.toLowerCase());
+				project.coordinator_id
+					.toString()
+					.toLowerCase()
+					.includes(searchTerm.toLowerCase());
 
 			const matchesPillar =
 				selectedPillar === "all" || project.pillar === selectedPillar;
@@ -1813,11 +1738,9 @@ export default function Projects() {
 		});
 	}, [projects, searchTerm, selectedPillar, selectedStatus]);
 
-
 	const coordinatorStats = useMemo(() => {
 		if (currentUser?.role !== "coordinator" || !currentUser.pillars?.length)
 			return null;
-
 
 		const pillarIdeas = ideas.filter((i) =>
 			currentUser.pillars?.includes(i.pillar),
@@ -1851,7 +1774,6 @@ export default function Projects() {
 				idea.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
 				idea.description.toLowerCase().includes(searchTerm.toLowerCase());
 
-
 			const matchesPillar =
 				selectedPillar === "all" || idea.pillar === selectedPillar;
 
@@ -1879,43 +1801,39 @@ export default function Projects() {
 				throw new Error(`HTTP error! status: ${response.status}`);
 			}
 
-
 			setProjects(projects.filter((p) => p.id !== id));
-			console.log(`✅ Projekt ${id} został usunięty`);
+			logger.debug(`✅ Projekt ${id} został usunięty`);
 		} catch (error) {
-			console.error("❌ Błąd usuwania projektu:", error);
+			logger.error("❌ Błąd usuwania projektu:", error);
 			alert("Nie udało się usunąć projektu. Spróbuj ponownie.");
 		}
 	};
 
-
 	const handleSaveProject = async (project: Project) => {
-		console.log("📤 Team przed wysyłką:", project.team);
-		console.log("📤 Team jako string:", project.team.join(", "));
+		logger.debug("📤 Team przed wysyłką:", project.team);
+		logger.debug("📤 Team jako string:", project.team.join(", "));
 		try {
 			const token = localStorage.getItem("accessToken");
 			const isEdit = projects.some((p) => p.id === project.id);
 			const url = isEdit ? `/api/projects/${project.id}` : "/api/projects";
 			const method = isEdit ? "PUT" : "POST";
 
-
 			const payload = {
 				name: project.name,
 				description: project.description,
 				pillar: PILLAR_LABELS_FALLBACK[project.pillar] || project.pillar,
 				status: project.status,
-				coordinator_id: parseInt(project.coordinator_id, 10),
+				coordinator_id: parseInt(String(project.coordinator_id), 10),
 				team: project.team.join(", "),
 				estimated_end: project.estimated_end,
 			};
 
+			logger.debug("📤 Team przed wysyłką:", project.team);
+			logger.debug("📤 Team jako string:", project.team.join(", "));
+			logger.debug("📤 Liczba członków:", project.team.length);
+			logger.debug("📤 Cały payload:", payload);
 
-			console.log("📤 Team przed wysyłką:", project.team);
-			console.log("📤 Team jako string:", project.team.join(", "));
-			console.log("📤 Liczba członków:", project.team.length);
-			console.log("📤 Cały payload:", payload);
-
-			console.log("📤 Wysyłane dane:", payload);
+			logger.debug("📤 Wysyłane dane:", payload);
 
 			const response = await fetch(url, {
 				method,
@@ -1932,12 +1850,11 @@ export default function Projects() {
 
 			const savedProject = await response.json();
 
-
 			const mappedProject = {
 				id: savedProject.id,
 				name: savedProject.name,
 				description: savedProject.description,
-				pillar: mapPillar(savedProject.pillar),
+				pillar: mapPillar(String(savedProject.pillar)),
 				status: savedProject.status as ProjectStatus,
 				estimated_end: savedProject.estimated_end,
 				coordinator_id: savedProject.coordinator_id,
@@ -1956,7 +1873,7 @@ export default function Projects() {
 				setProjects([mappedProject, ...projects]);
 			}
 		} catch (error) {
-			console.error("Błąd zapisywania projektu:", error);
+			logger.error("Błąd zapisywania projektu:", error);
 			alert("Nie udało się zapisać projektu. Spróbuj ponownie.");
 		}
 	};
@@ -1967,20 +1884,16 @@ export default function Projects() {
 	};
 
 	useEffect(() => {
-		console.log("📊 PODSUMOWANIE DANYCH:");
-		console.log("📋 Filary:", pillars);
-		console.log("📋 Projekty:", projects.length);
-		console.log("📋 Użytkownicy:", users.length);
-		console.log("📋 Pomysły:", ideas.length);
-		console.log("👤 Aktualny użytkownik:", currentUser);
+		logger.debug("📊 PODSUMOWANIE DANYCH:");
+		logger.debug("📋 Filary:", pillars);
+		logger.debug("📋 Projekty:", projects.length);
+		logger.debug("📋 Użytkownicy:", users.length);
+		logger.debug("📋 Pomysły:", ideas.length);
+		logger.debug("👤 Aktualny użytkownik:", currentUser);
 	}, [pillars, projects, users, ideas, currentUser]);
-
-
-
 
 	return (
 		<div className={styles.projects}>
-			{}
 			<div className={styles.header}>
 				<div className={styles.header__left}>
 					<h1 className={styles.header__title}>Aktualne projekty</h1>
@@ -1991,7 +1904,6 @@ export default function Projects() {
 					</p>
 				</div>
 				<div className={styles.header__actions}>
-					{}
 					<button
 						className={styles.header__ideaBtn}
 						onClick={() => setIsIdeaModalOpen(true)}
@@ -2010,8 +1922,7 @@ export default function Projects() {
 					)}
 				</div>
 			</div>
-			{}
-			{}
+
 			<div className={styles.stats}>
 				<div className={styles.stats__item}>
 					<span className={styles.stats__number}>{projects.length}</span>
@@ -2027,7 +1938,6 @@ export default function Projects() {
 				))}
 			</div>
 
-			{}
 			{canManageProjects &&
 				coordinatorStats &&
 				currentUser?.role === "coordinator" && (
@@ -2074,7 +1984,6 @@ export default function Projects() {
 					</div>
 				)}
 
-			{}
 			<div className={styles.tabs}>
 				<button
 					className={`${styles.tab} ${activeTab === "projects" ? styles.tabActive : ""}`}
@@ -2095,7 +2004,7 @@ export default function Projects() {
 					</span>
 				</button>
 			</div>
-			{}
+
 			<div className={styles.filters}>
 				<div className={styles.filters__search}>
 					<Search size={18} className={styles.filters__searchIcon} />
@@ -2151,16 +2060,14 @@ export default function Projects() {
 					{(selectedPillar !== "all" ||
 						selectedStatus !== "all" ||
 						searchTerm) && (
-							<button className={styles.filters__reset} onClick={clearFilters}>
-								Wyczyść filtry
-							</button>
-						)}
+						<button className={styles.filters__reset} onClick={clearFilters}>
+							Wyczyść filtry
+						</button>
+					)}
 				</div>
 			</div>
 
-			{}
 			{activeTab === "projects" ? (
-				
 				<div className={styles.projectsGrid}>
 					{filteredProjects.length === 0 ? (
 						<div className={styles.emptyState}>
@@ -2168,8 +2075,8 @@ export default function Projects() {
 							<h3 className={styles.emptyState__title}>Brak projektów</h3>
 							<p className={styles.emptyState__description}>
 								{searchTerm ||
-									selectedPillar !== "all" ||
-									selectedStatus !== "all"
+								selectedPillar !== "all" ||
+								selectedStatus !== "all"
 									? "Nie znaleziono projektów spełniających kryteria wyszukiwania."
 									: canManageProjects
 										? 'Nie ma jeszcze żadnych projektów. Kliknij "Dodaj projekt", aby utworzyć pierwszy.'
@@ -2202,7 +2109,6 @@ export default function Projects() {
 					)}
 				</div>
 			) : (
-				
 				<div className={styles.ideasGrid}>
 					{filteredIdeas.length === 0 ? (
 						<div className={styles.emptyState}>
@@ -2235,7 +2141,7 @@ export default function Projects() {
 					)}
 				</div>
 			)}
-			{}
+
 			<ProjectModal
 				isOpen={isModalOpen}
 				project={editingProject}

@@ -1,14 +1,12 @@
-
 import { Request, Response } from "express";
 import { PrismaClient } from "@prisma/client";
-
+import { logger } from "../utils/logger";
 
 const prisma = new PrismaClient() as any;
 
 type ProjectPillar = "project" | "conference" | "advocacy" | "simulation";
 
 export class UserController {
-
 	async getAllUsers(req: Request, res: Response) {
 		try {
 			const users = await prisma.user.findMany({
@@ -34,15 +32,13 @@ export class UserController {
 
 			res.json(mappedUsers);
 		} catch (error) {
-			console.error("❌ Błąd pobierania użytkowników:", error);
+			logger.error("❌ Błąd pobierania użytkowników:", error);
 			res.status(500).json({ error: "Nie udało się pobrać użytkowników" });
 		}
 	}
 
-
 	async getUserById(req: Request, res: Response) {
 		try {
-
 			const id = parseInt(req.params.id as string);
 
 			if (isNaN(id)) {
@@ -90,15 +86,13 @@ export class UserController {
 				created_at: user.created_at,
 			});
 		} catch (error) {
-			console.error("❌ Błąd pobierania użytkownika:", error);
+			logger.error("❌ Błąd pobierania użytkownika:", error);
 			res.status(500).json({ error: "Nie udało się pobrać użytkownika" });
 		}
 	}
 
-
 	async updateUser(req: Request, res: Response) {
 		try {
-
 			const id = parseInt(req.params.id as string);
 
 			if (isNaN(id)) {
@@ -118,7 +112,6 @@ export class UserController {
 				functional_role,
 				is_active,
 			} = req.body;
-
 
 			const existingUser = await prisma.user.findUnique({
 				where: { id },
@@ -150,15 +143,15 @@ export class UserController {
 				role: mapRoleId(updatedUser.role_id),
 			});
 		} catch (error) {
-			console.error("❌ Błąd aktualizacji użytkownika:", error);
-			res.status(500).json({ error: "Nie udało się zaktualizować użytkownika" });
+			logger.error("❌ Błąd aktualizacji użytkownika:", error);
+			res
+				.status(500)
+				.json({ error: "Nie udało się zaktualizować użytkownika" });
 		}
 	}
 
-
 	async deleteUser(req: Request, res: Response) {
 		try {
-
 			const id = parseInt(req.params.id as string);
 
 			if (isNaN(id)) {
@@ -172,12 +165,11 @@ export class UserController {
 
 			res.json({ message: "Użytkownik został dezaktywowany" });
 		} catch (error) {
-			console.error("❌ Błąd usuwania użytkownika:", error);
+			logger.error("❌ Błąd usuwania użytkownika:", error);
 			res.status(500).json({ error: "Nie udało się usunąć użytkownika" });
 		}
 	}
 }
-
 
 function mapRoleId(roleId: number | null): "admin" | "coordinator" | "member" {
 	const roleMap: Record<number, "admin" | "coordinator" | "member"> = {
@@ -188,7 +180,6 @@ function mapRoleId(roleId: number | null): "admin" | "coordinator" | "member" {
 	};
 	return roleMap[roleId || 4] || "member";
 }
-
 
 function mapTeamToPillar(team: string | null): ProjectPillar | null {
 	if (!team) return null;

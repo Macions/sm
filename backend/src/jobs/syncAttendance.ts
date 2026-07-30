@@ -1,10 +1,8 @@
-
-
 import { PrismaClient } from "@prisma/client";
 import mysql from "mysql2/promise";
+import { logger } from "../utils/logger";
 
 const prisma = new PrismaClient();
-
 
 const FREKWENCJA_DB_CONFIG = {
 	host: process.env.FREKWENCJA_DB_HOST || "57.128.253.89",
@@ -15,23 +13,18 @@ const FREKWENCJA_DB_CONFIG = {
 };
 
 export async function syncAttendance() {
-	console.log("🔄 [ATTENDANCE] Rozpoczynam synchronizację frekwencji...");
+	logger.debug("🔄 [ATTENDANCE] Rozpoczynam synchronizację frekwencji...");
 	const startTime = Date.now();
 
 	let connection: mysql.Connection | null = null;
 
 	try {
-		console.log("📡 [ATTENDANCE] Łączenie z SM_Frekwencja...");
+		logger.debug("📡 [ATTENDANCE] Łączenie z SM_Frekwencja...");
 		connection = await mysql.createConnection(FREKWENCJA_DB_CONFIG);
-		console.log("✅ [ATTENDANCE] Połączono z SM_Frekwencja");
-
+		logger.debug("✅ [ATTENDANCE] Połączono z SM_Frekwencja");
 
 		const [tables] = await connection.execute("SHOW TABLES");
-		console.log("📋 [ATTENDANCE] Tabele w SM_Frekwencja:", tables);
-
-
-
-
+		logger.debug("📋 [ATTENDANCE] Tabele w SM_Frekwencja:", tables);
 
 		const [rows] = await connection.execute(`
     SELECT
@@ -54,17 +47,16 @@ export async function syncAttendance() {
 			email: string;
 			attendance_percentage: number;
 		}>;
-		console.log(
+		logger.debug(
 			`📊 [ATTENDANCE] Pobrano ${attendanceData.length} rekordów frekwencji`,
 		);
 
 		if (attendanceData.length === 0) {
-			console.log("⚠️ [ATTENDANCE] Brak danych do synchronizacji");
+			logger.debug("⚠️ [ATTENDANCE] Brak danych do synchronizacji");
 			return;
 		}
 
-
-		console.log("🔄 [ATTENDANCE] Aktualizacja frekwencji użytkowników...");
+		logger.debug("🔄 [ATTENDANCE] Aktualizacja frekwencji użytkowników...");
 		let updatedCount = 0;
 		let skippedCount = 0;
 
@@ -89,7 +81,7 @@ export async function syncAttendance() {
 
 				updatedCount++;
 			} catch (error) {
-				console.error(
+				logger.error(
 					`❌ [ATTENDANCE] Błąd aktualizacji dla ${record.email}:`,
 					error,
 				);
@@ -98,19 +90,19 @@ export async function syncAttendance() {
 		}
 
 		const duration = Date.now() - startTime;
-		console.log(`✅ [ATTENDANCE] Zakończono w ${duration}ms`);
-		console.log(`📊 [ATTENDANCE] Podsumowanie:`);
-		console.log(`   ✅ Zaktualizowano: ${updatedCount} użytkowników`);
-		console.log(
+		logger.debug(`✅ [ATTENDANCE] Zakończono w ${duration}ms`);
+		logger.debug(`📊 [ATTENDANCE] Podsumowanie:`);
+		logger.debug(`   ✅ Zaktualizowano: ${updatedCount} użytkowników`);
+		logger.debug(
 			`   ⏭️ Pominięto: ${skippedCount} (nie znaleziono w głównej bazie)`,
 		);
 	} catch (error) {
-		console.error("❌ [ATTENDANCE] Błąd synchronizacji:", error);
+		logger.error("❌ [ATTENDANCE] Błąd synchronizacji:", error);
 		throw error;
 	} finally {
 		if (connection) {
 			await connection.end();
-			console.log("🔌 [ATTENDANCE] Zamknięto połączenie z SM_Frekwencja");
+			logger.debug("🔌 [ATTENDANCE] Zamknięto połączenie z SM_Frekwencja");
 		}
 		await prisma.$disconnect();
 	}

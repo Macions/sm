@@ -4,12 +4,12 @@ const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
 async function main() {
-    console.log('🌱 Seedowanie projektów...');
+    logger.debug('🌱 Seedowanie projektów...');
 
 
     const count = await prisma.project.count();
     if (count > 0) {
-        console.log('✅ Dane już istnieją, pomijam seedowanie');
+        logger.debug('✅ Dane już istnieją, pomijam seedowanie');
         return;
     }
 
@@ -67,13 +67,13 @@ async function main() {
         });
     }
 
-    console.log('✅ Seedowanie zakończone!');
-    console.log(`📊 Dodano ${projects.length} projektów`);
+    logger.debug('✅ Seedowanie zakończone!');
+    logger.debug(`📊 Dodano ${projects.length} projektów`);
 }
 
 main()
     .catch((e) => {
-        console.error('❌ Błąd seedowania:', e);
+        logger.error('❌ Błąd seedowania:', e);
         process.exit(1);
     })
     .finally(async () => {

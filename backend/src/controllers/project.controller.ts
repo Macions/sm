@@ -1,7 +1,7 @@
-
 import { Request, Response } from "express";
 import { ProjectService } from "../services/project.service";
 import { AuthRequest } from "../middleware/auth.middleware";
+import { logger } from "../utils/logger";
 
 const projectService = new ProjectService();
 
@@ -11,7 +11,7 @@ export class ProjectController {
 			const projects = await projectService.getAllProjects();
 			res.json(projects);
 		} catch (error) {
-			console.error("Błąd pobierania projektów:", error);
+			logger.error("Błąd pobierania projektów:", error);
 			res.status(500).json({
 				error: "Nie udało się pobrać listy projektów",
 			});
@@ -35,7 +35,7 @@ export class ProjectController {
 
 			res.json(project);
 		} catch (error) {
-			console.error(`Błąd pobierania projektu:`, error);
+			logger.error(`Błąd pobierania projektu:`, error);
 			res.status(500).json({ error: "Nie udało się pobrać projektu" });
 		}
 	}
@@ -68,7 +68,7 @@ export class ProjectController {
 
 			res.status(201).json(project);
 		} catch (error) {
-			console.error("Błąd tworzenia projektu:", error);
+			logger.error("Błąd tworzenia projektu:", error);
 			res.status(500).json({ error: "Nie udało się utworzyć projektu" });
 		}
 	}
@@ -105,7 +105,7 @@ export class ProjectController {
 
 			res.json(project);
 		} catch (error) {
-			console.error(`Błąd aktualizacji projektu:`, error);
+			logger.error(`Błąd aktualizacji projektu:`, error);
 			res.status(500).json({ error: "Nie udało się zaktualizować projektu" });
 		}
 	}
@@ -122,7 +122,7 @@ export class ProjectController {
 			await projectService.deleteProject(id.toString());
 			res.status(204).send();
 		} catch (error) {
-			console.error(`❌ Błąd usuwania projektu:`, error);
+			logger.error(`❌ Błąd usuwania projektu:`, error);
 			res.status(500).json({ error: "Nie udało się usunąć projektu" });
 		}
 	}
@@ -144,7 +144,7 @@ export class ProjectController {
 			const projects = await projectService.getProjectsByPillar(pillar);
 			res.json(projects);
 		} catch (error) {
-			console.error(`Błąd pobierania projektów dla filaru:`, error);
+			logger.error(`Błąd pobierania projektów dla filaru:`, error);
 			res.status(500).json({ error: "Nie udało się pobrać projektów" });
 		}
 	}
@@ -166,7 +166,7 @@ export class ProjectController {
 			const projects = await projectService.getProjectsByStatus(status);
 			res.json(projects);
 		} catch (error) {
-			console.error(`Błąd pobierania projektów dla statusu:`, error);
+			logger.error(`Błąd pobierania projektów dla statusu:`, error);
 			res.status(500).json({ error: "Nie udało się pobrać projektów" });
 		}
 	}

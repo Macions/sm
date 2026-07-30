@@ -27,7 +27,7 @@
     font-size: 28px;
     font-weight: 700;
     color: #0f172a;
-    margin: 0 0 8px 0;
+    margin: 0 0 8px;
     display: flex;
     align-items: center;
     gap: 12px;
@@ -69,12 +69,12 @@
     cursor: pointer;
     transition: all 0.2s;
     white-space: nowrap;
-    box-shadow: 0 4px 12px rgba(124, 58, 237, 0.25);
+    box-shadow: 0 4px 12px rgb(124 58 237 / 25%);
 }
 
 .header__editBtn:hover {
     transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(124, 58, 237, 0.35);
+    box-shadow: 0 6px 20px rgb(124 58 237 / 35%);
 }
 
 .header__cancelBtn {
@@ -152,7 +152,7 @@
     border-radius: 16px;
     border: 1px solid #e2e8f0;
     padding: 24px 28px;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+    box-shadow: 0 1px 3px rgb(0 0 0 / 4%);
 }
 
 .profileCard__header {
@@ -296,14 +296,14 @@
     font-size: 18px;
     font-weight: 600;
     color: #0f172a;
-    margin: 0 0 20px 0;
+    margin: 0 0 20px;
 }
 
 .section__subtitle {
     font-size: 14px;
     font-weight: 600;
     color: #475569;
-    margin: 0 0 12px 0;
+    margin: 0 0 12px;
 }
 
 .section__grid {
@@ -364,7 +364,7 @@
 .section__list {
     list-style: none;
     padding: 0;
-    margin: 4px 0 0 0;
+    margin: 4px 0 0;
 }
 
 .section__list li {
@@ -501,7 +501,7 @@
 .section__input:focus {
     outline: none;
     border-color: #7c3aed;
-    box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.1);
+    box-shadow: 0 0 0 3px rgb(124 58 237 / 10%);
 }
 
 
@@ -573,7 +573,7 @@
     display: flex;
     flex-direction: column;
     gap: 6px;
-    margin: 8px 0 12px 0;
+    margin: 8px 0 12px;
 }
 
 .section__leaveItem {
@@ -629,7 +629,7 @@
 }
 
 
-@media (max-width: 1024px) {
+@media (width <= 1024px) {
     .profileCard__header {
         flex-direction: column;
     }
@@ -639,7 +639,7 @@
     }
 }
 
-@media (max-width: 768px) {
+@media (width <= 768px) {
     .profile {
         padding: 16px;
     }
@@ -708,7 +708,7 @@
     }
 }
 
-@media (max-width: 480px) {
+@media (width <= 480px) {
     .profileCard__contact {
         min-width: unset;
     }

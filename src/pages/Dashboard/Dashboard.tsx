@@ -1,5 +1,7 @@
 import { useState, useEffect } from "react";
+import { safeNavigate } from "@/utils/safeNavigation";
 import { useNavigate } from "react-router-dom";
+import { logger } from "@/utils/logger";
 import {
 	Users,
 	FolderKanban,
@@ -14,10 +16,6 @@ import {
 	AlertCircle,
 } from "lucide-react";
 import styles from "./Dashboard.module.css";
-
-
-
-
 
 type Notification = {
 	id: string;
@@ -59,10 +57,6 @@ type User = {
 	createdAt?: string;
 };
 
-
-
-
-
 export default function Dashboard() {
 	const navigate = useNavigate();
 
@@ -72,18 +66,14 @@ export default function Dashboard() {
 	const [stats, setStats] = useState<DashboardStats | null>(null);
 	const [notifications, setNotifications] = useState<Notification[]>([]);
 
-
-
 	useEffect(() => {
 		const fetchDashboardData = async () => {
 			try {
 				setLoading(true);
 				setError(null);
 
-
 				const token = localStorage.getItem("accessToken");
-				console.log("🔑 Token:", token ? "Jest" : "Brak");
-
+				logger.debug("🔑 Token:", token ? "Jest" : "Brak");
 
 				const userRes = await fetch("/api/profile", {
 					headers: {
@@ -92,12 +82,11 @@ export default function Dashboard() {
 					},
 				});
 				if (!userRes.ok) {
-					console.error("❌ Błąd profile:", userRes.status, userRes.statusText);
+					logger.error("❌ Błąd profile:", userRes.status, userRes.statusText);
 					throw new Error("Nie udało się pobrać danych użytkownika");
 				}
 				const userData = await userRes.json();
-				console.log("📊 Profil z API:", userData);
-
+				logger.debug("📊 Profil z API:", userData);
 
 				setUser({
 					id: userData.id,
@@ -119,7 +108,6 @@ export default function Dashboard() {
 					createdAt: userData.created_at,
 				});
 
-
 				const statsRes = await fetch("/api/dashboard/stats", {
 					headers: {
 						Authorization: `Bearer ${token}`,
@@ -127,12 +115,11 @@ export default function Dashboard() {
 					},
 				});
 				if (!statsRes.ok) {
-					console.error("❌ Błąd stats:", statsRes.status, statsRes.statusText);
+					logger.error("❌ Błąd stats:", statsRes.status, statsRes.statusText);
 					throw new Error("Nie udało się pobrać statystyk");
 				}
 				const statsData = await statsRes.json();
 				setStats(statsData);
-
 
 				const notifRes = await fetch("/api/dashboard/notifications?limit=4", {
 					headers: {
@@ -141,7 +128,7 @@ export default function Dashboard() {
 					},
 				});
 				if (!notifRes.ok) {
-					console.error(
+					logger.error(
 						"❌ Błąd notifications:",
 						notifRes.status,
 						notifRes.statusText,
@@ -151,7 +138,7 @@ export default function Dashboard() {
 				const notifData = await notifRes.json();
 				setNotifications(notifData);
 			} catch (err) {
-				console.error("Błąd ładowania dashboardu:", err);
+				logger.error("Błąd ładowania dashboardu:", err);
 				setError(err instanceof Error ? err.message : "Wystąpił błąd");
 			} finally {
 				setLoading(false);
@@ -204,7 +191,6 @@ export default function Dashboard() {
 		},
 	];
 
-
 	const getGreeting = () => {
 		const hour = new Date().getHours();
 		if (hour >= 4 && hour < 21) return "Dzień dobry";
@@ -251,7 +237,6 @@ export default function Dashboard() {
 		return "od dzisiaj! 🎉";
 	};
 
-
 	const translateStatus = (status: string): string => {
 		const statusMap: Record<string, string> = {
 			active: "Aktywny",
@@ -297,7 +282,6 @@ export default function Dashboard() {
 		}
 	};
 
-
 	if (loading) {
 		return (
 			<div className={styles.dashboard}>
@@ -308,7 +292,6 @@ export default function Dashboard() {
 			</div>
 		);
 	}
-
 
 	if (error) {
 		return (
@@ -329,63 +312,60 @@ export default function Dashboard() {
 		user?.isTrial || false,
 	);
 
-
-
 	const statsData = stats
 		? [
-			{
-				id: "members",
-				label: "Członkowie SM",
-				value: stats.members.toString(),
-				icon: <Users size={24} />,
-				color: "#4A6FE8",
-				bgColor: "#EFEBFD",
-			},
-			{
-				id: "projects",
-				label: "Aktywne projekty",
-				value: stats.projects.toString(),
-				icon: <FolderKanban size={24} />,
-				color: "#2ECC71",
-				bgColor: "#ECFDF5",
-			},
-			{
-				id: "attendance",
-				label: "Twoja frekwencja",
-				subtext: "(na podstawie systemu frekwencji)",
-				value: stats.attendance,
-				icon: <CalendarCheck size={24} />,
-				color: "#10B981",
-				bgColor: "#ECFDF5",
-			},
+				{
+					id: "members",
+					label: "Członkowie SM",
+					value: stats.members.toString(),
+					icon: <Users size={24} />,
+					color: "#4A6FE8",
+					bgColor: "#EFEBFD",
+				},
+				{
+					id: "projects",
+					label: "Aktywne projekty",
+					value: stats.projects.toString(),
+					icon: <FolderKanban size={24} />,
+					color: "#2ECC71",
+					bgColor: "#ECFDF5",
+				},
+				{
+					id: "attendance",
+					label: "Twoja frekwencja",
+					subtext: "(na podstawie systemu frekwencji)",
+					value: stats.attendance,
+					icon: <CalendarCheck size={24} />,
+					color: "#10B981",
+					bgColor: "#ECFDF5",
+				},
 
-			...(membershipDuration
-				? [
-					{
-						id: "membership",
-						label: "Jesteś z nami",
-						value: membershipDuration,
-						icon: <CalendarCheck size={24} />,
-						color: "#4A6FE8",
-						bgColor: "#EFEBFD",
-					},
-				]
-				: []),
-			{
-				id: "guides",
-				label: "Nowe poradniki",
-				value: stats.newGuides.toString(),
-				subtext: "aktualizacje",
-				icon: <BookOpen size={24} />,
-				color: "#17C3B2",
-				bgColor: "#F0FDFA",
-			},
-		]
+				...(membershipDuration
+					? [
+							{
+								id: "membership",
+								label: "Jesteś z nami",
+								value: membershipDuration,
+								icon: <CalendarCheck size={24} />,
+								color: "#4A6FE8",
+								bgColor: "#EFEBFD",
+							},
+						]
+					: []),
+				{
+					id: "guides",
+					label: "Nowe poradniki",
+					value: stats.newGuides.toString(),
+					subtext: "aktualizacje",
+					icon: <BookOpen size={24} />,
+					color: "#17C3B2",
+					bgColor: "#F0FDFA",
+				},
+			]
 		: [];
 
 	return (
 		<>
-			{}
 			<div className={styles.welcomeCard}>
 				<div className={styles.welcomeCard__content}>
 					<img
@@ -421,7 +401,6 @@ export default function Dashboard() {
 				</div>
 			</div>
 
-			{}
 			<div className={styles.stats}>
 				{statsData.map((stat) => (
 					<div key={stat.id} className={styles.statCard}>
@@ -449,9 +428,7 @@ export default function Dashboard() {
 				))}
 			</div>
 
-			{}
 			<div className={styles.bottomSection}>
-				{}
 				<div className={styles.notifications}>
 					<h2 className={styles.sectionTitle}>
 						<Bell size={20} />
@@ -482,7 +459,6 @@ export default function Dashboard() {
 					</div>
 				</div>
 
-				{}
 				<div className={styles.quickActions}>
 					<h2 className={styles.sectionTitle}>Szybkie akcje</h2>
 					<div className={styles.quickActions__grid}>
@@ -497,9 +473,9 @@ export default function Dashboard() {
 									className={styles.quickAction}
 									onClick={() => {
 										if (action.link) {
-											navigate(action.link);
+											safeNavigate(action.link, navigate);
 										} else {
-											console.log(`Akcja: ${action.label}`);
+											logger.debug(`Akcja: ${action.label}`);
 										}
 									}}
 								>

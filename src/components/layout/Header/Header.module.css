@@ -40,18 +40,18 @@
 	display: flex;
 	align-items: center;
 	gap: 10px;
-	background: var(--card-bg, #ffffff);
+	background: var(--card-bg, #fff);
 	border-radius: 999px;
 	padding: 12px 20px;
 	max-width: 420px;
-	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+	box-shadow: 0 2px 8px rgb(0 0 0 / 4%);
 	border: 1px solid var(--border-soft, #eceaf4);
 	transition: all 0.2s ease;
 }
 
 .topbar__search:focus-within {
 	border-color: var(--purple-600, #5c3ae8);
-	box-shadow: 0 2px 12px rgba(92, 58, 232, 0.12);
+	box-shadow: 0 2px 12px rgb(92 58 232 / 12%);
 }
 
 .topbar__search input {
@@ -84,7 +84,7 @@
 	width: 44px;
 	height: 44px;
 	border-radius: 50%;
-	background: var(--card-bg, #ffffff);
+	background: var(--card-bg, #fff);
 	border: 1px solid var(--border-soft, #eceaf4);
 	display: flex;
 	align-items: center;
@@ -98,7 +98,7 @@
 	background: var(--purple-50, #f6f4fe);
 	border-color: var(--purple-100, #efebfd);
 	transform: translateY(-2px);
-	box-shadow: 0 4px 12px rgba(46, 26, 107, 0.1);
+	box-shadow: 0 4px 12px rgb(46 26 107 / 10%);
 }
 
 .iconBtn__badge {
@@ -153,7 +153,7 @@
 
 
 
-@media (max-width: 980px) {
+@media (width <= 980px) {
 	.topbar__search {
 		display: none;
 	}
@@ -163,7 +163,7 @@
 	}
 }
 
-@media (max-width: 768px) {
+@media (width <= 768px) {
 	.topbar {
 		gap: 14px;
 		margin-bottom: 20px;
@@ -205,7 +205,7 @@
 	}
 }
 
-@media (max-width: 480px) {
+@media (width <= 480px) {
 	.topbar {
 		gap: 10px;
 	}
@@ -267,10 +267,10 @@
 	right: 0;
 	width: 420px;
 	max-height: 480px;
-	background: var(--card-bg, #ffffff);
+	background: var(--card-bg, #fff);
 	border-radius: 16px;
 	border: 1px solid var(--border-soft, #eceaf4);
-	box-shadow: 0 12px 48px rgba(32, 26, 59, 0.12);
+	box-shadow: 0 12px 48px rgb(32 26 59 / 12%);
 	z-index: 1000;
 	display: flex;
 	flex-direction: column;
@@ -470,7 +470,7 @@
 .notification__message {
 	font-size: 13px;
 	color: var(--text-muted, #928fa3);
-	margin: 2px 0 6px 0;
+	margin: 2px 0 6px;
 	line-height: 1.4;
 }
 
@@ -539,7 +539,7 @@
 }
 
 
-@media (max-width: 768px) {
+@media (width <= 768px) {
 	.notificationsDropdown {
 		position: fixed;
 		top: 64px;
@@ -550,7 +550,7 @@
 	}
 }
 
-@media (max-width: 480px) {
+@media (width <= 480px) {
 	.notificationsDropdown {
 		top: 56px;
 		right: 4px;
@@ -592,10 +592,10 @@
 	right: 0;
 	width: 420px;
 	max-height: 500px;
-	background: var(--card-bg, #ffffff);
+	background: var(--card-bg, #fff);
 	border-radius: 16px;
 	border: 1px solid var(--border-soft, #eceaf4);
-	box-shadow: 0 12px 48px rgba(32, 26, 59, 0.12);
+	box-shadow: 0 12px 48px rgb(32 26 59 / 12%);
 	z-index: 1000;
 	display: flex;
 	flex-direction: column;
@@ -795,7 +795,7 @@
 .notification__message {
 	font-size: 13px;
 	color: var(--text-muted, #928fa3);
-	margin: 2px 0 6px 0;
+	margin: 2px 0 6px;
 	line-height: 1.4;
 }
 
@@ -871,7 +871,7 @@
 }
 
 
-@media (max-width: 768px) {
+@media (width <= 768px) {
 	.notificationsDropdown {
 		position: fixed;
 		top: 64px;
@@ -882,7 +882,7 @@
 	}
 }
 
-@media (max-width: 480px) {
+@media (width <= 480px) {
 	.notificationsDropdown {
 		top: 56px;
 		right: 4px;

@@ -3,10 +3,8 @@
    --------------------------------------------------------------------------- */
 
 .vacancies {
-	
 	width: 100%;
 	margin: 0 auto;
-	
 	font-family:
 		-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu,
 		sans-serif;
@@ -23,7 +21,6 @@
 	align-items: flex-start;
 	padding: 24px 0 32px;
 	border-bottom: 1px solid #e2e8f0;
-	
 	flex-wrap: wrap;
 	gap: 6px;
 }
@@ -37,14 +34,14 @@
 	font-size: 32px;
 	font-weight: 700;
 	color: #0f172a;
-	margin: 0 0 8px 0;
+	margin: 0 0 8px;
 	letter-spacing: -0.5px;
 }
 
 .header__subtitle {
 	font-size: 16px;
 	color: #475569;
-	margin: 0 0 16px 0;
+	margin: 0 0 16px;
 	line-height: 1.6;
 	max-width: 600px;
 }
@@ -90,7 +87,7 @@
 .header__addBtn:hover {
 	background: #4f46e5;
 	transform: translateY(-1px);
-	box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
+	box-shadow: 0 4px 12px rgb(99 102 241 / 40%);
 }
 
 /* ---------------------------------------------------------------------------
@@ -131,7 +128,7 @@
 
 .filters__searchInput:focus {
 	border-color: #6366f1;
-	box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+	box-shadow: 0 0 0 3px rgb(99 102 241 / 10%);
 }
 
 .filters__clear {
@@ -258,8 +255,8 @@
 	border-radius: 16px;
 	padding: 24px;
 	box-shadow:
-		0 1px 3px rgba(0, 0, 0, 0.06),
-		0 1px 2px rgba(0, 0, 0, 0.04);
+		0 1px 3px rgb(0 0 0 / 6%),
+		0 1px 2px rgb(0 0 0 / 4%);
 	border: 1px solid #e2e8f0;
 	transition: all 0.3s ease;
 	display: flex;
@@ -268,7 +265,7 @@
 
 .vacancyCard:hover {
 	transform: translateY(-2px);
-	box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+	box-shadow: 0 8px 25px rgb(0 0 0 / 8%);
 }
 
 .vacancyCardFilled {
@@ -344,7 +341,7 @@
 	font-size: 14px;
 	color: #475569;
 	line-height: 1.6;
-	margin: 0 0 16px 0;
+	margin: 0 0 16px;
 	display: -webkit-box;
 	-webkit-line-clamp: 2;
 	line-clamp: 2;
@@ -517,12 +514,12 @@
 	font-size: 20px;
 	font-weight: 600;
 	color: #0f172a;
-	margin: 0 0 8px 0;
+	margin: 0 0 8px;
 }
 
 .emptyState__description {
 	color: #64748b;
-	margin: 0 0 20px 0;
+	margin: 0 0 20px;
 	font-size: 15px;
 }
 
@@ -552,11 +549,8 @@
 
 .modalOverlay {
 	position: fixed;
-	top: 0;
-	left: 0;
-	right: 0;
-	bottom: 0;
-	background: rgba(15, 23, 42, 0.6);
+	inset: 0;
+	background: rgb(15 23 42 / 60%);
 	backdrop-filter: blur(4px);
 	display: flex;
 	align-items: center;
@@ -570,6 +564,7 @@
 	from {
 		opacity: 0;
 	}
+
 	to {
 		opacity: 1;
 	}
@@ -583,7 +578,7 @@
 	max-height: 90vh;
 	overflow: hidden;
 	animation: slideUp 0.3s ease;
-	box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
+	box-shadow: 0 25px 50px rgb(0 0 0 / 15%);
 }
 
 @keyframes slideUp {
@@ -591,6 +586,7 @@
 		transform: translateY(20px);
 		opacity: 0;
 	}
+
 	to {
 		transform: translateY(0);
 		opacity: 1;
@@ -685,7 +681,7 @@
 	font-size: 16px;
 	font-weight: 600;
 	color: #0f172a;
-	margin: 0 0 12px 0;
+	margin: 0 0 12px;
 }
 
 .modal__description {
@@ -703,7 +699,6 @@
 
 .modal__listItem {
 	display: flex;
-	align-items: flex-start;
 	gap: 10px;
 	padding: 6px 0;
 	font-size: 15px;
@@ -916,7 +911,7 @@
 
 .modal__input:focus {
 	border-color: #6366f1;
-	box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+	box-shadow: 0 0 0 3px rgb(99 102 241 / 10%);
 }
 
 .modal__input:disabled {
@@ -943,7 +938,7 @@
 
 .modal__select:focus {
 	border-color: #6366f1;
-	box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+	box-shadow: 0 0 0 3px rgb(99 102 241 / 10%);
 }
 
 .modal__tagInput {
@@ -1005,7 +1000,7 @@
 }
 
 .modal__removeTag:hover {
-	background: rgba(79, 70, 229, 0.1);
+	background: rgb(79 70 229 / 10%);
 }
 
 .modal__actions {
@@ -1063,7 +1058,7 @@
    RESPONSYWNOŚĆ
    --------------------------------------------------------------------------- */
 
-@media (max-width: 1024px) {
+@media (width <= 1024px) {
 	.vacancies {
 		padding: 16px 20px;
 	}
@@ -1077,7 +1072,7 @@
 	}
 }
 
-@media (max-width: 768px) {
+@media (width <= 768px) {
 	.header {
 		flex-direction: column;
 	}
@@ -1180,7 +1175,7 @@
 	}
 }
 
-@media (max-width: 480px) {
+@media (width <= 480px) {
 	.vacancies {
 		padding: 12px 16px;
 	}
@@ -1222,7 +1217,7 @@
 
 .modal__inputError {
 	border-color: #ef4444 !important;
-	box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1) !important;
+	box-shadow: 0 0 0 3px rgb(239 68 68 / 10%) !important;
 }
 
 .modal__error {
@@ -1241,7 +1236,7 @@
 .modal__sectionDescription {
 	font-size: 14px;
 	color: #64748b;
-	margin: 0 0 12px 0;
+	margin: 0 0 12px;
 }
 
 .modal__iconPreview {
@@ -1323,12 +1318,12 @@
 .modal__previewDescription {
 	font-size: 14px;
 	color: #475569;
-	margin: 8px 0 0 0;
+	margin: 8px 0 0;
 	line-height: 1.5;
 }
 
 
-@media (max-width: 768px) {
+@media (width <= 768px) {
 	.modal__previewHeader {
 		flex-wrap: wrap;
 	}
@@ -1356,7 +1351,7 @@
 	background: white;
 	border: 1px solid #e2e8f0;
 	border-radius: 10px;
-	box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
+	box-shadow: 0 8px 25px rgb(0 0 0 / 12%);
 	max-height: 200px;
 	overflow-y: auto;
 	z-index: 100;
@@ -1416,6 +1411,7 @@
 .contactSuggestionEmail svg {
 	color: #94a3b8;
 }
+
 /* ---------------------------------------------------------------------------
    ZAŁĄCZNIKI
    --------------------------------------------------------------------------- */
@@ -1457,7 +1453,7 @@
 	background: #6366f1;
 	color: white;
 	transform: translateY(-1px);
-	box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+	box-shadow: 0 4px 12px rgb(99 102 241 / 30%);
 }
 
 .attachmentUploadInput {
@@ -1559,6 +1555,7 @@
 	border-color: #fca5a5;
 	color: #dc2626;
 }
+
 /* ---------------------------------------------------------------------------
    ZAŁĄCZNIKI W PODGLĄDZIE
    --------------------------------------------------------------------------- */
@@ -1586,7 +1583,7 @@
 	background: #f1f5f9;
 	border-color: #6366f1;
 	transform: translateX(4px);
-	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+	box-shadow: 0 2px 8px rgb(0 0 0 / 6%);
 }
 
 .modal__attachment svg {
@@ -1640,6 +1637,7 @@
 	border-radius: 12px;
 	color: #475569;
 }
+
 /* ---------------------------------------------------------------------------
    MODAL ZGŁOSZENIOWY
    --------------------------------------------------------------------------- */
@@ -1712,6 +1710,7 @@
 	color: #0f172a;
 	cursor: pointer;
 }
+
 /* ---------------------------------------------------------------------------
    INFORMACJE O REKRUTACJI - FORMULARZ
    --------------------------------------------------------------------------- */
@@ -1735,13 +1734,13 @@
 	font-size: 16px;
 	font-weight: 600;
 	color: #0f172a;
-	margin: 0 0 4px 0;
+	margin: 0 0 4px;
 }
 
 .modal__sectionDescription {
 	font-size: 14px;
 	color: #64748b;
-	margin: 4px 0 16px 0;
+	margin: 4px 0 16px;
 }
 
 
@@ -1791,7 +1790,7 @@
 
 .modal__input:focus {
 	border-color: #6366f1;
-	box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+	box-shadow: 0 0 0 3px rgb(99 102 241 / 10%);
 }
 
 .modal__input::placeholder {
@@ -1805,12 +1804,12 @@
 
 .modal__inputError {
 	border-color: #ef4444 !important;
-	box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1) !important;
+	box-shadow: 0 0 0 3px rgb(239 68 68 / 10%) !important;
 }
 
 .modal__inputError:focus {
 	border-color: #ef4444 !important;
-	box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.2) !important;
+	box-shadow: 0 0 0 3px rgb(239 68 68 / 20%) !important;
 }
 
 .modal__select {
@@ -1832,7 +1831,7 @@
 
 .modal__select:focus {
 	border-color: #6366f1;
-	box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+	box-shadow: 0 0 0 3px rgb(99 102 241 / 10%);
 }
 
 .modal__select:disabled {
@@ -1933,7 +1932,7 @@
 }
 
 .modal__removeTag:hover {
-	background: rgba(79, 70, 229, 0.15);
+	background: rgb(79 70 229 / 15%);
 	color: #dc2626;
 }
 
@@ -2208,12 +2207,12 @@
 .modal__previewDescription {
 	font-size: 14px;
 	color: #475569;
-	margin: 8px 0 0 0;
+	margin: 8px 0 0;
 	line-height: 1.5;
 }
 
 
-@media (max-width: 768px) {
+@media (width <= 768px) {
 	.modal__formGrid {
 		grid-template-columns: 1fr;
 		gap: 12px;
@@ -2259,7 +2258,7 @@
 	}
 }
 
-@media (max-width: 480px) {
+@media (width <= 480px) {
 	.modal__section {
 		padding: 10px 12px;
 	}
@@ -2279,6 +2278,7 @@
 		padding: 3px 8px 3px 10px;
 	}
 }
+
 /* ---------------------------------------------------------------------------
    ODPOWIEDZI NA PYTANIA W ZGŁOSZENIACH
    --------------------------------------------------------------------------- */
@@ -2348,6 +2348,7 @@
 	background: #f1f5f9;
 	border-radius: 4px;
 }
+
 /* ---------------------------------------------------------------------------
    ZGŁOSZENIA - SZCZEGÓŁY
    --------------------------------------------------------------------------- */
@@ -2368,7 +2369,7 @@
 
 .modal__applicant:hover {
 	border-color: #cbd5e1;
-	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+	box-shadow: 0 2px 8px rgb(0 0 0 / 4%);
 }
 
 .modal__applicantHeader {
@@ -2558,6 +2559,7 @@
 .modal__applicantActionBtnDanger:hover {
 	background: #dc2626;
 }
+
 /* ---------------------------------------------------------------------------
    ZGŁOSZENIA - SZCZEGÓŁY W MODALU WAKATU
    --------------------------------------------------------------------------- */
@@ -2581,7 +2583,7 @@
 
 .modal__applicant:hover {
 	border-color: #cbd5e1;
-	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+	box-shadow: 0 2px 8px rgb(0 0 0 / 4%);
 }
 
 
@@ -2693,6 +2695,7 @@
 		opacity: 0;
 		transform: translateY(-8px);
 	}
+
 	to {
 		opacity: 1;
 		transform: translateY(0);
@@ -2719,7 +2722,7 @@
 	font-size: 14px;
 	color: #475569;
 	line-height: 1.6;
-	word-wrap: break-word;
+	overflow-wrap: break-word;
 }
 
 
@@ -2814,7 +2817,7 @@
 .modal__applicantActionBtn:hover {
 	background: #4f46e5;
 	transform: translateY(-1px);
-	box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
+	box-shadow: 0 2px 8px rgb(99 102 241 / 30%);
 }
 
 .modal__applicantActionBtn:active {
@@ -2827,7 +2830,7 @@
 
 .modal__applicantActionBtnDanger:hover {
 	background: #dc2626;
-	box-shadow: 0 2px 8px rgba(239, 68, 68, 0.3);
+	box-shadow: 0 2px 8px rgb(239 68 68 / 30%);
 }
 
 
@@ -2854,7 +2857,7 @@
 	font-size: 14px;
 	color: #0f172a;
 	font-weight: 500;
-	padding: 4px 0 0 0;
+	padding: 4px 0 0;
 	background: transparent;
 	border: none;
 }
@@ -2898,7 +2901,7 @@
 }
 
 
-@media (max-width: 768px) {
+@media (width <= 768px) {
 	.modal__applicantHeader {
 		flex-direction: column;
 		align-items: stretch;
@@ -2933,7 +2936,7 @@
 	}
 }
 
-@media (max-width: 480px) {
+@media (width <= 480px) {
 	.modal__applicant {
 		padding: 10px 12px;
 	}
@@ -2969,7 +2972,7 @@
 
 .modal__applicantAnswerText pre {
 	white-space: pre-wrap;
-	word-wrap: break-word;
+	overflow-wrap: break-word;
 	margin: 0;
 	font-family: inherit;
 	font-size: inherit;
@@ -3015,6 +3018,7 @@
 .modal__applicantAnswer.type-checkbox {
 	border-left: 3px solid #ec4899;
 }
+
 /* ---------------------------------------------------------------------------
    ZGŁOSZENIA - SZCZEGÓŁY W MODALU WAKATU
    --------------------------------------------------------------------------- */
@@ -3029,17 +3033,17 @@
 
 
 .modal__applicant {
-	background: #ffffff;
+	background: #fff;
 	border: 1px solid #e2e8f0;
 	border-radius: 12px;
 	padding: 16px 18px;
 	transition: all 0.25s ease;
-	box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+	box-shadow: 0 1px 2px rgb(0 0 0 / 2%);
 }
 
 .modal__applicant:hover {
 	border-color: #cbd5e1;
-	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+	box-shadow: 0 4px 12px rgb(0 0 0 / 6%);
 	transform: translateY(-1px);
 }
 
@@ -3176,6 +3180,7 @@
 		opacity: 0;
 		transform: translateY(-10px) scale(0.98);
 	}
+
 	to {
 		opacity: 1;
 		transform: translateY(0) scale(1);
@@ -3203,7 +3208,7 @@
 	font-size: 14px;
 	color: #334155;
 	line-height: 1.7;
-	word-wrap: break-word;
+	overflow-wrap: break-word;
 	white-space: pre-wrap;
 }
 
@@ -3240,15 +3245,19 @@
 .modal__applicantAnswer.type-text {
 	border-left: 4px solid #6366f1;
 }
+
 .modal__applicantAnswer.type-number {
 	border-left: 4px solid #22c55e;
 }
+
 .modal__applicantAnswer.type-textarea {
 	border-left: 4px solid #f59e0b;
 }
+
 .modal__applicantAnswer.type-select {
 	border-left: 4px solid #8b5cf6;
 }
+
 .modal__applicantAnswer.type-checkbox {
 	border-left: 4px solid #ec4899;
 }
@@ -3272,7 +3281,7 @@
 	font-size: 14px;
 	color: #1e293b;
 	padding: 8px 12px;
-	background: #ffffff;
+	background: #fff;
 	border-radius: 8px;
 	border: 1px solid #e2e8f0;
 	word-break: break-word;
@@ -3304,7 +3313,7 @@
 	gap: 6px;
 	font-size: 12px;
 	color: #94a3b8;
-	padding: 6px 0 2px 0;
+	padding: 6px 0 2px;
 }
 
 .modal__applicantDate svg {
@@ -3335,13 +3344,13 @@
 	font-weight: 500;
 	cursor: pointer;
 	transition: all 0.2s ease;
-	box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+	box-shadow: 0 1px 2px rgb(0 0 0 / 5%);
 }
 
 .modal__applicantActionBtn:hover {
 	background: #4f46e5;
 	transform: translateY(-2px);
-	box-shadow: 0 4px 12px rgba(99, 102, 241, 0.35);
+	box-shadow: 0 4px 12px rgb(99 102 241 / 35%);
 }
 
 .modal__applicantActionBtn:active {
@@ -3356,7 +3365,7 @@
 
 .modal__applicantActionBtnDanger:hover {
 	background: #dc2626;
-	box-shadow: 0 4px 12px rgba(239, 68, 68, 0.35);
+	box-shadow: 0 4px 12px rgb(239 68 68 / 35%);
 }
 
 
@@ -3434,7 +3443,7 @@
 }
 
 
-@media (max-width: 768px) {
+@media (width <= 768px) {
 	.modal__applicantHeader {
 		flex-direction: column;
 		align-items: stretch;
@@ -3471,7 +3480,7 @@
 	}
 }
 
-@media (max-width: 480px) {
+@media (width <= 480px) {
 	.modal__applicant {
 		padding: 12px 14px;
 	}
@@ -3742,18 +3751,18 @@
 
 
 .modal__applicant {
-	background: #ffffff;
+	background: #fff;
 	border: 1px solid #e2e8f0;
 	border-radius: 12px;
 	padding: 16px 20px;
 	transition: all 0.25s ease;
-	box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+	box-shadow: 0 1px 3px rgb(0 0 0 / 4%);
 	width: 100%;
 }
 
 .modal__applicant:hover {
 	border-color: #cbd5e1;
-	box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+	box-shadow: 0 4px 16px rgb(0 0 0 / 8%);
 	transform: translateY(-2px);
 }
 
@@ -3896,6 +3905,7 @@
 		opacity: 0;
 		transform: translateY(-10px);
 	}
+
 	to {
 		opacity: 1;
 		transform: translateY(0);
@@ -3924,7 +3934,7 @@
 	font-size: 14px;
 	color: #334155;
 	line-height: 1.7;
-	word-wrap: break-word;
+	overflow-wrap: break-word;
 	white-space: pre-wrap;
 }
 
@@ -3971,15 +3981,19 @@
 .modal__applicantAnswer.type-text {
 	border-left: 4px solid #6366f1;
 }
+
 .modal__applicantAnswer.type-number {
 	border-left: 4px solid #22c55e;
 }
+
 .modal__applicantAnswer.type-textarea {
 	border-left: 4px solid #f59e0b;
 }
+
 .modal__applicantAnswer.type-select {
 	border-left: 4px solid #8b5cf6;
 }
+
 .modal__applicantAnswer.type-checkbox {
 	border-left: 4px solid #ec4899;
 }
@@ -4010,7 +4024,7 @@
 	font-size: 14px;
 	color: #1e293b;
 	padding: 8px 14px;
-	background: #ffffff;
+	background: #fff;
 	border-radius: 8px;
 	border: 1px solid #e2e8f0;
 	word-break: break-word;
@@ -4030,7 +4044,7 @@
 	gap: 6px;
 	font-size: 13px;
 	color: #94a3b8;
-	padding: 6px 0 2px 0;
+	padding: 6px 0 2px;
 	width: 100%;
 }
 
@@ -4063,13 +4077,13 @@
 	font-weight: 500;
 	cursor: pointer;
 	transition: all 0.2s ease;
-	box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+	box-shadow: 0 1px 2px rgb(0 0 0 / 5%);
 }
 
 .modal__applicantActionBtn:hover {
 	background: #4f46e5;
 	transform: translateY(-2px);
-	box-shadow: 0 4px 12px rgba(99, 102, 241, 0.35);
+	box-shadow: 0 4px 12px rgb(99 102 241 / 35%);
 }
 
 .modal__applicantActionBtn:active {
@@ -4084,7 +4098,7 @@
 
 .modal__applicantActionBtnDanger:hover {
 	background: #dc2626;
-	box-shadow: 0 4px 12px rgba(239, 68, 68, 0.35);
+	box-shadow: 0 4px 12px rgb(239 68 68 / 35%);
 }
 
 
@@ -4103,7 +4117,7 @@
    RESPONSYWNOŚĆ
    ============================================================ */
 
-@media (max-width: 768px) {
+@media (width <= 768px) {
 	.modal__applicantHeader {
 		flex-direction: column;
 		align-items: stretch;
@@ -4151,7 +4165,7 @@
 	}
 }
 
-@media (max-width: 480px) {
+@media (width <= 480px) {
 	.modal__applicant {
 		padding: 12px 14px;
 	}
@@ -4179,6 +4193,7 @@
 		gap: 6px;
 	}
 }
+
 /* ============================================================
    NOWA SEKCJA ZGŁOSZEŃ - KOMPLETNIE OD NOWA
    ============================================================ */
@@ -4239,12 +4254,12 @@
 	border: 1px solid #e2e8f0;
 	overflow: hidden;
 	transition: all 0.2s ease;
-	box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+	box-shadow: 0 1px 3px rgb(0 0 0 / 4%);
 }
 
 .applicationCard:hover {
 	border-color: #cbd5e1;
-	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+	box-shadow: 0 4px 12px rgb(0 0 0 / 6%);
 }
 
 /* ============================================================
@@ -4411,6 +4426,7 @@
 		opacity: 0;
 		transform: translateY(-8px);
 	}
+
 	to {
 		opacity: 1;
 		transform: translateY(0);
@@ -4438,7 +4454,7 @@
 	color: #334155;
 	line-height: 1.7;
 	white-space: pre-wrap;
-	word-wrap: break-word;
+	overflow-wrap: break-word;
 }
 
 
@@ -4519,7 +4535,7 @@
 .applicationActionAccept:hover {
 	background: #4f46e5;
 	transform: translateY(-2px);
-	box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+	box-shadow: 0 4px 12px rgb(99 102 241 / 30%);
 }
 
 .applicationActionReject {
@@ -4536,7 +4552,7 @@
    RESPONSYWNOŚĆ
    ============================================================ */
 
-@media (max-width: 768px) {
+@media (width <= 768px) {
 	.applicationsSection {
 		padding: 16px;
 	}
@@ -4577,7 +4593,7 @@
 	}
 }
 
-@media (max-width: 480px) {
+@media (width <= 480px) {
 	.applicationsSection {
 		padding: 12px;
 	}

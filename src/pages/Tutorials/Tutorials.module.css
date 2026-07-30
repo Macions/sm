@@ -2,8 +2,6 @@
    GŁÓWNY KONTENER
    -------------------------------------------------------------------------- */
 .tutorials {
-    
-    
     margin: 0 auto;
     width: 100%;
 }
@@ -27,7 +25,7 @@
     font-size: 28px;
     font-weight: 700;
     color: var(--gray-900, #1a1a2e);
-    margin: 0 0 4px 0;
+    margin: 0 0 4px;
 }
 
 .header__subtitle {
@@ -157,7 +155,7 @@
 
 .filters__searchInput:focus {
     border-color: var(--purple-500, #8b5cf6);
-    box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.1);
+    box-shadow: 0 0 0 3px rgb(124 58 237 / 10%);
 }
 
 .filters__clear {
@@ -205,7 +203,7 @@
 
 .filters__select:focus {
     border-color: var(--purple-500, #8b5cf6);
-    box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.1);
+    box-shadow: 0 0 0 3px rgb(124 58 237 / 10%);
 }
 
 .filters__reset {
@@ -246,12 +244,12 @@
 
 .tutorialCard:hover {
     border-color: var(--purple-300, #c4b5fd);
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+    box-shadow: 0 4px 16px rgb(0 0 0 / 6%);
     transform: translateY(-2px);
 }
 
 .tutorialCard__header {
-    padding: 16px 20px 12px 20px;
+    padding: 16px 20px 12px;
     border-bottom: 1px solid var(--gray-100, #f1f5f9);
 }
 
@@ -356,7 +354,7 @@
 }
 
 .tutorialCard__body {
-    padding: 14px 20px 16px 20px;
+    padding: 14px 20px 16px;
 }
 
 .tutorialCard__meta {
@@ -382,7 +380,7 @@
     display: flex;
     align-items: flex-start;
     gap: 8px;
-    margin: 8px 0 10px 0;
+    margin: 8px 0 10px;
     flex-wrap: wrap;
 }
 
@@ -417,7 +415,7 @@
     font-size: 13px;
     font-weight: 600;
     color: var(--gray-700, #334155);
-    margin: 0 0 6px 0;
+    margin: 0 0 6px;
 }
 
 .tutorialCard__contentText {
@@ -438,7 +436,7 @@
     font-size: 13px;
     font-weight: 600;
     color: var(--gray-700, #334155);
-    margin: 0 0 8px 0;
+    margin: 0 0 8px;
 }
 
 .tutorialCard__attachmentsList {
@@ -568,13 +566,13 @@
     font-size: 18px;
     font-weight: 600;
     color: var(--gray-800, #1e293b);
-    margin: 0 0 8px 0;
+    margin: 0 0 8px;
 }
 
 .emptyState__description {
     font-size: 14px;
     color: var(--gray-500, #6b7280);
-    margin: 0 0 20px 0;
+    margin: 0 0 20px;
     max-width: 400px;
 }
 
@@ -602,11 +600,8 @@
    -------------------------------------------------------------------------- */
 .modalOverlay {
     position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(0, 0, 0, 0.5);
+    inset: 0;
+    background: rgb(0 0 0 / 50%);
     backdrop-filter: blur(4px);
     display: flex;
     align-items: center;
@@ -634,7 +629,7 @@
     max-height: 90vh;
     overflow-y: auto;
     animation: slideUp 0.25s ease;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 20px 60px rgb(0 0 0 / 20%);
 }
 
 .modalView {
@@ -657,7 +652,7 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 20px 24px 16px 24px;
+    padding: 20px 24px 16px;
     border-bottom: 1px solid var(--gray-200, #e2e8f0);
     position: sticky;
     top: 0;
@@ -692,7 +687,7 @@
 }
 
 .modal__form {
-    padding: 20px 24px 24px 24px;
+    padding: 20px 24px 24px;
 }
 
 .modal__field {
@@ -731,7 +726,7 @@
 
 .modal__input:focus {
     border-color: var(--purple-500, #8b5cf6);
-    box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.1);
+    box-shadow: 0 0 0 3px rgb(124 58 237 / 10%);
 }
 
 .modal__input:disabled {
@@ -759,7 +754,7 @@
 
 .modal__select:focus {
     border-color: var(--purple-500, #8b5cf6);
-    box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.1);
+    box-shadow: 0 0 0 3px rgb(124 58 237 / 10%);
 }
 
 .modal__select:disabled {
@@ -964,7 +959,7 @@
 /* --------------------------------------------------------------------------
    RESPONSYWNOŚĆ
    -------------------------------------------------------------------------- */
-@media (max-width: 768px) {
+@media (width <= 768px) {
     .tutorials {
         padding: 16px;
     }
@@ -1030,7 +1025,7 @@
     }
 }
 
-@media (max-width: 480px) {
+@media (width <= 480px) {
     .tutorialCard__meta {
         flex-direction: column;
         gap: 6px;
@@ -1071,9 +1066,7 @@
 
 
 .tutorials {
-    
     margin: 0 auto;
-    
     min-height: 100vh;
 }
 
@@ -1095,7 +1088,7 @@
     font-size: 28px;
     font-weight: 700;
     color: #0f172a;
-    margin: 0 0 8px 0;
+    margin: 0 0 8px;
     display: flex;
     align-items: center;
     gap: 12px;
@@ -1131,12 +1124,12 @@
     cursor: pointer;
     transition: all 0.2s;
     white-space: nowrap;
-    box-shadow: 0 4px 12px rgba(124, 58, 237, 0.25);
+    box-shadow: 0 4px 12px rgb(124 58 237 / 25%);
 }
 
 .header__addBtn:hover {
     transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(124, 58, 237, 0.35);
+    box-shadow: 0 6px 20px rgb(124 58 237 / 35%);
 }
 
 
@@ -1187,14 +1180,14 @@
     min-width: 20px;
     height: 20px;
     padding: 0 6px;
-    background: rgba(0, 0, 0, 0.08);
+    background: rgb(0 0 0 / 8%);
     border-radius: 10px;
     font-size: 12px;
     font-weight: 600;
 }
 
 .categories__itemActive .categories__count {
-    background: rgba(255, 255, 255, 0.2);
+    background: rgb(255 255 255 / 20%);
     color: white;
 }
 
@@ -1234,7 +1227,7 @@
 .filters__searchInput:focus {
     outline: none;
     border-color: #7c3aed;
-    box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.1);
+    box-shadow: 0 0 0 3px rgb(124 58 237 / 10%);
 }
 
 .filters__clear {
@@ -1309,11 +1302,11 @@
     border: 1px solid #e2e8f0;
     overflow: hidden;
     transition: all 0.3s;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+    box-shadow: 0 1px 3px rgb(0 0 0 / 4%);
 }
 
 .tutorialCard:hover {
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
+    box-shadow: 0 8px 24px rgb(0 0 0 / 6%);
     transform: translateY(-2px);
 }
 
@@ -1409,7 +1402,7 @@
 }
 
 .tutorialCard__description {
-    margin: 12px 0 0 0;
+    margin: 12px 0 0;
     font-size: 14px;
     color: #64748b;
     line-height: 1.6;
@@ -1481,7 +1474,7 @@
     font-size: 14px;
     font-weight: 600;
     color: #0f172a;
-    margin: 0 0 8px 0;
+    margin: 0 0 8px;
 }
 
 .tutorialCard__contentText {
@@ -1501,7 +1494,7 @@
     font-size: 14px;
     font-weight: 600;
     color: #0f172a;
-    margin: 0 0 8px 0;
+    margin: 0 0 8px;
 }
 
 .tutorialCard__attachmentsList {
@@ -1607,7 +1600,7 @@
 .modalOverlay {
     position: fixed;
     inset: 0;
-    background: rgba(15, 23, 42, 0.6);
+    background: rgb(15 23 42 / 60%);
     backdrop-filter: blur(8px);
     display: flex;
     align-items: center;
@@ -1625,7 +1618,7 @@
     max-height: 90vh;
     overflow-y: auto;
     padding: 32px;
-    box-shadow: 0 24px 64px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 24px 64px rgb(0 0 0 / 20%);
     animation: slideUp 0.3s ease;
 }
 
@@ -1699,7 +1692,7 @@
 .modal__input:focus {
     outline: none;
     border-color: #7c3aed;
-    box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.1);
+    box-shadow: 0 0 0 3px rgb(124 58 237 / 10%);
 }
 
 .modal__input:disabled {
@@ -1734,7 +1727,7 @@
 .modal__select:focus {
     outline: none;
     border-color: #7c3aed;
-    box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.1);
+    box-shadow: 0 0 0 3px rgb(124 58 237 / 10%);
 }
 
 .modal__select:disabled {
@@ -1928,12 +1921,12 @@
     font-weight: 600;
     cursor: pointer;
     transition: all 0.2s;
-    box-shadow: 0 4px 12px rgba(124, 58, 237, 0.25);
+    box-shadow: 0 4px 12px rgb(124 58 237 / 25%);
 }
 
 .modal__btnSave:hover {
     transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(124, 58, 237, 0.35);
+    box-shadow: 0 6px 20px rgb(124 58 237 / 35%);
 }
 
 
@@ -1954,13 +1947,13 @@
     font-size: 20px;
     font-weight: 600;
     color: #0f172a;
-    margin: 0 0 8px 0;
+    margin: 0 0 8px;
 }
 
 .emptyState__description {
     font-size: 14px;
     color: #94a3b8;
-    margin: 0 0 20px 0;
+    margin: 0 0 20px;
 }
 
 .emptyState__btn {
@@ -1976,12 +1969,12 @@
     font-weight: 600;
     cursor: pointer;
     transition: all 0.2s;
-    box-shadow: 0 4px 12px rgba(124, 58, 237, 0.25);
+    box-shadow: 0 4px 12px rgb(124 58 237 / 25%);
 }
 
 .emptyState__btn:hover {
     transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(124, 58, 237, 0.35);
+    box-shadow: 0 6px 20px rgb(124 58 237 / 35%);
 }
 
 
@@ -2015,7 +2008,7 @@
 }
 
 
-@media (max-width: 768px) {
+@media (width <= 768px) {
     .tutorials {
         padding: 16px;
     }
@@ -2108,7 +2101,7 @@
 
 .modal__toggleBtn {
     flex: 1;
-    padding: 16px 16px;
+    padding: 16px;
     background: #f1f5f9;
     border: 2px solid #e2e8f0;
     border-radius: 8px;
@@ -2305,13 +2298,13 @@
     transition: all 0.2s;
     white-space: nowrap;
     height: 42px;
-    box-shadow: 0 2px 8px rgba(124, 58, 237, 0.2);
+    box-shadow: 0 2px 8px rgb(124 58 237 / 20%);
 }
 
 .modal__linkInput .modal__addBtn:hover:not(:disabled) {
     background: linear-gradient(135deg, #6d28d9, #5b21b6);
     transform: translateY(-2px);
-    box-shadow: 0 4px 16px rgba(124, 58, 237, 0.35);
+    box-shadow: 0 4px 16px rgb(124 58 237 / 35%);
 }
 
 .modal__linkInput .modal__addBtn:active:not(:disabled) {
@@ -2342,7 +2335,7 @@
     transition: all 0.2s;
     white-space: nowrap;
     height: 42px;
-    box-shadow: 0 2px 8px rgba(124, 58, 237, 0.2);
+    box-shadow: 0 2px 8px rgb(124 58 237 / 20%);
     width: 100%;
     margin-top: 8px;
 }
@@ -2350,7 +2343,7 @@
 .modal__dropzone .modal__addBtn:hover:not(:disabled) {
     background: linear-gradient(135deg, #6d28d9, #5b21b6);
     transform: translateY(-2px);
-    box-shadow: 0 4px 16px rgba(124, 58, 237, 0.35);
+    box-shadow: 0 4px 16px rgb(124 58 237 / 35%);
 }
 
 .modal__dropzone .modal__addBtn:active:not(:disabled) {
@@ -2365,7 +2358,7 @@
 }
 
 
-@media (max-width: 768px) {
+@media (width <= 768px) {
     .modal__linkInput {
         flex-direction: column;
     }
