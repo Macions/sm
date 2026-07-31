@@ -3,8 +3,6 @@
    Motyw: fiolet, jasne tło, karty
    ========================================================================== */
 
-
-
 .welcome {
 	margin-bottom: 32px;
 	padding: 0 4px;
@@ -76,8 +74,6 @@
 	}
 }
 
-
-
 .stats {
 	display: grid;
 	grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
@@ -146,15 +142,11 @@
 	font-weight: 500;
 }
 
-
-
 .bottomSection {
 	display: grid;
 	grid-template-columns: 2fr 1fr;
 	gap: 28px;
 }
-
-
 
 .notifications {
 	background: var(--card-bg, #fff);
@@ -223,8 +215,6 @@
 	font-weight: 500;
 }
 
-
-
 .quickActions {
 	background: var(--card-bg, #fff);
 	border-radius: var(--radius-lg, 22px);
@@ -265,9 +255,11 @@
 	inset: 0;
 	opacity: 0;
 	transition: opacity 0.25s ease;
-	background: linear-gradient(135deg,
-			var(--purple-50, #f6f4fe) 0%,
-			transparent 100%);
+	background: linear-gradient(
+		135deg,
+		var(--purple-50, #f6f4fe) 0%,
+		transparent 100%
+	);
 }
 
 .quickAction:hover::before {
@@ -309,8 +301,6 @@
 	position: relative;
 	z-index: 1;
 }
-
-
 
 @media (width <= 1200px) {
 	.stats {
@@ -529,8 +519,6 @@
 	}
 }
 
-
-
 .welcomeCard {
 	background: var(--card-bg, #fff);
 	border-radius: var(--radius-lg, 22px);
@@ -625,8 +613,6 @@
 	}
 }
 
-
-
 @media (width <= 768px) {
 	.welcomeCard {
 		padding: 20px 24px;
@@ -708,7 +694,6 @@
 	}
 }
 
-
 .loading {
 	display: flex;
 	flex-direction: column;
@@ -732,7 +717,6 @@
 		transform: rotate(360deg);
 	}
 }
-
 
 .error {
 	display: flex;
@@ -772,10 +756,28 @@
 	transform: translateY(-2px);
 }
 
-
 .notifications__empty {
 	padding: 24px;
 	text-align: center;
 	color: #94a3b8;
 	font-size: 14px;
+}
+.skeleton {
+	background: linear-gradient(90deg, #e0e0e0 25%, #f0f0f0 50%, #e0e0e0 75%);
+	background-size: 200% 100%;
+	animation: shimmer 1.5s infinite;
+	border-radius: 4px;
+}
+
+@keyframes shimmer {
+	0% {
+		background-position: -200% 0;
+	}
+	100% {
+		background-position: 200% 0;
+	}
+}
+
+.skeletonCircle {
+	border-radius: 50%;
 }

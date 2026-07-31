@@ -470,7 +470,14 @@ export default function Onboarding({ initialData = {} }: OnboardingProps) {
 
 			const result = await response.json();
 			logger.debug("✅ [response] sukces:", result);
-
+			localStorage.setItem("onboardingCompleted", "true");
+			localStorage.setItem(
+				"onboardingData",
+				JSON.stringify(result.data || formData),
+			);
+			logger.debug(
+				"💾 [Onboarding] Zapisano w cache: onboardingCompleted = true",
+			);
 			logger.debug(
 				"💾 [Onboarding] Aktualizuję localStorage onboardingCompleted = true",
 			);

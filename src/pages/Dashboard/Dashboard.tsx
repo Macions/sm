@@ -1,5 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { safeNavigate } from "@/utils/safeNavigation";
+import { useUser } from "@/context/UserContext";
 import { useNavigate } from "react-router-dom";
 import { logger } from "@/utils/logger";
 import {
@@ -41,237 +42,267 @@ type DashboardStats = {
 	newGuides: number;
 };
 
-type User = {
-	id: string | number;
-	firstName: string;
-	lastName?: string;
-	first_name?: string;
-	last_name?: string;
-	role: string;
-	team: string;
-	status: string;
-	username?: string;
-	email?: string;
-	joinDate?: string;
-	isTrial?: boolean;
-	createdAt?: string;
+const QUICK_ACTIONS: QuickAction[] = [
+	{
+		id: "projects",
+		label: "Projekty",
+		icon: <FolderKanban size={18} />,
+		color: "#4A6FE8",
+		link: "/projects",
+		roles: ["member"],
+	},
+	{
+		id: "add-project",
+		label: "Dodaj projekt",
+		icon: <Plus size={18} />,
+		color: "#4A6FE8",
+		link: "/projects",
+		roles: ["admin", "coordinator"],
+	},
+	{
+		id: "leave-request",
+		label: "Zgłoś urlop",
+		icon: <CalendarPlus size={18} />,
+		color: "#2ECC71",
+		link: "/leave/",
+		roles: ["admin", "coordinator", "member"],
+	},
+	{
+		id: "search-member",
+		label: "Wyszukaj członka",
+		icon: <Search size={18} />,
+		color: "#F5A623",
+		link: "/members",
+		roles: ["admin", "coordinator", "member"],
+	},
+	{
+		id: "browse-guides",
+		label: "Przeglądaj poradniki",
+		icon: <BookMarked size={18} />,
+		color: "#E84AA9",
+		link: "/guides",
+		roles: ["admin", "coordinator", "member"],
+	},
+];
+
+const STATUS_MAP: Record<string, string> = {
+	active: "Aktywny",
+	trial: "Okres próbny",
+	mentor: "Mentor",
+	vacation: "Urlop",
+};
+
+const ROLE_MAP: Record<string, string> = {
+	admin: "Administrator",
+	board: "Zarząd",
+	coordinator: "Koordynator",
+	member: "Członek",
+	mentor: "Mentor",
+};
+
+const STATUS_COLOR_MAP: Record<string, string> = {
+	Aktywny: "#2ECC71",
+	Urlop: "#F5A623",
+	"Okres próbny": "#ff8989",
 };
 
 export default function Dashboard() {
 	const navigate = useNavigate();
+	const { user, loading: userLoading } = useUser();
 
-	const [loading, setLoading] = useState(true);
+	const [checkingOnboarding, setCheckingOnboarding] = useState(true);
 	const [error, setError] = useState<string | null>(null);
-	const [user, setUser] = useState<User | null>(null);
+
+	// Osobne stany dla każdej sekcji
 	const [stats, setStats] = useState<DashboardStats | null>(null);
 	const [notifications, setNotifications] = useState<Notification[]>([]);
 
+	// Osobne stany ładowania
+	const [loadingStats, setLoadingStats] = useState(true);
+	const [loadingNotifs, setLoadingNotifs] = useState(true);
+
 	useEffect(() => {
-		const fetchDashboardData = async () => {
+		const checkOnboarding = async () => {
 			try {
-				setLoading(true);
-				setError(null);
+				// Krok 1: Sprawdź cache w localStorage
+				const cachedStatus = localStorage.getItem("onboardingCompleted");
+				const cachedData = localStorage.getItem("onboardingData");
 
+				if (cachedStatus === "true" && cachedData) {
+					logger.debug("✅ [Dashboard] Onboarding ukończony (z cache)");
+					setCheckingOnboarding(false);
+					return;
+				}
+
+				// Krok 2: Sprawdź w API
 				const token = localStorage.getItem("accessToken");
-				logger.debug("🔑 Token:", token ? "Jest" : "Brak");
-
-				const userRes = await fetch("/api/profile", {
-					headers: {
-						Authorization: `Bearer ${token}`,
-						"Content-Type": "application/json",
-					},
-				});
-				if (!userRes.ok) {
-					logger.error("❌ Błąd profile:", userRes.status, userRes.statusText);
-					throw new Error("Nie udało się pobrać danych użytkownika");
+				if (!token) {
+					setCheckingOnboarding(false);
+					return;
 				}
-				const userData = await userRes.json();
-				logger.debug("📊 Profil z API:", userData);
 
-				setUser({
-					id: userData.id,
-					firstName: userData.firstName || "Użytkowniku",
-					lastName: userData.last_name || "",
-					first_name: userData.first_name,
-					last_name: userData.last_name,
-					role: userData.role || "member",
-					team: userData.team || "—",
-					status: userData.status || "active",
-					username: userData.username,
-					email: userData.email,
-
-					joinDate:
-						userData.joinDate ||
-						userData.created_at ||
-						new Date().toISOString(),
-					isTrial: userData.isTrial || false,
-					createdAt: userData.created_at,
-				});
-
-				const statsRes = await fetch("/api/dashboard/stats", {
+				logger.debug("🔄 [Dashboard] Sprawdzam onboarding w API...");
+				const response = await fetch("/api/auth/onboarding-status", {
 					headers: {
 						Authorization: `Bearer ${token}`,
 						"Content-Type": "application/json",
 					},
 				});
-				if (!statsRes.ok) {
-					logger.error("❌ Błąd stats:", statsRes.status, statsRes.statusText);
-					throw new Error("Nie udało się pobrać statystyk");
-				}
-				const statsData = await statsRes.json();
-				setStats(statsData);
 
-				const notifRes = await fetch("/api/dashboard/notifications?limit=4", {
-					headers: {
-						Authorization: `Bearer ${token}`,
-						"Content-Type": "application/json",
-					},
-				});
-				if (!notifRes.ok) {
-					logger.error(
-						"❌ Błąd notifications:",
-						notifRes.status,
-						notifRes.statusText,
+				if (response.ok) {
+					const data = await response.json();
+					const completed = data.completed === true;
+
+					// Krok 3: Zapisz w cache
+					localStorage.setItem(
+						"onboardingCompleted",
+						completed ? "true" : "false",
 					);
-					throw new Error("Nie udało się pobrać powiadomień");
+
+					if (completed && data.data) {
+						localStorage.setItem("onboardingData", JSON.stringify(data.data));
+					}
+
+					logger.debug(`📋 [Dashboard] Onboarding status: ${completed}`);
+
+					if (!completed) {
+						logger.debug("🔄 [Dashboard] Przekierowanie do onboardingu");
+						navigate("/onboarding");
+						return;
+					}
+				} else {
+					logger.warn(
+						"⚠️ [Dashboard] Nie udało się sprawdzić statusu onboardingu",
+					);
 				}
-				const notifData = await notifRes.json();
-				setNotifications(notifData);
-			} catch (err) {
-				logger.error("Błąd ładowania dashboardu:", err);
-				setError(err instanceof Error ? err.message : "Wystąpił błąd");
+			} catch (error) {
+				logger.error("❌ [Dashboard] Błąd sprawdzania onboardingu:", error);
 			} finally {
-				setLoading(false);
+				setCheckingOnboarding(false);
 			}
 		};
 
-		fetchDashboardData();
+		checkOnboarding();
+	}, [navigate]);
+	useEffect(() => {
+		console.log("🚀 [Dashboard] useEffect START");
+		const controller = new AbortController();
+
+		const fetchStats = async () => {
+			try {
+				console.log("📊 [Dashboard] Pobieram statystyki...");
+				setLoadingStats(true);
+				const token = localStorage.getItem("accessToken");
+
+				const res = await fetch("/api/dashboard/stats", {
+					signal: controller.signal,
+					headers: {
+						Authorization: `Bearer ${token}`,
+						"Content-Type": "application/json",
+					},
+				});
+
+				console.log("📊 [Dashboard] Status statystyk:", res.status);
+
+				if (!res.ok) throw new Error("Nie udało się pobrać statystyk");
+				const data = await res.json();
+				console.log("📊 [Dashboard] Dane statystyk:", data);
+				setStats(data);
+			} catch (err) {
+				if (err instanceof Error && err.name === "AbortError") return;
+				console.error("❌ [Dashboard] Błąd statystyk:", err);
+				setError("Nie udało się pobrać statystyk");
+			} finally {
+				setLoadingStats(false);
+			}
+		};
+
+		const fetchNotifs = async () => {
+			try {
+				console.log("🔔 [Dashboard] Pobieram powiadomienia...");
+				setLoadingNotifs(true);
+				const token = localStorage.getItem("accessToken");
+
+				const res = await fetch("/api/dashboard/notifications?limit=4", {
+					signal: controller.signal,
+					headers: {
+						Authorization: `Bearer ${token}`,
+						"Content-Type": "application/json",
+					},
+				});
+
+				console.log("🔔 [Dashboard] Status powiadomień:", res.status);
+
+				if (!res.ok) throw new Error("Nie udało się pobrać powiadomień");
+				const data = await res.json();
+				console.log("🔔 [Dashboard] Dane powiadomień:", data);
+				setNotifications(data);
+			} catch (err) {
+				if (err instanceof Error && err.name === "AbortError") return;
+				console.error("❌ [Dashboard] Błąd powiadomień:", err);
+				setError("Nie udało się pobrać powiadomień");
+			} finally {
+				setLoadingNotifs(false);
+			}
+		};
+
+		// ✅ WYWOŁANIE - to jest kluczowe!
+		console.log("🚀 [Dashboard] Wywołuję fetchStats i fetchNotifs");
+		Promise.all([fetchStats(), fetchNotifs()]);
+
+		return () => {
+			console.log("🧹 [Dashboard] Cleanup");
+			controller.abort();
+		};
 	}, []);
 
-	const quickActions: QuickAction[] = [
-		{
-			id: "projects",
-			label: "Projekty",
-			icon: <FolderKanban size={18} />,
-			color: "#4A6FE8",
-			link: "/projects",
-			roles: ["member"],
-		},
-		{
-			id: "add-project",
-			label: "Dodaj projekt",
-			icon: <Plus size={18} />,
-			color: "#4A6FE8",
-			link: "/projects",
-			roles: ["admin", "coordinator"],
-		},
-		{
-			id: "leave-request",
-			label: "Zgłoś urlop",
-			icon: <CalendarPlus size={18} />,
-			color: "#2ECC71",
-			link: "/leave/",
-			roles: ["admin", "coordinator", "member"],
-		},
-		{
-			id: "search-member",
-			label: "Wyszukaj członka",
-			icon: <Search size={18} />,
-			color: "#F5A623",
-			link: "/members",
-			roles: ["admin", "coordinator", "member"],
-		},
-		{
-			id: "browse-guides",
-			label: "Przeglądaj poradniki",
-			icon: <BookMarked size={18} />,
-			color: "#E84AA9",
-			link: "/guides",
-			roles: ["admin", "coordinator", "member"],
-		},
-	];
-
-	const getGreeting = () => {
+	const getGreeting = useCallback(() => {
 		const hour = new Date().getHours();
 		if (hour >= 4 && hour < 21) return "Dzień dobry";
 		return "Dobry wieczór";
-	};
+	}, []);
 
-	const getMembershipDuration = (
-		joinDate: string | null | undefined,
-		isTrial: boolean,
-	): string | null => {
-		if (!joinDate || isTrial) return null;
+	const getMembershipDuration = useCallback(
+		(joinDate: string | null | undefined, isTrial: boolean): string | null => {
+			if (!joinDate || isTrial) return null;
 
-		const start = new Date(joinDate);
-		const now = new Date();
+			const start = new Date(joinDate);
+			const now = new Date();
 
-		let years = now.getFullYear() - start.getFullYear();
-		let months = now.getMonth() - start.getMonth();
+			let years = now.getFullYear() - start.getFullYear();
+			let months = now.getMonth() - start.getMonth();
 
-		if (months < 0) {
-			years--;
-			months += 12;
-		}
+			if (months < 0) {
+				years--;
+				months += 12;
+			}
 
-		const days = Math.floor(
-			(now.getTime() - start.getTime()) / (1000 * 60 * 60 * 24),
-		);
+			const days = Math.floor(
+				(now.getTime() - start.getTime()) / (1000 * 60 * 60 * 24),
+			);
 
-		if (years > 0) {
-			const yearText = years === 1 ? "rok" : years < 5 ? "lata" : "lat";
+			if (years > 0) {
+				const yearText = years === 1 ? "rok" : years < 5 ? "lata" : "lat";
+				if (months > 0) {
+					const monthText = months === 1 ? "miesiąc" : "miesięcy";
+					return `${years} ${yearText}, ${months} ${monthText}`;
+				}
+				return `${years} ${yearText}`;
+			}
 			if (months > 0) {
 				const monthText = months === 1 ? "miesiąc" : "miesięcy";
-				return `${years} ${yearText}, ${months} ${monthText}`;
+				return `${months} ${monthText}`;
 			}
-			return `${years} ${yearText}`;
-		}
-		if (months > 0) {
-			const monthText = months === 1 ? "miesiąc" : "miesięcy";
-			return `${months} ${monthText}`;
-		}
-		if (days > 0) {
-			const dayText = days === 1 ? "dzień" : "dni";
-			return `${days} ${dayText}`;
-		}
-		return "od dzisiaj! 🎉";
-	};
+			if (days > 0) {
+				const dayText = days === 1 ? "dzień" : "dni";
+				return `${days} ${dayText}`;
+			}
+			return "od dzisiaj! 🎉";
+		},
+		[],
+	);
 
-	const translateStatus = (status: string): string => {
-		const statusMap: Record<string, string> = {
-			active: "Aktywny",
-			trial: "Okres próbny",
-			mentor: "Mentor",
-			vacation: "Urlop",
-		};
-		return statusMap[status?.toLowerCase()] || status || "—";
-	};
-
-	const getStatusColor = (status: string) => {
-		const translated = translateStatus(status);
-		switch (translated) {
-			case "Aktywny":
-				return "#2ECC71";
-			case "Urlop":
-				return "#F5A623";
-			case "Okres próbny":
-				return "#ff8989";
-			default:
-				return "#6B7280";
-		}
-	};
-
-	const translateRole = (role: string): string => {
-		const roleMap: Record<string, string> = {
-			admin: "Administrator",
-			board: "Zarząd",
-			coordinator: "Koordynator",
-			member: "Członek",
-			mentor: "Mentor",
-		};
-		return roleMap[role?.toLowerCase()] || role || "—";
-	};
-	const getNotificationIcon = (type: string) => {
+	const getNotificationIcon = useCallback((type: string) => {
 		switch (type) {
 			case "success":
 				return <CheckCircle size={16} color="#2ECC71" />;
@@ -280,19 +311,118 @@ export default function Dashboard() {
 			default:
 				return <Bell size={16} color="#4A6FE8" />;
 		}
-	};
+	}, []);
 
-	if (loading) {
+	const roleText = useMemo(
+		() => ROLE_MAP[user?.role?.toLowerCase() || ""] || user?.role || "—",
+		[user?.role],
+	);
+
+	const statusText = useMemo(
+		() => STATUS_MAP[user?.status?.toLowerCase() || ""] || user?.status || "—",
+		[user?.status],
+	);
+
+	const statusColor = useMemo(
+		() => STATUS_COLOR_MAP[statusText] || "#6B7280",
+		[statusText],
+	);
+
+	const membershipDuration = useMemo(
+		() => getMembershipDuration(user?.joinDate || null, user?.isTrial || false),
+		[user?.joinDate, user?.isTrial, getMembershipDuration],
+	);
+
+	const statsData = useMemo(() => {
+		if (!stats) return [];
+
+		const baseStats = [
+			{
+				id: "members",
+				label: "Członkowie SM",
+				value: stats.members.toString(),
+				icon: <Users size={24} />,
+				color: "#4A6FE8",
+				bgColor: "#EFEBFD",
+			},
+			{
+				id: "projects",
+				label: "Aktywne projekty",
+				value: stats.projects.toString(),
+				icon: <FolderKanban size={24} />,
+				color: "#2ECC71",
+				bgColor: "#ECFDF5",
+			},
+			{
+				id: "attendance",
+				label: "Twoja frekwencja",
+				subtext: "(na podstawie systemu frekwencji)",
+				value: stats.attendance,
+				icon: <CalendarCheck size={24} />,
+				color: "#10B981",
+				bgColor: "#ECFDF5",
+			},
+			{
+				id: "guides",
+				label: "Nowe poradniki",
+				value: stats.newGuides.toString(),
+				subtext: "aktualizacje",
+				icon: <BookOpen size={24} />,
+				color: "#17C3B2",
+				bgColor: "#F0FDFA",
+			},
+		];
+
+		if (membershipDuration) {
+			baseStats.splice(3, 0, {
+				id: "membership",
+				label: "Jesteś z nami",
+				value: membershipDuration,
+				icon: <CalendarCheck size={24} />,
+				color: "#4A6FE8",
+				bgColor: "#EFEBFD",
+			});
+		}
+
+		return baseStats;
+	}, [stats, membershipDuration]);
+
+	const handleQuickAction = useCallback(
+		(action: QuickAction) => {
+			if (action.link) {
+				safeNavigate(action.link, navigate);
+			} else {
+				logger.debug(`Akcja: ${action.label}`);
+			}
+		},
+		[navigate],
+	);
+
+	if (checkingOnboarding) {
 		return (
-			<div className={styles.dashboard}>
-				<div className={styles.loading}>
-					<div className={styles.loading__spinner}></div>
-					<p>Ładowanie dashboardu...</p>
-				</div>
+			<div
+				style={{
+					display: "flex",
+					justifyContent: "center",
+					alignItems: "center",
+					height: "100vh",
+				}}
+			>
+				<div
+					style={{
+						width: "48px",
+						height: "48px",
+						border: "4px solid #e5e7eb",
+						borderTopColor: "#4A6FE8",
+						borderRadius: "50%",
+						animation: "spin 0.8s linear infinite",
+					}}
+				/>
 			</div>
 		);
 	}
-
+	// Jeśli error - pokaż błąd
+	// Jeśli error - pokaż błąd
 	if (error) {
 		return (
 			<div className={styles.dashboard}>
@@ -307,65 +437,13 @@ export default function Dashboard() {
 			</div>
 		);
 	}
-	const membershipDuration = getMembershipDuration(
-		user?.joinDate || null,
-		user?.isTrial || false,
-	);
 
-	const statsData = stats
-		? [
-				{
-					id: "members",
-					label: "Członkowie SM",
-					value: stats.members.toString(),
-					icon: <Users size={24} />,
-					color: "#4A6FE8",
-					bgColor: "#EFEBFD",
-				},
-				{
-					id: "projects",
-					label: "Aktywne projekty",
-					value: stats.projects.toString(),
-					icon: <FolderKanban size={24} />,
-					color: "#2ECC71",
-					bgColor: "#ECFDF5",
-				},
-				{
-					id: "attendance",
-					label: "Twoja frekwencja",
-					subtext: "(na podstawie systemu frekwencji)",
-					value: stats.attendance,
-					icon: <CalendarCheck size={24} />,
-					color: "#10B981",
-					bgColor: "#ECFDF5",
-				},
-
-				...(membershipDuration
-					? [
-							{
-								id: "membership",
-								label: "Jesteś z nami",
-								value: membershipDuration,
-								icon: <CalendarCheck size={24} />,
-								color: "#4A6FE8",
-								bgColor: "#EFEBFD",
-							},
-						]
-					: []),
-				{
-					id: "guides",
-					label: "Nowe poradniki",
-					value: stats.newGuides.toString(),
-					subtext: "aktualizacje",
-					icon: <BookOpen size={24} />,
-					color: "#17C3B2",
-					bgColor: "#F0FDFA",
-				},
-			]
-		: [];
+	// ✅ USUŃ globalny loading - zamiast tego pokazuj skeleton dla każdej sekcji
+	// if (loading) { return <DashboardSkeleton /> }  ← USUŃ TO!
 
 	return (
 		<>
+			{/* Karta powitalna - ZAWSZE widoczna, z skeleton dla brakujących danych */}
 			<div className={styles.welcomeCard}>
 				<div className={styles.welcomeCard__content}>
 					<img
@@ -379,63 +457,135 @@ export default function Dashboard() {
 						</h1>
 						<div className={styles.welcomeCard__info}>
 							<span className={styles.welcomeCard__role}>
-								{translateRole(user?.role || "—")}{" "}
+								{userLoading ? (
+									<span
+										className={styles.skeleton}
+										style={{ width: 80, display: "inline-block" }}
+									>
+										 
+									</span>
+								) : (
+									roleText
+								)}
 							</span>
 							<span className={styles.welcomeCard__divider}>•</span>
 							<span className={styles.welcomeCard__team}>
-								{user?.team || "—"}
+								{userLoading ? (
+									<span
+										className={styles.skeleton}
+										style={{ width: 60, display: "inline-block" }}
+									>
+										 
+									</span>
+								) : (
+									user?.team || "—"
+								)}
 							</span>
 							<span className={styles.welcomeCard__divider}>•</span>
 							<span
 								className={styles.welcomeCard__status}
-								style={{ color: getStatusColor(user?.status || "") }}
+								style={{ color: statusColor }}
 							>
 								<span
 									className={styles.welcomeCard__statusDot}
-									style={{ background: getStatusColor(user?.status || "") }}
+									style={{ background: statusColor }}
 								/>
-								{translateStatus(user?.status || "—")}
+								{userLoading ? (
+									<span
+										className={styles.skeleton}
+										style={{ width: 60, display: "inline-block" }}
+									>
+										 
+									</span>
+								) : (
+									statusText
+								)}
 							</span>
 						</div>
 					</div>
 				</div>
 			</div>
 
+			{/* Statystyki - skeleton gdy się ładują */}
 			<div className={styles.stats}>
-				{statsData.map((stat) => (
-					<div key={stat.id} className={styles.statCard}>
-						<div
-							className={styles.statCard__icon}
-							style={{
-								background: stat.bgColor,
-								color: stat.color,
-							}}
-						>
-							{stat.icon}
-						</div>
-						<div className={styles.statCard__content}>
-							<p className={styles.statCard__label}>{stat.label}</p>
-							<div className={styles.statCard__valueWrapper}>
-								<span className={styles.statCard__value}>{stat.value}</span>
-								{stat.subtext && (
-									<span className={styles.statCard__subtext}>
-										{stat.subtext}
-									</span>
-								)}
+				{loadingStats ? (
+					// Skeleton dla statystyk
+					<>
+						{[1, 2, 3, 4].map((i) => (
+							<div key={i} className={styles.statCard}>
+								<div
+									className={`${styles.skeleton} ${styles.skeletonCircle}`}
+									style={{ width: 48, height: 48 }}
+								/>
+								<div className={styles.statCard__content}>
+									<div
+										className={styles.skeleton}
+										style={{ width: 80, height: 14, marginBottom: 6 }}
+									/>
+									<div
+										className={styles.skeleton}
+										style={{ width: 60, height: 24 }}
+									/>
+								</div>
+							</div>
+						))}
+					</>
+				) : (
+					statsData.map((stat) => (
+						<div key={stat.id} className={styles.statCard}>
+							<div
+								className={styles.statCard__icon}
+								style={{ background: stat.bgColor, color: stat.color }}
+							>
+								{stat.icon}
+							</div>
+							<div className={styles.statCard__content}>
+								<p className={styles.statCard__label}>{stat.label}</p>
+								<div className={styles.statCard__valueWrapper}>
+									<span className={styles.statCard__value}>{stat.value}</span>
+									{stat.subtext && (
+										<span className={styles.statCard__subtext}>
+											{stat.subtext}
+										</span>
+									)}
+								</div>
 							</div>
 						</div>
-					</div>
-				))}
+					))
+				)}
 			</div>
 
 			<div className={styles.bottomSection}>
+				{/* Powiadomienia - skeleton gdy się ładują */}
 				<div className={styles.notifications}>
 					<h2 className={styles.sectionTitle}>
 						<Bell size={20} />
 						Powiadomienia
 					</h2>
 					<div className={styles.notifications__list}>
-						{notifications.length === 0 ? (
+						{loadingNotifs ? (
+							// Skeleton dla powiadomień
+							<>
+								{[1, 2, 3].map((i) => (
+									<div key={i} className={styles.notification}>
+										<div
+											className={`${styles.skeleton} ${styles.skeletonCircle}`}
+											style={{ width: 32, height: 32 }}
+										/>
+										<div className={styles.notification__content}>
+											<div
+												className={styles.skeleton}
+												style={{ width: "80%", height: 14 }}
+											/>
+											<div
+												className={styles.skeleton}
+												style={{ width: "40%", height: 12 }}
+											/>
+										</div>
+									</div>
+								))}
+							</>
+						) : notifications.length === 0 ? (
 							<div className={styles.notifications__empty}>
 								<p>Brak nowych powiadomień</p>
 							</div>
@@ -459,40 +609,33 @@ export default function Dashboard() {
 					</div>
 				</div>
 
+				{/* Szybkie akcje - ZAWSZE widoczne (nie wymagają danych) */}
 				<div className={styles.quickActions}>
 					<h2 className={styles.sectionTitle}>Szybkie akcje</h2>
 					<div className={styles.quickActions__grid}>
-						{quickActions
-							.filter((action) => {
-								if (!user?.role || !action.roles) return true;
-								return action.roles.includes(user.role);
-							})
-							.map((action) => (
-								<button
-									key={action.id}
-									className={styles.quickAction}
-									onClick={() => {
-										if (action.link) {
-											safeNavigate(action.link, navigate);
-										} else {
-											logger.debug(`Akcja: ${action.label}`);
-										}
+						{QUICK_ACTIONS.filter((action) => {
+							if (!user?.role || !action.roles) return true;
+							return action.roles.includes(user.role);
+						}).map((action) => (
+							<button
+								key={action.id}
+								className={styles.quickAction}
+								onClick={() => handleQuickAction(action)}
+							>
+								<span
+									className={styles.quickAction__icon}
+									style={{
+										background: `${action.color}15`,
+										color: action.color,
 									}}
 								>
-									<span
-										className={styles.quickAction__icon}
-										style={{
-											background: `${action.color}15`,
-											color: action.color,
-										}}
-									>
-										{action.icon}
-									</span>
-									<span className={styles.quickAction__label}>
-										{action.label}
-									</span>
-								</button>
-							))}
+									{action.icon}
+								</span>
+								<span className={styles.quickAction__label}>
+									{action.label}
+								</span>
+							</button>
+						))}
 					</div>
 				</div>
 			</div>

@@ -446,7 +446,6 @@
 	font-weight: 600;
 }
 
-
 .vacancyCardList {
 	flex-direction: row;
 	align-items: center;
@@ -1256,7 +1255,6 @@
 	font-weight: 500;
 }
 
-
 .modal__preview {
 	margin-top: 8px;
 }
@@ -1321,7 +1319,6 @@
 	margin: 8px 0 0;
 	line-height: 1.5;
 }
-
 
 @media (width <= 768px) {
 	.modal__previewHeader {
@@ -1715,7 +1712,6 @@
    INFORMACJE O REKRUTACJI - FORMULARZ
    --------------------------------------------------------------------------- */
 
-
 .modal__section {
 	margin-bottom: 24px;
 	padding: 16px 20px;
@@ -1743,13 +1739,11 @@
 	margin: 4px 0 16px;
 }
 
-
 .modal__formGrid {
 	display: grid;
 	grid-template-columns: 1fr 1fr;
 	gap: 16px;
 }
-
 
 .modal__field {
 	margin-bottom: 8px;
@@ -1758,7 +1752,6 @@
 .modal__field:last-child {
 	margin-bottom: 0;
 }
-
 
 .modal__label {
 	display: block;
@@ -1773,7 +1766,6 @@
 	font-weight: 700;
 	margin-left: 2px;
 }
-
 
 .modal__input {
 	width: 100%;
@@ -1839,13 +1831,11 @@
 	cursor: not-allowed;
 }
 
-
 .modal__textarea {
 	resize: vertical;
 	min-height: 80px;
 	font-family: inherit;
 }
-
 
 .modal__helper {
 	display: block;
@@ -1854,14 +1844,12 @@
 	color: #94a3b8;
 }
 
-
 .modal__error {
 	display: block;
 	margin-top: 4px;
 	font-size: 13px;
 	color: #ef4444;
 }
-
 
 .modal__tagInput {
 	display: flex;
@@ -1941,7 +1929,6 @@
 	color: #94a3b8;
 	padding: 6px 0;
 }
-
 
 .questionManager {
 	margin-top: 8px;
@@ -2072,7 +2059,6 @@
 	border-top: 1px solid #f1f5f9;
 }
 
-
 .modal__btnCancel {
 	padding: 10px 20px;
 	background: white;
@@ -2143,7 +2129,6 @@
 	gap: 12px;
 }
 
-
 .modal__preview {
 	margin-top: 8px;
 }
@@ -2210,7 +2195,6 @@
 	margin: 8px 0 0;
 	line-height: 1.5;
 }
-
 
 @media (width <= 768px) {
 	.modal__formGrid {
@@ -2564,14 +2548,12 @@
    ZGŁOSZENIA - SZCZEGÓŁY W MODALU WAKATU
    --------------------------------------------------------------------------- */
 
-
 .modal__applicants {
 	display: flex;
 	flex-direction: column;
 	gap: 12px;
 	margin-top: 8px;
 }
-
 
 .modal__applicant {
 	background: white;
@@ -2585,7 +2567,6 @@
 	border-color: #cbd5e1;
 	box-shadow: 0 2px 8px rgb(0 0 0 / 4%);
 }
-
 
 .modal__applicantHeader {
 	display: flex;
@@ -2603,13 +2584,11 @@
 	flex: 1;
 }
 
-
 .modal__applicantName {
 	font-size: 15px;
 	font-weight: 600;
 	color: #0f172a;
 }
-
 
 .modal__applicantEmail {
 	display: flex;
@@ -2623,7 +2602,6 @@
 	color: #94a3b8;
 	flex-shrink: 0;
 }
-
 
 .modal__applicantStatus {
 	font-size: 12px;
@@ -2653,7 +2631,6 @@
 	color: #991b1b;
 }
 
-
 .modal__applicantToggle {
 	display: flex;
 	align-items: center;
@@ -2679,7 +2656,6 @@
 	transition: transform 0.2s ease;
 }
 
-
 .modal__applicantDetails {
 	margin-top: 12px;
 	padding-top: 12px;
@@ -2701,7 +2677,6 @@
 		transform: translateY(0);
 	}
 }
-
 
 .modal__applicantMessage {
 	padding: 10px 14px;
@@ -2725,7 +2700,6 @@
 	overflow-wrap: break-word;
 }
 
-
 .modal__applicantAnswers {
 	display: flex;
 	flex-direction: column;
@@ -2737,7 +2711,6 @@
 	color: #0f172a;
 	margin-bottom: 4px;
 }
-
 
 .modal__applicantAnswer {
 	padding: 8px 12px;
@@ -2751,7 +2724,6 @@
 	background: #f1f5f9;
 }
 
-
 .modal__applicantQuestion {
 	font-size: 13px;
 	font-weight: 500;
@@ -2764,7 +2736,6 @@
 	margin-left: 2px;
 }
 
-
 .modal__applicantAnswerText {
 	font-size: 14px;
 	color: #475569;
@@ -2775,7 +2746,6 @@
 	word-break: break-word;
 	line-height: 1.5;
 }
-
 
 .modal__applicantDate {
 	display: flex;
@@ -2790,7 +2760,6 @@
 	color: #94a3b8;
 	flex-shrink: 0;
 }
-
 
 .modal__applicantActions {
 	display: flex;
@@ -2833,7 +2802,6 @@
 	box-shadow: 0 2px 8px rgb(239 68 68 / 30%);
 }
 
-
 .modal__applicantAnswersGrid {
 	display: grid;
 	grid-template-columns: 1fr 1fr;
@@ -2862,7 +2830,6 @@
 	border: none;
 }
 
-
 .modal__applicantCheckboxBadge {
 	display: inline-flex;
 	align-items: center;
@@ -2883,7 +2850,6 @@
 	color: #991b1b;
 }
 
-
 .modal__applicantsEmpty {
 	text-align: center;
 	padding: 32px 20px;
@@ -2899,7 +2865,6 @@
 	margin: 0;
 	font-size: 14px;
 }
-
 
 @media (width <= 768px) {
 	.modal__applicantHeader {
@@ -2964,11 +2929,9 @@
 	}
 }
 
-
 .modal__applicantDetails.active {
 	display: block !important;
 }
-
 
 .modal__applicantAnswerText pre {
 	white-space: pre-wrap;
@@ -2977,7 +2940,6 @@
 	font-family: inherit;
 	font-size: inherit;
 }
-
 
 .modal__applicantAnswerText.text-long {
 	max-height: 150px;
@@ -2997,7 +2959,6 @@
 	background: #f1f5f9;
 	border-radius: 2px;
 }
-
 
 .modal__applicantAnswer.type-text {
 	border-left: 3px solid #6366f1;
@@ -3023,14 +2984,12 @@
    ZGŁOSZENIA - SZCZEGÓŁY W MODALU WAKATU
    --------------------------------------------------------------------------- */
 
-
 .modal__applicants {
 	display: flex;
 	flex-direction: column;
 	gap: 12px;
 	margin-top: 8px;
 }
-
 
 .modal__applicant {
 	background: #fff;
@@ -3047,7 +3006,6 @@
 	transform: translateY(-1px);
 }
 
-
 .modal__applicantHeader {
 	display: flex;
 	justify-content: space-between;
@@ -3055,7 +3013,6 @@
 	flex-wrap: wrap;
 	gap: 10px;
 }
-
 
 .modal__applicantInfo {
 	display: flex;
@@ -3066,14 +3023,12 @@
 	min-width: 200px;
 }
 
-
 .modal__applicantName {
 	font-size: 15px;
 	font-weight: 600;
 	color: #0f172a;
 	letter-spacing: -0.01em;
 }
-
 
 .modal__applicantEmail {
 	display: flex;
@@ -3092,7 +3047,6 @@
 	flex-shrink: 0;
 }
 
-
 .modal__applicantStatus {
 	font-size: 12px;
 	font-weight: 600;
@@ -3101,7 +3055,6 @@
 	white-space: nowrap;
 	letter-spacing: 0.01em;
 }
-
 
 .applicantStatusPending {
 	background: #fef3c7;
@@ -3126,7 +3079,6 @@
 	color: #991b1b;
 	border: 1px solid #fca5a5;
 }
-
 
 .modal__applicantToggle {
 	display: flex;
@@ -3158,11 +3110,9 @@
 	transition: transform 0.25s ease;
 }
 
-
 .modal__applicantToggle.active svg {
 	transform: rotate(90deg);
 }
-
 
 .modal__applicantDetails {
 	margin-top: 14px;
@@ -3173,7 +3123,6 @@
 	gap: 12px;
 	animation: slideDown 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
-
 
 @keyframes slideDown {
 	from {
@@ -3186,7 +3135,6 @@
 		transform: translateY(0) scale(1);
 	}
 }
-
 
 .modal__applicantMessage {
 	padding: 12px 16px;
@@ -3212,7 +3160,6 @@
 	white-space: pre-wrap;
 }
 
-
 .modal__applicantAnswers {
 	display: flex;
 	flex-direction: column;
@@ -3227,7 +3174,6 @@
 	display: block;
 }
 
-
 .modal__applicantAnswer {
 	padding: 10px 14px;
 	background: #f8fafc;
@@ -3240,7 +3186,6 @@
 	background: #f1f5f9;
 	border-color: #cbd5e1;
 }
-
 
 .modal__applicantAnswer.type-text {
 	border-left: 4px solid #6366f1;
@@ -3262,7 +3207,6 @@
 	border-left: 4px solid #ec4899;
 }
 
-
 .modal__applicantQuestion {
 	font-size: 13px;
 	font-weight: 500;
@@ -3275,7 +3219,6 @@
 	margin-left: 3px;
 	font-weight: 700;
 }
-
 
 .modal__applicantAnswerText {
 	font-size: 14px;
@@ -3293,7 +3236,6 @@
 	border-color: #cbd5e1;
 }
 
-
 .modal__applicantAnswerText.checkbox-true {
 	background: #dcfce7;
 	border-color: #86efac;
@@ -3305,7 +3247,6 @@
 	border-color: #fca5a5;
 	color: #991b1b;
 }
-
 
 .modal__applicantDate {
 	display: flex;
@@ -3321,7 +3262,6 @@
 	flex-shrink: 0;
 }
 
-
 .modal__applicantActions {
 	display: flex;
 	gap: 10px;
@@ -3329,7 +3269,6 @@
 	flex-wrap: wrap;
 	padding-top: 4px;
 }
-
 
 .modal__applicantActionBtn {
 	display: inline-flex;
@@ -3358,7 +3297,6 @@
 	box-shadow: none;
 }
 
-
 .modal__applicantActionBtnDanger {
 	background: #ef4444;
 }
@@ -3367,7 +3305,6 @@
 	background: #dc2626;
 	box-shadow: 0 4px 12px rgb(239 68 68 / 35%);
 }
-
 
 .modal__applicantToggle.active {
 	background: #6366f1;
@@ -3379,7 +3316,6 @@
 	background: #4f46e5;
 	border-color: #4f46e5;
 }
-
 
 .modal__applicantsEmpty {
 	text-align: center;
@@ -3401,7 +3337,6 @@
 	color: #94a3b8;
 }
 
-
 .modal__applicantCheckboxBadge {
 	display: inline-flex;
 	align-items: center;
@@ -3422,7 +3357,6 @@
 	color: #991b1b;
 }
 
-
 .modal__applicantAnswerText.text-long {
 	max-height: 150px;
 	overflow-y: auto;
@@ -3441,7 +3375,6 @@
 	background: #f1f5f9;
 	border-radius: 3px;
 }
-
 
 @media (width <= 768px) {
 	.modal__applicantHeader {
@@ -3518,16 +3451,13 @@
 	transform: rotate(90deg);
 }
 
-
 .modal__applicantDetails {
 	transition: all 0.3s ease;
 }
 
-
 .modal__applicant:hover .modal__applicantActionBtn {
 	opacity: 1;
 }
-
 
 .modal__sectionTitle .badge {
 	display: inline-block;
@@ -3595,7 +3525,6 @@
 	font-weight: 500;
 	white-space: nowrap;
 }
-
 
 .vacancyCardList .vacancyCard__recruitment {
 	padding: 4px 0;
@@ -3740,7 +3669,6 @@
    ZGŁOSZENIA - NOWOCZESNY WIDOK
    --------------------------------------------------------------------------- */
 
-
 .modal__applicants {
 	display: flex;
 	flex-direction: column;
@@ -3748,7 +3676,6 @@
 	margin-top: 8px;
 	width: 100%;
 }
-
 
 .modal__applicant {
 	background: #fff;
@@ -3766,7 +3693,6 @@
 	transform: translateY(-2px);
 }
 
-
 .modal__applicantHeader {
 	display: flex;
 	justify-content: space-between;
@@ -3775,7 +3701,6 @@
 	gap: 12px;
 	width: 100%;
 }
-
 
 .modal__applicantInfo {
 	display: flex;
@@ -3786,14 +3711,12 @@
 	min-width: 200px;
 }
 
-
 .modal__applicantName {
 	font-size: 15px;
 	font-weight: 600;
 	color: #0f172a;
 	letter-spacing: -0.01em;
 }
-
 
 .modal__applicantEmail {
 	display: flex;
@@ -3812,7 +3735,6 @@
 	flex-shrink: 0;
 }
 
-
 .modal__applicantStatus {
 	font-size: 12px;
 	font-weight: 600;
@@ -3821,7 +3743,6 @@
 	white-space: nowrap;
 	letter-spacing: 0.01em;
 }
-
 
 .applicantStatusPending {
 	background: #fef3c7;
@@ -3846,7 +3767,6 @@
 	color: #991b1b;
 	border: 1px solid #fca5a5;
 }
-
 
 .modal__applicantToggle {
 	display: flex;
@@ -3878,7 +3798,6 @@
 	transition: transform 0.25s ease;
 }
 
-
 .modal__applicantToggle.active svg {
 	transform: rotate(90deg);
 }
@@ -3886,7 +3805,6 @@
 /* ============================================================
    ROZWIJANE SZCZEGÓŁY - PEŁNA SZEROKOŚĆ POD SPODEM
    ============================================================ */
-
 
 .modal__applicantDetails {
 	margin-top: 16px;
@@ -3899,7 +3817,6 @@
 	animation: slideDown 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-
 @keyframes slideDown {
 	from {
 		opacity: 0;
@@ -3911,7 +3828,6 @@
 		transform: translateY(0);
 	}
 }
-
 
 .modal__applicantMessage {
 	padding: 14px 18px;
@@ -3938,7 +3854,6 @@
 	white-space: pre-wrap;
 }
 
-
 .modal__applicantAnswers {
 	display: flex;
 	flex-direction: column;
@@ -3954,14 +3869,12 @@
 	display: block;
 }
 
-
 .modal__applicantAnswersList {
 	display: flex;
 	flex-direction: column;
 	gap: 8px;
 	width: 100%;
 }
-
 
 .modal__applicantAnswer {
 	padding: 12px 16px;
@@ -3976,7 +3889,6 @@
 	background: #f1f5f9;
 	border-color: #cbd5e1;
 }
-
 
 .modal__applicantAnswer.type-text {
 	border-left: 4px solid #6366f1;
@@ -3998,7 +3910,6 @@
 	border-left: 4px solid #ec4899;
 }
 
-
 .modal__applicantQuestion {
 	font-size: 13px;
 	font-weight: 500;
@@ -4019,7 +3930,6 @@
 	font-weight: 400;
 }
 
-
 .modal__applicantAnswerText {
 	font-size: 14px;
 	color: #1e293b;
@@ -4037,7 +3947,6 @@
 	border-color: #cbd5e1;
 }
 
-
 .modal__applicantDate {
 	display: flex;
 	align-items: center;
@@ -4053,7 +3962,6 @@
 	flex-shrink: 0;
 }
 
-
 .modal__applicantActions {
 	display: flex;
 	gap: 10px;
@@ -4062,7 +3970,6 @@
 	padding-top: 4px;
 	width: 100%;
 }
-
 
 .modal__applicantActionBtn {
 	display: inline-flex;
@@ -4091,7 +3998,6 @@
 	box-shadow: none;
 }
 
-
 .modal__applicantActionBtnDanger {
 	background: #ef4444;
 }
@@ -4100,7 +4006,6 @@
 	background: #dc2626;
 	box-shadow: 0 4px 12px rgb(239 68 68 / 35%);
 }
-
 
 .modal__applicantToggle.active {
 	background: #6366f1;
@@ -4275,7 +4180,6 @@
 	flex-wrap: wrap;
 }
 
-
 .applicationUser {
 	display: flex;
 	align-items: center;
@@ -4324,7 +4228,6 @@
 	color: #94a3b8;
 	flex-shrink: 0;
 }
-
 
 .applicationMeta {
 	display: flex;
@@ -4433,7 +4336,6 @@
 	}
 }
 
-
 .applicationMessage {
 	background: #f8fafc;
 	border-radius: 10px;
@@ -4456,7 +4358,6 @@
 	white-space: pre-wrap;
 	overflow-wrap: break-word;
 }
-
 
 .applicationAnswers {
 	display: flex;
@@ -4504,7 +4405,6 @@
 	border: 1px solid #f1f5f9;
 	word-break: break-word;
 }
-
 
 .applicationActions {
 	display: flex;
@@ -4631,5 +4531,54 @@
 
 	.applicationAnswerItem {
 		padding: 8px 12px;
+	}
+}
+
+/* --------------------------------------------------------------------------
+   LOADING - jak w Structure i Projects
+   -------------------------------------------------------------------------- */
+.loading {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	min-height: 400px;
+	width: 100%;
+	gap: 16px;
+}
+
+.loading__spinner {
+	width: 48px;
+	height: 48px;
+	border: 4px solid rgba(74, 111, 232, 0.1);
+	border-top: 4px solid #4a6fe8;
+	border-radius: 50%;
+	animation: spin 0.8s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+	box-shadow: 0 4px 12px rgba(74, 111, 232, 0.15);
+}
+
+.loading p {
+	color: #6b7280;
+	font-size: 1rem;
+	margin: 0;
+	animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes spin {
+	0% {
+		transform: rotate(0deg);
+	}
+	100% {
+		transform: rotate(360deg);
+	}
+}
+
+@keyframes pulse {
+	0%,
+	100% {
+		opacity: 1;
+	}
+	50% {
+		opacity: 0.4;
 	}
 }

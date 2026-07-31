@@ -13,7 +13,7 @@ export default function DashboardLayout() {
 	const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 	const [isSocialMember, setIsSocialMember] = useState(false);
 	const [loading, setLoading] = useState(true);
-	const [currentUser, setCurrentUser] = useState<any>(null);
+	const [userData, setUserData] = useState<any>(null);
 
 	useEffect(() => {
 		const checkSocialMediaAccess = async () => {
@@ -24,24 +24,13 @@ export default function DashboardLayout() {
 					return;
 				}
 
-				const response = await fetch("/api/profile", {
-					headers: { Authorization: `Bearer ${token}` },
-				});
-
-				if (!response.ok) {
-					logger.error("❌ Błąd pobierania profilu:", response.status);
-					setLoading(false);
-					return;
-				}
-
-				const userData = await response.json();
-				logger.debug("📋 Profil użytkownika:", userData);
-				logger.debug("📋 role:", userData.role);
-				setCurrentUser(userData);
-
 				let hasSocialAccess = false;
 
-				if (userData.role === "admin") {
+				const userDataStr = localStorage.getItem("user");
+				const userData = userDataStr ? JSON.parse(userDataStr) : null;
+				setUserData(userData);
+
+				if (userData?.role === "admin") {
 					hasSocialAccess = true;
 					logger.debug("✅ Admin - dostęp do Social Media");
 				} else {
@@ -142,13 +131,13 @@ export default function DashboardLayout() {
 				onSelect={handleNavSelect}
 				collapsed={sidebarCollapsed}
 				isSocialMember={isSocialMember}
-				userRole={currentUser?.role}
+				userRole={userData?.role || null}
 			/>
 			<main className={styles.main}>
 				<Header
 					title={getPageTitle()}
-					userRole="ADMIN"
-					userName="Maciej Kowalski"
+					userRole={userData?.role || null}
+					userName={userData?.firstName + " " + userData?.lastName || "Użytkownik"}
 					collapsed={sidebarCollapsed}
 					onMenuClick={toggleSidebar}
 				/>

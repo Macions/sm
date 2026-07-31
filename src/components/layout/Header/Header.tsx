@@ -126,10 +126,6 @@ export default function Header({ title, onMenuClick, collapsed }: HeaderProps) {
 		}
 	};
 
-	useEffect(() => {
-		fetchNotifications();
-	}, []);
-
 	const filteredNotifications = notifications;
 	const unreadCount = filteredNotifications.filter((n) => !n.read).length;
 	const displayedNotifications = filteredNotifications.slice(0, visibleCount);

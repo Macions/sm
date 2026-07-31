@@ -1,0 +1,1710 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>depsee — sm</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background:#f9fafb; margin:0; }
+    .pkg-row:hover { background: #f9fafb; }
+    table { border-collapse: collapse; width: 100%; }
+    th { text-align:left; font-size:11px; font-weight:600; color:#6b7280; text-transform:uppercase; letter-spacing:0.05em; padding:8px 16px; border-bottom:1px solid #e5e7eb; background:#f9fafb; }
+    .tab-btn { font-size:13px; font-weight:600; padding:8px 20px; border:none; background:none; cursor:pointer; color:#6b7280; border-bottom:2px solid transparent; transition:all 0.15s; }
+    .tab-btn.active { color:#111827; border-bottom-color:#111827; }
+    .tab-btn:hover:not(.active) { color:#374151; }
+    #graph-svg { width:100%; height:calc(100vh - 260px); min-height:500px; }
+    #graph-svg .node { cursor:pointer; }
+    #graph-tooltip { position:fixed;pointer-events:none;background:#1e293b;color:#f8fafc;padding:10px 14px;border-radius:8px;font-size:12px;line-height:1.6;max-width:280px;z-index:1000;display:none;box-shadow:0 4px 20px rgba(0,0,0,0.3); }
+  </style>
+</head>
+<body>
+
+<!-- Header -->
+<div style="background:#fff;border-bottom:1px solid #e5e7eb;padding:20px 32px;display:flex;align-items:center;justify-content:space-between">
+  <div style="display:flex;align-items:center;gap:16px">
+    <div style="font-size:22px;font-weight:800;color:#111827;letter-spacing:-0.5px">depsee</div>
+    <div style="width:1px;height:24px;background:#e5e7eb"></div>
+    <div style="font-size:15px;font-weight:600;color:#374151">sm</div>
+    <span data-pm="npm" style="font-size:11px;font-weight:600;padding:2px 8px;border-radius:6px;background:#f3f4f6;color:#6b7280">npm</span>
+  </div>
+  <div style="font-size:12px;color:#9ca3af">31 July 2026</div>
+</div>
+
+<!-- Stats bar -->
+<div style="background:#fff;border-bottom:1px solid #e5e7eb;padding:16px 32px;display:flex;gap:32px;align-items:center">
+  <div style="display:flex;flex-direction:column;align-items:center">
+    <div style="font-size:28px;font-weight:800;color:#22c55e">88</div>
+    <div style="font-size:11px;color:#9ca3af;font-weight:500">GLOBAL SCORE</div>
+  </div>
+  <div style="width:1px;height:40px;background:#e5e7eb"></div>
+  
+    <div style="display:flex;flex-direction:column;align-items:center">
+      <div style="font-size:22px;font-weight:700;color:#374151">36</div>
+      <div style="font-size:10px;color:#9ca3af;font-weight:600">TOTAL</div>
+    </div>
+  
+    <div style="display:flex;flex-direction:column;align-items:center">
+      <div style="font-size:22px;font-weight:700;color:#22c55e">33</div>
+      <div style="font-size:10px;color:#9ca3af;font-weight:600">HEALTHY</div>
+    </div>
+  
+    <div style="display:flex;flex-direction:column;align-items:center">
+      <div style="font-size:22px;font-weight:700;color:#f59e0b">2</div>
+      <div style="font-size:10px;color:#9ca3af;font-weight:600">STALE</div>
+    </div>
+  
+    <div style="display:flex;flex-direction:column;align-items:center">
+      <div style="font-size:22px;font-weight:700;color:#ef4444">1</div>
+      <div style="font-size:10px;color:#9ca3af;font-weight:600">OUTDATED</div>
+    </div>
+  
+    <div style="display:flex;flex-direction:column;align-items:center">
+      <div style="font-size:22px;font-weight:700;color:#9ca3af">0</div>
+      <div style="font-size:10px;color:#9ca3af;font-weight:600">ABANDONED</div>
+    </div>
+  
+    <div style="display:flex;flex-direction:column;align-items:center">
+      <div style="font-size:22px;font-weight:700;color:#7c3aed">0</div>
+      <div style="font-size:10px;color:#9ca3af;font-weight:600">VULNERABLE</div>
+    </div>
+  
+</div>
+
+<!-- Tab nav -->
+<div style="background:#fff;border-bottom:1px solid #e5e7eb;padding:0 32px;display:flex;gap:4px">
+  <button class="tab-btn active" id="tab-btn-overview" onclick="switchTab('overview')">Overview</button>
+  <button class="tab-btn" id="tab-btn-graph" onclick="switchTab('graph')">Dependency Graph</button>
+</div>
+
+<!-- ── Pane: Overview ─────────────────────────────────────────────────────── -->
+<div id="pane-overview" style="max-width:1400px;margin:0 auto;padding:24px 32px">
+
+  <div style="display:grid;grid-template-columns:1fr 2fr;gap:24px;margin-bottom:24px">
+
+    <!-- Donut chart -->
+    <div style="background:#fff;border-radius:12px;border:1px solid #e5e7eb;padding:24px;display:flex;flex-direction:column;align-items:center">
+      <div style="font-size:13px;font-weight:700;color:#374151;margin-bottom:16px;align-self:flex-start">Status breakdown</div>
+      <div style="width:200px;height:200px"><canvas id="donutChart"></canvas></div>
+    </div>
+
+    <!-- Score heatmap -->
+    <div style="background:#fff;border-radius:12px;border:1px solid #e5e7eb;padding:24px">
+      <div style="font-size:13px;font-weight:700;color:#374151;margin-bottom:16px">Health heatmap</div>
+      <div id="heatmap" style="display:flex;flex-wrap:wrap;gap:6px">
+        
+          <div title="lucide-react — 43/100" style="width:36px;height:36px;border-radius:6px;background:#ef4444;opacity:0.85;display:flex;align-items:center;justify-content:center">
+            <span style="font-size:9px;font-weight:700;color:#fff">43</span>
+          </div>
+          <div title="@types/uuid — 53/100" style="width:36px;height:36px;border-radius:6px;background:#f59e0b;opacity:0.85;display:flex;align-items:center;justify-content:center">
+            <span style="font-size:9px;font-weight:700;color:#fff">53</span>
+          </div>
+          <div title="react-router-dom — 58/100" style="width:36px;height:36px;border-radius:6px;background:#f59e0b;opacity:0.85;display:flex;align-items:center;justify-content:center">
+            <span style="font-size:9px;font-weight:700;color:#fff">58</span>
+          </div>
+          <div title="jwt-decode — 75/100" style="width:36px;height:36px;border-radius:6px;background:#22c55e;opacity:0.85;display:flex;align-items:center;justify-content:center">
+            <span style="font-size:9px;font-weight:700;color:#fff">75</span>
+          </div>
+          <div title="react — 76/100" style="width:36px;height:36px;border-radius:6px;background:#22c55e;opacity:0.85;display:flex;align-items:center;justify-content:center">
+            <span style="font-size:9px;font-weight:700;color:#fff">76</span>
+          </div>
+          <div title="react-dom — 76/100" style="width:36px;height:36px;border-radius:6px;background:#22c55e;opacity:0.85;display:flex;align-items:center;justify-content:center">
+            <span style="font-size:9px;font-weight:700;color:#fff">76</span>
+          </div>
+          <div title="@types/react-dom — 76/100" style="width:36px;height:36px;border-radius:6px;background:#22c55e;opacity:0.85;display:flex;align-items:center;justify-content:center">
+            <span style="font-size:9px;font-weight:700;color:#fff">76</span>
+          </div>
+          <div title="typescript — 76/100" style="width:36px;height:36px;border-radius:6px;background:#22c55e;opacity:0.85;display:flex;align-items:center;justify-content:center">
+            <span style="font-size:9px;font-weight:700;color:#fff">76</span>
+          </div>
+          <div title="xss — 78/100" style="width:36px;height:36px;border-radius:6px;background:#22c55e;opacity:0.85;display:flex;align-items:center;justify-content:center">
+            <span style="font-size:9px;font-weight:700;color:#fff">78</span>
+          </div>
+          <div title="typescript-eslint — 79/100" style="width:36px;height:36px;border-radius:6px;background:#22c55e;opacity:0.85;display:flex;align-items:center;justify-content:center">
+            <span style="font-size:9px;font-weight:700;color:#fff">79</span>
+          </div>
+          <div title="@hookform/resolvers — 83/100" style="width:36px;height:36px;border-radius:6px;background:#22c55e;opacity:0.85;display:flex;align-items:center;justify-content:center">
+            <span style="font-size:9px;font-weight:700;color:#fff">83</span>
+          </div>
+          <div title="vite — 84/100" style="width:36px;height:36px;border-radius:6px;background:#22c55e;opacity:0.85;display:flex;align-items:center;justify-content:center">
+            <span style="font-size:9px;font-weight:700;color:#fff">84</span>
+          </div>
+          <div title="react-hook-form — 91/100" style="width:36px;height:36px;border-radius:6px;background:#22c55e;opacity:0.85;display:flex;align-items:center;justify-content:center">
+            <span style="font-size:9px;font-weight:700;color:#fff">91</span>
+          </div>
+          <div title="@types/react — 91/100" style="width:36px;height:36px;border-radius:6px;background:#22c55e;opacity:0.85;display:flex;align-items:center;justify-content:center">
+            <span style="font-size:9px;font-weight:700;color:#fff">91</span>
+          </div>
+          <div title="eslint — 91/100" style="width:36px;height:36px;border-radius:6px;background:#22c55e;opacity:0.85;display:flex;align-items:center;justify-content:center">
+            <span style="font-size:9px;font-weight:700;color:#fff">91</span>
+          </div>
+          <div title="react-hot-toast — 93/100" style="width:36px;height:36px;border-radius:6px;background:#22c55e;opacity:0.85;display:flex;align-items:center;justify-content:center">
+            <span style="font-size:9px;font-weight:700;color:#fff">93</span>
+          </div>
+          <div title="stylelint-config-standard — 93/100" style="width:36px;height:36px;border-radius:6px;background:#22c55e;opacity:0.85;display:flex;align-items:center;justify-content:center">
+            <span style="font-size:9px;font-weight:700;color:#fff">93</span>
+          </div>
+          <div title="axios — 94/100" style="width:36px;height:36px;border-radius:6px;background:#22c55e;opacity:0.85;display:flex;align-items:center;justify-content:center">
+            <span style="font-size:9px;font-weight:700;color:#fff">94</span>
+          </div>
+          <div title="@eslint/js — 94/100" style="width:36px;height:36px;border-radius:6px;background:#22c55e;opacity:0.85;display:flex;align-items:center;justify-content:center">
+            <span style="font-size:9px;font-weight:700;color:#fff">94</span>
+          </div>
+          <div title="@types/node — 94/100" style="width:36px;height:36px;border-radius:6px;background:#22c55e;opacity:0.85;display:flex;align-items:center;justify-content:center">
+            <span style="font-size:9px;font-weight:700;color:#fff">94</span>
+          </div>
+          <div title="@vitejs/plugin-react — 94/100" style="width:36px;height:36px;border-radius:6px;background:#22c55e;opacity:0.85;display:flex;align-items:center;justify-content:center">
+            <span style="font-size:9px;font-weight:700;color:#fff">94</span>
+          </div>
+          <div title="eslint-plugin-react-hooks — 94/100" style="width:36px;height:36px;border-radius:6px;background:#22c55e;opacity:0.85;display:flex;align-items:center;justify-content:center">
+            <span style="font-size:9px;font-weight:700;color:#fff">94</span>
+          </div>
+          <div title="globals — 94/100" style="width:36px;height:36px;border-radius:6px;background:#22c55e;opacity:0.85;display:flex;align-items:center;justify-content:center">
+            <span style="font-size:9px;font-weight:700;color:#fff">94</span>
+          </div>
+          <div title="@react-oauth/google — 97/100" style="width:36px;height:36px;border-radius:6px;background:#22c55e;opacity:0.85;display:flex;align-items:center;justify-content:center">
+            <span style="font-size:9px;font-weight:700;color:#fff">97</span>
+          </div>
+          <div title="uuid — 97/100" style="width:36px;height:36px;border-radius:6px;background:#22c55e;opacity:0.85;display:flex;align-items:center;justify-content:center">
+            <span style="font-size:9px;font-weight:700;color:#fff">97</span>
+          </div>
+          <div title="zod — 97/100" style="width:36px;height:36px;border-radius:6px;background:#22c55e;opacity:0.85;display:flex;align-items:center;justify-content:center">
+            <span style="font-size:9px;font-weight:700;color:#fff">97</span>
+          </div>
+          <div title="rollup-plugin-visualizer — 97/100" style="width:36px;height:36px;border-radius:6px;background:#22c55e;opacity:0.85;display:flex;align-items:center;justify-content:center">
+            <span style="font-size:9px;font-weight:700;color:#fff">97</span>
+          </div>
+          <div title="stylelint — 97/100" style="width:36px;height:36px;border-radius:6px;background:#22c55e;opacity:0.85;display:flex;align-items:center;justify-content:center">
+            <span style="font-size:9px;font-weight:700;color:#fff">97</span>
+          </div>
+          <div title="@fontsource/ubuntu — 100/100" style="width:36px;height:36px;border-radius:6px;background:#22c55e;opacity:0.85;display:flex;align-items:center;justify-content:center">
+            <span style="font-size:9px;font-weight:700;color:#fff">100</span>
+          </div>
+          <div title="@fortawesome/fontawesome-free — 100/100" style="width:36px;height:36px;border-radius:6px;background:#22c55e;opacity:0.85;display:flex;align-items:center;justify-content:center">
+            <span style="font-size:9px;font-weight:700;color:#fff">100</span>
+          </div>
+          <div title="helmet — 100/100" style="width:36px;height:36px;border-radius:6px;background:#22c55e;opacity:0.85;display:flex;align-items:center;justify-content:center">
+            <span style="font-size:9px;font-weight:700;color:#fff">100</span>
+          </div>
+          <div title="multer — 100/100" style="width:36px;height:36px;border-radius:6px;background:#22c55e;opacity:0.85;display:flex;align-items:center;justify-content:center">
+            <span style="font-size:9px;font-weight:700;color:#fff">100</span>
+          </div>
+          <div title="mysql2 — 100/100" style="width:36px;height:36px;border-radius:6px;background:#22c55e;opacity:0.85;display:flex;align-items:center;justify-content:center">
+            <span style="font-size:9px;font-weight:700;color:#fff">100</span>
+          </div>
+          <div title="react-icons — 100/100" style="width:36px;height:36px;border-radius:6px;background:#22c55e;opacity:0.85;display:flex;align-items:center;justify-content:center">
+            <span style="font-size:9px;font-weight:700;color:#fff">100</span>
+          </div>
+          <div title="@types/multer — 100/100" style="width:36px;height:36px;border-radius:6px;background:#22c55e;opacity:0.85;display:flex;align-items:center;justify-content:center">
+            <span style="font-size:9px;font-weight:700;color:#fff">100</span>
+          </div>
+          <div title="eslint-plugin-react-refresh — 100/100" style="width:36px;height:36px;border-radius:6px;background:#22c55e;opacity:0.85;display:flex;align-items:center;justify-content:center">
+            <span style="font-size:9px;font-weight:700;color:#fff">100</span>
+          </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filters -->
+  <div style="background:#fff;border-radius:12px;border:1px solid #e5e7eb;padding:16px 24px;margin-bottom:16px;display:flex;gap:16px;align-items:center;flex-wrap:wrap">
+    <span style="font-size:12px;font-weight:600;color:#6b7280">FILTER</span>
+    <div style="display:flex;gap:8px">
+      <button onclick="filterStatus('all')" id="btn-all" style="font-size:12px;padding:4px 12px;border-radius:6px;border:1px solid #e5e7eb;background:#111827;color:#fff;cursor:pointer;font-weight:500">all</button><button onclick="filterStatus('healthy')" id="btn-healthy" style="font-size:12px;padding:4px 12px;border-radius:6px;border:1px solid #e5e7eb;background:#fff;color:#374151;cursor:pointer;font-weight:500">healthy</button><button onclick="filterStatus('vulnerable')" id="btn-vulnerable" style="font-size:12px;padding:4px 12px;border-radius:6px;border:1px solid #e5e7eb;background:#fff;color:#374151;cursor:pointer;font-weight:500">vulnerable</button><button onclick="filterStatus('stale')" id="btn-stale" style="font-size:12px;padding:4px 12px;border-radius:6px;border:1px solid #e5e7eb;background:#fff;color:#374151;cursor:pointer;font-weight:500">stale</button><button onclick="filterStatus('outdated')" id="btn-outdated" style="font-size:12px;padding:4px 12px;border-radius:6px;border:1px solid #e5e7eb;background:#fff;color:#374151;cursor:pointer;font-weight:500">outdated</button><button onclick="filterStatus('abandoned')" id="btn-abandoned" style="font-size:12px;padding:4px 12px;border-radius:6px;border:1px solid #e5e7eb;background:#fff;color:#374151;cursor:pointer;font-weight:500">abandoned</button>
+    </div>
+    <div style="width:1px;height:20px;background:#e5e7eb"></div>
+    <label style="font-size:12px;color:#374151;display:flex;align-items:center;gap:6px;cursor:pointer">
+      <input type="checkbox" id="filterVuln" onchange="filterVuln(this.checked)" style="cursor:pointer">
+      Vulnerable only
+    </label>
+    <div style="width:1px;height:20px;background:#e5e7eb"></div>
+    <label style="font-size:12px;color:#374151;display:flex;align-items:center;gap:6px;cursor:pointer">
+      <input type="checkbox" id="filterDev" onchange="filterDev(this.checked)" style="cursor:pointer">
+      devDependencies only
+    </label>
+    <div style="margin-left:auto">
+      <input type="text" id="search" onkeyup="filterSearch(this.value)" placeholder="Search packages…"
+        style="font-size:12px;padding:6px 12px;border-radius:6px;border:1px solid #e5e7eb;outline:none;width:200px">
+    </div>
+  </div>
+
+  <!-- Packages table -->
+  <div style="background:#fff;border-radius:12px;border:1px solid #e5e7eb;overflow:hidden">
+    <table>
+      <thead>
+        <tr>
+          <th>Package</th>
+          <th>Version</th>
+          <th>Timeline</th>
+          <th>Status</th>
+          <th>Security</th>
+          <th style="text-align:center">Score</th>
+          
+        </tr>
+      </thead>
+      <tbody id="pkgTable">
+  <tr class="pkg-row" data-status="outdated" data-type="dependency" data-score="43" data-vuln="0"
+    style="border-bottom:1px solid #f3f4f6;transition:background 0.15s">
+    <td style="padding:12px 16px;max-width:280px">
+      <div style="font-weight:600;font-size:14px;color:#111827">lucide-react</div>
+      <div style="font-size:11px;color:#6b7280;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="A Lucide icon library package for React applications.">A Lucide icon library package for React applications.</div>
+      <div style="font-size:10px;color:#9ca3af;margin-top:2px">dep</div>
+    </td>
+    <td style="padding:12px 8px;font-family:monospace;font-size:13px;color:#374151">
+      0.462.0
+      <span style="color:#9ca3af">→</span> <span style="color:#3b82f6">1.28.0</span>
+    </td>
+    <td style="padding:12px 8px;min-width:200px">
+    <div style="display:flex;align-items:center;gap:8px;width:100%">
+      <div style="flex:1;height:8px;border-radius:4px;background:#f3f4f6;overflow:hidden;position:relative">
+        <div style="position:absolute;left:0;top:0;height:100%;width:0%;background:#ef4444;border-radius:4px"></div>
+        <div style="position:absolute;right:0;top:0;height:100%;width:80%;background:#e5e7eb;border-radius:0 4px 4px 0;opacity:0.8"></div>
+      </div>
+      <span style="font-size:11px;color:#6b7280;white-space:nowrap">610d behind</span>
+    </div></td>
+    <td style="padding:12px 8px"><span style="font-size:11px;font-weight:600;padding:2px 8px;border-radius:999px;background:#fee2e2;color:#b91c1c">outdated</span></td>
+    <td style="padding:12px 8px"><span style="font-size:12px;color:#9ca3af">—</span></td>
+    <td style="padding:12px 8px;text-align:center">
+      <span style="font-size:13px;font-weight:700;color:#ef4444">43</span>
+    </td>
+    
+  </tr>
+  <tr class="pkg-row" data-status="stale" data-type="devDependency" data-score="53" data-vuln="0"
+    style="border-bottom:1px solid #f3f4f6;transition:background 0.15s">
+    <td style="padding:12px 16px;max-width:280px">
+      <div style="font-weight:600;font-size:14px;color:#111827">@types/uuid</div>
+      <div style="font-size:11px;color:#6b7280;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="Stub TypeScript definitions entry for uuid, which provides its own types definitions">Stub TypeScript definitions entry for uuid, which provides its own types definitions</div>
+      <div style="font-size:10px;color:#9ca3af;margin-top:2px">dev</div>
+    </td>
+    <td style="padding:12px 8px;font-family:monospace;font-size:13px;color:#374151">
+      10.0.0
+      <span style="color:#9ca3af">→</span> <span style="color:#3b82f6">11.0.0</span>
+    </td>
+    <td style="padding:12px 8px;min-width:200px">
+    <div style="display:flex;align-items:center;gap:8px;width:100%">
+      <div style="flex:1;height:8px;border-radius:4px;background:#f3f4f6;overflow:hidden;position:relative">
+        <div style="position:absolute;left:0;top:0;height:100%;width:0%;background:#f59e0b;border-radius:4px"></div>
+        <div style="position:absolute;right:0;top:0;height:100%;width:80%;background:#e5e7eb;border-radius:0 4px 4px 0;opacity:0.8"></div>
+      </div>
+      <span style="font-size:11px;color:#6b7280;white-space:nowrap">453d behind</span>
+    </div></td>
+    <td style="padding:12px 8px"><span style="font-size:11px;font-weight:600;padding:2px 8px;border-radius:999px;background:#fef3c7;color:#92400e">stale</span></td>
+    <td style="padding:12px 8px"><span style="font-size:12px;color:#9ca3af">—</span></td>
+    <td style="padding:12px 8px;text-align:center">
+      <span style="font-size:13px;font-weight:700;color:#f59e0b">53</span>
+    </td>
+    
+  </tr>
+  <tr class="pkg-row" data-status="stale" data-type="dependency" data-score="58" data-vuln="0"
+    style="border-bottom:1px solid #f3f4f6;transition:background 0.15s">
+    <td style="padding:12px 16px;max-width:280px">
+      <div style="font-weight:600;font-size:14px;color:#111827">react-router-dom</div>
+      <div style="font-size:11px;color:#6b7280;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="Declarative routing for React web applications">Declarative routing for React web applications</div>
+      <div style="font-size:10px;color:#9ca3af;margin-top:2px">dep</div>
+    </td>
+    <td style="padding:12px 8px;font-family:monospace;font-size:13px;color:#374151">
+      7.11.0
+      <span style="color:#9ca3af">→</span> <span style="color:#3b82f6">7.18.2</span>
+    </td>
+    <td style="padding:12px 8px;min-width:200px">
+    <div style="display:flex;align-items:center;gap:8px;width:100%">
+      <div style="flex:1;height:8px;border-radius:4px;background:#f3f4f6;overflow:hidden;position:relative">
+        <div style="position:absolute;left:0;top:0;height:100%;width:0%;background:#f59e0b;border-radius:4px"></div>
+        <div style="position:absolute;right:0;top:0;height:100%;width:80%;background:#e5e7eb;border-radius:0 4px 4px 0;opacity:0.8"></div>
+      </div>
+      <span style="font-size:11px;color:#6b7280;white-space:nowrap">223d behind</span>
+    </div></td>
+    <td style="padding:12px 8px"><span style="font-size:11px;font-weight:600;padding:2px 8px;border-radius:999px;background:#fef3c7;color:#92400e">stale</span></td>
+    <td style="padding:12px 8px"><span style="font-size:12px;color:#9ca3af">—</span></td>
+    <td style="padding:12px 8px;text-align:center">
+      <span style="font-size:13px;font-weight:700;color:#f59e0b">58</span>
+    </td>
+    
+  </tr>
+  <tr class="pkg-row" data-status="healthy" data-type="dependency" data-score="75" data-vuln="0"
+    style="border-bottom:1px solid #f3f4f6;transition:background 0.15s">
+    <td style="padding:12px 16px;max-width:280px">
+      <div style="font-weight:600;font-size:14px;color:#111827">jwt-decode</div>
+      <div style="font-size:11px;color:#6b7280;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="Decode JWT tokens, mostly useful for browser applications.">Decode JWT tokens, mostly useful for browser applications.</div>
+      <div style="font-size:10px;color:#9ca3af;margin-top:2px">dep</div>
+    </td>
+    <td style="padding:12px 8px;font-family:monospace;font-size:13px;color:#374151">
+      4.0.0
+      
+    </td>
+    <td style="padding:12px 8px;min-width:200px">
+    <div style="display:flex;align-items:center;gap:8px;width:100%">
+      <div style="flex:1;height:8px;border-radius:4px;background:#f3f4f6;overflow:hidden;position:relative">
+        <div style="position:absolute;left:0;top:0;height:100%;width:100%;background:#22c55e;border-radius:4px"></div>
+        <div style="position:absolute;right:0;top:0;height:100%;width:0%;background:#e5e7eb;border-radius:0 4px 4px 0;opacity:0.8"></div>
+      </div>
+      <span style="font-size:11px;color:#6b7280;white-space:nowrap">0d behind</span>
+    </div></td>
+    <td style="padding:12px 8px"><span style="font-size:11px;font-weight:600;padding:2px 8px;border-radius:999px;background:#dcfce7;color:#15803d">healthy</span></td>
+    <td style="padding:12px 8px"><span style="font-size:12px;color:#9ca3af">—</span></td>
+    <td style="padding:12px 8px;text-align:center">
+      <span style="font-size:13px;font-weight:700;color:#22c55e">75</span>
+    </td>
+    
+  </tr>
+  <tr class="pkg-row" data-status="healthy" data-type="dependency" data-score="76" data-vuln="0"
+    style="border-bottom:1px solid #f3f4f6;transition:background 0.15s">
+    <td style="padding:12px 16px;max-width:280px">
+      <div style="font-weight:600;font-size:14px;color:#111827">react</div>
+      <div style="font-size:11px;color:#6b7280;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="React is a JavaScript library for building user interfaces.">React is a JavaScript library for building user interfaces.</div>
+      <div style="font-size:10px;color:#9ca3af;margin-top:2px">dep</div>
+    </td>
+    <td style="padding:12px 8px;font-family:monospace;font-size:13px;color:#374151">
+      19.2.7
+      <span style="color:#9ca3af">→</span> <span style="color:#3b82f6">19.2.8</span>
+    </td>
+    <td style="padding:12px 8px;min-width:200px">
+    <div style="display:flex;align-items:center;gap:8px;width:100%">
+      <div style="flex:1;height:8px;border-radius:4px;background:#f3f4f6;overflow:hidden;position:relative">
+        <div style="position:absolute;left:0;top:0;height:100%;width:2%;background:#22c55e;border-radius:4px"></div>
+        <div style="position:absolute;right:0;top:0;height:100%;width:80%;background:#e5e7eb;border-radius:0 4px 4px 0;opacity:0.8"></div>
+      </div>
+      <span style="font-size:11px;color:#6b7280;white-space:nowrap">50d behind</span>
+    </div></td>
+    <td style="padding:12px 8px"><span style="font-size:11px;font-weight:600;padding:2px 8px;border-radius:999px;background:#dcfce7;color:#15803d">healthy</span></td>
+    <td style="padding:12px 8px"><span style="font-size:12px;color:#9ca3af">—</span></td>
+    <td style="padding:12px 8px;text-align:center">
+      <span style="font-size:13px;font-weight:700;color:#22c55e">76</span>
+    </td>
+    
+  </tr>
+  <tr class="pkg-row" data-status="healthy" data-type="dependency" data-score="76" data-vuln="0"
+    style="border-bottom:1px solid #f3f4f6;transition:background 0.15s">
+    <td style="padding:12px 16px;max-width:280px">
+      <div style="font-weight:600;font-size:14px;color:#111827">react-dom</div>
+      <div style="font-size:11px;color:#6b7280;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="React package for working with the DOM.">React package for working with the DOM.</div>
+      <div style="font-size:10px;color:#9ca3af;margin-top:2px">dep</div>
+    </td>
+    <td style="padding:12px 8px;font-family:monospace;font-size:13px;color:#374151">
+      19.2.7
+      <span style="color:#9ca3af">→</span> <span style="color:#3b82f6">19.2.8</span>
+    </td>
+    <td style="padding:12px 8px;min-width:200px">
+    <div style="display:flex;align-items:center;gap:8px;width:100%">
+      <div style="flex:1;height:8px;border-radius:4px;background:#f3f4f6;overflow:hidden;position:relative">
+        <div style="position:absolute;left:0;top:0;height:100%;width:2%;background:#22c55e;border-radius:4px"></div>
+        <div style="position:absolute;right:0;top:0;height:100%;width:80%;background:#e5e7eb;border-radius:0 4px 4px 0;opacity:0.8"></div>
+      </div>
+      <span style="font-size:11px;color:#6b7280;white-space:nowrap">50d behind</span>
+    </div></td>
+    <td style="padding:12px 8px"><span style="font-size:11px;font-weight:600;padding:2px 8px;border-radius:999px;background:#dcfce7;color:#15803d">healthy</span></td>
+    <td style="padding:12px 8px"><span style="font-size:12px;color:#9ca3af">—</span></td>
+    <td style="padding:12px 8px;text-align:center">
+      <span style="font-size:13px;font-weight:700;color:#22c55e">76</span>
+    </td>
+    
+  </tr>
+  <tr class="pkg-row" data-status="healthy" data-type="devDependency" data-score="76" data-vuln="0"
+    style="border-bottom:1px solid #f3f4f6;transition:background 0.15s">
+    <td style="padding:12px 16px;max-width:280px">
+      <div style="font-weight:600;font-size:14px;color:#111827">@types/react-dom</div>
+      <div style="font-size:11px;color:#6b7280;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="TypeScript definitions for react-dom">TypeScript definitions for react-dom</div>
+      <div style="font-size:10px;color:#9ca3af;margin-top:2px">dev</div>
+    </td>
+    <td style="padding:12px 8px;font-family:monospace;font-size:13px;color:#374151">
+      19.2.3
+      <span style="color:#9ca3af">→</span> <span style="color:#3b82f6">19.2.4</span>
+    </td>
+    <td style="padding:12px 8px;min-width:200px">
+    <div style="display:flex;align-items:center;gap:8px;width:100%">
+      <div style="flex:1;height:8px;border-radius:4px;background:#f3f4f6;overflow:hidden;position:relative">
+        <div style="position:absolute;left:0;top:0;height:100%;width:0%;background:#22c55e;border-radius:4px"></div>
+        <div style="position:absolute;right:0;top:0;height:100%;width:80%;background:#e5e7eb;border-radius:0 4px 4px 0;opacity:0.8"></div>
+      </div>
+      <span style="font-size:11px;color:#6b7280;white-space:nowrap">261d behind</span>
+    </div></td>
+    <td style="padding:12px 8px"><span style="font-size:11px;font-weight:600;padding:2px 8px;border-radius:999px;background:#dcfce7;color:#15803d">healthy</span></td>
+    <td style="padding:12px 8px"><span style="font-size:12px;color:#9ca3af">—</span></td>
+    <td style="padding:12px 8px;text-align:center">
+      <span style="font-size:13px;font-weight:700;color:#22c55e">76</span>
+    </td>
+    
+  </tr>
+  <tr class="pkg-row" data-status="healthy" data-type="devDependency" data-score="76" data-vuln="0"
+    style="border-bottom:1px solid #f3f4f6;transition:background 0.15s">
+    <td style="padding:12px 16px;max-width:280px">
+      <div style="font-weight:600;font-size:14px;color:#111827">typescript</div>
+      <div style="font-size:11px;color:#6b7280;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="TypeScript is a language for application scale JavaScript development">TypeScript is a language for application scale JavaScript development</div>
+      <div style="font-size:10px;color:#9ca3af;margin-top:2px">dev</div>
+    </td>
+    <td style="padding:12px 8px;font-family:monospace;font-size:13px;color:#374151">
+      6.0.2
+      <span style="color:#9ca3af">→</span> <span style="color:#3b82f6">7.0.2</span>
+    </td>
+    <td style="padding:12px 8px;min-width:200px">
+    <div style="display:flex;align-items:center;gap:8px;width:100%">
+      <div style="flex:1;height:8px;border-radius:4px;background:#f3f4f6;overflow:hidden;position:relative">
+        <div style="position:absolute;left:0;top:0;height:100%;width:1%;background:#22c55e;border-radius:4px"></div>
+        <div style="position:absolute;right:0;top:0;height:100%;width:80%;background:#e5e7eb;border-radius:0 4px 4px 0;opacity:0.8"></div>
+      </div>
+      <span style="font-size:11px;color:#6b7280;white-space:nowrap">107d behind</span>
+    </div></td>
+    <td style="padding:12px 8px"><span style="font-size:11px;font-weight:600;padding:2px 8px;border-radius:999px;background:#dcfce7;color:#15803d">healthy</span></td>
+    <td style="padding:12px 8px"><span style="font-size:12px;color:#9ca3af">—</span></td>
+    <td style="padding:12px 8px;text-align:center">
+      <span style="font-size:13px;font-weight:700;color:#22c55e">76</span>
+    </td>
+    
+  </tr>
+  <tr class="pkg-row" data-status="healthy" data-type="dependency" data-score="78" data-vuln="0"
+    style="border-bottom:1px solid #f3f4f6;transition:background 0.15s">
+    <td style="padding:12px 16px;max-width:280px">
+      <div style="font-weight:600;font-size:14px;color:#111827">xss</div>
+      <div style="font-size:11px;color:#6b7280;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="Sanitize untrusted HTML (to prevent XSS) with a configuration specified by a Whitelist">Sanitize untrusted HTML (to prevent XSS) with a configuration specified by a Whitelist</div>
+      <div style="font-size:10px;color:#9ca3af;margin-top:2px">dep</div>
+    </td>
+    <td style="padding:12px 8px;font-family:monospace;font-size:13px;color:#374151">
+      1.0.15
+      
+    </td>
+    <td style="padding:12px 8px;min-width:200px">
+    <div style="display:flex;align-items:center;gap:8px;width:100%">
+      <div style="flex:1;height:8px;border-radius:4px;background:#f3f4f6;overflow:hidden;position:relative">
+        <div style="position:absolute;left:0;top:0;height:100%;width:100%;background:#22c55e;border-radius:4px"></div>
+        <div style="position:absolute;right:0;top:0;height:100%;width:0%;background:#e5e7eb;border-radius:0 4px 4px 0;opacity:0.8"></div>
+      </div>
+      <span style="font-size:11px;color:#6b7280;white-space:nowrap">0d behind</span>
+    </div></td>
+    <td style="padding:12px 8px"><span style="font-size:11px;font-weight:600;padding:2px 8px;border-radius:999px;background:#dcfce7;color:#15803d">healthy</span></td>
+    <td style="padding:12px 8px"><span style="font-size:12px;color:#9ca3af">—</span></td>
+    <td style="padding:12px 8px;text-align:center">
+      <span style="font-size:13px;font-weight:700;color:#22c55e">78</span>
+    </td>
+    
+  </tr>
+  <tr class="pkg-row" data-status="healthy" data-type="devDependency" data-score="79" data-vuln="0"
+    style="border-bottom:1px solid #f3f4f6;transition:background 0.15s">
+    <td style="padding:12px 16px;max-width:280px">
+      <div style="font-weight:600;font-size:14px;color:#111827">typescript-eslint</div>
+      <div style="font-size:11px;color:#6b7280;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="Tooling which enables you to use TypeScript with ESLint">Tooling which enables you to use TypeScript with ESLint</div>
+      <div style="font-size:10px;color:#9ca3af;margin-top:2px">dev</div>
+    </td>
+    <td style="padding:12px 8px;font-family:monospace;font-size:13px;color:#374151">
+      8.62.0
+      <span style="color:#9ca3af">→</span> <span style="color:#3b82f6">8.65.0</span>
+    </td>
+    <td style="padding:12px 8px;min-width:200px">
+    <div style="display:flex;align-items:center;gap:8px;width:100%">
+      <div style="flex:1;height:8px;border-radius:4px;background:#f3f4f6;overflow:hidden;position:relative">
+        <div style="position:absolute;left:0;top:0;height:100%;width:3%;background:#22c55e;border-radius:4px"></div>
+        <div style="position:absolute;right:0;top:0;height:100%;width:80%;background:#e5e7eb;border-radius:0 4px 4px 0;opacity:0.8"></div>
+      </div>
+      <span style="font-size:11px;color:#6b7280;white-space:nowrap">28d behind</span>
+    </div></td>
+    <td style="padding:12px 8px"><span style="font-size:11px;font-weight:600;padding:2px 8px;border-radius:999px;background:#dcfce7;color:#15803d">healthy</span></td>
+    <td style="padding:12px 8px"><span style="font-size:12px;color:#9ca3af">—</span></td>
+    <td style="padding:12px 8px;text-align:center">
+      <span style="font-size:13px;font-weight:700;color:#22c55e">79</span>
+    </td>
+    
+  </tr>
+  <tr class="pkg-row" data-status="healthy" data-type="dependency" data-score="83" data-vuln="0"
+    style="border-bottom:1px solid #f3f4f6;transition:background 0.15s">
+    <td style="padding:12px 16px;max-width:280px">
+      <div style="font-weight:600;font-size:14px;color:#111827">@hookform/resolvers</div>
+      <div style="font-size:11px;color:#6b7280;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="React Hook Form validation resolvers: Yup, Joi, Superstruct, Zod, Vest, Class Validator, io-ts, Nope, computed-types, TypeBox, arktype, Typanion, Effect-TS and VineJS">React Hook Form validation resolvers: Yup, Joi, Superstruct, Zod, Vest, Class Validator, io-ts, Nope, computed-types, TypeBox, arktype, Typanion, Effect-TS and VineJS</div>
+      <div style="font-size:10px;color:#9ca3af;margin-top:2px">dep</div>
+    </td>
+    <td style="padding:12px 8px;font-family:monospace;font-size:13px;color:#374151">
+      5.4.0
+      <span style="color:#9ca3af">→</span> <span style="color:#3b82f6">5.5.7</span>
+    </td>
+    <td style="padding:12px 8px;min-width:200px">
+    <div style="display:flex;align-items:center;gap:8px;width:100%">
+      <div style="flex:1;height:8px;border-radius:4px;background:#f3f4f6;overflow:hidden;position:relative">
+        <div style="position:absolute;left:0;top:0;height:100%;width:2%;background:#22c55e;border-radius:4px"></div>
+        <div style="position:absolute;right:0;top:0;height:100%;width:80%;background:#e5e7eb;border-radius:0 4px 4px 0;opacity:0.8"></div>
+      </div>
+      <span style="font-size:11px;color:#6b7280;white-space:nowrap">65d behind</span>
+    </div></td>
+    <td style="padding:12px 8px"><span style="font-size:11px;font-weight:600;padding:2px 8px;border-radius:999px;background:#dcfce7;color:#15803d">healthy</span></td>
+    <td style="padding:12px 8px"><span style="font-size:12px;color:#9ca3af">—</span></td>
+    <td style="padding:12px 8px;text-align:center">
+      <span style="font-size:13px;font-weight:700;color:#22c55e">83</span>
+    </td>
+    
+  </tr>
+  <tr class="pkg-row" data-status="healthy" data-type="devDependency" data-score="84" data-vuln="0"
+    style="border-bottom:1px solid #f3f4f6;transition:background 0.15s">
+    <td style="padding:12px 16px;max-width:280px">
+      <div style="font-weight:600;font-size:14px;color:#111827">vite</div>
+      <div style="font-size:11px;color:#6b7280;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="Native-ESM powered web dev build tool">Native-ESM powered web dev build tool</div>
+      <div style="font-size:10px;color:#9ca3af;margin-top:2px">dev</div>
+    </td>
+    <td style="padding:12px 8px;font-family:monospace;font-size:13px;color:#374151">
+      8.1.1
+      <span style="color:#9ca3af">→</span> <span style="color:#3b82f6">8.2.0</span>
+    </td>
+    <td style="padding:12px 8px;min-width:200px">
+    <div style="display:flex;align-items:center;gap:8px;width:100%">
+      <div style="flex:1;height:8px;border-radius:4px;background:#f3f4f6;overflow:hidden;position:relative">
+        <div style="position:absolute;left:0;top:0;height:100%;width:3%;background:#22c55e;border-radius:4px"></div>
+        <div style="position:absolute;right:0;top:0;height:100%;width:80%;background:#e5e7eb;border-radius:0 4px 4px 0;opacity:0.8"></div>
+      </div>
+      <span style="font-size:11px;color:#6b7280;white-space:nowrap">30d behind</span>
+    </div></td>
+    <td style="padding:12px 8px"><span style="font-size:11px;font-weight:600;padding:2px 8px;border-radius:999px;background:#dcfce7;color:#15803d">healthy</span></td>
+    <td style="padding:12px 8px"><span style="font-size:12px;color:#9ca3af">—</span></td>
+    <td style="padding:12px 8px;text-align:center">
+      <span style="font-size:13px;font-weight:700;color:#22c55e">84</span>
+    </td>
+    
+  </tr>
+  <tr class="pkg-row" data-status="healthy" data-type="dependency" data-score="91" data-vuln="0"
+    style="border-bottom:1px solid #f3f4f6;transition:background 0.15s">
+    <td style="padding:12px 16px;max-width:280px">
+      <div style="font-weight:600;font-size:14px;color:#111827">react-hook-form</div>
+      <div style="font-size:11px;color:#6b7280;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="Performant, flexible and extensible forms library for React Hooks">Performant, flexible and extensible forms library for React Hooks</div>
+      <div style="font-size:10px;color:#9ca3af;margin-top:2px">dep</div>
+    </td>
+    <td style="padding:12px 8px;font-family:monospace;font-size:13px;color:#374151">
+      7.81.0
+      <span style="color:#9ca3af">→</span> <span style="color:#3b82f6">7.83.0</span>
+    </td>
+    <td style="padding:12px 8px;min-width:200px">
+    <div style="display:flex;align-items:center;gap:8px;width:100%">
+      <div style="flex:1;height:8px;border-radius:4px;background:#f3f4f6;overflow:hidden;position:relative">
+        <div style="position:absolute;left:0;top:0;height:100%;width:5%;background:#22c55e;border-radius:4px"></div>
+        <div style="position:absolute;right:0;top:0;height:100%;width:80%;background:#e5e7eb;border-radius:0 4px 4px 0;opacity:0.8"></div>
+      </div>
+      <span style="font-size:11px;color:#6b7280;white-space:nowrap">20d behind</span>
+    </div></td>
+    <td style="padding:12px 8px"><span style="font-size:11px;font-weight:600;padding:2px 8px;border-radius:999px;background:#dcfce7;color:#15803d">healthy</span></td>
+    <td style="padding:12px 8px"><span style="font-size:12px;color:#9ca3af">—</span></td>
+    <td style="padding:12px 8px;text-align:center">
+      <span style="font-size:13px;font-weight:700;color:#22c55e">91</span>
+    </td>
+    
+  </tr>
+  <tr class="pkg-row" data-status="healthy" data-type="devDependency" data-score="91" data-vuln="0"
+    style="border-bottom:1px solid #f3f4f6;transition:background 0.15s">
+    <td style="padding:12px 16px;max-width:280px">
+      <div style="font-weight:600;font-size:14px;color:#111827">@types/react</div>
+      <div style="font-size:11px;color:#6b7280;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="TypeScript definitions for react">TypeScript definitions for react</div>
+      <div style="font-size:10px;color:#9ca3af;margin-top:2px">dev</div>
+    </td>
+    <td style="padding:12px 8px;font-family:monospace;font-size:13px;color:#374151">
+      19.2.17
+      <span style="color:#9ca3af">→</span> <span style="color:#3b82f6">19.2.18</span>
+    </td>
+    <td style="padding:12px 8px;min-width:200px">
+    <div style="display:flex;align-items:center;gap:8px;width:100%">
+      <div style="flex:1;height:8px;border-radius:4px;background:#f3f4f6;overflow:hidden;position:relative">
+        <div style="position:absolute;left:0;top:0;height:100%;width:2%;background:#22c55e;border-radius:4px"></div>
+        <div style="position:absolute;right:0;top:0;height:100%;width:80%;background:#e5e7eb;border-radius:0 4px 4px 0;opacity:0.8"></div>
+      </div>
+      <span style="font-size:11px;color:#6b7280;white-space:nowrap">55d behind</span>
+    </div></td>
+    <td style="padding:12px 8px"><span style="font-size:11px;font-weight:600;padding:2px 8px;border-radius:999px;background:#dcfce7;color:#15803d">healthy</span></td>
+    <td style="padding:12px 8px"><span style="font-size:12px;color:#9ca3af">—</span></td>
+    <td style="padding:12px 8px;text-align:center">
+      <span style="font-size:13px;font-weight:700;color:#22c55e">91</span>
+    </td>
+    
+  </tr>
+  <tr class="pkg-row" data-status="healthy" data-type="devDependency" data-score="91" data-vuln="0"
+    style="border-bottom:1px solid #f3f4f6;transition:background 0.15s">
+    <td style="padding:12px 16px;max-width:280px">
+      <div style="font-weight:600;font-size:14px;color:#111827">eslint</div>
+      <div style="font-size:11px;color:#6b7280;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="An AST-based pattern checker for JavaScript.">An AST-based pattern checker for JavaScript.</div>
+      <div style="font-size:10px;color:#9ca3af;margin-top:2px">dev</div>
+    </td>
+    <td style="padding:12px 8px;font-family:monospace;font-size:13px;color:#374151">
+      10.6.0
+      <span style="color:#9ca3af">→</span> <span style="color:#3b82f6">10.8.0</span>
+    </td>
+    <td style="padding:12px 8px;min-width:200px">
+    <div style="display:flex;align-items:center;gap:8px;width:100%">
+      <div style="flex:1;height:8px;border-radius:4px;background:#f3f4f6;overflow:hidden;position:relative">
+        <div style="position:absolute;left:0;top:0;height:100%;width:3%;background:#22c55e;border-radius:4px"></div>
+        <div style="position:absolute;right:0;top:0;height:100%;width:80%;background:#e5e7eb;border-radius:0 4px 4px 0;opacity:0.8"></div>
+      </div>
+      <span style="font-size:11px;color:#6b7280;white-space:nowrap">28d behind</span>
+    </div></td>
+    <td style="padding:12px 8px"><span style="font-size:11px;font-weight:600;padding:2px 8px;border-radius:999px;background:#dcfce7;color:#15803d">healthy</span></td>
+    <td style="padding:12px 8px"><span style="font-size:12px;color:#9ca3af">—</span></td>
+    <td style="padding:12px 8px;text-align:center">
+      <span style="font-size:13px;font-weight:700;color:#22c55e">91</span>
+    </td>
+    
+  </tr>
+  <tr class="pkg-row" data-status="healthy" data-type="dependency" data-score="93" data-vuln="0"
+    style="border-bottom:1px solid #f3f4f6;transition:background 0.15s">
+    <td style="padding:12px 16px;max-width:280px">
+      <div style="font-weight:600;font-size:14px;color:#111827">react-hot-toast</div>
+      <div style="font-size:11px;color:#6b7280;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="Smoking hot React Notifications. Lightweight, customizable and beautiful by default.">Smoking hot React Notifications. Lightweight, customizable and beautiful by default.</div>
+      <div style="font-size:10px;color:#9ca3af;margin-top:2px">dep</div>
+    </td>
+    <td style="padding:12px 8px;font-family:monospace;font-size:13px;color:#374151">
+      2.6.0
+      
+    </td>
+    <td style="padding:12px 8px;min-width:200px">
+    <div style="display:flex;align-items:center;gap:8px;width:100%">
+      <div style="flex:1;height:8px;border-radius:4px;background:#f3f4f6;overflow:hidden;position:relative">
+        <div style="position:absolute;left:0;top:0;height:100%;width:100%;background:#22c55e;border-radius:4px"></div>
+        <div style="position:absolute;right:0;top:0;height:100%;width:0%;background:#e5e7eb;border-radius:0 4px 4px 0;opacity:0.8"></div>
+      </div>
+      <span style="font-size:11px;color:#6b7280;white-space:nowrap">0d behind</span>
+    </div></td>
+    <td style="padding:12px 8px"><span style="font-size:11px;font-weight:600;padding:2px 8px;border-radius:999px;background:#dcfce7;color:#15803d">healthy</span></td>
+    <td style="padding:12px 8px"><span style="font-size:12px;color:#9ca3af">—</span></td>
+    <td style="padding:12px 8px;text-align:center">
+      <span style="font-size:13px;font-weight:700;color:#22c55e">93</span>
+    </td>
+    
+  </tr>
+  <tr class="pkg-row" data-status="healthy" data-type="devDependency" data-score="93" data-vuln="0"
+    style="border-bottom:1px solid #f3f4f6;transition:background 0.15s">
+    <td style="padding:12px 16px;max-width:280px">
+      <div style="font-weight:600;font-size:14px;color:#111827">stylelint-config-standard</div>
+      <div style="font-size:11px;color:#6b7280;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="Standard shareable config for Stylelint">Standard shareable config for Stylelint</div>
+      <div style="font-size:10px;color:#9ca3af;margin-top:2px">dev</div>
+    </td>
+    <td style="padding:12px 8px;font-family:monospace;font-size:13px;color:#374151">
+      40.0.0
+      
+    </td>
+    <td style="padding:12px 8px;min-width:200px">
+    <div style="display:flex;align-items:center;gap:8px;width:100%">
+      <div style="flex:1;height:8px;border-radius:4px;background:#f3f4f6;overflow:hidden;position:relative">
+        <div style="position:absolute;left:0;top:0;height:100%;width:100%;background:#22c55e;border-radius:4px"></div>
+        <div style="position:absolute;right:0;top:0;height:100%;width:0%;background:#e5e7eb;border-radius:0 4px 4px 0;opacity:0.8"></div>
+      </div>
+      <span style="font-size:11px;color:#6b7280;white-space:nowrap">0d behind</span>
+    </div></td>
+    <td style="padding:12px 8px"><span style="font-size:11px;font-weight:600;padding:2px 8px;border-radius:999px;background:#dcfce7;color:#15803d">healthy</span></td>
+    <td style="padding:12px 8px"><span style="font-size:12px;color:#9ca3af">—</span></td>
+    <td style="padding:12px 8px;text-align:center">
+      <span style="font-size:13px;font-weight:700;color:#22c55e">93</span>
+    </td>
+    
+  </tr>
+  <tr class="pkg-row" data-status="healthy" data-type="dependency" data-score="94" data-vuln="0"
+    style="border-bottom:1px solid #f3f4f6;transition:background 0.15s">
+    <td style="padding:12px 16px;max-width:280px">
+      <div style="font-weight:600;font-size:14px;color:#111827">axios</div>
+      <div style="font-size:11px;color:#6b7280;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="Promise based HTTP client for the browser and node.js">Promise based HTTP client for the browser and node.js</div>
+      <div style="font-size:10px;color:#9ca3af;margin-top:2px">dep</div>
+    </td>
+    <td style="padding:12px 8px;font-family:monospace;font-size:13px;color:#374151">
+      1.18.1
+      <span style="color:#9ca3af">→</span> <span style="color:#3b82f6">1.19.0</span>
+    </td>
+    <td style="padding:12px 8px;min-width:200px">
+    <div style="display:flex;align-items:center;gap:8px;width:100%">
+      <div style="flex:1;height:8px;border-radius:4px;background:#f3f4f6;overflow:hidden;position:relative">
+        <div style="position:absolute;left:0;top:0;height:100%;width:3%;background:#22c55e;border-radius:4px"></div>
+        <div style="position:absolute;right:0;top:0;height:100%;width:80%;background:#e5e7eb;border-radius:0 4px 4px 0;opacity:0.8"></div>
+      </div>
+      <span style="font-size:11px;color:#6b7280;white-space:nowrap">37d behind</span>
+    </div></td>
+    <td style="padding:12px 8px"><span style="font-size:11px;font-weight:600;padding:2px 8px;border-radius:999px;background:#dcfce7;color:#15803d">healthy</span></td>
+    <td style="padding:12px 8px"><span style="font-size:12px;color:#9ca3af">—</span></td>
+    <td style="padding:12px 8px;text-align:center">
+      <span style="font-size:13px;font-weight:700;color:#22c55e">94</span>
+    </td>
+    
+  </tr>
+  <tr class="pkg-row" data-status="healthy" data-type="devDependency" data-score="94" data-vuln="0"
+    style="border-bottom:1px solid #f3f4f6;transition:background 0.15s">
+    <td style="padding:12px 16px;max-width:280px">
+      <div style="font-weight:600;font-size:14px;color:#111827">@eslint/js</div>
+      <div style="font-size:11px;color:#6b7280;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="ESLint JavaScript language implementation">ESLint JavaScript language implementation</div>
+      <div style="font-size:10px;color:#9ca3af;margin-top:2px">dev</div>
+    </td>
+    <td style="padding:12px 8px;font-family:monospace;font-size:13px;color:#374151">
+      10.0.1
+      
+    </td>
+    <td style="padding:12px 8px;min-width:200px">
+    <div style="display:flex;align-items:center;gap:8px;width:100%">
+      <div style="flex:1;height:8px;border-radius:4px;background:#f3f4f6;overflow:hidden;position:relative">
+        <div style="position:absolute;left:0;top:0;height:100%;width:100%;background:#22c55e;border-radius:4px"></div>
+        <div style="position:absolute;right:0;top:0;height:100%;width:0%;background:#e5e7eb;border-radius:0 4px 4px 0;opacity:0.8"></div>
+      </div>
+      <span style="font-size:11px;color:#6b7280;white-space:nowrap">0d behind</span>
+    </div></td>
+    <td style="padding:12px 8px"><span style="font-size:11px;font-weight:600;padding:2px 8px;border-radius:999px;background:#dcfce7;color:#15803d">healthy</span></td>
+    <td style="padding:12px 8px"><span style="font-size:12px;color:#9ca3af">—</span></td>
+    <td style="padding:12px 8px;text-align:center">
+      <span style="font-size:13px;font-weight:700;color:#22c55e">94</span>
+    </td>
+    
+  </tr>
+  <tr class="pkg-row" data-status="healthy" data-type="devDependency" data-score="94" data-vuln="0"
+    style="border-bottom:1px solid #f3f4f6;transition:background 0.15s">
+    <td style="padding:12px 16px;max-width:280px">
+      <div style="font-weight:600;font-size:14px;color:#111827">@types/node</div>
+      <div style="font-size:11px;color:#6b7280;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="TypeScript definitions for node">TypeScript definitions for node</div>
+      <div style="font-size:10px;color:#9ca3af;margin-top:2px">dev</div>
+    </td>
+    <td style="padding:12px 8px;font-family:monospace;font-size:13px;color:#374151">
+      24.13.3
+      <span style="color:#9ca3af">→</span> <span style="color:#3b82f6">26.1.2</span>
+    </td>
+    <td style="padding:12px 8px;min-width:200px">
+    <div style="display:flex;align-items:center;gap:8px;width:100%">
+      <div style="flex:1;height:8px;border-radius:4px;background:#f3f4f6;overflow:hidden;position:relative">
+        <div style="position:absolute;left:0;top:0;height:100%;width:5%;background:#22c55e;border-radius:4px"></div>
+        <div style="position:absolute;right:0;top:0;height:100%;width:80%;background:#e5e7eb;border-radius:0 4px 4px 0;opacity:0.8"></div>
+      </div>
+      <span style="font-size:11px;color:#6b7280;white-space:nowrap">19d behind</span>
+    </div></td>
+    <td style="padding:12px 8px"><span style="font-size:11px;font-weight:600;padding:2px 8px;border-radius:999px;background:#dcfce7;color:#15803d">healthy</span></td>
+    <td style="padding:12px 8px"><span style="font-size:12px;color:#9ca3af">—</span></td>
+    <td style="padding:12px 8px;text-align:center">
+      <span style="font-size:13px;font-weight:700;color:#22c55e">94</span>
+    </td>
+    
+  </tr>
+  <tr class="pkg-row" data-status="healthy" data-type="devDependency" data-score="94" data-vuln="0"
+    style="border-bottom:1px solid #f3f4f6;transition:background 0.15s">
+    <td style="padding:12px 16px;max-width:280px">
+      <div style="font-weight:600;font-size:14px;color:#111827">@vitejs/plugin-react</div>
+      <div style="font-size:11px;color:#6b7280;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="The default Vite plugin for React projects">The default Vite plugin for React projects</div>
+      <div style="font-size:10px;color:#9ca3af;margin-top:2px">dev</div>
+    </td>
+    <td style="padding:12px 8px;font-family:monospace;font-size:13px;color:#374151">
+      6.0.3
+      <span style="color:#9ca3af">→</span> <span style="color:#3b82f6">6.0.5</span>
+    </td>
+    <td style="padding:12px 8px;min-width:200px">
+    <div style="display:flex;align-items:center;gap:8px;width:100%">
+      <div style="flex:1;height:8px;border-radius:4px;background:#f3f4f6;overflow:hidden;position:relative">
+        <div style="position:absolute;left:0;top:0;height:100%;width:3%;background:#22c55e;border-radius:4px"></div>
+        <div style="position:absolute;right:0;top:0;height:100%;width:80%;background:#e5e7eb;border-radius:0 4px 4px 0;opacity:0.8"></div>
+      </div>
+      <span style="font-size:11px;color:#6b7280;white-space:nowrap">37d behind</span>
+    </div></td>
+    <td style="padding:12px 8px"><span style="font-size:11px;font-weight:600;padding:2px 8px;border-radius:999px;background:#dcfce7;color:#15803d">healthy</span></td>
+    <td style="padding:12px 8px"><span style="font-size:12px;color:#9ca3af">—</span></td>
+    <td style="padding:12px 8px;text-align:center">
+      <span style="font-size:13px;font-weight:700;color:#22c55e">94</span>
+    </td>
+    
+  </tr>
+  <tr class="pkg-row" data-status="healthy" data-type="devDependency" data-score="94" data-vuln="0"
+    style="border-bottom:1px solid #f3f4f6;transition:background 0.15s">
+    <td style="padding:12px 16px;max-width:280px">
+      <div style="font-weight:600;font-size:14px;color:#111827">eslint-plugin-react-hooks</div>
+      <div style="font-size:11px;color:#6b7280;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="ESLint rules for React Hooks">ESLint rules for React Hooks</div>
+      <div style="font-size:10px;color:#9ca3af;margin-top:2px">dev</div>
+    </td>
+    <td style="padding:12px 8px;font-family:monospace;font-size:13px;color:#374151">
+      7.1.1
+      
+    </td>
+    <td style="padding:12px 8px;min-width:200px">
+    <div style="display:flex;align-items:center;gap:8px;width:100%">
+      <div style="flex:1;height:8px;border-radius:4px;background:#f3f4f6;overflow:hidden;position:relative">
+        <div style="position:absolute;left:0;top:0;height:100%;width:100%;background:#22c55e;border-radius:4px"></div>
+        <div style="position:absolute;right:0;top:0;height:100%;width:0%;background:#e5e7eb;border-radius:0 4px 4px 0;opacity:0.8"></div>
+      </div>
+      <span style="font-size:11px;color:#6b7280;white-space:nowrap">0d behind</span>
+    </div></td>
+    <td style="padding:12px 8px"><span style="font-size:11px;font-weight:600;padding:2px 8px;border-radius:999px;background:#dcfce7;color:#15803d">healthy</span></td>
+    <td style="padding:12px 8px"><span style="font-size:12px;color:#9ca3af">—</span></td>
+    <td style="padding:12px 8px;text-align:center">
+      <span style="font-size:13px;font-weight:700;color:#22c55e">94</span>
+    </td>
+    
+  </tr>
+  <tr class="pkg-row" data-status="healthy" data-type="devDependency" data-score="94" data-vuln="0"
+    style="border-bottom:1px solid #f3f4f6;transition:background 0.15s">
+    <td style="padding:12px 16px;max-width:280px">
+      <div style="font-weight:600;font-size:14px;color:#111827">globals</div>
+      <div style="font-size:11px;color:#6b7280;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="Global identifiers from different JavaScript environments">Global identifiers from different JavaScript environments</div>
+      <div style="font-size:10px;color:#9ca3af;margin-top:2px">dev</div>
+    </td>
+    <td style="padding:12px 8px;font-family:monospace;font-size:13px;color:#374151">
+      17.7.0
+      <span style="color:#9ca3af">→</span> <span style="color:#3b82f6">17.8.0</span>
+    </td>
+    <td style="padding:12px 8px;min-width:200px">
+    <div style="display:flex;align-items:center;gap:8px;width:100%">
+      <div style="flex:1;height:8px;border-radius:4px;background:#f3f4f6;overflow:hidden;position:relative">
+        <div style="position:absolute;left:0;top:0;height:100%;width:3%;background:#22c55e;border-radius:4px"></div>
+        <div style="position:absolute;right:0;top:0;height:100%;width:80%;background:#e5e7eb;border-radius:0 4px 4px 0;opacity:0.8"></div>
+      </div>
+      <span style="font-size:11px;color:#6b7280;white-space:nowrap">34d behind</span>
+    </div></td>
+    <td style="padding:12px 8px"><span style="font-size:11px;font-weight:600;padding:2px 8px;border-radius:999px;background:#dcfce7;color:#15803d">healthy</span></td>
+    <td style="padding:12px 8px"><span style="font-size:12px;color:#9ca3af">—</span></td>
+    <td style="padding:12px 8px;text-align:center">
+      <span style="font-size:13px;font-weight:700;color:#22c55e">94</span>
+    </td>
+    
+  </tr>
+  <tr class="pkg-row" data-status="healthy" data-type="dependency" data-score="97" data-vuln="0"
+    style="border-bottom:1px solid #f3f4f6;transition:background 0.15s">
+    <td style="padding:12px 16px;max-width:280px">
+      <div style="font-weight:600;font-size:14px;color:#111827">@react-oauth/google</div>
+      <div style="font-size:11px;color:#6b7280;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="Google OAuth2 using Google Identity Services for React 🚀">Google OAuth2 using Google Identity Services for React 🚀</div>
+      <div style="font-size:10px;color:#9ca3af;margin-top:2px">dep</div>
+    </td>
+    <td style="padding:12px 8px;font-family:monospace;font-size:13px;color:#374151">
+      0.13.5
+      
+    </td>
+    <td style="padding:12px 8px;min-width:200px">
+    <div style="display:flex;align-items:center;gap:8px;width:100%">
+      <div style="flex:1;height:8px;border-radius:4px;background:#f3f4f6;overflow:hidden;position:relative">
+        <div style="position:absolute;left:0;top:0;height:100%;width:100%;background:#22c55e;border-radius:4px"></div>
+        <div style="position:absolute;right:0;top:0;height:100%;width:0%;background:#e5e7eb;border-radius:0 4px 4px 0;opacity:0.8"></div>
+      </div>
+      <span style="font-size:11px;color:#6b7280;white-space:nowrap">0d behind</span>
+    </div></td>
+    <td style="padding:12px 8px"><span style="font-size:11px;font-weight:600;padding:2px 8px;border-radius:999px;background:#dcfce7;color:#15803d">healthy</span></td>
+    <td style="padding:12px 8px"><span style="font-size:12px;color:#9ca3af">—</span></td>
+    <td style="padding:12px 8px;text-align:center">
+      <span style="font-size:13px;font-weight:700;color:#22c55e">97</span>
+    </td>
+    
+  </tr>
+  <tr class="pkg-row" data-status="healthy" data-type="dependency" data-score="97" data-vuln="0"
+    style="border-bottom:1px solid #f3f4f6;transition:background 0.15s">
+    <td style="padding:12px 16px;max-width:280px">
+      <div style="font-weight:600;font-size:14px;color:#111827">uuid</div>
+      <div style="font-size:11px;color:#6b7280;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="RFC9562 UUIDs">RFC9562 UUIDs</div>
+      <div style="font-size:10px;color:#9ca3af;margin-top:2px">dep</div>
+    </td>
+    <td style="padding:12px 8px;font-family:monospace;font-size:13px;color:#374151">
+      14.0.1
+      
+    </td>
+    <td style="padding:12px 8px;min-width:200px">
+    <div style="display:flex;align-items:center;gap:8px;width:100%">
+      <div style="flex:1;height:8px;border-radius:4px;background:#f3f4f6;overflow:hidden;position:relative">
+        <div style="position:absolute;left:0;top:0;height:100%;width:100%;background:#22c55e;border-radius:4px"></div>
+        <div style="position:absolute;right:0;top:0;height:100%;width:0%;background:#e5e7eb;border-radius:0 4px 4px 0;opacity:0.8"></div>
+      </div>
+      <span style="font-size:11px;color:#6b7280;white-space:nowrap">0d behind</span>
+    </div></td>
+    <td style="padding:12px 8px"><span style="font-size:11px;font-weight:600;padding:2px 8px;border-radius:999px;background:#dcfce7;color:#15803d">healthy</span></td>
+    <td style="padding:12px 8px"><span style="font-size:12px;color:#9ca3af">—</span></td>
+    <td style="padding:12px 8px;text-align:center">
+      <span style="font-size:13px;font-weight:700;color:#22c55e">97</span>
+    </td>
+    
+  </tr>
+  <tr class="pkg-row" data-status="healthy" data-type="dependency" data-score="97" data-vuln="0"
+    style="border-bottom:1px solid #f3f4f6;transition:background 0.15s">
+    <td style="padding:12px 16px;max-width:280px">
+      <div style="font-weight:600;font-size:14px;color:#111827">zod</div>
+      <div style="font-size:11px;color:#6b7280;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="TypeScript-first schema declaration and validation library with static type inference">TypeScript-first schema declaration and validation library with static type inference</div>
+      <div style="font-size:10px;color:#9ca3af;margin-top:2px">dep</div>
+    </td>
+    <td style="padding:12px 8px;font-family:monospace;font-size:13px;color:#374151">
+      4.4.3
+      
+    </td>
+    <td style="padding:12px 8px;min-width:200px">
+    <div style="display:flex;align-items:center;gap:8px;width:100%">
+      <div style="flex:1;height:8px;border-radius:4px;background:#f3f4f6;overflow:hidden;position:relative">
+        <div style="position:absolute;left:0;top:0;height:100%;width:100%;background:#22c55e;border-radius:4px"></div>
+        <div style="position:absolute;right:0;top:0;height:100%;width:0%;background:#e5e7eb;border-radius:0 4px 4px 0;opacity:0.8"></div>
+      </div>
+      <span style="font-size:11px;color:#6b7280;white-space:nowrap">0d behind</span>
+    </div></td>
+    <td style="padding:12px 8px"><span style="font-size:11px;font-weight:600;padding:2px 8px;border-radius:999px;background:#dcfce7;color:#15803d">healthy</span></td>
+    <td style="padding:12px 8px"><span style="font-size:12px;color:#9ca3af">—</span></td>
+    <td style="padding:12px 8px;text-align:center">
+      <span style="font-size:13px;font-weight:700;color:#22c55e">97</span>
+    </td>
+    
+  </tr>
+  <tr class="pkg-row" data-status="healthy" data-type="devDependency" data-score="97" data-vuln="0"
+    style="border-bottom:1px solid #f3f4f6;transition:background 0.15s">
+    <td style="padding:12px 16px;max-width:280px">
+      <div style="font-weight:600;font-size:14px;color:#111827">rollup-plugin-visualizer</div>
+      <div style="font-size:11px;color:#6b7280;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="Visualize and analyze your bundle to quickly see which modules are taking up space.">Visualize and analyze your bundle to quickly see which modules are taking up space.</div>
+      <div style="font-size:10px;color:#9ca3af;margin-top:2px">dev</div>
+    </td>
+    <td style="padding:12px 8px;font-family:monospace;font-size:13px;color:#374151">
+      7.0.1
+      
+    </td>
+    <td style="padding:12px 8px;min-width:200px">
+    <div style="display:flex;align-items:center;gap:8px;width:100%">
+      <div style="flex:1;height:8px;border-radius:4px;background:#f3f4f6;overflow:hidden;position:relative">
+        <div style="position:absolute;left:0;top:0;height:100%;width:100%;background:#22c55e;border-radius:4px"></div>
+        <div style="position:absolute;right:0;top:0;height:100%;width:0%;background:#e5e7eb;border-radius:0 4px 4px 0;opacity:0.8"></div>
+      </div>
+      <span style="font-size:11px;color:#6b7280;white-space:nowrap">0d behind</span>
+    </div></td>
+    <td style="padding:12px 8px"><span style="font-size:11px;font-weight:600;padding:2px 8px;border-radius:999px;background:#dcfce7;color:#15803d">healthy</span></td>
+    <td style="padding:12px 8px"><span style="font-size:12px;color:#9ca3af">—</span></td>
+    <td style="padding:12px 8px;text-align:center">
+      <span style="font-size:13px;font-weight:700;color:#22c55e">97</span>
+    </td>
+    
+  </tr>
+  <tr class="pkg-row" data-status="healthy" data-type="devDependency" data-score="97" data-vuln="0"
+    style="border-bottom:1px solid #f3f4f6;transition:background 0.15s">
+    <td style="padding:12px 16px;max-width:280px">
+      <div style="font-weight:600;font-size:14px;color:#111827">stylelint</div>
+      <div style="font-size:11px;color:#6b7280;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="A mighty CSS linter that helps you avoid errors and enforce conventions.">A mighty CSS linter that helps you avoid errors and enforce conventions.</div>
+      <div style="font-size:10px;color:#9ca3af;margin-top:2px">dev</div>
+    </td>
+    <td style="padding:12px 8px;font-family:monospace;font-size:13px;color:#374151">
+      17.14.1
+      
+    </td>
+    <td style="padding:12px 8px;min-width:200px">
+    <div style="display:flex;align-items:center;gap:8px;width:100%">
+      <div style="flex:1;height:8px;border-radius:4px;background:#f3f4f6;overflow:hidden;position:relative">
+        <div style="position:absolute;left:0;top:0;height:100%;width:100%;background:#22c55e;border-radius:4px"></div>
+        <div style="position:absolute;right:0;top:0;height:100%;width:0%;background:#e5e7eb;border-radius:0 4px 4px 0;opacity:0.8"></div>
+      </div>
+      <span style="font-size:11px;color:#6b7280;white-space:nowrap">0d behind</span>
+    </div></td>
+    <td style="padding:12px 8px"><span style="font-size:11px;font-weight:600;padding:2px 8px;border-radius:999px;background:#dcfce7;color:#15803d">healthy</span></td>
+    <td style="padding:12px 8px"><span style="font-size:12px;color:#9ca3af">—</span></td>
+    <td style="padding:12px 8px;text-align:center">
+      <span style="font-size:13px;font-weight:700;color:#22c55e">97</span>
+    </td>
+    
+  </tr>
+  <tr class="pkg-row" data-status="healthy" data-type="dependency" data-score="100" data-vuln="0"
+    style="border-bottom:1px solid #f3f4f6;transition:background 0.15s">
+    <td style="padding:12px 16px;max-width:280px">
+      <div style="font-weight:600;font-size:14px;color:#111827">@fontsource/ubuntu</div>
+      <div style="font-size:11px;color:#6b7280;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="Self-host the Ubuntu font in a neatly bundled NPM package.">Self-host the Ubuntu font in a neatly bundled NPM package.</div>
+      <div style="font-size:10px;color:#9ca3af;margin-top:2px">dep</div>
+    </td>
+    <td style="padding:12px 8px;font-family:monospace;font-size:13px;color:#374151">
+      5.3.0
+      
+    </td>
+    <td style="padding:12px 8px;min-width:200px">
+    <div style="display:flex;align-items:center;gap:8px;width:100%">
+      <div style="flex:1;height:8px;border-radius:4px;background:#f3f4f6;overflow:hidden;position:relative">
+        <div style="position:absolute;left:0;top:0;height:100%;width:100%;background:#22c55e;border-radius:4px"></div>
+        <div style="position:absolute;right:0;top:0;height:100%;width:0%;background:#e5e7eb;border-radius:0 4px 4px 0;opacity:0.8"></div>
+      </div>
+      <span style="font-size:11px;color:#6b7280;white-space:nowrap">0d behind</span>
+    </div></td>
+    <td style="padding:12px 8px"><span style="font-size:11px;font-weight:600;padding:2px 8px;border-radius:999px;background:#dcfce7;color:#15803d">healthy</span></td>
+    <td style="padding:12px 8px"><span style="font-size:12px;color:#9ca3af">—</span></td>
+    <td style="padding:12px 8px;text-align:center">
+      <span style="font-size:13px;font-weight:700;color:#22c55e">100</span>
+    </td>
+    
+  </tr>
+  <tr class="pkg-row" data-status="healthy" data-type="dependency" data-score="100" data-vuln="0"
+    style="border-bottom:1px solid #f3f4f6;transition:background 0.15s">
+    <td style="padding:12px 16px;max-width:280px">
+      <div style="font-weight:600;font-size:14px;color:#111827">@fortawesome/fontawesome-free</div>
+      <div style="font-size:11px;color:#6b7280;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="The iconic font, CSS, and SVG framework">The iconic font, CSS, and SVG framework</div>
+      <div style="font-size:10px;color:#9ca3af;margin-top:2px">dep</div>
+    </td>
+    <td style="padding:12px 8px;font-family:monospace;font-size:13px;color:#374151">
+      7.3.1
+      
+    </td>
+    <td style="padding:12px 8px;min-width:200px">
+    <div style="display:flex;align-items:center;gap:8px;width:100%">
+      <div style="flex:1;height:8px;border-radius:4px;background:#f3f4f6;overflow:hidden;position:relative">
+        <div style="position:absolute;left:0;top:0;height:100%;width:100%;background:#22c55e;border-radius:4px"></div>
+        <div style="position:absolute;right:0;top:0;height:100%;width:0%;background:#e5e7eb;border-radius:0 4px 4px 0;opacity:0.8"></div>
+      </div>
+      <span style="font-size:11px;color:#6b7280;white-space:nowrap">0d behind</span>
+    </div></td>
+    <td style="padding:12px 8px"><span style="font-size:11px;font-weight:600;padding:2px 8px;border-radius:999px;background:#dcfce7;color:#15803d">healthy</span></td>
+    <td style="padding:12px 8px"><span style="font-size:12px;color:#9ca3af">—</span></td>
+    <td style="padding:12px 8px;text-align:center">
+      <span style="font-size:13px;font-weight:700;color:#22c55e">100</span>
+    </td>
+    
+  </tr>
+  <tr class="pkg-row" data-status="healthy" data-type="dependency" data-score="100" data-vuln="0"
+    style="border-bottom:1px solid #f3f4f6;transition:background 0.15s">
+    <td style="padding:12px 16px;max-width:280px">
+      <div style="font-weight:600;font-size:14px;color:#111827">helmet</div>
+      <div style="font-size:11px;color:#6b7280;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="help secure Express/Connect apps with various HTTP headers">help secure Express/Connect apps with various HTTP headers</div>
+      <div style="font-size:10px;color:#9ca3af;margin-top:2px">dep</div>
+    </td>
+    <td style="padding:12px 8px;font-family:monospace;font-size:13px;color:#374151">
+      8.3.0
+      
+    </td>
+    <td style="padding:12px 8px;min-width:200px">
+    <div style="display:flex;align-items:center;gap:8px;width:100%">
+      <div style="flex:1;height:8px;border-radius:4px;background:#f3f4f6;overflow:hidden;position:relative">
+        <div style="position:absolute;left:0;top:0;height:100%;width:100%;background:#22c55e;border-radius:4px"></div>
+        <div style="position:absolute;right:0;top:0;height:100%;width:0%;background:#e5e7eb;border-radius:0 4px 4px 0;opacity:0.8"></div>
+      </div>
+      <span style="font-size:11px;color:#6b7280;white-space:nowrap">0d behind</span>
+    </div></td>
+    <td style="padding:12px 8px"><span style="font-size:11px;font-weight:600;padding:2px 8px;border-radius:999px;background:#dcfce7;color:#15803d">healthy</span></td>
+    <td style="padding:12px 8px"><span style="font-size:12px;color:#9ca3af">—</span></td>
+    <td style="padding:12px 8px;text-align:center">
+      <span style="font-size:13px;font-weight:700;color:#22c55e">100</span>
+    </td>
+    
+  </tr>
+  <tr class="pkg-row" data-status="healthy" data-type="dependency" data-score="100" data-vuln="0"
+    style="border-bottom:1px solid #f3f4f6;transition:background 0.15s">
+    <td style="padding:12px 16px;max-width:280px">
+      <div style="font-weight:600;font-size:14px;color:#111827">multer</div>
+      <div style="font-size:11px;color:#6b7280;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="Middleware for handling `multipart/form-data`.">Middleware for handling `multipart/form-data`.</div>
+      <div style="font-size:10px;color:#9ca3af;margin-top:2px">dep</div>
+    </td>
+    <td style="padding:12px 8px;font-family:monospace;font-size:13px;color:#374151">
+      2.2.0
+      
+    </td>
+    <td style="padding:12px 8px;min-width:200px">
+    <div style="display:flex;align-items:center;gap:8px;width:100%">
+      <div style="flex:1;height:8px;border-radius:4px;background:#f3f4f6;overflow:hidden;position:relative">
+        <div style="position:absolute;left:0;top:0;height:100%;width:100%;background:#22c55e;border-radius:4px"></div>
+        <div style="position:absolute;right:0;top:0;height:100%;width:0%;background:#e5e7eb;border-radius:0 4px 4px 0;opacity:0.8"></div>
+      </div>
+      <span style="font-size:11px;color:#6b7280;white-space:nowrap">0d behind</span>
+    </div></td>
+    <td style="padding:12px 8px"><span style="font-size:11px;font-weight:600;padding:2px 8px;border-radius:999px;background:#dcfce7;color:#15803d">healthy</span></td>
+    <td style="padding:12px 8px"><span style="font-size:12px;color:#9ca3af">—</span></td>
+    <td style="padding:12px 8px;text-align:center">
+      <span style="font-size:13px;font-weight:700;color:#22c55e">100</span>
+    </td>
+    
+  </tr>
+  <tr class="pkg-row" data-status="healthy" data-type="dependency" data-score="100" data-vuln="0"
+    style="border-bottom:1px solid #f3f4f6;transition:background 0.15s">
+    <td style="padding:12px 16px;max-width:280px">
+      <div style="font-weight:600;font-size:14px;color:#111827">mysql2</div>
+      <div style="font-size:11px;color:#6b7280;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="fast mysql driver. Implements core protocol, prepared statements, ssl and compression in native JS">fast mysql driver. Implements core protocol, prepared statements, ssl and compression in native JS</div>
+      <div style="font-size:10px;color:#9ca3af;margin-top:2px">dep</div>
+    </td>
+    <td style="padding:12px 8px;font-family:monospace;font-size:13px;color:#374151">
+      3.23.2
+      
+    </td>
+    <td style="padding:12px 8px;min-width:200px">
+    <div style="display:flex;align-items:center;gap:8px;width:100%">
+      <div style="flex:1;height:8px;border-radius:4px;background:#f3f4f6;overflow:hidden;position:relative">
+        <div style="position:absolute;left:0;top:0;height:100%;width:100%;background:#22c55e;border-radius:4px"></div>
+        <div style="position:absolute;right:0;top:0;height:100%;width:0%;background:#e5e7eb;border-radius:0 4px 4px 0;opacity:0.8"></div>
+      </div>
+      <span style="font-size:11px;color:#6b7280;white-space:nowrap">0d behind</span>
+    </div></td>
+    <td style="padding:12px 8px"><span style="font-size:11px;font-weight:600;padding:2px 8px;border-radius:999px;background:#dcfce7;color:#15803d">healthy</span></td>
+    <td style="padding:12px 8px"><span style="font-size:12px;color:#9ca3af">—</span></td>
+    <td style="padding:12px 8px;text-align:center">
+      <span style="font-size:13px;font-weight:700;color:#22c55e">100</span>
+    </td>
+    
+  </tr>
+  <tr class="pkg-row" data-status="healthy" data-type="dependency" data-score="100" data-vuln="0"
+    style="border-bottom:1px solid #f3f4f6;transition:background 0.15s">
+    <td style="padding:12px 16px;max-width:280px">
+      <div style="font-weight:600;font-size:14px;color:#111827">react-icons</div>
+      <div style="font-size:11px;color:#6b7280;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="SVG React icons of popular icon packs using ES6 imports">SVG React icons of popular icon packs using ES6 imports</div>
+      <div style="font-size:10px;color:#9ca3af;margin-top:2px">dep</div>
+    </td>
+    <td style="padding:12px 8px;font-family:monospace;font-size:13px;color:#374151">
+      5.7.0
+      
+    </td>
+    <td style="padding:12px 8px;min-width:200px">
+    <div style="display:flex;align-items:center;gap:8px;width:100%">
+      <div style="flex:1;height:8px;border-radius:4px;background:#f3f4f6;overflow:hidden;position:relative">
+        <div style="position:absolute;left:0;top:0;height:100%;width:100%;background:#22c55e;border-radius:4px"></div>
+        <div style="position:absolute;right:0;top:0;height:100%;width:0%;background:#e5e7eb;border-radius:0 4px 4px 0;opacity:0.8"></div>
+      </div>
+      <span style="font-size:11px;color:#6b7280;white-space:nowrap">0d behind</span>
+    </div></td>
+    <td style="padding:12px 8px"><span style="font-size:11px;font-weight:600;padding:2px 8px;border-radius:999px;background:#dcfce7;color:#15803d">healthy</span></td>
+    <td style="padding:12px 8px"><span style="font-size:12px;color:#9ca3af">—</span></td>
+    <td style="padding:12px 8px;text-align:center">
+      <span style="font-size:13px;font-weight:700;color:#22c55e">100</span>
+    </td>
+    
+  </tr>
+  <tr class="pkg-row" data-status="healthy" data-type="devDependency" data-score="100" data-vuln="0"
+    style="border-bottom:1px solid #f3f4f6;transition:background 0.15s">
+    <td style="padding:12px 16px;max-width:280px">
+      <div style="font-weight:600;font-size:14px;color:#111827">@types/multer</div>
+      <div style="font-size:11px;color:#6b7280;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="TypeScript definitions for multer">TypeScript definitions for multer</div>
+      <div style="font-size:10px;color:#9ca3af;margin-top:2px">dev</div>
+    </td>
+    <td style="padding:12px 8px;font-family:monospace;font-size:13px;color:#374151">
+      2.2.0
+      
+    </td>
+    <td style="padding:12px 8px;min-width:200px">
+    <div style="display:flex;align-items:center;gap:8px;width:100%">
+      <div style="flex:1;height:8px;border-radius:4px;background:#f3f4f6;overflow:hidden;position:relative">
+        <div style="position:absolute;left:0;top:0;height:100%;width:100%;background:#22c55e;border-radius:4px"></div>
+        <div style="position:absolute;right:0;top:0;height:100%;width:0%;background:#e5e7eb;border-radius:0 4px 4px 0;opacity:0.8"></div>
+      </div>
+      <span style="font-size:11px;color:#6b7280;white-space:nowrap">0d behind</span>
+    </div></td>
+    <td style="padding:12px 8px"><span style="font-size:11px;font-weight:600;padding:2px 8px;border-radius:999px;background:#dcfce7;color:#15803d">healthy</span></td>
+    <td style="padding:12px 8px"><span style="font-size:12px;color:#9ca3af">—</span></td>
+    <td style="padding:12px 8px;text-align:center">
+      <span style="font-size:13px;font-weight:700;color:#22c55e">100</span>
+    </td>
+    
+  </tr>
+  <tr class="pkg-row" data-status="healthy" data-type="devDependency" data-score="100" data-vuln="0"
+    style="border-bottom:1px solid #f3f4f6;transition:background 0.15s">
+    <td style="padding:12px 16px;max-width:280px">
+      <div style="font-weight:600;font-size:14px;color:#111827">eslint-plugin-react-refresh</div>
+      <div style="font-size:11px;color:#6b7280;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="Validate that your components can safely be updated with Fast Refresh">Validate that your components can safely be updated with Fast Refresh</div>
+      <div style="font-size:10px;color:#9ca3af;margin-top:2px">dev</div>
+    </td>
+    <td style="padding:12px 8px;font-family:monospace;font-size:13px;color:#374151">
+      0.5.3
+      
+    </td>
+    <td style="padding:12px 8px;min-width:200px">
+    <div style="display:flex;align-items:center;gap:8px;width:100%">
+      <div style="flex:1;height:8px;border-radius:4px;background:#f3f4f6;overflow:hidden;position:relative">
+        <div style="position:absolute;left:0;top:0;height:100%;width:100%;background:#22c55e;border-radius:4px"></div>
+        <div style="position:absolute;right:0;top:0;height:100%;width:0%;background:#e5e7eb;border-radius:0 4px 4px 0;opacity:0.8"></div>
+      </div>
+      <span style="font-size:11px;color:#6b7280;white-space:nowrap">0d behind</span>
+    </div></td>
+    <td style="padding:12px 8px"><span style="font-size:11px;font-weight:600;padding:2px 8px;border-radius:999px;background:#dcfce7;color:#15803d">healthy</span></td>
+    <td style="padding:12px 8px"><span style="font-size:12px;color:#9ca3af">—</span></td>
+    <td style="padding:12px 8px;text-align:center">
+      <span style="font-size:13px;font-weight:700;color:#22c55e">100</span>
+    </td>
+    
+  </tr></tbody>
+    </table>
+    <div id="emptyState" style="display:none;padding:48px;text-align:center;color:#9ca3af;font-size:14px">
+      No packages match the current filters.
+    </div>
+  </div>
+</div>
+
+<!-- ── Pane: Graph ────────────────────────────────────────────────────────── -->
+
+<div id="pane-graph" style="display:none;padding:24px 32px">
+  <div style="background:#fff;border-radius:12px;border:1px solid #e5e7eb;overflow:hidden;position:relative">
+    <!-- Toolbar -->
+    <div style="padding:14px 20px;border-bottom:1px solid #f3f4f6;display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+      <span style="font-size:13px;font-weight:700;color:#374151">Dependency graph</span>
+      <!-- Layout toggle -->
+      <div style="display:flex;border:1px solid #e5e7eb;border-radius:6px;overflow:hidden">
+        <button id="layout-force"  onclick="renderGraph('force', currentDepth)"  style="font-size:12px;padding:4px 14px;border:none;background:#111827;color:#fff;cursor:pointer;font-weight:500">Force</button>
+        <button id="layout-radial" onclick="renderGraph('radial', currentDepth)" style="font-size:12px;padding:4px 14px;border:none;background:#fff;color:#374151;cursor:pointer;font-weight:500">Radial tree</button>
+        <button id="layout-list"   onclick="renderGraph('list', currentDepth)"   style="font-size:12px;padding:4px 14px;border:none;background:#fff;color:#374151;cursor:pointer;font-weight:500">List</button>
+      </div>
+      <!-- Depth control -->
+      <div style="display:flex;align-items:center;gap:6px">
+        <span style="font-size:11px;color:#9ca3af;font-weight:600">DEPTH</span>
+        <div style="display:flex;border:1px solid #e5e7eb;border-radius:6px;overflow:hidden">
+          <button id="depth-1"   onclick="renderGraph(currentLayout,1)"        style="font-size:12px;padding:4px 10px;border:none;background:#111827;color:#fff;cursor:pointer">Direct</button>
+          <button id="depth-2"   onclick="renderGraph(currentLayout,2)"        style="font-size:12px;padding:4px 10px;border:none;background:#fff;color:#374151;cursor:pointer">+1</button>
+          <button id="depth-3"   onclick="renderGraph(currentLayout,3)"        style="font-size:12px;padding:4px 10px;border:none;background:#fff;color:#374151;cursor:pointer">+2</button>
+          <button id="depth-all" onclick="renderGraph(currentLayout,Infinity)" style="font-size:12px;padding:4px 10px;border:none;background:#fff;color:#374151;cursor:pointer">All</button>
+        </div>
+      </div>
+      <div style="margin-left:auto">
+        <button onclick="resetZoom()" style="font-size:12px;padding:4px 12px;border-radius:6px;border:1px solid #e5e7eb;background:#fff;color:#374151;cursor:pointer">Reset zoom</button>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;font-size:11px;color:#9ca3af">
+        <span>⬤ <span style="color:#22c55e">healthy</span></span>
+        <span>⬤ <span style="color:#f59e0b">stale</span></span>
+        <span>⬤ <span style="color:#ef4444">at risk</span></span>
+        <span>⬤ <span style="color:#d1d5db">unknown</span></span>
+      </div>
+    </div>
+    <svg id="graph-svg"></svg>
+    <div id="graph-list" style="display:none;overflow-x:auto"></div>
+  </div>
+</div>
+<div id="graph-tooltip"></div>
+
+
+<script>
+const CHART_DATA  = {"donut":{"labels":["Healthy","Vulnerable","Stale","Outdated","Abandoned"],"data":[33,0,2,1,0],"colors":["#22c55e","#f59e0b","#fb923c","#ef4444","#9ca3af"]}}
+const GRAPH_DATA  = {"nodes":[{"id":"__root__","version":"","description":"sm","score":null,"status":null,"isDirect":false,"isRoot":true},{"id":"@fontsource/ubuntu","version":"5.3.0","description":"Self-host the Ubuntu font in a neatly bundled NPM package.","score":100,"status":"healthy","isDirect":true,"isRoot":false},{"id":"@fortawesome/fontawesome-free","version":"7.3.1","description":"The iconic font, CSS, and SVG framework","score":100,"status":"healthy","isDirect":true,"isRoot":false},{"id":"@hookform/resolvers","version":"5.5.7","description":"React Hook Form validation resolvers: Yup, Joi, Superstruct, Zod, Vest, Class Validator, io-ts, Nope, computed-types, TypeBox, arktype, Typanion, Effect-TS and VineJS","score":83,"status":"healthy","isDirect":true,"isRoot":false},{"id":"@standard-schema/utils","version":"0.3.0","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"@react-oauth/google","version":"0.13.5","description":"Google OAuth2 using Google Identity Services for React 🚀","score":97,"status":"healthy","isDirect":true,"isRoot":false},{"id":"axios","version":"1.19.0","description":"Promise based HTTP client for the browser and node.js","score":94,"status":"healthy","isDirect":true,"isRoot":false},{"id":"follow-redirects","version":"1.16.0","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"form-data","version":"4.0.6","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"asynckit","version":"0.4.0","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"combined-stream","version":"1.0.8","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"delayed-stream","version":"1.0.0","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"es-set-tostringtag","version":"2.1.0","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"es-errors","version":"1.3.0","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"get-intrinsic","version":"1.3.0","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"call-bind-apply-helpers","version":"1.0.2","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"es-define-property","version":"1.0.1","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"es-object-atoms","version":"1.1.2","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"function-bind","version":"1.1.2","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"get-proto","version":"1.0.1","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"gopd","version":"1.2.0","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"has-symbols","version":"1.1.0","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"hasown","version":"2.0.4","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"math-intrinsics","version":"1.1.0","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"has-tostringtag","version":"1.0.2","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"mime-types","version":"2.1.35","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"mime-db","version":"1.52.0","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"https-proxy-agent","version":"5.0.1","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"agent-base","version":"6.0.2","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"debug","version":"4.4.3","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"ms","version":"2.1.3","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"proxy-from-env","version":"2.1.0","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"helmet","version":"8.3.0","description":"help secure Express/Connect apps with various HTTP headers","score":100,"status":"healthy","isDirect":true,"isRoot":false},{"id":"jwt-decode","version":"4.0.0","description":"Decode JWT tokens, mostly useful for browser applications.","score":75,"status":"healthy","isDirect":true,"isRoot":false},{"id":"lucide-react","version":"0.462.0","description":"A Lucide icon library package for React applications.","score":43,"status":"outdated","isDirect":true,"isRoot":false},{"id":"multer","version":"2.2.0","description":"Middleware for handling `multipart/form-data`.","score":100,"status":"healthy","isDirect":true,"isRoot":false},{"id":"append-field","version":"1.0.0","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"busboy","version":"1.6.0","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"streamsearch","version":"1.1.0","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"concat-stream","version":"2.0.0","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"buffer-from","version":"1.1.2","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"inherits","version":"2.0.4","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"readable-stream","version":"3.6.2","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"string_decoder","version":"1.3.0","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"safe-buffer","version":"5.2.1","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"util-deprecate","version":"1.0.2","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"typedarray","version":"0.0.6","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"type-is","version":"1.6.18","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"media-typer","version":"0.3.0","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"mysql2","version":"3.23.2","description":"fast mysql driver. Implements core protocol, prepared statements, ssl and compression in native JS","score":100,"status":"healthy","isDirect":true,"isRoot":false},{"id":"aws-ssl-profiles","version":"1.1.2","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"denque","version":"2.1.0","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"generate-function","version":"2.3.1","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"is-property","version":"1.0.2","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"iconv-lite","version":"0.7.3","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"safer-buffer","version":"2.1.2","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"long","version":"5.3.2","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"lru.min","version":"1.1.4","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"named-placeholders","version":"1.1.6","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"sql-escaper","version":"1.5.1","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"react","version":"19.2.8","description":"React is a JavaScript library for building user interfaces.","score":76,"status":"healthy","isDirect":true,"isRoot":false},{"id":"react-dom","version":"19.2.8","description":"React package for working with the DOM.","score":76,"status":"healthy","isDirect":true,"isRoot":false},{"id":"scheduler","version":"0.27.0","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"react-hook-form","version":"7.83.0","description":"Performant, flexible and extensible forms library for React Hooks","score":91,"status":"healthy","isDirect":true,"isRoot":false},{"id":"react-hot-toast","version":"2.6.0","description":"Smoking hot React Notifications. Lightweight, customizable and beautiful by default.","score":93,"status":"healthy","isDirect":true,"isRoot":false},{"id":"csstype","version":"3.2.3","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"goober","version":"2.1.19","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"react-icons","version":"5.7.0","description":"SVG React icons of popular icon packs using ES6 imports","score":100,"status":"healthy","isDirect":true,"isRoot":false},{"id":"react-router-dom","version":"7.18.2","description":"Declarative routing for React web applications","score":58,"status":"stale","isDirect":true,"isRoot":false},{"id":"react-router","version":"7.18.2","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"cookie","version":"1.1.1","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"set-cookie-parser","version":"2.7.2","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"uuid","version":"14.0.1","description":"RFC9562 UUIDs","score":97,"status":"healthy","isDirect":true,"isRoot":false},{"id":"xss","version":"1.0.15","description":"Sanitize untrusted HTML (to prevent XSS) with a configuration specified by a Whitelist","score":78,"status":"healthy","isDirect":true,"isRoot":false},{"id":"commander","version":"2.20.3","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"cssfilter","version":"0.0.10","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"zod","version":"4.4.3","description":"TypeScript-first schema declaration and validation library with static type inference","score":97,"status":"healthy","isDirect":true,"isRoot":false},{"id":"@eslint/js","version":"10.0.1","description":"ESLint JavaScript language implementation","score":94,"status":"healthy","isDirect":true,"isRoot":false},{"id":"@types/multer","version":"2.2.0","description":"TypeScript definitions for multer","score":100,"status":"healthy","isDirect":true,"isRoot":false},{"id":"@types/express","version":"5.0.6","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"@types/body-parser","version":"1.19.6","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"@types/connect","version":"3.4.38","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"@types/node","version":"24.13.3","description":"TypeScript definitions for node","score":94,"status":"healthy","isDirect":false,"isRoot":false},{"id":"undici-types","version":"7.18.2","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"@types/express-serve-static-core","version":"5.1.2","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"@types/qs","version":"6.15.1","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"@types/range-parser","version":"1.2.7","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"@types/send","version":"1.2.1","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"@types/serve-static","version":"2.2.0","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"@types/http-errors","version":"2.0.5","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"@types/react","version":"19.2.18","description":"TypeScript definitions for react","score":91,"status":"healthy","isDirect":true,"isRoot":false},{"id":"@types/react-dom","version":"19.2.4","description":"TypeScript definitions for react-dom","score":76,"status":"healthy","isDirect":true,"isRoot":false},{"id":"@types/uuid","version":"10.0.0","description":"Stub TypeScript definitions entry for uuid, which provides its own types definitions","score":53,"status":"stale","isDirect":true,"isRoot":false},{"id":"@vitejs/plugin-react","version":"6.0.5","description":"The default Vite plugin for React projects","score":94,"status":"healthy","isDirect":true,"isRoot":false},{"id":"@rolldown/pluginutils","version":"1.0.1","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"eslint","version":"10.8.0","description":"An AST-based pattern checker for JavaScript.","score":91,"status":"healthy","isDirect":true,"isRoot":false},{"id":"@eslint-community/eslint-utils","version":"4.10.1","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"eslint-visitor-keys","version":"5.0.1","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"@eslint-community/regexpp","version":"4.12.2","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"@eslint/config-array","version":"0.23.5","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"@eslint/object-schema","version":"3.0.5","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"minimatch","version":"10.2.6","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"brace-expansion","version":"5.0.9","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"balanced-match","version":"4.0.4","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"@eslint/config-helpers","version":"0.7.0","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"@eslint/core","version":"1.2.1","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"@types/json-schema","version":"7.0.15","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"@eslint/plugin-kit","version":"0.7.2","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"levn","version":"0.4.1","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"prelude-ls","version":"1.2.1","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"type-check","version":"0.4.0","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"@humanfs/node","version":"0.16.8","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"@humanfs/core","version":"0.19.2","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"@humanfs/types","version":"0.15.0","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"@humanwhocodes/retry","version":"0.4.3","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"@humanwhocodes/module-importer","version":"1.0.1","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"@types/estree","version":"1.0.9","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"ajv","version":"6.15.0","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"fast-deep-equal","version":"3.1.3","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"fast-json-stable-stringify","version":"2.1.0","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"json-schema-traverse","version":"0.4.1","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"uri-js","version":"4.4.1","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"punycode","version":"2.3.1","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"cross-spawn","version":"7.0.6","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"path-key","version":"3.1.1","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"shebang-command","version":"2.0.0","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"shebang-regex","version":"3.0.0","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"which","version":"2.0.2","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"isexe","version":"2.0.0","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"escape-string-regexp","version":"4.0.0","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"eslint-scope","version":"9.1.2","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"@types/esrecurse","version":"4.3.1","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"esrecurse","version":"4.3.0","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"estraverse","version":"5.3.0","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"espree","version":"11.2.0","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"acorn","version":"8.18.0","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"acorn-jsx","version":"5.3.2","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"esquery","version":"1.7.0","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"esutils","version":"2.0.3","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"file-entry-cache","version":"8.0.0","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"flat-cache","version":"4.0.1","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"flatted","version":"3.4.4","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"keyv","version":"4.5.4","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"json-buffer","version":"3.0.1","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"find-up","version":"5.0.0","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"locate-path","version":"6.0.0","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"p-locate","version":"5.0.0","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"p-limit","version":"3.1.0","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"path-exists","version":"4.0.0","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"glob-parent","version":"6.0.2","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"is-glob","version":"4.0.3","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"is-extglob","version":"2.1.1","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"ignore","version":"5.3.2","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"imurmurhash","version":"0.1.4","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"json-stable-stringify-without-jsonify","version":"1.0.1","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"natural-compare","version":"1.4.0","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"optionator","version":"0.9.4","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"deep-is","version":"0.1.4","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"fast-levenshtein","version":"2.0.6","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"word-wrap","version":"1.2.5","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"eslint-plugin-react-hooks","version":"7.1.1","description":"ESLint rules for React Hooks","score":94,"status":"healthy","isDirect":true,"isRoot":false},{"id":"@babel/core","version":"7.29.7","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"@babel/code-frame","version":"7.29.7","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"@babel/helper-validator-identifier","version":"7.29.7","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"js-tokens","version":"4.0.0","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"picocolors","version":"1.1.1","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"@babel/generator","version":"7.29.8","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"@babel/parser","version":"7.29.8","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"@babel/types","version":"7.29.8","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"@babel/helper-string-parser","version":"7.29.7","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"@jridgewell/gen-mapping","version":"0.3.13","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"@jridgewell/sourcemap-codec","version":"1.5.5","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"@jridgewell/trace-mapping","version":"0.3.31","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"@jridgewell/resolve-uri","version":"3.1.2","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"jsesc","version":"3.1.0","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"@babel/helper-compilation-targets","version":"7.29.7","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"@babel/compat-data","version":"7.29.7","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"@babel/helper-validator-option","version":"7.29.7","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"browserslist","version":"4.28.7","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"baseline-browser-mapping","version":"2.11.8","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"caniuse-lite","version":"1.0.30001806","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"electron-to-chromium","version":"1.5.399","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"node-releases","version":"2.0.51","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"update-browserslist-db","version":"1.2.3","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"lru-cache","version":"5.1.1","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"yallist","version":"3.1.1","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"semver","version":"6.3.1","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"@babel/helper-module-transforms","version":"7.29.7","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"@babel/helper-module-imports","version":"7.29.7","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"@babel/traverse","version":"7.29.8","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"@babel/helper-globals","version":"7.29.7","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"@babel/template","version":"7.29.7","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"@babel/helpers","version":"7.29.7","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"@jridgewell/remapping","version":"2.3.5","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"convert-source-map","version":"2.0.0","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"gensync","version":"1.0.0-beta.2","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"json5","version":"2.2.3","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"hermes-parser","version":"0.25.1","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"hermes-estree","version":"0.25.1","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"zod-validation-error","version":"4.0.2","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"eslint-plugin-react-refresh","version":"0.5.3","description":"Validate that your components can safely be updated with Fast Refresh","score":100,"status":"healthy","isDirect":true,"isRoot":false},{"id":"globals","version":"17.8.0","description":"Global identifiers from different JavaScript environments","score":94,"status":"healthy","isDirect":true,"isRoot":false},{"id":"rollup-plugin-visualizer","version":"7.0.1","description":"Visualize and analyze your bundle to quickly see which modules are taking up space.","score":97,"status":"healthy","isDirect":true,"isRoot":false},{"id":"open","version":"11.0.0","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"default-browser","version":"5.5.0","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"bundle-name","version":"4.1.0","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"run-applescript","version":"7.1.0","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"default-browser-id","version":"5.0.1","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"define-lazy-prop","version":"3.0.0","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"is-in-ssh","version":"1.0.0","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"is-inside-container","version":"1.0.0","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"is-docker","version":"3.0.0","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"powershell-utils","version":"0.1.0","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"wsl-utils","version":"0.3.1","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"is-wsl","version":"3.1.1","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"picomatch","version":"4.0.5","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"source-map","version":"0.7.6","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"yargs","version":"18.1.0","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"cliui","version":"9.0.1","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"string-width","version":"8.2.2","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"get-east-asian-width","version":"1.6.0","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"strip-ansi","version":"7.2.0","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"ansi-regex","version":"6.2.2","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"wrap-ansi","version":"9.0.2","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"ansi-styles","version":"4.3.0","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"escalade","version":"3.2.0","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"get-caller-file","version":"2.0.5","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"y18n","version":"5.0.8","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"yargs-parser","version":"22.0.0","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"stylelint","version":"17.14.1","description":"A mighty CSS linter that helps you avoid errors and enforce conventions.","score":97,"status":"healthy","isDirect":true,"isRoot":false},{"id":"@csstools/css-calc","version":"3.3.0","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"@csstools/css-parser-algorithms","version":"4.0.0","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"@csstools/css-syntax-patches-for-csstree","version":"1.1.7","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"@csstools/css-tokenizer","version":"4.0.0","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"@csstools/media-query-list-parser","version":"5.0.0","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"@csstools/selector-resolve-nested","version":"4.0.1","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"@csstools/selector-specificity","version":"6.0.0","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"colord","version":"2.9.3","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"cosmiconfig","version":"9.0.2","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"env-paths","version":"2.2.1","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"import-fresh","version":"3.3.1","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"parent-module","version":"1.0.1","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"callsites","version":"3.1.0","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"resolve-from","version":"4.0.0","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"js-yaml","version":"4.3.0","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"argparse","version":"2.0.1","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"parse-json","version":"5.2.0","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"error-ex","version":"1.3.4","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"is-arrayish","version":"0.2.1","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"json-parse-even-better-errors","version":"2.3.1","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"lines-and-columns","version":"1.2.4","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"css-functions-list","version":"3.3.3","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"css-tree","version":"3.2.1","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"mdn-data","version":"2.27.1","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"source-map-js","version":"1.2.1","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"fast-glob","version":"3.3.3","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"@nodelib/fs.stat","version":"2.0.5","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"@nodelib/fs.walk","version":"1.2.8","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"@nodelib/fs.scandir","version":"2.1.5","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"run-parallel","version":"1.2.0","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"fastq","version":"1.20.1","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"reusify","version":"1.1.0","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"merge2","version":"1.4.1","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"micromatch","version":"4.0.8","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"braces","version":"3.0.3","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"fill-range","version":"7.1.1","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"fastest-levenshtein","version":"1.0.16","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"global-modules","version":"2.0.0","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"global-prefix","version":"3.0.0","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"ini","version":"1.3.8","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"kind-of","version":"6.0.3","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"globby","version":"16.2.2","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"@sindresorhus/merge-streams","version":"4.0.0","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"is-path-inside","version":"4.0.0","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"slash","version":"5.1.0","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"unicorn-magic","version":"0.4.0","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"globjoin","version":"0.1.4","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"html-tags","version":"5.1.0","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"import-meta-resolve","version":"4.2.0","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"mathml-tag-names","version":"4.0.0","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"meow","version":"14.1.0","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"to-regex-range","version":"5.0.1","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"normalize-path","version":"3.0.0","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"postcss","version":"8.5.25","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"nanoid","version":"3.3.16","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"postcss-safe-parser","version":"7.0.1","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"postcss-selector-parser","version":"7.1.4","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"cssesc","version":"3.0.0","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"postcss-value-parser","version":"4.2.0","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"supports-hyperlinks","version":"4.5.0","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"has-flag","version":"5.0.1","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"supports-color","version":"10.2.2","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"svg-tags","version":"1.0.0","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"table","version":"6.9.0","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"lodash.truncate","version":"4.4.2","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"slice-ansi","version":"4.0.0","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"color-convert","version":"2.0.1","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"astral-regex","version":"2.0.0","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"is-fullwidth-code-point","version":"3.0.0","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"write-file-atomic","version":"7.0.1","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"signal-exit","version":"4.1.0","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"stylelint-config-standard","version":"40.0.0","description":"Standard shareable config for Stylelint","score":93,"status":"healthy","isDirect":true,"isRoot":false},{"id":"stylelint-config-recommended","version":"18.0.0","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"typescript","version":"6.0.3","description":"TypeScript is a language for application scale JavaScript development","score":76,"status":"healthy","isDirect":true,"isRoot":false},{"id":"typescript-eslint","version":"8.65.0","description":"Tooling which enables you to use TypeScript with ESLint","score":79,"status":"healthy","isDirect":true,"isRoot":false},{"id":"@typescript-eslint/eslint-plugin","version":"8.65.0","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"@typescript-eslint/scope-manager","version":"8.65.0","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"@typescript-eslint/types","version":"8.65.0","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"@typescript-eslint/visitor-keys","version":"8.65.0","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"@typescript-eslint/type-utils","version":"8.65.0","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"@typescript-eslint/typescript-estree","version":"8.65.0","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"@typescript-eslint/project-service","version":"8.65.0","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"@typescript-eslint/tsconfig-utils","version":"8.65.0","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"tinyglobby","version":"0.2.17","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"ts-api-utils","version":"2.5.0","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"@typescript-eslint/utils","version":"8.65.0","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"@typescript-eslint/parser","version":"8.65.0","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"fdir","version":"6.5.0","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"vite","version":"8.2.0","description":"Native-ESM powered web dev build tool","score":84,"status":"healthy","isDirect":true,"isRoot":false},{"id":"lightningcss","version":"1.33.0","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"detect-libc","version":"2.1.2","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"rolldown","version":"1.2.1","description":"","score":null,"status":null,"isDirect":false,"isRoot":false},{"id":"@oxc-project/types","version":"0.142.0","description":"","score":null,"status":null,"isDirect":false,"isRoot":false}],"links":[{"source":"__root__","target":"@fontsource/ubuntu"},{"source":"__root__","target":"@fortawesome/fontawesome-free"},{"source":"__root__","target":"@hookform/resolvers"},{"source":"@hookform/resolvers","target":"@standard-schema/utils"},{"source":"__root__","target":"@react-oauth/google"},{"source":"__root__","target":"axios"},{"source":"axios","target":"follow-redirects"},{"source":"axios","target":"form-data"},{"source":"form-data","target":"asynckit"},{"source":"form-data","target":"combined-stream"},{"source":"combined-stream","target":"delayed-stream"},{"source":"form-data","target":"es-set-tostringtag"},{"source":"es-set-tostringtag","target":"es-errors"},{"source":"es-set-tostringtag","target":"get-intrinsic"},{"source":"get-intrinsic","target":"call-bind-apply-helpers"},{"source":"get-intrinsic","target":"es-define-property"},{"source":"get-intrinsic","target":"es-errors"},{"source":"get-intrinsic","target":"es-object-atoms"},{"source":"get-intrinsic","target":"function-bind"},{"source":"get-intrinsic","target":"get-proto"},{"source":"get-intrinsic","target":"gopd"},{"source":"get-intrinsic","target":"has-symbols"},{"source":"get-intrinsic","target":"hasown"},{"source":"get-intrinsic","target":"math-intrinsics"},{"source":"es-set-tostringtag","target":"has-tostringtag"},{"source":"has-tostringtag","target":"has-symbols"},{"source":"es-set-tostringtag","target":"hasown"},{"source":"hasown","target":"function-bind"},{"source":"form-data","target":"hasown"},{"source":"hasown","target":"function-bind"},{"source":"form-data","target":"mime-types"},{"source":"mime-types","target":"mime-db"},{"source":"axios","target":"https-proxy-agent"},{"source":"https-proxy-agent","target":"agent-base"},{"source":"agent-base","target":"debug"},{"source":"debug","target":"ms"},{"source":"https-proxy-agent","target":"debug"},{"source":"debug","target":"ms"},{"source":"axios","target":"proxy-from-env"},{"source":"__root__","target":"helmet"},{"source":"__root__","target":"jwt-decode"},{"source":"__root__","target":"lucide-react"},{"source":"__root__","target":"multer"},{"source":"multer","target":"append-field"},{"source":"multer","target":"busboy"},{"source":"busboy","target":"streamsearch"},{"source":"multer","target":"concat-stream"},{"source":"concat-stream","target":"buffer-from"},{"source":"concat-stream","target":"inherits"},{"source":"concat-stream","target":"readable-stream"},{"source":"readable-stream","target":"inherits"},{"source":"readable-stream","target":"string_decoder"},{"source":"string_decoder","target":"safe-buffer"},{"source":"readable-stream","target":"util-deprecate"},{"source":"concat-stream","target":"typedarray"},{"source":"multer","target":"type-is"},{"source":"type-is","target":"media-typer"},{"source":"type-is","target":"mime-types"},{"source":"mime-types","target":"mime-db"},{"source":"__root__","target":"mysql2"},{"source":"mysql2","target":"aws-ssl-profiles"},{"source":"mysql2","target":"denque"},{"source":"mysql2","target":"generate-function"},{"source":"generate-function","target":"is-property"},{"source":"mysql2","target":"iconv-lite"},{"source":"iconv-lite","target":"safer-buffer"},{"source":"mysql2","target":"long"},{"source":"mysql2","target":"lru.min"},{"source":"mysql2","target":"named-placeholders"},{"source":"named-placeholders","target":"lru.min"},{"source":"mysql2","target":"sql-escaper"},{"source":"__root__","target":"react"},{"source":"__root__","target":"react-dom"},{"source":"react-dom","target":"scheduler"},{"source":"__root__","target":"react-hook-form"},{"source":"__root__","target":"react-hot-toast"},{"source":"react-hot-toast","target":"csstype"},{"source":"react-hot-toast","target":"goober"},{"source":"__root__","target":"react-icons"},{"source":"__root__","target":"react-router-dom"},{"source":"react-router-dom","target":"react-router"},{"source":"react-router","target":"cookie"},{"source":"react-router","target":"set-cookie-parser"},{"source":"__root__","target":"uuid"},{"source":"__root__","target":"xss"},{"source":"xss","target":"commander"},{"source":"xss","target":"cssfilter"},{"source":"__root__","target":"zod"},{"source":"__root__","target":"@eslint/js"},{"source":"__root__","target":"@types/multer"},{"source":"@types/multer","target":"@types/express"},{"source":"@types/express","target":"@types/body-parser"},{"source":"@types/body-parser","target":"@types/connect"},{"source":"@types/connect","target":"@types/node"},{"source":"@types/body-parser","target":"@types/node"},{"source":"@types/node","target":"undici-types"},{"source":"@types/express","target":"@types/express-serve-static-core"},{"source":"@types/express-serve-static-core","target":"@types/node"},{"source":"@types/node","target":"undici-types"},{"source":"@types/express-serve-static-core","target":"@types/qs"},{"source":"@types/express-serve-static-core","target":"@types/range-parser"},{"source":"@types/express-serve-static-core","target":"@types/send"},{"source":"@types/send","target":"@types/node"},{"source":"@types/express","target":"@types/serve-static"},{"source":"@types/serve-static","target":"@types/http-errors"},{"source":"@types/serve-static","target":"@types/node"},{"source":"@types/node","target":"undici-types"},{"source":"__root__","target":"@types/node"},{"source":"@types/node","target":"undici-types"},{"source":"__root__","target":"@types/react"},{"source":"@types/react","target":"csstype"},{"source":"__root__","target":"@types/react-dom"},{"source":"__root__","target":"@types/uuid"},{"source":"__root__","target":"@vitejs/plugin-react"},{"source":"@vitejs/plugin-react","target":"@rolldown/pluginutils"},{"source":"__root__","target":"eslint"},{"source":"eslint","target":"@eslint-community/eslint-utils"},{"source":"@eslint-community/eslint-utils","target":"eslint-visitor-keys"},{"source":"eslint","target":"@eslint-community/regexpp"},{"source":"eslint","target":"@eslint/config-array"},{"source":"@eslint/config-array","target":"@eslint/object-schema"},{"source":"@eslint/config-array","target":"debug"},{"source":"debug","target":"ms"},{"source":"@eslint/config-array","target":"minimatch"},{"source":"minimatch","target":"brace-expansion"},{"source":"brace-expansion","target":"balanced-match"},{"source":"eslint","target":"@eslint/config-helpers"},{"source":"@eslint/config-helpers","target":"@eslint/core"},{"source":"@eslint/core","target":"@types/json-schema"},{"source":"eslint","target":"@eslint/core"},{"source":"@eslint/core","target":"@types/json-schema"},{"source":"eslint","target":"@eslint/plugin-kit"},{"source":"@eslint/plugin-kit","target":"@eslint/core"},{"source":"@eslint/core","target":"@types/json-schema"},{"source":"@eslint/plugin-kit","target":"levn"},{"source":"levn","target":"prelude-ls"},{"source":"levn","target":"type-check"},{"source":"type-check","target":"prelude-ls"},{"source":"eslint","target":"@humanfs/node"},{"source":"@humanfs/node","target":"@humanfs/core"},{"source":"@humanfs/core","target":"@humanfs/types"},{"source":"@humanfs/node","target":"@humanfs/types"},{"source":"@humanfs/node","target":"@humanwhocodes/retry"},{"source":"eslint","target":"@humanwhocodes/module-importer"},{"source":"eslint","target":"@humanwhocodes/retry"},{"source":"eslint","target":"@types/estree"},{"source":"eslint","target":"ajv"},{"source":"ajv","target":"fast-deep-equal"},{"source":"ajv","target":"fast-json-stable-stringify"},{"source":"ajv","target":"json-schema-traverse"},{"source":"ajv","target":"uri-js"},{"source":"uri-js","target":"punycode"},{"source":"eslint","target":"cross-spawn"},{"source":"cross-spawn","target":"path-key"},{"source":"cross-spawn","target":"shebang-command"},{"source":"shebang-command","target":"shebang-regex"},{"source":"cross-spawn","target":"which"},{"source":"which","target":"isexe"},{"source":"eslint","target":"debug"},{"source":"debug","target":"ms"},{"source":"eslint","target":"escape-string-regexp"},{"source":"eslint","target":"eslint-scope"},{"source":"eslint-scope","target":"@types/esrecurse"},{"source":"eslint-scope","target":"@types/estree"},{"source":"eslint-scope","target":"esrecurse"},{"source":"esrecurse","target":"estraverse"},{"source":"eslint-scope","target":"estraverse"},{"source":"eslint","target":"eslint-visitor-keys"},{"source":"eslint","target":"espree"},{"source":"espree","target":"acorn"},{"source":"espree","target":"acorn-jsx"},{"source":"espree","target":"eslint-visitor-keys"},{"source":"eslint","target":"esquery"},{"source":"esquery","target":"estraverse"},{"source":"eslint","target":"esutils"},{"source":"eslint","target":"fast-deep-equal"},{"source":"eslint","target":"file-entry-cache"},{"source":"file-entry-cache","target":"flat-cache"},{"source":"flat-cache","target":"flatted"},{"source":"flat-cache","target":"keyv"},{"source":"keyv","target":"json-buffer"},{"source":"eslint","target":"find-up"},{"source":"find-up","target":"locate-path"},{"source":"locate-path","target":"p-locate"},{"source":"p-locate","target":"p-limit"},{"source":"find-up","target":"path-exists"},{"source":"eslint","target":"glob-parent"},{"source":"glob-parent","target":"is-glob"},{"source":"is-glob","target":"is-extglob"},{"source":"eslint","target":"ignore"},{"source":"eslint","target":"imurmurhash"},{"source":"eslint","target":"is-glob"},{"source":"is-glob","target":"is-extglob"},{"source":"eslint","target":"json-stable-stringify-without-jsonify"},{"source":"eslint","target":"minimatch"},{"source":"minimatch","target":"brace-expansion"},{"source":"brace-expansion","target":"balanced-match"},{"source":"eslint","target":"natural-compare"},{"source":"eslint","target":"optionator"},{"source":"optionator","target":"deep-is"},{"source":"optionator","target":"fast-levenshtein"},{"source":"optionator","target":"levn"},{"source":"levn","target":"prelude-ls"},{"source":"levn","target":"type-check"},{"source":"type-check","target":"prelude-ls"},{"source":"optionator","target":"prelude-ls"},{"source":"optionator","target":"type-check"},{"source":"type-check","target":"prelude-ls"},{"source":"optionator","target":"word-wrap"},{"source":"__root__","target":"eslint-plugin-react-hooks"},{"source":"eslint-plugin-react-hooks","target":"@babel/core"},{"source":"@babel/core","target":"@babel/code-frame"},{"source":"@babel/code-frame","target":"@babel/helper-validator-identifier"},{"source":"@babel/code-frame","target":"js-tokens"},{"source":"@babel/code-frame","target":"picocolors"},{"source":"@babel/core","target":"@babel/generator"},{"source":"@babel/generator","target":"@babel/parser"},{"source":"@babel/parser","target":"@babel/types"},{"source":"@babel/generator","target":"@babel/types"},{"source":"@babel/types","target":"@babel/helper-string-parser"},{"source":"@babel/types","target":"@babel/helper-validator-identifier"},{"source":"@babel/generator","target":"@jridgewell/gen-mapping"},{"source":"@jridgewell/gen-mapping","target":"@jridgewell/sourcemap-codec"},{"source":"@jridgewell/gen-mapping","target":"@jridgewell/trace-mapping"},{"source":"@babel/generator","target":"@jridgewell/trace-mapping"},{"source":"@jridgewell/trace-mapping","target":"@jridgewell/resolve-uri"},{"source":"@jridgewell/trace-mapping","target":"@jridgewell/sourcemap-codec"},{"source":"@babel/generator","target":"jsesc"},{"source":"@babel/core","target":"@babel/helper-compilation-targets"},{"source":"@babel/helper-compilation-targets","target":"@babel/compat-data"},{"source":"@babel/helper-compilation-targets","target":"@babel/helper-validator-option"},{"source":"@babel/helper-compilation-targets","target":"browserslist"},{"source":"browserslist","target":"baseline-browser-mapping"},{"source":"browserslist","target":"caniuse-lite"},{"source":"browserslist","target":"electron-to-chromium"},{"source":"browserslist","target":"node-releases"},{"source":"browserslist","target":"update-browserslist-db"},{"source":"@babel/helper-compilation-targets","target":"lru-cache"},{"source":"lru-cache","target":"yallist"},{"source":"@babel/helper-compilation-targets","target":"semver"},{"source":"@babel/core","target":"@babel/helper-module-transforms"},{"source":"@babel/helper-module-transforms","target":"@babel/helper-module-imports"},{"source":"@babel/helper-module-imports","target":"@babel/traverse"},{"source":"@babel/helper-module-imports","target":"@babel/types"},{"source":"@babel/helper-module-transforms","target":"@babel/helper-validator-identifier"},{"source":"@babel/helper-module-transforms","target":"@babel/traverse"},{"source":"@babel/traverse","target":"@babel/code-frame"},{"source":"@babel/traverse","target":"@babel/generator"},{"source":"@babel/traverse","target":"@babel/helper-globals"},{"source":"@babel/traverse","target":"@babel/parser"},{"source":"@babel/traverse","target":"@babel/template"},{"source":"@babel/traverse","target":"@babel/types"},{"source":"@babel/traverse","target":"debug"},{"source":"@babel/core","target":"@babel/helpers"},{"source":"@babel/helpers","target":"@babel/template"},{"source":"@babel/template","target":"@babel/code-frame"},{"source":"@babel/template","target":"@babel/parser"},{"source":"@babel/template","target":"@babel/types"},{"source":"@babel/helpers","target":"@babel/types"},{"source":"@babel/types","target":"@babel/helper-string-parser"},{"source":"@babel/types","target":"@babel/helper-validator-identifier"},{"source":"@babel/core","target":"@babel/parser"},{"source":"@babel/parser","target":"@babel/types"},{"source":"@babel/types","target":"@babel/helper-string-parser"},{"source":"@babel/types","target":"@babel/helper-validator-identifier"},{"source":"@babel/core","target":"@babel/template"},{"source":"@babel/template","target":"@babel/code-frame"},{"source":"@babel/code-frame","target":"@babel/helper-validator-identifier"},{"source":"@babel/code-frame","target":"js-tokens"},{"source":"@babel/code-frame","target":"picocolors"},{"source":"@babel/template","target":"@babel/parser"},{"source":"@babel/parser","target":"@babel/types"},{"source":"@babel/template","target":"@babel/types"},{"source":"@babel/types","target":"@babel/helper-string-parser"},{"source":"@babel/types","target":"@babel/helper-validator-identifier"},{"source":"@babel/core","target":"@babel/traverse"},{"source":"@babel/traverse","target":"@babel/code-frame"},{"source":"@babel/code-frame","target":"@babel/helper-validator-identifier"},{"source":"@babel/code-frame","target":"js-tokens"},{"source":"@babel/code-frame","target":"picocolors"},{"source":"@babel/traverse","target":"@babel/generator"},{"source":"@babel/generator","target":"@babel/parser"},{"source":"@babel/generator","target":"@babel/types"},{"source":"@babel/generator","target":"@jridgewell/gen-mapping"},{"source":"@babel/generator","target":"@jridgewell/trace-mapping"},{"source":"@babel/generator","target":"jsesc"},{"source":"@babel/traverse","target":"@babel/helper-globals"},{"source":"@babel/traverse","target":"@babel/parser"},{"source":"@babel/parser","target":"@babel/types"},{"source":"@babel/traverse","target":"@babel/template"},{"source":"@babel/template","target":"@babel/code-frame"},{"source":"@babel/template","target":"@babel/parser"},{"source":"@babel/template","target":"@babel/types"},{"source":"@babel/traverse","target":"@babel/types"},{"source":"@babel/types","target":"@babel/helper-string-parser"},{"source":"@babel/types","target":"@babel/helper-validator-identifier"},{"source":"@babel/traverse","target":"debug"},{"source":"debug","target":"ms"},{"source":"@babel/core","target":"@babel/types"},{"source":"@babel/types","target":"@babel/helper-string-parser"},{"source":"@babel/types","target":"@babel/helper-validator-identifier"},{"source":"@babel/core","target":"@jridgewell/remapping"},{"source":"@jridgewell/remapping","target":"@jridgewell/gen-mapping"},{"source":"@jridgewell/gen-mapping","target":"@jridgewell/sourcemap-codec"},{"source":"@jridgewell/gen-mapping","target":"@jridgewell/trace-mapping"},{"source":"@jridgewell/remapping","target":"@jridgewell/trace-mapping"},{"source":"@jridgewell/trace-mapping","target":"@jridgewell/resolve-uri"},{"source":"@jridgewell/trace-mapping","target":"@jridgewell/sourcemap-codec"},{"source":"@babel/core","target":"convert-source-map"},{"source":"@babel/core","target":"debug"},{"source":"debug","target":"ms"},{"source":"@babel/core","target":"gensync"},{"source":"@babel/core","target":"json5"},{"source":"@babel/core","target":"semver"},{"source":"eslint-plugin-react-hooks","target":"@babel/parser"},{"source":"@babel/parser","target":"@babel/types"},{"source":"@babel/types","target":"@babel/helper-string-parser"},{"source":"@babel/types","target":"@babel/helper-validator-identifier"},{"source":"eslint-plugin-react-hooks","target":"hermes-parser"},{"source":"hermes-parser","target":"hermes-estree"},{"source":"eslint-plugin-react-hooks","target":"zod"},{"source":"eslint-plugin-react-hooks","target":"zod-validation-error"},{"source":"__root__","target":"eslint-plugin-react-refresh"},{"source":"__root__","target":"globals"},{"source":"__root__","target":"rollup-plugin-visualizer"},{"source":"rollup-plugin-visualizer","target":"open"},{"source":"open","target":"default-browser"},{"source":"default-browser","target":"bundle-name"},{"source":"bundle-name","target":"run-applescript"},{"source":"default-browser","target":"default-browser-id"},{"source":"open","target":"define-lazy-prop"},{"source":"open","target":"is-in-ssh"},{"source":"open","target":"is-inside-container"},{"source":"is-inside-container","target":"is-docker"},{"source":"open","target":"powershell-utils"},{"source":"open","target":"wsl-utils"},{"source":"wsl-utils","target":"is-wsl"},{"source":"is-wsl","target":"is-inside-container"},{"source":"wsl-utils","target":"powershell-utils"},{"source":"rollup-plugin-visualizer","target":"picomatch"},{"source":"rollup-plugin-visualizer","target":"source-map"},{"source":"rollup-plugin-visualizer","target":"yargs"},{"source":"yargs","target":"cliui"},{"source":"cliui","target":"string-width"},{"source":"string-width","target":"get-east-asian-width"},{"source":"string-width","target":"strip-ansi"},{"source":"cliui","target":"strip-ansi"},{"source":"strip-ansi","target":"ansi-regex"},{"source":"cliui","target":"wrap-ansi"},{"source":"wrap-ansi","target":"ansi-styles"},{"source":"wrap-ansi","target":"string-width"},{"source":"wrap-ansi","target":"strip-ansi"},{"source":"yargs","target":"escalade"},{"source":"yargs","target":"get-caller-file"},{"source":"yargs","target":"string-width"},{"source":"string-width","target":"get-east-asian-width"},{"source":"string-width","target":"strip-ansi"},{"source":"strip-ansi","target":"ansi-regex"},{"source":"yargs","target":"y18n"},{"source":"yargs","target":"yargs-parser"},{"source":"__root__","target":"stylelint"},{"source":"stylelint","target":"@csstools/css-calc"},{"source":"stylelint","target":"@csstools/css-parser-algorithms"},{"source":"stylelint","target":"@csstools/css-syntax-patches-for-csstree"},{"source":"stylelint","target":"@csstools/css-tokenizer"},{"source":"stylelint","target":"@csstools/media-query-list-parser"},{"source":"stylelint","target":"@csstools/selector-resolve-nested"},{"source":"stylelint","target":"@csstools/selector-specificity"},{"source":"stylelint","target":"colord"},{"source":"stylelint","target":"cosmiconfig"},{"source":"cosmiconfig","target":"env-paths"},{"source":"cosmiconfig","target":"import-fresh"},{"source":"import-fresh","target":"parent-module"},{"source":"parent-module","target":"callsites"},{"source":"import-fresh","target":"resolve-from"},{"source":"cosmiconfig","target":"js-yaml"},{"source":"js-yaml","target":"argparse"},{"source":"cosmiconfig","target":"parse-json"},{"source":"parse-json","target":"@babel/code-frame"},{"source":"@babel/code-frame","target":"@babel/helper-validator-identifier"},{"source":"@babel/code-frame","target":"js-tokens"},{"source":"@babel/code-frame","target":"picocolors"},{"source":"parse-json","target":"error-ex"},{"source":"error-ex","target":"is-arrayish"},{"source":"parse-json","target":"json-parse-even-better-errors"},{"source":"parse-json","target":"lines-and-columns"},{"source":"stylelint","target":"css-functions-list"},{"source":"stylelint","target":"css-tree"},{"source":"css-tree","target":"mdn-data"},{"source":"css-tree","target":"source-map-js"},{"source":"stylelint","target":"debug"},{"source":"debug","target":"ms"},{"source":"stylelint","target":"fast-glob"},{"source":"fast-glob","target":"@nodelib/fs.stat"},{"source":"fast-glob","target":"@nodelib/fs.walk"},{"source":"@nodelib/fs.walk","target":"@nodelib/fs.scandir"},{"source":"@nodelib/fs.scandir","target":"@nodelib/fs.stat"},{"source":"@nodelib/fs.scandir","target":"run-parallel"},{"source":"@nodelib/fs.walk","target":"fastq"},{"source":"fastq","target":"reusify"},{"source":"fast-glob","target":"glob-parent"},{"source":"glob-parent","target":"is-glob"},{"source":"is-glob","target":"is-extglob"},{"source":"fast-glob","target":"merge2"},{"source":"fast-glob","target":"micromatch"},{"source":"micromatch","target":"braces"},{"source":"braces","target":"fill-range"},{"source":"micromatch","target":"picomatch"},{"source":"stylelint","target":"fastest-levenshtein"},{"source":"stylelint","target":"file-entry-cache"},{"source":"file-entry-cache","target":"flat-cache"},{"source":"flat-cache","target":"flatted"},{"source":"flat-cache","target":"keyv"},{"source":"keyv","target":"json-buffer"},{"source":"stylelint","target":"global-modules"},{"source":"global-modules","target":"global-prefix"},{"source":"global-prefix","target":"ini"},{"source":"global-prefix","target":"kind-of"},{"source":"global-prefix","target":"which"},{"source":"which","target":"isexe"},{"source":"stylelint","target":"globby"},{"source":"globby","target":"@sindresorhus/merge-streams"},{"source":"globby","target":"fast-glob"},{"source":"fast-glob","target":"@nodelib/fs.stat"},{"source":"fast-glob","target":"@nodelib/fs.walk"},{"source":"@nodelib/fs.walk","target":"@nodelib/fs.scandir"},{"source":"@nodelib/fs.walk","target":"fastq"},{"source":"fast-glob","target":"glob-parent"},{"source":"glob-parent","target":"is-glob"},{"source":"fast-glob","target":"merge2"},{"source":"fast-glob","target":"micromatch"},{"source":"micromatch","target":"braces"},{"source":"micromatch","target":"picomatch"},{"source":"globby","target":"ignore"},{"source":"globby","target":"is-path-inside"},{"source":"globby","target":"slash"},{"source":"globby","target":"unicorn-magic"},{"source":"stylelint","target":"globjoin"},{"source":"stylelint","target":"html-tags"},{"source":"stylelint","target":"ignore"},{"source":"stylelint","target":"import-meta-resolve"},{"source":"stylelint","target":"mathml-tag-names"},{"source":"stylelint","target":"meow"},{"source":"stylelint","target":"micromatch"},{"source":"micromatch","target":"braces"},{"source":"braces","target":"fill-range"},{"source":"fill-range","target":"to-regex-range"},{"source":"micromatch","target":"picomatch"},{"source":"stylelint","target":"normalize-path"},{"source":"stylelint","target":"picocolors"},{"source":"stylelint","target":"postcss"},{"source":"postcss","target":"nanoid"},{"source":"postcss","target":"picocolors"},{"source":"postcss","target":"source-map-js"},{"source":"stylelint","target":"postcss-safe-parser"},{"source":"stylelint","target":"postcss-selector-parser"},{"source":"postcss-selector-parser","target":"cssesc"},{"source":"postcss-selector-parser","target":"util-deprecate"},{"source":"stylelint","target":"postcss-value-parser"},{"source":"stylelint","target":"string-width"},{"source":"string-width","target":"get-east-asian-width"},{"source":"string-width","target":"strip-ansi"},{"source":"strip-ansi","target":"ansi-regex"},{"source":"stylelint","target":"supports-hyperlinks"},{"source":"supports-hyperlinks","target":"has-flag"},{"source":"supports-hyperlinks","target":"supports-color"},{"source":"stylelint","target":"svg-tags"},{"source":"stylelint","target":"table"},{"source":"table","target":"ajv"},{"source":"ajv","target":"fast-deep-equal"},{"source":"ajv","target":"fast-json-stable-stringify"},{"source":"ajv","target":"json-schema-traverse"},{"source":"ajv","target":"uri-js"},{"source":"uri-js","target":"punycode"},{"source":"table","target":"lodash.truncate"},{"source":"table","target":"slice-ansi"},{"source":"slice-ansi","target":"ansi-styles"},{"source":"ansi-styles","target":"color-convert"},{"source":"slice-ansi","target":"astral-regex"},{"source":"slice-ansi","target":"is-fullwidth-code-point"},{"source":"table","target":"string-width"},{"source":"string-width","target":"get-east-asian-width"},{"source":"string-width","target":"strip-ansi"},{"source":"strip-ansi","target":"ansi-regex"},{"source":"table","target":"strip-ansi"},{"source":"strip-ansi","target":"ansi-regex"},{"source":"stylelint","target":"write-file-atomic"},{"source":"write-file-atomic","target":"signal-exit"},{"source":"__root__","target":"stylelint-config-standard"},{"source":"stylelint-config-standard","target":"stylelint-config-recommended"},{"source":"__root__","target":"typescript"},{"source":"__root__","target":"typescript-eslint"},{"source":"typescript-eslint","target":"@typescript-eslint/eslint-plugin"},{"source":"@typescript-eslint/eslint-plugin","target":"@eslint-community/regexpp"},{"source":"@typescript-eslint/eslint-plugin","target":"@typescript-eslint/scope-manager"},{"source":"@typescript-eslint/scope-manager","target":"@typescript-eslint/types"},{"source":"@typescript-eslint/scope-manager","target":"@typescript-eslint/visitor-keys"},{"source":"@typescript-eslint/visitor-keys","target":"@typescript-eslint/types"},{"source":"@typescript-eslint/visitor-keys","target":"eslint-visitor-keys"},{"source":"@typescript-eslint/eslint-plugin","target":"@typescript-eslint/type-utils"},{"source":"@typescript-eslint/type-utils","target":"@typescript-eslint/types"},{"source":"@typescript-eslint/type-utils","target":"@typescript-eslint/typescript-estree"},{"source":"@typescript-eslint/typescript-estree","target":"@typescript-eslint/project-service"},{"source":"@typescript-eslint/typescript-estree","target":"@typescript-eslint/tsconfig-utils"},{"source":"@typescript-eslint/typescript-estree","target":"@typescript-eslint/types"},{"source":"@typescript-eslint/typescript-estree","target":"@typescript-eslint/visitor-keys"},{"source":"@typescript-eslint/typescript-estree","target":"debug"},{"source":"@typescript-eslint/typescript-estree","target":"minimatch"},{"source":"@typescript-eslint/typescript-estree","target":"semver"},{"source":"@typescript-eslint/typescript-estree","target":"tinyglobby"},{"source":"@typescript-eslint/typescript-estree","target":"ts-api-utils"},{"source":"@typescript-eslint/type-utils","target":"@typescript-eslint/utils"},{"source":"@typescript-eslint/utils","target":"@eslint-community/eslint-utils"},{"source":"@typescript-eslint/utils","target":"@typescript-eslint/scope-manager"},{"source":"@typescript-eslint/utils","target":"@typescript-eslint/types"},{"source":"@typescript-eslint/utils","target":"@typescript-eslint/typescript-estree"},{"source":"@typescript-eslint/type-utils","target":"debug"},{"source":"debug","target":"ms"},{"source":"@typescript-eslint/type-utils","target":"ts-api-utils"},{"source":"@typescript-eslint/eslint-plugin","target":"@typescript-eslint/utils"},{"source":"@typescript-eslint/utils","target":"@eslint-community/eslint-utils"},{"source":"@eslint-community/eslint-utils","target":"eslint-visitor-keys"},{"source":"@typescript-eslint/utils","target":"@typescript-eslint/scope-manager"},{"source":"@typescript-eslint/scope-manager","target":"@typescript-eslint/types"},{"source":"@typescript-eslint/scope-manager","target":"@typescript-eslint/visitor-keys"},{"source":"@typescript-eslint/utils","target":"@typescript-eslint/types"},{"source":"@typescript-eslint/utils","target":"@typescript-eslint/typescript-estree"},{"source":"@typescript-eslint/typescript-estree","target":"@typescript-eslint/project-service"},{"source":"@typescript-eslint/typescript-estree","target":"@typescript-eslint/tsconfig-utils"},{"source":"@typescript-eslint/typescript-estree","target":"@typescript-eslint/types"},{"source":"@typescript-eslint/typescript-estree","target":"@typescript-eslint/visitor-keys"},{"source":"@typescript-eslint/typescript-estree","target":"debug"},{"source":"@typescript-eslint/typescript-estree","target":"minimatch"},{"source":"@typescript-eslint/typescript-estree","target":"semver"},{"source":"@typescript-eslint/typescript-estree","target":"tinyglobby"},{"source":"@typescript-eslint/typescript-estree","target":"ts-api-utils"},{"source":"@typescript-eslint/eslint-plugin","target":"@typescript-eslint/visitor-keys"},{"source":"@typescript-eslint/visitor-keys","target":"@typescript-eslint/types"},{"source":"@typescript-eslint/visitor-keys","target":"eslint-visitor-keys"},{"source":"@typescript-eslint/eslint-plugin","target":"ignore"},{"source":"@typescript-eslint/eslint-plugin","target":"natural-compare"},{"source":"@typescript-eslint/eslint-plugin","target":"ts-api-utils"},{"source":"typescript-eslint","target":"@typescript-eslint/parser"},{"source":"@typescript-eslint/parser","target":"@typescript-eslint/scope-manager"},{"source":"@typescript-eslint/scope-manager","target":"@typescript-eslint/types"},{"source":"@typescript-eslint/scope-manager","target":"@typescript-eslint/visitor-keys"},{"source":"@typescript-eslint/visitor-keys","target":"@typescript-eslint/types"},{"source":"@typescript-eslint/visitor-keys","target":"eslint-visitor-keys"},{"source":"@typescript-eslint/parser","target":"@typescript-eslint/types"},{"source":"@typescript-eslint/parser","target":"@typescript-eslint/typescript-estree"},{"source":"@typescript-eslint/typescript-estree","target":"@typescript-eslint/project-service"},{"source":"@typescript-eslint/project-service","target":"@typescript-eslint/tsconfig-utils"},{"source":"@typescript-eslint/project-service","target":"@typescript-eslint/types"},{"source":"@typescript-eslint/project-service","target":"debug"},{"source":"@typescript-eslint/typescript-estree","target":"@typescript-eslint/tsconfig-utils"},{"source":"@typescript-eslint/typescript-estree","target":"@typescript-eslint/types"},{"source":"@typescript-eslint/typescript-estree","target":"@typescript-eslint/visitor-keys"},{"source":"@typescript-eslint/visitor-keys","target":"@typescript-eslint/types"},{"source":"@typescript-eslint/visitor-keys","target":"eslint-visitor-keys"},{"source":"@typescript-eslint/typescript-estree","target":"debug"},{"source":"debug","target":"ms"},{"source":"@typescript-eslint/typescript-estree","target":"minimatch"},{"source":"minimatch","target":"brace-expansion"},{"source":"@typescript-eslint/typescript-estree","target":"semver"},{"source":"@typescript-eslint/typescript-estree","target":"tinyglobby"},{"source":"tinyglobby","target":"fdir"},{"source":"tinyglobby","target":"picomatch"},{"source":"@typescript-eslint/typescript-estree","target":"ts-api-utils"},{"source":"@typescript-eslint/parser","target":"@typescript-eslint/visitor-keys"},{"source":"@typescript-eslint/visitor-keys","target":"@typescript-eslint/types"},{"source":"@typescript-eslint/visitor-keys","target":"eslint-visitor-keys"},{"source":"@typescript-eslint/parser","target":"debug"},{"source":"debug","target":"ms"},{"source":"typescript-eslint","target":"@typescript-eslint/typescript-estree"},{"source":"@typescript-eslint/typescript-estree","target":"@typescript-eslint/project-service"},{"source":"@typescript-eslint/project-service","target":"@typescript-eslint/tsconfig-utils"},{"source":"@typescript-eslint/project-service","target":"@typescript-eslint/types"},{"source":"@typescript-eslint/project-service","target":"debug"},{"source":"debug","target":"ms"},{"source":"@typescript-eslint/typescript-estree","target":"@typescript-eslint/tsconfig-utils"},{"source":"@typescript-eslint/typescript-estree","target":"@typescript-eslint/types"},{"source":"@typescript-eslint/typescript-estree","target":"@typescript-eslint/visitor-keys"},{"source":"@typescript-eslint/visitor-keys","target":"@typescript-eslint/types"},{"source":"@typescript-eslint/visitor-keys","target":"eslint-visitor-keys"},{"source":"@typescript-eslint/typescript-estree","target":"debug"},{"source":"debug","target":"ms"},{"source":"@typescript-eslint/typescript-estree","target":"minimatch"},{"source":"minimatch","target":"brace-expansion"},{"source":"brace-expansion","target":"balanced-match"},{"source":"@typescript-eslint/typescript-estree","target":"semver"},{"source":"@typescript-eslint/typescript-estree","target":"tinyglobby"},{"source":"tinyglobby","target":"fdir"},{"source":"tinyglobby","target":"picomatch"},{"source":"@typescript-eslint/typescript-estree","target":"ts-api-utils"},{"source":"typescript-eslint","target":"@typescript-eslint/utils"},{"source":"@typescript-eslint/utils","target":"@eslint-community/eslint-utils"},{"source":"@eslint-community/eslint-utils","target":"eslint-visitor-keys"},{"source":"@typescript-eslint/utils","target":"@typescript-eslint/scope-manager"},{"source":"@typescript-eslint/scope-manager","target":"@typescript-eslint/types"},{"source":"@typescript-eslint/scope-manager","target":"@typescript-eslint/visitor-keys"},{"source":"@typescript-eslint/visitor-keys","target":"@typescript-eslint/types"},{"source":"@typescript-eslint/visitor-keys","target":"eslint-visitor-keys"},{"source":"@typescript-eslint/utils","target":"@typescript-eslint/types"},{"source":"@typescript-eslint/utils","target":"@typescript-eslint/typescript-estree"},{"source":"@typescript-eslint/typescript-estree","target":"@typescript-eslint/project-service"},{"source":"@typescript-eslint/project-service","target":"@typescript-eslint/tsconfig-utils"},{"source":"@typescript-eslint/project-service","target":"@typescript-eslint/types"},{"source":"@typescript-eslint/project-service","target":"debug"},{"source":"@typescript-eslint/typescript-estree","target":"@typescript-eslint/tsconfig-utils"},{"source":"@typescript-eslint/typescript-estree","target":"@typescript-eslint/types"},{"source":"@typescript-eslint/typescript-estree","target":"@typescript-eslint/visitor-keys"},{"source":"@typescript-eslint/visitor-keys","target":"@typescript-eslint/types"},{"source":"@typescript-eslint/visitor-keys","target":"eslint-visitor-keys"},{"source":"@typescript-eslint/typescript-estree","target":"debug"},{"source":"debug","target":"ms"},{"source":"@typescript-eslint/typescript-estree","target":"minimatch"},{"source":"minimatch","target":"brace-expansion"},{"source":"@typescript-eslint/typescript-estree","target":"semver"},{"source":"@typescript-eslint/typescript-estree","target":"tinyglobby"},{"source":"tinyglobby","target":"fdir"},{"source":"tinyglobby","target":"picomatch"},{"source":"@typescript-eslint/typescript-estree","target":"ts-api-utils"},{"source":"__root__","target":"vite"},{"source":"vite","target":"lightningcss"},{"source":"lightningcss","target":"detect-libc"},{"source":"vite","target":"picomatch"},{"source":"vite","target":"postcss"},{"source":"postcss","target":"nanoid"},{"source":"postcss","target":"picocolors"},{"source":"postcss","target":"source-map-js"},{"source":"vite","target":"rolldown"},{"source":"rolldown","target":"@oxc-project/types"},{"source":"rolldown","target":"@rolldown/pluginutils"},{"source":"vite","target":"tinyglobby"},{"source":"tinyglobby","target":"fdir"},{"source":"tinyglobby","target":"picomatch"}]}
+const HAS_GRAPH   = true
+
+// ── Tab system ────────────────────────────────────────────────────────────────
+let graphInitialized = false
+const TABS = ['overview', 'graph']
+
+function switchTab(name) {
+  TABS.forEach(t => {
+    const pane = document.getElementById('pane-' + t)
+    const btn  = document.getElementById('tab-btn-' + t)
+    if (pane) pane.style.display = t === name ? 'block' : 'none'
+    if (btn)  btn.classList.toggle('active', t === name)
+  })
+  if (name === 'graph' && HAS_GRAPH && !graphInitialized) {
+    graphInitialized = true
+    renderGraph('force', 1)
+  }
+}
+
+// ── D3 shared state ───────────────────────────────────────────────────────────
+// Raw data kept immutable — D3 mutates link objects during simulation
+const RAW_NODES = GRAPH_DATA.nodes
+const RAW_LINKS = GRAPH_DATA.links.map(l => ({ source: l.source, target: l.target }))
+
+let currentLayout = 'force'
+let currentDepth  = 1
+let svgRoot, zoomBehavior, simulation
+
+// ── Node helpers ──────────────────────────────────────────────────────────────
+function nodeRadius(d) { return d.isRoot ? 18 : d.isDirect ? 12 : 7 }
+function nodeColor(d) {
+  if (d.isRoot)         return '#111827'
+  if (d.score === null) return '#d1d5db'
+  if (d.score >= 75)    return '#22c55e'
+  if (d.score >= 45)    return '#f59e0b'
+  return '#ef4444'
+}
+
+// ── Depth filter ──────────────────────────────────────────────────────────────
+function getFilteredData(maxDepth) {
+  const visible = new Set(['__root__'])
+  let frontier  = ['__root__']
+  for (let d = 0; d < maxDepth; d++) {
+    const next = []
+    for (const srcId of frontier) {
+      RAW_LINKS.forEach(l => {
+        if (l.source === srcId && !visible.has(l.target)) {
+          visible.add(l.target); next.push(l.target)
+        }
+      })
+    }
+    frontier = next
+    if (!frontier.length) break
+  }
+  return {
+    nodes: RAW_NODES.filter(n => visible.has(n.id)).map(n => ({ ...n })),
+    links: RAW_LINKS.filter(l => visible.has(l.source) && visible.has(l.target)).map(l => ({ ...l })),
+  }
+}
+
+// ── Layout + depth orchestrator ───────────────────────────────────────────────
+function renderGraph(layout, depth) {
+  currentLayout = layout
+  currentDepth  = depth
+
+  // Button states — layout
+  ;['force', 'radial', 'list'].forEach(l => {
+    const b = document.getElementById('layout-' + l); if (!b) return
+    b.style.background = l === layout ? '#111827' : '#fff'
+    b.style.color      = l === layout ? '#fff'    : '#374151'
+  })
+  // Button states — depth
+  ;[[1,'1'],[2,'2'],[3,'3'],[Infinity,'all']].forEach(([d, k]) => {
+    const b = document.getElementById('depth-' + k); if (!b) return
+    b.style.background = d === depth ? '#111827' : '#fff'
+    b.style.color      = d === depth ? '#fff'    : '#374151'
+  })
+
+  const svgEl  = document.getElementById('graph-svg')
+  const listEl = document.getElementById('graph-list')
+
+  if (layout === 'list') {
+    // Show list, hide SVG
+    if (svgEl)  svgEl.style.display  = 'none'
+    if (listEl) listEl.style.display = 'block'
+    if (simulation) { simulation.stop(); simulation = null }
+    initListView(getFilteredData(depth))
+    return
+  }
+
+  // SVG layouts — ensure svgRoot + zoomBehavior are ready
+  if (svgEl)  svgEl.style.display  = ''
+  if (listEl) listEl.style.display = 'none'
+  if (!svgRoot) {
+    svgRoot      = d3.select('#graph-svg')
+    zoomBehavior = d3.zoom().scaleExtent([0.1, 5])
+  }
+  if (simulation) { simulation.stop(); simulation = null }
+  svgRoot.selectAll('*').remove()
+
+  const filtered = getFilteredData(depth)
+  if (layout === 'force') initForceGraph(filtered)
+  else                    initRadialTree(filtered)
+}
+
+// ── Force-directed ────────────────────────────────────────────────────────────
+function initForceGraph(data) {
+  const el = document.getElementById('graph-svg')
+  const W  = el.clientWidth || 900
+  const H  = el.clientHeight || 600
+
+  svgRoot.append('defs').append('marker')
+    .attr('id', 'arrow').attr('viewBox', '0 -4 8 8')
+    .attr('refX', 22).attr('refY', 0)
+    .attr('markerWidth', 5).attr('markerHeight', 5).attr('orient', 'auto')
+    .append('path').attr('d', 'M0,-4L8,0L0,4').attr('fill', '#d1d5db')
+
+  const g = svgRoot.append('g')
+  svgRoot.call(zoomBehavior.on('zoom', e => g.attr('transform', e.transform)))
+  svgRoot.call(zoomBehavior.transform, d3.zoomIdentity)
+
+  simulation = d3.forceSimulation(data.nodes)
+    .force('link',    d3.forceLink(data.links).id(d => d.id).distance(d => d.source.isRoot ? 160 : 90))
+    .force('charge',  d3.forceManyBody().strength(d => d.isRoot ? -800 : d.isDirect ? -400 : -150))
+    .force('center',  d3.forceCenter(W / 2, H / 2))
+    .force('collide', d3.forceCollide(d => nodeRadius(d) + 10))
+
+  const link = g.append('g').attr('stroke', '#e5e7eb').attr('stroke-width', 1.2)
+    .selectAll('line').data(data.links).join('line').attr('marker-end', 'url(#arrow)')
+
+  const node = g.append('g').selectAll('circle').data(data.nodes).join('circle')
+    .attr('r', nodeRadius).attr('fill', nodeColor)
+    .attr('stroke', d => d.isRoot ? '#374151' : '#fff')
+    .attr('stroke-width', d => d.isRoot ? 3 : 1.5)
+    .call(d3.drag()
+      .on('start', (e, d) => { if (!e.active) simulation.alphaTarget(0.3).restart(); d.fx = d.x; d.fy = d.y })
+      .on('drag',  (e, d) => { d.fx = e.x; d.fy = e.y })
+      .on('end',   (e, d) => { if (!e.active) simulation.alphaTarget(0); d.fx = null; d.fy = null })
+    )
+    .on('mousemove', showTooltip).on('mouseout', hideTooltip)
+
+  const label = g.append('g').selectAll('text').data(data.nodes).join('text')
+    .text(d => d.isRoot ? d.description : d.id)
+    .attr('font-size', d => d.isRoot ? 13 : d.isDirect ? 11 : 9)
+    .attr('font-weight', d => d.isRoot || d.isDirect ? '700' : '400')
+    .attr('fill', '#374151').attr('pointer-events', 'none')
+    .attr('display', d => d.isRoot || d.isDirect ? null : 'none')
+
+  simulation.on('tick', () => {
+    link.attr('x1', d => d.source.x).attr('y1', d => d.source.y)
+        .attr('x2', d => d.target.x).attr('y2', d => d.target.y)
+    node.attr('cx', d => d.x).attr('cy', d => d.y)
+    label.attr('x', d => d.x + nodeRadius(d) + 4).attr('y', d => d.y + 4)
+  })
+}
+
+// ── Radial tree ───────────────────────────────────────────────────────────────
+function initRadialTree(data) {
+  const el = document.getElementById('graph-svg')
+  const W  = el.clientWidth || 900
+  const H  = el.clientHeight || 600
+
+  const g = svgRoot.append('g')
+  svgRoot.call(zoomBehavior.on('zoom', e => g.attr('transform', e.transform)))
+  svgRoot.call(zoomBehavior.transform, d3.zoomIdentity.translate(W / 2, H / 2))
+
+  // Build parent→children map from links (strings, not mutated)
+  const byId      = new Map(data.nodes.map(n => [n.id, n]))
+  const childrenOf = new Map(data.nodes.map(n => [n.id, []]))
+  data.links.forEach(l => {
+    const arr = childrenOf.get(l.source)
+    if (arr && !arr.includes(l.target)) arr.push(l.target)
+  })
+
+  function buildHier(id, seen) {
+    const node = byId.get(id); if (!node) return null
+    const kids = (childrenOf.get(id) || [])
+      .filter(c => !seen.has(c))
+      .map(c => { seen.add(c); return buildHier(c, seen) })
+      .filter(Boolean)
+    return { ...node, children: kids }
+  }
+
+  const treeData = buildHier('__root__', new Set(['__root__']))
+  if (!treeData) return
+
+  const radius = Math.min(W, H) / 2 - 120
+  const root   = d3.hierarchy(treeData)
+  d3.tree().size([2 * Math.PI, radius])
+    .separation((a, b) => (a.parent === b.parent ? 1 : 2) / a.depth)(root)
+
+  // Links
+  g.append('g').attr('fill', 'none').attr('stroke', '#e5e7eb').attr('stroke-width', 1.2)
+    .selectAll('path').data(root.links()).join('path')
+    .attr('d', d3.linkRadial().angle(d => d.x).radius(d => d.y))
+
+  // Nodes
+  const node = g.append('g').selectAll('g').data(root.descendants()).join('g')
+    .attr('transform', d => `rotate(${d.x * 180 / Math.PI - 90}) translate(${d.y}, 0)`)
+
+  node.append('circle')
+    .attr('r', d => nodeRadius(d.data))
+    .attr('fill', d => nodeColor(d.data))
+    .attr('stroke', d => d.data.isRoot ? '#374151' : '#fff')
+    .attr('stroke-width', d => d.data.isRoot ? 3 : 1.5)
+    .on('mousemove', (e, d) => showTooltip(e, d.data))
+    .on('mouseout', hideTooltip)
+
+  node.append('text')
+    .attr('dy', '0.31em')
+    .attr('x', d => d.data.isRoot ? 0 : (d.x < Math.PI ? nodeRadius(d.data) + 5 : -nodeRadius(d.data) - 5))
+    .attr('text-anchor', d => d.data.isRoot ? 'middle' : (d.x < Math.PI ? 'start' : 'end'))
+    .attr('transform', d => (!d.data.isRoot && d.x >= Math.PI) ? 'rotate(180)' : null)
+    .attr('font-size', d => d.data.isRoot ? 13 : d.data.isDirect ? 11 : 9)
+    .attr('font-weight', d => d.data.isRoot || d.data.isDirect ? '700' : '400')
+    .attr('fill', '#374151').attr('pointer-events', 'none')
+    .text(d => d.data.isRoot ? d.data.description : d.data.id)
+}
+
+// ── List view (accordion) ─────────────────────────────────────────────────────
+function toggleListGroup(groupId, btn) {
+  const listEl = document.getElementById('graph-list')
+  if (!listEl) return
+  const rows   = listEl.querySelectorAll(`[data-group="${groupId}"]`)
+  const isOpen = rows.length && rows[0].style.display !== 'none'
+  rows.forEach(r => r.style.display = isOpen ? 'none' : 'table-row')
+  if (btn) btn.textContent = isOpen ? '▶' : '▼'
+}
+
+function initListView(data) {
+  const listEl = document.getElementById('graph-list')
+  if (!listEl) return
+
+  // Build immediate parent map
+  const parentOf = new Map()
+  data.links.forEach(l => { if (!parentOf.has(l.target)) parentOf.set(l.target, l.source) })
+
+  // Walk up to find the direct-dep ancestor of a node
+  function directAncestor(id) {
+    let cur = id
+    while (parentOf.has(cur)) {
+      const p = parentOf.get(cur)
+      if (p === '__root__') return cur
+      cur = p
+    }
+    return null
+  }
+
+  // ── Helpers ────────────────────────────────────────────────────────────────
+  const scoreCol = s => s === null ? '#9ca3af' : s >= 75 ? '#22c55e' : s >= 45 ? '#f59e0b' : '#ef4444'
+  const statusStyle = {
+    healthy:   'background:#dcfce7;color:#15803d',
+    stale:     'background:#fef3c7;color:#92400e',
+    outdated:  'background:#fee2e2;color:#b91c1c',
+    abandoned: 'background:#f3f4f6;color:#374151',
+    vulnerable:'background:#fef3c7;color:#b45309',
+  }
+  const TH = `text-align:left;font-size:11px;font-weight:600;color:#6b7280;text-transform:uppercase;letter-spacing:0.05em;padding:8px 12px;border-bottom:1px solid #e5e7eb;background:#f9fafb`
+
+  function scoreBadge(score) {
+    return score !== null
+      ? `<span style="font-size:13px;font-weight:700;color:${scoreCol(score)}">${score}</span>`
+      : '<span style="font-size:12px;color:#9ca3af">—</span>'
+  }
+  function statusBadge(status) {
+    const s = status && statusStyle[status]
+    return s
+      ? `<span style="font-size:11px;font-weight:600;padding:2px 8px;border-radius:999px;${s}">${status}</span>`
+      : '<span style="font-size:12px;color:#9ca3af">—</span>'
+  }
+  function descLine(n) {
+    return n.description
+      ? `<div style="font-size:11px;color:#6b7280;margin-top:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${n.description.replace(/"/g,'&quot;')}">${n.description}</div>`
+      : ''
+  }
+
+  // ── Group transitive deps under their direct ancestor ─────────────────────
+  const directNodes = data.nodes.filter(n => !n.isRoot && n.isDirect)
+  const transNodes  = data.nodes.filter(n => !n.isRoot && !n.isDirect)
+
+  const childrenOf = new Map()   // directName → transitive nodes[]
+  transNodes.forEach(n => {
+    const da = directAncestor(n.id)
+    if (da) {
+      if (!childrenOf.has(da)) childrenOf.set(da, [])
+      childrenOf.get(da).push(n)
+    }
+  })
+
+  // ── Build rows ────────────────────────────────────────────────────────────
+  let tbody = ''
+  directNodes.forEach((n, i) => {
+    const children   = childrenOf.get(n.id) || []
+    const hasKids    = children.length > 0
+    const countLabel = hasKids ? `<span style="font-size:11px;color:#9ca3af">${children.length} transitive dep${children.length > 1 ? 's' : ''}</span>` : ''
+    const toggleBtn  = hasKids
+      ? `<button onclick="toggleListGroup(${i}, this)" title="Toggle transitive deps"
+           style="width:20px;height:20px;border-radius:4px;border:1px solid #e5e7eb;background:#fff;cursor:pointer;color:#6b7280;padding:0;display:inline-flex;align-items:center;justify-content:center;margin-right:8px;flex-shrink:0;font-size:10px">▶</button>`
+      : `<span style="display:inline-block;width:20px;margin-right:8px;flex-shrink:0"></span>`
+
+    tbody += `<tr style="border-bottom:1px solid #f3f4f6">
+      <td style="padding:10px 16px;max-width:280px">
+        <div style="display:flex;align-items:flex-start">
+          ${toggleBtn}
+          <div style="min-width:0">
+            <div style="font-weight:600;font-size:13px;color:#111827">${n.id}</div>
+            ${descLine(n)}
+          </div>
+        </div>
+      </td>
+      <td style="padding:10px 8px;font-family:monospace;font-size:12px;color:#374151">${n.version}</td>
+      <td style="padding:10px 8px">${statusBadge(n.status)}</td>
+      <td style="padding:10px 8px;text-align:center">${scoreBadge(n.score)}</td>
+      <td style="padding:10px 8px">${countLabel}</td>
+    </tr>`
+
+    // Collapsed transitive sub-rows
+    children.forEach(c => {
+      const immParent = parentOf.get(c.id)
+      const via = immParent && immParent !== '__root__' ? immParent : n.id
+      tbody += `<tr data-group="${i}" style="display:none;border-bottom:1px solid #f8fafc;background:#fafbfc">
+        <td style="padding:8px 16px 8px 48px;max-width:280px">
+          <div style="font-size:12px;color:#374151;font-weight:500">${c.id}</div>
+          ${descLine(c)}
+        </td>
+        <td style="padding:8px 8px;font-family:monospace;font-size:11px;color:#6b7280">${c.version}</td>
+        <td style="padding:8px 8px">${statusBadge(c.status)}</td>
+        <td style="padding:8px 8px;text-align:center">${scoreBadge(c.score)}</td>
+        <td style="padding:8px 8px;font-size:11px;color:#9ca3af">via ${via}</td>
+      </tr>`
+    })
+  })
+
+  listEl.innerHTML = `<table style="border-collapse:collapse;width:100%">
+    <thead><tr>
+      <th style="${TH};padding-left:16px">Package</th>
+      <th style="${TH}">Version</th>
+      <th style="${TH}">Status</th>
+      <th style="${TH};text-align:center">Score</th>
+      <th style="${TH}"></th>
+    </tr></thead>
+    <tbody>${tbody || '<tr><td colspan="5" style="padding:32px;text-align:center;color:#9ca3af">No packages at this depth.</td></tr>'}</tbody>
+  </table>`
+}
+
+// ── Tooltip ───────────────────────────────────────────────────────────────────
+function showTooltip(event, d) {
+  const tt = document.getElementById('graph-tooltip')
+  const c  = d.score === null ? '#9ca3af' : d.score >= 75 ? '#22c55e' : d.score >= 45 ? '#f59e0b' : '#ef4444'
+  let html = `<div style="font-weight:700;font-size:13px;margin-bottom:3px">${d.isRoot ? d.description : d.id}</div>`
+  if (!d.isRoot) {
+    html += `<div style="color:#94a3b8;font-size:11px;margin-bottom:4px">${d.version}</div>`
+    if (d.description) html += `<div style="color:#cbd5e1;margin-bottom:6px">${d.description}</div>`
+    if (d.score !== null) html += `<div>Score <span style="color:${c};font-weight:700">${d.score}/100</span>${d.status ? ' · ' + d.status : ''}</div>`
+    else html += `<div style="color:#9ca3af;font-size:11px">Transitive — not directly analysed</div>`
+  }
+  tt.innerHTML = html
+  tt.style.display = 'block'
+  tt.style.left = (event.clientX + 14) + 'px'
+  tt.style.top  = (event.clientY - 10) + 'px'
+}
+function hideTooltip() { document.getElementById('graph-tooltip').style.display = 'none' }
+
+function resetZoom() {
+  if (!svgRoot || currentLayout === 'list') return
+  const el = document.getElementById('graph-svg')
+  const W  = el.clientWidth || 900
+  const H  = el.clientHeight || 600
+  const t  = currentLayout === 'radial' ? d3.zoomIdentity.translate(W / 2, H / 2) : d3.zoomIdentity
+  svgRoot.transition().duration(400).call(zoomBehavior.transform, t)
+}
+
+let activeStatus = 'all'
+let vulnOnly = false
+let devOnly = false
+let searchQuery = ''
+
+// Init donut chart
+new Chart(document.getElementById('donutChart'), {
+  type: 'doughnut',
+  data: {
+    labels: CHART_DATA.donut.labels,
+    datasets: [{ data: CHART_DATA.donut.data, backgroundColor: CHART_DATA.donut.colors, borderWidth: 2, borderColor: '#fff' }]
+  },
+  options: { plugins: { legend: { position: 'bottom', labels: { font: { size: 11 }, padding: 8 } } }, cutout: '65%' }
+})
+
+// Filter logic
+function applyFilters() {
+  const rows = document.querySelectorAll('.pkg-row')
+  let visible = 0
+  rows.forEach(row => {
+    const status  = row.dataset.status
+    const type    = row.dataset.type
+    const vuln    = row.dataset.vuln === '1'
+    const name    = row.querySelector('td div').textContent.toLowerCase()
+    const show =
+      (activeStatus === 'all' || status === activeStatus) &&
+      (!vulnOnly || vuln) &&
+      (!devOnly || type === 'devDependency') &&
+      (!searchQuery || name.includes(searchQuery.toLowerCase()))
+    row.style.display = show ? '' : 'none'
+    if (show) visible++
+  })
+  document.getElementById('emptyState').style.display = visible === 0 ? 'block' : 'none'
+}
+
+function filterStatus(status) {
+  activeStatus = status
+  document.querySelectorAll('[id^="btn-"]').forEach(b => {
+    b.style.background = b.id === 'btn-' + status ? '#111827' : '#fff'
+    b.style.color = b.id === 'btn-' + status ? '#fff' : '#374151'
+  })
+  applyFilters()
+}
+
+function filterVuln(checked) { vulnOnly = checked; applyFilters() }
+function filterDev(checked)  { devOnly = checked;  applyFilters() }
+function filterSearch(q)     { searchQuery = q;    applyFilters() }
+
+// ── Terminal overlay ──────────────────────────────────────────────────────────
+function createTerminal() {
+  const overlay = document.createElement('div')
+  overlay.id = 'depsee-terminal'
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:9999;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(2px)'
+
+  overlay.innerHTML = `
+    <div style="width:640px;max-width:90vw;background:#0f172a;border-radius:14px;overflow:hidden;box-shadow:0 25px 60px rgba(0,0,0,0.5);font-family:monospace">
+      <div style="padding:12px 16px;background:#1e293b;display:flex;align-items:center;gap:8px;position:relative">
+        <button id="term-dot-close" title="Close / Cancel" style="width:12px;height:12px;border-radius:50%;background:#ef4444;border:none;cursor:pointer;padding:0;display:flex;align-items:center;justify-content:center;font-size:9px;color:transparent;line-height:1" onmouseenter="this.style.color='#7f1d1d'" onmouseleave="this.style.color='transparent'">✕</button>
+        <div style="width:12px;height:12px;border-radius:50%;background:#f59e0b"></div>
+        <div style="width:12px;height:12px;border-radius:50%;background:#22c55e"></div>
+        <span style="margin-left:8px;font-size:12px;color:#64748b">depsee — terminal</span>
+        <span id="term-running-badge" style="margin-left:auto;font-size:10px;color:#60a5fa;font-family:sans-serif">● running</span>
+      </div>
+      <div id="term-body" style="padding:20px;min-height:180px;max-height:360px;overflow-y:auto;font-size:13px;line-height:1.6;color:#e2e8f0"></div>
+      <div id="term-footer" style="padding:12px 16px;background:#1e293b;display:none;justify-content:flex-end">
+        <button id="term-close" style="font-size:12px;padding:6px 16px;border-radius:6px;background:#3b82f6;color:#fff;border:none;cursor:pointer;font-weight:600">Close</button>
+      </div>
+    </div>`
+
+  document.body.appendChild(overlay)
+  document.getElementById('term-close').onclick = () => overlay.remove()
+  // Default red dot handler: just close (no process running yet).
+  // initTermCmd overwrites this with an AbortController-aware handler.
+  document.getElementById('term-dot-close').onclick = () => overlay.remove()
+  return overlay
+}
+
+function termLog(overlay, text, color) {
+  const body = document.getElementById('term-body')
+  const line = document.createElement('div')
+  line.style.color = color || '#e2e8f0'
+  line.textContent = text
+  body.appendChild(line)
+  body.scrollTop = body.scrollHeight
+}
+
+function termDone(overlay, success) {
+  // Remove the "● running" badge — process is over
+  const badge = document.getElementById('term-running-badge')
+  if (badge) badge.remove()
+  // Show the Close button in the footer
+  const footer = document.getElementById('term-footer')
+  footer.style.display = 'flex'
+  if (success) {
+    termLog(overlay, '', '')
+    termLog(overlay, '✓ Done! Reloading in 2s…', '#22c55e')
+    setTimeout(() => { overlay.remove(); window.location.reload() }, 2000)
+  }
+}
+
+
+</script>
+<style>
+@keyframes spin { from { transform: rotate(0deg) } to { transform: rotate(360deg) } }
+</style>
+</body>
+</html>
