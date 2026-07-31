@@ -1,3 +1,4 @@
+import { useUser } from "@/context/UserContext";
 import { useState, useEffect, useMemo } from "react";
 import { hasPermission } from "../../utils/permissions";
 import { logger } from "@/utils/logger";
@@ -53,13 +54,6 @@ type Tutorial = {
 	isNew?: boolean;
 	isUpdated?: boolean;
 	functionalRoles?: string[];
-};
-
-type User = {
-	id: string;
-	name: string;
-	role: "admin" | "coordinator" | "functional" | "member";
-	functionalRole?: string;
 };
 
 const isNewTutorial = (updatedAt: string): boolean => {
@@ -920,9 +914,9 @@ function TutorialModal({
 }
 
 export default function Tutorials() {
+	const { user: contextUser, loading: userLoading } = useUser();
 	const [loading, setLoading] = useState(true);
 	const [tutorials, setTutorials] = useState<Tutorial[]>([]);
-	const [currentUser, setCurrentUser] = useState<User | null>(null);
 	const [searchTerm, setSearchTerm] = useState("");
 	const [selectedCategory, setSelectedCategory] = useState<
 		TutorialCategory | "all"
@@ -933,6 +927,23 @@ export default function Tutorials() {
 	const [isModalOpen, setIsModalOpen] = useState(false);
 	const [editingTutorial, setEditingTutorial] = useState<Tutorial | null>(null);
 
+	const currentUser = useMemo(() => {
+		if (!contextUser) return null;
+		return {
+			id: String(contextUser.id),
+			name: `${contextUser.firstName} ${contextUser.lastName}`,
+			role: contextUser.role as
+				| "admin"
+				| "coordinator"
+				| "functional"
+				| "member",
+			functionalRole:
+				(contextUser as any).function ||
+				(contextUser as any).functional_role ||
+				"",
+		};
+	}, [contextUser]);
+
 	const canManageTutorials = currentUser
 		? hasPermission(currentUser.role, "canManageGuides")
 		: false;
@@ -941,33 +952,6 @@ export default function Tutorials() {
 			try {
 				setLoading(true);
 				const token = localStorage.getItem("accessToken");
-
-				const userResponse = await fetch("/api/profile", {
-					headers: {
-						Authorization: `Bearer ${token}`,
-						"Content-Type": "application/json",
-					},
-				});
-
-				if (!userResponse.ok) {
-					throw new Error("Błąd pobierania profilu");
-				}
-
-				const userData = await userResponse.json();
-				logger.debug("📊 Dane użytkownika z API:", userData);
-
-				const mappedUser: User = {
-					id: userData.id,
-					name:
-						`${userData.firstName || ""} ${userData.lastName || ""}`.trim() ||
-						"Użytkownik",
-					role: userData.role || "member",
-					functionalRole: userData.function || userData.functional_role || "",
-				};
-
-				setCurrentUser(mappedUser);
-				logger.debug("✅ Zmapowany użytkownik:", mappedUser);
-				logger.debug("🔍 Rola użytkownika:", mappedUser.role);
 
 				const tutorialsResponse = await fetch("/api/tutorials", {
 					headers: {
@@ -1126,7 +1110,7 @@ export default function Tutorials() {
 			(t) => t.category === category && canViewTutorial(t),
 		).length;
 	};
-	if (loading || !currentUser) {
+	if (loading || userLoading || !currentUser) {
 		return (
 			<div className={styles.tutorials}>
 				<div className={styles.loadingState}>

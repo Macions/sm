@@ -1,3 +1,4 @@
+import { useUser } from "@/context/UserContext";
 import { useState, useMemo, useEffect } from "react";
 import { safeNavigate } from "@/utils/safeNavigation";
 import { useNavigate } from "react-router-dom";
@@ -113,7 +114,7 @@ type User = {
 	name: string;
 	email: string;
 	role: "admin" | "coordinator" | "member";
-	pillar?: ProjectPillar | null;
+	pillar?: string | null;
 	pillars?: string[];
 };
 
@@ -1148,47 +1149,26 @@ function IdeaCard({
 }
 export default function Projects() {
 	const navigate = useNavigate();
+	const { user: contextUser } = useUser();
 	const [projects, setProjects] = useState<Project[]>([]);
 	const [users, setUsers] = useState<User[]>([]);
 	const [pillars, setPillars] = useState<string[]>([]);
-	const [currentUser, setCurrentUser] = useState<User | null>(() => {
-		const userStr = localStorage.getItem("user");
-		if (userStr) {
-			try {
-				const user = JSON.parse(userStr);
-				return {
-					id: user.id.toString(),
-					name: `${user.first_name} ${user.last_name}`,
-					email: user.email,
-					role: user.role as "admin" | "coordinator" | "member",
-					pillar: user.pillar || null,
-				};
-			} catch {
-				return null;
-			}
-		}
-		return null;
-	});
+	const [currentUser, setCurrentUser] = useState<User | null>(null);
+	const [loading, setLoading] = useState(true);
 
 	useEffect(() => {
-		const userStr = localStorage.getItem("user");
-		if (userStr) {
-			try {
-				const user = JSON.parse(userStr);
-				setCurrentUser({
-					id: user.id.toString(),
-					name: `${user.first_name} ${user.last_name}`,
-					email: user.email,
-					role: user.role as "admin" | "coordinator" | "member",
-					pillar: user.pillar || null,
-				});
-			} catch {
-				setCurrentUser(null);
-			}
-		} else {
-			setCurrentUser(null);
+		if (contextUser) {
+			setCurrentUser({
+				id: String(contextUser.id),
+				name: `${contextUser.firstName} ${contextUser.lastName}`,
+				email: contextUser.email || "",
+				role: contextUser.role as "admin" | "coordinator" | "member",
+				pillar: (contextUser as any).pillar || null,
+				pillars: (contextUser as any).pillars || [],
+			});
 		}
-	}, []);
+	}, [contextUser]);
+
 	const [searchTerm, setSearchTerm] = useState("");
 	const [selectedPillar, setSelectedPillar] = useState<ProjectPillar | "all">(
 		"all",
@@ -1465,6 +1445,7 @@ export default function Projects() {
 
 	useEffect(() => {
 		const fetchIdeas = async () => {
+			setLoading(true);
 			try {
 				const token = localStorage.getItem("accessToken");
 				logger.debug("🔍 Pobieranie pomysłów z API...");
@@ -1522,6 +1503,8 @@ export default function Projects() {
 			} catch (error) {
 				logger.error("❌ Błąd pobierania pomysłów:", error);
 				setIdeas(MOCK_IDEAS);
+			} finally {
+				setLoading(false);
 			}
 		};
 
@@ -1539,6 +1522,7 @@ export default function Projects() {
 	}, []);
 	useEffect(() => {
 		const fetchProjects = async () => {
+			setLoading(true);
 			try {
 				const token = localStorage.getItem("accessToken");
 				logger.debug("🔍 Pobieranie projektów z API...");
@@ -1600,6 +1584,14 @@ export default function Projects() {
 				logger.error("❌ Błąd ładowania projektów:", error);
 				logger.debug("📋 Używam MOCK_PROJECTS jako fallback");
 				setProjects(MOCK_PROJECTS);
+			} finally {
+				console.log("🔄 [Projects] BEFORE setTimeout - loading:", loading);
+				setTimeout(() => {
+					console.log(
+						"🔄 [Projects] INSIDE setTimeout - ustawiam loading na false",
+					);
+					setLoading(false);
+				}, 300);
 			}
 		};
 
@@ -1687,39 +1679,6 @@ export default function Projects() {
 	const canManageProjects =
 		currentUser?.role === "admin" || currentUser?.role === "coordinator";
 
-	useEffect(() => {
-		const fetchCurrentUser = async () => {
-			try {
-				const token = localStorage.getItem("accessToken");
-				const response = await fetch("/api/profile", {
-					headers: {
-						Authorization: `Bearer ${token}`,
-						"Content-Type": "application/json",
-					},
-				});
-
-				if (response.ok) {
-					const data = await response.json();
-					logger.debug("👤 Profil użytkownika:", data);
-					logger.debug("🏷️ Filar użytkownika:", data.pillar);
-					logger.debug("🏷️ WSZYSTKIE filary:", data.pillars);
-
-					setCurrentUser({
-						id: data.id.toString(),
-						name: `${data.firstName} ${data.lastName}`,
-						email: data.email,
-						role: data.role,
-						pillar: data.pillar || null,
-						pillars: data.pillars || [],
-					});
-				}
-			} catch (error) {
-				logger.error("❌ Błąd pobierania profilu:", error);
-			}
-		};
-
-		fetchCurrentUser();
-	}, []);
 	const filteredProjects = useMemo(() => {
 		return projects.filter((project) => {
 			const matchesSearch =
@@ -2069,7 +2028,11 @@ export default function Projects() {
 
 			{activeTab === "projects" ? (
 				<div className={styles.projectsGrid}>
-					{filteredProjects.length === 0 ? (
+					{loading ? (
+						<div className={styles.loading}>
+							<div className={styles.loading__spinner}></div>
+						</div>
+					) : filteredProjects.length === 0 ? (
 						<div className={styles.emptyState}>
 							<AlertCircle size={48} className={styles.emptyState__icon} />
 							<h3 className={styles.emptyState__title}>Brak projektów</h3>
@@ -2110,7 +2073,11 @@ export default function Projects() {
 				</div>
 			) : (
 				<div className={styles.ideasGrid}>
-					{filteredIdeas.length === 0 ? (
+					{loading ? (
+						<div className={styles.loadingContainer}>
+							<div className={styles.loading__spinner}></div>
+						</div>
+					) : filteredIdeas.length === 0 ? (
 						<div className={styles.emptyState}>
 							<Lightbulb size={48} className={styles.emptyState__icon} />
 							<h3 className={styles.emptyState__title}>Brak pomysłów</h3>

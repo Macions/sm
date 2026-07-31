@@ -1,17 +1,9 @@
-e
-
-/*
-   GŁÓWNY KONTENER
-
 .members {
-	padding: 24px 32px;
-	max-width: 1440px;
+	/* padding: 24px 32px; */
+	/* max-width: 1440px; */
 	margin: 0 auto;
 	width: 100%;
 }
-
-/*
-   NAGŁÓWEK
 
 .header {
 	display: flex;
@@ -37,9 +29,6 @@ e
 	color: var(--gray-600, #64748b);
 	margin: 0;
 }
-
-/*
-   FILTRY
 
 .filters {
 	display: flex;
@@ -180,9 +169,6 @@ e
 	color: var(--gray-900, #1a1a2e);
 }
 
-/* --------------------------------------------------------------------------
-   SORTOWANIE
-   -------------------------------------------------------------------------- */
 .sorting {
 	display: flex;
 	align-items: center;
@@ -233,9 +219,6 @@ e
 	transform: rotate(180deg);
 }
 
-/* --------------------------------------------------------------------------
-   SIATKA CZŁONKÓW
-   -------------------------------------------------------------------------- */
 .membersGrid {
 	display: grid;
 	grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
@@ -247,9 +230,6 @@ e
 	gap: 12px;
 }
 
-/* --------------------------------------------------------------------------
-   KARTA CZŁONKA
-   -------------------------------------------------------------------------- */
 .memberCard {
 	background: #fff;
 	border-radius: 14px;
@@ -352,11 +332,11 @@ e
 
 .memberCardList .memberCard__status {
 	margin: 0;
-    display: flex;
-    gap: 5px;
-    align-items: center;
-    padding: 4px 7px;
-    border-radius: 4px;
+	display: flex;
+	gap: 5px;
+	align-items: center;
+	padding: 4px 7px;
+	border-radius: 4px;
 }
 
 .statusTrial {
@@ -443,9 +423,9 @@ e
 .memberCard__info {
 	flex: 1;
 	min-width: 150px;
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
 }
 
 .memberCard__actions {
@@ -480,9 +460,6 @@ e
 	color: var(--gray-800, #1e293b);
 }
 
-/* --------------------------------------------------------------------------
-   PUSTY STAN
-   -------------------------------------------------------------------------- */
 .emptyState {
 	grid-column: 1 / -1;
 	display: flex;
@@ -515,9 +492,6 @@ e
 	max-width: 400px;
 }
 
-/* --------------------------------------------------------------------------
-   MODAL PROFILU
-   -------------------------------------------------------------------------- */
 .modalOverlay {
 	position: fixed;
 	inset: 0;
@@ -836,9 +810,6 @@ e
 	background: var(--purple-700, #6d28d9);
 }
 
-/* --------------------------------------------------------------------------
-   RESPONSYWNOŚĆ
-   -------------------------------------------------------------------------- */
 @media (width <= 768px) {
 	.members {
 		padding: 16px;
@@ -957,7 +928,6 @@ e
 	}
 }
 
-
 .header__addBtn {
 	display: flex;
 	align-items: center;
@@ -979,7 +949,6 @@ e
 	transform: translateY(-2px);
 	box-shadow: 0 6px 20px rgb(124 58 237 / 35%);
 }
-
 
 .loadingState {
 	display: flex;
@@ -1019,6 +988,6 @@ e
 }
 
 .memberCardOnVacation {
-    opacity: 0.5;
-    filter: grayscale(0.5);
+	opacity: 0.5;
+	filter: grayscale(0.5);
 }
