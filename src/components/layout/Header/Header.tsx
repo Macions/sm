@@ -1,5 +1,4 @@
-import { safeNavigate } from '@/utils/safeNavigation';
-import { useNavigate } from 'react-router-dom';
+import { logger } from "@/utils/logger";
 import { useState, useRef, useEffect } from "react";
 import {
 	Search,
@@ -24,10 +23,6 @@ interface HeaderProps {
 	userId?: string;
 }
 
-
-
-
-
 type NotificationType = "info" | "success" | "warning" | "error";
 
 interface Notification {
@@ -41,31 +36,17 @@ interface Notification {
 	time?: string;
 }
 
-
-
-
-
-export default function Header({
-	title,
-	onMenuClick,
-	collapsed,
-	userRole = "MEMBER",
-	userId = "1",
-}: HeaderProps) {
-	const navigate = useNavigate();
-
+export default function Header({ title, onMenuClick, collapsed }: HeaderProps) {
 	const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
 	const [notifications, setNotifications] = useState<Notification[]>([]);
-	const [loading, setLoading] = useState(false);
+	const [_loading, setLoading] = useState(false);
 	const [visibleCount, setVisibleCount] = useState(15);
 	const dropdownRef = useRef<HTMLDivElement>(null);
-
 
 	const fetchNotifications = async () => {
 		try {
 			setLoading(true);
 			const token = localStorage.getItem("accessToken");
-
 
 			const response = await fetch("/api/dashboard/notifications?limit=20", {
 				headers: {
@@ -81,7 +62,6 @@ export default function Header({
 			const data = await response.json();
 			logger.debug("📊 Powiadomienia w Header:", data);
 
-
 			setNotifications(data);
 		} catch (error) {
 			logger.error("Błąd ładowania powiadomień:", error);
@@ -89,7 +69,6 @@ export default function Header({
 			setLoading(false);
 		}
 	};
-
 
 	const markAsRead = async (id: string) => {
 		try {
@@ -103,7 +82,6 @@ export default function Header({
 				},
 			});
 
-
 			setNotifications((prev) =>
 				prev.map((n) => (n.id === id ? { ...n, read: true } : n)),
 			);
@@ -111,7 +89,6 @@ export default function Header({
 			logger.error("Błąd oznaczania jako przeczytane:", error);
 		}
 	};
-
 
 	const markAllAsRead = async () => {
 		try {
@@ -131,7 +108,6 @@ export default function Header({
 		}
 	};
 
-
 	const deleteNotification = async (id: string) => {
 		try {
 			const token = localStorage.getItem("accessToken");
@@ -150,49 +126,14 @@ export default function Header({
 		}
 	};
 
-
 	useEffect(() => {
 		fetchNotifications();
 	}, []);
-
-
-
-
-
-	const formatTime = (createdAt: Date | string | undefined): string => {
-		if (!createdAt) return "przed chwilą";
-
-		const date =
-			typeof createdAt === "string" ? new Date(createdAt) : createdAt;
-
-		if (isNaN(date.getTime())) return "przed chwilą";
-
-		const now = new Date();
-		const diffMs = now.getTime() - date.getTime();
-		const diffSec = Math.floor(diffMs / 1000);
-		const diffMin = Math.floor(diffSec / 60);
-		const diffHour = Math.floor(diffMin / 60);
-		const diffDay = Math.floor(diffHour / 24);
-
-
-		if (diffMin < 1) return "przed chwilą";
-		if (diffMin < 60) return `${diffMin} min temu`;
-		if (diffHour < 24) return `${diffHour} godz. temu`;
-		if (diffDay === 1) return "1 dzień temu";
-		if (diffDay < 7) return `${diffDay} dni temu`;
-		if (diffDay < 30) {
-			const weeks = Math.floor(diffDay / 7);
-			return `${weeks} ${weeks === 1 ? "tydzień" : "tygodnie"} temu`;
-		}
-		const months = Math.floor(diffDay / 30);
-		return `${months} ${months === 1 ? "miesiąc" : "miesięcy"} temu`;
-	};
 
 	const filteredNotifications = notifications;
 	const unreadCount = filteredNotifications.filter((n) => !n.read).length;
 	const displayedNotifications = filteredNotifications.slice(0, visibleCount);
 	const hasMore = filteredNotifications.length > visibleCount;
-
 
 	useEffect(() => {
 		const handleClickOutside = (event: MouseEvent) => {
@@ -339,7 +280,7 @@ export default function Header({
 													<div className={styles.notification__footer}>
 														<span className={styles.notification__time}>
 															<Clock size={12} />
-															{notification.time || "przed chwilą"}  {}
+															{notification.time || "przed chwilą"} {}
 														</span>
 														{!notification.read && (
 															<span className={styles.notification__unreadDot}>
