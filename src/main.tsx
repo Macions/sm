@@ -1,5 +1,5 @@
-import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
+import { logger } from "./utils/logger";
 import { HashRouter } from "react-router-dom";
 import "@fortawesome/fontawesome-free/css/all.min.css";
 import { GoogleOAuthProvider } from "@react-oauth/google";
@@ -7,7 +7,6 @@ import App from "./App";
 import "./styles/reset.css";
 import "./styles/variables.css";
 import "./styles/globals.css";
-
 
 const API_URL = "https://sm-backend-po9k.onrender.com";
 const originalFetch = window.fetch;
@@ -20,8 +19,6 @@ window.fetch = function (...args) {
 	}
 	return originalFetch(url, options);
 };
-
-
 
 (window as any).goTo = (path: string) => {
 	logger.debug(`🔄 [goTo] -> ${path}`);

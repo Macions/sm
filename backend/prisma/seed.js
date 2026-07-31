@@ -1,4 +1,5 @@
 // prisma/seed.js
+import { logger } from "./utils/logger";
 const { PrismaClient } = require('@prisma/client');
 
 const prisma = new PrismaClient();

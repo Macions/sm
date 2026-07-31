@@ -1,7 +1,6 @@
-
-
 import { useState, useEffect } from "react";
-import { safeNavigate } from '@/utils/safeNavigation';
+import { logger } from "@/utils/logger";
+import { safeNavigate } from "@/utils/safeNavigation";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import Sidebar from "../components/layout/Sidebar/Sidebar";
 import Header from "../components/layout/Header/Header";
@@ -25,7 +24,6 @@ export default function DashboardLayout() {
 					return;
 				}
 
-
 				const response = await fetch("/api/profile", {
 					headers: { Authorization: `Bearer ${token}` },
 				});
@@ -41,16 +39,12 @@ export default function DashboardLayout() {
 				logger.debug("📋 role:", userData.role);
 				setCurrentUser(userData);
 
-
 				let hasSocialAccess = false;
-
 
 				if (userData.role === "admin") {
 					hasSocialAccess = true;
 					logger.debug("✅ Admin - dostęp do Social Media");
-				}
-
-				else {
+				} else {
 					try {
 						logger.debug("🔍 Sprawdzam przez /api/social/members/check...");
 						const socialCheck = await fetch("/api/social/members/check", {
@@ -61,10 +55,14 @@ export default function DashboardLayout() {
 							const checkData = await socialCheck.json();
 							logger.debug("📊 Wynik check:", checkData);
 
-							hasSocialAccess = checkData.isMember === true || checkData.isSocialMember === true;
+							hasSocialAccess =
+								checkData.isMember === true ||
+								checkData.isSocialMember === true;
 							logger.debug(`📊 hasSocialAccess: ${hasSocialAccess}`);
 						} else {
-							logger.debug(`❌ /api/social/members/check zwrócił ${socialCheck.status}`);
+							logger.debug(
+								`❌ /api/social/members/check zwrócił ${socialCheck.status}`,
+							);
 							hasSocialAccess = false;
 						}
 					} catch (error) {
@@ -73,9 +71,10 @@ export default function DashboardLayout() {
 					}
 				}
 
-				logger.debug(`🎯 Ostateczny wynik: hasSocialAccess = ${hasSocialAccess}`);
+				logger.debug(
+					`🎯 Ostateczny wynik: hasSocialAccess = ${hasSocialAccess}`,
+				);
 				setIsSocialMember(hasSocialAccess);
-
 			} catch (error) {
 				logger.error("❌ Błąd:", error);
 				setIsSocialMember(false);
@@ -86,7 +85,6 @@ export default function DashboardLayout() {
 
 		checkSocialMediaAccess();
 	}, []);
-
 
 	useEffect(() => {
 		const path = location.pathname.replace("/", "") || "dashboard";
@@ -128,12 +126,12 @@ export default function DashboardLayout() {
 	};
 
 	if (loading) {
-	return (
-		<div className={styles.loadingContainer}>
-			<div className={styles.loading__spinner}></div>
-		</div>
-	);
-}
+		return (
+			<div className={styles.loadingContainer}>
+				<div className={styles.loading__spinner}></div>
+			</div>
+		);
+	}
 
 	return (
 		<div

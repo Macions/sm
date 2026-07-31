@@ -1,47 +1,47 @@
-
-import { useState, useEffect } from 'react';
-import { authService } from '../services/auth.service';
+import { useState, useEffect } from "react";
+import { authService } from "../../backend/src/services/auth.service";
+import { logger } from "@/utils/logger";
 
 export interface User {
-    id: string;
-    name: string;
-    role: 'admin' | 'coordinator' | 'member';
-    teamId?: string;
+	id: string;
+	name: string;
+	role: "admin" | "coordinator" | "member";
+	teamId?: string;
 }
 
 export function useAuth() {
-    const [user, setUser] = useState<User | null>(null);
-    const [loading, setLoading] = useState(true);
-    const [isAuthenticated, setIsAuthenticated] = useState(false);
+	const [user, setUser] = useState<User | null>(null);
+	const [loading, setLoading] = useState(true);
+	const [isAuthenticated, setIsAuthenticated] = useState(false);
 
-    useEffect(() => {
-        const loadUser = async () => {
-            try {
-                const currentUser = authService.getCurrentUser();
-                if (currentUser) {
-                    setUser({
-                        id: currentUser.id,
-                        name: `${currentUser.first_name} ${currentUser.last_name}`,
-                        role: currentUser.role as 'admin' | 'coordinator' | 'member',
-                        teamId: currentUser.team || undefined,
-                    });
-                    setIsAuthenticated(true);
-                }
-            } catch (error) {
-                logger.error('Błąd ładowania użytkownika:', error);
-            } finally {
-                setLoading(false);
-            }
-        };
+	useEffect(() => {
+		const loadUser = async () => {
+			try {
+				const currentUser = authService.getCurrentUser();
+				if (currentUser) {
+					setUser({
+						id: currentUser.id,
+						name: `${currentUser.first_name} ${currentUser.last_name}`,
+						role: currentUser.role as "admin" | "coordinator" | "member",
+						teamId: currentUser.team || undefined,
+					});
+					setIsAuthenticated(true);
+				}
+			} catch (error) {
+				logger.error("Błąd ładowania użytkownika:", error);
+			} finally {
+				setLoading(false);
+			}
+		};
 
-        loadUser();
-    }, []);
+		loadUser();
+	}, []);
 
-    const logout = () => {
-        authService.logout();
-        setUser(null);
-        setIsAuthenticated(false);
-    };
+	const logout = () => {
+		authService.logout();
+		setUser(null);
+		setIsAuthenticated(false);
+	};
 
-    return { user, loading, isAuthenticated, logout };
+	return { user, loading, isAuthenticated, logout };
 }

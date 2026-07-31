@@ -1,3 +1,4 @@
+import { logger } from "./utils/logger";
 const bcrypt = require('bcrypt');
 const hash = '$2b$10$yg2jdEHeXi0s7cbz5J8uA.wgLituq1Nfo7/tADOr32FL.fIPpYCOm';
 
