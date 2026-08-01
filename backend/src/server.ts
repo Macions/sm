@@ -20,13 +20,6 @@ import { syncMembers } from "./jobs/syncMembers";
 
 updateLeaveStatus();
 
-const FREKWENCJA_DB_CONFIG = {
-	host: process.env.FREKWENCJA_DB_HOST || "57.128.253.89",
-	user: process.env.FREKWENCJA_DB_USER || "czarnecki",
-	password: process.env.FREKWENCJA_DB_PASSWORD || "",
-	database: process.env.FREKWENCJA_DB_NAME || "SM_Frekwencja",
-	port: 3306,
-};
 cron.schedule("0 7,14,21 * * *", async () => {
 	logger.debug("🔄 [CRON] Uruchamiam synchronizację frekwencji...");
 	try {
@@ -60,11 +53,7 @@ const PUBLIC_ENDPOINTS = [
 	"/api/status",
 	"/uploads",
 ];
-const isPublicPath = (path: string): boolean => {
-	return PUBLIC_ENDPOINTS.some(
-		(endpoint) => path === endpoint || path.startsWith(endpoint),
-	);
-};
+
 type LogActionType =
 	| "CREATE"
 	| "UPDATE"
@@ -107,7 +96,7 @@ app.use(
 	}),
 );
 
-app.use((req, res, next) => {
+app.use((_req, res, next) => {
 	res.setHeader("X-Frame-Options", "DENY");
 
 	res.setHeader("X-Content-Type-Options", "nosniff");
@@ -394,7 +383,6 @@ app.use(async (req: any, res: any, next: any) => {
 	const originalJson = res.json;
 	const originalStatus = res.status;
 	const originalSend = res.send;
-	const originalEnd = res.end;
 
 	let statusCode = 200;
 	let responseBody: any = null;
@@ -1200,7 +1188,6 @@ app.get(
 	async (req: any, res) => {
 		try {
 			const userId = req.user?.id;
-			const userRole = req.user?.role;
 
 			if (!userId) {
 				return res.status(401).json({ error: "Brak autoryzacji" });
@@ -1639,7 +1626,6 @@ app.get(
 	async (req: any, res) => {
 		try {
 			const { id } = req.params;
-			const userId = req.user?.id;
 			const userRole = req.user?.role;
 
 			if (userRole !== "admin" && userRole !== "coordinator") {
@@ -2714,11 +2700,6 @@ app.post("/api/leaves", authMiddleware, async (req: any, res) => {
 			? `${user.first_name || ""} ${user.last_name || ""}`.trim()
 			: "Nieznany";
 
-		const admin = await prisma.user.findUnique({
-			where: { id: 63 },
-			select: { id: true },
-		});
-
 		const boardMember = await prisma.user.findFirst({
 			where: {
 				role_id: 2,
@@ -3058,7 +3039,7 @@ app.post("/api/profile/skills", authMiddleware, async (req: any, res) => {
 			where: { user_id: userId },
 			orderBy: { created_at: "desc" },
 		});
-		let skills = onboarding?.skills ? JSON.parse(onboarding.skills) : [];
+		const skills = onboarding?.skills ? JSON.parse(onboarding.skills) : [];
 		if (!skills.includes(skill)) skills.push(skill);
 
 		await prisma.onboarding_data.update({
@@ -3085,15 +3066,15 @@ app.delete(
 				where: { user_id: userId },
 				orderBy: { created_at: "desc" },
 			});
-			let skills = onboarding?.skills ? JSON.parse(onboarding.skills) : [];
-			skills = skills.filter((s: string) => s !== skillToRemove);
+			const skills = onboarding?.skills ? JSON.parse(onboarding.skills) : [];
+			const updatedSkills = skills.filter((s: string) => s !== skillToRemove);
 
 			await prisma.onboarding_data.update({
 				where: { id: onboarding!.id },
-				data: { skills: JSON.stringify(skills) },
+				data: { skills: JSON.stringify(updatedSkills) },
 			});
 
-			res.json({ success: true, skills });
+			res.json({ success: true, skills: updatedSkills });
 		} catch (error) {
 			logger.error("❌ Błąd:", error);
 			res.status(500).json({ error: "Nie udało się usunąć umiejętności" });
@@ -3106,7 +3087,6 @@ app.use(
 		err: any,
 		req: express.Request,
 		res: express.Response,
-		next: express.NextFunction,
 	) => {
 		logger.error("❌ Błąd:", err);
 
@@ -4983,7 +4963,7 @@ app.get("/api/admin/logs", authMiddleware, async (req: any, res) => {
 
 		const skip = (page - 1) * limit;
 
-		let where: any = {};
+		const where: any = {};
 
 		if (category && category !== "all") {
 			where.category = category;

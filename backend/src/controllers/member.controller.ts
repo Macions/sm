@@ -5,16 +5,6 @@ import bcrypt from "bcrypt";
 
 const prisma = new PrismaClient() as any;
 
-function mapRoleId(roleId: number | null): string {
-	const roleMap: Record<number, string> = {
-		1: "admin",
-		2: "coordinator",
-		3: "coordinator",
-		4: "member",
-	};
-	return roleMap[roleId || 4] || "member";
-}
-
 export const getMembers = async (req: Request, res: Response) => {
 	try {
 		const members = await prisma.user.findMany({

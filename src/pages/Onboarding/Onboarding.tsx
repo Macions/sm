@@ -353,7 +353,7 @@ export default function Onboarding({ initialData = {} }: OnboardingProps) {
 			};
 
 			const fullName = `${formData.firstName.trim()} ${formData.lastName.trim()}`;
-			let emailPart = normalize(fullName.toLowerCase())
+			const emailPart = normalize(fullName.toLowerCase())
 				.replace(/\s+/g, ".")
 				.replace(/\.+/g, ".")
 				.replace(/^\.|\.$/g, "");

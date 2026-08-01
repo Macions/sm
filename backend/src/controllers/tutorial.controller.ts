@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-const { v4: uuidv4 } = require("uuid");
+import { v4 as uuidv4 } from "uuid";
 import path from "path";
 import fs from "fs";
 import multer from "multer";
