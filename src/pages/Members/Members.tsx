@@ -2127,7 +2127,7 @@ export default function Members({ title }: { title?: string }) {
 					return;
 				}
 
-				let teamName = member.team;
+				const teamName = member.team;
 				if (teamName && !teamsList.some((t) => t.name === teamName)) {
 					if (!teamName || !teamName.trim()) {
 						toast.error("Nazwa nowego zespołu jest wymagana");
