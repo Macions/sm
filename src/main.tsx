@@ -13,7 +13,11 @@ import "@fontsource/ubuntu/300.css";
 import "@fontsource/ubuntu/500.css";
 import "@fontsource/ubuntu/700.css";
 
-const API_URL = "https://sm-backend-po9k.onrender.com";
+// 🔥 API_URL - bezpośrednio (usuwamy process.env)
+const API_URL = "http://localhost:3306";
+
+console.log(`🔗 [main.tsx] API_URL: ${API_URL}`);
+
 const originalFetch = window.fetch;
 window.fetch = function (...args) {
 	const [url, options] = args;

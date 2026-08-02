@@ -128,7 +128,8 @@ export default defineConfig({
 		allowedHosts: ["turbine-protector-aluminum.ngrok-free.dev"],
 		proxy: {
 			"/api": {
-				target: "https://sm-backend-po9k.onrender.com",
+				// target: "https://sm-backend-po9k.onrender.com",
+				target: "http://localhost:3306",
 				changeOrigin: true,
 				secure: false,
 			},
@@ -170,7 +171,8 @@ export default defineConfig({
 	},
 	define: {
 		"process.env.VITE_API_URL": JSON.stringify(
-			"https://sm-backend-po9k.onrender.com",
+			// "https://sm-backend-po9k.onrender.com",
+			"http://localhost:3306",
 		),
 	},
 });

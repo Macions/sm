@@ -41,8 +41,8 @@ interface OnboardingData {
 	email: string;
 	phone: string;
 	province: string;
-	joinMonth?: number;
-	joinYear?: number;
+	joinMonth?: number | string;
+	joinYear?: number | string;
 	isTrial?: boolean;
 
 	developmentAreas: DevelopmentArea[];
@@ -167,6 +167,8 @@ export default function Onboarding({ initialData = {} }: OnboardingProps) {
 		mpContacts: initialData.mpContacts || [],
 		institutionContacts: initialData.institutionContacts || [],
 		otherContacts: initialData.otherContacts || [],
+		joinMonth: initialData.joinMonth || "",
+		joinYear: initialData.joinYear || "",
 	});
 
 	const [newSkill, setNewSkill] = useState("");
@@ -437,7 +439,11 @@ export default function Onboarding({ initialData = {} }: OnboardingProps) {
 
 			let joinDate = null;
 			if (formData.joinMonth && formData.joinYear && !formData.isTrial) {
-				joinDate = `${formData.joinYear}-${String(formData.joinMonth).padStart(2, "0")}-01`;
+				const month = Number(formData.joinMonth);
+				const year = Number(formData.joinYear);
+				if (!isNaN(month) && !isNaN(year)) {
+					joinDate = `${year}-${String(month).padStart(2, "0")}-01`;
+				}
 			}
 
 			logger.debug("📅 [joinDate] wynik:", joinDate);
@@ -487,42 +493,13 @@ export default function Onboarding({ initialData = {} }: OnboardingProps) {
 				localStorage.getItem("onboardingCompleted"),
 			);
 
-			try {
-				logger.debug("📨 [ONBOARDING] Tworzę powiadomienie powitalne...");
-
-				const welcomeResponse = await fetch("/api/notifications/welcome", {
-					method: "POST",
-					headers: {
-						"Content-Type": "application/json",
-						Authorization: `Bearer ${token}`,
-					},
-				});
-
-				if (welcomeResponse.ok) {
-					const welcomeData = await welcomeResponse.json();
-					logger.debug("✅ [ONBOARDING] Powiadomienie utworzone:", welcomeData);
-				} else {
-					const errorText = await welcomeResponse.text();
-					logger.warn(
-						"⚠️ [ONBOARDING] Nie udało się utworzyć powiadomienia:",
-						welcomeResponse.status,
-						errorText,
-					);
-				}
-			} catch (welcomeError) {
-				logger.error(
-					"⚠️ [ONBOARDING] Błąd tworzenia powiadomienia:",
-					welcomeError,
-				);
-			}
-
 			logger.debug("🚀 [ONBOARDING] Przekierowuję na dashboard...");
 			safeNavigate("/dashboard", navigate);
 		} catch (error) {
 			logger.error("❌ Błąd zapisu onboardingu:", error);
 			alert(
 				"❌ Wystąpił błąd: " +
-					(error instanceof Error ? error.message : "Nieznany błąd"),
+				(error instanceof Error ? error.message : "Nieznany błąd"),
 			);
 		} finally {
 			setIsSubmitting(false);
@@ -568,8 +545,7 @@ export default function Onboarding({ initialData = {} }: OnboardingProps) {
 				<div className={styles.header}>
 					<h1 className={styles.title}>Witaj w Sile Młodych!</h1>
 					<p className={styles.subtitle}>
-						Wypełnij formularz, abyśmy mogli lepiej poznać Twoje zainteresowania
-						i dopasować Cię do odpowiednich działań w organizacji.
+						Wypełnij formularz, abyśmy mogli lepiej poznać Twoje zainteresowania i umiejętności.
 					</p>
 				</div>
 
@@ -702,7 +678,7 @@ export default function Onboarding({ initialData = {} }: OnboardingProps) {
 									</label>
 									<select
 										className={styles.form__select}
-										value={formData.joinMonth}
+										value={formData.joinMonth || ""}
 										onChange={(e) =>
 											handleInputChange("joinMonth", parseInt(e.target.value))
 										}
@@ -724,7 +700,7 @@ export default function Onboarding({ initialData = {} }: OnboardingProps) {
 									<label className={styles.form__label}>Rok *</label>
 									<select
 										className={styles.form__select}
-										value={formData.joinYear}
+										value={formData.joinYear || ""}
 										onChange={(e) =>
 											handleInputChange("joinYear", parseInt(e.target.value))
 										}
@@ -1278,80 +1254,80 @@ export default function Onboarding({ initialData = {} }: OnboardingProps) {
 									formData.mpContacts.length > 0 ||
 									formData.institutionContacts.length > 0 ||
 									formData.otherContacts.length > 0) && (
-									<div className={styles.summary__section}>
-										<h4 className={styles.summary__title}>Kontakty prywatne</h4>
-										<div className={styles.summary__grid}>
-											{formData.salaContacts.length > 0 && (
-												<div>
-													<span className={styles.summary__label}>
-														Kontakty do sal
-													</span>
-													<div className={styles.summary__tags}>
-														{formData.salaContacts.map((contact) => (
-															<span
-																key={contact}
-																className={styles.summary__tag}
-															>
-																{contact}
-															</span>
-														))}
+										<div className={styles.summary__section}>
+											<h4 className={styles.summary__title}>Kontakty prywatne</h4>
+											<div className={styles.summary__grid}>
+												{formData.salaContacts.length > 0 && (
+													<div>
+														<span className={styles.summary__label}>
+															Kontakty do sal
+														</span>
+														<div className={styles.summary__tags}>
+															{formData.salaContacts.map((contact) => (
+																<span
+																	key={contact}
+																	className={styles.summary__tag}
+																>
+																	{contact}
+																</span>
+															))}
+														</div>
 													</div>
-												</div>
-											)}
-											{formData.mpContacts.length > 0 && (
-												<div>
-													<span className={styles.summary__label}>
-														Kontakty do posłów
-													</span>
-													<div className={styles.summary__tags}>
-														{formData.mpContacts.map((contact) => (
-															<span
-																key={contact}
-																className={styles.summary__tag}
-															>
-																{contact}
-															</span>
-														))}
+												)}
+												{formData.mpContacts.length > 0 && (
+													<div>
+														<span className={styles.summary__label}>
+															Kontakty do posłów
+														</span>
+														<div className={styles.summary__tags}>
+															{formData.mpContacts.map((contact) => (
+																<span
+																	key={contact}
+																	className={styles.summary__tag}
+																>
+																	{contact}
+																</span>
+															))}
+														</div>
 													</div>
-												</div>
-											)}
-											{formData.institutionContacts.length > 0 && (
-												<div>
-													<span className={styles.summary__label}>
-														Kontakty do instytucji
-													</span>
-													<div className={styles.summary__tags}>
-														{formData.institutionContacts.map((contact) => (
-															<span
-																key={contact}
-																className={styles.summary__tag}
-															>
-																{contact}
-															</span>
-														))}
+												)}
+												{formData.institutionContacts.length > 0 && (
+													<div>
+														<span className={styles.summary__label}>
+															Kontakty do instytucji
+														</span>
+														<div className={styles.summary__tags}>
+															{formData.institutionContacts.map((contact) => (
+																<span
+																	key={contact}
+																	className={styles.summary__tag}
+																>
+																	{contact}
+																</span>
+															))}
+														</div>
 													</div>
-												</div>
-											)}
-											{formData.otherContacts.length > 0 && (
-												<div>
-													<span className={styles.summary__label}>
-														Inne kontakty
-													</span>
-													<div className={styles.summary__tags}>
-														{formData.otherContacts.map((contact) => (
-															<span
-																key={contact}
-																className={styles.summary__tag}
-															>
-																{contact}
-															</span>
-														))}
+												)}
+												{formData.otherContacts.length > 0 && (
+													<div>
+														<span className={styles.summary__label}>
+															Inne kontakty
+														</span>
+														<div className={styles.summary__tags}>
+															{formData.otherContacts.map((contact) => (
+																<span
+																	key={contact}
+																	className={styles.summary__tag}
+																>
+																	{contact}
+																</span>
+															))}
+														</div>
 													</div>
-												</div>
-											)}
+												)}
+											</div>
 										</div>
-									</div>
-								)}
+									)}
 
 								{formData.description && (
 									<div className={styles.summary__section}>
