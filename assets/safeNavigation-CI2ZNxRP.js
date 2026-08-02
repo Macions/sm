@@ -1,0 +1,1 @@
+import{c as e}from"./index-6SKQiIKP.js";var t=(t,n)=>{if([`javascript:`,`data:`,`vbscript:`].some(e=>t.toLowerCase().startsWith(e))){e.warn(`❌ Niebezpieczne przekierowanie zablokowane:`,t);return}n(t.replace(/([^:])\/\/+/g,`$1/`))};export{t};
