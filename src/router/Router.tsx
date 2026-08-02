@@ -87,7 +87,10 @@ function AppRoutes() {
 						)
 					}
 				/>
-
+				<Route
+					path="/onboarding"
+					element={<Onboarding onComplete={() => { }} />}
+				/>
 				<Route element={<DashboardLayout />}>
 					<Route path="/" element={<Dashboard />} />
 					<Route path="/dashboard" element={<Dashboard />} />
@@ -96,10 +99,6 @@ function AppRoutes() {
 					<Route path="/guides" element={<Tutorials />} />
 					<Route path="/members" element={<Members title="Członkowie" />} />
 					<Route path="/vacancies" element={<Vacancies title="Wakaty" />} />
-					<Route
-						path="/onboarding"
-						element={<Onboarding onComplete={() => {}} />}
-					/>
 					<Route path="/profile" element={<Profile title="Mój profil" />} />
 					<Route path="/leave" element={<Leave title="Urlop" />} />
 					<Route

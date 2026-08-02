@@ -86,6 +86,14 @@ const JWT_SECRET =
 
 const prisma = new PrismaClient() as any;
 
+// Dodaj na początku pliku, przed innymi routami
+app.get("/api/health", (req, res) => {
+	res.status(200).json({
+		status: "ok",
+		timestamp: new Date().toISOString(),
+		uptime: process.uptime()
+	});
+});
 app.use(
 	cors({
 		origin: "*",
@@ -991,11 +999,11 @@ app.get("/api/members", authMiddleware, async (req: any, res) => {
 					user.created_at.toISOString().split("T")[0],
 				vacation: activeLeave
 					? {
-							startDate: activeLeave.start_date.toISOString().split("T")[0],
-							endDate: activeLeave.end_date.toISOString().split("T")[0],
-							type: activeLeave.scope === "team" ? "team" : "organization",
-							teamId: activeLeave.affected_teams || undefined,
-						}
+						startDate: activeLeave.start_date.toISOString().split("T")[0],
+						endDate: activeLeave.end_date.toISOString().split("T")[0],
+						type: activeLeave.scope === "team" ? "team" : "organization",
+						teamId: activeLeave.affected_teams || undefined,
+					}
 					: null,
 				onboarding_data: onboarding,
 			};
@@ -1554,7 +1562,7 @@ app.get("/api/applications", authMiddleware, async (req: any, res) => {
 				userId: app.user_id.toString(),
 				userName: app.user
 					? `${app.user.first_name || ""} ${app.user.last_name || ""}`.trim() ||
-						"Nieznany"
+					"Nieznany"
 					: "Nieznany",
 				userEmail: app.user?.email || "",
 				message: app.message || "",
@@ -1675,7 +1683,7 @@ app.get(
 					userId: app.user_id.toString(),
 					userName: app.user
 						? `${app.user.first_name || ""} ${app.user.last_name || ""}`.trim() ||
-							"Nieznany"
+						"Nieznany"
 						: "Nieznany",
 					userEmail: app.user?.email || "",
 					message: app.message || "",
@@ -2838,11 +2846,11 @@ app.put("/api/leaves/:id", authMiddleware, async (req: any, res) => {
 				status: status || existingLeave.status,
 				...(status === "approved" || status === "rejected"
 					? {
-							approved_by:
-								`${currentUser?.first_name || ""} ${currentUser?.last_name || ""}`.trim() ||
-								"Nieznany",
-							approved_at: new Date(),
-						}
+						approved_by:
+							`${currentUser?.first_name || ""} ${currentUser?.last_name || ""}`.trim() ||
+							"Nieznany",
+						approved_at: new Date(),
+					}
 					: {}),
 			},
 		});
@@ -3087,22 +3095,20 @@ app.use(
 		err: any,
 		req: express.Request,
 		res: express.Response,
+		next: express.NextFunction,
 	) => {
 		logger.error("❌ Błąd:", err);
 
+		// Sprawdź czy to błąd multer
 		if (err instanceof multer.MulterError) {
 			if (err.message.includes("File too large")) {
-				return res
-					.status(400)
-					.json({ error: "Plik jest za duży. Maksymalny rozmiar: 10MB" });
+				return res.status(400).json({ error: "Plik jest za duży. Maksymalny rozmiar: 10MB" });
 			}
 			if (err.message.includes("too many files")) {
 				return res.status(400).json({ error: "Maksymalnie 5 plików na raz" });
 			}
 			if (err.message.includes("Unexpected field")) {
-				return res
-					.status(400)
-					.json({ error: "Nieoczekiwany plik. Sprawdź nazwę pola (files)" });
+				return res.status(400).json({ error: "Nieoczekiwany plik. Sprawdź nazwę pola (files)" });
 			}
 			return res.status(400).json({ error: err.message });
 		}
@@ -3111,8 +3117,28 @@ app.use(
 			return res.status(400).json({ error: err.message });
 		}
 
-		res.status(500).json({ error: err.message || "Wewnętrzny błąd serwera" });
-	},
+		// 🔥 POPRAWNY HANDLER BŁĘDÓW - BEZPIECZNIEJSZY
+		try {
+			if (typeof res.status === 'function') {
+				res.status(500).json({ error: err.message || "Wewnętrzny błąd serwera" });
+			} else {
+				// Jeśli res.status nie jest funkcją, użyj alternatywnego sposobu
+				res.statusCode = 500;
+				res.setHeader('Content-Type', 'application/json');
+				res.end(JSON.stringify({ error: err.message || "Wewnętrzny błąd serwera" }));
+			}
+		} catch (e) {
+			// Ostateczna deska ratunku
+			try {
+				res.statusCode = 500;
+				res.setHeader('Content-Type', 'application/json');
+				res.end(JSON.stringify({ error: "Wewnętrzny błąd serwera" }));
+			} catch (finalError) {
+				console.error('💀 Krytyczny błąd w handlerze błędów:', finalError);
+				// Nawet to nie działa - nic więcej nie możemy zrobić
+			}
+		}
+	}
 );
 
 app.get("/api/social/members", authMiddleware, async (req: any, res) => {

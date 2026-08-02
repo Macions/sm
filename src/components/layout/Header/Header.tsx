@@ -18,6 +18,7 @@ interface HeaderProps {
 	title: string;
 	onMenuClick?: () => void;
 	collapsed: boolean;
+	hideNotifications?: boolean;
 	userRole?: "MEMBER" | "COORDINATOR" | "SOCIAL_MEDIA" | "ADMIN" | "BOARD";
 	userName?: string;
 	userId?: string;
@@ -36,9 +37,10 @@ interface Notification {
 	time?: string;
 }
 
-export default function Header({ title, onMenuClick, collapsed }: HeaderProps) {
+export default function Header({ title, onMenuClick, collapsed, hideNotifications = false }: HeaderProps) {
 	const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
 	const [notifications, setNotifications] = useState<Notification[]>([]);
+	const [unreadCount, setUnreadCount] = useState(0);
 	const [_loading, setLoading] = useState(false);
 	const [visibleCount, setVisibleCount] = useState(15);
 	const dropdownRef = useRef<HTMLDivElement>(null);
@@ -63,6 +65,10 @@ export default function Header({ title, onMenuClick, collapsed }: HeaderProps) {
 			logger.debug("📊 Powiadomienia w Header:", data);
 
 			setNotifications(data);
+
+			// ✅ AKTUALIZUJ LICZNIK
+			const unread = data.filter((n: Notification) => !n.read).length;
+			setUnreadCount(unread);
 		} catch (error) {
 			logger.error("Błąd ładowania powiadomień:", error);
 		} finally {
@@ -103,11 +109,11 @@ export default function Header({ title, onMenuClick, collapsed }: HeaderProps) {
 			});
 
 			setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+			setUnreadCount(0);  // ← DODANE!
 		} catch (error) {
 			logger.error("Błąd oznaczania wszystkich:", error);
 		}
 	};
-
 	const deleteNotification = async (id: string) => {
 		try {
 			const token = localStorage.getItem("accessToken");
@@ -127,10 +133,40 @@ export default function Header({ title, onMenuClick, collapsed }: HeaderProps) {
 	};
 
 	const filteredNotifications = notifications;
-	const unreadCount = filteredNotifications.filter((n) => !n.read).length;
 	const displayedNotifications = filteredNotifications.slice(0, visibleCount);
 	const hasMore = filteredNotifications.length > visibleCount;
 
+	const fetchUnreadCount = async () => {
+		try {
+			const token = localStorage.getItem("accessToken");
+			const response = await fetch("/api/dashboard/notifications/unread-count", {
+				headers: { Authorization: `Bearer ${token}` },
+			});
+			if (response.ok) {
+				const data = await response.json();
+				// Aktualizuj tylko licznik bez pełnej listy
+				setUnreadCount(data.count);
+			}
+		} catch (error) {
+			logger.error("Błąd pobierania licznika:", error);
+		}
+	};
+	useEffect(() => {
+		// Pobierz powiadomienia przy starcie
+		fetchNotifications();
+
+		// Ustaw interval na co 30 sekund
+		const interval = setInterval(() => {
+			if (isNotificationsOpen) {
+				fetchNotifications(); // Odśwież tylko jeśli dropdown jest otwarty
+			} else {
+				// Pobierz tylko licznik (HEAD request lub osobny endpoint)
+				fetchUnreadCount();
+			}
+		}, 30000); // co 30 sekund
+
+		return () => clearInterval(interval);
+	}, []);
 	useEffect(() => {
 		const handleClickOutside = (event: MouseEvent) => {
 			if (
@@ -199,117 +235,119 @@ export default function Header({ title, onMenuClick, collapsed }: HeaderProps) {
 			</div>
 
 			<div className={styles.topbar__actions}>
-				<div className={styles.notificationsWrapper} ref={dropdownRef}>
-					<button
-						className={styles.iconBtn}
-						onClick={toggleNotifications}
-						aria-label="Powiadomienia"
-					>
-						<Bell size={18} />
-						{unreadCount > 0 && (
-							<span className={styles.iconBtn__badge}>{unreadCount}</span>
-						)}
-					</button>
+				{/* 🔥 POKAŻ TYLKO GDY NIE JEST UKRYTE */}
+				{!hideNotifications && (
+					<div className={styles.notificationsWrapper} ref={dropdownRef}>
+						<button
+							className={styles.iconBtn}
+							onClick={toggleNotifications}
+							aria-label="Powiadomienia"
+						>
+							<Bell size={18} />
+							{unreadCount > 0 && (
+								<span className={styles.iconBtn__badge}>{unreadCount}</span>
+							)}
+						</button>
 
-					{}
-					{isNotificationsOpen && (
-						<div className={styles.notificationsDropdown}>
-							<div className={styles.notificationsDropdown__header}>
-								<span className={styles.notificationsDropdown__title}>
-									Powiadomienia
-								</span>
-								<div className={styles.notificationsDropdown__actions}>
-									{unreadCount > 0 && (
-										<button
-											className={styles.notificationsDropdown__markAll}
-											onClick={markAllAsRead}
-										>
-											<Check size={14} />
-											Oznacz wszystkie
-										</button>
-									)}
-									<button
-										className={styles.notificationsDropdown__close}
-										onClick={() => setIsNotificationsOpen(false)}
-									>
-										<X size={16} />
-									</button>
-								</div>
-							</div>
-
-							<div className={styles.notificationsDropdown__list}>
-								{filteredNotifications.length === 0 ? (
-									<div className={styles.notificationsDropdown__empty}>
-										<Bell size={32} />
-										<span>Brak powiadomień</span>
-									</div>
-								) : (
-									<>
-										{displayedNotifications.map((notification) => (
-											<div
-												key={notification.id}
-												className={`${styles.notification} ${!notification.read ? styles.notification__unread : ""}`}
-												onClick={() => handleNotificationClick(notification)}
-											>
-												<div className={styles.notification__icon}>
-													{getTypeIcon(notification.type)}
-												</div>
-												<div className={styles.notification__content}>
-													<div className={styles.notification__header}>
-														<span className={styles.notification__title}>
-															{notification.title}
-														</span>
-														<button
-															className={styles.notification__delete}
-															onClick={(e) => {
-																e.stopPropagation();
-																deleteNotification(notification.id);
-															}}
-															aria-label="Usuń powiadomienie"
-														>
-															<X size={12} />
-														</button>
-													</div>
-													<p className={styles.notification__message}>
-														{notification.message}
-													</p>
-													<div className={styles.notification__footer}>
-														<span className={styles.notification__time}>
-															<Clock size={12} />
-															{notification.time || "przed chwilą"} {}
-														</span>
-														{!notification.read && (
-															<span className={styles.notification__unreadDot}>
-																Nowe
-															</span>
-														)}
-														{notification.link && (
-															<span className={styles.notification__linkHint}>
-																Kliknij aby przejść
-															</span>
-														)}
-													</div>
-												</div>
-											</div>
-										))}
-
-										{hasMore && (
+						{isNotificationsOpen && (
+							<div className={styles.notificationsDropdown}>
+								<div className={styles.notificationsDropdown__header}>
+									<span className={styles.notificationsDropdown__title}>
+										Powiadomienia
+									</span>
+									<div className={styles.notificationsDropdown__actions}>
+										{unreadCount > 0 && (
 											<button
-												className={styles.notificationsDropdown__loadMore}
-												onClick={loadMore}
+												className={styles.notificationsDropdown__markAll}
+												onClick={markAllAsRead}
 											>
-												<ChevronDown size={16} />
-												Pokaż więcej (
-												{filteredNotifications.length - visibleCount}{" "}
-												pozostałych)
+												<Check size={14} />
+												Oznacz wszystkie
 											</button>
 										)}
-									</>
-								)}
+										<button
+											className={styles.notificationsDropdown__close}
+											onClick={() => setIsNotificationsOpen(false)}
+										>
+											<X size={16} />
+										</button>
+									</div>
+								</div>
+
+								<div className={styles.notificationsDropdown__list}>
+									{filteredNotifications.length === 0 ? (
+										<div className={styles.notificationsDropdown__empty}>
+											<Bell size={32} />
+											<span>Brak powiadomień</span>
+										</div>
+									) : (
+										<>
+											{displayedNotifications.map((notification) => (
+												<div
+													key={notification.id}
+													className={`${styles.notification} ${!notification.read ? styles.notification__unread : ""}`}
+													onClick={() => handleNotificationClick(notification)}
+												>
+													<div className={styles.notification__icon}>
+														{getTypeIcon(notification.type)}
+													</div>
+													<div className={styles.notification__content}>
+														<div className={styles.notification__header}>
+															<span className={styles.notification__title}>
+																{notification.title}
+															</span>
+															<button
+																className={styles.notification__delete}
+																onClick={(e) => {
+																	e.stopPropagation();
+																	deleteNotification(notification.id);
+																}}
+																aria-label="Usuń powiadomienie"
+															>
+																<X size={12} />
+															</button>
+														</div>
+														<p className={styles.notification__message}>
+															{notification.message}
+														</p>
+														<div className={styles.notification__footer}>
+															<span className={styles.notification__time}>
+																<Clock size={12} />
+																{notification.time || "przed chwilą"} { }
+															</span>
+															{!notification.read && (
+																<span className={styles.notification__unreadDot}>
+																	Nowe
+																</span>
+															)}
+															{notification.link && (
+																<span className={styles.notification__linkHint}>
+																	Kliknij aby przejść
+																</span>
+															)}
+														</div>
+													</div>
+												</div>
+											))}
+
+											{hasMore && (
+												<button
+													className={styles.notificationsDropdown__loadMore}
+													onClick={loadMore}
+												>
+													<ChevronDown size={16} />
+													Pokaż więcej (
+													{filteredNotifications.length - visibleCount}{" "}
+													pozostałych)
+												</button>
+											)}
+										</>
+									)}
+								</div>
 							</div>
-						</div>
-					)}
-				</div>
+						)}
+					</div>
+				)}
 			</div>
 		</div>
 	);
