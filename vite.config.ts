@@ -13,24 +13,24 @@ const isGitHubPages =
 
 // 🔒 LISTA PODEJRZANYCH WZORCÓW (blokowane zapytania)
 const SUSPICIOUS_PATTERNS = [
-	/\.\.\//, // path traversal
-	/%2e%2e%2f/i, // URL encoded ../
-	/\.\.%2f/i, // URL encoded ../
-	/WEB-INF/i, // Java web files
-	/system\.ini/i, // Windows system files
-	/win\.ini/i, // Windows system files
-	/\.env/i, // Environment variables
-	/\.git/i, // Git repository
-	/sleep\+/i, // Time-based attacks
-	/exec/i, // Command execution
-	/timeout/i, // Time-based attacks
-	/\.\.\\/, // Windows path traversal
-	/%5c%2e%2e%5c/i, // URL encoded Windows path traversal
-	/\/etc\/passwd/i, // Linux system files
-	/\/proc\/self\/environ/i, // Linux system files
-	/\/boot\.ini/i, // Windows boot files
-	/\.htaccess/i, // Apache config
-	/\.htpasswd/i, // Apache passwords
+	/\.\.\//,
+	/%2e%2e%2f/i,
+	/\.\.%2f/i,
+	/WEB-INF/i,
+	/system\.ini/i,
+	/win\.ini/i,
+	/\.env/i,
+	/\.git/i,
+	/sleep\+/i,
+	/exec/i,
+	/timeout/i,
+	/\.\.\\/,
+	/%5c%2e%2e%5c/i,
+	/\/etc\/passwd/i,
+	/\/proc\/self\/environ/i,
+	/\/boot\.ini/i,
+	/\.htaccess/i,
+	/\.htpasswd/i,
 ];
 
 export default defineConfig({
@@ -56,20 +56,52 @@ export default defineConfig({
 						return;
 					}
 
-					// Dodaj nagłówki bezpieczeństwa
-					const csp = [
+					// 🔥 WARUNKOWY CSP - inne dla lokalnego, inne dla produkcji
+					const isDevelopment = process.env.NODE_ENV === "development";
+
+					let csp = [
 						"default-src 'self'",
-						"script-src 'self' 'unsafe-inline' 'unsafe-eval' http://localhost:* https://*.ngrok-free.dev",
+						"script-src 'self' 'unsafe-inline' 'unsafe-eval'",
 						"style-src 'self' 'unsafe-inline'",
 						"img-src 'self' data: https:",
 						"font-src 'self' data:",
-						"connect-src 'self' http://localhost:* https://*.ngrok-free.dev https://sm-backend-po9k.onrender.com https://api.silamlodych.pl",
+						"connect-src 'self'",
 						"base-uri 'self'",
 						"form-action 'self'",
 						"frame-ancestors 'none'",
-					].join("; ");
+					];
 
-					res.setHeader("Content-Security-Policy", csp);
+					if (isDevelopment) {
+						// 🔓 DEVELOPMENT - bardziej liberalny dla lokalnych testów
+						csp = [
+							"default-src 'self'",
+							"script-src 'self' 'unsafe-inline' 'unsafe-eval' http://localhost:* https://*.ngrok-free.dev https://accounts.google.com https://apis.google.com",
+							"style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://fonts.gstatic.com https://accounts.google.com",
+							"img-src 'self' data: https: http://localhost:*",
+							"font-src 'self' data: https://fonts.gstatic.com https://fonts.googleapis.com",
+							"connect-src 'self' http://localhost:* https://*.ngrok-free.dev https://sm-backend-po9k.onrender.com https://api.silamlodych.pl https://accounts.google.com https://*.googleapis.com",
+							"frame-src https://accounts.google.com https://*.google.com",
+							"base-uri 'self'",
+							"form-action 'self'",
+							"frame-ancestors 'none'",
+						];
+					} else {
+						// 🔒 PRODUKCJA - restrykcyjny CSP
+						csp = [
+							"default-src 'self'",
+							"script-src 'self' https://accounts.google.com https://apis.google.com",
+							"style-src 'self' https://fonts.googleapis.com https://fonts.gstatic.com https://accounts.google.com",
+							"img-src 'self' data: https:",
+							"font-src 'self' https://fonts.gstatic.com https://fonts.googleapis.com",
+							"connect-src 'self' https://sm-backend-po9k.onrender.com https://api.silamlodych.pl https://accounts.google.com https://*.googleapis.com",
+							"frame-src https://accounts.google.com https://*.google.com",
+							"base-uri 'self'",
+							"form-action 'self'",
+							"frame-ancestors 'none'",
+						];
+					}
+
+					res.setHeader("Content-Security-Policy", csp.join("; "));
 					res.setHeader("X-Frame-Options", "DENY");
 					res.setHeader("X-Content-Type-Options", "nosniff");
 					res.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
@@ -108,6 +140,7 @@ export default defineConfig({
 				path.resolve(__dirname, "src"),
 				path.resolve(__dirname, "public"),
 				path.resolve(__dirname, "index.html"),
+				path.resolve(__dirname, ".."), // Dla fontów z node_modules
 			],
 			deny: [
 				".env",
