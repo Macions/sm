@@ -600,6 +600,9 @@
 
 .modal__sectionTitle {
 	font-size: 16px;
+	display: flex;
+	align-items: center;
+	gap: 8px;
 	font-weight: 600;
 	color: var(--gray-800, #1e293b);
 	margin: 0 0 12px;
@@ -990,4 +993,82 @@
 .memberCardOnVacation {
 	opacity: 0.5;
 	filter: grayscale(0.5);
+}
+
+/* frontend/src/pages/Members/Members.module.css */
+
+.contributionStatsGrid {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+	gap: 12px;
+	margin-top: 8px;
+}
+
+.contributionStatItem {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	padding: 10px 14px;
+	background: #f9fafb;
+	border-radius: 8px;
+}
+
+.contributionStatLabel {
+	font-size: 12px;
+	color: #6b7280;
+	font-weight: 500;
+}
+
+.contributionStatValue {
+	font-size: 16px;
+	font-weight: 600;
+	color: #1f2937;
+}
+
+.statusPaid {
+	color: #2ecc71;
+}
+
+.statusPending {
+	color: #f5a623;
+}
+
+.statusOverdue {
+	color: #ef4444;
+}
+
+.statusNone {
+	color: #9ca3af;
+}
+
+.contributionEmpty {
+	color: #6b7280;
+	font-size: 14px;
+	padding: 12px 0;
+}
+
+.contributionHistoryGrid {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	margin-top: 8px;
+}
+
+.historyItem {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	padding: 4px 10px;
+	background: white;
+	border-radius: 6px;
+	font-size: 13px;
+	box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.historyMonth {
+	color: #374151;
+}
+
+.historyStatus {
+	font-size: 14px;
 }

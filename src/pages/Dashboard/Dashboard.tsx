@@ -15,9 +15,27 @@ import {
 	Bell,
 	CheckCircle,
 	AlertCircle,
+	Wallet,
+	CreditCard,
 } from "lucide-react";
 import styles from "./Dashboard.module.css";
-
+function getMonthName(month: number): string {
+	const months = [
+		"Styczeń",
+		"Luty",
+		"Marzec",
+		"Kwiecień",
+		"Maj",
+		"Czerwiec",
+		"Lipiec",
+		"Sierpień",
+		"Wrzesień",
+		"Październik",
+		"Listopad",
+		"Grudzień",
+	];
+	return months[month - 1] || month.toString();
+}
 type Notification = {
 	id: string;
 	message: string;
@@ -41,7 +59,37 @@ type DashboardStats = {
 	announcements: number;
 	newGuides: number;
 };
+type ContributionStats = {
+	hasContributions?: boolean;
+	currentMonth: {
+		status: "paid" | "pending";
+		amount: number;
+		monthName: string;
+		month: number;
+		year: number;
+		monthsPaid: number;
+	};
+	summary: {
+		overdueMonths: number;
+		totalPaid: number;
+		totalContributions: number;
+	};
+	history: Array<{
+		month: number;
+		year: number;
+		monthName: string;
+		status: string;
+		amount: number;
+		monthsPaid: number;
+	}>;
+};
 
+const PILLAR_MAP: Record<string, string> = {
+	Konferencyjny: "Filar Konferencyjny",
+	Projektowy: "Filar Projektowy",
+	Rzeczniczy: "Filar Rzeczniczy",
+	Symulacyjny: "Filar Symulacyjny",
+};
 const QUICK_ACTIONS: QuickAction[] = [
 	{
 		id: "projects",
@@ -106,9 +154,20 @@ const STATUS_COLOR_MAP: Record<string, string> = {
 	"Okres próbny": "#ff8989",
 };
 
+const transformPillars = (pillarsString: string): string => {
+	if (!pillarsString) return "";
+	return pillarsString
+		.split(",")
+		.map((p: string) => p.trim())
+		.filter(Boolean)
+		.map((p: string) => PILLAR_MAP[p] || p)
+		.join(", ");
+};
 export default function Dashboard() {
 	const navigate = useNavigate();
 	const { user, loading: userLoading } = useUser();
+
+	const displayName = user?.firstName || "Użytkowniku";
 
 	const [checkingOnboarding, setCheckingOnboarding] = useState(true);
 	const [error, setError] = useState<string | null>(null);
@@ -116,10 +175,12 @@ export default function Dashboard() {
 	// Osobne stany dla każdej sekcji
 	const [stats, setStats] = useState<DashboardStats | null>(null);
 	const [notifications, setNotifications] = useState<Notification[]>([]);
-
+	const [contributionStats, setContributionStats] =
+		useState<ContributionStats | null>(null);
 	// Osobne stany ładowania
 	const [loadingStats, setLoadingStats] = useState(true);
 	const [loadingNotifs, setLoadingNotifs] = useState(true);
+	const [loadingContributions, setLoadingContributions] = useState(true);
 
 	useEffect(() => {
 		const checkOnboarding = async () => {
@@ -217,6 +278,33 @@ export default function Dashboard() {
 			}
 		};
 
+		// ⬇️⬇️⬇️ PRZENIESIONE DO ŚRODKA useEffect ⬇️⬇️⬇️
+		const fetchContributions = async () => {
+			try {
+				console.log("💰 [Dashboard] Pobieram statystyki składek...");
+				setLoadingContributions(true);
+				const token = localStorage.getItem("accessToken");
+
+				const res = await fetch("/api/dashboard/contributions", {
+					signal: controller.signal,
+					headers: {
+						Authorization: `Bearer ${token}`, // ✅ TO MUSI BYĆ!
+						"Content-Type": "application/json",
+					},
+				});
+
+				if (!res.ok) throw new Error("Nie udało się pobrać statystyk składek");
+				const data = await res.json();
+				console.log("💰 [Dashboard] Dane składek:", data);
+				setContributionStats(data);
+			} catch (err) {
+				if (err instanceof Error && err.name === "AbortError") return;
+				console.error("❌ [Dashboard] Błąd składek:", err);
+			} finally {
+				setLoadingContributions(false);
+			}
+		};
+
 		const fetchNotifs = async () => {
 			try {
 				console.log("🔔 [Dashboard] Pobieram powiadomienia...");
@@ -246,16 +334,17 @@ export default function Dashboard() {
 			}
 		};
 
-		// ✅ WYWOŁANIE - to jest kluczowe!
-		console.log("🚀 [Dashboard] Wywołuję fetchStats i fetchNotifs");
-		Promise.all([fetchStats(), fetchNotifs()]);
+		// ⬇️⬇️⬇️ DODAJ fetchContributions do Promise.all ⬇️⬇️⬇️
+		console.log(
+			"🚀 [Dashboard] Wywołuję fetchStats, fetchContributions i fetchNotifs",
+		);
+		Promise.all([fetchStats(), fetchContributions(), fetchNotifs()]); // ✅ DODANE
 
 		return () => {
 			console.log("🧹 [Dashboard] Cleanup");
 			controller.abort();
 		};
 	}, []);
-
 	const getGreeting = useCallback(() => {
 		const hour = new Date().getHours();
 		if (hour >= 4 && hour < 21) return "Dzień dobry";
@@ -345,6 +434,60 @@ export default function Dashboard() {
 				color: "#4A6FE8",
 				bgColor: "#EFEBFD",
 			},
+			// DODAJ STATYSTYKĘ SKŁADEK TUTAJ (po members)
+			...(contributionStats
+				? [
+						{
+							id: "contribution",
+							label: (() => {
+								const { month, monthName, year, monthsPaid } =
+									contributionStats.currentMonth;
+								if (monthsPaid > 1) {
+									const months = [];
+									for (let i = 0; i < monthsPaid; i++) {
+										const m = ((month - i + 11) % 12) + 1;
+										months.push(m);
+									}
+									const monthNames = months.map((m) => getMonthName(m));
+									return `Składka ${monthNames.reverse().join("-")} ${year}`;
+								}
+								return `Składka ${monthName} ${year}`;
+							})(),
+							value:
+								contributionStats.hasContributions === false
+									? ""
+									: `${contributionStats.currentMonth.amount.toFixed(2)} zł`,
+							subtext:
+								contributionStats.hasContributions === false
+									? "Nie dotyczy"
+									: contributionStats.currentMonth.status === "paid"
+										? `Opłacona (${contributionStats.currentMonth.monthsPaid} mies.)`
+										: contributionStats.summary.overdueMonths > 0
+											? `${contributionStats.summary.overdueMonths} mies. zaległości`
+											: "Nieopłacona",
+							icon:
+								contributionStats.hasContributions === false ? (
+									<AlertCircle size={24} /> // ← Nowa ikona
+								) : contributionStats.currentMonth.status === "paid" ? (
+									<CreditCard size={24} />
+								) : (
+									<Wallet size={24} />
+								),
+							color:
+								contributionStats.hasContributions === false
+									? "#6B7280" // ← Szary kolor
+									: contributionStats.currentMonth.status === "paid"
+										? "#2ECC71"
+										: "#F5A623",
+							bgColor:
+								contributionStats.hasContributions === false
+									? "#F3F4F6" // ← Jasnoszary
+									: contributionStats.currentMonth.status === "paid"
+										? "#ECFDF5"
+										: "#FEF9E7",
+						},
+					]
+				: []),
 			{
 				id: "projects",
 				label: "Aktywne projekty",
@@ -385,7 +528,7 @@ export default function Dashboard() {
 		}
 
 		return baseStats;
-	}, [stats, membershipDuration]);
+	}, [stats, membershipDuration, contributionStats]);
 
 	const handleQuickAction = useCallback(
 		(action: QuickAction) => {
@@ -453,21 +596,10 @@ export default function Dashboard() {
 					/>
 					<div className={styles.welcomeCard__text}>
 						<h1 className={styles.welcomeCard__title}>
-							{getGreeting()}, {user?.firstName || "Użytkowniku"}!
+							{getGreeting()}, {displayName}!
 						</h1>
 						<div className={styles.welcomeCard__info}>
-							<span className={styles.welcomeCard__role}>
-								{userLoading ? (
-									<span
-										className={styles.skeleton}
-										style={{ width: 80, display: "inline-block" }}
-									>
-										 
-									</span>
-								) : (
-									roleText
-								)}
-							</span>
+							<span className={styles.welcomeCard__role}>{roleText}</span>
 							<span className={styles.welcomeCard__divider}>•</span>
 							<span className={styles.welcomeCard__team}>
 								{userLoading ? (
@@ -475,10 +607,13 @@ export default function Dashboard() {
 										className={styles.skeleton}
 										style={{ width: 60, display: "inline-block" }}
 									>
-										 
+										&nbsp;
 									</span>
+								) : // ✅ TRANSFORMACJA FILARÓW
+								user?.pillars ? (
+									transformPillars(user.pillars)
 								) : (
-									user?.team || "—"
+									"—"
 								)}
 							</span>
 							<span className={styles.welcomeCard__divider}>•</span>
@@ -490,16 +625,7 @@ export default function Dashboard() {
 									className={styles.welcomeCard__statusDot}
 									style={{ background: statusColor }}
 								/>
-								{userLoading ? (
-									<span
-										className={styles.skeleton}
-										style={{ width: 60, display: "inline-block" }}
-									>
-										 
-									</span>
-								) : (
-									statusText
-								)}
+								{statusText}
 							</span>
 						</div>
 					</div>
@@ -508,10 +634,10 @@ export default function Dashboard() {
 
 			{/* Statystyki - skeleton gdy się ładują */}
 			<div className={styles.stats}>
-				{loadingStats ? (
+				{loadingStats || loadingContributions ? (
 					// Skeleton dla statystyk
 					<>
-						{[1, 2, 3, 4].map((i) => (
+						{[1, 2, 3, 4, 5].map((i) => (
 							<div key={i} className={styles.statCard}>
 								<div
 									className={`${styles.skeleton} ${styles.skeletonCircle}`}

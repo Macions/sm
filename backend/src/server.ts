@@ -7,8 +7,11 @@ import { UserController } from "./controllers/user.controller";
 import { authMiddleware } from "./middleware/auth.middleware";
 import mysql from "mysql2/promise";
 import memberRoutes from "./routes/member.routes";
+import contributionRoutes from "./routes/contribution.routes";
+import { syncContributions } from "./jobs/syncContributions";
 import { syncAttendance } from "./jobs/syncAttendance";
 import cron from "node-cron";
+import dashboardRoutes from "./routes/dashboard.routes";
 import { updateLeaveStatus } from "./jobs/updateLeaveStatus";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
@@ -91,7 +94,7 @@ app.get("/api/health", (req, res) => {
 	res.status(200).json({
 		status: "ok",
 		timestamp: new Date().toISOString(),
-		uptime: process.uptime()
+		uptime: process.uptime(),
 	});
 });
 app.use(
@@ -972,6 +975,14 @@ app.get("/api/members", authMiddleware, async (req: any, res) => {
 
 			const teamString = teams.length > 0 ? teams.join(", ") : "Brak zespołu";
 
+			// ============================================================
+			// 🔥 DODANE - POBRANIE FILARÓW Z POLA `pillars`
+			// ============================================================
+			const pillarList = user.pillars
+				? user.pillars.split(", ").filter(Boolean)
+				: [];
+			const pillarString = pillarList.length > 0 ? pillarList.join(", ") : null;
+
 			const today = new Date();
 			today.setHours(0, 0, 0, 0);
 
@@ -991,19 +1002,20 @@ app.get("/api/members", authMiddleware, async (req: any, res) => {
 				phone: user.phone,
 				province: user.province,
 				status: user.status || "active",
-				team: teamString,
+				team: teamString, // ← ZESPÓŁ z team_members (ręcznie wpisane)
 				team_id: teams.length > 0 ? teams.join("-") : "",
+				pillars: pillarString, // ← FILARY z SM_Frekwencja (DODANE)
 				functional_role: user.functional_role || "Członek",
 				join_date:
 					user.join_date?.toISOString().split("T")[0] ||
 					user.created_at.toISOString().split("T")[0],
 				vacation: activeLeave
 					? {
-						startDate: activeLeave.start_date.toISOString().split("T")[0],
-						endDate: activeLeave.end_date.toISOString().split("T")[0],
-						type: activeLeave.scope === "team" ? "team" : "organization",
-						teamId: activeLeave.affected_teams || undefined,
-					}
+							startDate: activeLeave.start_date.toISOString().split("T")[0],
+							endDate: activeLeave.end_date.toISOString().split("T")[0],
+							type: activeLeave.scope === "team" ? "team" : "organization",
+							teamId: activeLeave.affected_teams || undefined,
+						}
 					: null,
 				onboarding_data: onboarding,
 			};
@@ -1562,7 +1574,7 @@ app.get("/api/applications", authMiddleware, async (req: any, res) => {
 				userId: app.user_id.toString(),
 				userName: app.user
 					? `${app.user.first_name || ""} ${app.user.last_name || ""}`.trim() ||
-					"Nieznany"
+						"Nieznany"
 					: "Nieznany",
 				userEmail: app.user?.email || "",
 				message: app.message || "",
@@ -1683,7 +1695,7 @@ app.get(
 					userId: app.user_id.toString(),
 					userName: app.user
 						? `${app.user.first_name || ""} ${app.user.last_name || ""}`.trim() ||
-						"Nieznany"
+							"Nieznany"
 						: "Nieznany",
 					userEmail: app.user?.email || "",
 					message: app.message || "",
@@ -2453,6 +2465,9 @@ app.get("/api/structure", authMiddleware, async (req: any, res) => {
 	}
 });
 app.use("/api", memberRoutes);
+app.use("/api/contributions", contributionRoutes);
+app.use("/api/dashboard", dashboardRoutes);
+// src/server.ts - /api/profile (około linii 1450-1480)
 
 app.get("/api/profile", authMiddleware, async (req: any, res) => {
 	try {
@@ -2480,16 +2495,27 @@ app.get("/api/profile", authMiddleware, async (req: any, res) => {
 
 		logger.debug(`✅ Profil pobrany dla: ${user.first_name} ${user.last_name}`);
 
+		// ============================================================
+		// 🔥 UŻYJ FILARÓW Z POLA `pillars` (Z SM_Frekwencja)
+		// ============================================================
+		// ❌ NIE używaj team_members do filarów:
+		// const teams = user.team_members.map((tm: any) => tm.team?.name).filter(Boolean);
+		// const pillars = teams.filter((t: string) => t.includes("Filar"));
+
+		// ✅ UŻYJ filarów z pola pillars:
+		const pillarList = user.pillars
+			? user.pillars.split(", ").filter(Boolean)
+			: [];
+		const pillar = pillarList.length > 0 ? pillarList[0] : null;
+
+		// Tylko dla zespołu (team) - używaj team_members
 		const teams = user.team_members
 			.map((tm: any) => tm.team?.name)
 			.filter(Boolean);
+		const teamString =
+			teams.length > 0 ? teams.join(", ") : user.team || "Brak zespołu";
+
 		const onboarding = user.onboarding_data?.[0] || {};
-
-		const pillars = teams.filter((t: string) => t.includes("Filar"));
-		const pillar = pillars.length > 0 ? pillars[0] : null;
-
-		logger.debug("🏷️ TEAMS:", teams);
-		logger.debug("🏷️ PILLARS:", pillars);
 
 		const profile = {
 			id: user.id.toString(),
@@ -2497,9 +2523,9 @@ app.get("/api/profile", authMiddleware, async (req: any, res) => {
 			lastName: user.last_name,
 			role: mapRoleId(user.role_id),
 			function: user.functional_role || "Członek",
-			team: teams.length > 0 ? teams.join(", ") : user.team || "Brak zespołu",
-			pillar: pillar,
-			pillars: pillars,
+			team: teamString, // ← ZESPÓŁ z team_members
+			pillar: pillar, // ← GŁÓWNY FILAR z pillars
+			pillars: pillarList, // ← WSZYSTKIE FILARY z pillars
 			province: user.province || "Brak danych",
 			status: user.status || "active",
 			email: user.email || "",
@@ -2846,11 +2872,11 @@ app.put("/api/leaves/:id", authMiddleware, async (req: any, res) => {
 				status: status || existingLeave.status,
 				...(status === "approved" || status === "rejected"
 					? {
-						approved_by:
-							`${currentUser?.first_name || ""} ${currentUser?.last_name || ""}`.trim() ||
-							"Nieznany",
-						approved_at: new Date(),
-					}
+							approved_by:
+								`${currentUser?.first_name || ""} ${currentUser?.last_name || ""}`.trim() ||
+								"Nieznany",
+							approved_at: new Date(),
+						}
 					: {}),
 			},
 		});
@@ -3102,13 +3128,17 @@ app.use(
 		// Sprawdź czy to błąd multer
 		if (err instanceof multer.MulterError) {
 			if (err.message.includes("File too large")) {
-				return res.status(400).json({ error: "Plik jest za duży. Maksymalny rozmiar: 10MB" });
+				return res
+					.status(400)
+					.json({ error: "Plik jest za duży. Maksymalny rozmiar: 10MB" });
 			}
 			if (err.message.includes("too many files")) {
 				return res.status(400).json({ error: "Maksymalnie 5 plików na raz" });
 			}
 			if (err.message.includes("Unexpected field")) {
-				return res.status(400).json({ error: "Nieoczekiwany plik. Sprawdź nazwę pola (files)" });
+				return res
+					.status(400)
+					.json({ error: "Nieoczekiwany plik. Sprawdź nazwę pola (files)" });
 			}
 			return res.status(400).json({ error: err.message });
 		}
@@ -3119,26 +3149,30 @@ app.use(
 
 		// 🔥 POPRAWNY HANDLER BŁĘDÓW - BEZPIECZNIEJSZY
 		try {
-			if (typeof res.status === 'function') {
-				res.status(500).json({ error: err.message || "Wewnętrzny błąd serwera" });
+			if (typeof res.status === "function") {
+				res
+					.status(500)
+					.json({ error: err.message || "Wewnętrzny błąd serwera" });
 			} else {
 				// Jeśli res.status nie jest funkcją, użyj alternatywnego sposobu
 				res.statusCode = 500;
-				res.setHeader('Content-Type', 'application/json');
-				res.end(JSON.stringify({ error: err.message || "Wewnętrzny błąd serwera" }));
+				res.setHeader("Content-Type", "application/json");
+				res.end(
+					JSON.stringify({ error: err.message || "Wewnętrzny błąd serwera" }),
+				);
 			}
 		} catch (e) {
 			// Ostateczna deska ratunku
 			try {
 				res.statusCode = 500;
-				res.setHeader('Content-Type', 'application/json');
+				res.setHeader("Content-Type", "application/json");
 				res.end(JSON.stringify({ error: "Wewnętrzny błąd serwera" }));
 			} catch (finalError) {
-				console.error('💀 Krytyczny błąd w handlerze błędów:', finalError);
+				console.error("💀 Krytyczny błąd w handlerze błędów:", finalError);
 				// Nawet to nie działa - nic więcej nie możemy zrobić
 			}
 		}
-	}
+	},
 );
 
 app.get("/api/social/members", authMiddleware, async (req: any, res) => {
@@ -3675,19 +3709,13 @@ app.post("/api/onboarding/save", authMiddleware, async (req: any, res) => {
 			pillarIds,
 		} = req.body;
 
-		logger.debug("🔍 [ONBOARDING] pillarIds:", pillarIds);
-		logger.debug("🔍 [ONBOARDING] typeof pillarIds:", typeof pillarIds);
-		logger.debug(
-			"🔍 [ONBOARDING] Array.isArray(pillarIds):",
-			Array.isArray(pillarIds),
-		);
-
 		const existing = await prisma.onboarding_data.findFirst({
 			where: { user_id: userId },
 			orderBy: { created_at: "desc" },
 		});
 
-		let onboarding;
+		// 🔥 ZADEKLARUJ onboarding TUTAJ (przed if/else)
+		let onboarding: any = null;
 
 		const data = {
 			first_name: firstName || "",
@@ -3731,6 +3759,7 @@ app.post("/api/onboarding/save", authMiddleware, async (req: any, res) => {
 			);
 		}
 
+		// Aktualizacja danych użytkownika
 		await prisma.user.update({
 			where: { id: userId },
 			data: {
@@ -3746,83 +3775,130 @@ app.post("/api/onboarding/save", authMiddleware, async (req: any, res) => {
 
 		logger.debug(`✅ [ONBOARDING] Zaktualizowano dane użytkownika ${userId}`);
 
+		// ============================================================
+		// 🔥 AKTUALIZACJA FILARÓW
+		// ============================================================
 		if (pillarIds && Array.isArray(pillarIds) && pillarIds.length > 0) {
 			logger.debug(
 				`📋 [ONBOARDING] Dodawanie użytkownika ${userId} do filarów:`,
 				pillarIds,
 			);
 
-			const existingTeams = await prisma.team.findMany({
+			// 1. Pobierz nazwy filarów
+			const teams = await prisma.team.findMany({
 				where: {
 					id: { in: pillarIds },
 				},
-				select: { id: true },
+				select: { id: true, name: true },
 			});
-			const existingTeamIds = existingTeams.map((t: any) => t.id);
-			logger.debug("🔍 [ONBOARDING] Istniejące team ID:", existingTeamIds);
 
-			const validPillarIds = pillarIds.filter((id: number) =>
-				existingTeamIds.includes(id),
+			const pillarNames = teams
+				.map((t: any) => t.name.replace("Filar ", ""))
+				.join(", ");
+
+			logger.debug(`📋 [ONBOARDING] Nazwy filarów: ${pillarNames}`);
+
+			// 2. ZAKTUALIZUJ pole pillars w tabeli users
+			await prisma.user.update({
+				where: { id: userId },
+				data: {
+					pillars: pillarNames,
+				},
+			});
+
+			logger.debug(
+				`✅ [ONBOARDING] Zaktualizowano pole pillars dla użytkownika ${userId}: ${pillarNames}`,
 			);
-			logger.debug("🔍 [ONBOARDING] Valid pillarIds:", validPillarIds);
 
-			if (validPillarIds.length > 0) {
-				const existingMemberships = await prisma.teamMember.findMany({
+			// 3. Pobierz obecne członkostwa użytkownika w filarach
+			const currentMemberships = await prisma.teamMember.findMany({
+				where: {
+					user_id: userId,
+					team: {
+						name: { contains: "Filar" },
+					},
+				},
+				select: { team_id: true },
+			});
+
+			const currentTeamIds = currentMemberships.map((m: any) => m.team_id);
+			const newTeamIds = pillarIds;
+
+			// 4. Usuń te, których nie ma w nowej liście
+			const toRemove = currentTeamIds.filter(
+				(id: number) => !newTeamIds.includes(id),
+			);
+
+			if (toRemove.length > 0) {
+				await prisma.teamMember.deleteMany({
 					where: {
 						user_id: userId,
-						team_id: { in: validPillarIds },
+						team_id: { in: toRemove },
 					},
-					select: { team_id: true },
 				});
-
-				const existingMembershipIds = existingMemberships.map(
-					(m: any) => m.team_id,
-				);
 				logger.debug(
-					"🔍 [ONBOARDING] Istniejące członkostwa:",
-					existingMembershipIds,
+					`🗑️ [ONBOARDING] Usunięto z filarów: ${toRemove.join(", ")}`,
 				);
+			}
 
-				const toAdd = validPillarIds.filter(
-					(id: number) => !existingMembershipIds.includes(id),
-				);
-				logger.debug("🔍 [ONBOARDING] Do dodania:", toAdd);
+			// 5. Dodaj nowe członkostwa
+			const existingMemberships = await prisma.teamMember.findMany({
+				where: {
+					user_id: userId,
+					team_id: { in: newTeamIds },
+				},
+				select: { team_id: true },
+			});
 
-				if (toAdd.length > 0) {
-					const result = await prisma.teamMember.createMany({
-						data: toAdd.map((teamId: number) => ({
-							user_id: userId,
-							team_id: teamId,
-							role: "Członek",
-							is_leader: false,
-						})),
-					});
-					logger.debug(
-						`✅ [ONBOARDING] Dodano ${result.count} rekordów do team_members`,
-					);
-				} else {
-					logger.debug(
-						`⏭️ [ONBOARDING] Użytkownik ${userId} już jest we wszystkich wybranych filarach`,
-					);
-				}
-			} else {
+			const existingMembershipIds = existingMemberships.map(
+				(m: any) => m.team_id,
+			);
+			const toAdd = newTeamIds.filter(
+				(id: number) => !existingMembershipIds.includes(id),
+			);
+
+			if (toAdd.length > 0) {
+				await prisma.teamMember.createMany({
+					data: toAdd.map((teamId: number) => ({
+						user_id: userId,
+						team_id: teamId,
+						role: "Członek",
+						is_leader: false,
+					})),
+				});
 				logger.debug(
-					`⚠️ [ONBOARDING] Żadne z podanych ID nie istnieje w tabeli teams`,
+					`✅ [ONBOARDING] Dodano ${toAdd.length} rekordów do team_members`,
 				);
 			}
 		} else {
+			// Jeśli użytkownik odznaczył wszystkie filary - wyczyść pole pillars
+			await prisma.user.update({
+				where: { id: userId },
+				data: {
+					pillars: null,
+				},
+			});
 			logger.debug(
-				`⚠️ [ONBOARDING] Brak pillarIds lub nieprawidłowy format:`,
-				pillarIds,
+				`✅ [ONBOARDING] Wyczyszczono pole pillars dla użytkownika ${userId}`,
+			);
+
+			// Usuń wszystkie członkostwa w filarach
+			await prisma.teamMember.deleteMany({
+				where: {
+					user_id: userId,
+					team: {
+						name: { contains: "Filar" },
+					},
+				},
+			});
+			logger.debug(
+				`🗑️ [ONBOARDING] Usunięto wszystkie członkostwa w filarach dla użytkownika ${userId}`,
 			);
 		}
 
+		// Powiadomienie
 		try {
 			const fullName = `${firstName || ""} ${lastName || ""}`.trim();
-
-			logger.debug(
-				`📨 [ONBOARDING] Tworzenie powiadomienia dla ${fullName}...`,
-			);
 
 			const existingNotification = await prisma.notification.findFirst({
 				where: {
@@ -3834,16 +3910,12 @@ app.post("/api/onboarding/save", authMiddleware, async (req: any, res) => {
 				},
 			});
 
-			if (existingNotification) {
-				logger.debug(
-					`⏭️ [ONBOARDING] Powiadomienie już istnieje dla użytkownika ${userId}`,
-				);
-			} else {
-				const notification = await prisma.notification.create({
+			if (!existingNotification) {
+				await prisma.notification.create({
 					data: {
 						user_id: userId,
 						title: "🎉 Witaj w panelu członka Siły Młodych!",
-						message: `Witaj w panelu członka Siły Młodych. Miłego korzystania! ${fullName}`,
+						message: `Witaj w panelu członka Siły Młodych. Miłego korzystania!`,
 						type: "success",
 						read: false,
 						link: "/dashboard",
@@ -3851,9 +3923,8 @@ app.post("/api/onboarding/save", authMiddleware, async (req: any, res) => {
 						created_at: new Date(),
 					},
 				});
-
 				logger.debug(
-					`✅ [ONBOARDING] Utworzono powiadomienie ID: ${notification.id} dla użytkownika ${userId}`,
+					`✅ [ONBOARDING] Utworzono powiadomienie dla użytkownika ${userId}`,
 				);
 			}
 		} catch (notificationError) {
@@ -3866,7 +3937,7 @@ app.post("/api/onboarding/save", authMiddleware, async (req: any, res) => {
 		res.status(200).json({
 			success: true,
 			message: "Dane onboardingu zapisane",
-			onboardingId: onboarding.id,
+			onboardingId: onboarding?.id || null,
 		});
 	} catch (error) {
 		logger.error("❌ [ONBOARDING] Błąd zapisu:", error);
@@ -5033,7 +5104,28 @@ app.get("/api/admin/logs", authMiddleware, async (req: any, res) => {
 		res.status(500).json({ error: "Nie udało się pobrać logów" });
 	}
 });
+cron.schedule("0 1,17 * * *", async () => {
+	logger.debug("🔄 [CRON] Uruchamiam synchronizację składek...");
+	try {
+		await syncContributions();
+		logger.debug("✅ [CRON] Synchronizacja składek zakończona");
+	} catch (error) {
+		logger.error("❌ [CRON] Błąd synchronizacji składek:", error);
+	}
+});
 
+// Opcjonalnie: uruchom przy starcie
+setTimeout(async () => {
+	logger.debug(
+		"🔄 [STARTUP] Uruchamiam synchronizację składek przy starcie...",
+	);
+	try {
+		await syncContributions();
+		logger.debug("✅ [STARTUP] Synchronizacja składek zakończona");
+	} catch (error) {
+		logger.error("❌ [STARTUP] Błąd synchronizacji składek:", error);
+	}
+}, 15000);
 setTimeout(async () => {
 	logger.debug(
 		"🔄 [STARTUP] Uruchamiam synchronizację frekwencji przy starcie...",

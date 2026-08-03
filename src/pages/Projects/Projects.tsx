@@ -199,7 +199,21 @@ const IDEA_STATUS_COLORS: Record<IdeaStatus, string> = {
 	rejected: styles.statusRejected,
 	in_progress: styles.statusInProgress,
 };
+const getPillarsArray = (pillars: string | string[] | undefined): string[] => {
+	if (!pillars) return [];
+	if (Array.isArray(pillars)) return pillars;
+	if (typeof pillars === "string") {
+		return pillars
+			.split(",")
+			.map((p: string) => p.trim())
+			.filter(Boolean);
+	}
+	return [];
+};
 
+const getPillarsString = (pillars: string | string[] | undefined): string => {
+	return getPillarsArray(pillars).join(", ");
+};
 const IDEA_STATUS_ICONS: Record<IdeaStatus, React.ReactNode> = {
 	pending: <Clock size={14} />,
 	approved: <CheckCircle size={14} />,
@@ -1122,9 +1136,8 @@ function IdeaCard({
 						</>
 					)}
 
-					{(currentUser?.role === "coordinator" &&
-						currentUser?.pillars?.includes(idea.pillar)) ||
-						(false && (
+					{currentUser?.role === "coordinator" &&
+						getPillarsArray(currentUser?.pillars).includes(idea.pillar) && (
 							<>
 								<button
 									className={`${styles.ideaCard__actionBtn} ${styles.ideaCard__actionBtnSuccess}`}
@@ -1141,7 +1154,7 @@ function IdeaCard({
 									Odrzuć
 								</button>
 							</>
-						))}
+						)}
 				</div>
 			)}
 		</div>
@@ -1164,7 +1177,7 @@ export default function Projects() {
 				email: contextUser.email || "",
 				role: contextUser.role as "admin" | "coordinator" | "member",
 				pillar: (contextUser as any).pillar || null,
-				pillars: (contextUser as any).pillars || [],
+				pillars: (contextUser as any).pillars || "",
 			});
 		}
 	}, [contextUser]);
@@ -1671,7 +1684,7 @@ export default function Projects() {
 				userPillars: currentUser.pillars,
 				result: currentUser.pillars?.includes(pillarName),
 			});
-			return currentUser.pillars?.includes(pillarName) || false;
+			return getPillarsArray(currentUser?.pillars).includes(pillarName);
 		}
 		return false;
 	};
@@ -1701,9 +1714,8 @@ export default function Projects() {
 		if (currentUser?.role !== "coordinator" || !currentUser.pillars?.length)
 			return null;
 
-		const pillarIdeas = ideas.filter((i) =>
-			currentUser.pillars?.includes(i.pillar),
-		);
+		const userPillars = getPillarsArray(currentUser?.pillars);
+		const pillarIdeas = ideas.filter((i) => userPillars.includes(i.pillar));
 
 		const pending = pillarIdeas.filter((i) => i.status === "pending").length;
 		const approved = pillarIdeas.filter((i) => i.status === "approved").length;
@@ -1903,7 +1915,7 @@ export default function Projects() {
 					<div className={styles.coordinatorStats}>
 						<span className={styles.coordinatorStats__title}>
 							Pomysły dla twoich filarów:{" "}
-							<strong>{currentUser.pillars?.join(", ")}</strong>
+							<strong>{getPillarsString(currentUser?.pillars)}</strong>
 						</span>
 						<span className={styles.coordinatorStats__item}>
 							<span className={styles.coordinatorStats__number}>

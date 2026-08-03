@@ -1,3 +1,5 @@
+// src/jobs/syncMembers.ts
+
 import dotenv from "dotenv";
 dotenv.config();
 import { logger } from "../utils/logger";
@@ -9,7 +11,12 @@ const prisma = new PrismaClient();
 logger.debug("📋 [SYNC] Ładowanie konfiguracji z .env...");
 logger.debug("📋 [SYNC] EWIDENCJA_DB_HOST:", process.env.EWIDENCJA_DB_HOST);
 logger.debug("📋 [SYNC] EWIDENCJA_DB_USER:", process.env.EWIDENCJA_DB_USER);
-
+const ALLOWED_PILLARS = [
+	"Konferencyjny",
+	"Rzeczniczy",
+	"Symulacyjny",
+	"Projektowy",
+];
 const externalDb = mysql.createPool({
 	host: process.env.EWIDENCJA_DB_HOST || "57.128.253.89",
 	user: process.env.EWIDENCJA_DB_USER || "czarnecki",
@@ -17,6 +24,18 @@ const externalDb = mysql.createPool({
 	database: process.env.EWIDENCJA_DB_NAME || "SM_Ewidencja",
 	waitForConnections: true,
 	connectionLimit: 10,
+});
+
+// ============================================================
+// 🔥 POŁĄCZENIE Z SM_Frekwencja DLA FILARÓW
+// ============================================================
+const frekwencjaDb = mysql.createPool({
+	host: process.env.FREKWENCJA_DB_HOST || "57.128.253.89",
+	user: process.env.FREKWENCJA_DB_USER || "czarnecki",
+	password: process.env.FREKWENCJA_DB_PASSWORD || "N7#vQ4!xLp9@Tw2K",
+	database: process.env.FREKWENCJA_DB_NAME || "SM_Frekwencja",
+	waitForConnections: true,
+	connectionLimit: 5,
 });
 
 function generateEmail(firstname: string, lastname: string): string {
@@ -161,6 +180,51 @@ export async function syncMembers() {
 			return;
 		}
 
+		// ============================================================
+		// 🔥 POBIERANIE FILARÓW Z SM_Frekwencja
+		// ============================================================
+		logger.debug("📥 [SYNC] Pobieranie filarów z SM_Frekwencja...");
+
+		// Pobierz filary dla członków z att_member_pillars
+		const [memberPillars] = (await frekwencjaDb.query(`
+    SELECT 
+        mp.member_id,
+        p.name as pillar_name
+    FROM att_member_pillars mp
+    INNER JOIN att_pillars p ON p.id = mp.pillar_id
+`)) as any[];
+
+		// Stwórz mapę filarów dla każdego członka - TYLKO DOZWOLONE
+		const pillarMap = new Map<number, string[]>();
+		for (const row of memberPillars) {
+			// 🔥 SPRAWDŹ CZY FILAR JEST NA LIŚCIE DOZWOLONYCH
+			if (ALLOWED_PILLARS.includes(row.pillar_name)) {
+				if (!pillarMap.has(row.member_id)) {
+					pillarMap.set(row.member_id, []);
+				}
+				pillarMap.get(row.member_id)!.push(row.pillar_name);
+			}
+		}
+
+		// Pobierz mapowanie email -> member_id z att_members
+		const [attMembers] = (await frekwencjaDb.query(`
+            SELECT id, email FROM att_members
+        `)) as any[];
+
+		const emailToMemberId = new Map<string, number>();
+		for (const m of attMembers) {
+			if (m.email) {
+				emailToMemberId.set(m.email, m.id);
+			}
+		}
+
+		logger.debug(
+			`📊 [SYNC] Pobrano filary dla ${pillarMap.size} członków z SM_Frekwencja`,
+		);
+
+		// ============================================================
+		// STATYSTYKI STATUSÓW
+		// ============================================================
 		const statusStats: Record<string, number> = {};
 		for (const member of rows) {
 			const status = member.status || "unknown";
@@ -185,6 +249,8 @@ export async function syncMembers() {
 				status: true,
 				phone: true,
 				is_trial: true,
+				pillars: true,
+				functional_role: true,
 			},
 		});
 
@@ -229,6 +295,22 @@ export async function syncMembers() {
 
 				const existing = existingEmails.get(generatedEmail);
 
+				// ============================================================
+				// 🔥 POBIERZ FILARY DLA TEGO CZŁONKA
+				// ============================================================
+				const memberId = emailToMemberId.get(generatedEmail);
+				let pillarNames: string[] = [];
+
+				if (memberId && pillarMap.has(memberId)) {
+					pillarNames = pillarMap.get(memberId) || [];
+				}
+
+				const pillarString =
+					pillarNames.length > 0 ? pillarNames.join(", ") : null;
+
+				// ============================================================
+				// 🔥 DANE UŻYTKOWNIKA Z FILARAMI I ROLĄ
+				// ============================================================
 				const userData = {
 					username: generatedEmail.split("@")[0] || generatedEmail,
 					email: generatedEmail,
@@ -238,18 +320,23 @@ export async function syncMembers() {
 					status: mapped.status,
 					is_active: mapped.isActive,
 					is_trial: mapped.isTrial,
-					role_id: 4,
+					role_id: 4, // member
 					join_date: member.created_at ? new Date(member.created_at) : null,
 					password_hash: "$2b$10$abcdefghijklmnopqrstuvwxyz1234567890",
+					functional_role: "Członek", // ← DOMYŚLNA ROLA
+					pillars: pillarString, // ← FILARY
 				};
 
 				if (existing) {
+					// Sprawdź czy zmieniły się dane (łącznie z filarami)
 					const hasChanges =
 						existing.first_name !== userData.first_name ||
 						existing.last_name !== userData.last_name ||
 						existing.status !== userData.status ||
 						existing.phone !== userData.phone ||
-						existing.is_trial !== userData.is_trial;
+						existing.is_trial !== userData.is_trial ||
+						existing.pillars !== userData.pillars ||
+						existing.functional_role !== userData.functional_role;
 
 					if (hasChanges) {
 						await prisma.user.update({
@@ -261,11 +348,13 @@ export async function syncMembers() {
 								phone: userData.phone,
 								is_active: userData.is_active,
 								is_trial: userData.is_trial,
+								functional_role: userData.functional_role,
+								pillars: userData.pillars,
 							},
 						});
 						updated++;
 						logger.debug(
-							`🔄 [SYNC] Zaktualizowano: ${generatedEmail} | status: ${member.status} -> ${userData.status} | trial: ${userData.is_trial}`,
+							`🔄 [SYNC] Zaktualizowano: ${generatedEmail} | status: ${member.status} -> ${userData.status} | filary: ${userData.pillars || "brak"}`,
 						);
 					} else {
 						skipped++;
@@ -276,7 +365,7 @@ export async function syncMembers() {
 					});
 					added++;
 					logger.debug(
-						`✅ [SYNC] Dodano: ${generatedEmail} (${userData.first_name} ${userData.last_name}) | status: ${userData.status} | trial: ${userData.is_trial}`,
+						`✅ [SYNC] Dodano: ${generatedEmail} (${userData.first_name} ${userData.last_name}) | status: ${userData.status} | filary: ${userData.pillars || "brak"}`,
 					);
 				}
 			} catch (error) {
