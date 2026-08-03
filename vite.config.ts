@@ -129,9 +129,10 @@ export default defineConfig({
 		proxy: {
 			"/api": {
 				// target: "https://sm-backend-po9k.onrender.com",
-				target: "http://localhost:3306",
+				target: "http://localhost:3000",
 				changeOrigin: true,
 				secure: false,
+				rewrite: (path) => path,
 			},
 		},
 		// 🔒 Ograniczenia dostępu do plików
@@ -172,7 +173,7 @@ export default defineConfig({
 	define: {
 		"process.env.VITE_API_URL": JSON.stringify(
 			// "https://sm-backend-po9k.onrender.com",
-			"http://localhost:3306",
+			"http://localhost:3000",
 		),
 	},
 });

@@ -5,7 +5,7 @@ import { ConfirmDialog } from "../../components/common/ConfirmDialog";
 import toast from "react-hot-toast";
 import { hasPermission } from "../../utils/permissions";
 import { logger } from "@/utils/logger";
-
+import { CreditCard } from "lucide-react";
 import {
 	Users,
 	Search,
@@ -15,7 +15,6 @@ import {
 	List,
 	User,
 	MapPin,
-	Briefcase,
 	Star,
 	Clock,
 	CheckCircle,
@@ -31,7 +30,43 @@ import styles from "./Members.module.css";
 // ---------------------------------------------------------------------------
 // MAPOWANIE AREAS Z ANGIELSKIEGO NA POLSKI
 // ---------------------------------------------------------------------------
+const PILLAR_MAP: Record<string, string> = {
+	Konferencyjny: "Filar Konferencyjny",
+	Projektowy: "Filar Projektowy",
+	Rzeczniczy: "Filar Rzeczniczy",
+	Symulacyjny: "Filar Symulacyjny",
+};
 
+const transformPillars = (pillars: string): string => {
+	if (!pillars) return "";
+	return pillars
+		.split(", ")
+		.filter(Boolean)
+		.map((p: string) => PILLAR_MAP[p] || p)
+		.join(", ");
+};
+
+// FUNKCJA DO ŁĄCZENIA WSZYSTKICH INFORMACJI:
+const getMemberInfo = (member: Member): string => {
+	const parts: string[] = [];
+
+	// 1. Filary (z SM_Frekwencja)
+	if (member.pillars) {
+		parts.push(transformPillars(member.pillars));
+	}
+
+	// 2. Zespoły z team (z team_members)
+	if (member.team && member.team !== "Brak zespołu") {
+		parts.push(member.team);
+	}
+
+	// 3. Funkcja/rola (functional_role)
+	if (member.function && member.function !== "Członek") {
+		parts.push(member.function);
+	}
+
+	return parts.length > 0 ? parts.join(" • ") : "Brak informacji";
+};
 const AREA_LABELS: Record<string, string> = {
 	projects: "Projekty",
 	conferences: "Konferencje i debaty",
@@ -69,6 +104,7 @@ type Member = {
 	function: string;
 	team: string;
 	teamId: string;
+	pillars: string;
 	province: string;
 	status: MemberStatus;
 	interests: string[];
@@ -174,12 +210,10 @@ function MemberCard({
 					</div>
 					<div className={styles.memberCard__details}>
 						<span className={styles.memberCard__detail}>
-							<Briefcase size={14} />
-							{member.function}
-						</span>
-						<span className={styles.memberCard__detail}>
 							<Users size={14} />
-							{member.team}
+							{member.pillars
+								? transformPillars(member.pillars)
+								: member.team || "Brak filaru"}
 						</span>
 						{member.province &&
 							member.province !== "" &&
@@ -231,10 +265,15 @@ function MemberCard({
 				{member.firstName || ""} {member.lastName || ""}
 			</h3>
 			<p className={styles.memberCard__function}>{member.function}</p>
-			<p className={styles.memberCard__team}>
-				<Users size={14} />
-				{member.team}
-			</p>
+
+			{/* TYLKO FILARY - BEZ DUPLIKOWANIA */}
+			{member.pillars && (
+				<p className={styles.memberCard__team}>
+					<Users size={14} />
+					{transformPillars(member.pillars)}
+				</p>
+			)}
+
 			{member.province &&
 				member.province !== "" &&
 				member.province !== "Brak" &&
@@ -324,6 +363,8 @@ interface ProfileModalProps {
 	customTeamEmail?: string;
 	setCustomTeamEmail?: (value: string) => void;
 	parentTeamsList?: { id: number; name: string; parent_id: number | null }[];
+	contributionStats?: any;
+	loadingContributions?: boolean;
 }
 
 function ProfileModal({
@@ -333,23 +374,8 @@ function ProfileModal({
 	isEdit = false,
 	onClose,
 	onSave,
-	teamsList = [],
-	showCustomTeam = false,
-	setShowCustomTeam,
-	customTeamName = "",
-	setCustomTeamName,
-	customTeamRole = "",
-	setCustomTeamRole,
-	customTeamDescription = "",
-	setCustomTeamDescription,
-	customTeamIcon = "Users",
-	setCustomTeamIcon,
-	customTeamParent = "",
-	setCustomTeamParent,
-	customTeamEmail = "",
-
-	setCustomTeamEmail,
-	parentTeamsList = [],
+	contributionStats, // ← DODAJ
+	loadingContributions, // ← DODAJ
 }: ProfileModalProps) {
 	const [formData, setFormData] = useState<Partial<Member>>({
 		firstName: "",
@@ -357,6 +383,7 @@ function ProfileModal({
 		function: "",
 		team: "",
 		teamId: "",
+		pillars: "",
 		province: "",
 		status: "",
 		interests: [],
@@ -365,6 +392,7 @@ function ProfileModal({
 		email: "",
 		phone: "",
 		joinDate: "",
+		vacation: undefined,
 		contacts: {
 			salaContacts: [],
 			mpContacts: [],
@@ -375,6 +403,7 @@ function ProfileModal({
 			status: "paid",
 			arrears: 0,
 		},
+		formData: {},
 	});
 
 	const [newInterest, setNewInterest] = useState("");
@@ -394,6 +423,7 @@ function ProfileModal({
 				function: member.function || "",
 				team: member.team || "",
 				teamId: member.teamId || "",
+				pillars: member.pillars || "",
 				province: member.province || "",
 				status: (member.status as MemberStatus) || "trial",
 				interests: member.interests || [],
@@ -405,6 +435,7 @@ function ProfileModal({
 				joinDate: member.joinDate
 					? new Date(member.joinDate).toISOString().split("T")[0]
 					: "",
+				vacation: member.vacation,
 				contacts: member.contacts || {
 					salaContacts: [],
 					mpContacts: [],
@@ -426,6 +457,7 @@ function ProfileModal({
 				function: "",
 				team: "",
 				teamId: "",
+				pillars: "",
 				province: "",
 				status: "",
 				interests: [],
@@ -434,6 +466,7 @@ function ProfileModal({
 				email: "",
 				phone: "",
 				joinDate: "",
+				vacation: undefined,
 				contacts: {
 					salaContacts: [],
 					mpContacts: [],
@@ -444,6 +477,7 @@ function ProfileModal({
 					status: "paid",
 					arrears: 0,
 				},
+				formData: {},
 			});
 		}
 	}, [member, isOpen]);
@@ -486,6 +520,7 @@ function ProfileModal({
 		lastName: "",
 		function: "",
 		team: "",
+		pillars: "",
 		teamId: "",
 		province: "",
 		status: "trial" as MemberStatus,
@@ -495,6 +530,7 @@ function ProfileModal({
 		email: "",
 		phone: "",
 		joinDate: "",
+		vacation: undefined,
 		contacts: {
 			salaContacts: [],
 			mpContacts: [],
@@ -505,6 +541,7 @@ function ProfileModal({
 			status: "paid" as const,
 			arrears: 0,
 		},
+		formData: {},
 	};
 
 	const canEdit =
@@ -518,6 +555,12 @@ function ProfileModal({
 			currentUser.teamId === currentMember.teamId) ||
 		currentUser.id === currentMember.id;
 
+	console.log("[ProfileModal] START");
+	console.log("[ProfileModal] contributionStats:", contributionStats);
+	console.log("[ProfileModal] loadingContributions:", loadingContributions);
+	console.log("[ProfileModal] canViewSensitive:", canViewSensitive);
+	console.log("[ProfileModal] isOpen:", isOpen);
+	console.log("[ProfileModal] member:", member?.id);
 	const addItem = (
 		list: string[],
 		setList: (list: string[]) => void,
@@ -545,7 +588,7 @@ function ProfileModal({
 		}
 
 		if (onSave && canEdit) {
-			logger.debug("📝 formData w handleSubmit:", formData);
+			logger.debug("formData w handleSubmit:", formData);
 
 			const saveData: Member = {
 				id: currentMember.id,
@@ -554,6 +597,7 @@ function ProfileModal({
 				function: formData.function || currentMember.function,
 				team: formData.team || currentMember.team,
 				teamId: formData.teamId || currentMember.teamId,
+				pillars: formData.pillars || currentMember.pillars || "",
 				province: formData.province || currentMember.province,
 				status: (formData.status as MemberStatus) || "active",
 				interests: formData.interests || currentMember.interests,
@@ -576,7 +620,7 @@ function ProfileModal({
 					? formData.formData || currentMember.formData
 					: undefined,
 			};
-			logger.debug("📤 saveData:", saveData);
+			logger.debug("saveData:", saveData);
 
 			onSave(saveData);
 		}
@@ -668,7 +712,7 @@ function ProfileModal({
 												marginTop: "4px",
 											}}
 										>
-											📧 Email wygenerowany automatycznie z imienia i nazwiska
+											Email wygenerowany automatycznie z imienia i nazwiska
 										</small>
 									)}
 								</div>
@@ -702,28 +746,26 @@ function ProfileModal({
 							</div>
 
 							<div className={styles.modal__field}>
-								<label className={styles.modal__label}>Zespoły</label>
+								<label className={styles.modal__label}>Filary</label>
 
 								{canEdit ? (
 									<>
+										{/* Jeśli chcesz edytować filary */}
 										<div className={styles.modal__tagInput}>
 											<select
 												className={styles.modal__select}
 												value=""
 												onChange={(e) => {
 													const value = e.target.value;
-													if (value === "other") {
-														setShowCustomTeam?.(true);
-													} else if (value) {
-														const currentTeams = formData.team
-															? formData.team.split(", ")
+													if (value) {
+														const currentPillars = formData.pillars
+															? formData.pillars.split(", ")
 															: [];
-														if (!currentTeams.includes(value)) {
-															const newTeams = [...currentTeams, value];
+														if (!currentPillars.includes(value)) {
+															const newPillars = [...currentPillars, value];
 															setFormData({
 																...formData,
-																team: newTeams.join(", "),
-																teamId: newTeams.join("-"),
+																pillars: newPillars.join(", "),
 															});
 														}
 														e.target.value = "";
@@ -731,50 +773,36 @@ function ProfileModal({
 												}}
 												disabled={!canEdit}
 											>
-												<option value="">Dodaj zespół...</option>
-												{teamsList
-													.filter(
-														(team) =>
-															!(formData.team || "")
-																.split(", ")
-																.includes(team.name),
-													)
-													.map((team) => (
-														<option key={team.id} value={team.name}>
-															{team.name}
-														</option>
-													))}
-												<option value="other">➕ Inny (dodaj nowy)</option>
+												<option value="">Dodaj filar...</option>
+												<option value="Konferencyjny">
+													Filar Konferencyjny
+												</option>
+												<option value="Projektowy">Filar Projektowy</option>
+												<option value="Rzeczniczy">Filar Rzeczniczy</option>
+												<option value="Symulacyjny">Filar Symulacyjny</option>
 											</select>
 										</div>
 
 										<div className={styles.modal__tags}>
-											{(formData.team || "")
+											{(formData.pillars || "")
 												.split(", ")
 												.filter(Boolean)
-												.map((team) => (
-													<span key={team} className={styles.modal__tag}>
-														{team}
+												.map((pillar) => (
+													<span key={pillar} className={styles.modal__tag}>
+														{PILLAR_MAP[pillar] || pillar}
 														<button
 															type="button"
 															className={styles.modal__removeTag}
 															onClick={() => {
-																const currentTeams = formData.team
-																	? formData.team.split(", ")
+																const currentPillars = formData.pillars
+																	? formData.pillars.split(", ")
 																	: [];
-																const newTeams = currentTeams.filter(
-																	(t) => t !== team,
+																const newPillars = currentPillars.filter(
+																	(p) => p !== pillar,
 																);
 																setFormData({
 																	...formData,
-																	team:
-																		newTeams.length > 0
-																			? newTeams.join(", ")
-																			: "",
-																	teamId:
-																		newTeams.length > 0
-																			? newTeams.join("-")
-																			: "",
+																	pillars: newPillars.join(", "),
 																});
 															}}
 														>
@@ -783,159 +811,16 @@ function ProfileModal({
 													</span>
 												))}
 										</div>
-
-										{showCustomTeam && isEdit && (
-											<div
-												style={{
-													marginTop: "12px",
-													padding: "12px",
-													border: "1px solid #e5e7eb",
-													borderRadius: "8px",
-													background: "#f9fafb",
-												}}
-											>
-												<div
-													style={{
-														marginBottom: "8px",
-														fontWeight: "500",
-														color: "#374151",
-													}}
-												>
-													➕ Dodawanie nowego zespołu
-												</div>
-
-												<div className={styles.modal__field}>
-													<label className={styles.modal__label}>
-														Nazwa zespołu *
-													</label>
-													<input
-														type="text"
-														className={styles.modal__input}
-														value={customTeamName || ""}
-														onChange={(e) => {
-															setCustomTeamName?.(e.target.value);
-															setFormData({
-																...formData,
-																team: e.target.value,
-															});
-														}}
-														placeholder="Wpisz nazwę nowego zespołu..."
-														style={{
-															borderColor: customTeamName
-																? "#22c55e"
-																: "#ef4444",
-														}}
-													/>
-												</div>
-
-												<div className={styles.modal__field}>
-													<label className={styles.modal__label}>Rola</label>
-													<input
-														type="text"
-														className={styles.modal__input}
-														value={customTeamRole || ""}
-														onChange={(e) =>
-															setCustomTeamRole?.(e.target.value)
-														}
-														placeholder="np. Zespół, Filar, Dyrekcja..."
-													/>
-												</div>
-
-												<div className={styles.modal__field}>
-													<label className={styles.modal__label}>Opis</label>
-													<textarea
-														className={styles.modal__input}
-														value={customTeamDescription || ""}
-														onChange={(e) =>
-															setCustomTeamDescription?.(e.target.value)
-														}
-														placeholder="Krótki opis zespołu..."
-														rows={2}
-														style={{ resize: "vertical" }}
-													/>
-												</div>
-
-												<div className={styles.modal__field}>
-													<label className={styles.modal__label}>Ikona</label>
-													<select
-														className={styles.modal__select}
-														value={customTeamIcon || "Users"}
-														onChange={(e) =>
-															setCustomTeamIcon?.(e.target.value)
-														}
-													>
-														<option value="Users">👥 Users</option>
-														<option value="UserCog">⚙️ UserCog</option>
-														<option value="Briefcase">💼 Briefcase</option>
-														<option value="Building2">🏢 Building2</option>
-														<option value="Megaphone">📢 Megaphone</option>
-														<option value="GraduationCap">
-															🎓 GraduationCap
-														</option>
-														<option value="Calendar">📅 Calendar</option>
-														<option value="Settings">⚙️ Settings</option>
-														<option value="Shield">🛡️ Shield</option>
-														<option value="Star">⭐ Star</option>
-													</select>
-												</div>
-
-												<div className={styles.modal__field}>
-													<label className={styles.modal__label}>
-														Zespół nadrzędny
-													</label>
-													<select
-														className={styles.modal__select}
-														value={customTeamParent || ""}
-														onChange={(e) => {
-															const value = e.target.value;
-															setCustomTeamParent?.(value);
-														}}
-													>
-														<option value="">Brak (zespół główny)</option>
-														{parentTeamsList.map((team) => (
-															<option key={team.id} value={team.id.toString()}>
-																{team.name}
-															</option>
-														))}
-													</select>
-												</div>
-
-												<div className={styles.modal__field}>
-													<label className={styles.modal__label}>Email</label>
-													<input
-														type="email"
-														className={styles.modal__input}
-														value={customTeamEmail || ""}
-														onChange={(e) =>
-															setCustomTeamEmail?.(e.target.value)
-														}
-														placeholder="email@domena.pl"
-													/>
-												</div>
-
-												{!customTeamName && (
-													<small
-														style={{
-															color: "#ef4444",
-															fontSize: "12px",
-															display: "block",
-															marginTop: "4px",
-														}}
-													>
-														⚠️ Nazwa zespołu jest wymagana
-													</small>
-												)}
-											</div>
-										)}
 									</>
 								) : (
+									// Widok tylko do odczytu
 									<div className={styles.modal__tags}>
-										{(formData.team || "")
+										{(formData.pillars || "")
 											.split(", ")
 											.filter(Boolean)
-											.map((team) => (
-												<span key={team} className={styles.modal__tag}>
-													{team}
+											.map((pillar) => (
+												<span key={pillar} className={styles.modal__tag}>
+													{PILLAR_MAP[pillar] || pillar}
 												</span>
 											))}
 									</div>
@@ -1734,62 +1619,79 @@ function ProfileModal({
 
 									<div className={styles.modal__section}>
 										<h3 className={styles.modal__sectionTitle}>
-											Informacje o składkach
+											<CreditCard size={18} />
+											Statystyki składek
 										</h3>
-										<div className={styles.modal__row}>
-											<div className={styles.modal__field}>
-												<label className={styles.modal__label}>Status</label>
-												<select
-													className={styles.modal__select}
-													value={
-														formData.contributionInfo?.status ||
-														currentMember.contributionInfo?.status ||
-														"paid"
-													}
-													onChange={(e) =>
-														setFormData({
-															...formData,
-															contributionInfo: {
-																...formData.contributionInfo,
-																status: e.target.value as
-																	| "paid"
-																	| "partial"
-																	| "unpaid",
-															},
-														})
-													}
-													disabled={!canEdit}
-												>
-													<option value="paid">Opłacone</option>
-													<option value="partial">Częściowo opłacone</option>
-													<option value="unpaid">Nieopłacone</option>
-												</select>
+
+										{loadingContributions ? (
+											<div
+												className={styles.loadingSpinner}
+												style={{ padding: "20px" }}
+											/>
+										) : contributionStats ? (
+											<div className={styles.contributionStatsGrid}>
+												<div className={styles.contributionStatItem}>
+													<span className={styles.contributionStatLabel}>
+														Bieżący miesiąc
+													</span>
+													<span
+														className={`${styles.contributionStatValue} ${
+															contributionStats.currentMonth?.status === "paid"
+																? styles.statusPaid
+																: contributionStats.hasContributions === false
+																	? styles.statusNone
+																	: styles.statusPending
+														}`}
+													>
+														{contributionStats.currentMonth?.status === "paid"
+															? "Opłacona"
+															: contributionStats.hasContributions === false
+																? "Brak danych"
+																: "Nieopłacona"}
+													</span>
+												</div>
+												<div className={styles.contributionStatItem}>
+													<span className={styles.contributionStatLabel}>
+														Kwota
+													</span>
+													<span className={styles.contributionStatValue}>
+														{contributionStats.currentMonth?.amount > 0
+															? `${contributionStats.currentMonth.amount.toFixed(2)} zł`
+															: "0.00 zł"}
+													</span>
+												</div>
+												<div className={styles.contributionStatItem}>
+													<span className={styles.contributionStatLabel}>
+														Zaległości
+													</span>
+													<span
+														className={`${styles.contributionStatValue} ${
+															contributionStats.summary?.overdueMonths > 0
+																? styles.statusOverdue
+																: ""
+														}`}
+													>
+														{contributionStats.summary?.overdueMonths > 0
+															? `️ ${contributionStats.summary.overdueMonths} mies.`
+															: "Brak zaległości"}
+													</span>
+												</div>
+												<div className={styles.contributionStatItem}>
+													<span className={styles.contributionStatLabel}>
+														Łącznie opłacone
+													</span>
+													<span className={styles.contributionStatValue}>
+														{contributionStats.summary?.totalPaid > 0
+															? `${contributionStats.summary.totalPaid.toFixed(2)} zł`
+															: "0.00 zł"}
+													</span>
+												</div>
 											</div>
-											<div className={styles.modal__field}>
-												<label className={styles.modal__label}>
-													Zaległości (zł)
-												</label>
-												<input
-													type="number"
-													className={styles.modal__input}
-													value={
-														formData.contributionInfo?.arrears ||
-														currentMember.contributionInfo?.arrears ||
-														0
-													}
-													onChange={(e) =>
-														setFormData({
-															...formData,
-															contributionInfo: {
-																...formData.contributionInfo,
-																arrears: parseFloat(e.target.value) || 0,
-															},
-														})
-													}
-													disabled={!canEdit}
-												/>
-											</div>
-										</div>
+										) : (
+											<p className={styles.contributionEmpty}>
+												Brak danych o składkach
+											</p>
+										)}
 									</div>
 								</>
 							);
@@ -1850,11 +1752,38 @@ export default function Members({ title }: { title?: string }) {
 	const [customTeamIcon, setCustomTeamIcon] = useState("Users");
 	const [customTeamParent, setCustomTeamParent] = useState("");
 	const [customTeamEmail, setCustomTeamEmail] = useState("");
+	const [contributionStats, setContributionStats] = useState<any>(null);
+	const [loadingContributions, setLoadingContributions] = useState(false);
 	const [sortBy, setSortBy] = useState<
 		"name" | "function" | "province" | "status"
 	>("name");
 	const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
 
+	const fetchContributionStats = async () => {
+		try {
+			setLoadingContributions(true);
+			const token = localStorage.getItem("accessToken");
+			const response = await fetch("/api/dashboard/contributions", {
+				headers: {
+					Authorization: `Bearer ${token}`,
+					"Content-Type": "application/json",
+				},
+			});
+			if (response.ok) {
+				const data = await response.json();
+				setContributionStats(data);
+			}
+		} catch (error) {
+			console.error("Błąd pobierania składek:", error);
+		} finally {
+			setLoadingContributions(false);
+		}
+	};
+	useEffect(() => {
+		if (isProfileOpen || isEditOpen) {
+			fetchContributionStats();
+		}
+	}, [isProfileOpen, isEditOpen]);
 	useEffect(() => {
 		const fetchAllData = async () => {
 			try {
@@ -1900,7 +1829,7 @@ export default function Members({ title }: { title?: string }) {
 				});
 				if (!membersResponse.ok) throw new Error("Błąd członków");
 				const membersData = await membersResponse.json();
-				logger.debug("📦 Dane z backendu:", membersData);
+				logger.debug("Dane z backendu:", membersData);
 
 				interface ApiUser {
 					id: string | number;
@@ -1916,6 +1845,7 @@ export default function Members({ title }: { title?: string }) {
 					status?: string;
 					join_date?: string;
 					created_at?: string;
+					pillars?: string;
 					onboarding_data?: {
 						development_areas?: string;
 						skills?: string;
@@ -1932,7 +1862,7 @@ export default function Members({ title }: { title?: string }) {
 					const teamString = user.team || "Brak zespołu";
 					const teams = user.team ? user.team.split(", ") : [];
 
-					logger.debug(`🔍 Mapped member:`, {
+					logger.debug(`Mapped member:`, {
 						id: user.id,
 						firstName: user.first_name,
 						lastName: user.last_name,
@@ -1958,6 +1888,7 @@ export default function Members({ title }: { title?: string }) {
 						function: user.functional_role || user.role || "Członek",
 						team: teamString,
 						teamId: user.team_id || (teams.length > 0 ? teams.join("-") : ""),
+						pillars: user.pillars || "",
 						province: user.province || "",
 						status: (user.status || "trial") as MemberStatus,
 						interests:
@@ -2056,14 +1987,14 @@ export default function Members({ title }: { title?: string }) {
 					};
 				});
 
-				logger.debug("📊 Wszyscy członkowie po mapowaniu:", mappedMembers);
+				logger.debug("Wszyscy członkowie po mapowaniu:", mappedMembers);
 				logger.debug(
-					"🏷️ Lista zespołów:",
+					"️ Lista zespołów:",
 					mappedMembers.map((m: any) => m.team),
 				);
 				setMembers(mappedMembers);
 			} catch (error) {
-				logger.error("❌ Błąd:", error);
+				logger.error("Błąd:", error);
 				setMembers([]);
 			} finally {
 				setLoading(false);
@@ -2219,7 +2150,7 @@ export default function Members({ title }: { title?: string }) {
 					`Członek ${member.firstName} ${member.lastName} został dodany!`,
 				);
 			} catch (error) {
-				logger.error("❌ Błąd dodawania członka:", error);
+				logger.error("Błąd dodawania członka:", error);
 				toast.error(
 					error instanceof Error
 						? error.message
@@ -2260,12 +2191,22 @@ export default function Members({ title }: { title?: string }) {
 	const teams = useMemo(() => {
 		const allTeams = new Set<string>();
 		members.forEach((member) => {
+			// Zespoły z team
 			const teamList = member.team.split(", ");
 			teamList.forEach((team) => {
 				if (team && team !== "Brak zespołu") {
 					allTeams.add(team);
 				}
 			});
+			// Filary z pillars
+			if (member.pillars) {
+				const pillarList = member.pillars.split(", ");
+				pillarList.forEach((pillar) => {
+					if (pillar) {
+						allTeams.add(`Filar ${pillar}`);
+					}
+				});
+			}
 		});
 		return Array.from(allTeams).sort();
 	}, [members]);
@@ -2310,7 +2251,7 @@ export default function Members({ title }: { title?: string }) {
 				`Członek ${member.firstName} ${member.lastName} został usunięty.`,
 			);
 		} catch (error) {
-			logger.error("❌ Błąd usuwania członka:", error);
+			logger.error("Błąd usuwania członka:", error);
 			toast.error("Nie udało się usunąć członka");
 		}
 	}, [confirmDialog.member, members, navigate]);
@@ -2332,6 +2273,9 @@ export default function Members({ title }: { title?: string }) {
 						.toLowerCase()
 						.includes(searchTerm.toLowerCase()) ||
 					(member.team || "")
+						.toLowerCase()
+						.includes(searchTerm.toLowerCase()) ||
+					(member.pillars || "")
 						.toLowerCase()
 						.includes(searchTerm.toLowerCase()) ||
 					(member.province || "")
@@ -2679,6 +2623,11 @@ export default function Members({ title }: { title?: string }) {
 					setIsProfileOpen(false);
 					setSelectedMember(null);
 				}}
+				// ============================================================
+				// DODAJ TE PROPSY:
+				// ============================================================
+				contributionStats={contributionStats}
+				loadingContributions={loadingContributions}
 			/>
 			<ProfileModal
 				isOpen={isEditOpen}
@@ -2690,6 +2639,11 @@ export default function Members({ title }: { title?: string }) {
 					setSelectedMember(null);
 				}}
 				onSave={handleSaveMember}
+				// ============================================================
+				// DODAJ TE PROPSY:
+				// ============================================================
+				contributionStats={contributionStats}
+				loadingContributions={loadingContributions}
 			/>
 			<ConfirmDialog
 				isOpen={confirmDialog.isOpen}

@@ -13,6 +13,7 @@ type User = {
 	lastName?: string;
 	role: string;
 	team: string;
+	pillars: string; // ← STRING (np. "Konferencyjny, Projektowy")
 	status: string;
 	username?: string;
 	email?: string;
@@ -48,6 +49,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
 					setUser(parsed);
 					setLoading(false);
 				} catch (e) {
+					// ignore
 				}
 			}
 
@@ -60,12 +62,22 @@ export function UserProvider({ children }: { children: ReactNode }) {
 
 			if (response.ok) {
 				const data = await response.json();
+
+				// 🔥 KONWERSJA pillars na string (jeśli to tablica)
+				let pillarsString = "";
+				if (Array.isArray(data.pillars)) {
+					pillarsString = data.pillars.join(", ");
+				} else if (typeof data.pillars === "string") {
+					pillarsString = data.pillars;
+				}
+
 				const userData = {
 					id: data.id,
 					firstName: data.firstName || "Użytkowniku",
-					lastName: data.last_name || "",
+					lastName: data.lastName || "",
 					role: data.role || "member",
 					team: data.team || "—",
+					pillars: pillarsString,
 					status: data.status || "active",
 					username: data.username,
 					email: data.email,
