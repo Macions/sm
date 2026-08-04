@@ -330,7 +330,7 @@ async function checkAndSendNotification(
 				data: {
 					user_id: userId,
 					type: "warning",
-					title: "⚠️ Zaległa składka",
+					title: "Zaległa składka",
 					message: `Masz zaległą składkę za ${getMonthName(month)} ${year}. Opłać ją jak najszybciej.`,
 					read: false,
 					link: "/profile",
@@ -346,24 +346,43 @@ async function checkAndSendNotification(
 	}
 }
 
-function getMonthName(month: number): string {
-	const months = [
-		"stycznia",
-		"lutego",
-		"marca",
-		"kwietnia",
-		"maja",
-		"czerwca",
-		"lipca",
-		"sierpnia",
-		"września",
-		"października",
-		"listopada",
-		"grudnia",
-	];
-	return months[month - 1] || month.toString();
-}
+function getMonthName(
+	month: number,
+	form: "nominative" | "genitive" = "genitive",
+): string {
+	const months = {
+		nominative: [
+			"styczeń",
+			"luty",
+			"marzec",
+			"kwiecień",
+			"maj",
+			"czerwiec",
+			"lipiec",
+			"sierpień",
+			"wrzesień",
+			"październik",
+			"listopad",
+			"grudzień",
+		],
+		genitive: [
+			"stycznia",
+			"lutego",
+			"marca",
+			"kwietnia",
+			"maja",
+			"czerwca",
+			"lipca",
+			"sierpnia",
+			"września",
+			"października",
+			"listopada",
+			"grudnia",
+		],
+	};
 
+	return months[form][month - 1] || month.toString();
+}
 // ============================================================
 // URUCHOMIENIE BEZPOŚREDNIE - DODAJ NA KONIEC PLIKU!
 // ============================================================

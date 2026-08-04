@@ -1,7 +1,7 @@
 import { useUser } from "@/context/UserContext";
 import { getCachedPermissions, type Permission } from "@/utils/permissions";
 import { useState, useMemo, useEffect } from "react";
-import { useCallback } from 'react';
+import { useCallback } from "react";
 import { safeNavigate } from "@/utils/safeNavigation";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
@@ -115,7 +115,7 @@ type User = {
 	id: string;
 	name: string;
 	email: string;
-	role: "admin" | "coordinator" | "member" | "board" | "zarząd";  // ← DODAJ "board" i "zarząd"
+	role: "admin" | "coordinator" | "member" | "board" | "zarząd"; // ← DODAJ "board" i "zarząd"
 	pillar?: string | null;
 	pillars?: string[];
 	coordinatorPillars?: string[];
@@ -217,19 +217,18 @@ const getPillarsArray = (pillars: string | string[] | undefined): string[] => {
 // 🔥 DODAJ NOWĄ FUNKCJĘ - normalizuje nazwy filarów
 const normalizePillarName = (pillar: string): string => {
 	// Jeśli już ma "Filar " to zwróć jak jest
-	if (pillar.startsWith('Filar ')) return pillar;
+	if (pillar.startsWith("Filar ")) return pillar;
 
 	// Mapowanie nazw bez prefiksu na nazwy z prefiksem
 	const pillarMap: Record<string, string> = {
-		'Projektowy': 'Filar Projektowy',
-		'Konferencyjny': 'Filar Konferencyjny',
-		'Rzeczniczy': 'Filar Rzeczniczy',
-		'Symulacyjny': 'Filar Symulacyjny'
+		Projektowy: "Filar Projektowy",
+		Konferencyjny: "Filar Konferencyjny",
+		Rzeczniczy: "Filar Rzeczniczy",
+		Symulacyjny: "Filar Symulacyjny",
 	};
 
 	return pillarMap[pillar] || pillar;
 };
-
 
 const isPillarMatching = (userPillar: string, ideaPillar: string): boolean => {
 	const normalizedUser = normalizePillarName(userPillar);
@@ -452,8 +451,8 @@ interface ProjectModalProps {
 	onClose: () => void;
 	onSave: (project: Project) => void;
 	users: User[];
-	userPillars?: string[];        // <- DODAJ
-	isAdminOrBoard?: boolean;      // <- DODAJ
+	userPillars?: string[]; // <- DODAJ
+	isAdminOrBoard?: boolean; // <- DODAJ
 }
 
 function ProjectModal({
@@ -465,6 +464,9 @@ function ProjectModal({
 	userPillars = [],
 	isAdminOrBoard = false,
 }: ProjectModalProps) {
+	console.log("🔍 [ProjectModal] userPillars:", userPillars);
+	console.log("🔍 [ProjectModal] isAdminOrBoard:", isAdminOrBoard);
+
 	const [formData, setFormData] = useState<Partial<Project>>(
 		project || {
 			name: "",
@@ -482,19 +484,32 @@ function ProjectModal({
 		if (isAdminOrBoard) {
 			return Object.keys(PILLAR_LABELS_FALLBACK);
 		}
-		const userPillarKeys = userPillars.map(p => {
-			const entry = Object.entries(PILLAR_LABELS_FALLBACK).find(
-				([key, label]) => label === p || p === key
-			);
-			return entry ? entry[0] : null;
-		}).filter(Boolean) as string[];
+
+		const userPillarKeys = userPillars
+			.map((p) => {
+				const entry = Object.entries(PILLAR_LABELS_FALLBACK).find(
+					([key, label]) => {
+						// Sprawdź czy pasuje po pełnej nazwie
+						if (label === p) return true;
+						// Sprawdź czy pasuje po skróconej nazwie
+						if (key === p) return true;
+						// Sprawdź czy pasuje po nazwie bez "Filar "
+						const labelWithoutPrefix = label.replace("Filar ", "");
+						if (labelWithoutPrefix === p) return true;
+						return false;
+					},
+				);
+				return entry ? entry[0] : null;
+			})
+			.filter(Boolean) as string[];
+
 		return userPillarKeys;
 	}, [userPillars, isAdminOrBoard]);
 
 	// Automatycznie wybierz filar jeśli tylko jeden dostępny
 	useEffect(() => {
 		if (availablePillars.length === 1 && !formData.pillar && isOpen) {
-			setFormData(prev => ({
+			setFormData((prev) => ({
 				...prev,
 				pillar: availablePillars[0] as ProjectPillar,
 			}));
@@ -633,8 +648,9 @@ function ProjectModal({
 								))}
 							</select>
 							{availablePillars.length === 0 && (
-								<p style={{ color: 'red', fontSize: '13px', marginTop: '4px' }}>
-									Nie masz przypisanego żadnego filaru. Skontaktuj się z administratorem.
+								<p style={{ color: "red", fontSize: "13px", marginTop: "4px" }}>
+									Nie masz przypisanego żadnego filaru. Skontaktuj się z
+									administratorem.
 								</p>
 							)}
 						</div>
@@ -742,25 +758,34 @@ function TeamSelector({
 	const [filter, setFilter] = useState<"all" | "pillar" | "custom">("all");
 	const [forceUpdate, setForceUpdate] = useState(0);
 
+	// 🔥 DODAJ - automatycznie wybierz wszystkich gdy filter === "all" i selectedTeam jest puste
+	useEffect(() => {
+		if (filter === "all" && selectedTeam.length === 0 && users.length > 0) {
+			const allIds = users.map((u) => u.id);
+			onTeamChange(allIds);
+		}
+	}, [filter, users, selectedTeam.length, onTeamChange]);
+
 	// Wymuś odświeżenie gdy zmieni się filtr
 	useEffect(() => {
-		setForceUpdate(prev => prev + 1);
+		setForceUpdate((prev) => prev + 1);
 	}, [filter, pillar]);
 
 	const filteredUsers = useMemo(() => {
 		if (filter === "pillar" && pillar) {
-			const pillarName = PILLAR_LABELS_FALLBACK[pillar as ProjectPillar] || pillar;
-			const searchPillar = pillarName.replace('Filar ', '');
+			const pillarName =
+				PILLAR_LABELS_FALLBACK[pillar as ProjectPillar] || pillar;
+			const searchPillar = pillarName.replace("Filar ", "");
 
 			return users.filter((u) => {
 				if (u.pillars && Array.isArray(u.pillars) && u.pillars.length > 0) {
 					return u.pillars.some((p: string) => {
-						const normalizedP = p.replace('Filar ', '');
+						const normalizedP = p.replace("Filar ", "");
 						return normalizedP === searchPillar || p === pillarName;
 					});
 				}
 				if (u.pillar) {
-					const normalizedP = u.pillar.replace('Filar ', '');
+					const normalizedP = u.pillar.replace("Filar ", "");
 					return normalizedP === searchPillar || u.pillar === pillarName;
 				}
 				return false;
@@ -812,20 +837,27 @@ function TeamSelector({
 						className={`${styles.teamSelector__option} ${filter === "pillar" ? styles.teamSelector__optionActive : ""}`}
 						onClick={() => {
 							setFilter("pillar");
-							const pillarName = PILLAR_LABELS_FALLBACK[pillar as ProjectPillar] || pillar;
-							const searchPillar = pillarName.replace('Filar ', '');
+							const pillarName =
+								PILLAR_LABELS_FALLBACK[pillar as ProjectPillar] || pillar;
+							const searchPillar = pillarName.replace("Filar ", "");
 
 							const pillarIds = users
 								.filter((u) => {
-									if (u.pillars && Array.isArray(u.pillars) && u.pillars.length > 0) {
+									if (
+										u.pillars &&
+										Array.isArray(u.pillars) &&
+										u.pillars.length > 0
+									) {
 										return u.pillars.some((p: string) => {
-											const normalizedP = p.replace('Filar ', '');
+											const normalizedP = p.replace("Filar ", "");
 											return normalizedP === searchPillar || p === pillarName;
 										});
 									}
 									if (u.pillar) {
-										const normalizedP = u.pillar.replace('Filar ', '');
-										return normalizedP === searchPillar || u.pillar === pillarName;
+										const normalizedP = u.pillar.replace("Filar ", "");
+										return (
+											normalizedP === searchPillar || u.pillar === pillarName
+										);
 									}
 									return false;
 								})
@@ -869,7 +901,9 @@ function TeamSelector({
 					<div className={styles.teamSelector__list}>
 						{filteredUsers.length === 0 ? (
 							<p className={styles.teamSelector__empty}>
-								{filter === "pillar" ? "Brak użytkowników w tym filarze" : "Brak użytkowników"}
+								{filter === "pillar"
+									? "Brak użytkowników w tym filarze"
+									: "Brak użytkowników"}
 							</p>
 						) : (
 							filteredUsers.map((user) => (
@@ -886,11 +920,13 @@ function TeamSelector({
 									>
 										{ROLE_LABELS[user.role] || user.role}
 									</span>
-									{user.pillars && Array.isArray(user.pillars) && user.pillars.length > 0 && (
-										<span className={styles.teamSelector__pillar} hidden>
-											{user.pillars.join(", ")}
-										</span>
-									)}
+									{user.pillars &&
+										Array.isArray(user.pillars) &&
+										user.pillars.length > 0 && (
+											<span className={styles.teamSelector__pillar} hidden>
+												{user.pillars.join(", ")}
+											</span>
+										)}
 									{user.pillar && !user.pillars?.length && (
 										<span className={styles.teamSelector__pillar}>
 											{user.pillar}
@@ -1242,7 +1278,7 @@ function IdeaCard({
 			</div>
 			{idea.status === "pending" && (
 				<div className={styles.ideaCard__actions}>
-					{permissions.includes('canManageAllProjects') && (
+					{permissions.includes("canManageAllProjects") && (
 						<>
 							<button
 								className={`${styles.ideaCard__actionBtn} ${styles.ideaCard__actionBtnSuccess}`}
@@ -1261,9 +1297,9 @@ function IdeaCard({
 						</>
 					)}
 
-					{permissions.includes('canManagePillarProjects') &&
-						getPillarsArray(currentUser?.pillars).some((up) =>
-							isPillarMatching(up, idea.pillar)
+					{permissions.includes("canManagePillarProjects") &&
+						getPillarsArray(currentUser?.coordinatorPillars).some((up) =>
+							isPillarMatching(up, idea.pillar),
 						) && (
 							<>
 								<button
@@ -1298,26 +1334,43 @@ export default function Projects() {
 	const [permissions, setPermissions] = useState<Permission[]>([]);
 
 	const refreshAllData = useCallback(async () => {
-		console.log('🔄 [REFRESH] Odświeżanie danych...');
+		console.log("🔄 [REFRESH] Odświeżanie danych...");
 
-		const token = localStorage.getItem('accessToken');
+		const token = localStorage.getItem("accessToken");
 		if (!token) {
-			console.warn('⚠️ [REFRESH] Brak tokenu');
+			console.warn("⚠️ [REFRESH] Brak tokenu");
 			return;
 		}
 
 		try {
-			// 1. Odśwież profil - to jest najważniejsze!
-			const profileRes = await fetch('/api/profile', {
-				headers: { Authorization: `Bearer ${token}` }
+			// 1. Odśwież profil
+			const profileRes = await fetch("/api/profile", {
+				headers: { Authorization: `Bearer ${token}` },
 			});
 
 			let profileData = null;
 			if (profileRes.ok) {
 				profileData = await profileRes.json();
-				console.log('👤 Profil pobrany:', profileData);
+				console.log("👤 Profil pobrany:", profileData);
 
-				// Ustaw currentUser od razu
+				// 🔥 DODAJ - zapisz do localStorage z coordinatorPillars
+				const userForStorage = {
+					id: profileData.id,
+					firstName: profileData.firstName,
+					lastName: profileData.lastName,
+					email: profileData.email,
+					role: profileData.role,
+					team: profileData.team,
+					pillar: profileData.pillar,
+					pillars: profileData.pillars || [],
+					coordinatorPillars: profileData.coordinatorPillars || [],
+				};
+				localStorage.setItem("user", JSON.stringify(userForStorage));
+				console.log(
+					"✅ Zapisano user do localStorage z coordinatorPillars:",
+					userForStorage.coordinatorPillars,
+				);
+
 				setCurrentUser({
 					id: String(profileData.id),
 					name: `${profileData.firstName} ${profileData.lastName}`,
@@ -1325,20 +1378,45 @@ export default function Projects() {
 					role: profileData.role as "admin" | "coordinator" | "member",
 					pillar: profileData.pillar || null,
 					pillars: profileData.pillars || "",
+					coordinatorPillars: profileData.coordinatorPillars || [],
 				});
 			}
 
-			// 2. Pobierz uprawnienia - używając roli z profilu
+			// 🔥 2. Pobierz uprawnienia - NAJPIERW SPRAWDŹ CZY KOORDYNATOR
 			if (profileData?.role) {
-				console.log('🔓 Pobieranie uprawnień dla roli:', profileData.role);
-				const perms = await getCachedPermissions(profileData.role);
-				setPermissions(perms);
-				console.log('✅ Uprawnienia pobrane:', perms);
+				console.log("🔓 Pobieranie uprawnień...");
+
+				const coordRes = await fetch("/api/user/is-coordinator", {
+					headers: { Authorization: `Bearer ${token}` },
+				});
+
+				if (coordRes.ok) {
+					const coordData = await coordRes.json();
+					console.log("👑 Status koordynatora:", coordData);
+
+					if (coordData.isCoordinator) {
+						const perms: Permission[] = [
+							"canManagePillarProjects",
+							"canManagePillarIdeas",
+						];
+						if (coordData.isAdmin) {
+							perms.push("canManageAllProjects");
+						}
+						setPermissions(perms);
+						console.log("✅ Uprawnienia koordynatora ustawione:", perms);
+					} else {
+						const perms = await getCachedPermissions(profileData.role);
+						setPermissions(perms);
+					}
+				} else {
+					const perms = await getCachedPermissions(profileData.role);
+					setPermissions(perms);
+				}
 			}
 
 			// 3. Odśwież pomysły
-			const ideasRes = await fetch('/api/ideas', {
-				headers: { Authorization: `Bearer ${token}` }
+			const ideasRes = await fetch("/api/ideas", {
+				headers: { Authorization: `Bearer ${token}` },
 			});
 			if (ideasRes.ok) {
 				const ideasData = await ideasRes.json();
@@ -1360,8 +1438,8 @@ export default function Projects() {
 			}
 
 			// 4. Odśwież projekty
-			const projectsRes = await fetch('/api/projects', {
-				headers: { Authorization: `Bearer ${token}` }
+			const projectsRes = await fetch("/api/projects", {
+				headers: { Authorization: `Bearer ${token}` },
 			});
 			if (projectsRes.ok) {
 				const projectsData = await projectsRes.json();
@@ -1373,25 +1451,27 @@ export default function Projects() {
 					status: apiProject.status as ProjectStatus,
 					estimated_end: apiProject.estimated_end,
 					coordinator_id: apiProject.coordinator_id?.toString() || "",
-					team: apiProject.team ? apiProject.team.split(",").map((t: string) => t.trim()) : [],
+					team: apiProject.team
+						? apiProject.team.split(",").map((t: string) => t.trim())
+						: [],
 					created_at: apiProject.created_at,
 					updated_at: apiProject.updated_at,
 				}));
 				setProjects(mappedProjects);
 			}
 
-			console.log('✅ [REFRESH] Dane odświeżone!');
+			console.log("✅ [REFRESH] Dane odświeżone!");
 		} catch (error) {
-			console.error('❌ [REFRESH] Błąd odświeżania:', error);
+			console.error("❌ [REFRESH] Błąd odświeżania:", error);
 		}
-	}, []); // <- USUŃ zależność od currentUser
+	}, []);
 
 	// Nasłuchuj na zmiany HMR
 	useEffect(() => {
 		// Obsługa HMR - odśwież dane gdy moduł jest aktualizowany
 		if (import.meta.hot) {
-			import.meta.hot.on('vite:afterUpdate', () => {
-				console.log('🔄 [HMR] Wykryto zmianę kodu - odświeżam dane...');
+			import.meta.hot.on("vite:afterUpdate", () => {
+				console.log("🔄 [HMR] Wykryto zmianę kodu - odświeżam dane...");
 				setTimeout(() => {
 					refreshAllData();
 				}, 100);
@@ -1409,10 +1489,66 @@ export default function Projects() {
 		const loadPermissions = async () => {
 			if (!currentUser?.role) return;
 			try {
+				const token = localStorage.getItem("accessToken");
+				const response = await fetch("/api/user/is-coordinator", {
+					headers: {
+						Authorization: `Bearer ${token}`,
+						"Content-Type": "application/json",
+					},
+				});
+
+				if (response.ok) {
+					const data = await response.json();
+					console.log("👑 Status koordynatora z endpointu:", data);
+
+					if (data.isCoordinator) {
+						const perms: Permission[] = [
+							"canManagePillarProjects",
+							"canManagePillarIdeas",
+						];
+
+						if (data.isAdmin) {
+							perms.push("canManageAllProjects");
+						}
+
+						setPermissions(perms);
+
+						// 🔥 DODAJ - zapisz coordinatorPillars do localStorage
+						const currentUserData = JSON.parse(
+							localStorage.getItem("user") || "{}",
+						);
+						const updatedUser = {
+							...currentUserData,
+							coordinatorPillars: data.leaderTeams.map((t: any) => t.name),
+							isCoordinator: true,
+						};
+						localStorage.setItem("user", JSON.stringify(updatedUser));
+						console.log(
+							"✅ Zaktualizowano localStorage z coordinatorPillars:",
+							updatedUser.coordinatorPillars,
+						);
+
+						setCurrentUser((prev) =>
+							prev
+								? {
+										...prev,
+										coordinatorPillars: data.leaderTeams.map(
+											(t: any) => t.name,
+										),
+									}
+								: prev,
+						);
+
+						return;
+					}
+				}
+
 				const perms = await getCachedPermissions(currentUser.role);
 				setPermissions(perms);
 			} catch (error) {
-				logger.error('❌ Błąd pobierania uprawnień:', error);
+				logger.error("❌ Błąd pobierania uprawnień:", error);
+				const perms = await getCachedPermissions(currentUser.role);
+				setPermissions(perms);
 			}
 		};
 		loadPermissions();
@@ -1420,6 +1556,19 @@ export default function Projects() {
 	// Projects.tsx - w useEffect dla contextUser
 	useEffect(() => {
 		if (contextUser) {
+			// 🔥 DODAJ - zapisz do localStorage z coordinatorPillars
+			const userForStorage = {
+				id: contextUser.id,
+				firstName: contextUser.firstName,
+				lastName: contextUser.lastName,
+				email: contextUser.email,
+				role: contextUser.role,
+				pillar: (contextUser as any).pillar || null,
+				pillars: (contextUser as any).pillars || [],
+				coordinatorPillars: (contextUser as any).coordinatorPillars || [],
+			};
+			localStorage.setItem("user", JSON.stringify(userForStorage));
+
 			setCurrentUser({
 				id: String(contextUser.id),
 				name: `${contextUser.firstName} ${contextUser.lastName}`,
@@ -1427,7 +1576,6 @@ export default function Projects() {
 				role: contextUser.role as "admin" | "coordinator" | "member",
 				pillar: (contextUser as any).pillar || null,
 				pillars: (contextUser as any).pillars || "",
-				// 🔥 DODAJ - filary w których jest koordynatorem
 				coordinatorPillars: (contextUser as any).coordinatorPillars || [],
 			});
 		}
@@ -1875,21 +2023,28 @@ export default function Projects() {
 
 				if (response.ok) {
 					const data = await response.json();
-					console.log('📦 [fetchUsers] Otrzymano danych:', data.length);
-					console.log('📦 [fetchUsers] Pierwszy użytkownik:', data[0]);
+					console.log("📦 [fetchUsers] Otrzymano danych:", data.length);
+					console.log("📦 [fetchUsers] Pierwszy użytkownik:", data[0]);
 
 					const mappedUsers = data
 						.filter((user: any) => user.id !== 63 && user.id !== "63")
 						.map((user: any) => ({
 							id: user.id.toString(),
-							name: user.name || `${user.first_name || ""} ${user.last_name || ""}`.trim() || user.email || "Nieznany",
+							name:
+								user.name ||
+								`${user.first_name || ""} ${user.last_name || ""}`.trim() ||
+								user.email ||
+								"Nieznany",
 							email: user.email,
 							role: user.role || "member",
 							pillar: user.pillar || null,
-							pillars: user.pillars || [],  // ← TO JEST WAŻNE!
+							pillars: user.pillars || [], // ← TO JEST WAŻNE!
 						}));
 
-					console.log('📦 [fetchUsers] Po mapowaniu - pierwszy:', mappedUsers[0]);
+					console.log(
+						"📦 [fetchUsers] Po mapowaniu - pierwszy:",
+						mappedUsers[0],
+					);
 					setUsers(mappedUsers);
 				}
 			} catch (error) {
@@ -1900,18 +2055,20 @@ export default function Projects() {
 		fetchUsers();
 	}, []);
 	const canManageProject = (project: Project) => {
-		if (permissions.includes('canManageAllProjects')) return true;
-		if (permissions.includes('canManagePillarProjects')) {
-			const pillarName = PILLAR_LABELS_FALLBACK[project.pillar as ProjectPillar] || project.pillar;
-			const userPillars = getPillarsArray(currentUser?.pillars);
-			// 🔥 UŻYJ NOWEJ FUNKCJI DO PORÓWNANIA
+		if (permissions.includes("canManageAllProjects")) return true;
+		if (permissions.includes("canManagePillarProjects")) {
+			const pillarName =
+				PILLAR_LABELS_FALLBACK[project.pillar as ProjectPillar] ||
+				project.pillar;
+			const userPillars = getPillarsArray(currentUser?.coordinatorPillars);
 			return userPillars.some((up) => isPillarMatching(up, pillarName));
 		}
 		return false;
 	};
 
 	const canManageProjects =
-		permissions.includes('canManageAllProjects') || permissions.includes('canManagePillarProjects');
+		permissions.includes("canManageAllProjects") ||
+		permissions.includes("canManagePillarProjects");
 
 	const filteredProjects = useMemo(() => {
 		return projects.filter((project) => {
@@ -1932,13 +2089,12 @@ export default function Projects() {
 	}, [projects, searchTerm, selectedPillar, selectedStatus]);
 
 	const coordinatorStats = useMemo(() => {
-		if (!permissions.includes('canManagePillarIdeas')) return null;
-		if (!currentUser?.pillars?.length) return null;
+		if (!permissions.includes("canManagePillarIdeas")) return null;
+		if (!currentUser?.coordinatorPillars?.length) return null;
 
-		const userPillars = getPillarsArray(currentUser.pillars);
-		// 🔥 UŻYJ NOWEJ FUNKCJI DO FILTROWANIA
+		const userPillars = getPillarsArray(currentUser.coordinatorPillars);
 		const pillarIdeas = ideas.filter((i) =>
-			userPillars.some((up) => isPillarMatching(up, i.pillar))
+			userPillars.some((up) => isPillarMatching(up, i.pillar)),
 		);
 
 		const pending = pillarIdeas.filter((i) => i.status === "pending").length;
@@ -2133,15 +2289,17 @@ export default function Projects() {
 				))}
 			</div>
 
-			{permissions.includes('canManagePillarProjects') &&
+			{permissions.includes("canManagePillarProjects") &&
 				coordinatorStats &&
 				currentUser &&
-				currentUser.pillars &&
-				currentUser.pillars.length > 0 && (
+				currentUser.coordinatorPillars &&
+				currentUser.coordinatorPillars.length > 0 && (
 					<div className={styles.coordinatorStats}>
 						<span className={styles.coordinatorStats__title}>
-							Pomysły dla twoich filarów:{" "}
-							<strong>{getPillarsString(currentUser.pillars)}</strong>
+							Pomysły dla twoich filarów (koordynator):{" "}
+							<strong>
+								{getPillarsString(currentUser.coordinatorPillars)}
+							</strong>
 						</span>
 						<span className={styles.coordinatorStats__item}>
 							<span className={styles.coordinatorStats__number}>
@@ -2165,7 +2323,9 @@ export default function Projects() {
 							>
 								{coordinatorStats.approved}
 							</span>
-							<span className={styles.coordinatorStats__label}>Zaakceptowane</span>
+							<span className={styles.coordinatorStats__label}>
+								Zaakceptowane
+							</span>
 						</span>
 						<span className={styles.coordinatorStats__item}>
 							<span
@@ -2254,10 +2414,10 @@ export default function Projects() {
 					{(selectedPillar !== "all" ||
 						selectedStatus !== "all" ||
 						searchTerm) && (
-							<button className={styles.filters__reset} onClick={clearFilters}>
-								Wyczyść filtry
-							</button>
-						)}
+						<button className={styles.filters__reset} onClick={clearFilters}>
+							Wyczyść filtry
+						</button>
+					)}
 				</div>
 			</div>
 
@@ -2273,8 +2433,8 @@ export default function Projects() {
 							<h3 className={styles.emptyState__title}>Brak projektów</h3>
 							<p className={styles.emptyState__description}>
 								{searchTerm ||
-									selectedPillar !== "all" ||
-									selectedStatus !== "all"
+								selectedPillar !== "all" ||
+								selectedStatus !== "all"
 									? "Nie znaleziono projektów spełniających kryteria wyszukiwania."
 									: canManageProjects
 										? 'Nie ma jeszcze żadnych projektów. Kliknij "Dodaj projekt", aby utworzyć pierwszy.'
@@ -2354,11 +2514,11 @@ export default function Projects() {
 				}}
 				onSave={handleSaveProject}
 				users={users}
-				userPillars={getPillarsArray(currentUser?.pillars)}        // <- DODAJ
-				isAdminOrBoard={                                           // <- DODAJ
-					permissions.includes('canManageAllProjects') ||
-					currentUser?.role === 'admin' ||
-					currentUser?.role === 'board'
+				userPillars={getPillarsArray(currentUser?.coordinatorPillars)} // <- TYLKO KOORDYNATOR
+				isAdminOrBoard={
+					permissions.includes("canManageAllProjects") ||
+					currentUser?.role === "admin" ||
+					currentUser?.role === "board"
 				}
 			/>
 

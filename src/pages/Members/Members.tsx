@@ -1779,6 +1779,7 @@ export default function Members({ title }: { title?: string }) {
 			setLoadingContributions(false);
 		}
 	};
+
 	useEffect(() => {
 		if (isProfileOpen || isEditOpen) {
 			fetchContributionStats();
@@ -2262,6 +2263,16 @@ export default function Members({ title }: { title?: string }) {
 	const filteredMembers = useMemo(() => {
 		return members
 			.filter((member) => {
+				// 🔥 POMIŃ "Admin System" - użytkownik z ID 63 lub 1 (admin)
+				// Sprawdź czy to admin (możesz też sprawdzać po nazwie)
+				if (
+					member.id === "63" ||
+					member.id === "1" ||
+					member.email === "admin@system.pl"
+				) {
+					return false;
+				}
+
 				const matchesSearch =
 					(member.firstName || "")
 						.toLowerCase()
