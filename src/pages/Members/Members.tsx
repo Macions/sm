@@ -46,27 +46,6 @@ const transformPillars = (pillars: string): string => {
 		.join(", ");
 };
 
-// FUNKCJA DO ŁĄCZENIA WSZYSTKICH INFORMACJI:
-const getMemberInfo = (member: Member): string => {
-	const parts: string[] = [];
-
-	// 1. Filary (z SM_Frekwencja)
-	if (member.pillars) {
-		parts.push(transformPillars(member.pillars));
-	}
-
-	// 2. Zespoły z team (z team_members)
-	if (member.team && member.team !== "Brak zespołu") {
-		parts.push(member.team);
-	}
-
-	// 3. Funkcja/rola (functional_role)
-	if (member.function && member.function !== "Członek") {
-		parts.push(member.function);
-	}
-
-	return parts.length > 0 ? parts.join(" • ") : "Brak informacji";
-};
 const AREA_LABELS: Record<string, string> = {
 	projects: "Projekty",
 	conferences: "Konferencje i debaty",
@@ -209,21 +188,39 @@ function MemberCard({
 						</span>
 					</div>
 					<div className={styles.memberCard__details}>
-						<span className={styles.memberCard__detail}>
-							<Users size={14} />
-							{member.pillars
-								? transformPillars(member.pillars)
-								: member.team || "Brak filaru"}
-						</span>
-						{member.province &&
-							member.province !== "" &&
-							member.province !== "Brak" &&
-							member.province !== "Nieznane" && (
-								<span className={styles.memberCard__detail}>
-									<MapPin size={14} />
-									{member.province}
-								</span>
-							)}
+						{/* Filary */}
+						{member.pillars && (
+							<span className={styles.memberCard__detail}>
+								<Users size={14} />
+								{transformPillars(member.pillars)}
+							</span>
+						)}
+
+						{/* Zespoły (pomijając filary) */}
+						{member.team && member.team !== "Brak zespołu" && (
+							<span className={styles.memberCard__detail}>
+								<Users size={14} />
+								{member.team.split(", ")
+									.filter(team => team !== "Brak zespołu")
+									.filter(team => {
+										if (member.pillars) {
+											const pillars = member.pillars.split(", ");
+											return !pillars.some(p => PILLAR_MAP[p] === team || p === team);
+										}
+										return true;
+									})
+									.join(", ")
+								}
+							</span>
+						)}
+
+						{/* Województwo */}
+						{member.province && member.province !== "" && member.province !== "Brak" && member.province !== "Nieznane" && (
+							<span className={styles.memberCard__detail}>
+								<MapPin size={14} />
+								{member.province}
+							</span>
+						)}
 					</div>
 				</div>
 				<div className={styles.memberCard__actions}>
@@ -267,11 +264,34 @@ function MemberCard({
 			<p className={styles.memberCard__function}>{member.function}</p>
 
 			{/* TYLKO FILARY - BEZ DUPLIKOWANIA */}
+			{/* FILARY I ZESPOŁY */}
 			{member.pillars && (
 				<p className={styles.memberCard__team}>
 					<Users size={14} />
 					{transformPillars(member.pillars)}
 				</p>
+			)}
+
+			{/* ZESPOŁY (osobne badge'y) */}
+			{member.team && member.team !== "Brak zespołu" && (
+				<div className={styles.memberCard__teams}>
+					{member.team.split(", ")
+						.filter(team => team !== "Brak zespołu")
+						.filter(team => {
+							// Filtrujemy filary które już są wyświetlane
+							if (member.pillars) {
+								const pillars = member.pillars.split(", ");
+								return !pillars.some(p => PILLAR_MAP[p] === team || p === team);
+							}
+							return true;
+						})
+						.map(team => (
+							<span key={team} className={styles.memberCard__teamBadge}>
+								{team}
+							</span>
+						))
+					}
+				</div>
 			)}
 
 			{member.province &&
@@ -1635,13 +1655,12 @@ function ProfileModal({
 														Bieżący miesiąc
 													</span>
 													<span
-														className={`${styles.contributionStatValue} ${
-															contributionStats.currentMonth?.status === "paid"
-																? styles.statusPaid
-																: contributionStats.hasContributions === false
-																	? styles.statusNone
-																	: styles.statusPending
-														}`}
+														className={`${styles.contributionStatValue} ${contributionStats.currentMonth?.status === "paid"
+															? styles.statusPaid
+															: contributionStats.hasContributions === false
+																? styles.statusNone
+																: styles.statusPending
+															}`}
 													>
 														{contributionStats.currentMonth?.status === "paid"
 															? "Opłacona"
@@ -1665,11 +1684,10 @@ function ProfileModal({
 														Zaległości
 													</span>
 													<span
-														className={`${styles.contributionStatValue} ${
-															contributionStats.summary?.overdueMonths > 0
-																? styles.statusOverdue
-																: ""
-														}`}
+														className={`${styles.contributionStatValue} ${contributionStats.summary?.overdueMonths > 0
+															? styles.statusOverdue
+															: ""
+															}`}
 													>
 														{contributionStats.summary?.overdueMonths > 0
 															? `️ ${contributionStats.summary.overdueMonths} mies.`
@@ -1895,90 +1913,90 @@ export default function Members({ title }: { title?: string }) {
 						interests:
 							hasOnboardingData && onboarding.development_areas
 								? (() => {
-										try {
-											return JSON.parse(onboarding.development_areas);
-										} catch (e) {
-											return [];
-										}
-									})()
+									try {
+										return JSON.parse(onboarding.development_areas);
+									} catch (e) {
+										return [];
+									}
+								})()
 								: [],
 						skills:
 							hasOnboardingData && onboarding.skills
 								? (() => {
-										try {
-											return JSON.parse(onboarding.skills);
-										} catch (e) {
-											return [];
-										}
-									})()
+									try {
+										return JSON.parse(onboarding.skills);
+									} catch (e) {
+										return [];
+									}
+								})()
 								: [],
 						smAreas:
 							hasOnboardingData && onboarding.development_areas
 								? (() => {
-										try {
-											return JSON.parse(onboarding.development_areas);
-										} catch (e) {
-											return [];
-										}
-									})()
+									try {
+										return JSON.parse(onboarding.development_areas);
+									} catch (e) {
+										return [];
+									}
+								})()
 								: [],
 						email: user.email || "",
 						phone: user.phone || "",
 						joinDate: user.join_date
 							? new Date(user.join_date).toISOString().split("T")[0]
 							: user.created_at?.split("T")[0] ||
-								new Date().toISOString().split("T")[0],
+							new Date().toISOString().split("T")[0],
 						contacts: {
 							salaContacts:
 								hasOnboardingData && onboarding.sala_contacts
 									? (() => {
-											try {
-												return JSON.parse(onboarding.sala_contacts);
-											} catch (e) {
-												return [];
-											}
-										})()
+										try {
+											return JSON.parse(onboarding.sala_contacts);
+										} catch (e) {
+											return [];
+										}
+									})()
 									: [],
 							mpContacts:
 								hasOnboardingData && onboarding.mp_contacts
 									? (() => {
-											try {
-												return JSON.parse(onboarding.mp_contacts);
-											} catch (e) {
-												return [];
-											}
-										})()
+										try {
+											return JSON.parse(onboarding.mp_contacts);
+										} catch (e) {
+											return [];
+										}
+									})()
 									: [],
 							otherContacts: [
 								...(hasOnboardingData && onboarding.institution_contacts
 									? (() => {
-											try {
-												return JSON.parse(onboarding.institution_contacts);
-											} catch (e) {
-												return [];
-											}
-										})()
+										try {
+											return JSON.parse(onboarding.institution_contacts);
+										} catch (e) {
+											return [];
+										}
+									})()
 									: []),
 								...(hasOnboardingData && onboarding.other_contacts
 									? (() => {
-											try {
-												return JSON.parse(onboarding.other_contacts);
-											} catch (e) {
-												return [];
-											}
-										})()
+										try {
+											return JSON.parse(onboarding.other_contacts);
+										} catch (e) {
+											return [];
+										}
+									})()
 									: []),
 							],
 						},
 						trainingAreas:
 							hasOnboardingData && onboarding.skills
 								? (() => {
-										try {
-											return JSON.parse(onboarding.skills);
-										} catch (e) {
-											return [];
-										}
-									})()
+									try {
+										return JSON.parse(onboarding.skills);
+									} catch (e) {
+										return [];
+									}
+								})()
 								: [],
 						contributionInfo: {
 							status: "paid",
@@ -2263,44 +2281,38 @@ export default function Members({ title }: { title?: string }) {
 	const filteredMembers = useMemo(() => {
 		return members
 			.filter((member) => {
-				// 🔥 POMIŃ "Admin System" - użytkownik z ID 63 lub 1 (admin)
-				// Sprawdź czy to admin (możesz też sprawdzać po nazwie)
-				if (
-					member.id === "63" ||
-					member.id === "1" ||
-					member.email === "admin@system.pl"
-				) {
+				// SPRAWDŹ CZY TO ADMIN SYSTEMOWY
+				const isSystemAdmin =
+					member.email === "admin@system.pl" ||
+					(member.firstName === "Admin" && member.lastName === "System");
+
+				// POMIŃ ADMINA SYSTEMOWEGO
+				if (isSystemAdmin) {
 					return false;
 				}
 
+				// SPRAWDŹ CZY TO MACIEJ CZARNECKI
+				const isMaciej =
+					member.firstName?.toLowerCase().includes('maciej') &&
+					member.lastName?.toLowerCase().includes('czarnecki');
+
+				// DLA MACIEJA - POMIŃ FILTRY (ZAWSZE POKAZUJ)
+				if (isMaciej) {
+					return true;
+				}
+
+				// NORMALNE FILTRY DLA RESZTY
+				const searchLower = searchTerm.toLowerCase();
 				const matchesSearch =
-					(member.firstName || "")
-						.toLowerCase()
-						.includes(searchTerm.toLowerCase()) ||
-					(member.lastName || "")
-						.toLowerCase()
-						.includes(searchTerm.toLowerCase()) ||
-					(member.function || "")
-						.toLowerCase()
-						.includes(searchTerm.toLowerCase()) ||
-					(member.team || "")
-						.toLowerCase()
-						.includes(searchTerm.toLowerCase()) ||
-					(member.pillars || "")
-						.toLowerCase()
-						.includes(searchTerm.toLowerCase()) ||
-					(member.province || "")
-						.toLowerCase()
-						.includes(searchTerm.toLowerCase()) ||
-					member.skills.some((s) =>
-						s.toLowerCase().includes(searchTerm.toLowerCase()),
-					) ||
-					member.interests.some((i) =>
-						i.toLowerCase().includes(searchTerm.toLowerCase()),
-					) ||
-					member.smAreas.some((a) =>
-						a.toLowerCase().includes(searchTerm.toLowerCase()),
-					);
+					(member.firstName || "").toLowerCase().includes(searchLower) ||
+					(member.lastName || "").toLowerCase().includes(searchLower) ||
+					(member.function || "").toLowerCase().includes(searchLower) ||
+					(member.team || "").toLowerCase().includes(searchLower) ||
+					(member.pillars || "").toLowerCase().includes(searchLower) ||
+					(member.province || "").toLowerCase().includes(searchLower) ||
+					member.skills.some(s => s.toLowerCase().includes(searchLower)) ||
+					member.interests.some(i => i.toLowerCase().includes(searchLower)) ||
+					member.smAreas.some(a => a.toLowerCase().includes(searchLower));
 
 				const matchesProvince =
 					selectedProvince === "all" || member.province === selectedProvince;
@@ -2315,9 +2327,9 @@ export default function Members({ title }: { title?: string }) {
 				let comparison = 0;
 				switch (sortBy) {
 					case "name":
-						comparison = (
-							(a.firstName || "") + (a.lastName || "")
-						).localeCompare((b.firstName || "") + (b.lastName || ""));
+						comparison = ((a.firstName || "") + (a.lastName || "")).localeCompare(
+							(b.firstName || "") + (b.lastName || "")
+						);
 						break;
 					case "function":
 						comparison = (a.function || "").localeCompare(b.function || "");
@@ -2328,11 +2340,13 @@ export default function Members({ title }: { title?: string }) {
 					case "status":
 						comparison = (a.status || "").localeCompare(b.status || "");
 						break;
+					default:
+						comparison = 0;
 				}
 				return sortOrder === "asc" ? comparison : -comparison;
 			});
 	}, [members, searchTerm, selectedProvince, selectedTeam, sortBy, sortOrder]);
-
+	
 	const handleViewMember = useCallback((member: Member) => {
 		setSelectedMember(member);
 		setIsProfileOpen(true);
@@ -2493,10 +2507,10 @@ export default function Members({ title }: { title?: string }) {
 					{(selectedProvince !== "all" ||
 						selectedTeam !== "all" ||
 						searchTerm) && (
-						<button className={styles.filters__reset} onClick={clearFilters}>
-							Wyczyść filtry
-						</button>
-					)}
+							<button className={styles.filters__reset} onClick={clearFilters}>
+								Wyczyść filtry
+							</button>
+						)}
 				</div>
 			</div>
 
@@ -2574,8 +2588,8 @@ export default function Members({ title }: { title?: string }) {
 						<h3 className={styles.emptyState__title}>Brak członków</h3>
 						<p className={styles.emptyState__description}>
 							{searchTerm ||
-							selectedProvince !== "all" ||
-							selectedTeam !== "all"
+								selectedProvince !== "all" ||
+								selectedTeam !== "all"
 								? "Nie znaleziono członków spełniających kryteria wyszukiwania."
 								: "Nie ma jeszcze żadnych członków w organizacji."}
 						</p>
