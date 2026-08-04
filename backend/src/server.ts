@@ -37,7 +37,7 @@ cron.schedule("1 0 * * *", async () => {
 	logger.debug("⏰ [CRON] Uruchamiam codzienny job aktualizacji statusów...");
 	await updateLeaveStatus();
 });
-const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+const googleClient = new OAuth2Client(process.env.VITE_GOOGLE_CLIENT_ID);
 cron.schedule("0 3 */2 * *", async () => {
 	logger.debug(
 		"🔄 [CRON] Uruchamiam synchronizację członków z SM_Ewidencja...",
@@ -134,7 +134,7 @@ app.post("/api/auth/google", async (req, res) => {
 
 		const ticket = await googleClient.verifyIdToken({
 			idToken: credential,
-			audience: process.env.GOOGLE_CLIENT_ID,
+			audience: process.env.VITE_GOOGLE_CLIENT_ID,
 		});
 
 		const payload = ticket.getPayload();
@@ -976,7 +976,7 @@ app.get("/api/members", authMiddleware, async (req: any, res) => {
 			const teamString = teams.length > 0 ? teams.join(", ") : "Brak zespołu";
 
 			// ============================================================
-			// 🔥 DODANE - POBRANIE FILARÓW Z POLA `pillars`
+			// 🔥 POBRANIE FILARÓW Z POLA `pillars`
 			// ============================================================
 			const pillarList = user.pillars
 				? user.pillars.split(", ").filter(Boolean)
@@ -1002,20 +1002,20 @@ app.get("/api/members", authMiddleware, async (req: any, res) => {
 				phone: user.phone,
 				province: user.province,
 				status: user.status || "active",
-				team: teamString, // ← ZESPÓŁ z team_members (ręcznie wpisane)
+				team: teamString,
 				team_id: teams.length > 0 ? teams.join("-") : "",
-				pillars: pillarString, // ← FILARY z SM_Frekwencja (DODANE)
+				pillars: pillarString, // ← FILARY z SM_Frekwencja
 				functional_role: user.functional_role || "Członek",
 				join_date:
 					user.join_date?.toISOString().split("T")[0] ||
 					user.created_at.toISOString().split("T")[0],
 				vacation: activeLeave
 					? {
-							startDate: activeLeave.start_date.toISOString().split("T")[0],
-							endDate: activeLeave.end_date.toISOString().split("T")[0],
-							type: activeLeave.scope === "team" ? "team" : "organization",
-							teamId: activeLeave.affected_teams || undefined,
-						}
+						startDate: activeLeave.start_date.toISOString().split("T")[0],
+						endDate: activeLeave.end_date.toISOString().split("T")[0],
+						type: activeLeave.scope === "team" ? "team" : "organization",
+						teamId: activeLeave.affected_teams || undefined,
+					}
 					: null,
 				onboarding_data: onboarding,
 			};
@@ -1155,8 +1155,8 @@ app.get("/api/dashboard/stats", authMiddleware, async (req: any, res) => {
 							* 100,
 							2
 						) AS attendance_percentage
-					FROM members m
-					LEFT JOIN attendance a ON a.member_id = m.id
+					FROM att_members m
+					LEFT JOIN att_attendance a ON a.member_id = m.id
 					WHERE m.email = ?
 					GROUP BY m.id, m.email
 					`,
@@ -1167,7 +1167,10 @@ app.get("/api/dashboard/stats", authMiddleware, async (req: any, res) => {
 
 				const result = rows as Array<{ attendance_percentage: number }>;
 				if (result.length > 0 && result[0].attendance_percentage !== null) {
-					attendance = `${result[0].attendance_percentage.toFixed(1)}%`;
+					const value = Number(result[0].attendance_percentage);
+					if (!isNaN(value)) {
+						attendance = `${value.toFixed(1)}%`;
+					}
 				}
 			} catch (dbError) {
 				logger.error("❌ Błąd pobierania frekwencji z SM_Frekwencja:", dbError);
@@ -1201,7 +1204,30 @@ app.get("/api/dashboard/stats", authMiddleware, async (req: any, res) => {
 		res.status(500).json({ error: "Nie udało się pobrać statystyk" });
 	}
 });
+app.get(
+	"/api/dashboard/notifications/unread-count",
+	authMiddleware,
+	async (req: any, res) => {
+		try {
+			const userId = req.user?.id;
+			if (!userId) {
+				return res.status(401).json({ error: "Brak autoryzacji" });
+			}
 
+			const count = await prisma.notification.count({
+				where: {
+					user_id: userId,
+					read: false,
+				},
+			});
+
+			res.json({ count });
+		} catch (error) {
+			logger.error("❌ Błąd liczenia nieprzeczytanych:", error);
+			res.status(500).json({ error: "Nie udało się pobrać liczby" });
+		}
+	}
+);
 app.get(
 	"/api/dashboard/notifications",
 	authMiddleware,
@@ -1574,7 +1600,7 @@ app.get("/api/applications", authMiddleware, async (req: any, res) => {
 				userId: app.user_id.toString(),
 				userName: app.user
 					? `${app.user.first_name || ""} ${app.user.last_name || ""}`.trim() ||
-						"Nieznany"
+					"Nieznany"
 					: "Nieznany",
 				userEmail: app.user?.email || "",
 				message: app.message || "",
@@ -1695,7 +1721,7 @@ app.get(
 					userId: app.user_id.toString(),
 					userName: app.user
 						? `${app.user.first_name || ""} ${app.user.last_name || ""}`.trim() ||
-							"Nieznany"
+						"Nieznany"
 						: "Nieznany",
 					userEmail: app.user?.email || "",
 					message: app.message || "",
@@ -2483,7 +2509,15 @@ app.get("/api/profile", authMiddleware, async (req: any, res) => {
 			where: { id: parseInt(userId) },
 			include: {
 				roles: true,
-				team_members: { include: { team: true } },
+				team_members: {
+					include: { team: true },
+					// 🔥 DODAJ - filtruj tylko członkostwa w filarach
+					where: {
+						team: {
+							name: { contains: "Filar" }
+						}
+					}
+				},
 				onboarding_data: { orderBy: { created_at: "desc" }, take: 1 },
 			},
 		});
@@ -2496,17 +2530,23 @@ app.get("/api/profile", authMiddleware, async (req: any, res) => {
 		logger.debug(`✅ Profil pobrany dla: ${user.first_name} ${user.last_name}`);
 
 		// ============================================================
-		// 🔥 UŻYJ FILARÓW Z POLA `pillars` (Z SM_Frekwencja)
+		// 🔥 FILARY Z POLA `pillars` (Z SM_Frekwencja)
 		// ============================================================
-		// ❌ NIE używaj team_members do filarów:
-		// const teams = user.team_members.map((tm: any) => tm.team?.name).filter(Boolean);
-		// const pillars = teams.filter((t: string) => t.includes("Filar"));
-
-		// ✅ UŻYJ filarów z pola pillars:
 		const pillarList = user.pillars
 			? user.pillars.split(", ").filter(Boolean)
 			: [];
 		const pillar = pillarList.length > 0 ? pillarList[0] : null;
+
+		// ============================================================
+		// 🔥 FILARY, W KTÓRYCH UŻYTKOWNIK JEST KOORDYNATOREM
+		// ============================================================
+		const coordinatorPillars = user.team_members
+			.filter((tm: any) => tm.is_leader === true && tm.team?.name?.includes("Filar"))
+			.map((tm: any) => tm.team?.name?.replace("Filar ", ""))
+			.filter(Boolean);
+
+		logger.debug(`🏷️ Filary użytkownika: ${pillarList.join(", ")}`);
+		logger.debug(`👑 Koordynator w filarach: ${coordinatorPillars.join(", ")}`);
 
 		// Tylko dla zespołu (team) - używaj team_members
 		const teams = user.team_members
@@ -2523,9 +2563,13 @@ app.get("/api/profile", authMiddleware, async (req: any, res) => {
 			lastName: user.last_name,
 			role: mapRoleId(user.role_id),
 			function: user.functional_role || "Członek",
-			team: teamString, // ← ZESPÓŁ z team_members
-			pillar: pillar, // ← GŁÓWNY FILAR z pillars
-			pillars: pillarList, // ← WSZYSTKIE FILARY z pillars
+			team: teamString,
+			pillar: pillar,
+			pillars: pillarList,
+			// ============================================================
+			// 🔥 DODAJ - filary w których użytkownik jest koordynatorem
+			// ============================================================
+			coordinatorPillars: coordinatorPillars,
 			province: user.province || "Brak danych",
 			status: user.status || "active",
 			email: user.email || "",
@@ -2872,11 +2916,11 @@ app.put("/api/leaves/:id", authMiddleware, async (req: any, res) => {
 				status: status || existingLeave.status,
 				...(status === "approved" || status === "rejected"
 					? {
-							approved_by:
-								`${currentUser?.first_name || ""} ${currentUser?.last_name || ""}`.trim() ||
-								"Nieznany",
-							approved_at: new Date(),
-						}
+						approved_by:
+							`${currentUser?.first_name || ""} ${currentUser?.last_name || ""}`.trim() ||
+							"Nieznany",
+						approved_at: new Date(),
+					}
 					: {}),
 			},
 		});
@@ -3903,7 +3947,7 @@ app.post("/api/onboarding/save", authMiddleware, async (req: any, res) => {
 			const existingNotification = await prisma.notification.findFirst({
 				where: {
 					user_id: userId,
-					title: "🎉 Witaj w panelu członka Siły Młodych!",
+					title: "Witaj w panelu członka Siły Młodych!",
 					created_at: {
 						gte: new Date(Date.now() - 60000),
 					},
@@ -3914,7 +3958,7 @@ app.post("/api/onboarding/save", authMiddleware, async (req: any, res) => {
 				await prisma.notification.create({
 					data: {
 						user_id: userId,
-						title: "🎉 Witaj w panelu członka Siły Młodych!",
+						title: "Witaj w panelu członka Siły Młodych!",
 						message: `Witaj w panelu członka Siły Młodych. Miłego korzystania!`,
 						type: "success",
 						read: false,

@@ -11,12 +11,14 @@ const prisma = new PrismaClient();
 logger.debug("📋 [SYNC] Ładowanie konfiguracji z .env...");
 logger.debug("📋 [SYNC] EWIDENCJA_DB_HOST:", process.env.EWIDENCJA_DB_HOST);
 logger.debug("📋 [SYNC] EWIDENCJA_DB_USER:", process.env.EWIDENCJA_DB_USER);
+
 const ALLOWED_PILLARS = [
 	"Konferencyjny",
 	"Rzeczniczy",
 	"Symulacyjny",
 	"Projektowy",
 ];
+
 const externalDb = mysql.createPool({
 	host: process.env.EWIDENCJA_DB_HOST || "57.128.253.89",
 	user: process.env.EWIDENCJA_DB_USER || "czarnecki",
@@ -187,17 +189,16 @@ export async function syncMembers() {
 
 		// Pobierz filary dla członków z att_member_pillars
 		const [memberPillars] = (await frekwencjaDb.query(`
-    SELECT 
-        mp.member_id,
-        p.name as pillar_name
-    FROM att_member_pillars mp
-    INNER JOIN att_pillars p ON p.id = mp.pillar_id
-`)) as any[];
+            SELECT 
+                mp.member_id,
+                p.name as pillar_name
+            FROM att_member_pillars mp
+            INNER JOIN att_pillars p ON p.id = mp.pillar_id
+        `)) as any[];
 
 		// Stwórz mapę filarów dla każdego członka - TYLKO DOZWOLONE
 		const pillarMap = new Map<number, string[]>();
 		for (const row of memberPillars) {
-			// 🔥 SPRAWDŹ CZY FILAR JEST NA LIŚCIE DOZWOLONYCH
 			if (ALLOWED_PILLARS.includes(row.pillar_name)) {
 				if (!pillarMap.has(row.member_id)) {
 					pillarMap.set(row.member_id, []);
@@ -221,6 +222,33 @@ export async function syncMembers() {
 		logger.debug(
 			`📊 [SYNC] Pobrano filary dla ${pillarMap.size} członków z SM_Frekwencja`,
 		);
+
+		// ============================================================
+		// 🔥 POBIERANIE KOORDYNATORÓW Z SM_Frekwencja
+		// ============================================================
+		// Pobierz liderów filarów (koordynatorów)
+		const coordinatorMap = new Map<string, string[]>();
+
+		// ============================================================
+		// 🔥 POBIERANIE ZESPOŁÓW (TEAMS) Z GŁÓWNEJ BAZY
+		// ============================================================
+		// Pobierz istniejące zespoły (filarów)
+		const teams = await prisma.team.findMany({
+			where: {
+				name: {
+					in: ALLOWED_PILLARS.map(p => `Filar ${p}`),
+				},
+			},
+			select: {
+				id: true,
+				name: true,
+			},
+		});
+
+		const teamMap = new Map<string, number>();
+		for (const team of teams) {
+			teamMap.set(team.name, team.id);
+		}
 
 		// ============================================================
 		// STATYSTYKI STATUSÓW
@@ -267,6 +295,8 @@ export async function syncMembers() {
 		let skipped = 0;
 		let skippedRezygnacja = 0;
 		let duplicateEmails = 0;
+		let teamMembersAdded = 0;
+		let teamMembersUpdated = 0;
 
 		const usedEmails = new Set<string>();
 
@@ -309,6 +339,12 @@ export async function syncMembers() {
 					pillarNames.length > 0 ? pillarNames.join(", ") : null;
 
 				// ============================================================
+				// 🔥 SPRAWDŹ CZY UŻYTKOWNIK JEST KOORDYNATOREM
+				// ============================================================
+				const isCoordinator = false;
+				const coordinatorPillars: string[] = [];
+
+				// ============================================================
 				// 🔥 DANE UŻYTKOWNIKA Z FILARAMI I ROLĄ
 				// ============================================================
 				const userData = {
@@ -320,15 +356,17 @@ export async function syncMembers() {
 					status: mapped.status,
 					is_active: mapped.isActive,
 					is_trial: mapped.isTrial,
-					role_id: 4, // member
+					role_id: 4, // 3 = coordinator, 4 = member
 					join_date: member.created_at ? new Date(member.created_at) : null,
 					password_hash: "$2b$10$abcdefghijklmnopqrstuvwxyz1234567890",
-					functional_role: "Członek", // ← DOMYŚLNA ROLA
-					pillars: pillarString, // ← FILARY
+					functional_role: "Członek",
+					pillars: pillarString,
 				};
 
+				let userId: number;
+
 				if (existing) {
-					// Sprawdź czy zmieniły się dane (łącznie z filarami)
+					// Sprawdź czy zmieniły się dane
 					const hasChanges =
 						existing.first_name !== userData.first_name ||
 						existing.last_name !== userData.last_name ||
@@ -339,7 +377,7 @@ export async function syncMembers() {
 						existing.functional_role !== userData.functional_role;
 
 					if (hasChanges) {
-						await prisma.user.update({
+						const updatedUser = await prisma.user.update({
 							where: { id: existing.id },
 							data: {
 								first_name: userData.first_name,
@@ -350,23 +388,127 @@ export async function syncMembers() {
 								is_trial: userData.is_trial,
 								functional_role: userData.functional_role,
 								pillars: userData.pillars,
+								role_id: userData.role_id,
 							},
 						});
+						userId = updatedUser.id;
 						updated++;
 						logger.debug(
-							`🔄 [SYNC] Zaktualizowano: ${generatedEmail} | status: ${member.status} -> ${userData.status} | filary: ${userData.pillars || "brak"}`,
+							`🔄 [SYNC] Zaktualizowano: ${generatedEmail} | status: ${member.status} -> ${userData.status} | filary: ${userData.pillars || "brak"} | koordynator: ${isCoordinator}`,
 						);
 					} else {
+						userId = existing.id;
 						skipped++;
 					}
 				} else {
-					await prisma.user.create({
+					const newUser = await prisma.user.create({
 						data: userData,
 					});
+					userId = newUser.id;
 					added++;
 					logger.debug(
-						`✅ [SYNC] Dodano: ${generatedEmail} (${userData.first_name} ${userData.last_name}) | status: ${userData.status} | filary: ${userData.pillars || "brak"}`,
+						`✅ [SYNC] Dodano: ${generatedEmail} (${userData.first_name} ${userData.last_name}) | status: ${userData.status} | filary: ${userData.pillars || "brak"} | koordynator: ${isCoordinator}`,
 					);
+				}
+
+				// ============================================================
+				// 🔥 SYNCHRONIZACJA TEAM_MEMBERS - DLA FILARÓW
+				// ============================================================
+				if (pillarNames.length > 0) {
+					// Pobierz istniejące członkostwa w filarach dla tego użytkownika
+					const existingTeamMembers = await prisma.teamMember.findMany({
+						where: {
+							user_id: userId,
+							team: {
+								name: {
+									in: ALLOWED_PILLARS.map(p => `Filar ${p}`),
+								},
+							},
+						},
+						include: {
+							team: true,
+						},
+					});
+
+					const existingTeamIds = new Set(
+						existingTeamMembers.map((tm: any) => tm.team_id),
+					);
+
+					// Dla każdego filaru użytkownika
+					for (const pillarName of pillarNames) {
+						const teamName = `Filar ${pillarName}`;
+						const teamId = teamMap.get(teamName);
+
+						if (!teamId) {
+							logger.warn(
+								`⚠️ [SYNC] Nie znaleziono zespołu dla filaru: ${teamName}`,
+							);
+							continue;
+						}
+
+						// Sprawdź czy już istnieje członkostwo
+						const existingMember = existingTeamMembers.find(
+							(tm: any) => tm.team_id === teamId,
+						);
+
+						if (existingMember) {
+							// Już istnieje - sprawdź czy jest poprawnie ustawiony jako członek
+							if (existingMember.is_leader !== false || existingMember.role !== "Członek") {
+								await prisma.teamMember.update({
+									where: { id: existingMember.id },
+									data: {
+										role: "Członek",
+										is_leader: false,
+									},
+								});
+								teamMembersUpdated++;
+								logger.debug(
+									`🔄 [TEAM] Poprawiono członkostwo: ${generatedEmail} -> ${teamName} (Członek)`,
+								);
+							}
+							// Usuń z setu istniejących
+							existingTeamIds.delete(teamId);
+						} else {
+							// Dodaj nowe członkostwo - ZAWSZE jako członek
+							await prisma.teamMember.create({
+								data: {
+									user_id: userId,
+									team_id: teamId,
+									role: "Członek",
+									is_leader: false,
+								},
+							});
+							teamMembersAdded++;
+							logger.debug(
+								`➕ [TEAM] Dodano członkostwo: ${generatedEmail} -> ${teamName} (Członek)`,
+							);
+						}
+					}
+
+					// Usuń członkostwa w filarach, które już nie istnieją
+					for (const teamId of existingTeamIds) {
+						await prisma.teamMember.deleteMany({
+							where: {
+								user_id: userId,
+								team_id: teamId,
+							},
+						});
+						logger.debug(
+							`🗑️ [TEAM] Usunięto członkostwo: ${generatedEmail} z filaru ID: ${teamId}`,
+						);
+					}
+				} else {
+					// Jeśli użytkownik nie ma żadnych filarów - usuń wszystkie członkostwa w filarach
+					await prisma.teamMember.deleteMany({
+						where: {
+							user_id: userId,
+							team: {
+								name: {
+									in: ALLOWED_PILLARS.map(p => `Filar ${p}`),
+								},
+							},
+						},
+					});
 				}
 			} catch (error) {
 				logger.error(
@@ -383,6 +525,8 @@ export async function syncMembers() {
 		logger.debug(`   🔄${updated} zaktualizowanych`);
 		logger.debug(`   ⏭️${skipped} bez zmian`);
 		logger.debug(`   ⏭️${skippedRezygnacja} pominiętych (rezygnacja)`);
+		logger.debug(`   ➕${teamMembersAdded} dodanych członkostw w filarach`);
+		logger.debug(`   🔄${teamMembersUpdated} zaktualizowanych członkostw`);
 		if (duplicateEmails > 0) {
 			logger.debug(`   ⚠️${duplicateEmails} pominiętych (duplikaty emaili)`);
 		}
@@ -404,6 +548,8 @@ export async function syncMembers() {
 						skipped,
 						skippedRezygnacja,
 						duplicateEmails,
+						teamMembersAdded,
+						teamMembersUpdated,
 						duration,
 						timestamp: new Date().toISOString(),
 					},

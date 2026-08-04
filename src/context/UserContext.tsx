@@ -13,7 +13,7 @@ type User = {
 	lastName?: string;
 	role: string;
 	team: string;
-	pillars: string; // ← STRING (np. "Konferencyjny, Projektowy")
+	pillars: string;
 	status: string;
 	username?: string;
 	email?: string;
@@ -39,6 +39,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
 			const token = localStorage.getItem("accessToken");
 			if (!token) {
 				setUser(null);
+				setLoading(false);
 				return;
 			}
 
@@ -47,7 +48,6 @@ export function UserProvider({ children }: { children: ReactNode }) {
 				try {
 					const parsed = JSON.parse(cached);
 					setUser(parsed);
-					setLoading(false);
 				} catch (e) {
 					// ignore
 				}
@@ -63,7 +63,6 @@ export function UserProvider({ children }: { children: ReactNode }) {
 			if (response.ok) {
 				const data = await response.json();
 
-				// 🔥 KONWERSJA pillars na string (jeśli to tablica)
 				let pillarsString = "";
 				if (Array.isArray(data.pillars)) {
 					pillarsString = data.pillars.join(", ");
