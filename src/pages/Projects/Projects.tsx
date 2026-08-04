@@ -1,5 +1,7 @@
 import { useUser } from "@/context/UserContext";
+import { getCachedPermissions, type Permission } from "@/utils/permissions";
 import { useState, useMemo, useEffect } from "react";
+import { useCallback } from 'react';
 import { safeNavigate } from "@/utils/safeNavigation";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
@@ -113,9 +115,10 @@ type User = {
 	id: string;
 	name: string;
 	email: string;
-	role: "admin" | "coordinator" | "member";
+	role: "admin" | "coordinator" | "member" | "board" | "zarząd";  // ← DODAJ "board" i "zarząd"
 	pillar?: string | null;
 	pillars?: string[];
+	coordinatorPillars?: string[];
 };
 
 const MOCK_PROJECTS: Project[] = [
@@ -211,6 +214,28 @@ const getPillarsArray = (pillars: string | string[] | undefined): string[] => {
 	return [];
 };
 
+// 🔥 DODAJ NOWĄ FUNKCJĘ - normalizuje nazwy filarów
+const normalizePillarName = (pillar: string): string => {
+	// Jeśli już ma "Filar " to zwróć jak jest
+	if (pillar.startsWith('Filar ')) return pillar;
+
+	// Mapowanie nazw bez prefiksu na nazwy z prefiksem
+	const pillarMap: Record<string, string> = {
+		'Projektowy': 'Filar Projektowy',
+		'Konferencyjny': 'Filar Konferencyjny',
+		'Rzeczniczy': 'Filar Rzeczniczy',
+		'Symulacyjny': 'Filar Symulacyjny'
+	};
+
+	return pillarMap[pillar] || pillar;
+};
+
+
+const isPillarMatching = (userPillar: string, ideaPillar: string): boolean => {
+	const normalizedUser = normalizePillarName(userPillar);
+	const normalizedIdea = normalizePillarName(ideaPillar);
+	return normalizedUser === normalizedIdea;
+};
 const getPillarsString = (pillars: string | string[] | undefined): string => {
 	return getPillarsArray(pillars).join(", ");
 };
@@ -427,6 +452,8 @@ interface ProjectModalProps {
 	onClose: () => void;
 	onSave: (project: Project) => void;
 	users: User[];
+	userPillars?: string[];        // <- DODAJ
+	isAdminOrBoard?: boolean;      // <- DODAJ
 }
 
 function ProjectModal({
@@ -435,6 +462,8 @@ function ProjectModal({
 	onClose,
 	onSave,
 	users,
+	userPillars = [],
+	isAdminOrBoard = false,
 }: ProjectModalProps) {
 	const [formData, setFormData] = useState<Partial<Project>>(
 		project || {
@@ -447,6 +476,30 @@ function ProjectModal({
 			coordinator_id: "",
 		},
 	);
+
+	// ✅ HOOKI PRZED if (!isOpen) - TYLKO JEDNA KOPIA!
+	const availablePillars = useMemo(() => {
+		if (isAdminOrBoard) {
+			return Object.keys(PILLAR_LABELS_FALLBACK);
+		}
+		const userPillarKeys = userPillars.map(p => {
+			const entry = Object.entries(PILLAR_LABELS_FALLBACK).find(
+				([key, label]) => label === p || p === key
+			);
+			return entry ? entry[0] : null;
+		}).filter(Boolean) as string[];
+		return userPillarKeys;
+	}, [userPillars, isAdminOrBoard]);
+
+	// Automatycznie wybierz filar jeśli tylko jeden dostępny
+	useEffect(() => {
+		if (availablePillars.length === 1 && !formData.pillar && isOpen) {
+			setFormData(prev => ({
+				...prev,
+				pillar: availablePillars[0] as ProjectPillar,
+			}));
+		}
+	}, [availablePillars, isOpen]);
 
 	useEffect(() => {
 		if (project) {
@@ -474,7 +527,10 @@ function ProjectModal({
 			});
 		}
 	}, [project]);
+
+	// ✅ TERAZ MOŻE BYĆ if (!isOpen)
 	if (!isOpen) return null;
+
 	const handleSubmit = (e: React.FormEvent) => {
 		e.preventDefault();
 		const now = new Date().toISOString().split("T")[0];
@@ -493,6 +549,31 @@ function ProjectModal({
 		onSave(saveData);
 		onClose();
 	};
+
+	// ❌ USUŃ TEN DUPLIKAT (linie ~680-700):
+	/*
+	const availablePillars = useMemo(() => {
+		if (isAdminOrBoard) {
+			return Object.keys(PILLAR_LABELS_FALLBACK);
+		}
+		const userPillarKeys = userPillars.map(p => {
+			const entry = Object.entries(PILLAR_LABELS_FALLBACK).find(
+				([key, label]) => label === p || p === key
+			);
+			return entry ? entry[0] : null;
+		}).filter(Boolean) as string[];
+		return userPillarKeys;
+	}, [userPillars, isAdminOrBoard]);
+
+	useEffect(() => {
+		if (availablePillars.length === 1 && !formData.pillar) {
+			setFormData(prev => ({
+				...prev,
+				pillar: availablePillars[0] as ProjectPillar,
+			}));
+		}
+	}, [availablePillars]);
+	*/
 
 	return (
 		<div className={styles.modalOverlay} onClick={onClose}>
@@ -535,21 +616,27 @@ function ProjectModal({
 							<label className={styles.modal__label}>Filar *</label>
 							<select
 								className={styles.modal__select}
-								value={formData.pillar || "project"}
+								value={formData.pillar || ""}
 								onChange={(e) =>
 									setFormData({
 										...formData,
 										pillar: e.target.value as ProjectPillar,
 									})
 								}
+								required
 							>
 								<option value="">Wybierz filar</option>
-								{Object.keys(PILLAR_LABELS_FALLBACK).map((key) => (
+								{availablePillars.map((key) => (
 									<option key={key} value={key}>
 										{PILLAR_LABELS_FALLBACK[key]}
 									</option>
 								))}
 							</select>
+							{availablePillars.length === 0 && (
+								<p style={{ color: 'red', fontSize: '13px', marginTop: '4px' }}>
+									Nie masz przypisanego żadnego filaru. Skontaktuj się z administratorem.
+								</p>
+							)}
 						</div>
 
 						<div className={styles.modal__field}>
@@ -653,29 +740,44 @@ function TeamSelector({
 	pillar,
 }: TeamSelectorProps) {
 	const [filter, setFilter] = useState<"all" | "pillar" | "custom">("all");
+	const [forceUpdate, setForceUpdate] = useState(0);
+
+	// Wymuś odświeżenie gdy zmieni się filtr
+	useEffect(() => {
+		setForceUpdate(prev => prev + 1);
+	}, [filter, pillar]);
 
 	const filteredUsers = useMemo(() => {
 		if (filter === "pillar" && pillar) {
-			return users.filter((u) => u.pillar === pillar);
+			const pillarName = PILLAR_LABELS_FALLBACK[pillar as ProjectPillar] || pillar;
+			const searchPillar = pillarName.replace('Filar ', '');
+
+			return users.filter((u) => {
+				if (u.pillars && Array.isArray(u.pillars) && u.pillars.length > 0) {
+					return u.pillars.some((p: string) => {
+						const normalizedP = p.replace('Filar ', '');
+						return normalizedP === searchPillar || p === pillarName;
+					});
+				}
+				if (u.pillar) {
+					const normalizedP = u.pillar.replace('Filar ', '');
+					return normalizedP === searchPillar || u.pillar === pillarName;
+				}
+				return false;
+			});
 		}
 		if (filter === "all") {
 			return users;
 		}
-
 		return users;
-	}, [users, filter, pillar]);
+	}, [users, filter, pillar, forceUpdate]);
 
 	const toggleUser = (userId: string) => {
-		logger.debug("🔄 Toggle user:", userId);
-		logger.debug("📋 Current team:", selectedTeam);
-
 		if (selectedTeam.includes(userId)) {
 			const newTeam = selectedTeam.filter((id) => id !== userId);
-			logger.debug("➖ After remove:", newTeam);
 			onTeamChange(newTeam);
 		} else {
 			const newTeam = [...selectedTeam, userId];
-			logger.debug("➕ After add:", newTeam);
 			onTeamChange(newTeam);
 		}
 	};
@@ -697,7 +799,6 @@ function TeamSelector({
 					className={`${styles.teamSelector__option} ${filter === "all" ? styles.teamSelector__optionActive : ""}`}
 					onClick={() => {
 						setFilter("all");
-
 						const allIds = users.map((u) => u.id);
 						onTeamChange(allIds);
 					}}
@@ -711,9 +812,23 @@ function TeamSelector({
 						className={`${styles.teamSelector__option} ${filter === "pillar" ? styles.teamSelector__optionActive : ""}`}
 						onClick={() => {
 							setFilter("pillar");
+							const pillarName = PILLAR_LABELS_FALLBACK[pillar as ProjectPillar] || pillar;
+							const searchPillar = pillarName.replace('Filar ', '');
 
 							const pillarIds = users
-								.filter((u) => u.pillar === pillar)
+								.filter((u) => {
+									if (u.pillars && Array.isArray(u.pillars) && u.pillars.length > 0) {
+										return u.pillars.some((p: string) => {
+											const normalizedP = p.replace('Filar ', '');
+											return normalizedP === searchPillar || p === pillarName;
+										});
+									}
+									if (u.pillar) {
+										const normalizedP = u.pillar.replace('Filar ', '');
+										return normalizedP === searchPillar || u.pillar === pillarName;
+									}
+									return false;
+								})
 								.map((u) => u.id);
 							onTeamChange(pillarIds);
 						}}
@@ -732,7 +847,7 @@ function TeamSelector({
 				</button>
 			</div>
 
-			{filter === "custom" && (
+			{(filter === "pillar" || filter === "custom") && (
 				<>
 					<div className={styles.teamSelector__actions}>
 						<button
@@ -752,35 +867,43 @@ function TeamSelector({
 					</div>
 
 					<div className={styles.teamSelector__list}>
-						{filteredUsers.map((user) => (
-							<label key={user.id} className={styles.teamSelector__item}>
-								<input
-									type="checkbox"
-									checked={selectedTeam.includes(user.id)}
-									onChange={() => toggleUser(user.id)}
-									className={styles.teamSelector__checkbox}
-								/>
-								<span className={styles.teamSelector__name}>{user.name}</span>
-								<span
-									className={`${styles.teamSelector__role} ${styles[ROLE_COLORS[user.role] || ""]}`}
-								>
-									{ROLE_LABELS[user.role] || user.role}
-								</span>
-								{user.pillar && (
-									<span className={styles.teamSelector__pillar}>
-										{PILLAR_LABELS_FALLBACK[user.pillar] || user.pillar}
+						{filteredUsers.length === 0 ? (
+							<p className={styles.teamSelector__empty}>
+								{filter === "pillar" ? "Brak użytkowników w tym filarze" : "Brak użytkowników"}
+							</p>
+						) : (
+							filteredUsers.map((user) => (
+								<label key={user.id} className={styles.teamSelector__item}>
+									<input
+										type="checkbox"
+										checked={selectedTeam.includes(user.id)}
+										onChange={() => toggleUser(user.id)}
+										className={styles.teamSelector__checkbox}
+									/>
+									<span className={styles.teamSelector__name}>{user.name}</span>
+									<span
+										className={`${styles.teamSelector__role} ${styles[ROLE_COLORS[user.role] || ""]}`}
+									>
+										{ROLE_LABELS[user.role] || user.role}
 									</span>
-								)}
-							</label>
-						))}
-						{filteredUsers.length === 0 && (
-							<p className={styles.teamSelector__empty}>Brak użytkowników</p>
+									{user.pillars && Array.isArray(user.pillars) && user.pillars.length > 0 && (
+										<span className={styles.teamSelector__pillar} hidden>
+											{user.pillars.join(", ")}
+										</span>
+									)}
+									{user.pillar && !user.pillars?.length && (
+										<span className={styles.teamSelector__pillar}>
+											{user.pillar}
+										</span>
+									)}
+								</label>
+							))
 						)}
 					</div>
 				</>
 			)}
 
-			{filter !== "custom" && (
+			{filter === "all" && (
 				<div className={styles.teamSelector__info}>
 					{selectedTeam.length === users.length ? (
 						<p className={styles.teamSelector__infoText}>
@@ -969,6 +1092,7 @@ interface IdeaCardProps {
 	onStatusChange?: (ideaId: string, status: IdeaStatus) => void;
 	canManage: boolean;
 	pillars: string[];
+	permissions: Permission[];
 }
 
 function IdeaCard({
@@ -977,6 +1101,7 @@ function IdeaCard({
 	onVote,
 	onStatusChange,
 	pillars,
+	permissions,
 }: IdeaCardProps) {
 	const userVote = idea.currentUserVote || null;
 
@@ -1117,41 +1242,43 @@ function IdeaCard({
 			</div>
 			{idea.status === "pending" && (
 				<div className={styles.ideaCard__actions}>
-					{currentUser?.role === "admin" && (
+					{permissions.includes('canManageAllProjects') && (
 						<>
 							<button
 								className={`${styles.ideaCard__actionBtn} ${styles.ideaCard__actionBtnSuccess}`}
 								onClick={() => onStatusChange?.(idea.id, "approved")}
+								type="button"
 							>
-								<CheckCircle size={14} />
-								Zaakceptuj
+								<CheckCircle size={14} /> Zaakceptuj
 							</button>
 							<button
 								className={`${styles.ideaCard__actionBtn} ${styles.ideaCard__actionBtnDanger}`}
 								onClick={() => onStatusChange?.(idea.id, "rejected")}
+								type="button"
 							>
-								<XCircle size={14} />
-								Odrzuć
+								<XCircle size={14} /> Odrzuć
 							</button>
 						</>
 					)}
 
-					{currentUser?.role === "coordinator" &&
-						getPillarsArray(currentUser?.pillars).includes(idea.pillar) && (
+					{permissions.includes('canManagePillarProjects') &&
+						getPillarsArray(currentUser?.pillars).some((up) =>
+							isPillarMatching(up, idea.pillar)
+						) && (
 							<>
 								<button
 									className={`${styles.ideaCard__actionBtn} ${styles.ideaCard__actionBtnSuccess}`}
 									onClick={() => onStatusChange?.(idea.id, "approved")}
+									type="button"
 								>
-									<CheckCircle size={14} />
-									Zaakceptuj
+									<CheckCircle size={14} /> Zaakceptuj
 								</button>
 								<button
 									className={`${styles.ideaCard__actionBtn} ${styles.ideaCard__actionBtnDanger}`}
 									onClick={() => onStatusChange?.(idea.id, "rejected")}
+									type="button"
 								>
-									<XCircle size={14} />
-									Odrzuć
+									<XCircle size={14} /> Odrzuć
 								</button>
 							</>
 						)}
@@ -1168,7 +1295,129 @@ export default function Projects() {
 	const [pillars, setPillars] = useState<string[]>([]);
 	const [currentUser, setCurrentUser] = useState<User | null>(null);
 	const [loading, setLoading] = useState(true);
+	const [permissions, setPermissions] = useState<Permission[]>([]);
 
+	const refreshAllData = useCallback(async () => {
+		console.log('🔄 [REFRESH] Odświeżanie danych...');
+
+		const token = localStorage.getItem('accessToken');
+		if (!token) {
+			console.warn('⚠️ [REFRESH] Brak tokenu');
+			return;
+		}
+
+		try {
+			// 1. Odśwież profil - to jest najważniejsze!
+			const profileRes = await fetch('/api/profile', {
+				headers: { Authorization: `Bearer ${token}` }
+			});
+
+			let profileData = null;
+			if (profileRes.ok) {
+				profileData = await profileRes.json();
+				console.log('👤 Profil pobrany:', profileData);
+
+				// Ustaw currentUser od razu
+				setCurrentUser({
+					id: String(profileData.id),
+					name: `${profileData.firstName} ${profileData.lastName}`,
+					email: profileData.email || "",
+					role: profileData.role as "admin" | "coordinator" | "member",
+					pillar: profileData.pillar || null,
+					pillars: profileData.pillars || "",
+				});
+			}
+
+			// 2. Pobierz uprawnienia - używając roli z profilu
+			if (profileData?.role) {
+				console.log('🔓 Pobieranie uprawnień dla roli:', profileData.role);
+				const perms = await getCachedPermissions(profileData.role);
+				setPermissions(perms);
+				console.log('✅ Uprawnienia pobrane:', perms);
+			}
+
+			// 3. Odśwież pomysły
+			const ideasRes = await fetch('/api/ideas', {
+				headers: { Authorization: `Bearer ${token}` }
+			});
+			if (ideasRes.ok) {
+				const ideasData = await ideasRes.json();
+				const mappedIdeas = ideasData.map((idea: any) => ({
+					id: idea.id.toString(),
+					title: idea.title,
+					description: idea.description,
+					pillar: idea.pillar,
+					authorId: idea.author_id?.toString() || "unknown",
+					authorName: idea.author_name || "Nieznany",
+					status: (idea.status as IdeaStatus) || "pending",
+					votes: idea.votes || 0,
+					upvotes: idea.upvotes || 0,
+					downvotes: idea.downvotes || 0,
+					createdAt: idea.created_at || new Date().toISOString(),
+					currentUserVote: idea.user_vote || null,
+				}));
+				setIdeas(mappedIdeas);
+			}
+
+			// 4. Odśwież projekty
+			const projectsRes = await fetch('/api/projects', {
+				headers: { Authorization: `Bearer ${token}` }
+			});
+			if (projectsRes.ok) {
+				const projectsData = await projectsRes.json();
+				const mappedProjects = projectsData.map((apiProject: any) => ({
+					id: apiProject.id,
+					name: apiProject.name,
+					description: apiProject.description || "",
+					pillar: mapPillar(String(apiProject.pillar)),
+					status: apiProject.status as ProjectStatus,
+					estimated_end: apiProject.estimated_end,
+					coordinator_id: apiProject.coordinator_id?.toString() || "",
+					team: apiProject.team ? apiProject.team.split(",").map((t: string) => t.trim()) : [],
+					created_at: apiProject.created_at,
+					updated_at: apiProject.updated_at,
+				}));
+				setProjects(mappedProjects);
+			}
+
+			console.log('✅ [REFRESH] Dane odświeżone!');
+		} catch (error) {
+			console.error('❌ [REFRESH] Błąd odświeżania:', error);
+		}
+	}, []); // <- USUŃ zależność od currentUser
+
+	// Nasłuchuj na zmiany HMR
+	useEffect(() => {
+		// Obsługa HMR - odśwież dane gdy moduł jest aktualizowany
+		if (import.meta.hot) {
+			import.meta.hot.on('vite:afterUpdate', () => {
+				console.log('🔄 [HMR] Wykryto zmianę kodu - odświeżam dane...');
+				setTimeout(() => {
+					refreshAllData();
+				}, 100);
+			});
+		}
+	}, [refreshAllData]);
+
+	// Odśwież dane przy montowaniu i po zmianie uprawnień
+	useEffect(() => {
+		if (currentUser?.role) {
+			refreshAllData();
+		}
+	}, [currentUser?.role]);
+	useEffect(() => {
+		const loadPermissions = async () => {
+			if (!currentUser?.role) return;
+			try {
+				const perms = await getCachedPermissions(currentUser.role);
+				setPermissions(perms);
+			} catch (error) {
+				logger.error('❌ Błąd pobierania uprawnień:', error);
+			}
+		};
+		loadPermissions();
+	}, [currentUser?.role]);
+	// Projects.tsx - w useEffect dla contextUser
 	useEffect(() => {
 		if (contextUser) {
 			setCurrentUser({
@@ -1178,6 +1427,8 @@ export default function Projects() {
 				role: contextUser.role as "admin" | "coordinator" | "member",
 				pillar: (contextUser as any).pillar || null,
 				pillars: (contextUser as any).pillars || "",
+				// 🔥 DODAJ - filary w których jest koordynatorem
+				coordinatorPillars: (contextUser as any).coordinatorPillars || [],
 			});
 		}
 	}, [contextUser]);
@@ -1624,46 +1875,22 @@ export default function Projects() {
 
 				if (response.ok) {
 					const data = await response.json();
-					logger.debug("📦 Surowe dane użytkowników:", data);
-					if (data.length > 0) {
-						logger.debug("👤 Pierwszy użytkownik:", data[0]);
-						logger.debug("📋 Klucze użytkownika:", Object.keys(data[0]));
-					}
+					console.log('📦 [fetchUsers] Otrzymano danych:', data.length);
+					console.log('📦 [fetchUsers] Pierwszy użytkownik:', data[0]);
 
 					const mappedUsers = data
 						.filter((user: any) => user.id !== 63 && user.id !== "63")
 						.map((user: any) => ({
 							id: user.id.toString(),
-							name:
-								user.name ||
-								`${user.first_name || ""} ${user.last_name || ""}`.trim() ||
-								user.email ||
-								"Nieznany",
+							name: user.name || `${user.first_name || ""} ${user.last_name || ""}`.trim() || user.email || "Nieznany",
 							email: user.email,
 							role: user.role || "member",
 							pillar: user.pillar || null,
+							pillars: user.pillars || [],  // ← TO JEST WAŻNE!
 						}));
 
+					console.log('📦 [fetchUsers] Po mapowaniu - pierwszy:', mappedUsers[0]);
 					setUsers(mappedUsers);
-
-					const currentUserData = data.find(
-						(u: any) => u.id === currentUser?.id,
-					);
-					if (currentUserData) {
-						logger.debug("👤 Obecny użytkownik z API:", currentUserData);
-						logger.debug("🏷️ Jego filar:", currentUserData.pillar);
-
-						setCurrentUser({
-							id: currentUserData.id.toString(),
-							name:
-								currentUserData.name ||
-								`${currentUserData.first_name || ""} ${currentUserData.last_name || ""}`.trim() ||
-								"Nieznany",
-							email: currentUserData.email,
-							role: currentUserData.role || "member",
-							pillar: currentUserData.pillar || null,
-						});
-					}
 				}
 			} catch (error) {
 				logger.error("❌ Błąd pobierania użytkowników:", error);
@@ -1673,24 +1900,18 @@ export default function Projects() {
 		fetchUsers();
 	}, []);
 	const canManageProject = (project: Project) => {
-		if (currentUser?.role === "admin") return true;
-		if (currentUser?.role === "coordinator") {
-			const pillarName =
-				PILLAR_LABELS_FALLBACK[project.pillar as ProjectPillar] ||
-				project.pillar;
-			logger.debug("🔍 Porównanie:", {
-				projectPillar: project.pillar,
-				pillarName: pillarName,
-				userPillars: currentUser.pillars,
-				result: currentUser.pillars?.includes(pillarName),
-			});
-			return getPillarsArray(currentUser?.pillars).includes(pillarName);
+		if (permissions.includes('canManageAllProjects')) return true;
+		if (permissions.includes('canManagePillarProjects')) {
+			const pillarName = PILLAR_LABELS_FALLBACK[project.pillar as ProjectPillar] || project.pillar;
+			const userPillars = getPillarsArray(currentUser?.pillars);
+			// 🔥 UŻYJ NOWEJ FUNKCJI DO PORÓWNANIA
+			return userPillars.some((up) => isPillarMatching(up, pillarName));
 		}
 		return false;
 	};
 
 	const canManageProjects =
-		currentUser?.role === "admin" || currentUser?.role === "coordinator";
+		permissions.includes('canManageAllProjects') || permissions.includes('canManagePillarProjects');
 
 	const filteredProjects = useMemo(() => {
 		return projects.filter((project) => {
@@ -1711,11 +1932,14 @@ export default function Projects() {
 	}, [projects, searchTerm, selectedPillar, selectedStatus]);
 
 	const coordinatorStats = useMemo(() => {
-		if (currentUser?.role !== "coordinator" || !currentUser.pillars?.length)
-			return null;
+		if (!permissions.includes('canManagePillarIdeas')) return null;
+		if (!currentUser?.pillars?.length) return null;
 
-		const userPillars = getPillarsArray(currentUser?.pillars);
-		const pillarIdeas = ideas.filter((i) => userPillars.includes(i.pillar));
+		const userPillars = getPillarsArray(currentUser.pillars);
+		// 🔥 UŻYJ NOWEJ FUNKCJI DO FILTROWANIA
+		const pillarIdeas = ideas.filter((i) =>
+			userPillars.some((up) => isPillarMatching(up, i.pillar))
+		);
 
 		const pending = pillarIdeas.filter((i) => i.status === "pending").length;
 		const approved = pillarIdeas.filter((i) => i.status === "approved").length;
@@ -1728,7 +1952,7 @@ export default function Projects() {
 			rejected,
 			pillars: currentUser.pillars,
 		};
-	}, [ideas, currentUser]);
+	}, [ideas, currentUser, permissions]);
 
 	const handleAddProject = () => {
 		setEditingProject(null);
@@ -1909,13 +2133,15 @@ export default function Projects() {
 				))}
 			</div>
 
-			{canManageProjects &&
+			{permissions.includes('canManagePillarProjects') &&
 				coordinatorStats &&
-				currentUser?.role === "coordinator" && (
+				currentUser &&
+				currentUser.pillars &&
+				currentUser.pillars.length > 0 && (
 					<div className={styles.coordinatorStats}>
 						<span className={styles.coordinatorStats__title}>
 							Pomysły dla twoich filarów:{" "}
-							<strong>{getPillarsString(currentUser?.pillars)}</strong>
+							<strong>{getPillarsString(currentUser.pillars)}</strong>
 						</span>
 						<span className={styles.coordinatorStats__item}>
 							<span className={styles.coordinatorStats__number}>
@@ -1939,9 +2165,7 @@ export default function Projects() {
 							>
 								{coordinatorStats.approved}
 							</span>
-							<span className={styles.coordinatorStats__label}>
-								Zaakceptowane
-							</span>
+							<span className={styles.coordinatorStats__label}>Zaakceptowane</span>
 						</span>
 						<span className={styles.coordinatorStats__item}>
 							<span
@@ -1954,7 +2178,6 @@ export default function Projects() {
 						</span>
 					</div>
 				)}
-
 			<div className={styles.tabs}>
 				<button
 					className={`${styles.tab} ${activeTab === "projects" ? styles.tabActive : ""}`}
@@ -2031,10 +2254,10 @@ export default function Projects() {
 					{(selectedPillar !== "all" ||
 						selectedStatus !== "all" ||
 						searchTerm) && (
-						<button className={styles.filters__reset} onClick={clearFilters}>
-							Wyczyść filtry
-						</button>
-					)}
+							<button className={styles.filters__reset} onClick={clearFilters}>
+								Wyczyść filtry
+							</button>
+						)}
 				</div>
 			</div>
 
@@ -2050,8 +2273,8 @@ export default function Projects() {
 							<h3 className={styles.emptyState__title}>Brak projektów</h3>
 							<p className={styles.emptyState__description}>
 								{searchTerm ||
-								selectedPillar !== "all" ||
-								selectedStatus !== "all"
+									selectedPillar !== "all" ||
+									selectedStatus !== "all"
 									? "Nie znaleziono projektów spełniających kryteria wyszukiwania."
 									: canManageProjects
 										? 'Nie ma jeszcze żadnych projektów. Kliknij "Dodaj projekt", aby utworzyć pierwszy.'
@@ -2115,6 +2338,7 @@ export default function Projects() {
 								onStatusChange={handleIdeaStatusChange}
 								canManage={canManageProjects}
 								pillars={pillars}
+								permissions={permissions}
 							/>
 						))
 					)}
@@ -2130,6 +2354,12 @@ export default function Projects() {
 				}}
 				onSave={handleSaveProject}
 				users={users}
+				userPillars={getPillarsArray(currentUser?.pillars)}        // <- DODAJ
+				isAdminOrBoard={                                           // <- DODAJ
+					permissions.includes('canManageAllProjects') ||
+					currentUser?.role === 'admin' ||
+					currentUser?.role === 'board'
+				}
 			/>
 
 			<IdeaModal

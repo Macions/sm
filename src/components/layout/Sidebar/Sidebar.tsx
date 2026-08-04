@@ -2,8 +2,7 @@
 
 import { NAV_ITEMS } from "../../../data/navigation";
 import styles from "./Sidebar.module.css";
-import { LogOut, Home, FolderKanban, Users, BookOpen, Briefcase, FolderTree, CalendarCheck, Megaphone, Shield, User, ChevronLeft, ChevronRight } from "lucide-react";
-import { safeNavigate } from '@/utils/safeNavigation';
+import { LogOut, Home, FolderKanban, Users, BookOpen, Briefcase, FolderTree, CalendarCheck, Megaphone, Shield, User } from "lucide-react";
 import { useNavigate } from 'react-router-dom';
 
 interface SidebarProps {
@@ -21,7 +20,6 @@ export default function Sidebar({
 	collapsed = false,
 	isSocialMember = false,
 	userRole,
-	onToggleCollapse,
 }: SidebarProps) {
 	const navigate = useNavigate();
 	const isAdminOrBoard =
@@ -57,7 +55,7 @@ export default function Sidebar({
 		localStorage.removeItem("user");
 		localStorage.removeItem("onboardingCompleted");
 		localStorage.removeItem("onboardingData");
-		(window as any).goTo("/login");
+		navigate("/login");
 	};
 
 
@@ -67,7 +65,7 @@ export default function Sidebar({
 
 	return (
 		<>
-			
+
 			<aside
 				className={`${styles.sidebar} ${collapsed ? styles.sidebarCollapsed : ""}`}
 			>
@@ -134,7 +132,7 @@ export default function Sidebar({
 				</div>
 			</aside>
 
-			
+
 			<nav className={styles.mobileBottomNav}>
 				{filteredNavItems.map(({ key, icon: Icon }) => {
 					const MobileIcon = iconMap[key] || Icon;
@@ -152,7 +150,7 @@ export default function Sidebar({
 						</button>
 					);
 				})}
-				
+
 				<button
 					className={`${styles.mobileNav__item} ${styles.logoutBtn}`}
 					onClick={handleLogout}

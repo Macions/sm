@@ -22,7 +22,10 @@ export type Permission =
 	| "canViewAllNotifications"
 	| "canManageTeams"
 	| "canViewStructure"
-	| "canEditProfile";
+	| "canEditProfile"
+	| "canManageAllProjects"        // Admin - zarządza wszystkimi projektami
+	| "canManagePillarProjects"     // Koordynator - zarządza projektami w swoim filarze
+	| "canManagePillarIdeas";
 
 export const PERMISSION_LABELS: Record<Permission, string> = {
 	canViewAllLeaves: "Podgląd wszystkich urlopów",
@@ -47,6 +50,9 @@ export const PERMISSION_LABELS: Record<Permission, string> = {
 	canManageTeams: "Zarządzanie zespołami",
 	canViewStructure: "Podgląd struktury",
 	canEditProfile: "Edycja profilu",
+	canManageAllProjects: "Zarządzanie wszystkimi projektami",
+	canManagePillarProjects: "Zarządzanie projektami w swoim filarze",
+	canManagePillarIdeas: "Zarządzanie pomysłami w swoim filarze",
 };
 
 export const DEFAULT_PERMISSIONS: Record<UserRole, Permission[]> = {
@@ -73,6 +79,9 @@ export const DEFAULT_PERMISSIONS: Record<UserRole, Permission[]> = {
 		"canManageTeams",
 		"canViewStructure",
 		"canEditProfile",
+		"canManageAllProjects",
+		"canManagePillarProjects",
+		"canManagePillarIdeas",
 	],
 	board: [
 		"canViewAllLeaves",
@@ -90,6 +99,8 @@ export const DEFAULT_PERMISSIONS: Record<UserRole, Permission[]> = {
 		"canViewAllNotifications",
 		"canViewStructure",
 		"canEditProfile",
+		"canManageAllProjects",
+		"canManagePillarProjects",
 	],
 	zarząd: [
 		"canViewAllLeaves",
@@ -107,6 +118,8 @@ export const DEFAULT_PERMISSIONS: Record<UserRole, Permission[]> = {
 		"canViewAllNotifications",
 		"canViewStructure",
 		"canEditProfile",
+		"canManageAllProjects",
+		"canManagePillarProjects",
 	],
 	coordinator: [
 		"canManageProjects",
@@ -115,6 +128,8 @@ export const DEFAULT_PERMISSIONS: Record<UserRole, Permission[]> = {
 		"canViewApplications",
 		"canViewStructure",
 		"canEditProfile",
+		"canManagePillarProjects",
+		"canManagePillarIdeas",
 	],
 	member: [
 		"canViewVacancies",

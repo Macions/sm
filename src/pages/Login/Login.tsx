@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import { safeNavigate } from "@/utils/safeNavigation";
+import { useUser } from "@/context/UserContext";
 import { useNavigate } from "react-router-dom";
 import { GoogleLogin } from "@react-oauth/google";
 import styles from "./Login.module.css";
@@ -14,6 +15,7 @@ const Login: React.FC = () => {
 	const [error, setError] = useState<string | null>(null);
 
 	const navigate = useNavigate();
+	const { refetch } = useUser();  // ← DODAJ
 
 	const getGreeting = () => {
 		const hour = new Date().getHours();
@@ -57,7 +59,8 @@ const Login: React.FC = () => {
 			localStorage.setItem("refreshToken", data.refreshToken);
 			localStorage.setItem("user", JSON.stringify(data.user));
 
-			logger.debug("💾 Tokeny zapisane w localStorage");
+			// 🔥 DODAJ - odśwież dane usera z profilu
+			await refetch();
 
 			await checkOnboardingStatus();
 		} catch (error) {
@@ -167,7 +170,8 @@ const Login: React.FC = () => {
 			localStorage.setItem("refreshToken", data.refreshToken);
 			localStorage.setItem("user", JSON.stringify(data.user));
 
-			logger.debug("💾 Tokeny zapisane w localStorage");
+			// 🔥 DODAJ - odśwież dane usera z profilu
+			await refetch();
 
 			await checkOnboardingStatus();
 		} catch (error) {
@@ -271,6 +275,8 @@ const Login: React.FC = () => {
 								text="signin_with"
 								shape="rectangular"
 								logo_alignment="left"
+								type="standard"
+								useOneTap={false}
 							/>
 						</div>
 					</div>

@@ -37,7 +37,7 @@ import "@fontsource/ubuntu/700.css";
 // };
 
 createRoot(document.getElementById("root")!).render(
-	<GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID}>
+	<GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID} onScriptLoadError={() => console.error('Google script error')}>
 		<UserProvider>
 			<HashRouter>
 				<App />

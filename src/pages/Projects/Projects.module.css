@@ -761,7 +761,7 @@
 /* --------------------------------------------------------------------------
    RESPONSYWNOŚĆ
    -------------------------------------------------------------------------- */
-@media (width <= 768px) {
+@media (width <=768px) {
 	.projects {
 		padding: 16px;
 	}
@@ -822,7 +822,7 @@
 	}
 }
 
-@media (width <= 480px) {
+@media (width <=480px) {
 	.projectCard__titleRow {
 		flex-direction: column;
 		align-items: flex-start;
@@ -1550,7 +1550,7 @@
 /* --------------------------------------------------------------------------
    RESPONSYWNOŚĆ DLA POMYSŁÓW
    -------------------------------------------------------------------------- */
-@media (width <= 768px) {
+@media (width <=768px) {
 	.tabs {
 		flex-wrap: wrap;
 		gap: 4px;
@@ -1603,7 +1603,7 @@
 	}
 }
 
-@media (width <= 480px) {
+@media (width <=480px) {
 	.tabs {
 		flex-direction: column;
 	}
@@ -1758,7 +1758,7 @@
 	color: var(--gray-500, #6b7280);
 }
 
-@media (width <= 768px) {
+@media (width <=768px) {
 	.coordinatorStats {
 		gap: 12px 16px;
 		padding: 12px 16px;
@@ -1783,7 +1783,7 @@
 	}
 }
 
-@media (width <= 480px) {
+@media (width <=480px) {
 	.coordinatorStats {
 		flex-direction: column;
 		align-items: stretch;
@@ -1845,6 +1845,64 @@
 	border-top: 1px solid var(--gray-200, #e2e8f0);
 	flex-shrink: 0;
 }
+
+/* --------------------------------------------------------------------------
+   PRZYCISKI AKCJI POMYSŁÓW
+   -------------------------------------------------------------------------- */
+.ideaCard__actions {
+	display: flex !important;
+	flex-wrap: wrap;
+	gap: 8px;
+	margin-top: 12px;
+	padding-top: 12px;
+	border-top: 1px solid #e5e7eb;
+}
+
+.ideaCard__actionBtn {
+	display: inline-flex !important;
+	align-items: center;
+	justify-content: center;
+	gap: 6px;
+	padding: 8px 16px;
+	border: 1px solid transparent;
+	border-radius: 8px;
+	font-size: 13px;
+	font-weight: 600;
+	cursor: pointer;
+	line-height: 1.4;
+	min-height: 36px;
+	background: #f3f4f6;
+	color: #6b7280;
+	transition: all 0.2s ease;
+}
+
+.ideaCard__actionBtn:hover {
+	transform: translateY(-1px);
+	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.ideaCard__actionBtnSuccess {
+	background: #10b981 !important;
+	color: #ffffff !important;
+	border-color: #059669 !important;
+}
+
+.ideaCard__actionBtnSuccess:hover {
+	background: #059669 !important;
+	box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3) !important;
+}
+
+.ideaCard__actionBtnDanger {
+	background: #ef4444 !important;
+	color: #ffffff !important;
+	border-color: #dc2626 !important;
+}
+
+.ideaCard__actionBtnDanger:hover {
+	background: #dc2626 !important;
+	box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3) !important;
+}
+
 /* Loading - jak w Structure */
 .loading {
 	display: flex;
@@ -1877,17 +1935,485 @@
 	0% {
 		transform: rotate(0deg);
 	}
+
 	100% {
 		transform: rotate(360deg);
 	}
 }
 
 @keyframes pulse {
+
 	0%,
 	100% {
 		opacity: 1;
 	}
+
 	50% {
 		opacity: 0.4;
 	}
+}
+
+/* ============================================================
+   🔘 PRZYCISKI AKCJI W POMYSŁACH (IdeaCard)
+   ============================================================ */
+
+.ideaCard__actions {
+	display: flex;
+	gap: 8px;
+	margin-top: 12px;
+	padding-top: 12px;
+	border-top: 1px solid var(--border-color, #e5e7eb);
+	flex-wrap: wrap;
+}
+
+.ideaCard__actionBtn {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	padding: 6px 14px;
+	border: none;
+	border-radius: 6px;
+	font-size: 13px;
+	font-weight: 500;
+	cursor: pointer;
+	transition: all 0.2s ease;
+	background: var(--bg-secondary, #f3f4f6);
+	color: var(--text-secondary, #6b7280);
+}
+
+.ideaCard__actionBtn:hover {
+	transform: translateY(-1px);
+	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.ideaCard__actionBtn:active {
+	transform: translateY(0);
+}
+
+/* Przycisk Zaakceptuj - zielony */
+.ideaCard__actionBtnSuccess {
+	background: #10b981;
+	color: white;
+}
+
+.ideaCard__actionBtnSuccess:hover {
+	background: #059669;
+	box-shadow: 0 2px 12px rgba(16, 185, 129, 0.3);
+}
+
+/* Przycisk Odrzuć - czerwony */
+.ideaCard__actionBtnDanger {
+	background: #ef4444;
+	color: white;
+}
+
+.ideaCard__actionBtnDanger:hover {
+	background: #dc2626;
+	box-shadow: 0 2px 12px rgba(239, 68, 68, 0.3);
+}
+
+/* Przycisk W realizacji - niebieski (opcjonalnie) */
+.ideaCard__actionBtnInfo {
+	background: #3b82f6;
+	color: white;
+}
+
+.ideaCard__actionBtnInfo:hover {
+	background: #2563eb;
+	box-shadow: 0 2px 12px rgba(59, 130, 246, 0.3);
+}
+
+/* Przycisk Anuluj - szary (opcjonalnie) */
+.ideaCard__actionBtnSecondary {
+	background: #6b7280;
+	color: white;
+}
+
+.ideaCard__actionBtnSecondary:hover {
+	background: #4b5563;
+	box-shadow: 0 2px 12px rgba(107, 114, 128, 0.3);
+}
+
+/* ============================================================
+   🎯 STATYSTYKI KOORDYNATORA
+   ============================================================ */
+
+.coordinatorStats {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 16px 24px;
+	padding: 14px 20px;
+	background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+	border: 1px solid #bae6fd;
+	border-radius: 10px;
+	margin-bottom: 20px;
+}
+
+.coordinatorStats__title {
+	font-size: 14px;
+	font-weight: 500;
+	color: #1e293b;
+}
+
+.coordinatorStats__title strong {
+	color: #0284c7;
+	font-weight: 600;
+}
+
+.coordinatorStats__item {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	font-size: 13px;
+	color: #475569;
+}
+
+.coordinatorStats__number {
+	font-weight: 700;
+	font-size: 16px;
+	min-width: 20px;
+	text-align: center;
+}
+
+.coordinatorStats__label {
+	font-size: 12px;
+	color: #64748b;
+}
+
+/* ============================================================
+   🗳️ GŁOSOWANIE (już masz, ale uzupełniam)
+   ============================================================ */
+
+.ideaCard__votes {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	margin-top: 12px;
+}
+
+.voteBtn {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+	padding: 4px 10px;
+	border: 1px solid #e5e7eb;
+	border-radius: 6px;
+	background: white;
+	font-size: 13px;
+	font-weight: 500;
+	color: #6b7280;
+	cursor: pointer;
+	transition: all 0.15s ease;
+}
+
+.voteBtn:hover {
+	background: #f3f4f6;
+	border-color: #d1d5db;
+}
+
+.voteBtn:disabled {
+	opacity: 0.5;
+	cursor: not-allowed;
+}
+
+.voteUp {
+	color: #3b82f6;
+}
+
+.voteUp:hover {
+	background: #eff6ff;
+	border-color: #93c5fd;
+}
+
+.voteUpActive {
+	background: #3b82f6;
+	color: white;
+	border-color: #3b82f6;
+}
+
+.voteUpActive:hover {
+	background: #2563eb;
+	border-color: #2563eb;
+}
+
+.voteDown {
+	color: #ef4444;
+}
+
+.voteDown:hover {
+	background: #fef2f2;
+	border-color: #fca5a5;
+}
+
+.voteDownActive {
+	background: #ef4444;
+	color: white;
+	border-color: #ef4444;
+}
+
+.voteDownActive:hover {
+	background: #dc2626;
+	border-color: #dc2626;
+}
+
+.voteCount {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+	font-size: 13px;
+	color: #6b7280;
+}
+
+.ideaCard__voteScore {
+	font-weight: 600;
+	font-size: 14px;
+	color: #1e293b;
+	padding: 2px 10px;
+	background: #f1f5f9;
+	border-radius: 12px;
+}
+
+.ideaCard__authorBadge {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+	font-size: 12px;
+	color: #8b5cf6;
+	background: #ede9fe;
+	padding: 2px 10px;
+	border-radius: 12px;
+	font-weight: 500;
+}
+
+/* ============================================================
+   🔘 PRZYCISKI AKCJI W POMYSŁACH
+   ============================================================ */
+
+.ideaCard__actions {
+	display: flex;
+	gap: 8px;
+	margin-top: 12px;
+	padding-top: 12px;
+	border-top: 1px solid #e5e7eb;
+	flex-wrap: wrap;
+}
+
+.ideaCard__actionBtn {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	padding: 6px 16px;
+	border: none;
+	border-radius: 6px;
+	font-size: 13px;
+	font-weight: 500;
+	cursor: pointer;
+	transition: all 0.2s ease;
+	background: #f3f4f6;
+	color: #6b7280;
+}
+
+.ideaCard__actionBtn:hover {
+	transform: translateY(-1px);
+	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.ideaCard__actionBtn:active {
+	transform: translateY(0);
+}
+
+/* 🟢 Zaakceptuj - zielony */
+.ideaCard__actionBtnSuccess {
+	background: #10b981;
+	color: white;
+}
+
+.ideaCard__actionBtnSuccess:hover {
+	background: #059669;
+	box-shadow: 0 2px 12px rgba(16, 185, 129, 0.3);
+}
+
+/* 🔴 Odrzuć - czerwony */
+.ideaCard__actionBtnDanger {
+	background: #ef4444;
+	color: white;
+}
+
+.ideaCard__actionBtnDanger:hover {
+	background: #dc2626;
+	box-shadow: 0 2px 12px rgba(239, 68, 68, 0.3);
+}
+
+/* ============================================================
+   🔘 PRZYCISKI AKCJI - WYŚWIETLANIE (NAJWAŻNIEJSZE!)
+   ============================================================ */
+
+/* Wymuś wyświetlanie kontenera */
+.ideaCard__actions {
+	display: flex !important;
+	flex-wrap: wrap !important;
+	gap: 8px !important;
+	margin-top: 12px !important;
+	padding-top: 12px !important;
+	border-top: 1px solid #e5e7eb !important;
+	visibility: visible !important;
+	opacity: 1 !important;
+	height: auto !important;
+	overflow: visible !important;
+}
+
+/* Wymuś wyświetlanie przycisków */
+.ideaCard__actionBtn {
+	display: inline-flex !important;
+	align-items: center !important;
+	gap: 6px !important;
+	padding: 8px 18px !important;
+	border: none !important;
+	border-radius: 8px !important;
+	font-size: 13px !important;
+	font-weight: 600 !important;
+	cursor: pointer !important;
+	transition: all 0.2s ease !important;
+	text-decoration: none !important;
+	line-height: 1.4 !important;
+	min-height: 36px !important;
+	visibility: visible !important;
+	opacity: 1 !important;
+}
+
+/* Przycisk Zaakceptuj - zielony */
+.ideaCard__actionBtnSuccess {
+	background: #10b981 !important;
+	color: #ffffff !important;
+	border: 1px solid #059669 !important;
+}
+
+.ideaCard__actionBtnSuccess:hover {
+	background: #059669 !important;
+	transform: translateY(-2px) !important;
+	box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4) !important;
+}
+
+.ideaCard__actionBtnSuccess:active {
+	transform: translateY(0) !important;
+}
+
+/* Przycisk Odrzuć - czerwony */
+.ideaCard__actionBtnDanger {
+	background: #ef4444 !important;
+	color: #ffffff !important;
+	border: 1px solid #dc2626 !important;
+}
+
+.ideaCard__actionBtnDanger:hover {
+	background: #dc2626 !important;
+	transform: translateY(-2px) !important;
+	box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4) !important;
+}
+
+.ideaCard__actionBtnDanger:active {
+	transform: translateY(0) !important;
+}
+
+/* Ikony w przyciskach */
+.ideaCard__actionBtn svg {
+	flex-shrink: 0 !important;
+	width: 16px !important;
+	height: 16px !important;
+}
+
+/* ============================================================
+   🔘 PRZYCISKI AKCJI - OSTATECZNE ROZWIĄZANIE
+   ============================================================ */
+
+/* Wymuś wyświetlanie kontenera */
+.projects .ideaCard__actions,
+.ideaCard .ideaCard__actions,
+div.ideaCard__actions {
+	display: flex !important;
+	flex-wrap: wrap !important;
+	gap: 8px !important;
+	margin-top: 12px !important;
+	padding-top: 12px !important;
+	border-top: 1px solid #e5e7eb !important;
+	visibility: visible !important;
+	opacity: 1 !important;
+	height: auto !important;
+	overflow: visible !important;
+}
+
+/* Wymuś wyświetlanie przycisków - z bardzo wysoką specyficznością */
+.projects .ideaCard__actionBtn,
+.ideaCard .ideaCard__actionBtn,
+div.ideaCard__actionBtn,
+button.ideaCard__actionBtn {
+	display: inline-flex !important;
+	align-items: center !important;
+	justify-content: center !important;
+	gap: 6px !important;
+	padding: 8px 18px !important;
+	border: none !important;
+	border-radius: 8px !important;
+	font-size: 13px !important;
+	font-weight: 600 !important;
+	cursor: pointer !important;
+	transition: all 0.2s ease !important;
+	text-decoration: none !important;
+	line-height: 1.4 !important;
+	min-height: 36px !important;
+	min-width: 100px !important;
+	visibility: visible !important;
+	opacity: 1 !important;
+	font-family: inherit !important;
+	-webkit-appearance: none !important;
+	appearance: none !important;
+}
+
+/* Przycisk Zaakceptuj - zielony - z wysoką specyficznością */
+.projects .ideaCard__actionBtnSuccess,
+.ideaCard .ideaCard__actionBtnSuccess,
+button.ideaCard__actionBtnSuccess,
+.ideaCard__actionBtn.ideaCard__actionBtnSuccess {
+	background: #10b981 !important;
+	color: #ffffff !important;
+	border: 1px solid #059669 !important;
+	box-shadow: 0 2px 4px rgba(16, 185, 129, 0.2) !important;
+}
+
+.projects .ideaCard__actionBtnSuccess:hover,
+.ideaCard .ideaCard__actionBtnSuccess:hover,
+button.ideaCard__actionBtnSuccess:hover {
+	background: #059669 !important;
+	transform: translateY(-2px) !important;
+	box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4) !important;
+}
+
+/* Przycisk Odrzuć - czerwony - z wysoką specyficznością */
+.projects .ideaCard__actionBtnDanger,
+.ideaCard .ideaCard__actionBtnDanger,
+button.ideaCard__actionBtnDanger,
+.ideaCard__actionBtn.ideaCard__actionBtnDanger {
+	background: #ef4444 !important;
+	color: #ffffff !important;
+	border: 1px solid #dc2626 !important;
+	box-shadow: 0 2px 4px rgba(239, 68, 68, 0.2) !important;
+}
+
+.projects .ideaCard__actionBtnDanger:hover,
+.ideaCard .ideaCard__actionBtnDanger:hover,
+button.ideaCard__actionBtnDanger:hover {
+	background: #dc2626 !important;
+	transform: translateY(-2px) !important;
+	box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4) !important;
+}
+
+/* Ikony w przyciskach */
+.projects .ideaCard__actionBtn svg,
+.ideaCard .ideaCard__actionBtn svg,
+.ideaCard__actionBtn svg {
+	flex-shrink: 0 !important;
+	width: 16px !important;
+	height: 16px !important;
+	color: inherit !important;
 }
