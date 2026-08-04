@@ -236,7 +236,7 @@ export async function syncMembers() {
 		const teams = await prisma.team.findMany({
 			where: {
 				name: {
-					in: ALLOWED_PILLARS.map(p => `Filar ${p}`),
+					in: ALLOWED_PILLARS.map((p) => `Filar ${p}`),
 				},
 			},
 			select: {
@@ -421,7 +421,7 @@ export async function syncMembers() {
 							user_id: userId,
 							team: {
 								name: {
-									in: ALLOWED_PILLARS.map(p => `Filar ${p}`),
+									in: ALLOWED_PILLARS.map((p) => `Filar ${p}`),
 								},
 							},
 						},
@@ -452,24 +452,9 @@ export async function syncMembers() {
 						);
 
 						if (existingMember) {
-							// Już istnieje - sprawdź czy jest poprawnie ustawiony jako członek
-							if (existingMember.is_leader !== false || existingMember.role !== "Członek") {
-								await prisma.teamMember.update({
-									where: { id: existingMember.id },
-									data: {
-										role: "Członek",
-										is_leader: false,
-									},
-								});
-								teamMembersUpdated++;
-								logger.debug(
-									`🔄 [TEAM] Poprawiono członkostwo: ${generatedEmail} -> ${teamName} (Członek)`,
-								);
-							}
-							// Usuń z setu istniejących
+							// Już istnieje - nic nie rób
 							existingTeamIds.delete(teamId);
 						} else {
-							// Dodaj nowe członkostwo - ZAWSZE jako członek
 							await prisma.teamMember.create({
 								data: {
 									user_id: userId,
@@ -478,14 +463,14 @@ export async function syncMembers() {
 									is_leader: false,
 								},
 							});
+
 							teamMembersAdded++;
 							logger.debug(
-								`➕ [TEAM] Dodano członkostwo: ${generatedEmail} -> ${teamName} (Członek)`,
+								`➕ [TEAM] Dodano członkostwo: ${generatedEmail} -> ${teamName}`,
 							);
 						}
 					}
 
-					// Usuń członkostwa w filarach, które już nie istnieją
 					for (const teamId of existingTeamIds) {
 						await prisma.teamMember.deleteMany({
 							where: {
@@ -504,7 +489,7 @@ export async function syncMembers() {
 							user_id: userId,
 							team: {
 								name: {
-									in: ALLOWED_PILLARS.map(p => `Filar ${p}`),
+									in: ALLOWED_PILLARS.map((p) => `Filar ${p}`),
 								},
 							},
 						},

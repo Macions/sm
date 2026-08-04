@@ -1011,11 +1011,11 @@ app.get("/api/members", authMiddleware, async (req: any, res) => {
 					user.created_at.toISOString().split("T")[0],
 				vacation: activeLeave
 					? {
-						startDate: activeLeave.start_date.toISOString().split("T")[0],
-						endDate: activeLeave.end_date.toISOString().split("T")[0],
-						type: activeLeave.scope === "team" ? "team" : "organization",
-						teamId: activeLeave.affected_teams || undefined,
-					}
+							startDate: activeLeave.start_date.toISOString().split("T")[0],
+							endDate: activeLeave.end_date.toISOString().split("T")[0],
+							type: activeLeave.scope === "team" ? "team" : "organization",
+							teamId: activeLeave.affected_teams || undefined,
+						}
 					: null,
 				onboarding_data: onboarding,
 			};
@@ -1226,7 +1226,7 @@ app.get(
 			logger.error("❌ Błąd liczenia nieprzeczytanych:", error);
 			res.status(500).json({ error: "Nie udało się pobrać liczby" });
 		}
-	}
+	},
 );
 app.get(
 	"/api/dashboard/notifications",
@@ -1600,7 +1600,7 @@ app.get("/api/applications", authMiddleware, async (req: any, res) => {
 				userId: app.user_id.toString(),
 				userName: app.user
 					? `${app.user.first_name || ""} ${app.user.last_name || ""}`.trim() ||
-					"Nieznany"
+						"Nieznany"
 					: "Nieznany",
 				userEmail: app.user?.email || "",
 				message: app.message || "",
@@ -1721,7 +1721,7 @@ app.get(
 					userId: app.user_id.toString(),
 					userName: app.user
 						? `${app.user.first_name || ""} ${app.user.last_name || ""}`.trim() ||
-						"Nieznany"
+							"Nieznany"
 						: "Nieznany",
 					userEmail: app.user?.email || "",
 					message: app.message || "",
@@ -2514,9 +2514,9 @@ app.get("/api/profile", authMiddleware, async (req: any, res) => {
 					// 🔥 DODAJ - filtruj tylko członkostwa w filarach
 					where: {
 						team: {
-							name: { contains: "Filar" }
-						}
-					}
+							name: { contains: "Filar" },
+						},
+					},
 				},
 				onboarding_data: { orderBy: { created_at: "desc" }, take: 1 },
 			},
@@ -2541,7 +2541,9 @@ app.get("/api/profile", authMiddleware, async (req: any, res) => {
 		// 🔥 FILARY, W KTÓRYCH UŻYTKOWNIK JEST KOORDYNATOREM
 		// ============================================================
 		const coordinatorPillars = user.team_members
-			.filter((tm: any) => tm.is_leader === true && tm.team?.name?.includes("Filar"))
+			.filter(
+				(tm: any) => tm.is_leader === true && tm.team?.name?.includes("Filar"),
+			)
 			.map((tm: any) => tm.team?.name?.replace("Filar ", ""))
 			.filter(Boolean);
 
@@ -2916,11 +2918,11 @@ app.put("/api/leaves/:id", authMiddleware, async (req: any, res) => {
 				status: status || existingLeave.status,
 				...(status === "approved" || status === "rejected"
 					? {
-						approved_by:
-							`${currentUser?.first_name || ""} ${currentUser?.last_name || ""}`.trim() ||
-							"Nieznany",
-						approved_at: new Date(),
-					}
+							approved_by:
+								`${currentUser?.first_name || ""} ${currentUser?.last_name || ""}`.trim() ||
+								"Nieznany",
+							approved_at: new Date(),
+						}
 					: {}),
 			},
 		});
@@ -5192,6 +5194,114 @@ setTimeout(async () => {
 		logger.error("❌ [STARTUP] Błąd synchronizacji:", error);
 	}
 }, 5000);
+
+// ============================================================
+// 🆕 ENDPOINT: Sprawdza czy użytkownik jest liderem (koordynatorem)
+// ============================================================
+app.get(
+	"/api/user/is-coordinator",
+	authMiddleware,
+	async (req: any, res: any) => {
+		try {
+			const userId = req.user?.id;
+
+			if (!userId) {
+				return res.status(401).json({ error: "Brak autoryzacji" });
+			}
+
+			logger.debug(`🔍 Sprawdzanie czy użytkownik ${userId} jest liderem...`);
+
+			// Sprawdź czy użytkownik jest liderem w jakimkolwiek zespole
+			const teamMember = await prisma.teamMember.findFirst({
+				where: {
+					user_id: parseInt(userId),
+					is_leader: true,
+				},
+				include: {
+					team: {
+						select: {
+							id: true,
+							name: true,
+						},
+					},
+				},
+			});
+
+			if (teamMember) {
+				logger.debug(
+					`✅ Użytkownik ${userId} jest liderem w zespole: ${teamMember.team?.name}`,
+				);
+
+				// Pobierz wszystkie zespoły gdzie jest liderem
+				const allLeaderTeams = await prisma.teamMember.findMany({
+					where: {
+						user_id: parseInt(userId),
+						is_leader: true,
+					},
+					include: {
+						team: {
+							select: {
+								id: true,
+								name: true,
+							},
+						},
+					},
+				});
+
+				// 🔥 POPRAWA: Dodajemy typ dla parametru 'tm'
+				const leaderTeams = allLeaderTeams
+					.filter((tm: any) => tm.team?.name?.includes("Filar"))
+					.map((tm: any) => ({
+						id: tm.team_id,
+						name: tm.team?.name?.replace("Filar ", "") || tm.team?.name,
+						fullName: tm.team?.name,
+					}));
+
+				return res.json({
+					isCoordinator: true,
+					isLeader: true,
+					leaderTeams: leaderTeams,
+					allLeaderTeams: allLeaderTeams.map((tm: any) => ({
+						id: tm.team_id,
+						name: tm.team?.name,
+					})),
+				});
+			}
+
+			// Sprawdź czy użytkownik ma rolę admin - admin też ma uprawnienia
+			const user = await prisma.user.findUnique({
+				where: { id: parseInt(userId) },
+				select: { role_id: true },
+			});
+
+			if (user?.role_id === 1) {
+				// admin
+				logger.debug(`👑 Użytkownik ${userId} jest administratorem`);
+				return res.json({
+					isCoordinator: true,
+					isLeader: true,
+					isAdmin: true,
+					leaderTeams: [],
+					allLeaderTeams: [],
+				});
+			}
+
+			logger.debug(`❌ Użytkownik ${userId} NIE jest liderem`);
+			res.json({
+				isCoordinator: false,
+				isLeader: false,
+				leaderTeams: [],
+				allLeaderTeams: [],
+			});
+		} catch (error) {
+			logger.error("❌ Błąd sprawdzania lidera:", error);
+			res.status(500).json({
+				error: "Nie udało się sprawdzić uprawnień",
+				details: error instanceof Error ? error.message : "Unknown error",
+			});
+		}
+	},
+);
 
 app.listen(port, () => {
 	logger.debug(`🚀 Serwer działa na porcie ${port}`);
