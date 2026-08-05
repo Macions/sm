@@ -19,6 +19,7 @@ import {
 	Clock,
 	CheckCircle,
 	Pencil,
+	Eye,
 	AlertCircle,
 	Briefcase,
 	PenLine,
@@ -110,6 +111,17 @@ type Project = {
 	coordinator_id: string | number;
 	created_at: string;
 	updated_at: string;
+};
+
+type Task = {
+	id: string;
+	title: string;
+	status: string;
+	priority: string;
+	dueDate: string;
+	assignedToName: string;
+	projectId?: string; // 🔥 DODAJ - potrzebne do filtrowania
+	createdAt: string;
 };
 type User = {
 	id: string;
@@ -275,6 +287,7 @@ interface ProjectCardProps {
 	onDelete: (id: string) => void;
 	canEdit: boolean;
 	users: User[];
+	tasks?: Task[];
 }
 
 function ProjectCard({
@@ -283,6 +296,7 @@ function ProjectCard({
 	onDelete,
 	canEdit,
 	users,
+	tasks = [],
 }: ProjectCardProps) {
 	logger.debug("🔍 ProjectCard - projekt:", {
 		id: project.id,
@@ -293,7 +307,13 @@ function ProjectCard({
 		foundUser: users.find((u) => u.id === project.coordinator_id?.toString()),
 	});
 	const [isExpanded, setIsExpanded] = useState(false);
-
+	const projectTasks = tasks
+		.filter((task) => task.projectId === project.id)
+		.sort(
+			(a, b) =>
+				new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+		)
+		.slice(0, 5);
 	const getCoordinatorName = (coordinatorId: string) => {
 		if (!coordinatorId) return "Brak";
 		const user = users.find((u) => u.id === coordinatorId);
@@ -379,7 +399,44 @@ function ProjectCard({
 						</span>
 					</div>
 				</div>
-
+				{projectTasks.length > 0 && (
+					<div className={styles.projectTasks}>
+						<div className={styles.projectTasks__header}>
+							<h4 className={styles.projectTasks__title}>
+								<CheckCircle size={14} />
+								Ostatnie zadania ({projectTasks.length})
+							</h4>
+						</div>
+						<ul className={styles.projectTasks__list}>
+							{projectTasks.map((task) => (
+								<li key={task.id} className={styles.projectTasks__item}>
+									<span className={styles.projectTasks__status}>
+										{task.status === "done" ? (
+											<CheckCircle size={12} className={styles.statusDone} />
+										) : task.status === "in_progress" ? (
+											<Clock size={12} className={styles.statusInProgress} />
+										) : task.status === "review" ? (
+											<Eye size={12} className={styles.statusReview} />
+										) : (
+											<Clock size={12} className={styles.statusTodo} />
+										)}
+									</span>
+									<span className={styles.projectTasks__title}>
+										{task.title}
+									</span>
+									<span className={styles.projectTasks__assignee}>
+										<UsersIcon size={12} />
+										{task.assignedToName}
+									</span>
+									<span className={styles.projectTasks__due}>
+										<Calendar size={12} />
+										{new Date(task.dueDate).toLocaleDateString("pl-PL")}
+									</span>
+								</li>
+							))}
+						</ul>
+					</div>
+				)}
 				<div className={styles.projectCard__coordinator}>
 					<Tag size={14} />
 					<span>
@@ -1332,7 +1389,38 @@ export default function Projects() {
 	const [currentUser, setCurrentUser] = useState<User | null>(null);
 	const [loading, setLoading] = useState(true);
 	const [permissions, setPermissions] = useState<Permission[]>([]);
-
+	const [tasks, setTasks] = useState<Task[]>([]);
+	useEffect(() => {
+		const fetchTasks = async () => {
+			try {
+				const token = localStorage.getItem("accessToken");
+				const response = await fetch("/api/tasks", {
+					headers: {
+						Authorization: `Bearer ${token}`,
+						"Content-Type": "application/json",
+					},
+				});
+				if (response.ok) {
+					const data = await response.json();
+					// Mapuj dane do typu Task
+					const mappedTasks = data.map((task: any) => ({
+						id: task.id,
+						title: task.title,
+						status: task.status,
+						priority: task.priority,
+						dueDate: task.dueDate,
+						assignedToName: task.assignedToName || "Nieprzypisany",
+						projectId: task.projectId || task.project_id?.toString(),
+						createdAt: task.createdAt || task.created_at,
+					}));
+					setTasks(mappedTasks);
+				}
+			} catch (error) {
+				console.error("Błąd pobierania zadań:", error);
+			}
+		};
+		fetchTasks();
+	}, []);
 	const refreshAllData = useCallback(async () => {
 		console.log("🔄 [REFRESH] Odświeżanie danych...");
 
@@ -2462,6 +2550,7 @@ export default function Projects() {
 								onDelete={handleDeleteProject}
 								canEdit={canManageProject(project)}
 								users={users}
+								tasks={tasks} // 🔥 DODAJ
 							/>
 						))
 					)}

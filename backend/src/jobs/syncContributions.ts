@@ -150,9 +150,6 @@ export async function syncContributions() {
 				});
 
 				if (!user) {
-					console.log(
-						`⚠️ [CONTRIBUTIONS] Nie znaleziono użytkownika: ${member.email}`,
-					);
 					logger.warn(
 						`⚠️ [CONTRIBUTIONS] Nie znaleziono użytkownika: ${member.email}`,
 					);
@@ -261,7 +258,6 @@ export async function syncContributions() {
 					}
 
 					pendingCount++;
-					console.log(`⚠️ [CONTRIBUTIONS] ${member.full_name}: nieopłacone`);
 					logger.debug(`⚠️ [CONTRIBUTIONS] ${member.full_name}: nieopłacone`);
 				}
 			} catch (error) {

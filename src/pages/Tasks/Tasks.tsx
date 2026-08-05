@@ -1,0 +1,2133 @@
+import { useState, useEffect, useCallback } from "react";
+import { toast } from "react-hot-toast";
+import {
+	Plus,
+	Search,
+	Check,
+	Clock,
+	Edit,
+	Trash2,
+	Eye,
+	User,
+	Calendar,
+	Tag,
+	X,
+	FolderKanban,
+	Send,
+	MessageCircle,
+} from "lucide-react";
+import styles from "./Tasks.module.css";
+import { logger } from "@/utils/logger";
+
+type TaskStatus = "todo" | "in_progress" | "review" | "done";
+type TaskPriority = "low" | "medium" | "high" | "urgent";
+
+type Task = {
+	id: string;
+	title: string;
+	description: string;
+	status: TaskStatus;
+	priority: TaskPriority;
+	assignedTo: string;
+	assignedToName: string;
+	assignedUsers?: string[];
+	createdBy: string;
+	createdByName: string;
+	dueDate: string;
+	createdAt: string;
+	updatedAt: string;
+	tags: string[];
+	projectId?: string;
+	projectName?: string;
+	requiresFeedback?: boolean;
+	feedbackType?: string;
+	feedbackText?: string;
+	feedbackFile?: string;
+	feedbackFileName?: string;
+	feedbackFileSize?: number;
+	feedbackFileType?: string;
+	feedbackSubmittedAt?: string;
+	// 🔥 NOWE POLA
+	assignedType?: "user" | "team" | "pillar" | "role";
+	assignedGroup?: string;
+	isRecurring?: boolean;
+	recurrencePattern?: "daily" | "weekly" | "monthly";
+	recurrenceEndDate?: string;
+	parentTaskId?: string;
+	childTasks?: Task[];
+	attachments?: {
+		id: string;
+		name: string;
+		url: string;
+		size: number;
+	}[];
+	comments?: {
+		id: string;
+		userId: string;
+		userName: string;
+		content: string;
+		createdAt: string;
+	}[];
+};
+
+type User = {
+	id: string;
+	name: string;
+	role: string;
+};
+
+const STATUS_LABELS: Record<TaskStatus, string> = {
+	todo: "Do zrobienia",
+	in_progress: "W trakcie",
+	review: "Do review",
+	done: "Zakończone",
+};
+
+const STATUS_COLORS: Record<TaskStatus, string> = {
+	todo: styles.statusTodo,
+	in_progress: styles.statusInProgress,
+	review: styles.statusReview,
+	done: styles.statusDone,
+};
+
+const PRIORITY_LABELS: Record<TaskPriority, string> = {
+	low: "Niski",
+	medium: "Średni",
+	high: "Wysoki",
+	urgent: "Krytyczny",
+};
+
+const PRIORITY_COLORS: Record<TaskPriority, string> = {
+	low: styles.priorityLow,
+	medium: styles.priorityMedium,
+	high: styles.priorityHigh,
+	urgent: styles.priorityUrgent,
+};
+
+interface TaskCardProps {
+	task: Task;
+	currentUser: User;
+	onView: (task: Task) => void;
+	onEdit?: (task: Task) => void;
+	onDelete?: (task: Task) => void;
+	onStatusChange: (task: Task, status: TaskStatus) => void;
+	onFeedback?: (task: Task) => void;
+}
+
+interface Comment {
+	id: string;
+	taskId: string;
+	userId: string;
+	userName: string;
+	content: string;
+	createdAt: string;
+}
+
+function Comments({ taskId }: { taskId: string; currentUser: User }) {
+	const [comments, setComments] = useState<Comment[]>([]);
+	const [newComment, setNewComment] = useState("");
+	const [loading, setLoading] = useState(true);
+
+	const fetchComments = async () => {
+		try {
+			const token = localStorage.getItem("accessToken");
+			const response = await fetch(`/api/tasks/${taskId}/comments`, {
+				headers: { Authorization: `Bearer ${token}` },
+			});
+			if (response.ok) {
+				const data = await response.json();
+				setComments(data);
+			}
+		} catch (error) {
+			console.error("Błąd pobierania komentarzy:", error);
+		} finally {
+			setLoading(false);
+		}
+	};
+
+	const addComment = async () => {
+		if (!newComment.trim()) return;
+
+		try {
+			const token = localStorage.getItem("accessToken");
+			const response = await fetch(`/api/tasks/${taskId}/comments`, {
+				method: "POST",
+				headers: {
+					Authorization: `Bearer ${token}`,
+					"Content-Type": "application/json",
+				},
+				body: JSON.stringify({ content: newComment.trim() }),
+			});
+
+			if (response.ok) {
+				const comment = await response.json();
+				setComments([...comments, comment]);
+				setNewComment("");
+				toast.success("Komentarz dodany!");
+			}
+		} catch (error) {
+			console.error("Błąd dodawania komentarza:", error);
+			toast.error("Nie udało się dodać komentarza");
+		}
+	};
+
+	useEffect(() => {
+		fetchComments();
+	}, [taskId]);
+
+	if (loading)
+		return (
+			<div className={styles.commentsLoading}>Ładowanie komentarzy...</div>
+		);
+
+	return (
+		<div className={styles.commentsSection}>
+			<h4 className={styles.commentsTitle}>
+				<MessageCircle size={16} />
+				Komentarze ({comments.length})
+			</h4>
+
+			<div className={styles.commentsList}>
+				{comments.map((comment) => (
+					<div key={comment.id} className={styles.commentItem}>
+						<div className={styles.commentHeader}>
+							<span className={styles.commentAuthor}>
+								<User size={14} />
+								{comment.userName}
+							</span>
+							<span className={styles.commentDate}>
+								{new Date(comment.createdAt).toLocaleDateString("pl-PL", {
+									day: "numeric",
+									month: "short",
+									hour: "2-digit",
+									minute: "2-digit",
+								})}
+							</span>
+						</div>
+						<p className={styles.commentContent}>{comment.content}</p>
+					</div>
+				))}
+				{comments.length === 0 && (
+					<p className={styles.commentsEmpty}>Brak komentarzy</p>
+				)}
+			</div>
+
+			<div className={styles.commentInput}>
+				<textarea
+					className={styles.commentTextarea}
+					value={newComment}
+					onChange={(e) => setNewComment(e.target.value)}
+					placeholder="Dodaj komentarz..."
+					rows={2}
+				/>
+				<button
+					className={styles.commentSubmitBtn}
+					onClick={addComment}
+					disabled={!newComment.trim()}
+				>
+					<Send size={14} />
+					Wyślij
+				</button>
+			</div>
+		</div>
+	);
+}
+interface TaskDetailModalProps {
+	isOpen: boolean;
+	task: Task | null;
+	currentUser: User;
+	onClose: () => void;
+	onEdit?: () => void;
+}
+interface FeedbackModalProps {
+	isOpen: boolean;
+	task: Task | null;
+	onClose: () => void;
+	onSubmit: (task: Task, feedbackText: string, file?: File) => void;
+}
+
+function FeedbackModal({
+	isOpen,
+	task,
+	onClose,
+	onSubmit,
+}: FeedbackModalProps) {
+	const [feedbackText, setFeedbackText] = useState("");
+	const [file, setFile] = useState<File | null>(null);
+	const [errors, setErrors] = useState<Record<string, string>>({});
+
+	useEffect(() => {
+		if (!isOpen) {
+			setFeedbackText("");
+			setFile(null);
+			setErrors({});
+		}
+	}, [isOpen]);
+
+	if (!isOpen || !task) return null;
+
+	const validateForm = () => {
+		const newErrors: Record<string, string> = {};
+		if (task.feedbackType === "text" && !feedbackText.trim()) {
+			newErrors.feedbackText = "Odpowiedź tekstowa jest wymagana";
+		}
+		if (task.feedbackType === "file" && !file) {
+			newErrors.file = "Plik jest wymagany";
+		}
+		setErrors(newErrors);
+		return Object.keys(newErrors).length === 0;
+	};
+
+	const handleSubmit = (e: React.FormEvent) => {
+		e.preventDefault();
+		if (!validateForm()) return;
+		onSubmit(task, feedbackText, file || undefined);
+		onClose();
+	};
+
+	return (
+		<div className={styles.modalOverlay} onClick={onClose}>
+			<div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+				<div className={styles.modal__header}>
+					<h2 className={styles.modal__title}>
+						Odpowiedź zwrotna: {task.title}
+					</h2>
+					<button className={styles.modal__close} onClick={onClose}>
+						<X size={20} />
+					</button>
+				</div>
+
+				<form onSubmit={handleSubmit} className={styles.modal__form}>
+					<div className={styles.modal__body}>
+						<p className={styles.feedbackInfo}>
+							{task.feedbackType === "text"
+								? "Wpisz odpowiedź tekstową dla tego zadania."
+								: "Załącz plik z odpowiedzią dla tego zadania."}
+						</p>
+
+						{task.feedbackType === "text" ? (
+							<div className={styles.modal__field}>
+								<label className={styles.modal__label}>
+									Odpowiedź tekstowa{" "}
+									<span className={styles.modal__required}>*</span>
+								</label>
+								<textarea
+									className={`${styles.modal__input} ${styles.modal__textarea} ${errors.feedbackText ? styles.modal__inputError : ""}`}
+									value={feedbackText}
+									onChange={(e) => {
+										setFeedbackText(e.target.value);
+										if (errors.feedbackText)
+											setErrors({ ...errors, feedbackText: "" });
+									}}
+									rows={6}
+									placeholder="Napisz swoją odpowiedź..."
+								/>
+								{errors.feedbackText && (
+									<span className={styles.modal__error}>
+										{errors.feedbackText}
+									</span>
+								)}
+							</div>
+						) : (
+							<div className={styles.modal__field}>
+								<label className={styles.modal__label}>
+									Załącz plik <span className={styles.modal__required}>*</span>
+								</label>
+								<input
+									type="file"
+									className={`${styles.modal__input} ${errors.file ? styles.modal__inputError : ""}`}
+									onChange={(e) => {
+										if (e.target.files && e.target.files.length > 0) {
+											setFile(e.target.files[0]);
+											if (errors.file) setErrors({ ...errors, file: "" });
+										}
+									}}
+								/>
+								{errors.file && (
+									<span className={styles.modal__error}>{errors.file}</span>
+								)}
+								{file && (
+									<p className={styles.fileInfo}>
+										📎 {file.name} ({(file.size / 1024).toFixed(1)} KB)
+									</p>
+								)}
+							</div>
+						)}
+					</div>
+
+					<div className={styles.modal__actions}>
+						<div className={styles.modal__actionsRight}>
+							<button
+								type="button"
+								className={styles.modal__btnCancel}
+								onClick={onClose}
+							>
+								Anuluj
+							</button>
+							<button type="submit" className={styles.modal__btnSave}>
+								<Send size={16} />
+								Wyślij odpowiedź
+							</button>
+						</div>
+					</div>
+				</form>
+			</div>
+		</div>
+	);
+}
+function TaskDetailModal({
+	isOpen,
+	task,
+	currentUser,
+	onClose,
+	onEdit,
+}: TaskDetailModalProps) {
+	if (!isOpen || !task) return null;
+
+	const formatDate = (date: string) => {
+		return new Date(date).toLocaleDateString("pl-PL", {
+			year: "numeric",
+			month: "long",
+			day: "numeric",
+			hour: "2-digit",
+			minute: "2-digit",
+		});
+	};
+	// W TaskDetailModal, przed return:
+	// W TaskDetailModal, przed return:
+	const handleDownloadFile = async (fileUrl: string, fileName: string) => {
+		try {
+			const token = localStorage.getItem("accessToken");
+
+			// 🔥 DEKODUJ NAZWĘ PLIKU
+			const decodedFileName = decodeURIComponent(fileName);
+
+			console.log("📁 Pobieram plik z:", fileUrl);
+			console.log("📁 Nazwa pliku:", decodedFileName);
+
+			const response = await fetch(fileUrl, {
+				headers: {
+					Authorization: `Bearer ${token}`,
+				},
+			});
+
+			if (!response.ok) {
+				throw new Error(`Błąd pobierania: ${response.status}`);
+			}
+
+			const blob = await response.blob();
+
+			// 🔥 SPRAWDŹ CZY TO NA PEWNO PDF
+			if (
+				blob.type !== "application/pdf" &&
+				!fileName.toLowerCase().endsWith(".pdf")
+			) {
+				console.warn("⚠️ Nieoczekiwany typ pliku:", blob.type);
+			}
+
+			const url = window.URL.createObjectURL(blob);
+			const link = document.createElement("a");
+			link.href = url;
+			link.download = decodedFileName; // UŻYJ ZDEKODOWANEJ NAZWY
+			document.body.appendChild(link);
+			link.click();
+			document.body.removeChild(link);
+			window.URL.revokeObjectURL(url);
+
+			toast.success("Plik pobrany!");
+		} catch (error) {
+			console.error("❌ Błąd pobierania pliku:", error);
+			toast.error("Nie udało się pobrać pliku");
+		}
+	};
+	const getStatusLabel = (status: TaskStatus) => {
+		const labels: Record<TaskStatus, string> = {
+			todo: "Do zrobienia",
+			in_progress: "W trakcie",
+			review: "Do review",
+			done: "Zakończone",
+		};
+		return labels[status] || status;
+	};
+
+	const getPriorityLabel = (priority: TaskPriority) => {
+		const labels: Record<TaskPriority, string> = {
+			low: "Niski",
+			medium: "Średni",
+			high: "Wysoki",
+			urgent: "Krytyczny",
+		};
+		return labels[priority] || priority;
+	};
+
+	return (
+		<div className={styles.modalOverlay} onClick={onClose}>
+			<div
+				className={`${styles.modal} ${styles.detailModal}`}
+				onClick={(e) => e.stopPropagation()}
+			>
+				<div className={styles.modal__header}>
+					<h2 className={styles.modal__title}>{task.title}</h2>
+					<button className={styles.modal__close} onClick={onClose}>
+						<X size={20} />
+					</button>
+				</div>
+
+				<div className={styles.modal__body}>
+					{/* Status i Priorytet */}
+					<div className={styles.detailRow}>
+						<div className={styles.detailItem}>
+							<span className={styles.detailLabel}>Status</span>
+							<span
+								className={`${styles.detailValue} ${STATUS_COLORS[task.status]}`}
+							>
+								{getStatusLabel(task.status)}
+							</span>
+						</div>
+						<div className={styles.detailItem}>
+							<span className={styles.detailLabel}>Priorytet</span>
+							<span
+								className={`${styles.detailValue} ${PRIORITY_COLORS[task.priority]}`}
+							>
+								{getPriorityLabel(task.priority)}
+							</span>
+						</div>
+					</div>
+
+					{/* Opis */}
+					<div className={styles.detailSection}>
+						<h4 className={styles.detailSectionTitle}>Opis</h4>
+						<p className={styles.detailDescription}>{task.description}</p>
+					</div>
+
+					{/* Przypisanie i terminy */}
+					<div className={styles.detailGrid}>
+						<div className={styles.detailItem}>
+							<span className={styles.detailLabel}>Przypisany do</span>
+							<span className={styles.detailValue}>
+								<User size={16} />
+								{task.assignedToName}
+							</span>
+						</div>
+						{task.projectId && task.projectName && (
+							<div className={styles.detailItem}>
+								<span className={styles.detailLabel}>Projekt</span>
+								<span className={styles.detailValue}>
+									<FolderKanban size={16} />
+									{task.projectName}
+								</span>
+							</div>
+						)}
+						<div className={styles.detailItem}>
+							<span className={styles.detailLabel}>Termin</span>
+							<span className={styles.detailValue}>
+								<Calendar size={16} />
+								{formatDate(task.dueDate)}
+							</span>
+						</div>
+						<div className={styles.detailItem}>
+							<span className={styles.detailLabel}>Utworzone</span>
+							<span className={styles.detailValue}>
+								{formatDate(task.createdAt)}
+							</span>
+						</div>
+					</div>
+
+					{/* Tagi */}
+					{task.tags.length > 0 && (
+						<div className={styles.detailSection}>
+							<h4 className={styles.detailSectionTitle}>Tagi</h4>
+							<div className={styles.detailTags}>
+								{task.tags.map((tag) => (
+									<span key={tag} className={styles.detailTag}>
+										<Tag size={12} />
+										{tag}
+									</span>
+								))}
+							</div>
+						</div>
+					)}
+
+					{/* Odpowiedź zwrotna */}
+					{task.requiresFeedback && (
+						<div className={styles.detailSection}>
+							<h4 className={styles.detailSectionTitle}>
+								Odpowiedź zwrotna
+								{task.feedbackSubmittedAt ? (
+									<span className={styles.feedbackSubmitted}>✅ Przesłana</span>
+								) : (
+									<span className={styles.feedbackPending}>Oczekuje</span>
+								)}
+							</h4>
+							{task.feedbackSubmittedAt ? (
+								<div className={styles.feedbackContent}>
+									<p className={styles.feedbackMeta}>
+										Przesłano: {formatDate(task.feedbackSubmittedAt)}
+									</p>
+									{task.feedbackType === "text" && task.feedbackText && (
+										<div className={styles.feedbackText}>
+											<strong>Odpowiedź:</strong>
+											<p>{task.feedbackText}</p>
+										</div>
+									)}
+									{task.feedbackType === "file" && task.feedbackFile && (
+										<div className={styles.feedbackFile}>
+											<strong>Załącznik:</strong>
+											<button
+												className={styles.feedbackDownloadBtn}
+												onClick={() =>
+													handleDownloadFile(
+														task.feedbackFile!,
+														task.feedbackFileName || "plik.pdf",
+													)
+												}
+											>
+												📎 {task.feedbackFileName || "Pobierz plik"}
+											</button>
+											{/* Komentarze */}
+											<div className={styles.detailSection}>
+												<Comments taskId={task.id} currentUser={currentUser} />
+											</div>
+										</div>
+									)}
+								</div>
+							) : (
+								<p className={styles.feedbackEmpty}>Brak odpowiedzi zwrotnej</p>
+							)}
+						</div>
+					)}
+				</div>
+
+				<div className={styles.modal__actions}>
+					<div className={styles.modal__actionsRight}>
+						<button className={styles.modal__btnCancel} onClick={onClose}>
+							Zamknij
+						</button>
+						{onEdit && (
+							<button className={styles.modal__btnSave} onClick={onEdit}>
+								<Edit size={16} />
+								Edytuj
+							</button>
+						)}
+					</div>
+				</div>
+			</div>
+		</div>
+	);
+}
+function TaskCard({
+	task,
+	currentUser,
+	onView,
+	onEdit,
+	onDelete,
+	onStatusChange,
+	onFeedback,
+}: TaskCardProps) {
+	// ✅ POPRAWIONE
+	const canManage =
+		currentUser?.role === "admin" ||
+		currentUser?.role === "board" ||
+		currentUser?.role === "coordinator";
+	const isAssigned = task.assignedTo === currentUser.id;
+
+	const formatDate = (date: string) => {
+		const d = new Date(date);
+		const today = new Date();
+		const tomorrow = new Date(today);
+		tomorrow.setDate(tomorrow.getDate() + 1);
+
+		if (d.toDateString() === today.toDateString()) return "Dzisiaj";
+		if (d.toDateString() === tomorrow.toDateString()) return "Jutro";
+		return d.toLocaleDateString("pl-PL", { day: "numeric", month: "short" });
+	};
+
+	const isOverdue =
+		task.dueDate &&
+		new Date(task.dueDate) < new Date() &&
+		task.status !== "done";
+
+	return (
+		<div
+			className={`${styles.taskCard} ${isOverdue ? styles.taskCardOverdue : ""}`}
+		>
+			<div className={styles.taskCard__header}>
+				<div className={styles.taskCard__titleRow}>
+					<h3 className={styles.taskCard__title}>{task.title}</h3>
+					<span
+						className={`${styles.taskCard__priority} ${PRIORITY_COLORS[task.priority]}`}
+					>
+						{PRIORITY_LABELS[task.priority]}
+					</span>
+				</div>
+				<span
+					className={`${styles.taskCard__status} ${STATUS_COLORS[task.status]}`}
+				>
+					{STATUS_LABELS[task.status]}
+				</span>
+			</div>
+
+			<p className={styles.taskCard__description}>{task.description}</p>
+
+			<div className={styles.taskCard__meta}>
+				<div className={styles.taskCard__metaItem}>
+					<User size={14} />
+					<span>{task.assignedToName}</span>
+				</div>
+				{task.projectId && task.projectName && (
+					<div className={styles.taskCard__metaItem}>
+						<FolderKanban size={14} />
+						<span>{task.projectName}</span>
+					</div>
+				)}
+				<div className={styles.taskCard__metaItem}>
+					<Calendar size={14} />
+					<span className={isOverdue ? styles.taskCard__dateOverdue : ""}>
+						{formatDate(task.dueDate)}
+					</span>
+				</div>
+				{task.tags.length > 0 && (
+					<div className={styles.taskCard__tags}>
+						{task.tags.slice(0, 2).map((tag) => (
+							<span key={tag} className={styles.taskCard__tag}>
+								<Tag size={12} />
+								{tag}
+							</span>
+						))}
+						{task.tags.length > 2 && (
+							<span className={styles.taskCard__tag}>
+								+{task.tags.length - 2}
+							</span>
+						)}
+					</div>
+				)}
+			</div>
+
+			<div className={styles.taskCard__actions}>
+				<div className={styles.taskCard__statusActions}>
+					{task.status !== "done" && (
+						<button
+							className={styles.taskCard__statusBtn}
+							onClick={() => onStatusChange(task, "done")}
+							title="Zakończ zadanie"
+						>
+							<Check size={16} />
+							Zakończ
+						</button>
+					)}
+					{task.status === "todo" && (
+						<button
+							className={styles.taskCard__statusBtn}
+							onClick={() => onStatusChange(task, "in_progress")}
+							title="Rozpocznij"
+						>
+							<Clock size={16} />
+							Rozpocznij
+						</button>
+					)}
+					{task.status === "in_progress" && (
+						<button
+							className={styles.taskCard__statusBtn}
+							onClick={() => onStatusChange(task, "review")}
+							title="Prześlij do review"
+						>
+							<Eye size={16} />
+							Prześlij do review
+						</button>
+					)}
+				</div>
+
+				<div className={styles.taskCard__actionBtns}>
+					<button
+						className={styles.taskCard__actionBtn}
+						onClick={() => onView(task)}
+						title="Szczegóły"
+					>
+						<Eye size={16} />
+					</button>
+					{(canManage || isAssigned) && (
+						<button
+							className={styles.taskCard__actionBtn}
+							onClick={() => onEdit?.(task)}
+							title="Edytuj"
+						>
+							<Edit size={16} />
+						</button>
+					)}
+					{canManage && (
+						<button
+							className={`${styles.taskCard__actionBtn} ${styles.taskCard__actionBtnDanger}`}
+							onClick={() => onDelete?.(task)}
+							title="Usuń"
+						>
+							<Trash2 size={16} />
+						</button>
+					)}
+
+					{task.requiresFeedback &&
+						task.status === "done" &&
+						!task.feedbackSubmittedAt && (
+							<button
+								className={styles.taskCard__feedbackBtn}
+								onClick={() => onFeedback?.(task)}
+								title="Dodaj odpowiedź zwrotną"
+							>
+								<Send size={14} />
+								Odpowiedź
+							</button>
+						)}
+
+					{/* 🔥 POKAŻ STATUS ODPOWIEDZI */}
+					{task.requiresFeedback && task.feedbackSubmittedAt && (
+						<span className={styles.taskCard__feedbackDone}>
+							<Check size={14} />
+							Odpowiedź przesłana
+						</span>
+					)}
+				</div>
+			</div>
+		</div>
+	);
+}
+
+interface TaskModalProps {
+	isOpen: boolean;
+	task: Task | null;
+	currentUser: User;
+	members: { id: string; name: string }[];
+	projects: { id: string; name: string }[];
+	teams?: string[]; // 🔥 DODAJ
+	pillars?: string[]; // 🔥 DODAJ
+	onClose: () => void;
+	onSave: (task: Task) => void;
+	onDelete?: (task: Task) => void;
+}
+
+function TaskModal({
+	isOpen,
+	task,
+	currentUser,
+	members,
+	projects,
+	teams = [], // 🔥 DODAJ
+	pillars = [], // 🔥 DODAJ
+	onClose,
+	onSave,
+	onDelete,
+}: TaskModalProps) {
+	const [searchUser, setSearchUser] = useState("");
+	const [userSuggestions, setUserSuggestions] = useState<
+		{ id: string; name: string }[]
+	>([]);
+	const [selectedUsers, setSelectedUsers] = useState<
+		{ id: string; name: string }[]
+	>([]);
+
+	const [formData, setFormData] = useState<Partial<Task>>({
+		title: "",
+		description: "",
+		status: "todo",
+		priority: "medium",
+		assignedTo: "",
+		dueDate: "",
+		tags: [],
+		projectId: "", // 🔥 DODAJ
+		requiresFeedback: false, // 🔥 DODAJ
+		feedbackType: "text", // 🔥 DODAJ
+		assignedType: "user",
+		assignedGroup: "",
+		isRecurring: false,
+		recurrencePattern: "weekly",
+		recurrenceEndDate: "",
+	});
+	const [newTag, setNewTag] = useState("");
+	const [errors, setErrors] = useState<Record<string, string>>({});
+
+	useEffect(() => {
+		if (task) {
+			setFormData({
+				...task,
+				dueDate: task.dueDate
+					? new Date(task.dueDate).toISOString().slice(0, 16)
+					: "",
+				projectId: task.projectId || "",
+				requiresFeedback: task.requiresFeedback || false,
+				feedbackType: task.feedbackType || "text",
+				assignedType: task.assignedType || "user",
+				assignedGroup: task.assignedGroup || "",
+				isRecurring: task.isRecurring || false,
+				recurrencePattern: task.recurrencePattern || "weekly",
+				recurrenceEndDate: task.recurrenceEndDate || "",
+				// 🔥 DODAJ - ustaw assignedTo z task
+				assignedTo: task.assignedTo || "",
+			});
+
+			// 🔥 DODAJ - ustaw selectedUsers z task
+			if (task.assignedTo) {
+				setSelectedUsers([
+					{
+						id: task.assignedTo,
+						name: task.assignedToName || "Nieznany",
+					},
+				]);
+			}
+
+			// 🔥 DODAJ - jeśli są przypisani użytkownicy
+			if (task.assignedUsers && task.assignedUsers.length > 0) {
+				const users = task.assignedUsers.map((id) => {
+					const member = members.find((m) => m.id === id);
+					return { id, name: member?.name || "Nieznany" };
+				});
+				setSelectedUsers(users);
+			}
+		} else {
+			setFormData({
+				title: "",
+				description: "",
+				status: "todo",
+				priority: "medium",
+				assignedTo: "",
+				assignedToName: "",
+				dueDate: "",
+				tags: [],
+				projectId: "",
+				requiresFeedback: false,
+				feedbackType: "text",
+				assignedType: "user",
+				assignedGroup: "",
+				isRecurring: false,
+				recurrencePattern: "weekly",
+				recurrenceEndDate: "",
+			});
+			setSelectedUsers([]);
+		}
+	}, [task, currentUser, members]);
+
+	if (!isOpen) return null;
+
+	const isEdit = !!task;
+	// ✅ POPRAWIONE
+	const canManage =
+		currentUser?.role === "admin" ||
+		currentUser?.role === "board" ||
+		currentUser?.role === "coordinator";
+
+	const validateForm = () => {
+		const newErrors: Record<string, string> = {};
+		if (!formData.title?.trim()) newErrors.title = "Tytuł jest wymagany";
+		if (!formData.description?.trim())
+			newErrors.description = "Opis jest wymagany";
+		// 🔥 SPRAWDZAJ selectedUsers ZAMIAST formData.assignedTo
+		if (formData.assignedType === "user" && selectedUsers.length === 0) {
+			newErrors.assignedTo = "Wybierz przynajmniej jednego użytkownika";
+		}
+		if (formData.assignedType !== "user" && !formData.assignedGroup) {
+			newErrors.assignedGroup = "Wybierz grupę";
+		}
+		if (!formData.dueDate) newErrors.dueDate = "Termin jest wymagany";
+		setErrors(newErrors);
+		return Object.keys(newErrors).length === 0;
+	};
+
+	const handleSubmit = (e: React.FormEvent) => {
+		e.preventDefault();
+		if (!validateForm()) return;
+
+		const saveData: Task = {
+			id: task?.id || `task-${Date.now()}`,
+			title: formData.title!.trim(),
+			description: formData.description!.trim(),
+			status: (formData.status as TaskStatus) || "todo",
+			priority: (formData.priority as TaskPriority) || "medium",
+			assignedTo: selectedUsers.length > 0 ? selectedUsers[0].id : "",
+			assignedToName:
+				selectedUsers.length > 0 ? selectedUsers[0].name : "Nieznany",
+			assignedUsers: selectedUsers.map((u) => u.id),
+			createdBy: task?.createdBy || currentUser.id,
+			createdByName: task?.createdByName || currentUser.name,
+			dueDate: formData.dueDate!,
+			createdAt: task?.createdAt || new Date().toISOString(),
+			updatedAt: new Date().toISOString(),
+			tags: formData.tags || [],
+			projectId: formData.projectId || undefined,
+			requiresFeedback: formData.requiresFeedback || false,
+			feedbackType: formData.feedbackType || "text",
+			// 🔥 DODAJ NOWE POLA
+			assignedType:
+				(formData.assignedType as "user" | "team" | "pillar" | "role") ||
+				"user",
+			assignedGroup: formData.assignedGroup || "",
+			isRecurring: formData.isRecurring || false,
+			recurrencePattern:
+				(formData.recurrencePattern as "daily" | "weekly" | "monthly") ||
+				"weekly",
+			recurrenceEndDate: formData.recurrenceEndDate || "",
+			attachments: task?.attachments || [],
+			comments: task?.comments || [],
+			feedbackText: undefined,
+			feedbackFile: undefined,
+			feedbackFileName: undefined,
+			feedbackFileSize: undefined,
+			feedbackFileType: undefined,
+			feedbackSubmittedAt: undefined,
+		};
+
+		onSave(saveData);
+		onClose();
+	};
+
+	const addTag = () => {
+		if (newTag.trim() && !formData.tags?.includes(newTag.trim())) {
+			setFormData({
+				...formData,
+				tags: [...(formData.tags || []), newTag.trim()],
+			});
+			setNewTag("");
+		}
+	};
+
+	const removeTag = (tag: string) => {
+		setFormData({
+			...formData,
+			tags: (formData.tags || []).filter((t) => t !== tag),
+		});
+	};
+
+	const handleDelete = () => {
+		if (
+			task &&
+			onDelete &&
+			window.confirm(`Czy na pewno chcesz usunąć zadanie "${task.title}"?`)
+		) {
+			onDelete(task);
+			onClose();
+		}
+	};
+
+	return (
+		<div className={styles.modalOverlay} onClick={onClose}>
+			<div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+				<div className={styles.modal__header}>
+					<h2 className={styles.modal__title}>
+						{isEdit ? "Edytuj zadanie" : "Dodaj nowe zadanie"}
+					</h2>
+					<button className={styles.modal__close} onClick={onClose}>
+						<X size={20} />
+					</button>
+				</div>
+
+				<form onSubmit={handleSubmit} className={styles.modal__form}>
+					<div className={styles.modal__body}>
+						<div className={styles.modal__field}>
+							<label className={styles.modal__label}>
+								Tytuł <span className={styles.modal__required}>*</span>
+							</label>
+							<input
+								type="text"
+								className={`${styles.modal__input} ${errors.title ? styles.modal__inputError : ""}`}
+								value={formData.title || ""}
+								onChange={(e) => {
+									setFormData({ ...formData, title: e.target.value });
+									if (errors.title) setErrors({ ...errors, title: "" });
+								}}
+								placeholder="np. Przygotowanie raportu"
+							/>
+							{errors.title && (
+								<span className={styles.modal__error}>{errors.title}</span>
+							)}
+						</div>
+						<div className={styles.modal__field}>
+							<label className={styles.modal__label}>
+								Opis <span className={styles.modal__required}>*</span>
+							</label>
+							<textarea
+								className={`${styles.modal__input} ${styles.modal__textarea} ${errors.description ? styles.modal__inputError : ""}`}
+								value={formData.description || ""}
+								onChange={(e) => {
+									setFormData({ ...formData, description: e.target.value });
+									if (errors.description)
+										setErrors({ ...errors, description: "" });
+								}}
+								rows={4}
+								placeholder="Szczegółowy opis zadania..."
+							/>
+							{errors.description && (
+								<span className={styles.modal__error}>
+									{errors.description}
+								</span>
+							)}
+						</div>
+						<div className={styles.modal__row}>
+							<div className={styles.modal__field}>
+								<label className={styles.modal__label}>
+									Status <span className={styles.modal__required}>*</span>
+								</label>
+								<select
+									className={styles.modal__select}
+									value={formData.status || "todo"}
+									onChange={(e) =>
+										setFormData({
+											...formData,
+											status: e.target.value as TaskStatus,
+										})
+									}
+								>
+									<option value="todo">Do zrobienia</option>
+									<option value="in_progress">W trakcie</option>
+									<option value="review">Do review</option>
+									<option value="done">Zakończone</option>
+								</select>
+							</div>
+
+							<div className={styles.modal__field}>
+								<label className={styles.modal__label}>
+									Priorytet <span className={styles.modal__required}>*</span>
+								</label>
+								<select
+									className={styles.modal__select}
+									value={formData.priority || "medium"}
+									onChange={(e) =>
+										setFormData({
+											...formData,
+											priority: e.target.value as TaskPriority,
+										})
+									}
+								>
+									<option value="low">Niski</option>
+									<option value="medium">Średni</option>
+									<option value="high">Wysoki</option>
+									<option value="urgent">Krytyczny</option>
+								</select>
+							</div>
+						</div>
+						{/* Projekt (opcjonalnie) */}
+						<div className={styles.modal__field}>
+							<label className={styles.modal__label}>
+								Projekt (opcjonalnie)
+							</label>
+							<select
+								className={styles.modal__select}
+								value={formData.projectId || ""}
+								onChange={(e) =>
+									setFormData({
+										...formData,
+										projectId: e.target.value || undefined,
+									})
+								}
+							>
+								<option value="">Brak projektu</option>
+								{projects.map((p: { id: string; name: string }) => (
+									<option key={p.id} value={p.id}>
+										{p.name}
+									</option>
+								))}
+							</select>
+						</div>
+						{/* Wymaga odpowiedzi zwrotnej */}
+						<div className={styles.modal__field}>
+							<label
+								className={styles.modal__label}
+								style={{
+									display: "flex",
+									alignItems: "center",
+									gap: "8px",
+									cursor: "pointer",
+								}}
+							>
+								<input
+									type="checkbox"
+									checked={formData.requiresFeedback || false}
+									onChange={(e) =>
+										setFormData({
+											...formData,
+											requiresFeedback: e.target.checked,
+										})
+									}
+								/>
+								Wymaga odpowiedzi zwrotnej
+							</label>
+						</div>
+						{/* Typ odpowiedzi zwrotnej */}
+						{formData.requiresFeedback && (
+							<div className={styles.modal__field}>
+								<label className={styles.modal__label}>Typ odpowiedzi</label>
+								<select
+									className={styles.modal__select}
+									value={formData.feedbackType || "text"}
+									onChange={(e) =>
+										setFormData({ ...formData, feedbackType: e.target.value })
+									}
+								>
+									<option value="text">Tekst</option>
+									<option value="file">Plik</option>
+								</select>
+								<span className={styles.modal__helper}>
+									{formData.feedbackType === "text"
+										? "Użytkownik będzie musiał wpisać odpowiedź tekstową"
+										: "Użytkownik będzie musiał załączyć plik"}
+								</span>
+							</div>
+						)}
+						{/* Typ przypisania */}
+						<div className={styles.modal__row}>
+							<div className={styles.modal__field}>
+								<label className={styles.modal__label}>Przypisz do</label>
+								<select
+									className={styles.modal__select}
+									value={formData.assignedType || "user"}
+									onChange={(e) => {
+										const type = e.target.value as
+											| "user"
+											| "team"
+											| "pillar"
+											| "role";
+										setFormData({
+											...formData,
+											assignedType: type,
+											assignedGroup: "",
+										});
+										setSelectedUsers([]);
+									}}
+								>
+									<option value="user">Konkretny użytkownik</option>
+									<option value="team">Zespół</option>
+									<option value="pillar">Filar</option>
+									<option value="role">Rola</option>
+								</select>
+							</div>
+
+							<div className={styles.modal__field}>
+								<label className={styles.modal__label}>
+									Termin <span className={styles.modal__required}>*</span>
+								</label>
+								<input
+									type="datetime-local"
+									className={`${styles.modal__input} ${errors.dueDate ? styles.modal__inputError : ""}`}
+									value={formData.dueDate || ""}
+									onChange={(e) => {
+										setFormData({ ...formData, dueDate: e.target.value });
+										if (errors.dueDate) setErrors({ ...errors, dueDate: "" });
+									}}
+								/>
+								{errors.dueDate && (
+									<span className={styles.modal__error}>{errors.dueDate}</span>
+								)}
+							</div>
+						</div>
+						{/* Wyszukiwanie użytkownika (gdy typ = user) */}
+						{formData.assignedType === "user" && (
+							<div className={styles.modal__field}>
+								<label className={styles.modal__label}>
+									Szukaj użytkowników *
+								</label>
+								<div className={styles.userSearchWrapper}>
+									<input
+										type="text"
+										className={styles.modal__input}
+										placeholder="Wpisz imię lub nazwisko..."
+										value={searchUser}
+										onChange={(e) => {
+											setSearchUser(e.target.value);
+											const filtered = members.filter((m) =>
+												m.name
+													.toLowerCase()
+													.includes(e.target.value.toLowerCase()),
+											);
+											setUserSuggestions(filtered.slice(0, 10));
+										}}
+										onFocus={() => {
+											if (searchUser && userSuggestions.length === 0) {
+												const filtered = members.filter((m) =>
+													m.name
+														.toLowerCase()
+														.includes(searchUser.toLowerCase()),
+												);
+												setUserSuggestions(filtered.slice(0, 10));
+											}
+										}}
+									/>
+									{userSuggestions.length > 0 && (
+										<div className={styles.userSuggestions}>
+											{userSuggestions.map((user) => (
+												<div
+													key={user.id}
+													className={styles.userSuggestionItem}
+													onMouseDown={(e) => {
+														e.preventDefault();
+														// ✅ DODAJEMY WIELU UŻYTKOWNIKÓW
+														if (!selectedUsers.find((u) => u.id === user.id)) {
+															setSelectedUsers([...selectedUsers, user]);
+															// Nie ustawiamy assignedTo na pojedynczego użytkownika
+															// Będziemy wysyłać tablicę ID
+														}
+														setSearchUser("");
+														setUserSuggestions([]);
+													}}
+												>
+													<User size={14} />
+													{user.name}
+												</div>
+											))}
+										</div>
+									)}
+								</div>
+								{selectedUsers.length > 0 && (
+									<div className={styles.selectedUsers}>
+										{selectedUsers.map((user) => (
+											<span key={user.id} className={styles.selectedUser}>
+												{user.name}
+												<button
+													type="button"
+													onClick={() => {
+														setSelectedUsers(
+															selectedUsers.filter((u) => u.id !== user.id),
+														);
+													}}
+												>
+													<X size={12} />
+												</button>
+											</span>
+										))}
+									</div>
+								)}
+								{selectedUsers.length === 0 && (
+									<span className={styles.modal__error}>
+										Wybierz przynajmniej jednego użytkownika
+									</span>
+								)}
+							</div>
+						)}
+						{/* Grupa (dla team/pillar/role) */}
+						{formData.assignedType !== "user" && (
+							<div className={styles.modal__field}>
+								<label className={styles.modal__label}>
+									{formData.assignedType === "team"
+										? "Zespół"
+										: formData.assignedType === "pillar"
+											? "Filar"
+											: "Rola"}{" "}
+									*
+								</label>
+								<select
+									className={styles.modal__select}
+									value={formData.assignedGroup || ""}
+									onChange={(e) =>
+										setFormData({ ...formData, assignedGroup: e.target.value })
+									}
+								>
+									<option value="">Wybierz...</option>
+									{formData.assignedType === "team" &&
+										teams.map((t) => (
+											<option key={t} value={t}>
+												{t}
+											</option>
+										))}
+									{formData.assignedType === "pillar" &&
+										pillars.map((p) => (
+											<option key={p} value={p}>
+												{p}
+											</option>
+										))}
+									{formData.assignedType === "role" &&
+										[
+											{ value: "admin", label: "Administrator" },
+											{ value: "board", label: "Zarząd" },
+											{ value: "coordinator", label: "Koordynator" },
+											{ value: "member", label: "Członek" },
+										].map((r) => (
+											<option key={r.value} value={r.value}>
+												{r.label}
+											</option>
+										))}
+								</select>
+							</div>
+						)}
+						{/* Zadanie cykliczne */}
+						<div className={styles.modal__field}>
+							<label
+								className={styles.modal__label}
+								style={{
+									display: "flex",
+									alignItems: "center",
+									gap: "8px",
+									cursor: "pointer",
+								}}
+							>
+								<input
+									type="checkbox"
+									checked={formData.isRecurring || false}
+									onChange={(e) =>
+										setFormData({ ...formData, isRecurring: e.target.checked })
+									}
+								/>
+								Zadanie cykliczne
+							</label>
+						</div>
+						{formData.isRecurring && (
+							<>
+								<div className={styles.modal__field}>
+									<label className={styles.modal__label}>Powtarzaj</label>
+									<select
+										className={styles.modal__select}
+										value={formData.recurrencePattern || "weekly"}
+										onChange={(e) =>
+											setFormData({
+												...formData,
+												recurrencePattern: e.target.value as
+													| "daily"
+													| "weekly"
+													| "monthly",
+											})
+										}
+									>
+										<option value="daily">Codziennie</option>
+										<option value="weekly">Co tydzień</option>
+										<option value="monthly">Co miesiąc</option>
+									</select>
+								</div>
+								<div className={styles.modal__field}>
+									<label className={styles.modal__label}>
+										Data zakończenia powtarzania
+									</label>
+									<input
+										type="datetime-local"
+										className={styles.modal__input}
+										value={formData.recurrenceEndDate || ""}
+										onChange={(e) =>
+											setFormData({
+												...formData,
+												recurrenceEndDate: e.target.value,
+											})
+										}
+									/>
+								</div>
+							</>
+						)}
+						<div className={styles.modal__field}>
+							<label className={styles.modal__label}>Tagi</label>
+							<div className={styles.tagInput}>
+								<input
+									type="text"
+									className={styles.modal__input}
+									value={newTag}
+									onChange={(e) => setNewTag(e.target.value)}
+									onKeyDown={(e) => {
+										if (e.key === "Enter") {
+											e.preventDefault();
+											addTag();
+										}
+									}}
+									placeholder="Dodaj tag (np. ważne, raport)"
+								/>
+								<button
+									type="button"
+									className={styles.tagAddBtn}
+									onClick={addTag}
+								>
+									<Plus size={16} />
+								</button>
+							</div>
+							<div className={styles.tagsList}>
+								{(formData.tags || []).map((tag) => (
+									<span key={tag} className={styles.tag}>
+										{tag}
+										<button type="button" onClick={() => removeTag(tag)}>
+											<X size={12} />
+										</button>
+									</span>
+								))}
+							</div>
+						</div>
+					</div>
+
+					<div className={styles.modal__actions}>
+						{isEdit && canManage && (
+							<button
+								type="button"
+								className={styles.modal__btnDelete}
+								onClick={handleDelete}
+							>
+								<Trash2 size={16} />
+								Usuń zadanie
+							</button>
+						)}
+						<div className={styles.modal__actionsRight}>
+							<button
+								type="button"
+								className={styles.modal__btnCancel}
+								onClick={onClose}
+							>
+								Anuluj
+							</button>
+							<button type="submit" className={styles.modal__btnSave}>
+								{isEdit ? "Zapisz zmiany" : "Dodaj zadanie"}
+							</button>
+						</div>
+					</div>
+				</form>
+			</div>
+		</div>
+	);
+}
+
+export default function Tasks() {
+	const [tasks, setTasks] = useState<Task[]>([]);
+	const [members, setMembers] = useState<{ id: string; name: string }[]>([]);
+	const [loading, setLoading] = useState(true);
+	const [searchTerm, setSearchTerm] = useState("");
+	const [filterStatus, setFilterStatus] = useState<string>("all");
+	const [teams, setTeams] = useState<string[]>([]);
+	const [pillars, setPillars] = useState<string[]>([]);
+	const [filterPriority, setFilterPriority] = useState<string>("all");
+	const [isModalOpen, setIsModalOpen] = useState(false);
+	const [isUpdating, setIsUpdating] = useState(false);
+	const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
+	const [feedbackTask, setFeedbackTask] = useState<Task | null>(null);
+	const [editingTask, setEditingTask] = useState<Task | null>(null);
+	const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+	const [isDetailOpen, setIsDetailOpen] = useState(false);
+	const [projects, setProjects] = useState<{ id: string; name: string }[]>([]);
+	const [currentUser, setCurrentUser] = useState<User>({
+		id: "",
+		name: "",
+		role: "member",
+	});
+
+	useEffect(() => {
+		const fetchTeamsAndPillars = async () => {
+			try {
+				const token = localStorage.getItem("accessToken");
+
+				// Pobierz zespoły
+				const teamsRes = await fetch("/api/teams", {
+					headers: { Authorization: `Bearer ${token}` },
+				});
+				if (teamsRes.ok) {
+					const data = await teamsRes.json();
+					setTeams(data.map((t: any) => t.name));
+				}
+
+				// Pobierz filary
+				const pillarsRes = await fetch("/api/teams", {
+					headers: { Authorization: `Bearer ${token}` },
+				});
+				if (pillarsRes.ok) {
+					const data = await pillarsRes.json();
+					const pillarNames = data
+						.filter((team: any) => team.name?.includes("Filar"))
+						.map((team: any) => team.name);
+					setPillars(pillarNames);
+				}
+			} catch (error) {
+				console.error("Błąd pobierania:", error);
+			}
+		};
+		fetchTeamsAndPillars();
+	}, []);
+
+	const canManage =
+		currentUser?.role === "admin" ||
+		currentUser?.role === "board" ||
+		currentUser?.role === "coordinator";
+
+	useEffect(() => {
+		fetchData();
+	}, []);
+	const handleOpenFeedback = (task: Task) => {
+		setFeedbackTask(task);
+		setIsFeedbackOpen(true);
+	};
+
+	const handleSubmitFeedback = async (
+		task: Task,
+		feedbackText: string,
+		file?: File,
+	) => {
+		try {
+			const token = localStorage.getItem("accessToken");
+
+			// 🔥 UŻYJ FormData TYLKO gdy jest plik, inaczej wyślij JSON
+			let response;
+
+			if (file) {
+				// Z plikiem - używamy FormData
+				const formData = new FormData();
+				formData.append("feedbackText", feedbackText || "");
+				formData.append("file", file);
+
+				response = await fetch(`/api/tasks/${task.id}/feedback`, {
+					method: "POST",
+					headers: {
+						Authorization: `Bearer ${token}`,
+					},
+					body: formData,
+				});
+			} else {
+				// Bez pliku - używamy JSON
+				response = await fetch(`/api/tasks/${task.id}/feedback`, {
+					method: "POST",
+					headers: {
+						Authorization: `Bearer ${token}`,
+						"Content-Type": "application/json",
+					},
+					body: JSON.stringify({
+						feedbackText: feedbackText || "",
+					}),
+				});
+			}
+
+			if (response.ok) {
+				const data = await response.json();
+
+				setTasks(
+					tasks.map((t) =>
+						t.id === task.id
+							? {
+									...t,
+									feedbackText: data.feedbackText || feedbackText,
+									feedbackFile: data.feedbackFile,
+									feedbackFileName: data.feedbackFileName,
+									feedbackSubmittedAt:
+										data.feedbackSubmittedAt || new Date().toISOString(),
+								}
+							: t,
+					),
+				);
+
+				toast.success("Odpowiedź zwrotna została przesłana!");
+				setIsFeedbackOpen(false);
+				setFeedbackTask(null);
+			} else {
+				const error = await response.json();
+				throw new Error(error.error || "Błąd zapisu");
+			}
+		} catch (error) {
+			console.error("Błąd wysyłania odpowiedzi:", error);
+			toast.error(
+				error instanceof Error
+					? error.message
+					: "Nie udało się wysłać odpowiedzi",
+			);
+		}
+	};
+	const handleViewTask = (task: Task) => {
+		setSelectedTask(task);
+		setIsDetailOpen(true);
+	};
+
+	const handleEditFromDetail = () => {
+		if (selectedTask) {
+			setIsDetailOpen(false);
+			handleEditTask(selectedTask);
+		}
+	};
+	const fetchData = async () => {
+		try {
+			setLoading(true);
+			const token = localStorage.getItem("accessToken");
+
+			// Pobierz profil użytkownika
+			const userRes = await fetch("/api/profile", {
+				headers: { Authorization: `Bearer ${token}` },
+			});
+			if (userRes.ok) {
+				const userData = await userRes.json();
+				setCurrentUser({
+					id: userData.id?.toString() || "",
+					name:
+						`${userData.firstName || ""} ${userData.lastName || ""}`.trim() ||
+						"Użytkownik",
+					role: userData.role || "member",
+				});
+			}
+
+			// Pobierz członków
+			const membersRes = await fetch("/api/members", {
+				headers: { Authorization: `Bearer ${token}` },
+			});
+			if (membersRes.ok) {
+				const data = await membersRes.json();
+				setMembers(
+					data.map((m: any) => ({
+						id: m.id?.toString() || "",
+						name:
+							`${m.first_name || ""} ${m.last_name || ""}`.trim() ||
+							m.email ||
+							"Nieznany",
+					})),
+				);
+			}
+
+			// Pobierz zadania
+			const tasksRes = await fetch("/api/tasks", {
+				headers: { Authorization: `Bearer ${token}` },
+			});
+			if (tasksRes.ok) {
+				const data = await tasksRes.json();
+				const mappedTasks = data.map((task: any) => ({
+					...task,
+					projectName: task.project?.name || task.projectName || undefined,
+				}));
+				setTasks(mappedTasks);
+			} else {
+				// Fallback - przykładowe dane
+				setTasks([
+					{
+						id: "1",
+						title: "Przygotowanie raportu miesięcznego",
+						description: "Zebranie danych i przygotowanie raportu dla zarządu",
+						status: "in_progress",
+						priority: "high",
+						assignedTo: "1",
+						assignedToName: "Jan Kowalski",
+						createdBy: "1",
+						createdByName: "Jan Kowalski",
+						dueDate: new Date(
+							Date.now() + 2 * 24 * 60 * 60 * 1000,
+						).toISOString(),
+						createdAt: new Date().toISOString(),
+						updatedAt: new Date().toISOString(),
+						tags: ["raport", "ważne"],
+					},
+					{
+						id: "2",
+						title: "Aktualizacja dokumentacji",
+						description: "Zaktualizuj dokumentację projektu",
+						status: "todo",
+						priority: "medium",
+						assignedTo: "2",
+						assignedToName: "Anna Nowak",
+						createdBy: "1",
+						createdByName: "Jan Kowalski",
+						dueDate: new Date(
+							Date.now() + 5 * 24 * 60 * 60 * 1000,
+						).toISOString(),
+						createdAt: new Date().toISOString(),
+						updatedAt: new Date().toISOString(),
+						tags: ["dokumentacja"],
+					},
+				]);
+			}
+		} catch (error) {
+			logger.error("Błąd pobierania danych:", error);
+		} finally {
+			setLoading(false);
+		}
+	};
+	useEffect(() => {
+		const fetchProjects = async () => {
+			try {
+				const token = localStorage.getItem("accessToken");
+				const res = await fetch("/api/projects", {
+					headers: { Authorization: `Bearer ${token}` },
+				});
+				if (res.ok) {
+					const data = await res.json();
+					setProjects(
+						data.map((p: any) => ({ id: p.id.toString(), name: p.name })),
+					);
+				}
+			} catch (error) {
+				console.error("Błąd pobierania projektów:", error);
+			}
+		};
+		fetchProjects();
+	}, []);
+
+	const handleAddTask = () => {
+		setEditingTask(null);
+		setIsModalOpen(true);
+	};
+
+	const handleEditTask = (task: Task) => {
+		setEditingTask(task);
+		setIsModalOpen(true);
+	};
+
+	const handleDeleteTask = async (task: Task) => {
+		try {
+			const token = localStorage.getItem("accessToken");
+			const response = await fetch(`/api/tasks/${task.id}`, {
+				method: "DELETE",
+				headers: { Authorization: `Bearer ${token}` },
+			});
+			if (response.ok) {
+				setTasks(tasks.filter((t) => t.id !== task.id));
+				toast.success(`Zadanie "${task.title}" zostało usunięte`);
+			}
+		} catch (error) {
+			logger.error("Błąd usuwania zadania:", error);
+			// Fallback - usuń lokalnie
+			setTasks(tasks.filter((t) => t.id !== task.id));
+			toast.success(`Zadanie "${task.title}" zostało usunięte lokalnie`);
+		}
+	};
+	const handleSaveTask = async (task: Task) => {
+		console.log("💾 [SAVE TASK] START", task.id, task.status);
+
+		try {
+			const token = localStorage.getItem("accessToken");
+			const isEdit = tasks.some((t) => t.id === task.id);
+			const isNumericId = /^\d+$/.test(task.id);
+			if (
+				task.isRecurring &&
+				task.recurrencePattern &&
+				task.recurrenceEndDate
+			) {
+				const response = await fetch("/api/tasks/recurring", {
+					method: "POST",
+					headers: {
+						Authorization: `Bearer ${token}`,
+						"Content-Type": "application/json",
+					},
+					body: JSON.stringify({
+						...task,
+						assignedTo: task.assignedTo,
+						assignedUsers: task.assignedUsers || [], // 🔥 DODAJ
+						assignedType: task.assignedType || "user",
+						assignedGroup: task.assignedGroup || null,
+					}),
+				});
+
+				if (response.ok) {
+					const data = await response.json();
+					toast.success(`Utworzono ${data.count} zadań cyklicznych`);
+					fetchData();
+					setIsModalOpen(false);
+					setEditingTask(null);
+					return;
+				}
+			}
+			console.log("💾 isEdit:", isEdit, "isNumericId:", isNumericId);
+
+			const url =
+				isEdit && isNumericId ? `/api/tasks/${task.id}` : "/api/tasks";
+			const method = isEdit && isNumericId ? "PUT" : "POST";
+
+			console.log("💾 URL:", url, "Method:", method);
+
+			// ✅ POPRAWIONE
+			const payload = {
+				title: task.title,
+				description: task.description,
+				status: task.status,
+				priority: task.priority,
+				assignedTo: task.assignedTo,
+				assignedUsers: task.assignedUsers || [], // 🔥 DODAJ
+				projectId: task.projectId || null,
+				dueDate: task.dueDate,
+				tags: task.tags || [],
+				requiresFeedback: task.requiresFeedback || false,
+				feedbackType: task.feedbackType || "text",
+				assignedType: task.assignedType || "user",
+				assignedGroup: task.assignedGroup || null,
+				isRecurring: task.isRecurring || false,
+				recurrencePattern: task.recurrencePattern || "weekly",
+				recurrenceEndDate: task.recurrenceEndDate || null,
+			};
+
+			console.log("💾 Payload:", JSON.stringify(payload, null, 2));
+
+			// 🔥 SPRAWDŹ CZY TUTAJ JEST BŁĄD - brak await lub problem z fetch
+			console.log("💾 Wysyłam zapytanie...");
+
+			const response = await fetch(url, {
+				method,
+				headers: {
+					Authorization: `Bearer ${token}`,
+					"Content-Type": "application/json",
+				},
+				body: JSON.stringify(payload),
+			});
+
+			console.log("💾 Response status:", response.status); // 🔥 TEGO NIE MA W LOGACH!
+
+			if (response.ok) {
+				const data = await response.json();
+				const savedTaskId = data.id || task.id;
+
+				let wasNew = false;
+				let oldAssignedTo = "";
+
+				// ✅ TYLKO JEDNO setTasks
+				setTasks((prevTasks) => {
+					const isNew = !prevTasks.some((t) => t.id === task.id);
+					const oldTask = prevTasks.find((t) => t.id === task.id);
+					wasNew = isNew;
+					oldAssignedTo = oldTask?.assignedTo || "";
+
+					if (prevTasks.some((t) => t.id === task.id)) {
+						return prevTasks.map((t) =>
+							t.id === task.id
+								? { ...task, ...data, id: data.id || task.id }
+								: t,
+						);
+					} else {
+						const newTask = { ...task, id: savedTaskId };
+						return [newTask, ...prevTasks];
+					}
+				});
+
+				// Wyślij powiadomienia
+				if (wasNew || task.assignedTo !== oldAssignedTo) {
+					const userIds = task.assignedUsers?.length
+						? task.assignedUsers
+						: [task.assignedTo];
+					for (const userId of userIds) {
+						await sendTaskNotification(
+							userId,
+							savedTaskId,
+							task.title,
+							currentUser.name,
+						);
+					}
+				}
+
+				toast.success(`Zadanie "${task.title}" zostało zaktualizowane`);
+			} else {
+				const errorText = await response.text();
+				console.error("💾 Błąd response:", response.status, errorText);
+				throw new Error(`Błąd zapisu: ${response.status}`);
+			}
+		} catch (error) {
+			console.error("💾 Błąd zapisywania zadania:", error);
+			// Fallback - zapisz lokalnie
+			setTasks((prevTasks) => {
+				if (prevTasks.some((t) => t.id === task.id)) {
+					return prevTasks.map((t) => (t.id === task.id ? task : t));
+				} else {
+					return [{ ...task, id: `task-${Date.now()}` }, ...prevTasks];
+				}
+			});
+			toast.success(`Zadanie "${task.title}" zostało zapisane lokalnie`);
+		}
+	};
+	const sendTaskNotification = async (
+		userId: string,
+		taskId: string, // 🔥 DODAJ
+		taskTitle: string,
+		createdByName: string,
+	) => {
+		try {
+			const token = localStorage.getItem("accessToken");
+			await fetch("/api/notifications/task-created", {
+				method: "POST",
+				headers: {
+					Authorization: `Bearer ${token}`,
+					"Content-Type": "application/json",
+				},
+				body: JSON.stringify({
+					userId,
+					taskId,
+					taskTitle,
+					createdBy: createdByName,
+				}),
+			});
+		} catch (error) {
+			console.error("Błąd wysyłki powiadomienia:", error);
+		}
+	};
+	const handleStatusChange = useCallback(
+		async (task: Task, newStatus: TaskStatus) => {
+			if (isUpdating || task.status === newStatus) return;
+
+			setIsUpdating(true);
+			try {
+				const token = localStorage.getItem("accessToken");
+				const response = await fetch(`/api/tasks/${task.id}`, {
+					method: "PUT",
+					headers: {
+						Authorization: `Bearer ${token}`,
+						"Content-Type": "application/json",
+					},
+					body: JSON.stringify({
+						...task,
+						status: newStatus,
+					}),
+				});
+
+				if (response.ok) {
+					const data = await response.json();
+					setTasks((prev) =>
+						prev.map((t) =>
+							t.id === task.id ? { ...t, status: data.status || newStatus } : t,
+						),
+					);
+					toast.success(`Status zmieniony na ${STATUS_LABELS[newStatus]}`);
+				}
+			} catch (error) {
+				console.error("Błąd zmiany statusu:", error);
+				toast.error("Nie udało się zmienić statusu");
+			} finally {
+				setIsUpdating(false);
+			}
+		},
+		[isUpdating],
+	);
+
+	const filteredTasks = tasks
+		.filter((task) => {
+			const matchesSearch =
+				task.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+				task.description.toLowerCase().includes(searchTerm.toLowerCase());
+			const matchesStatus =
+				filterStatus === "all" || task.status === filterStatus;
+			const matchesPriority =
+				filterPriority === "all" || task.priority === filterPriority;
+			return matchesSearch && matchesStatus && matchesPriority;
+		})
+		.sort((a, b) => {
+			const priorityOrder = { urgent: 0, high: 1, medium: 2, low: 3 };
+			return priorityOrder[a.priority] - priorityOrder[b.priority];
+		});
+
+	if (loading) {
+		return (
+			<div className={styles.tasks}>
+				<div className={styles.loading}>
+					<div className={styles.loading__spinner}></div>
+					<p>Ładowanie zadań...</p>
+				</div>
+			</div>
+		);
+	}
+
+	return (
+		<div className={styles.tasks}>
+			<div className={styles.header}>
+				<div className={styles.header__left}>
+					<h1 className={styles.header__title}>Zadania</h1>
+					<p className={styles.header__subtitle}>
+						Zarządzaj zadaniami dla członków organizacji
+					</p>
+				</div>
+				{canManage && (
+					<button className={styles.header__addBtn} onClick={handleAddTask}>
+						<Plus size={18} />
+						Dodaj zadanie
+					</button>
+				)}
+			</div>
+
+			<div className={styles.filters}>
+				<div className={styles.filters__search}>
+					<Search size={18} className={styles.filters__searchIcon} />
+					<input
+						type="text"
+						className={styles.filters__searchInput}
+						placeholder="Szukaj zadań..."
+						value={searchTerm}
+						onChange={(e) => setSearchTerm(e.target.value)}
+					/>
+					{searchTerm && (
+						<button
+							className={styles.filters__clear}
+							onClick={() => setSearchTerm("")}
+						>
+							<X size={14} />
+						</button>
+					)}
+				</div>
+
+				<div className={styles.filters__group}>
+					<select
+						className={styles.filters__select}
+						value={filterStatus}
+						onChange={(e) => setFilterStatus(e.target.value)}
+					>
+						<option value="all">Wszystkie statusy</option>
+						<option value="todo">Do zrobienia</option>
+						<option value="in_progress">W trakcie</option>
+						<option value="review">Do review</option>
+						<option value="done">Zakończone</option>
+					</select>
+
+					<select
+						className={styles.filters__select}
+						value={filterPriority}
+						onChange={(e) => setFilterPriority(e.target.value)}
+					>
+						<option value="all">Wszystkie priorytety</option>
+						<option value="urgent">Krytyczny</option>
+						<option value="high">Wysoki</option>
+						<option value="medium">Średni</option>
+						<option value="low">Niski</option>
+					</select>
+				</div>
+			</div>
+
+			<div className={styles.tasksGrid}>
+				{filteredTasks.length === 0 ? (
+					<div className={styles.emptyState}>
+						<Check size={48} className={styles.emptyState__icon} />
+						<h3 className={styles.emptyState__title}>Brak zadań</h3>
+						<p className={styles.emptyState__description}>
+							{searchTerm || filterStatus !== "all" || filterPriority !== "all"
+								? "Nie znaleziono zadań spełniających kryteria wyszukiwania."
+								: canManage
+									? "Nie ma jeszcze żadnych zadań. Kliknij 'Dodaj zadanie' aby utworzyć pierwsze."
+									: "Nie ma jeszcze żadnych zadań."}
+						</p>
+						{canManage && filteredTasks.length === 0 && !searchTerm && (
+							<button
+								className={styles.emptyState__btn}
+								onClick={handleAddTask}
+							>
+								<Plus size={16} />
+								Dodaj pierwsze zadanie
+							</button>
+						)}
+					</div>
+				) : (
+					filteredTasks.map((task) => (
+						<TaskCard
+							key={task.id}
+							task={task}
+							currentUser={currentUser}
+							onView={handleViewTask}
+							onEdit={canManage ? handleEditTask : undefined}
+							onDelete={canManage ? handleDeleteTask : undefined}
+							onStatusChange={handleStatusChange}
+							onFeedback={handleOpenFeedback}
+						/>
+					))
+				)}
+			</div>
+
+			<FeedbackModal
+				isOpen={isFeedbackOpen}
+				task={feedbackTask}
+				onClose={() => {
+					setIsFeedbackOpen(false);
+					setFeedbackTask(null);
+				}}
+				onSubmit={handleSubmitFeedback}
+			/>
+			<TaskDetailModal
+				isOpen={isDetailOpen}
+				task={selectedTask}
+				currentUser={currentUser}
+				onClose={() => {
+					setIsDetailOpen(false);
+					setSelectedTask(null);
+				}}
+				onEdit={canManage ? handleEditFromDetail : undefined}
+			/>
+			<TaskModal
+				isOpen={isModalOpen}
+				task={editingTask}
+				currentUser={currentUser}
+				members={members}
+				projects={projects}
+				teams={teams} // 🔥 DODAJ
+				pillars={pillars} // 🔥 DODAJ
+				onClose={() => {
+					setIsModalOpen(false);
+					setEditingTask(null);
+				}}
+				onSave={handleSaveTask}
+				onDelete={canManage ? handleDeleteTask : undefined}
+			/>
+		</div>
+	);
+}

@@ -53,4 +53,10 @@ router.delete(
 	controller.deleteContribution.bind(controller),
 );
 
+router.get(
+    "/all",
+    authMiddleware,
+    controller.getAllContributionsSummary.bind(controller),
+);
+
 export default router;

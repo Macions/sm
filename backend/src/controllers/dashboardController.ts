@@ -245,6 +245,114 @@ export class DashboardController {
 			res.status(500).json({ error: "Nie udało się pobrać statystyk składek" });
 		}
 	}
+
+	async getUserContributionStats(req: AuthRequest, res: Response) {
+		try {
+			const { userId } = req.params;
+			if (typeof userId !== "string") {
+				return res.status(400).json({ error: "Nieprawidłowe userId" });
+			}
+
+			const id = parseInt(userId, 10);
+			if (isNaN(id)) {
+				return res.status(400).json({ error: "Nieprawidłowe ID użytkownika" });
+			}
+
+			// Sprawdź czy użytkownik istnieje
+			const user = await prisma.user.findUnique({
+				where: { id: id },
+				select: { id: true, email: true, first_name: true, last_name: true },
+			});
+
+			if (!user) {
+				return res.status(404).json({ error: "Nie znaleziono użytkownika" });
+			}
+
+			const currentDate = new Date();
+			const currentMonth = currentDate.getMonth() + 1;
+			const currentYear = currentDate.getFullYear();
+
+			// Pobierz składki dla konkretnego użytkownika
+			const contributions = await prisma.contribution.findMany({
+				where: { userId: id },
+				orderBy: [{ year: "desc" }, { month: "desc" }],
+				take: 12,
+			});
+
+			// Jeśli brak składek
+			if (contributions.length === 0) {
+				return res.json({
+					hasContributions: false,
+					currentMonth: {
+						status: "none",
+						amount: 0,
+						monthName: getMonthName(currentMonth),
+						year: currentYear,
+						monthsPaid: 0,
+					},
+					summary: {
+						overdueMonths: 0,
+						totalPaid: 0,
+						totalContributions: 0,
+					},
+					history: [],
+				});
+			}
+
+			// Znajdź składkę za bieżący miesiąc
+			const currentMonthContribution = contributions.find(
+				(c) => c.month === currentMonth && c.year === currentYear,
+			);
+
+			const isPaid = currentMonthContribution?.status === "PAID";
+			const amount = currentMonthContribution?.amount || 0;
+			const monthsPaid = currentMonthContribution?.monthsPaid || 1;
+
+			// Policz zaległości (status PENDING)
+			const overdueMonths = contributions.filter(
+				(c) => c.status === "PENDING",
+			).length;
+
+			// Oblicz sumę opłaconych składek
+			const totalPaid = contributions
+				.filter((c) => c.status === "PAID")
+				.reduce((sum, c) => sum + c.amount, 0);
+
+			res.json({
+				hasContributions: true,
+				currentMonth: {
+					status: isPaid ? "paid" : "pending",
+					amount: amount,
+					monthName: getMonthName(currentMonth),
+					month: currentMonth,
+					year: currentYear,
+					monthsPaid: monthsPaid,
+				},
+				summary: {
+					overdueMonths: overdueMonths,
+					totalPaid: totalPaid,
+					totalContributions: contributions.length,
+				},
+				history: contributions.slice(0, 6).map((c) => ({
+					month: c.month,
+					year: c.year,
+					monthName: getMonthName(c.month),
+					status: c.status,
+					amount: c.amount,
+					monthsPaid: c.monthsPaid || 1,
+				})),
+			});
+		} catch (error) {
+			logger.error(
+				"❌ [Dashboard] Błąd pobierania składek użytkownika:",
+				error,
+			);
+			res.status(500).json({
+				error: "Nie udało się pobrać składek użytkownika",
+				details: error instanceof Error ? error.message : "Unknown error",
+			});
+		}
+	}
 	async markNotificationRead(req: AuthRequest, res: Response) {
 		try {
 			const userId = req.user?.id;

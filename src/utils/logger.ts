@@ -23,6 +23,7 @@ class Logger {
 		);
 	}
 
+	// 🔥 POPRAWA - używaj console bezpośrednio, nie wywołuj loggera
 	private output(level: LogLevel, ...args: LogArgs) {
 		if (!this.canLog(level)) return;
 
@@ -32,17 +33,14 @@ class Logger {
 			case "debug":
 				console.debug(prefix, ...args);
 				break;
-
 			case "info":
-				logger.info(prefix, ...args);
+				console.info(prefix, ...args); // ✅ było logger.info
 				break;
-
 			case "warn":
-				logger.warn(prefix, ...args);
+				console.warn(prefix, ...args); // ✅ było logger.warn
 				break;
-
 			case "error":
-				logger.error(prefix, ...args);
+				console.error(prefix, ...args); // ✅ było logger.error
 				break;
 		}
 	}
@@ -67,11 +65,9 @@ class Logger {
 		request: (endpoint: string, data?: unknown) => {
 			this.debug("🌐 API Request:", endpoint, data);
 		},
-
 		response: (endpoint: string, data?: unknown) => {
 			this.debug("✅ API Response:", endpoint, data);
 		},
-
 		error: (endpoint: string, error: unknown) => {
 			this.error("❌ API Error:", endpoint, error);
 		},
@@ -83,7 +79,6 @@ class Logger {
 				console.group(label);
 			}
 		},
-
 		end() {
 			if (isDevelopment) {
 				console.groupEnd();

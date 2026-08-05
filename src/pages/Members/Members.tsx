@@ -24,6 +24,8 @@ import {
 	Plus,
 	ArrowUpDown,
 	Trash2,
+	AlertCircle,
+	Coins,
 } from "lucide-react";
 import styles from "./Members.module.css";
 
@@ -110,10 +112,156 @@ type Member = {
 type User = {
 	id: string;
 	name: string;
-	role: "admin" | "coordinator" | "member";
+	role: "admin" | "board" | "coordinator" | "member";
 	teamId?: string;
 };
+interface ApiUser {
+	id: string | number;
+	first_name: string;
+	last_name: string;
+	email: string;
+	phone?: string;
+	role?: string;
+	functional_role?: string;
+	team?: string;
+	team_id?: string;
+	province?: string;
+	status?: string;
+	join_date?: string;
+	created_at?: string;
+	pillars?: string;
+	onboarding_data?: {
+		development_areas?: string;
+		skills?: string;
+		sala_contacts?: string;
+		mp_contacts?: string;
+		institution_contacts?: string;
+		other_contacts?: string;
+	};
+}
 
+const mapApiUserToMember = (user: ApiUser): Member => {
+	const onboarding = user.onboarding_data || {};
+	const teamString = user.team || "Brak zespołu";
+	const teams = user.team ? user.team.split(", ") : [];
+
+	const hasOnboardingData =
+		onboarding &&
+		((onboarding.development_areas &&
+			onboarding.development_areas !== "[]" &&
+			onboarding.development_areas !== '[""]') ||
+			(onboarding.skills &&
+				onboarding.skills !== "[]" &&
+				onboarding.skills !== '[""]') ||
+			(onboarding.sala_contacts && onboarding.sala_contacts !== "[]") ||
+			(onboarding.mp_contacts && onboarding.mp_contacts !== "[]"));
+
+	return {
+		id: user.id?.toString() || "",
+		firstName: user.first_name || "",
+		lastName: user.last_name || "",
+		function: user.functional_role || user.role || "Członek",
+		team: teamString,
+		teamId: user.team_id || (teams.length > 0 ? teams.join("-") : ""),
+		pillars: user.pillars || "",
+		province: user.province || "",
+		status: (user.status || "trial") as MemberStatus,
+		interests:
+			hasOnboardingData && onboarding.development_areas
+				? (() => {
+						try {
+							return JSON.parse(onboarding.development_areas);
+						} catch (e) {
+							return [];
+						}
+					})()
+				: [],
+		skills:
+			hasOnboardingData && onboarding.skills
+				? (() => {
+						try {
+							return JSON.parse(onboarding.skills);
+						} catch (e) {
+							return [];
+						}
+					})()
+				: [],
+		smAreas:
+			hasOnboardingData && onboarding.development_areas
+				? (() => {
+						try {
+							return JSON.parse(onboarding.development_areas);
+						} catch (e) {
+							return [];
+						}
+					})()
+				: [],
+		email: user.email || "",
+		phone: user.phone || "",
+		joinDate: user.join_date
+			? new Date(user.join_date).toISOString().split("T")[0]
+			: user.created_at?.split("T")[0] ||
+				new Date().toISOString().split("T")[0],
+		contacts: {
+			salaContacts:
+				hasOnboardingData && onboarding.sala_contacts
+					? (() => {
+							try {
+								return JSON.parse(onboarding.sala_contacts);
+							} catch (e) {
+								return [];
+							}
+						})()
+					: [],
+			mpContacts:
+				hasOnboardingData && onboarding.mp_contacts
+					? (() => {
+							try {
+								return JSON.parse(onboarding.mp_contacts);
+							} catch (e) {
+								return [];
+							}
+						})()
+					: [],
+			otherContacts: [
+				...(hasOnboardingData && onboarding.institution_contacts
+					? (() => {
+							try {
+								return JSON.parse(onboarding.institution_contacts);
+							} catch (e) {
+								return [];
+							}
+						})()
+					: []),
+				...(hasOnboardingData && onboarding.other_contacts
+					? (() => {
+							try {
+								return JSON.parse(onboarding.other_contacts);
+							} catch (e) {
+								return [];
+							}
+						})()
+					: []),
+			],
+		},
+		trainingAreas:
+			hasOnboardingData && onboarding.skills
+				? (() => {
+						try {
+							return JSON.parse(onboarding.skills);
+						} catch (e) {
+							return [];
+						}
+					})()
+				: [],
+		contributionInfo: {
+			status: "paid",
+			arrears: 0,
+		},
+		// ❌ USUŃ TĘ LINIĘ:
+		// hasOnboarding: hasOnboardingData,
+	};
+};
 const STATUS_LABELS: Record<MemberStatus, string> = {
 	active: "Pełnoprawny członek",
 	trial: "Okres próbny",
@@ -149,6 +297,7 @@ interface MemberCardProps {
 	onEdit: (member: Member) => void;
 	onDelete: (member: Member) => void;
 	viewMode: "grid" | "list";
+	contributionBadge?: "paid" | "pending" | "none";
 }
 
 function MemberCard({
@@ -158,6 +307,7 @@ function MemberCard({
 	onEdit,
 	onDelete,
 	viewMode,
+	contributionBadge,
 }: MemberCardProps) {
 	const getInitials = () => {
 		return (
@@ -179,7 +329,26 @@ function MemberCard({
 					<div className={styles.memberCard__nameRow}>
 						<h3 className={styles.memberCard__name}>
 							{member.firstName || ""} {member.lastName || ""}
+							{/* 🔥 IKONKA STATUSU SKŁADKI - DODAJ TUTAJ */}
+							{/* 🔥 IKONKA STATUSU SKŁADKI - MONETA */}
+							{contributionBadge && contributionBadge !== "none" && (
+								<span
+									className={`${styles.contributionDot} ${
+										contributionBadge === "paid"
+											? styles.contributionDotPaid
+											: styles.contributionDotPending
+									}`}
+									title={
+										contributionBadge === "paid"
+											? "Opłacona składka"
+											: "Nieopłacona składka"
+									}
+								>
+									<Coins size={14} />
+								</span>
+							)}
 						</h3>
+
 						<span
 							className={`${styles.memberCard__status} ${STATUS_COLORS[member.status || "trial"]}`}
 						>
@@ -200,27 +369,32 @@ function MemberCard({
 						{member.team && member.team !== "Brak zespołu" && (
 							<span className={styles.memberCard__detail}>
 								<Users size={14} />
-								{member.team.split(", ")
-									.filter(team => team !== "Brak zespołu")
-									.filter(team => {
+								{member.team
+									.split(", ")
+									.filter((team) => team !== "Brak zespołu")
+									.filter((team) => {
 										if (member.pillars) {
 											const pillars = member.pillars.split(", ");
-											return !pillars.some(p => PILLAR_MAP[p] === team || p === team);
+											return !pillars.some(
+												(p) => PILLAR_MAP[p] === team || p === team,
+											);
 										}
 										return true;
 									})
-									.join(", ")
-								}
+									.join(", ")}
 							</span>
 						)}
 
 						{/* Województwo */}
-						{member.province && member.province !== "" && member.province !== "Brak" && member.province !== "Nieznane" && (
-							<span className={styles.memberCard__detail}>
-								<MapPin size={14} />
-								{member.province}
-							</span>
-						)}
+						{member.province &&
+							member.province !== "" &&
+							member.province !== "Brak" &&
+							member.province !== "Nieznane" && (
+								<span className={styles.memberCard__detail}>
+									<MapPin size={14} />
+									{member.province}
+								</span>
+							)}
 					</div>
 				</div>
 				<div className={styles.memberCard__actions}>
@@ -260,11 +434,30 @@ function MemberCard({
 			</div>
 			<h3 className={styles.memberCard__name}>
 				{member.firstName || ""} {member.lastName || ""}
+				{/* 🔥 IKONKA STATUSU SKŁADKI - MONETA */}
+				{contributionBadge && contributionBadge !== "none" && (
+					<span
+						className={`${styles.contributionDot} ${
+							contributionBadge === "paid"
+								? styles.contributionDotPaid
+								: styles.contributionDotPending
+						}`}
+						title={
+							contributionBadge === "paid"
+								? "Opłacona składka"
+								: "Nieopłacona składka"
+						}
+					>
+						<Coins size={14} />
+					</span>
+				)}
 			</h3>
 			<p className={styles.memberCard__function}>{member.function}</p>
 
 			{/* TYLKO FILARY - BEZ DUPLIKOWANIA */}
 			{/* FILARY I ZESPOŁY */}
+			{/* FILARY */}
+			{/* FILARY - wyświetlane z ikoną Users */}
 			{member.pillars && (
 				<p className={styles.memberCard__team}>
 					<Users size={14} />
@@ -272,25 +465,28 @@ function MemberCard({
 				</p>
 			)}
 
-			{/* ZESPOŁY (osobne badge'y) */}
+			{/* ZESPOŁY - tylko te które NIE są filarami */}
 			{member.team && member.team !== "Brak zespołu" && (
 				<div className={styles.memberCard__teams}>
-					{member.team.split(", ")
-						.filter(team => team !== "Brak zespołu")
-						.filter(team => {
-							// Filtrujemy filary które już są wyświetlane
+					{member.team
+						.split(", ")
+						.filter((team) => team !== "Brak zespołu")
+						.filter((team) => {
+							// 🔥 POKAŻ TYLKO ZESPOŁY KTÓRE NIE SĄ FILARAMI
 							if (member.pillars) {
 								const pillars = member.pillars.split(", ");
-								return !pillars.some(p => PILLAR_MAP[p] === team || p === team);
+								// Sprawdź czy ten team NIE jest w filarach
+								return !pillars.some(
+									(p) => PILLAR_MAP[p] === team || p === team,
+								);
 							}
 							return true;
 						})
-						.map(team => (
+						.map((team) => (
 							<span key={team} className={styles.memberCard__teamBadge}>
 								{team}
 							</span>
-						))
-					}
+						))}
 				</div>
 			)}
 
@@ -574,7 +770,10 @@ function ProfileModal({
 		(currentUser.role === "coordinator" &&
 			currentUser.teamId === currentMember.teamId) ||
 		currentUser.id === currentMember.id;
-
+	const canViewContributions =
+		!isEdit &&
+		(hasPermission(currentUser?.role, "canViewAllUsers") ||
+			currentUser.id === currentMember?.id);
 	console.log("[ProfileModal] START");
 	console.log("[ProfileModal] contributionStats:", contributionStats);
 	console.log("[ProfileModal] loadingContributions:", loadingContributions);
@@ -601,12 +800,17 @@ function ProfileModal({
 
 	const handleSubmit = (e: React.FormEvent) => {
 		e.preventDefault();
+		console.log("🔍 [handleSubmit] formData.pillars:", formData.pillars);
+
+		if (isEdit && (!formData.pillars || formData.pillars.trim() === "")) {
+			toast.error("Członek musi być przypisany do przynajmniej jednego filaru");
+			return;
+		}
 
 		if (isEdit && !formData.status) {
 			alert("Wybierz status członka");
 			return;
 		}
-
 		if (onSave && canEdit) {
 			logger.debug("formData w handleSubmit:", formData);
 
@@ -767,10 +971,8 @@ function ProfileModal({
 
 							<div className={styles.modal__field}>
 								<label className={styles.modal__label}>Filary</label>
-
 								{canEdit ? (
 									<>
-										{/* Jeśli chcesz edytować filary */}
 										<div className={styles.modal__tagInput}>
 											<select
 												className={styles.modal__select}
@@ -781,6 +983,14 @@ function ProfileModal({
 														const currentPillars = formData.pillars
 															? formData.pillars.split(", ")
 															: [];
+
+														// 🔥 DODAJ TEN WARUNEK
+														if (currentPillars.length >= 2) {
+															toast.error("Można dodać maksymalnie 2 filary");
+															e.target.value = "";
+															return;
+														}
+
 														if (!currentPillars.includes(value)) {
 															const newPillars = [...currentPillars, value];
 															setFormData({
@@ -802,7 +1012,6 @@ function ProfileModal({
 												<option value="Symulacyjny">Filar Symulacyjny</option>
 											</select>
 										</div>
-
 										<div className={styles.modal__tags}>
 											{(formData.pillars || "")
 												.split(", ")
@@ -820,6 +1029,14 @@ function ProfileModal({
 																const newPillars = currentPillars.filter(
 																	(p) => p !== pillar,
 																);
+																console.log(
+																	"🔍 [removeTag] Przed:",
+																	formData.pillars,
+																);
+																console.log(
+																	"🔍 [removeTag] Po:",
+																	newPillars.join(", "),
+																);
 																setFormData({
 																	...formData,
 																	pillars: newPillars.join(", "),
@@ -833,7 +1050,6 @@ function ProfileModal({
 										</div>
 									</>
 								) : (
-									// Widok tylko do odczytu
 									<div className={styles.modal__tags}>
 										{(formData.pillars || "")
 											.split(", ")
@@ -845,8 +1061,59 @@ function ProfileModal({
 											))}
 									</div>
 								)}
+								<small
+									style={{
+										color: "#6b7280",
+										fontSize: "12px",
+										marginTop: "4px",
+										display: "block",
+									}}
+								>
+									Wymagany minimum 1 filar, maksymalnie 2 filary
+								</small>
 							</div>
 						</div>
+
+						{/* 🔥 BADGE W OSOBNYM WIERSZU */}
+						{canViewContributions && (
+							<div className={styles.modal__row}>
+								<div className={styles.modal__field}>
+									<label className={styles.modal__label}>Status składki</label>
+									<div className={styles.modal__value}>
+										{loadingContributions ? (
+											<span
+												className={styles.loadingSpinner}
+												style={{ width: 20, height: 20 }}
+											/>
+										) : contributionStats?.hasContributions ? (
+											<span
+												className={`${styles.contributionBadge} ${
+													contributionStats.currentMonth?.status === "paid"
+														? styles.contributionBadgePaid
+														: styles.contributionBadgePending
+												}`}
+											>
+												{contributionStats.currentMonth?.status === "paid" ? (
+													<Coins size={16} />
+												) : (
+													<AlertCircle size={16} />
+												)}
+												{contributionStats.currentMonth?.status === "paid"
+													? `Opłacona (${contributionStats.currentMonth?.amount?.toFixed(2)} zł)`
+													: contributionStats.currentMonth?.status === "pending"
+														? `Nieopłacona (${contributionStats.currentMonth?.amount?.toFixed(2)} zł)`
+														: "Brak danych"}
+											</span>
+										) : (
+											<span className={styles.contributionBadgeNone}>
+												<Coins size={16} /> {/* 🔥 ZAMIENIONE */}
+												Brak danych
+											</span>
+										)}
+									</div>
+								</div>
+							</div>
+						)}
 
 						<div className={styles.modal__row}>
 							<div className={styles.modal__field}>
@@ -1655,12 +1922,13 @@ function ProfileModal({
 														Bieżący miesiąc
 													</span>
 													<span
-														className={`${styles.contributionStatValue} ${contributionStats.currentMonth?.status === "paid"
-															? styles.statusPaid
-															: contributionStats.hasContributions === false
-																? styles.statusNone
-																: styles.statusPending
-															}`}
+														className={`${styles.contributionStatValue} ${
+															contributionStats.currentMonth?.status === "paid"
+																? styles.statusPaid
+																: contributionStats.hasContributions === false
+																	? styles.statusNone
+																	: styles.statusPending
+														}`}
 													>
 														{contributionStats.currentMonth?.status === "paid"
 															? "Opłacona"
@@ -1684,10 +1952,11 @@ function ProfileModal({
 														Zaległości
 													</span>
 													<span
-														className={`${styles.contributionStatValue} ${contributionStats.summary?.overdueMonths > 0
-															? styles.statusOverdue
-															: ""
-															}`}
+														className={`${styles.contributionStatValue} ${
+															contributionStats.summary?.overdueMonths > 0
+																? styles.statusOverdue
+																: ""
+														}`}
 													>
 														{contributionStats.summary?.overdueMonths > 0
 															? `️ ${contributionStats.summary.overdueMonths} mies.`
@@ -1757,6 +2026,12 @@ export default function Members({ title }: { title?: string }) {
 	const [isEditOpen, setIsEditOpen] = useState(false);
 	const [selectedMember, setSelectedMember] = useState<Member | null>(null);
 	const [isAddMemberOpen, setIsAddMemberOpen] = useState(false);
+	const [selectedFunction, setSelectedFunction] = useState<string>("all");
+	const [allContributions, setAllContributions] = useState<
+		Record<string, { status: string; amount: number }>
+	>({});
+	const [_loadingAllContributions, setLoadingAllContributions] =
+		useState(false);
 	const [newMemberData, setNewMemberData] = useState<Partial<Member> | null>(
 		null,
 	);
@@ -1777,11 +2052,45 @@ export default function Members({ title }: { title?: string }) {
 	>("name");
 	const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
 
-	const fetchContributionStats = async () => {
+	const fetchContributionStats = async (memberId?: string) => {
 		try {
 			setLoadingContributions(true);
 			const token = localStorage.getItem("accessToken");
-			const response = await fetch("/api/dashboard/contributions", {
+
+			const url = memberId
+				? `/api/dashboard/contributions/${memberId}`
+				: "/api/dashboard/contributions";
+
+			console.log(`📊 [fetch] Pobieram dla: ${memberId || "ALL"}`);
+
+			const response = await fetch(url, {
+				headers: {
+					Authorization: `Bearer ${token}`,
+					"Content-Type": "application/json",
+				},
+			});
+
+			if (response.ok) {
+				const data = await response.json();
+				console.log("💰 [fetch] Dane:", data);
+				setContributionStats(data);
+
+				// 🔥 WYMUŚ ODSWIEŻENIE - zaktualizuj members
+				setMembers((prev) => [...prev]);
+			} else {
+				console.error("❌ [fetch] Błąd:", response.status);
+			}
+		} catch (error) {
+			console.error("❌ [fetch] Błąd:", error);
+		} finally {
+			setLoadingContributions(false);
+		}
+	};
+	const fetchAllContributions = async () => {
+		try {
+			setLoadingAllContributions(true);
+			const token = localStorage.getItem("accessToken");
+			const response = await fetch("/api/contributions/all", {
 				headers: {
 					Authorization: `Bearer ${token}`,
 					"Content-Type": "application/json",
@@ -1789,20 +2098,47 @@ export default function Members({ title }: { title?: string }) {
 			});
 			if (response.ok) {
 				const data = await response.json();
-				setContributionStats(data);
+				setAllContributions(data.contributions || {});
 			}
 		} catch (error) {
-			console.error("Błąd pobierania składek:", error);
+			console.error("❌ Błąd pobierania składek dla wszystkich:", error);
 		} finally {
-			setLoadingContributions(false);
+			setLoadingAllContributions(false);
 		}
 	};
 
+	// Wywołaj przy załadowaniu strony
 	useEffect(() => {
-		if (isProfileOpen || isEditOpen) {
-			fetchContributionStats();
+		if (currentUser?.role === "admin" || currentUser?.role === "board") {
+			fetchAllContributions();
 		}
-	}, [isProfileOpen, isEditOpen]);
+	}, [currentUser]);
+	// Wywołanie z ID członka
+	useEffect(() => {
+		console.log(
+			"🔄 [useEffect] isProfileOpen:",
+			isProfileOpen,
+			"isEditOpen:",
+			isEditOpen,
+			"selectedMember:",
+			selectedMember?.id,
+		);
+		if (isProfileOpen || isEditOpen) {
+			if (selectedMember?.id) {
+				console.log("📊 [useEffect] Wywołuję fetch dla:", selectedMember.id);
+				fetchContributionStats(selectedMember.id);
+			}
+		}
+	}, [isProfileOpen, isEditOpen, selectedMember?.id]);
+	const functions = useMemo(() => {
+		const unique = new Set(
+			members
+				.map((m) => m.function)
+				.filter((f) => f && f !== "" && f !== "Członek"),
+		);
+		return Array.from(unique).sort();
+	}, [members]);
+
 	useEffect(() => {
 		const fetchAllData = async () => {
 			try {
@@ -1850,161 +2186,10 @@ export default function Members({ title }: { title?: string }) {
 				const membersData = await membersResponse.json();
 				logger.debug("Dane z backendu:", membersData);
 
-				interface ApiUser {
-					id: string | number;
-					first_name: string;
-					last_name: string;
-					email: string;
-					phone?: string;
-					role?: string;
-					functional_role?: string;
-					team?: string;
-					team_id?: string;
-					province?: string;
-					status?: string;
-					join_date?: string;
-					created_at?: string;
-					pillars?: string;
-					onboarding_data?: {
-						development_areas?: string;
-						skills?: string;
-						sala_contacts?: string;
-						mp_contacts?: string;
-						institution_contacts?: string;
-						other_contacts?: string;
-					};
-				}
-
-				const mappedMembers = membersData.map((user: ApiUser) => {
-					const onboarding = user.onboarding_data || {};
-
-					const teamString = user.team || "Brak zespołu";
-					const teams = user.team ? user.team.split(", ") : [];
-
-					logger.debug(`Mapped member:`, {
-						id: user.id,
-						firstName: user.first_name,
-						lastName: user.last_name,
-						teamFromBackend: user.team,
-						teamString: teamString,
-					});
-
-					const hasOnboardingData =
-						onboarding &&
-						((onboarding.development_areas &&
-							onboarding.development_areas !== "[]" &&
-							onboarding.development_areas !== '[""]') ||
-							(onboarding.skills &&
-								onboarding.skills !== "[]" &&
-								onboarding.skills !== '[""]') ||
-							(onboarding.sala_contacts && onboarding.sala_contacts !== "[]") ||
-							(onboarding.mp_contacts && onboarding.mp_contacts !== "[]"));
-
-					return {
-						id: user.id?.toString() || "",
-						firstName: user.first_name || "",
-						lastName: user.last_name || "",
-						function: user.functional_role || user.role || "Członek",
-						team: teamString,
-						teamId: user.team_id || (teams.length > 0 ? teams.join("-") : ""),
-						pillars: user.pillars || "",
-						province: user.province || "",
-						status: (user.status || "trial") as MemberStatus,
-						interests:
-							hasOnboardingData && onboarding.development_areas
-								? (() => {
-									try {
-										return JSON.parse(onboarding.development_areas);
-									} catch (e) {
-										return [];
-									}
-								})()
-								: [],
-						skills:
-							hasOnboardingData && onboarding.skills
-								? (() => {
-									try {
-										return JSON.parse(onboarding.skills);
-									} catch (e) {
-										return [];
-									}
-								})()
-								: [],
-						smAreas:
-							hasOnboardingData && onboarding.development_areas
-								? (() => {
-									try {
-										return JSON.parse(onboarding.development_areas);
-									} catch (e) {
-										return [];
-									}
-								})()
-								: [],
-						email: user.email || "",
-						phone: user.phone || "",
-						joinDate: user.join_date
-							? new Date(user.join_date).toISOString().split("T")[0]
-							: user.created_at?.split("T")[0] ||
-							new Date().toISOString().split("T")[0],
-						contacts: {
-							salaContacts:
-								hasOnboardingData && onboarding.sala_contacts
-									? (() => {
-										try {
-											return JSON.parse(onboarding.sala_contacts);
-										} catch (e) {
-											return [];
-										}
-									})()
-									: [],
-							mpContacts:
-								hasOnboardingData && onboarding.mp_contacts
-									? (() => {
-										try {
-											return JSON.parse(onboarding.mp_contacts);
-										} catch (e) {
-											return [];
-										}
-									})()
-									: [],
-							otherContacts: [
-								...(hasOnboardingData && onboarding.institution_contacts
-									? (() => {
-										try {
-											return JSON.parse(onboarding.institution_contacts);
-										} catch (e) {
-											return [];
-										}
-									})()
-									: []),
-								...(hasOnboardingData && onboarding.other_contacts
-									? (() => {
-										try {
-											return JSON.parse(onboarding.other_contacts);
-										} catch (e) {
-											return [];
-										}
-									})()
-									: []),
-							],
-						},
-						trainingAreas:
-							hasOnboardingData && onboarding.skills
-								? (() => {
-									try {
-										return JSON.parse(onboarding.skills);
-									} catch (e) {
-										return [];
-									}
-								})()
-								: [],
-						contributionInfo: {
-							status: "paid",
-							arrears: 0,
-						},
-						hasOnboarding: hasOnboardingData,
-					};
-				});
+				// ---------------------------------------------------------------------------
+				// MAPOWANIE API USER -> MEMBER
+				// ---------------------------------------------------------------------------
+				const mappedMembers = membersData.map(mapApiUserToMember);
 
 				logger.debug("Wszyscy członkowie po mapowaniu:", mappedMembers);
 				logger.debug(
@@ -2056,6 +2241,22 @@ export default function Members({ title }: { title?: string }) {
 
 	const handleAddNewMember = useCallback(
 		async (member: Member) => {
+			// 🔥 DODAJ NA POCZĄTKU FUNKCJI
+			const pillarsArray = member.pillars
+				? member.pillars.split(", ").filter(Boolean)
+				: [];
+			if (member.pillars && pillarsArray.length > 2) {
+				toast.error("Członek może być przypisany do maksymalnie 2 filarów");
+				return;
+			}
+			if (!member.pillars || member.pillars.trim() === "") {
+				toast.error(
+					"Członek musi być przypisany do przynajmniej jednego filaru",
+				);
+				return;
+			}
+
+			// Potem idzie istniejący kod:
 			if (!member.status) {
 				toast.error("Wybierz status członka");
 				return;
@@ -2279,30 +2480,22 @@ export default function Members({ title }: { title?: string }) {
 		setConfirmDialog({ isOpen: false, member: null });
 	}, []);
 	const filteredMembers = useMemo(() => {
-		return members
+		const result = members
 			.filter((member) => {
-				// SPRAWDŹ CZY TO ADMIN SYSTEMOWY
+				// POMIŃ ADMINA SYSTEMOWEGO
 				const isSystemAdmin =
 					member.email === "admin@system.pl" ||
 					(member.firstName === "Admin" && member.lastName === "System");
 
-				// POMIŃ ADMINA SYSTEMOWEGO
 				if (isSystemAdmin) {
 					return false;
 				}
 
-				// SPRAWDŹ CZY TO MACIEJ CZARNECKI
-				const isMaciej =
-					member.firstName?.toLowerCase().includes('maciej') &&
-					member.lastName?.toLowerCase().includes('czarnecki');
-
-				// DLA MACIEJA - POMIŃ FILTRY (ZAWSZE POKAZUJ)
-				if (isMaciej) {
-					return true;
-				}
-
-				// NORMALNE FILTRY DLA RESZTY
 				const searchLower = searchTerm.toLowerCase();
+
+				const matchesFunction =
+					selectedFunction === "all" || member.function === selectedFunction;
+
 				const matchesSearch =
 					(member.firstName || "").toLowerCase().includes(searchLower) ||
 					(member.lastName || "").toLowerCase().includes(searchLower) ||
@@ -2310,9 +2503,9 @@ export default function Members({ title }: { title?: string }) {
 					(member.team || "").toLowerCase().includes(searchLower) ||
 					(member.pillars || "").toLowerCase().includes(searchLower) ||
 					(member.province || "").toLowerCase().includes(searchLower) ||
-					member.skills.some(s => s.toLowerCase().includes(searchLower)) ||
-					member.interests.some(i => i.toLowerCase().includes(searchLower)) ||
-					member.smAreas.some(a => a.toLowerCase().includes(searchLower));
+					member.skills.some((s) => s.toLowerCase().includes(searchLower)) ||
+					member.interests.some((i) => i.toLowerCase().includes(searchLower)) ||
+					member.smAreas.some((a) => a.toLowerCase().includes(searchLower));
 
 				const matchesProvince =
 					selectedProvince === "all" || member.province === selectedProvince;
@@ -2321,15 +2514,35 @@ export default function Members({ title }: { title?: string }) {
 					selectedTeam === "all" ||
 					member.team.split(", ").includes(selectedTeam);
 
-				return matchesSearch && matchesProvince && matchesTeam;
+				const passed =
+					matchesSearch && matchesProvince && matchesTeam && matchesFunction;
+
+				return passed;
 			})
+
+			.map((member) => {
+				let contributionBadge: "paid" | "pending" | "none" = "none";
+
+				// 🔥 SPRAWDŹ W MAPIE WSZYSTKICH SKŁADEK
+				const contribution = allContributions[member.id];
+				if (contribution) {
+					contributionBadge =
+						contribution.status === "PAID" ? "paid" : "pending";
+				}
+
+				return {
+					...member,
+					contributionBadge,
+				};
+			})
+
 			.sort((a, b) => {
 				let comparison = 0;
 				switch (sortBy) {
 					case "name":
-						comparison = ((a.firstName || "") + (a.lastName || "")).localeCompare(
-							(b.firstName || "") + (b.lastName || "")
-						);
+						comparison = (
+							(a.firstName || "") + (a.lastName || "")
+						).localeCompare((b.firstName || "") + (b.lastName || ""));
 						break;
 					case "function":
 						comparison = (a.function || "").localeCompare(b.function || "");
@@ -2345,8 +2558,20 @@ export default function Members({ title }: { title?: string }) {
 				}
 				return sortOrder === "asc" ? comparison : -comparison;
 			});
-	}, [members, searchTerm, selectedProvince, selectedTeam, sortBy, sortOrder]);
-	
+		return result;
+	}, [
+		members,
+		searchTerm,
+		selectedProvince,
+		selectedTeam,
+		selectedFunction,
+		sortBy,
+		sortOrder,
+		contributionStats, // 🔥 DODAJ
+		selectedMember, // 🔥 DODAJ
+		allContributions,
+	]);
+
 	const handleViewMember = useCallback((member: Member) => {
 		setSelectedMember(member);
 		setIsProfileOpen(true);
@@ -2359,6 +2584,22 @@ export default function Members({ title }: { title?: string }) {
 
 	const handleSaveMember = useCallback(
 		async (updatedMember: Member) => {
+			// 🔥 DODAJ NA POCZĄTKU FUNKCJI
+			const pillarsArray = updatedMember.pillars
+				? updatedMember.pillars.split(", ").filter(Boolean)
+				: [];
+			if (updatedMember.pillars && pillarsArray.length > 2) {
+				toast.error("Członek może być przypisany do maksymalnie 2 filarów");
+				return;
+			}
+			if (!updatedMember.pillars || updatedMember.pillars.trim() === "") {
+				toast.error(
+					"Członek musi być przypisany do przynajmniej jednego filaru",
+				);
+				return;
+			}
+
+			// Potem idzie istniejący kod:
 			try {
 				const token = localStorage.getItem("accessToken");
 				if (!token) {
@@ -2366,6 +2607,7 @@ export default function Members({ title }: { title?: string }) {
 					safeNavigate("/login", navigate);
 					return;
 				}
+
 				const response = await fetch(`/api/members/${updatedMember.id}`, {
 					method: "PUT",
 					headers: {
@@ -2380,9 +2622,26 @@ export default function Members({ title }: { title?: string }) {
 				}
 
 				const savedMember = await response.json();
-				setMembers(
-					members.map((m) => (m.id === savedMember.id ? savedMember : m)),
-				);
+
+				// 🔥🔥🔥 PROBLEM JEST TUTAJ - ODŚWIEŻ LISTĘ 🔥🔥🔥
+				// Zamiast używać savedMember, pobierz ŚWIEŻĄ listę z API
+				const membersResponse = await fetch("/api/members", {
+					headers: { Authorization: `Bearer ${token}` },
+				});
+
+				if (membersResponse.ok) {
+					const freshMembers = await membersResponse.json();
+					console.log("🔄 [handleSaveMember] Świeża lista:", freshMembers);
+					const mappedMembers = freshMembers.map(mapApiUserToMember);
+					setMembers(mappedMembers);
+				} else {
+					// Fallback - zaktualizuj tylko jednego członka
+					const mappedMember = mapApiUserToMember(savedMember);
+					setMembers(
+						members.map((m) => (m.id === mappedMember.id ? mappedMember : m)),
+					);
+				}
+
 				setIsEditOpen(false);
 				setSelectedMember(null);
 				toast.success("Dane członka zostały zaktualizowane!");
@@ -2397,6 +2656,7 @@ export default function Members({ title }: { title?: string }) {
 		setSearchTerm("");
 		setSelectedProvince("all");
 		setSelectedTeam("all");
+		setSelectedFunction("all"); // 🔥 DODAJ TĘ LINIĘ
 	}, []);
 
 	const toggleSort = useCallback(
@@ -2461,6 +2721,20 @@ export default function Members({ title }: { title?: string }) {
 
 				<div className={styles.filters__group}>
 					<Filter size={16} className={styles.filters__groupIcon} />
+
+					<select
+						className={styles.filters__select}
+						value={selectedFunction}
+						onChange={(e) => setSelectedFunction(e.target.value)}
+					>
+						<option value="all">Wszystkie funkcje</option>
+						<option value="Członek">Członek</option>
+						{functions.map((f) => (
+							<option key={f} value={f}>
+								{f}
+							</option>
+						))}
+					</select>
 					<select
 						className={styles.filters__select}
 						value={selectedProvince}
@@ -2506,11 +2780,12 @@ export default function Members({ title }: { title?: string }) {
 
 					{(selectedProvince !== "all" ||
 						selectedTeam !== "all" ||
+						selectedFunction !== "all" || // 🔥 DODANE
 						searchTerm) && (
-							<button className={styles.filters__reset} onClick={clearFilters}>
-								Wyczyść filtry
-							</button>
-						)}
+						<button className={styles.filters__reset} onClick={clearFilters}>
+							Wyczyść filtry
+						</button>
+					)}
 				</div>
 			</div>
 
@@ -2588,8 +2863,8 @@ export default function Members({ title }: { title?: string }) {
 						<h3 className={styles.emptyState__title}>Brak członków</h3>
 						<p className={styles.emptyState__description}>
 							{searchTerm ||
-								selectedProvince !== "all" ||
-								selectedTeam !== "all"
+							selectedProvince !== "all" ||
+							selectedTeam !== "all"
 								? "Nie znaleziono członków spełniających kryteria wyszukiwania."
 								: "Nie ma jeszcze żadnych członków w organizacji."}
 						</p>
@@ -2604,6 +2879,7 @@ export default function Members({ title }: { title?: string }) {
 							onEdit={handleEditMember}
 							onDelete={handleDeleteMember}
 							viewMode={viewMode}
+							contributionBadge={member.contributionBadge}
 						/>
 					))
 				)}

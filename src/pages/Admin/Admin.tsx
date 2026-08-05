@@ -1606,7 +1606,9 @@ export default function Admin({ title }: { title?: string }) {
 		return null;
 	}
 
-	const canManage = currentUser.role === "admin";
+	const canManage =
+		hasPermission(currentUser?.role, "canEditVacancies") ||
+		hasPermission(currentUser?.role, "canDeleteVacancies");
 
 	return (
 		<div className={styles.admin}>

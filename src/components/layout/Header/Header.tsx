@@ -37,7 +37,12 @@ interface Notification {
 	time?: string;
 }
 
-export default function Header({ title, onMenuClick, collapsed, hideNotifications = false }: HeaderProps) {
+export default function Header({
+	title,
+	onMenuClick,
+	collapsed,
+	hideNotifications = false,
+}: HeaderProps) {
 	const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
 	const [notifications, setNotifications] = useState<Notification[]>([]);
 	const [unreadCount, setUnreadCount] = useState(0);
@@ -45,8 +50,15 @@ export default function Header({ title, onMenuClick, collapsed, hideNotification
 	const [visibleCount, setVisibleCount] = useState(15);
 	const dropdownRef = useRef<HTMLDivElement>(null);
 
+	// 🔥 DODAJ FLAGĘ - zapobiega wielokrotnym zapytaniom
+	const isFetching = useRef(false);
+
 	const fetchNotifications = async () => {
+		// 🔥 ZAPOBIEGA WIELOKROTNEMU WYWOŁANIU
+		if (isFetching.current) return;
+
 		try {
+			isFetching.current = true;
 			setLoading(true);
 			const token = localStorage.getItem("accessToken");
 
@@ -66,13 +78,37 @@ export default function Header({ title, onMenuClick, collapsed, hideNotification
 
 			setNotifications(data);
 
-			// ✅ AKTUALIZUJ LICZNIK
 			const unread = data.filter((n: Notification) => !n.read).length;
 			setUnreadCount(unread);
 		} catch (error) {
 			logger.error("Błąd ładowania powiadomień:", error);
 		} finally {
 			setLoading(false);
+			isFetching.current = false;
+		}
+	};
+
+	const fetchUnreadCount = async () => {
+		// 🔥 ZAPOBIEGA WIELOKROTNEMU WYWOŁANIU
+		if (isFetching.current) return;
+
+		try {
+			isFetching.current = true;
+			const token = localStorage.getItem("accessToken");
+			const response = await fetch(
+				"/api/dashboard/notifications/unread-count",
+				{
+					headers: { Authorization: `Bearer ${token}` },
+				},
+			);
+			if (response.ok) {
+				const data = await response.json();
+				setUnreadCount(data.count);
+			}
+		} catch (error) {
+			logger.error("Błąd pobierania licznika:", error);
+		} finally {
+			isFetching.current = false;
 		}
 	};
 
@@ -91,6 +127,9 @@ export default function Header({ title, onMenuClick, collapsed, hideNotification
 			setNotifications((prev) =>
 				prev.map((n) => (n.id === id ? { ...n, read: true } : n)),
 			);
+
+			// 🔥 AKTUALIZUJ LICZNIK
+			setUnreadCount((prev) => Math.max(0, prev - 1));
 		} catch (error) {
 			logger.error("Błąd oznaczania jako przeczytane:", error);
 		}
@@ -109,11 +148,12 @@ export default function Header({ title, onMenuClick, collapsed, hideNotification
 			});
 
 			setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
-			setUnreadCount(0);  // ← DODANE!
+			setUnreadCount(0);
 		} catch (error) {
 			logger.error("Błąd oznaczania wszystkich:", error);
 		}
 	};
+
 	const deleteNotification = async (id: string) => {
 		try {
 			const token = localStorage.getItem("accessToken");
@@ -136,37 +176,24 @@ export default function Header({ title, onMenuClick, collapsed, hideNotification
 	const displayedNotifications = filteredNotifications.slice(0, visibleCount);
 	const hasMore = filteredNotifications.length > visibleCount;
 
-	const fetchUnreadCount = async () => {
-		try {
-			const token = localStorage.getItem("accessToken");
-			const response = await fetch("/api/dashboard/notifications/unread-count", {
-				headers: { Authorization: `Bearer ${token}` },
-			});
-			if (response.ok) {
-				const data = await response.json();
-				// Aktualizuj tylko licznik bez pełnej listy
-				setUnreadCount(data.count);
-			}
-		} catch (error) {
-			logger.error("Błąd pobierania licznika:", error);
-		}
-	};
+	// 🔥 TYLKO JEDEN useEffect - pobierz dane raz
 	useEffect(() => {
 		// Pobierz powiadomienia przy starcie
 		fetchNotifications();
 
-		// Ustaw interval na co 30 sekund
+		// 🔥 INTERVAL TYLKO DLA LICZNIKA - NIE DLA PEŁNYCH POWIADOMIEŃ
 		const interval = setInterval(() => {
-			if (isNotificationsOpen) {
-				fetchNotifications(); // Odśwież tylko jeśli dropdown jest otwarty
-			} else {
-				// Pobierz tylko licznik (HEAD request lub osobny endpoint)
-				fetchUnreadCount();
-			}
+			// Pobierz tylko licznik (lekkie zapytanie)
+			fetchUnreadCount();
 		}, 30000); // co 30 sekund
 
-		return () => clearInterval(interval);
-	}, []);
+		return () => {
+			clearInterval(interval);
+			isFetching.current = false;
+		};
+	}, []); // 🔥 PUSTA TABLICA = WYKONAJ RAZ
+
+	// Click outside - bez zmian
 	useEffect(() => {
 		const handleClickOutside = (event: MouseEvent) => {
 			if (
@@ -235,7 +262,6 @@ export default function Header({ title, onMenuClick, collapsed, hideNotification
 			</div>
 
 			<div className={styles.topbar__actions}>
-				{/* 🔥 POKAŻ TYLKO GDY NIE JEST UKRYTE */}
 				{!hideNotifications && (
 					<div className={styles.notificationsWrapper} ref={dropdownRef}>
 						<button
@@ -313,10 +339,12 @@ export default function Header({ title, onMenuClick, collapsed, hideNotification
 														<div className={styles.notification__footer}>
 															<span className={styles.notification__time}>
 																<Clock size={12} />
-																{notification.time || "przed chwilą"} { }
+																{notification.time || "przed chwilą"}
 															</span>
 															{!notification.read && (
-																<span className={styles.notification__unreadDot}>
+																<span
+																	className={styles.notification__unreadDot}
+																>
 																	Nowe
 																</span>
 															)}

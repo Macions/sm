@@ -1942,7 +1942,6 @@
 }
 
 @keyframes pulse {
-
 	0%,
 	100% {
 		opacity: 1;
@@ -2416,4 +2415,142 @@ button.ideaCard__actionBtnDanger:hover {
 	width: 16px !important;
 	height: 16px !important;
 	color: inherit !important;
+}
+
+/* ============================================================
+   PROJECT TASKS - ZADANIA W PROJEKCIE
+   ============================================================ */
+
+.projectTasks {
+	margin-top: 12px;
+	margin-bottom: 15px;
+	padding-top: 12px;
+	border-top: 1px solid #e2e8f0;
+}
+
+.projectTasks__header {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	margin-bottom: 8px;
+}
+
+.projectTasks__title {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	font-size: 13px;
+	font-weight: 600;
+	color: #475569;
+	margin: 0;
+}
+
+.projectTasks__viewAll {
+	font-size: 12px;
+	color: #3b82f6;
+	background: none;
+	border: none;
+	cursor: pointer;
+	padding: 2px 8px;
+	border-radius: 4px;
+	transition: background 0.2s;
+}
+
+.projectTasks__viewAll:hover {
+	background: #eff6ff;
+}
+
+.projectTasks__list {
+	list-style: none;
+	padding: 0;
+	margin: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+}
+
+.projectTasks__item {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	padding: 6px 8px;
+	border-radius: 6px;
+	font-size: 13px;
+	background: #f8fafc;
+	transition: background 0.2s;
+}
+
+.projectTasks__item:hover {
+	background: #f1f5f9;
+}
+
+.projectTasks__status {
+	display: flex;
+	align-items: center;
+	flex-shrink: 0;
+}
+
+.projectTasks__title {
+	flex: 1;
+	color: #1e293b;
+	font-weight: 500;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.projectTasks__assignee {
+	display: flex;
+	align-items: center;
+	gap: 4px;
+	color: #64748b;
+	font-size: 12px;
+	flex-shrink: 0;
+}
+
+.projectTasks__due {
+	display: flex;
+	align-items: center;
+	gap: 4px;
+	color: #94a3b8;
+	font-size: 12px;
+	flex-shrink: 0;
+}
+
+/* Statusy zadań - kolory */
+.statusTodo {
+	color: #94a3b8;
+}
+
+.statusInProgress {
+	color: #3b82f6;
+}
+
+.statusReview {
+	color: #f59e0b;
+}
+
+.statusDone {
+	color: #22c55e;
+}
+
+/* ============================================================
+   RESPONSYWNOŚĆ DLA ZADAŃ W PROJEKCIE
+   ============================================================ */
+
+@media (max-width: 768px) {
+	.projectTasks__item {
+		flex-wrap: wrap;
+		gap: 4px 8px;
+	}
+
+	.projectTasks__title {
+		flex-basis: 100%;
+		white-space: normal;
+	}
+
+	.projectTasks__assignee,
+	.projectTasks__due {
+		font-size: 11px;
+	}
 }

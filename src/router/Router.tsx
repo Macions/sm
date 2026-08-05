@@ -1,6 +1,7 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 import { lazy, Suspense } from "react";
 import { logger } from "@/utils/logger";
+import Tasks from "../pages/Tasks/Tasks";
 
 const DashboardLayout = lazy(() => import("../layouts/DashboardLayout"));
 const Login = lazy(() => import("../pages/Login/Login"));
@@ -89,7 +90,7 @@ function AppRoutes() {
 				/>
 				<Route
 					path="/onboarding"
-					element={<Onboarding onComplete={() => { }} />}
+					element={<Onboarding onComplete={() => {}} />}
 				/>
 				<Route element={<DashboardLayout />}>
 					<Route path="/" element={<Dashboard />} />
@@ -106,6 +107,7 @@ function AppRoutes() {
 						element={<SocialMedia title="Social Media" />}
 					/>
 					<Route path="/admin" element={<Admin title="Administracja" />} />
+					<Route path="/tasks" element={<Tasks />} />
 				</Route>
 			</Routes>
 		</Suspense>
