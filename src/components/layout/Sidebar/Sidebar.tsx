@@ -1,9 +1,19 @@
-
-
 import { NAV_ITEMS } from "../../../data/navigation";
 import styles from "./Sidebar.module.css";
-import { LogOut, Home, FolderKanban, Users, BookOpen, Briefcase, FolderTree, CalendarCheck, Megaphone, Shield, User } from "lucide-react";
-import { useNavigate } from 'react-router-dom';
+import {
+	LogOut,
+	Home,
+	FolderKanban,
+	Users,
+	BookOpen,
+	Briefcase,
+	FolderTree,
+	CalendarCheck,
+	Megaphone,
+	Shield,
+	User,
+} from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 interface SidebarProps {
 	activeKey: string;
@@ -24,7 +34,6 @@ export default function Sidebar({
 	const navigate = useNavigate();
 	const isAdminOrBoard =
 		userRole === "admin" || userRole === "board" || userRole === "zarząd";
-
 
 	const iconMap: Record<string, any> = {
 		dashboard: Home,
@@ -58,14 +67,12 @@ export default function Sidebar({
 		navigate("/login");
 	};
 
-
 	const handleMobileNav = (key: string) => {
 		onSelect(key);
 	};
 
 	return (
 		<>
-
 			<aside
 				className={`${styles.sidebar} ${collapsed ? styles.sidebarCollapsed : ""}`}
 			>
@@ -132,7 +139,6 @@ export default function Sidebar({
 				</div>
 			</aside>
 
-
 			<nav className={styles.mobileBottomNav}>
 				{filteredNavItems.map(({ key, icon: Icon }) => {
 					const MobileIcon = iconMap[key] || Icon;
@@ -145,7 +151,7 @@ export default function Sidebar({
 						>
 							<MobileIcon size={24} />
 							<span className={styles.mobileNav__label}>
-								{NAV_ITEMS.find(item => item.key === key)?.label || key}
+								{NAV_ITEMS.find((item) => item.key === key)?.label || key}
 							</span>
 						</button>
 					);

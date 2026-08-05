@@ -1,7 +1,6 @@
 import toast from "react-hot-toast";
 import { ConfirmDialog } from "../../components/common/ConfirmDialog";
 import { useState, useMemo, useEffect } from "react";
-import { hasPermission } from "../../utils/permissions";
 import { logger } from "@/utils/logger";
 
 import {
@@ -60,7 +59,7 @@ type VacancyStatus = "active" | "recruiting" | "filled";
 type User = {
 	id: string;
 	name: string;
-	role: "admin" | "coordinator" | "member";
+	role: "admin" | "board" | "coordinator" | "member";
 	teamId?: string;
 };
 
@@ -123,13 +122,6 @@ type Application = {
 	status: "pending" | "reviewed" | "accepted" | "rejected";
 	answers?: Record<string, string>;
 };
-
-const DEFAULT_PILLARS = [
-	"Filar Projektowy",
-	"Filar Konferencyjny",
-	"Filar Symulacyjny",
-	"Filar Rzeczniczy",
-];
 
 const STATUS_LABELS: Record<VacancyStatus, string> = {
 	active: "Aktywny",
@@ -227,7 +219,9 @@ function VacancyCard({
 	hasApplied = false,
 }: VacancyCardProps) {
 	const IconComponent = ICON_MAP[vacancy.icon] || Briefcase;
-	const canManage = currentUser.role === "admin";
+	const canManage =
+		currentUser.role === "admin" || currentUser.role === "board";
+
 	const isFilled = vacancy.status === "filled";
 
 	const formatDate = (date: string) => {
@@ -341,7 +335,7 @@ function VacancyCard({
 						</>
 					)}
 
-					{!isFilled && !hasApplied && (
+					{!isFilled && !hasApplied && vacancy.status !== "recruiting" && (
 						<button
 							className={styles.vacancyCard__applyBtn}
 							onClick={() => onApply(vacancy)}
@@ -462,7 +456,7 @@ function VacancyCard({
 							</>
 						)}
 
-						{!isFilled && !hasApplied && (
+						{!isFilled && !hasApplied && vacancy.status !== "recruiting" && (
 							<button
 								className={styles.vacancyCard__applyBtn}
 								onClick={() => onApply(vacancy)}
@@ -506,7 +500,10 @@ function ApplyModal({ isOpen, vacancy, onClose, onSubmit }: ApplyModalProps) {
 
 	const isInternal = vacancy.recruitment?.type === "internal";
 	const questions = vacancy.recruitment?.questions || [];
-
+	if (vacancy.status === "recruiting") {
+		onClose();
+		return null;
+	}
 	const validateForm = () => {
 		const newErrors: Record<string, string> = {};
 
@@ -538,6 +535,10 @@ function ApplyModal({ isOpen, vacancy, onClose, onSubmit }: ApplyModalProps) {
 		onSubmit(vacancy, answers, message);
 		onClose();
 	};
+	// 🔥 DODAJ TO - sprawdzenie czy rekrutacja jest zakończona
+	if (!isOpen || !vacancy) return null;
+
+	// Jeśli status to "recruiting" - nie pokazuj formularza
 
 	return (
 		<div className={styles.modalOverlay} onClick={onClose}>
@@ -844,7 +845,8 @@ function VacancyDetailModal({
 		: [];
 	const IconComponent = ICON_MAP[vacancy.icon] || Briefcase;
 	const isFilled = vacancy.status === "filled";
-	const canManage = currentUser.role === "admin";
+	const canManage =
+		currentUser.role === "admin" || currentUser.role === "board";
 
 	const formatDate = (date: string) => {
 		return new Date(date).toLocaleDateString("pl-PL", {
@@ -1259,7 +1261,7 @@ function VacancyDetailModal({
 					<button className={styles.modal__btnCancel} onClick={onClose}>
 						Zamknij
 					</button>
-					{!isFilled && !hasApplied && (
+					{!isFilled && !hasApplied && vacancy.status !== "recruiting" && (
 						<button
 							className={styles.modal__btnApply}
 							onClick={() => {
@@ -1290,7 +1292,6 @@ interface VacancyFormModalProps {
 	vacancy: Vacancy | null;
 	currentUser: User;
 	teams: string[];
-	pillars: string[];
 	onClose: () => void;
 	onSave: (vacancy: Vacancy) => void;
 	onDelete?: (vacancy: Vacancy) => void;
@@ -1301,43 +1302,96 @@ function VacancyFormModal({
 	vacancy,
 	currentUser,
 	teams,
-	pillars,
 	onClose,
 	onSave,
 	onDelete,
 	members = [],
 }: VacancyFormModalProps) {
-	const [formData, setFormData] = useState<Partial<Vacancy>>(
-		vacancy || {
-			title: "",
-			icon: "Briefcase",
-			description: "",
-			responsibilities: [],
-			requirements: [],
-			niceToHave: [],
-			team: "",
-			teamId: "",
-			pillar: "",
-			contactPerson: {
-				name: currentUser.name || "",
-				email: "",
-				phone: "",
-			},
-			status: "active",
-			recruitment: {
-				type: "internal",
-				deadline: "",
-				questions: [],
-			},
+	const formatDateForInput = (dateString: string) => {
+		if (!dateString) return "";
+		try {
+			const date = new Date(dateString);
+			if (isNaN(date.getTime())) return "";
+			// Format: YYYY-MM-DDTHH:mm
+			return date.toISOString().slice(0, 16);
+		} catch {
+			return "";
+		}
+	};
+	// ❌ USUŃ to stare useState:
+	// const [formData, setFormData] = useState<Partial<Vacancy>>(vacancy || {...});
+
+	// ✅ ZAMIEN NA TO:
+	const [formData, setFormData] = useState<Partial<Vacancy>>({
+		title: "",
+		icon: "Briefcase",
+		description: "",
+		responsibilities: [],
+		requirements: [],
+		niceToHave: [],
+		team: "",
+		teamId: "",
+		pillar: "",
+		contactPerson: {
+			name: currentUser.name || "",
+			email: "",
+			phone: "",
 		},
-	);
+		status: "active",
+		recruitment: {
+			type: "internal",
+			deadline: "",
+			questions: [],
+		},
+	});
+
+	// useEffect aktualizuje formData gdy vacancy się zmienia
+	useEffect(() => {
+		if (vacancy) {
+			console.log("🔄 Vacancy:", vacancy);
+			console.log("🔄 Contact person z vacancy:", vacancy.contactPerson);
+
+			// Pobierz nazwę z różnych źródeł
+			const contactName =
+				vacancy.contactPerson?.name ||
+				vacancy.recruitment?.messengerContact ||
+				currentUser.name ||
+				"Admin";
+
+			// 🔥 Wygeneruj email z nazwy
+			const autoEmail = generateEmail(contactName);
+
+			setFormData({
+				...vacancy,
+				responsibilities: Array.isArray(vacancy.responsibilities)
+					? vacancy.responsibilities
+					: [],
+				requirements: Array.isArray(vacancy.requirements)
+					? vacancy.requirements
+					: [],
+				niceToHave: Array.isArray(vacancy.niceToHave) ? vacancy.niceToHave : [],
+				contactPerson: {
+					name: contactName,
+					// Jeśli jest email w danych, użyj go, jeśli nie - wygeneruj
+					email: vacancy.contactPerson?.email || autoEmail || "",
+					phone: vacancy.contactPerson?.phone || "",
+				},
+				recruitment: {
+					...vacancy.recruitment,
+					deadline: formatDateForInput(vacancy.recruitment?.deadline || ""),
+					questions: Array.isArray(vacancy.recruitment?.questions)
+						? vacancy.recruitment.questions
+						: [],
+				},
+			});
+		}
+	}, [vacancy, currentUser.name]);
 
 	const [newResponsibility, setNewResponsibility] = useState("");
 	const [newRequirement, setNewRequirement] = useState("");
 	const [newNiceToHave, setNewNiceToHave] = useState("");
 	const [errors, setErrors] = useState<Record<string, string>>({});
 	const [showCustomTeam, setShowCustomTeam] = useState(false);
-	const [showCustomPillar, setShowCustomPillar] = useState(false);
 	const [attachments, setAttachments] = useState<
 		{
 			id: string;
@@ -1362,28 +1416,44 @@ function VacancyFormModal({
 
 	const generateEmail = (name: string): string => {
 		if (!name.trim()) return "";
+
+		// Podziel na części (imiona + nazwisko)
 		const parts = name.trim().split(/\s+/);
-		if (parts.length < 2) return "";
-		const firstName = parts[0].toLowerCase();
-		const lastName = parts.slice(1).join("").toLowerCase();
+		if (parts.length < 2) return ""; // Musi być imię i nazwisko
+
+		// Weź wszystkie części oprócz ostatniej jako imiona
+		const firstNameParts = parts.slice(0, -1);
+		const lastName = parts[parts.length - 1];
+
+		// Połącz imiona kropkami
+		const firstName = firstNameParts.join(".");
 
 		const normalize = (str: string) => {
-			return str.replace(/[ąćęłńóśźż]/g, (char) => {
-				const map: Record<string, string> = {
-					ą: "a",
-					ć: "c",
-					ę: "e",
-					ł: "l",
-					ń: "n",
-					ó: "o",
-					ś: "s",
-					ź: "z",
-					ż: "z",
-				};
-				return map[char] || char;
-			});
+			return str
+				.toLowerCase()
+				.replace(/[ąćęłńóśźż]/g, (char) => {
+					const map: Record<string, string> = {
+						ą: "a",
+						ć: "c",
+						ę: "e",
+						ł: "l",
+						ń: "n",
+						ó: "o",
+						ś: "s",
+						ź: "z",
+						ż: "z",
+					};
+					return map[char] || char;
+				})
+				.replace(/[^a-z.]/g, ""); // Tylko litery i kropki
 		};
-		return `${normalize(firstName)}.${normalize(lastName)}@silamlodych.pl`;
+
+		const normalizedFirstName = normalize(firstName);
+		const normalizedLastName = normalize(lastName);
+
+		if (!normalizedFirstName || !normalizedLastName) return "";
+
+		return `${normalizedFirstName}.${normalizedLastName}@silamlodych.pl`;
 	};
 
 	const formatFileSize = (bytes: number): string => {
@@ -1510,6 +1580,18 @@ function VacancyFormModal({
 			return;
 		}
 
+		// 🔥 FUNKCJA DO KONWERSJI DATY NA FORMAT DLA BACKENDU
+		const formatDateForBackend = (dateString: string) => {
+			if (!dateString) return "";
+			try {
+				const date = new Date(dateString);
+				if (isNaN(date.getTime())) return "";
+				return date.toISOString();
+			} catch {
+				return "";
+			}
+		};
+
 		const now = new Date().toISOString().split("T")[0];
 		const saveData: Vacancy = {
 			id: vacancy?.id || `vacancy-${Date.now()}`,
@@ -1523,7 +1605,8 @@ function VacancyFormModal({
 			teamId: formData.teamId?.trim() || "",
 			pillar: formData.pillar?.trim() || "",
 			contactPerson: {
-				name: formData.contactPerson?.name?.trim() || "",
+				name:
+					formData.contactPerson?.name?.trim() || currentUser.name || "Admin",
 				email: formData.contactPerson?.email?.trim() || "",
 				phone: formData.contactPerson?.phone?.trim() || "",
 			},
@@ -1537,7 +1620,8 @@ function VacancyFormModal({
 				formUrl: formData.recruitment?.formUrl,
 				messengerContact: formData.recruitment?.messengerContact,
 				questions: formData.recruitment?.questions || [],
-				deadline: formData.recruitment?.deadline || "",
+				// 🔥 KONWERTUJ DATĘ PRZED WYSŁANIEM
+				deadline: formatDateForBackend(formData.recruitment?.deadline || ""),
 			},
 		};
 		onSave(saveData);
@@ -2016,7 +2100,10 @@ function VacancyFormModal({
 									</div>
 								)}
 
-								<div className={styles.modal__field}>
+								<div
+									className={styles.modal__field}
+									style={{ display: "none" }}
+								>
 									<label className={styles.modal__label}>ID zespołu</label>
 									<input
 										type="text"
@@ -2027,76 +2114,6 @@ function VacancyFormModal({
 										}
 										placeholder="np. social-media"
 									/>
-								</div>
-							</div>
-
-							<div className={styles.modal__formGrid}>
-								<div className={styles.modal__field}>
-									<label className={styles.modal__label}>Filar</label>
-									<select
-										className={styles.modal__select}
-										value={formData.pillar || ""}
-										onChange={(e) => {
-											const value = e.target.value;
-											if (value === "other") {
-												setShowCustomPillar(true);
-												setFormData({
-													...formData,
-													pillar: "",
-												});
-											} else if (value) {
-												setShowCustomPillar(false);
-												setFormData({
-													...formData,
-													pillar: value,
-												});
-											}
-										}}
-									>
-										<option value="">Wybierz filar...</option>
-										{pillars.map((p) => (
-											<option key={p} value={p}>
-												{p}
-											</option>
-										))}
-										<option value="other">Inny filar</option>
-									</select>
-								</div>
-
-								{showCustomPillar && (
-									<div className={styles.modal__field}>
-										<label className={styles.modal__label}>Nazwa filaru</label>
-										<input
-											type="text"
-											className={styles.modal__input}
-											value={formData.pillar || ""}
-											onChange={(e) => {
-												setFormData({
-													...formData,
-													pillar: e.target.value,
-												});
-											}}
-											placeholder="Wpisz nazwę nowego filaru"
-										/>
-									</div>
-								)}
-
-								<div className={styles.modal__field}>
-									<label className={styles.modal__label}>Status</label>
-									<select
-										className={styles.modal__select}
-										value={formData.status || "active"}
-										onChange={(e) =>
-											setFormData({
-												...formData,
-												status: e.target.value as VacancyStatus,
-											})
-										}
-									>
-										<option value="active">Aktywny</option>
-										<option value="recruiting">W trakcie rekrutacji</option>
-										<option value="filled">Obsadzony</option>
-									</select>
 								</div>
 							</div>
 						</div>
@@ -2122,6 +2139,7 @@ function VacancyFormModal({
 												const value = e.target.value;
 												setContactSearch(value);
 
+												// 🔥 GENERUJ EMAIL AUTOMATYCZNIE z wpisanego imienia i nazwiska
 												const email = generateEmail(value);
 
 												setFormData({
@@ -2860,7 +2878,6 @@ export default function Vacancies({ title }: { title?: string }) {
 	const [loading, setLoading] = useState(true);
 	const [searchTerm, setSearchTerm] = useState("");
 	const [selectedTeam, setSelectedTeam] = useState<string>("all");
-	const [selectedPillar, setSelectedPillar] = useState<string>("all");
 	const [selectedStatus, setSelectedStatus] = useState<string>("all");
 	const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
 	const [isDetailOpen, setIsDetailOpen] = useState(false);
@@ -2883,18 +2900,14 @@ export default function Vacancies({ title }: { title?: string }) {
 	});
 
 	const canManage =
-		hasPermission(currentUser?.role, "canEditVacancies") ||
-		hasPermission(currentUser?.role, "canDeleteVacancies");
+		currentUser.role === "admin" ||
+		currentUser.role === "board" ||
+		currentUser.role === "coordinator";
 
-	const teams = useMemo(() => {
-		const unique = new Set(vacancies.map((v) => v.team));
-		return Array.from(unique).sort();
-	}, [vacancies]);
+	// Dodaj osobny state i fetch dla zespołów:
+	const [teams, setTeams] = useState<string[]>([]);
 
-	const pillars = useMemo(() => {
-		return [...DEFAULT_PILLARS].sort();
-	}, []);
-
+	// W fetchData, po pobraniu usera:
 	useEffect(() => {
 		const fetchData = async () => {
 			try {
@@ -2907,6 +2920,7 @@ export default function Vacancies({ title }: { title?: string }) {
 					return;
 				}
 
+				// 1. Pobierz profil użytkownika
 				const userResponse = await fetch("/api/profile", {
 					headers: { Authorization: `Bearer ${token}` },
 				});
@@ -2922,6 +2936,19 @@ export default function Vacancies({ title }: { title?: string }) {
 					});
 				}
 
+				// 2. 🔥 POBIERZ ZESPOŁY - PRZENIESIONE DO ŚRODKA
+				const teamsResponse = await fetch("/api/teams", {
+					headers: { Authorization: `Bearer ${token}` },
+				});
+				if (teamsResponse.ok) {
+					const teamsData = await teamsResponse.json();
+					const teamNames = (Array.isArray(teamsData) ? teamsData : []).map(
+						(t: any) => t.name || t,
+					);
+					setTeams(teamNames.sort());
+				}
+
+				// 3. Pobierz członków
 				const membersResponse = await fetch("/api/members", {
 					headers: { Authorization: `Bearer ${token}` },
 				});
@@ -2940,6 +2967,9 @@ export default function Vacancies({ title }: { title?: string }) {
 					setMembers(mappedMembers);
 				}
 
+				// 4. Pobierz wakaty
+				// 4. Pobierz wakaty
+				// 4. Pobierz wakaty
 				const vacanciesResponse = await fetch("/api/vacancies", {
 					headers: {
 						Authorization: `Bearer ${token}`,
@@ -2948,114 +2978,100 @@ export default function Vacancies({ title }: { title?: string }) {
 				});
 
 				if (vacanciesResponse.ok) {
-					const data = await vacanciesResponse.json();
-					logger.debug("📦 Dane wakatów z backendu:", data);
+					const vacanciesData = await vacanciesResponse.json();
 
-					const mapped = (Array.isArray(data) ? data : []).map((v: any) => ({
-						id: v.id?.toString() || `vac-${Date.now()}`,
-						title: v.title || "Bez nazwy",
+					// 🔥 ULEPSZONA funkcja do parsowania JSON - radzi sobie z podwójnym kodowaniem
+					// 🔥 ZMIEŃ TĘ FUNKCJĘ
+					const parseJson = (data: any) => {
+						if (!data) return [];
+						if (Array.isArray(data)) return data;
+						if (typeof data === "string") {
+							try {
+								// Spróbuj sparsować
+								let parsed = JSON.parse(data);
+								// Jeśli to nadal string, sparsuj ponownie
+								if (typeof parsed === "string") {
+									try {
+										parsed = JSON.parse(parsed);
+									} catch {
+										// Jeśli nie można sparsować, zwróć pustą tablicę
+										return [];
+									}
+								}
+								return Array.isArray(parsed) ? parsed : [];
+							} catch {
+								return [];
+							}
+						}
+						return [];
+					};
+
+					// W fetchData, dla wakatów:
+
+					const mapped = (
+						Array.isArray(vacanciesData) ? vacanciesData : []
+					).map((v: any) => ({
+						id: v.id?.toString() || `vacancy-${Date.now()}`,
+						title: v.title || "",
 						icon: v.icon || "Briefcase",
 						description: v.description || "",
-						responsibilities: Array.isArray(v.responsibilities)
-							? v.responsibilities
-							: v.responsibilities
-								? JSON.parse(v.responsibilities)
-								: [],
-						requirements: Array.isArray(v.requirements)
-							? v.requirements
-							: v.requirements
-								? JSON.parse(v.requirements)
-								: [],
-						niceToHave: Array.isArray(v.nice_to_have)
-							? v.nice_to_have
-							: v.nice_to_have
-								? JSON.parse(v.nice_to_have)
-								: [],
+						responsibilities: parseJson(v.responsibilities),
+						requirements: parseJson(v.requirements),
+						niceToHave: parseJson(v.nice_to_have),
 						team: v.team || "",
 						teamId: v.team_id || "",
 						pillar: v.pillar || "",
-						contactPerson: v.contact_person
-							? {
-									name:
-										`${v.contact_person.first_name || ""} ${v.contact_person.last_name || ""}`.trim() ||
-										v.contact_person.name ||
-										"",
-									email: v.contact_person.email || "",
-									phone: v.contact_person.phone || "",
-								}
-							: { name: "", email: "", phone: "" },
-						createdAt: v.created_at
-							? new Date(v.created_at).toISOString().split("T")[0]
-							: new Date().toISOString().split("T")[0],
-						status: (v.status as VacancyStatus) || "active",
-						applicants:
-							v.applications?.map((a: any) => a.user_id?.toString()) || [],
-						filledBy: v.filled_by?.toString() || "",
-						attachments:
-							v.attachments?.map((a: any) => ({
-								id: a.id?.toString() || `att-${Date.now()}`,
-								name: a.name || "bez nazwy",
-								size: a.size || 0,
-								type: a.type || "",
-								url: a.url || "",
-								uploadedAt: a.uploaded_at
-									? new Date(a.uploaded_at).toISOString().split("T")[0]
-									: new Date().toISOString().split("T")[0],
-							})) || [],
+						// 🔥 TO JEST KLUCZOWE - contact_person z relacji
+						contactPerson: {
+							// Jeśli jest contact_person (obiekt z relacji) - użyj go
+							// Jeśli nie ma, użyj recruitment_messenger_contact
+							name:
+								v.contact_person?.first_name && v.contact_person?.last_name
+									? `${v.contact_person.first_name} ${v.contact_person.last_name}`.trim()
+									: v.contact_person?.name ||
+										v.recruitment_messenger_contact || // ← TO JEST WAŻNE!
+										currentUser.name ||
+										"Admin",
+							email: v.contact_person?.email || "",
+							phone: v.contact_person?.phone || "",
+						},
+						createdAt:
+							v.created_at ||
+							v.createdAt ||
+							new Date().toISOString().split("T")[0],
+						status: v.status || "active",
+						applicants: v.applicants || [],
+						filledBy: v.filled_by || v.filledBy || undefined,
+						attachments: v.attachments || [],
 						recruitment: {
-							type: (v.recruitment_type as RecruitmentType) || "internal",
-							deadline: v.recruitment_deadline
-								? new Date(v.recruitment_deadline).toISOString()
-								: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-							formUrl: v.recruitment_form_url || "",
-							messengerContact: v.recruitment_messenger_contact || "",
-							questions: Array.isArray(v.questions)
-								? v.questions.map((q: any) => ({
-										id: q.id?.toString() || `q-${Date.now()}`,
-										question: q.question || "",
-										type: (q.type as FormQuestion["type"]) || "text",
-										required: q.required || false,
-										options: Array.isArray(q.options)
-											? q.options
-											: q.options
-												? JSON.parse(q.options)
-												: [],
-									}))
-								: [],
+							type: v.recruitment_type || v.recruitment?.type || "internal",
+							formUrl:
+								v.recruitment_form_url || v.recruitment?.formUrl || undefined,
+							messengerContact:
+								v.recruitment_messenger_contact ||
+								v.recruitment?.messengerContact ||
+								undefined,
+							questions: parseJson(v.questions || v.recruitment?.questions),
+							deadline: v.recruitment_deadline || v.recruitment?.deadline || "",
 						},
 					}));
+
+					console.log(
+						"📦 Po mapowaniu (responsibilities powinny być tablicą):",
+						mapped[0]?.responsibilities,
+					);
+					console.log(
+						"📦 Po mapowaniu (requirements powinny być tablicą):",
+						mapped[0]?.requirements,
+					);
+					console.log("📦 Po mapowaniu (recruitment):", mapped[0]?.recruitment);
 					setVacancies(mapped);
 				} else {
 					logger.warn("⚠️ Błąd pobierania wakatów:", vacanciesResponse.status);
 					setVacancies([]);
 				}
 
-				const applicationsResponse = await fetch("/api/applications", {
-					headers: {
-						Authorization: `Bearer ${token}`,
-						"Content-Type": "application/json",
-					},
-				});
-
-				if (applicationsResponse.ok) {
-					const appsData = await applicationsResponse.json();
-					const mappedApps = (Array.isArray(appsData) ? appsData : []).map(
-						(a: any) => ({
-							id: a.id?.toString() || `app-${Date.now()}`,
-							vacancyId: a.vacancyId?.toString() || "",
-							userId: a.userId?.toString() || "",
-							userName: a.userName || "Nieznany",
-							userEmail: a.userEmail || "",
-							message: a.message || "",
-							appliedAt: a.appliedAt
-								? new Date(a.appliedAt).toISOString().split("T")[0]
-								: new Date().toISOString().split("T")[0],
-							status: (a.status as Application["status"]) || "pending",
-							answers: a.answers || {},
-						}),
-					);
-					setApplications(mappedApps);
-				}
+				// ... reszta
 			} catch (error) {
 				logger.error("❌ Błąd pobierania danych:", error);
 				setVacancies([]);
@@ -3115,12 +3131,10 @@ export default function Vacancies({ title }: { title?: string }) {
 
 				const matchesTeam =
 					selectedTeam === "all" || vacancy.team === selectedTeam;
-				const matchesPillar =
-					selectedPillar === "all" || vacancy.pillar === selectedPillar;
 				const matchesStatus =
 					selectedStatus === "all" || vacancy.status === selectedStatus;
 
-				return matchesSearch && matchesTeam && matchesPillar && matchesStatus;
+				return matchesSearch && matchesTeam && matchesStatus;
 			})
 			.sort((a, b) => {
 				const statusOrder = { active: 0, recruiting: 1, filled: 2 };
@@ -3130,8 +3144,7 @@ export default function Vacancies({ title }: { title?: string }) {
 					new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
 				);
 			});
-	}, [vacancies, searchTerm, selectedTeam, selectedPillar, selectedStatus]);
-
+	}, [vacancies, searchTerm, selectedTeam, selectedStatus]);
 	const activeCount = vacancies.filter((v) => v.status === "active").length;
 
 	const handleViewVacancy = (vacancy: Vacancy) => {
@@ -3192,6 +3205,12 @@ export default function Vacancies({ title }: { title?: string }) {
 				return v;
 			});
 			setVacancies(updatedVacancies);
+
+			// 🔥 DODAJ TO - zaktualizuj status zgłoszenia od razu
+			setAppliedStatuses((prev) => ({
+				...prev,
+				[vacancy.id]: true,
+			}));
 
 			try {
 				logger.debug(
@@ -3381,16 +3400,51 @@ export default function Vacancies({ title }: { title?: string }) {
 		}
 	};
 
+	const [appliedStatuses, setAppliedStatuses] = useState<
+		Record<string, boolean>
+	>({});
+
+	// Funkcja do sprawdzania zgłoszeń dla wszystkich wakatów
+	const checkAllApplications = async () => {
+		const statuses: Record<string, boolean> = {};
+		for (const vacancy of vacancies) {
+			try {
+				const token = localStorage.getItem("accessToken");
+				const response = await fetch(
+					`/api/vacancies/${vacancy.id}/check-application`,
+					{
+						headers: {
+							Authorization: `Bearer ${token}`,
+						},
+					},
+				);
+				if (response.ok) {
+					const data = await response.json();
+					statuses[vacancy.id] = data.hasApplied;
+				}
+			} catch (error) {
+				console.error("Błąd sprawdzania:", error);
+				statuses[vacancy.id] = false;
+			}
+		}
+		setAppliedStatuses(statuses);
+	};
+
+	// Wywołaj po załadowaniu wakatów
+	useEffect(() => {
+		if (vacancies.length > 0 && currentUser.id) {
+			checkAllApplications();
+		}
+	}, [vacancies, currentUser.id]);
+
+	// Funkcja hasApplied używa stanu
 	const hasApplied = (vacancyId: string) => {
-		return applications.some(
-			(a) => a.vacancyId === vacancyId && a.userId === currentUser.id,
-		);
+		return appliedStatuses[vacancyId] || false;
 	};
 
 	const clearFilters = () => {
 		setSearchTerm("");
 		setSelectedTeam("all");
-		setSelectedPillar("all");
 		setSelectedStatus("all");
 	};
 
@@ -3399,7 +3453,6 @@ export default function Vacancies({ title }: { title?: string }) {
 			<div className={styles.vacancies}>
 				<div className={styles.loading}>
 					<div className={styles.loading__spinner}></div>
-					<p>Ładowanie wakatów...</p>
 				</div>
 			</div>
 		);
@@ -3415,13 +3468,14 @@ export default function Vacancies({ title }: { title?: string }) {
 		}
 		return "aktywnych wakatów";
 	};
+
 	return (
 		<div className={styles.vacancies}>
 			<h1>{title ?? "Wakaty"}</h1>
 			<div className={styles.header}>
 				<div className={styles.header__left}>
 					<h1 className={styles.header__title}>
-						Wolne Stanowiska w Siła Młodych
+						Wolne stanowiska w Sile Młodych
 					</h1>
 					<p className={styles.header__subtitle}>
 						Sprawdź aktualnie dostępne funkcje i dołącz do zespołów, w których
@@ -3483,19 +3537,6 @@ export default function Vacancies({ title }: { title?: string }) {
 
 					<select
 						className={styles.filters__select}
-						value={selectedPillar}
-						onChange={(e) => setSelectedPillar(e.target.value)}
-					>
-						<option value="all">Wszystkie filary</option>
-						{pillars.map((p) => (
-							<option key={p} value={p}>
-								{p}
-							</option>
-						))}
-					</select>
-
-					<select
-						className={styles.filters__select}
 						value={selectedStatus}
 						onChange={(e) => setSelectedStatus(e.target.value)}
 					>
@@ -3523,7 +3564,6 @@ export default function Vacancies({ title }: { title?: string }) {
 					</div>
 
 					{(selectedTeam !== "all" ||
-						selectedPillar !== "all" ||
 						selectedStatus !== "all" ||
 						searchTerm) && (
 						<button className={styles.filters__reset} onClick={clearFilters}>
@@ -3541,10 +3581,7 @@ export default function Vacancies({ title }: { title?: string }) {
 						<Briefcase size={48} className={styles.emptyState__icon} />
 						<h3 className={styles.emptyState__title}>Brak wakatów</h3>
 						<p className={styles.emptyState__description}>
-							{searchTerm ||
-							selectedTeam !== "all" ||
-							selectedPillar !== "all" ||
-							selectedStatus !== "all"
+							{searchTerm || selectedTeam !== "all" || selectedStatus !== "all"
 								? "Nie znaleziono wakatów spełniających kryteria wyszukiwania."
 								: canManage
 									? "Nie ma jeszcze żadnych wakatów. Kliknij 'Dodaj wakat' aby utworzyć pierwszy."
@@ -3554,7 +3591,6 @@ export default function Vacancies({ title }: { title?: string }) {
 							filteredVacancies.length === 0 &&
 							!searchTerm &&
 							selectedTeam === "all" &&
-							selectedPillar === "all" &&
 							selectedStatus === "all" && (
 								<button
 									className={styles.emptyState__btn}
@@ -3601,7 +3637,6 @@ export default function Vacancies({ title }: { title?: string }) {
 				vacancy={editingVacancy}
 				currentUser={currentUser}
 				teams={teams}
-				pillars={pillars}
 				onClose={() => {
 					setIsFormOpen(false);
 					setEditingVacancy(null);

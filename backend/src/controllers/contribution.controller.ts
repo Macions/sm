@@ -169,6 +169,56 @@ export class ContributionController {
 	/**
 	 * Ręczna synchronizacja składek (dla admina)
 	 */
+
+	/**
+	 * Pobiera składki dla wszystkich użytkowników (dla listy członków)
+	 */
+	async getAllContributionsSummary(req: AuthRequest, res: Response) {
+		try {
+			// Tylko admin może to zobaczyć
+			if (req.user?.role !== "admin" && req.user?.role !== "board") {
+				return res.status(403).json({ error: "Brak uprawnień" });
+			}
+
+			const currentDate = new Date();
+			const currentMonth = currentDate.getMonth() + 1;
+			const currentYear = currentDate.getFullYear();
+
+			// Pobierz wszystkie składki za bieżący miesiąc
+			const contributions = await prisma.contribution.findMany({
+				where: {
+					month: currentMonth,
+					year: currentYear,
+				},
+				select: {
+					userId: true,
+					status: true,
+					amount: true,
+				},
+			});
+
+			// Stwórz mapę userId -> status
+			const contributionMap = new Map();
+			contributions.forEach((c) => {
+				contributionMap.set(c.userId, {
+					status: c.status,
+					amount: c.amount,
+				});
+			});
+
+			res.json({
+				month: currentMonth,
+				year: currentYear,
+				contributions: Object.fromEntries(contributionMap),
+			});
+		} catch (error) {
+			logger.error(
+				"❌ [Contribution] Błąd pobierania wszystkich składek:",
+				error,
+			);
+			res.status(500).json({ error: "Nie udało się pobrać składek" });
+		}
+	}
 	async syncContributionsManual(req: AuthRequest, res: Response) {
 		try {
 			// Tylko admin/zarząd może uruchomić ręczną synchronizację

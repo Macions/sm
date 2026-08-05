@@ -12,26 +12,38 @@ router.get(
 	authMiddleware,
 	controller.getDashboardStats.bind(controller),
 );
+
 router.get(
 	"/notifications",
 	authMiddleware,
 	controller.getNotifications.bind(controller),
 );
+
 router.get(
 	"/contributions",
 	authMiddleware,
 	controller.getContributionStats.bind(controller),
-); // <-- DODAJ
+);
+
+// 🔥 POPRAWIONE - używamy `controller`, nie `dashboardController`
+router.get(
+	"/contributions/:userId",
+	authMiddleware,
+	controller.getUserContributionStats.bind(controller), // ✅ POPRAWIONE
+);
+
 router.put(
 	"/notifications/:id/read",
 	authMiddleware,
 	controller.markNotificationRead.bind(controller),
 );
+
 router.put(
 	"/notifications/read-all",
 	authMiddleware,
 	controller.markAllNotificationsRead.bind(controller),
 );
+
 router.delete(
 	"/notifications/:id",
 	authMiddleware,

@@ -183,7 +183,69 @@ export async function syncMembers() {
 		}
 
 		// ============================================================
-		// 🔥 POBIERANIE FILARÓW Z SM_Frekwencja
+		// 🔥 KROK 1: USUŃ UŻYTKOWNIKÓW Z REZYGNACJĄ
+		// ============================================================
+		const [resignedMembers] = (await externalDb.query(`
+			SELECT 
+				id,
+				firstname,
+				lastname,
+				email,
+				status
+			FROM members
+			WHERE LOWER(status) LIKE '%rezygnacja%'
+		`)) as any[];
+
+		if (resignedMembers.length > 0) {
+			logger.debug(
+				`👥 [SYNC] Znaleziono ${resignedMembers.length} użytkowników z rezygnacją do usunięcia`,
+			);
+
+			let deletedCount = 0;
+			for (const resigned of resignedMembers) {
+				const email = generateEmail(resigned.firstname, resigned.lastname);
+
+				const existingUser = await prisma.user.findUnique({
+					where: { email: email },
+					select: { id: true, email: true, first_name: true, last_name: true },
+				});
+
+				if (existingUser) {
+					try {
+						await prisma.$transaction([
+							prisma.onboarding_data.deleteMany({
+								where: { user_id: existingUser.id },
+							}),
+							prisma.teamMember.deleteMany({
+								where: { user_id: existingUser.id },
+							}),
+							prisma.contribution.deleteMany({
+								where: { userId: existingUser.id },
+							}),
+							prisma.notification.deleteMany({
+								where: { user_id: existingUser.id },
+							}),
+							prisma.user.delete({
+								where: { id: existingUser.id },
+							}),
+						]);
+
+						deletedCount++;
+						logger.debug(
+							`🗑️ [SYNC] Usunięto użytkownika z rezygnacją: ${email}`,
+						);
+					} catch (deleteError) {
+						logger.error(`❌ [SYNC] Błąd usuwania ${email}:`, deleteError);
+					}
+				}
+			}
+			logger.debug(
+				`🗑️ [SYNC] Usunięto ${deletedCount} użytkowników z rezygnacją`,
+			);
+		}
+
+		// ============================================================
+		// 🔥 KROK 2: POBIERANIE FILARÓW Z SM_Frekwencja
 		// ============================================================
 		logger.debug("📥 [SYNC] Pobieranie filarów z SM_Frekwencja...");
 
@@ -278,6 +340,7 @@ export async function syncMembers() {
 				phone: true,
 				is_trial: true,
 				pillars: true,
+				team: true,
 				functional_role: true,
 			},
 		});
@@ -356,45 +419,69 @@ export async function syncMembers() {
 					status: mapped.status,
 					is_active: mapped.isActive,
 					is_trial: mapped.isTrial,
-					role_id: 4, // 3 = coordinator, 4 = member
+					role_id: 4,
 					join_date: member.created_at ? new Date(member.created_at) : null,
 					password_hash: "$2b$10$abcdefghijklmnopqrstuvwxyz1234567890",
 					functional_role: "Członek",
 					pillars: pillarString,
+					team: null, // 🔥 DODAJ - synchronizacja NIE nadpisuje team
 				};
 
 				let userId: number;
 
 				if (existing) {
-					// Sprawdź czy zmieniły się dane
-					const hasChanges =
-						existing.first_name !== userData.first_name ||
-						existing.last_name !== userData.last_name ||
-						existing.status !== userData.status ||
-						existing.phone !== userData.phone ||
-						existing.is_trial !== userData.is_trial ||
-						existing.pillars !== userData.pillars ||
-						existing.functional_role !== userData.functional_role;
+					// 🔥 SPRAWDŹ CZY UŻYTKOWNIK MA JUŻ USTAWIONY STATUS W GŁÓWNEJ BAZIE
+					// Jeśli ma status (nie jest pusty) - NIE ZMIENIAJ GO
+					const hasExistingStatus = existing.status && existing.status !== "";
 
+					// Przygotuj dane do aktualizacji
+					// Przygotuj dane do aktualizacji
+					const dataToUpdate: any = {
+						first_name: userData.first_name,
+						last_name: userData.last_name,
+						phone: userData.phone,
+						is_active: userData.is_active,
+						functional_role: userData.functional_role,
+						pillars: userData.pillars,
+						team: userData.team, // 🔥 DODAJ
+						role_id: userData.role_id,
+					};
+
+					// NIE ZMIENIAJ STATUSU jeśli użytkownik ma już jakiś status w głównej bazie
+					if (!hasExistingStatus) {
+						dataToUpdate.status = userData.status;
+						dataToUpdate.is_trial = userData.is_trial;
+					} else {
+						// Zachowaj istniejący status
+						dataToUpdate.status = existing.status;
+						dataToUpdate.is_trial = existing.is_trial;
+					}
+
+					// Sprawdź czy są zmiany
+					// Sprawdź czy są zmiany
+					const hasChanges =
+						existing.first_name !== dataToUpdate.first_name ||
+						existing.last_name !== dataToUpdate.last_name ||
+						existing.phone !== dataToUpdate.phone ||
+						existing.pillars !== dataToUpdate.pillars ||
+						existing.team !== dataToUpdate.team || // 🔥 DODAJ
+						existing.functional_role !== dataToUpdate.functional_role ||
+						(!hasExistingStatus && existing.status !== dataToUpdate.status) ||
+						(!hasExistingStatus && existing.is_trial !== dataToUpdate.is_trial);
 					if (hasChanges) {
 						const updatedUser = await prisma.user.update({
 							where: { id: existing.id },
-							data: {
-								first_name: userData.first_name,
-								last_name: userData.last_name,
-								status: userData.status,
-								phone: userData.phone,
-								is_active: userData.is_active,
-								is_trial: userData.is_trial,
-								functional_role: userData.functional_role,
-								pillars: userData.pillars,
-								role_id: userData.role_id,
-							},
+							data: dataToUpdate,
 						});
 						userId = updatedUser.id;
 						updated++;
+
+						const statusMsg = hasExistingStatus
+							? `⏭️ status niezmieniony (zachowano: ${existing.status})`
+							: `status: ${member.status} -> ${userData.status}`;
+
 						logger.debug(
-							`🔄 [SYNC] Zaktualizowano: ${generatedEmail} | status: ${member.status} -> ${userData.status} | filary: ${userData.pillars || "brak"} | koordynator: ${isCoordinator}`,
+							`🔄 [SYNC] Zaktualizowano: ${generatedEmail} | ${statusMsg} | filary: ${userData.pillars || "brak"}`,
 						);
 					} else {
 						userId = existing.id;

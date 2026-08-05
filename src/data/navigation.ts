@@ -7,12 +7,14 @@ import {
 	CalendarOff,
 	Megaphone,
 	Settings,
+	CheckSquare,
 } from "lucide-react";
 
 export const NAV_ITEMS = [
 	{ key: "dashboard", label: "Panel główny", icon: Home },
 	{ key: "structure", label: "Struktura SM", icon: Users },
 	{ key: "projects", label: "Projekty", icon: FolderKanban },
+	{ key: "tasks", label: "Zadania", icon: CheckSquare },
 	{ key: "guides", label: "Poradniki", icon: BookOpen },
 	{ key: "members", label: "Członkowie", icon: Users },
 	{ key: "vacancies", label: "Wakaty", icon: Megaphone },
