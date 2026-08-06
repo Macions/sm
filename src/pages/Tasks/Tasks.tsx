@@ -1537,7 +1537,52 @@ export default function Tasks() {
 		setFeedbackTask(task);
 		setIsFeedbackOpen(true);
 	};
+	// Funkcja określająca czy użytkownik widzi dane zadanie
+	// Funkcja określająca czy użytkownik widzi dane zadanie
+	const canViewTask = (task: Task, user: User): boolean => {
+		// ✅ Admin i Zarząd widzą wszystko
+		if (user.role === "admin" || user.role === "board") {
+			return true;
+		}
 
+		// 🔥 Koordynator - widzi zadania z swojego filaru + swoje
+		if (user.role === "coordinator") {
+			// Sprawdź czy zadanie jest przypisane do filaru koordynatora
+			if (
+				task.assignedType === "pillar" &&
+				task.assignedGroup === user.pillarName
+			) {
+				return true;
+			}
+
+			// Sprawdź czy zadanie jest przypisane do zespołu w filarze koordynatora
+			if (
+				task.assignedType === "team" &&
+				user.teamName &&
+				task.assignedGroup === user.teamName
+			) {
+				return true;
+			}
+
+			// Sprawdź czy zadanie jest przypisane do użytkownika
+			if (
+				task.assignedTo === user.id ||
+				(task.assignedUsers && task.assignedUsers.includes(user.id))
+			) {
+				return true;
+			}
+
+			return false;
+		}
+
+		// 📌 Zwykły członek i wszyscy inni - widzą tylko swoje zadania
+		// Sprawdź czy zadanie jest przypisane do użytkownika
+		const isAssignedToUser =
+			task.assignedTo === user.id ||
+			(task.assignedUsers && task.assignedUsers.includes(user.id));
+
+		return isAssignedToUser;
+		};	
 	const handleSubmitFeedback = async (
 		task: Task,
 		feedbackText: string,
