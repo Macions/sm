@@ -68,12 +68,21 @@ type Task = {
 		content: string;
 		createdAt: string;
 	}[];
+	pillar?: string;
 };
 
 type User = {
 	id: string;
 	name: string;
 	role: string;
+	// 🔥 NOWE POLA Z BAZY
+	teamId?: string;
+	teamName?: string;
+	pillarId?: string;
+	pillarName?: string;
+	isLeader?: boolean; // ← z tabeli team_members
+	isTeamCoordinator?: boolean;
+	isPillarCoordinator?: boolean;
 };
 
 const STATUS_LABELS: Record<TaskStatus, string> = {
@@ -103,7 +112,27 @@ const PRIORITY_COLORS: Record<TaskPriority, string> = {
 	high: styles.priorityHigh,
 	urgent: styles.priorityUrgent,
 };
+// ✅ SPRAWDZANIE CZY UŻYTKOWNIK MOŻE ZARZĄDZAĆ
+const canManageUser = (user: User): boolean => {
+	if (!user) return false;
 
+	// Admin i Zarząd (specjalne role) - zawsze mogą
+	if (user.role === "admin" || user.role === "board") {
+		return true;
+	}
+
+	// Lider/koordynator - może zarządzać
+	if (user.isLeader === true) {
+		return true;
+	}
+
+	// Jeśli ktoś ma specjalną rolę (np. Prezes, Wiceprezes) - może zarządzać
+	if (user.role === "Prezes" || user.role === "Wiceprezes") {
+		return true;
+	}
+
+	return false;
+};
 interface TaskCardProps {
 	task: Task;
 	currentUser: User;
@@ -625,10 +654,9 @@ function TaskCard({
 	onFeedback,
 }: TaskCardProps) {
 	// ✅ POPRAWIONE
-	const canManage =
-		currentUser?.role === "admin" ||
-		currentUser?.role === "board" ||
-		currentUser?.role === "coordinator";
+	// ✅ POPRAWNIE - zawsze boolean
+	const canManage = canManageUser(currentUser);
+
 	const isAssigned = task.assignedTo === currentUser.id;
 
 	const formatDate = (date: string) => {
@@ -907,10 +935,8 @@ function TaskModal({
 
 	const isEdit = !!task;
 	// ✅ POPRAWIONE
-	const canManage =
-		currentUser?.role === "admin" ||
-		currentUser?.role === "board" ||
-		currentUser?.role === "coordinator";
+	// ✅ POPRAWNIE - zawsze boolean
+	const canManage = canManageUser(currentUser);
 
 	const validateForm = () => {
 		const newErrors: Record<string, string> = {};
@@ -1168,6 +1194,25 @@ function TaskModal({
 								</span>
 							</div>
 						)}
+						<div className={styles.modal__field}>
+							<label className={styles.modal__label}>
+								Filar <span className={styles.modal__required}>*</span>
+							</label>
+							<select
+								className={styles.modal__select}
+								value={formData.pillar || ""}
+								onChange={(e) => {
+									setFormData({ ...formData, pillar: e.target.value });
+								}}
+							>
+								<option value="">Wybierz filar...</option>
+								{pillars.map((p) => (
+									<option key={p} value={p}>
+										{p}
+									</option>
+								))}
+							</select>
+						</div>
 						{/* Typ przypisania */}
 						<div className={styles.modal__row}>
 							<div className={styles.modal__field}>
@@ -1525,10 +1570,8 @@ export default function Tasks() {
 		fetchTeamsAndPillars();
 	}, []);
 
-	const canManage =
-		currentUser?.role === "admin" ||
-		currentUser?.role === "board" ||
-		currentUser?.role === "coordinator";
+	// ✅ POPRAWNIE - zawsze boolean
+	const canManage = canManageUser(currentUser);
 
 	useEffect(() => {
 		fetchData();
@@ -1539,32 +1582,26 @@ export default function Tasks() {
 	};
 	// Funkcja określająca czy użytkownik widzi dane zadanie
 	// Funkcja określająca czy użytkownik widzi dane zadanie
+	// Funkcja określająca czy użytkownik widzi dane zadanie
 	const canViewTask = (task: Task, user: User): boolean => {
-		// ✅ Admin i Zarząd widzą wszystko
+		// Admin i Zarząd widzą wszystko
 		if (user.role === "admin" || user.role === "board") {
 			return true;
 		}
 
-		// 🔥 Koordynator - widzi zadania z swojego filaru + swoje
-		if (user.role === "coordinator") {
-			// Sprawdź czy zadanie jest przypisane do filaru koordynatora
-			if (
-				task.assignedType === "pillar" &&
-				task.assignedGroup === user.pillarName
-			) {
-				return true;
+		// Prezes i Wiceprezes widzą wszystko
+		if (user.role === "Prezes" || user.role === "Wiceprezes") {
+			return true;
+		}
+
+		// 🔥 Lider/Koordynator - widzi WSZYSTKIE zadania z jego filaru
+		if (user.isLeader === true) {
+			// ✅ Sprawdź czy zadanie ma filar
+			if (task.pillar === user.pillarName) {
+				return true; // ← Koordynator widzi WSZYSTKIE zadania z tego filaru!
 			}
 
-			// Sprawdź czy zadanie jest przypisane do zespołu w filarze koordynatora
-			if (
-				task.assignedType === "team" &&
-				user.teamName &&
-				task.assignedGroup === user.teamName
-			) {
-				return true;
-			}
-
-			// Sprawdź czy zadanie jest przypisane do użytkownika
+			// ✅ Sprawdź czy zadanie jest przypisane do niego
 			if (
 				task.assignedTo === user.id ||
 				(task.assignedUsers && task.assignedUsers.includes(user.id))
@@ -1575,14 +1612,12 @@ export default function Tasks() {
 			return false;
 		}
 
-		// 📌 Zwykły członek i wszyscy inni - widzą tylko swoje zadania
-		// Sprawdź czy zadanie jest przypisane do użytkownika
-		const isAssignedToUser =
+		// Zwykły członek - widzi tylko swoje zadania
+		return (
 			task.assignedTo === user.id ||
-			(task.assignedUsers && task.assignedUsers.includes(user.id));
-
-		return isAssignedToUser;
-		};	
+			(task.assignedUsers && task.assignedUsers.includes(user.id))
+		);
+	};
 	const handleSubmitFeedback = async (
 		task: Task,
 		feedbackText: string,
@@ -1671,18 +1706,30 @@ export default function Tasks() {
 			setLoading(true);
 			const token = localStorage.getItem("accessToken");
 
+			// ✅ ZDEFINIUJ userData PRZED UŻYCIEM
+			let userData = null;
+
 			// Pobierz profil użytkownika
 			const userRes = await fetch("/api/profile", {
 				headers: { Authorization: `Bearer ${token}` },
 			});
+
 			if (userRes.ok) {
-				const userData = await userRes.json();
+				userData = await userRes.json(); // ← PRZYPISZ DANE
+
 				setCurrentUser({
 					id: userData.id?.toString() || "",
 					name:
 						`${userData.firstName || ""} ${userData.lastName || ""}`.trim() ||
 						"Użytkownik",
 					role: userData.role || "member",
+					teamId: userData.teamId?.toString(),
+					teamName: userData.teamName,
+					pillarId: userData.pillarId?.toString(),
+					pillarName: userData.pillarName,
+					isLeader: userData.isLeader === true,
+					isTeamCoordinator: userData.isLeader === true,
+					isPillarCoordinator: userData.isLeader === true,
 				});
 			}
 
@@ -1699,66 +1746,82 @@ export default function Tasks() {
 							`${m.first_name || ""} ${m.last_name || ""}`.trim() ||
 							m.email ||
 							"Nieznany",
+						teamId: m.teamId?.toString(),
+						teamName: m.teamName,
+						pillarId: m.pillarId?.toString(),
+						pillarName: m.pillarName,
+						isLeader: m.isLeader === true,
 					})),
 				);
 			}
 
-			// Pobierz zadania
-			const tasksRes = await fetch("/api/tasks", {
+			// ✅ SPRAWDŹ CZY userData ISTNIEJE
+			if (!userData) {
+				throw new Error("Nie udało się pobrać danych użytkownika");
+			}
+
+			// ✅ TERAZ userData jest zdefiniowane i możemy go użyć
+			const getTasksUrl = () => {
+				const baseUrl = "/api/tasks";
+				const params = new URLSearchParams();
+
+				// Sprawdź czy userData jest liderem
+				if (userData.isLeader === true) {
+					params.append("leaderId", userData.id);
+					if (userData.pillarId) {
+						params.append("pillarId", userData.pillarId);
+					}
+					if (userData.teamId) {
+						params.append("teamId", userData.teamId);
+					}
+					return `${baseUrl}?${params.toString()}`;
+				}
+
+				// Zwykły członek - tylko swoje zadania
+				params.append("userId", userData.id);
+				return `${baseUrl}?${params.toString()}`;
+			};
+
+			const tasksRes = await fetch(getTasksUrl(), {
 				headers: { Authorization: `Bearer ${token}` },
 			});
+
 			if (tasksRes.ok) {
 				const data = await tasksRes.json();
 				const mappedTasks = data.map((task: any) => ({
 					...task,
 					projectName: task.project?.name || task.projectName || undefined,
 				}));
-				setTasks(mappedTasks);
-			} else {
-				// Fallback - przykładowe dane
-				setTasks([
-					{
-						id: "1",
-						title: "Przygotowanie raportu miesięcznego",
-						description: "Zebranie danych i przygotowanie raportu dla zarządu",
-						status: "in_progress",
-						priority: "high",
-						assignedTo: "1",
-						assignedToName: "Jan Kowalski",
-						createdBy: "1",
-						createdByName: "Jan Kowalski",
-						dueDate: new Date(
-							Date.now() + 2 * 24 * 60 * 60 * 1000,
-						).toISOString(),
-						createdAt: new Date().toISOString(),
-						updatedAt: new Date().toISOString(),
-						tags: ["raport", "ważne"],
-					},
-					{
-						id: "2",
-						title: "Aktualizacja dokumentacji",
-						description: "Zaktualizuj dokumentację projektu",
-						status: "todo",
-						priority: "medium",
-						assignedTo: "2",
-						assignedToName: "Anna Nowak",
-						createdBy: "1",
-						createdByName: "Jan Kowalski",
-						dueDate: new Date(
-							Date.now() + 5 * 24 * 60 * 60 * 1000,
-						).toISOString(),
-						createdAt: new Date().toISOString(),
-						updatedAt: new Date().toISOString(),
-						tags: ["dokumentacja"],
-					},
-				]);
+
+				const visibleTasks = mappedTasks.filter((task: Task) =>
+					canViewTask(task, {
+						id: userData.id?.toString() || "",
+						name:
+							`${userData.firstName || ""} ${userData.lastName || ""}`.trim() ||
+							"Użytkownik",
+						role: userData.role || "member",
+						pillarName: userData.pillarName,
+						teamName: userData.teamName,
+						isLeader: userData.isLeader === true,
+					} as User),
+				);
+				setTasks(visibleTasks);
 			}
 		} catch (error) {
 			logger.error("Błąd pobierania danych:", error);
+			toast.error("Nie udało się pobrać danych");
 		} finally {
 			setLoading(false);
 		}
 	};
+	useEffect(() => {
+		if (currentUser.id) {
+			setTasks((prevTasks) =>
+				prevTasks.filter((task) => canViewTask(task, currentUser)),
+			);
+		}
+	}, [currentUser]);
+
 	useEffect(() => {
 		const fetchProjects = async () => {
 			try {
@@ -1797,13 +1860,13 @@ export default function Tasks() {
 				headers: { Authorization: `Bearer ${token}` },
 			});
 			if (response.ok) {
-				setTasks(tasks.filter((t) => t.id !== task.id));
+				// ✅ FILTRUJ PO USUNIĘCIU
+				setTasks((prev) => prev.filter((t) => t.id !== task.id));
 				toast.success(`Zadanie "${task.title}" zostało usunięte`);
 			}
 		} catch (error) {
 			logger.error("Błąd usuwania zadania:", error);
-			// Fallback - usuń lokalnie
-			setTasks(tasks.filter((t) => t.id !== task.id));
+			setTasks((prev) => prev.filter((t) => t.id !== task.id));
 			toast.success(`Zadanie "${task.title}" zostało usunięte lokalnie`);
 		}
 	};
@@ -1814,6 +1877,8 @@ export default function Tasks() {
 			const token = localStorage.getItem("accessToken");
 			const isEdit = tasks.some((t) => t.id === task.id);
 			const isNumericId = /^\d+$/.test(task.id);
+
+			// Obsługa zadań cyklicznych
 			if (
 				task.isRecurring &&
 				task.recurrencePattern &&
@@ -1828,7 +1893,7 @@ export default function Tasks() {
 					body: JSON.stringify({
 						...task,
 						assignedTo: task.assignedTo,
-						assignedUsers: task.assignedUsers || [], // 🔥 DODAJ
+						assignedUsers: task.assignedUsers || [],
 						assignedType: task.assignedType || "user",
 						assignedGroup: task.assignedGroup || null,
 					}),
@@ -1837,13 +1902,26 @@ export default function Tasks() {
 				if (response.ok) {
 					const data = await response.json();
 					toast.success(`Utworzono ${data.count} zadań cyklicznych`);
+					const savedTaskId = data.tasks?.[0]?.id || data.id || task.id;
 					fetchData();
 					setIsModalOpen(false);
 					setEditingTask(null);
+					setTasks((prevTasks) => {
+						let newTasks;
+						if (prevTasks.some((t) => t.id === task.id)) {
+							newTasks = prevTasks.map((t) =>
+								t.id === task.id
+									? { ...task, ...data, id: data.id || task.id }
+									: t,
+							);
+						} else {
+							newTasks = [{ ...task, id: savedTaskId }, ...prevTasks];
+						}
+						return newTasks.filter((t) => canViewTask(t, currentUser));
+					});
 					return;
 				}
 			}
-			console.log("💾 isEdit:", isEdit, "isNumericId:", isNumericId);
 
 			const url =
 				isEdit && isNumericId ? `/api/tasks/${task.id}` : "/api/tasks";
@@ -1851,14 +1929,13 @@ export default function Tasks() {
 
 			console.log("💾 URL:", url, "Method:", method);
 
-			// ✅ POPRAWIONE
 			const payload = {
 				title: task.title,
 				description: task.description,
 				status: task.status,
 				priority: task.priority,
 				assignedTo: task.assignedTo,
-				assignedUsers: task.assignedUsers || [], // 🔥 DODAJ
+				assignedUsers: task.assignedUsers || [],
 				projectId: task.projectId || null,
 				dueDate: task.dueDate,
 				tags: task.tags || [],
@@ -1871,9 +1948,6 @@ export default function Tasks() {
 				recurrenceEndDate: task.recurrenceEndDate || null,
 			};
 
-			console.log("💾 Payload:", JSON.stringify(payload, null, 2));
-
-			// 🔥 SPRAWDŹ CZY TUTAJ JEST BŁĄD - brak await lub problem z fetch
 			console.log("💾 Wysyłam zapytanie...");
 
 			const response = await fetch(url, {
@@ -1885,7 +1959,7 @@ export default function Tasks() {
 				body: JSON.stringify(payload),
 			});
 
-			console.log("💾 Response status:", response.status); // 🔥 TEGO NIE MA W LOGACH!
+			console.log("💾 Response status:", response.status);
 
 			if (response.ok) {
 				const data = await response.json();
@@ -1894,23 +1968,24 @@ export default function Tasks() {
 				let wasNew = false;
 				let oldAssignedTo = "";
 
-				// ✅ TYLKO JEDNO setTasks
 				setTasks((prevTasks) => {
 					const isNew = !prevTasks.some((t) => t.id === task.id);
 					const oldTask = prevTasks.find((t) => t.id === task.id);
 					wasNew = isNew;
 					oldAssignedTo = oldTask?.assignedTo || "";
 
+					let newTasks;
 					if (prevTasks.some((t) => t.id === task.id)) {
-						return prevTasks.map((t) =>
+						newTasks = prevTasks.map((t) =>
 							t.id === task.id
 								? { ...task, ...data, id: data.id || task.id }
 								: t,
 						);
 					} else {
 						const newTask = { ...task, id: savedTaskId };
-						return [newTask, ...prevTasks];
+						newTasks = [newTask, ...prevTasks];
 					}
+					return newTasks.filter((t) => canViewTask(t, currentUser));
 				});
 
 				// Wyślij powiadomienia
@@ -1936,7 +2011,6 @@ export default function Tasks() {
 			}
 		} catch (error) {
 			console.error("💾 Błąd zapisywania zadania:", error);
-			// Fallback - zapisz lokalnie
 			setTasks((prevTasks) => {
 				if (prevTasks.some((t) => t.id === task.id)) {
 					return prevTasks.map((t) => (t.id === task.id ? task : t));
@@ -1993,10 +2067,16 @@ export default function Tasks() {
 
 				if (response.ok) {
 					const data = await response.json();
-					setTasks((prev) =>
-						prev.map((t) =>
-							t.id === task.id ? { ...t, status: data.status || newStatus } : t,
-						),
+					// ✅ POŁĄCZ W JEDNO setTasks z filtrowaniem
+					setTasks(
+						(prev) =>
+							prev
+								.map((t) =>
+									t.id === task.id
+										? { ...t, status: data.status || newStatus }
+										: t,
+								)
+								.filter((t) => canViewTask(t, currentUser)), // 🔥 FILTRUJ
 					);
 					toast.success(`Status zmieniony na ${STATUS_LABELS[newStatus]}`);
 				}
@@ -2007,7 +2087,7 @@ export default function Tasks() {
 				setIsUpdating(false);
 			}
 		},
-		[isUpdating],
+		[isUpdating, currentUser], // ✅ DODAJ currentUser do zależności
 	);
 
 	const filteredTasks = tasks

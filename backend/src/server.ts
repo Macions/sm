@@ -2574,12 +2574,6 @@ app.get("/api/profile", authMiddleware, async (req: any, res) => {
 				roles: true,
 				team_members: {
 					include: { team: true },
-					// 🔥 DODAJ - filtruj tylko członkostwa w filarach
-					where: {
-						team: {
-							name: { contains: "Filar" },
-						},
-					},
 				},
 				onboarding_data: { orderBy: { created_at: "desc" }, take: 1 },
 			},
@@ -2590,7 +2584,31 @@ app.get("/api/profile", authMiddleware, async (req: any, res) => {
 			return res.status(404).json({ error: "Użytkownik nie znaleziony" });
 		}
 
-		// 		logger.debug(`✅ Profil pobrany dla: ${user.first_name} ${user.last_name}`);
+		// ============================================================
+		// 🔥 SPRAWDŹ CZY UŻYTKOWNIK JEST LIDEREM (is_leader = 1)
+		// ============================================================
+		const isLeader = user.team_members.some((tm: any) => tm.is_leader === true);
+
+		// ============================================================
+		// 🔥 ZNAJDŹ ZESPÓŁ W KTÓRYM UŻYTKOWNIK JEST LIDEREM
+		// ============================================================
+		const leaderTeam = user.team_members.find(
+			(tm: any) => tm.is_leader === true,
+		);
+		const teamName = leaderTeam?.team?.name || null;
+		const teamId = leaderTeam?.team_id?.toString() || null;
+
+		// ============================================================
+		// 🔥 SPRAWDŹ CZY NAZWA ZESPOŁU ZAWIERA "Filar" - wtedy to filar
+		// ============================================================
+		let pillarName = null;
+		let pillarId = null;
+
+		// Jeśli nazwa zespołu zawiera "Filar", to jest to filar
+		if (leaderTeam?.team?.name?.includes("Filar")) {
+			pillarName = leaderTeam.team.name.replace("Filar ", "").trim();
+			pillarId = leaderTeam.team_id?.toString() || null;
+		}
 
 		// ============================================================
 		// 🔥 FILARY Z POLA `pillars` (Z SM_Frekwencja)
@@ -2610,10 +2628,9 @@ app.get("/api/profile", authMiddleware, async (req: any, res) => {
 			.map((tm: any) => tm.team?.name?.replace("Filar ", ""))
 			.filter(Boolean);
 
-		// 		logger.debug(`🏷️ Filary użytkownika: ${pillarList.join(", ")}`);
-		// 		logger.debug(`👑 Koordynator w filarach: ${coordinatorPillars.join(", ")}`);
-
-		// Tylko dla zespołu (team) - używaj team_members
+		// ============================================================
+		// 🔥 WSZYSTKIE ZESPOŁY UŻYTKOWNIKA
+		// ============================================================
 		const teams = user.team_members
 			.map((tm: any) => tm.team?.name)
 			.filter(Boolean);
@@ -2622,6 +2639,9 @@ app.get("/api/profile", authMiddleware, async (req: any, res) => {
 
 		const onboarding = user.onboarding_data?.[0] || {};
 
+		// ============================================================
+		// 🔥 OSTATECZNY OBIEKT PROFILU Z WSZYSTKIMI POLAMI
+		// ============================================================
 		const profile = {
 			id: user.id.toString(),
 			firstName: user.first_name,
@@ -2631,9 +2651,6 @@ app.get("/api/profile", authMiddleware, async (req: any, res) => {
 			team: teamString,
 			pillar: pillar,
 			pillars: pillarList,
-			// ============================================================
-			// 🔥 DODAJ - filary w których użytkownik jest koordynatorem
-			// ============================================================
 			coordinatorPillars: coordinatorPillars,
 			province: user.province || "Brak danych",
 			status: user.status || "active",
@@ -2666,6 +2683,17 @@ app.get("/api/profile", authMiddleware, async (req: any, res) => {
 			},
 			contributionInfo: { arrears: 0, status: "paid" },
 			leave: { isOnLeave: false, history: [] },
+
+			// ============================================================
+			// 🔥 NOWE POLA - KRYTYCZNE DLA SYSTEMU!
+			// ============================================================
+			isLeader: isLeader,
+			isTeamCoordinator: isLeader,
+			isPillarCoordinator: isLeader,
+			teamName: teamName,
+			pillarName: pillarName,
+			teamId: teamId,
+			pillarId: pillarId,
 		};
 
 		res.json(profile);
@@ -5164,16 +5192,124 @@ app.get("/api/tasks", authMiddleware, async (req: any, res) => {
 	try {
 		const userId = req.user?.id;
 		const userRole = req.user?.role;
+		const userPillar = req.user?.pillarName; // ← Pobierz filar użytkownika
+		const isLeader = req.user?.isLeader || false;
 
 		let whereCondition: any = {};
 
-		if (
-			userRole !== "admin" &&
-			userRole !== "board" &&
-			userRole !== "coordinator"
-		) {
-			whereCondition = { assigned_to: userId };
+		// ============================================================
+		// 1. ADMIN i ZARZĄD - widzą WSZYSTKIE zadania
+		// ============================================================
+		if (userRole === "admin" || userRole === "board") {
+			whereCondition = {};
 		}
+		// ============================================================
+		// 2. KOORDYNATOR/LIDER - widzi zadania z filaru + swoje
+		// ============================================================
+		else if (userRole === "coordinator" || isLeader === true) {
+			// Pobierz filary w których użytkownik jest liderem
+			const leaderTeams = await prisma.teamMember.findMany({
+				where: {
+					user_id: parseInt(userId),
+					is_leader: true,
+					team: {
+						name: { contains: "Filar" },
+					},
+				},
+				include: {
+					team: true,
+				},
+			});
+
+			const pillarNames = leaderTeams
+				.map((tm: any) => tm.team?.name?.replace("Filar ", ""))
+				.filter(Boolean);
+
+			// Jeśli użytkownik jest liderem w filarach
+			if (pillarNames.length > 0) {
+				whereCondition = {
+					OR: [
+						// ✅ WSZYSTKIE zadania z filarów w których jest liderem
+						{ pillar: { in: pillarNames } },
+						// ✅ Zadania przypisane do niego (jeśli nie są już w filarze)
+						{ assigned_to: parseInt(userId) },
+					],
+				};
+			} else {
+				// Jeśli nie ma filarów, tylko swoje zadania
+				whereCondition = { assigned_to: parseInt(userId) };
+			}
+		}
+		// ============================================================
+		// 3. ZWYKŁY CZŁONEK - widzi tylko swoje zadania
+		// ============================================================
+		else {
+			whereCondition = { assigned_to: parseInt(userId) };
+		}
+
+		// ============================================================
+		// 🔥 DODATKOWO - obsługa parametrów z frontendu
+		// ============================================================
+		// Jeśli frontend wysyła parametry (leaderId, pillarId, teamId)
+		if (req.query.leaderId) {
+			const leaderId = parseInt(req.query.leaderId as string);
+			const pillarId = req.query.pillarId
+				? parseInt(req.query.pillarId as string)
+				: null;
+			const teamId = req.query.teamId
+				? parseInt(req.query.teamId as string)
+				: null;
+
+			// Pobierz nazwy filarów dla lidera
+			let leaderPillars: string[] = [];
+			if (pillarId) {
+				const pillar = await prisma.pillar.findUnique({
+					where: { id: pillarId },
+					select: { name: true },
+				});
+				if (pillar) {
+					leaderPillars.push(pillar.name);
+				}
+			}
+
+			// Jeśli nie ma pillarId, znajdź filary lidera
+			if (leaderPillars.length === 0) {
+				const leaderTeams = await prisma.teamMember.findMany({
+					where: {
+						user_id: leaderId,
+						is_leader: true,
+						team: {
+							name: { contains: "Filar" },
+						},
+					},
+					include: {
+						team: true,
+					},
+				});
+				leaderPillars = leaderTeams
+					.map((tm: any) => tm.team?.name?.replace("Filar ", ""))
+					.filter(Boolean);
+			}
+
+			// Nadpisz whereCondition jeśli są parametry
+			if (leaderPillars.length > 0) {
+				whereCondition = {
+					OR: [{ pillar: { in: leaderPillars } }, { assigned_to: leaderId }],
+				};
+			} else {
+				whereCondition = { assigned_to: leaderId };
+			}
+		}
+
+		// Jeśli frontend wysyła tylko userId (zwykły członek)
+		if (req.query.userId && !req.query.leaderId) {
+			whereCondition = { assigned_to: parseInt(req.query.userId as string) };
+		}
+
+		console.log(
+			"🔍 [BACKEND] Zapytanie do bazy:",
+			JSON.stringify(whereCondition, null, 2),
+		);
 
 		const tasks = await prisma.task.findMany({
 			where: whereCondition,
@@ -5228,6 +5364,7 @@ app.get("/api/tasks", authMiddleware, async (req: any, res) => {
 			assignedToName: task.assignedTo
 				? `${task.assignedTo.first_name || ""} ${task.assignedTo.last_name || ""}`.trim()
 				: "Nieprzypisany",
+			assignedUsers: task.assigned_users ? JSON.parse(task.assigned_users) : [],
 			createdBy: task.created_by?.toString() || "",
 			createdByName: task.createdBy
 				? `${task.createdBy.first_name || ""} ${task.createdBy.last_name || ""}`.trim()
@@ -5235,6 +5372,9 @@ app.get("/api/tasks", authMiddleware, async (req: any, res) => {
 			projectId: task.project_id?.toString() || null,
 			projectName: task.project?.name || null,
 			projectPillar: task.project?.pillar || null,
+			pillar: task.pillar || null, // ← DODAJ - filar zadania
+			assignedType: task.assigned_type || "user",
+			assignedGroup: task.assigned_group || null,
 			dueDate: task.due_date?.toISOString() || "",
 			createdAt: task.created_at.toISOString(),
 			updatedAt: task.updated_at.toISOString(),
@@ -5259,6 +5399,8 @@ app.get("/api/tasks", authMiddleware, async (req: any, res) => {
 					createdAt: c.created_at.toISOString(),
 				})) || [],
 		}));
+
+		console.log(`✅ [BACKEND] Znaleziono ${mappedTasks.length} zadań`);
 
 		res.json(mappedTasks);
 	} catch (error) {
