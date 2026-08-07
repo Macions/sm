@@ -35,7 +35,7 @@ model User {
   is_trial                  Boolean?             @default(false)
   attendance_percentage     Decimal?             @default(92.00) @db.Decimal(5, 2)
   form_data                 String?              @db.LongText
-  guides                    Guide[]
+  guides                    guide[]
   ideaVotes                 IdeaVote[]
   leaveComments             LeaveComment[]
   leaves                    Leave[]
@@ -61,8 +61,17 @@ model User {
   mediaContacts             MediaContact[]
   contributions             Contribution[]
   taskComments              TaskComment[]
-  assignedTasks             Task[]               @relation("assignedTasks")
-  createdTasks              Task[]               @relation("createdTasks")
+
+  // ============================================================
+  // 🔥 RELACJE DO TASK
+  // ============================================================
+  assignedTasks Task[] @relation("assignedTasks") // zadania przypisane do użytkownika
+  createdTasks  Task[] @relation("createdTasks") // zadania utworzone przez użytkownika
+  // ❌ USUŃ `tasks` - to jest niepotrzebne
+  // tasks                     Task[]               ← USUŃ TĘ LINIĘ!
+
+  // ✅ DODAJ - zadania ocenione przez użytkownika
+  ratedTasks Task[] @relation("TaskRatedBy")
 
   @@index([role_id], map: "idx_users_role_id")
   @@index([status], map: "idx_users_status")
@@ -130,19 +139,24 @@ model Task {
   status      String @default("todo") @db.VarChar(50)
   priority    String @default("medium") @db.VarChar(50)
 
-  assigned_to    Int
-  assigned_users String?
-  created_by     Int
-  project_id     Int?
-
+  assigned_to           Int
+  assigned_users        String?
+  created_by            Int
+  project_id            Int?
+  pillar                String?   @db.VarChar(255)
   // 🔥 NOWE POLA
-  assigned_type       String    @default("user") @db.VarChar(50) // "user" | "team" | "pillar" | "role"
-  assigned_group      String?   @db.VarChar(255) // nazwa grupy/zespołu/filaru/roli
-  is_recurring        Boolean?  @default(false)
-  recurrence_pattern  String?   @db.VarChar(50) // "daily" | "weekly" | "monthly"
-  recurrence_end_date DateTime?
-  parent_task_id      Int? // dla zadań cyklicznych - ID zadania nadrzędnego
-
+  assigned_type         String    @default("user") @db.VarChar(50) // "user" | "team" | "pillar" | "role"
+  assigned_group        String?   @db.VarChar(255) // nazwa grupy/zespołu/filaru/roli
+  is_recurring          Boolean?  @default(false)
+  recurrence_pattern    String?   @db.VarChar(50) // "daily" | "weekly" | "monthly"
+  recurrence_end_date   DateTime?
+  parent_task_id        Int? // dla zadań cyklicznych - ID zadania nadrzędnego
+  rating                Int? // Ocena w gwiazdkach 1-5
+  difficulty            Int? // Poziom trudności 1-5
+  rating_comment        String?   @db.Text // Komentarz do oceny
+  rated_by_name         String?   @db.VarChar(255)
+  rated_at              DateTime? // Data oceny
+  rated_by              Int? // ID użytkownika który ocenił
   due_date              DateTime
   tags                  String?   @db.Text
   requires_feedback     Boolean?  @default(false)
@@ -157,6 +171,9 @@ model Task {
   created_at            DateTime  @default(now()) @db.Timestamp(0)
   updated_at            DateTime  @updatedAt @db.Timestamp(0)
 
+  // ============================================================
+  // 🔥 RELACJE
+  // ============================================================
   assignedTo User          @relation("assignedTasks", fields: [assigned_to], references: [id], onDelete: Cascade)
   createdBy  User          @relation("createdTasks", fields: [created_by], references: [id], onDelete: Cascade)
   project    Project?      @relation(fields: [project_id], references: [id], onDelete: SetNull)
@@ -164,6 +181,12 @@ model Task {
   childTasks Task[]        @relation("TaskParent")
   comments   TaskComment[]
 
+  // ✅ DODAJ TĘ RELACJĘ!
+  ratedBy User? @relation("TaskRatedBy", fields: [rated_by], references: [id])
+
+  // ============================================================
+  // 🔥 INDEKSY
+  // ============================================================
   @@index([assigned_to])
   @@index([created_by])
   @@index([project_id])
@@ -172,6 +195,8 @@ model Task {
   @@index([due_date])
   @@index([assigned_type])
   @@index([assigned_group])
+  @@index([rated_by]) // ✅ DODAJ INDEKS DLA rated_by
+  @@index([pillar])
   @@map("tasks")
 }
 
@@ -223,23 +248,23 @@ model TeamMember {
   @@map("team_members")
 }
 
-model Guide {
+model guide {
   id               Int      @id @default(autoincrement())
-  title            String   @db.VarChar(255)
-  description      String?  @db.Text
-  category         String?  @db.VarChar(50)
-  access           String?  @default("all") @db.VarChar(50)
-  author_id        Int?
-  content          String?  @db.LongText
-  created_at       DateTime @default(now()) @db.Timestamp(0)
-  updated_at       DateTime @default(now()) @updatedAt @db.Timestamp(0)
-  is_published     Int?     @default(1) @db.TinyInt
-  attachments      String?  @db.LongText
-  functional_roles String?  @db.LongText
-  author           User?    @relation(fields: [author_id], references: [id], onUpdate: Restrict, map: "guides_ibfk_1")
+  title            String
+  description      String?
+  category         String?
+  access           String?  @default("all")
+  author_id        Int? // ← TO JUŻ JEST
+  author           String? // ← DODAJ TO! Pole tekstowe dla autora
+  content          String?
+  created_at       DateTime @default(now())
+  updated_at       DateTime @updatedAt
+  is_published     Int?     @default(1)
+  attachments      String? // JSON
+  functional_roles String? // JSON
 
-  @@index([author_id], map: "author_id")
-  @@index([created_at], map: "idx_guides_created_at")
+  author_user User? @relation(fields: [author_id], references: [id])
+
   @@map("guides")
 }
 

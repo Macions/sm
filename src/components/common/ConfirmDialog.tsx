@@ -7,6 +7,7 @@ interface ConfirmDialogProps {
 	message: string;
 	confirmText?: string;
 	cancelText?: string;
+	isLoading?: boolean;
 	onConfirm: () => void;
 	onCancel: () => void;
 }
@@ -17,6 +18,7 @@ export function ConfirmDialog({
 	message,
 	confirmText = "Usuń",
 	cancelText = "Anuluj",
+	isLoading = false,
 	onConfirm,
 	onCancel,
 }: ConfirmDialogProps) {
@@ -38,11 +40,26 @@ export function ConfirmDialog({
 				<h3 className={styles.title}>{title}</h3>
 				<p className={styles.message}>{message}</p>
 				<div className={styles.actions}>
-					<button className={styles.cancelBtn} onClick={onCancel}>
+					<button
+						className={styles.cancelBtn}
+						onClick={onCancel}
+						disabled={isLoading} // 🔥 WYŁĄCZ PRZYCISK PODCZAS ŁADOWANIA
+					>
 						{cancelText}
 					</button>
-					<button className={styles.confirmBtn} onClick={onConfirm}>
-						{confirmText}
+					<button
+						className={`${styles.confirmBtn} ${isLoading ? styles.loading : ""}`}
+						onClick={onConfirm}
+						disabled={isLoading} // 🔥 WYŁĄCZ PRZYCISK PODCZAS ŁADOWANIA
+					>
+						{isLoading ? (
+							<>
+								<span className={styles.spinner}></span>
+								Usuwanie...
+							</>
+						) : (
+							confirmText
+						)}
 					</button>
 				</div>
 			</div>

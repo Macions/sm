@@ -16,6 +16,7 @@ const SocialMedia = lazy(() => import("../pages/SocialMedia/SocialMedia"));
 const Admin = lazy(() => import("../pages/Admin/Admin"));
 const Onboarding = lazy(() => import("../pages/Onboarding/Onboarding"));
 const Profile = lazy(() => import("../pages/Profile/Profile"));
+const Calendar = lazy(() => import("../pages/Calendar/Calendar"));
 
 const Loading = () => (
 	<div
@@ -108,6 +109,7 @@ function AppRoutes() {
 					/>
 					<Route path="/admin" element={<Admin title="Administracja" />} />
 					<Route path="/tasks" element={<Tasks />} />
+					<Route path="/calendar" element={<Calendar />} />
 				</Route>
 			</Routes>
 		</Suspense>

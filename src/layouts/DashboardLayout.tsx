@@ -99,6 +99,10 @@ export default function DashboardLayout() {
 				return "Mój profil";
 			case "guides":
 				return "Poradniki";
+			case "tasks":
+				return "Zadania";
+			case "calendar":
+				return "Kalendarz";
 			case "vacancies":
 				return "Aktualne wakaty";
 			case "structure":

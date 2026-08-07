@@ -35,6 +35,7 @@ import {
 } from "../../utils/permissions";
 import { ConfirmDialog } from "../../components/common/ConfirmDialog";
 import styles from "./Admin.module.css";
+import { hasPermission } from "../../utils/permissions";
 
 // ---------------------------------------------------------------------------
 // TYPY
