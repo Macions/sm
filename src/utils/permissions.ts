@@ -1,4 +1,10 @@
-export type UserRole = "admin" | "board" | "zarząd" | "coordinator" | "member";
+export type UserRole =
+	| "admin"
+	| "board"
+	| "zarząd"
+	| "coordinator"
+	| "functional"
+	| "member";
 import { logger } from "@/utils/logger";
 export type Permission =
 	| "canViewAllLeaves"
@@ -23,8 +29,8 @@ export type Permission =
 	| "canManageTeams"
 	| "canViewStructure"
 	| "canEditProfile"
-	| "canManageAllProjects"        // Admin - zarządza wszystkimi projektami
-	| "canManagePillarProjects"     // Koordynator - zarządza projektami w swoim filarze
+	| "canManageAllProjects" // Admin - zarządza wszystkimi projektami
+	| "canManagePillarProjects" // Koordynator - zarządza projektami w swoim filarze
 	| "canManagePillarIdeas";
 
 export const PERMISSION_LABELS: Record<Permission, string> = {
@@ -123,6 +129,15 @@ export const DEFAULT_PERMISSIONS: Record<UserRole, Permission[]> = {
 	],
 	coordinator: [
 		"canManageProjects",
+		"canViewVacancies",
+		"canApplyVacancies",
+		"canViewApplications",
+		"canViewStructure",
+		"canEditProfile",
+		"canManagePillarProjects",
+		"canManagePillarIdeas",
+	],
+	functional: [
 		"canViewVacancies",
 		"canApplyVacancies",
 		"canViewApplications",
@@ -355,4 +370,19 @@ export async function updateRolePermissions(
 		logger.error("❌ Błąd aktualizacji uprawnień:", error);
 		return false;
 	}
+}
+export function isAdminOrBoard(role: string | undefined): boolean {
+	if (!role) return false;
+	return role === "admin" || role === "board" || role === "zarząd";
+}
+
+export function isCoordinator(
+	role: string | undefined,
+	isLeader?: boolean,
+): boolean {
+	if (!role) return false;
+	// Admin też jest koordynatorem
+	if (role === "admin" || role === "board" || role === "zarząd") return true;
+	// Sprawdź czy to koordynator lub lider
+	return role === "coordinator" || isLeader === true;
 }

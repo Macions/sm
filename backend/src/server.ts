@@ -852,6 +852,45 @@ app.get("/uploads/tasks/:filename", authMiddleware, async (req: any, res) => {
 		res.status(500).json({ error: "Nie udało się pobrać pliku" });
 	}
 });
+// ✅ DODAJ TEN ENDPOINT OBOK ISTNIEJĄCEGO
+app.get(
+	"/api/uploads/tasks/:filename",
+	authMiddleware,
+	async (req: any, res) => {
+		try {
+			const filename = decodeURIComponent(req.params.filename);
+			const filePath = path.join(__dirname, "uploads/tasks", filename);
+
+			console.log("📁 [DOWNLOAD] Szukam pliku (api):", filePath);
+
+			if (!fs.existsSync(filePath)) {
+				const cleanFilename = filename
+					.normalize("NFD")
+					.replace(/[\u0300-\u036f]/g, "");
+				const cleanPath = path.join(__dirname, "uploads/tasks", cleanFilename);
+
+				if (fs.existsSync(cleanPath)) {
+					return res.sendFile(cleanPath);
+				}
+
+				console.log("❌ [DOWNLOAD] Plik nie istnieje:", filePath);
+				return res.status(404).json({ error: "Nie znaleziono pliku" });
+			}
+
+			const mimeType = getMimeType(filename);
+			res.setHeader("Content-Type", mimeType);
+			res.setHeader(
+				"Content-Disposition",
+				`attachment; filename*=UTF-8''${encodeURIComponent(filename)}`,
+			);
+
+			res.sendFile(filePath);
+		} catch (error) {
+			console.error("❌ [DOWNLOAD] Błąd:", error);
+			res.status(500).json({ error: "Nie udało się pobrać pliku" });
+		}
+	},
+);
 app.post("/api/ideas/:id/vote", authMiddleware, async (req: any, res) => {
 	try {
 		const { id } = req.params;
@@ -1455,10 +1494,6 @@ app.get("/api/tutorials", authMiddleware, async (req: any, res) => {
 					attachments = t.attachments;
 				}
 			} catch (e) {
-				// 				logger.warn(
-				// 	`⚠️ Nie udało się sparsować attachments dla tutorial ${t.id}:`,
-				// 	e,
-				// );
 				attachments = [];
 			}
 
@@ -1472,10 +1507,6 @@ app.get("/api/tutorials", authMiddleware, async (req: any, res) => {
 					functionalRoles = t.functional_roles;
 				}
 			} catch (e) {
-				// 				logger.warn(
-				// 	`⚠️ Nie udało się sparsować functional_roles dla tutorial ${t.id}:`,
-				// 	e,
-				// );
 				functionalRoles = [];
 			}
 
@@ -1485,7 +1516,8 @@ app.get("/api/tutorials", authMiddleware, async (req: any, res) => {
 				description: t.description,
 				category: t.category || "new_member",
 				access: t.access || "all",
-				author: "Admin",
+				// ✅ ZWRÓĆ AUTORA Z BAZY
+				author: t.author || "Nieznany", // ← POPRAWIONE!
 				createdAt: t.created_at.toISOString().split("T")[0],
 				updatedAt: t.updated_at.toISOString().split("T")[0],
 				content: t.content || "",
@@ -1498,20 +1530,315 @@ app.get("/api/tutorials", authMiddleware, async (req: any, res) => {
 
 		res.json(mappedTutorials);
 	} catch (error) {
-		// 		logger.error("❌ Błąd pobierania poradników:", error);
+		logger.error("❌ Błąd pobierania poradników:", error);
 		res.status(500).json({ error: "Nie udało się pobrać poradników" });
 	}
 });
 
+// ============================================================
+// 📋 GET /api/tasks - Pobierz wszystkie zadania z ocenami
+// ============================================================
+app.get("/api/tasks", authMiddleware, async (req: any, res) => {
+	try {
+		const userId = req.user?.id;
+		const userRole = req.user?.role;
+		const isLeader = req.user?.isLeader || false;
+
+		let whereCondition: any = {};
+
+		// ============================================================
+		// 1. ADMIN i ZARZĄD - widzą WSZYSTKIE zadania
+		// ============================================================
+		if (userRole === "admin" || userRole === "board") {
+			whereCondition = {};
+		}
+		// ============================================================
+		// 2. KOORDYNATOR/LIDER - widzi zadania z filaru + swoje
+		// ============================================================
+		else if (userRole === "coordinator" || isLeader === true) {
+			const leaderTeams = await prisma.teamMember.findMany({
+				where: {
+					user_id: parseInt(userId),
+					is_leader: true,
+					team: {
+						name: { contains: "Filar" },
+					},
+				},
+				include: {
+					team: true,
+				},
+			});
+
+			const pillarNames = leaderTeams
+				.map((tm: any) => tm.team?.name?.replace("Filar ", ""))
+				.filter(Boolean);
+
+			if (pillarNames.length > 0) {
+				whereCondition = {
+					OR: [
+						{
+							assigned_type: "pillar",
+							assigned_group: { in: pillarNames },
+						},
+						{ assigned_to: parseInt(userId) },
+					],
+				};
+			} else {
+				whereCondition = { assigned_to: parseInt(userId) };
+			}
+		}
+		// ============================================================
+		// 3. ZWYKŁY CZŁONEK - widzi tylko swoje zadania
+		// ============================================================
+		else {
+			whereCondition = { assigned_to: parseInt(userId) };
+		}
+
+		// ============================================================
+		// 🔥 OBSŁUGA PARAMETRÓW - TYLKO DLA KOORDYNATORA I CZŁONKA
+		// ============================================================
+		// ✅ DLA ADMINA I ZARZĄDU - NIE NADPISUJ whereCondition!
+		if (userRole !== "admin" && userRole !== "board") {
+			if (req.query.leaderId) {
+				const leaderId = parseInt(req.query.leaderId as string);
+				const leaderTeams = await prisma.teamMember.findMany({
+					where: {
+						user_id: leaderId,
+						is_leader: true,
+						team: {
+							name: { contains: "Filar" },
+						},
+					},
+					include: {
+						team: true,
+					},
+				});
+
+				const pillarNames = leaderTeams
+					.map((tm: any) => tm.team?.name?.replace("Filar ", ""))
+					.filter(Boolean);
+
+				if (pillarNames.length > 0) {
+					whereCondition = {
+						OR: [
+							{
+								assigned_type: "pillar",
+								assigned_group: { in: pillarNames },
+							},
+							{ assigned_to: leaderId },
+						],
+					};
+				} else {
+					whereCondition = { assigned_to: leaderId };
+				}
+			}
+
+			if (req.query.userId && !req.query.leaderId) {
+				whereCondition = { assigned_to: parseInt(req.query.userId as string) };
+			}
+		}
+
+		// ============================================================
+		// 🔥 POBRANIE ZADAŃ Z DANYMI UŻYTKOWNIKA KTÓRY OCENIŁ
+		// ============================================================
+		const tasks = await prisma.task.findMany({
+			where: whereCondition,
+			include: {
+				assignedTo: {
+					select: {
+						id: true,
+						first_name: true,
+						last_name: true,
+						email: true,
+					},
+				},
+				createdBy: {
+					select: {
+						id: true,
+						first_name: true,
+						last_name: true,
+						email: true,
+					},
+				},
+				project: {
+					select: {
+						id: true,
+						name: true,
+						pillar: true,
+					},
+				},
+				comments: {
+					include: {
+						user: {
+							select: {
+								id: true,
+								first_name: true,
+								last_name: true,
+							},
+						},
+					},
+				},
+				// ✅ DODANE - pobierz dane użytkownika który ocenił
+				ratedBy: {
+					select: {
+						id: true,
+						first_name: true,
+						last_name: true,
+					},
+				},
+			},
+			orderBy: {
+				created_at: "desc",
+			},
+		});
+
+		// ============================================================
+		// MAPOWANIE ZADAŃ Z OCENAMI
+		// ============================================================
+		const mappedTasks = tasks.map((task: any) => ({
+			id: task.id.toString(),
+			title: task.title,
+			description: task.description,
+			status: task.status || "todo",
+			priority: task.priority || "medium",
+			assignedTo: task.assigned_to?.toString() || "",
+			assignedToName: task.assignedTo
+				? `${task.assignedTo.first_name || ""} ${task.assignedTo.last_name || ""}`.trim()
+				: "Nieprzypisany",
+			assignedUsers: task.assigned_users ? JSON.parse(task.assigned_users) : [],
+			createdBy: task.created_by?.toString() || "",
+			createdByName: task.createdBy
+				? `${task.createdBy.first_name || ""} ${task.createdBy.last_name || ""}`.trim()
+				: "Nieznany",
+			projectId: task.project_id?.toString() || null,
+			projectName: task.project?.name || null,
+			projectPillar: task.project?.pillar || null,
+			pillar: task.pillar || null,
+			assignedType: task.assigned_type || "user",
+			assignedGroup: task.assigned_group || null,
+			dueDate: task.due_date?.toISOString() || "",
+			createdAt: task.created_at.toISOString(),
+			updatedAt: task.updated_at.toISOString(),
+			tags: task.tags ? JSON.parse(task.tags) : [],
+			requiresFeedback: task.requires_feedback || false,
+			feedbackType: task.feedback_type || "text",
+			feedbackText: task.feedback_text || null,
+			feedbackFile: task.feedback_file || null,
+			feedbackFileName: task.feedback_file_name || null,
+			feedbackFileSize: task.feedback_file_size || null,
+			feedbackFileType: task.feedback_file_type || null,
+			feedbackSubmittedAt: task.feedback_submitted_at?.toISOString() || null,
+			attachments: task.attachments ? JSON.parse(task.attachments) : [],
+			comments:
+				task.comments?.map((c: any) => ({
+					id: c.id.toString(),
+					userId: c.user_id.toString(),
+					userName: c.user
+						? `${c.user.first_name || ""} ${c.user.last_name || ""}`.trim()
+						: "Nieznany",
+					content: c.content,
+					createdAt: c.created_at.toISOString(),
+				})) || [],
+			// ✅ POLA OCENY
+			rating: task.rating ?? null,
+			rating_comment: task.rating_comment ?? null,
+			rated_at: task.rated_at?.toISOString() ?? null,
+			rated_by: task.rated_by?.toString() ?? null,
+			// ✅ NAZWA UŻYTKOWNIKA KTÓRY OCENIŁ
+			rated_by_name: task.ratedBy
+				? `${task.ratedBy.first_name || ""} ${task.ratedBy.last_name || ""}`.trim()
+				: null,
+		}));
+
+		res.json(mappedTasks);
+	} catch (error) {
+		logger.error("❌ Błąd pobierania zadań:", error);
+		res.status(500).json({ error: "Nie udało się pobrać zadań" });
+	}
+});
+
+// ============================================================
+// 🆕 ENDPOINT: Ocena zadania (ZAPIS)
+// ============================================================
+app.post("/api/tasks/:id/rate", authMiddleware, async (req: any, res) => {
+	try {
+		const { id } = req.params;
+		const userId = req.user?.id;
+		const { rating, comment } = req.body;
+
+		console.log("📥 [RATING] Zadanie ID:", id);
+		console.log("📥 [RATING] Użytkownik:", userId);
+		console.log("📥 [RATING] Ocena:", rating);
+		console.log("📥 [RATING] Komentarz:", comment);
+
+		const taskId = parseInt(id);
+		if (isNaN(taskId)) {
+			return res.status(400).json({ error: "Nieprawidłowe ID zadania" });
+		}
+
+		const task = await prisma.task.findUnique({
+			where: { id: taskId },
+		});
+
+		if (!task) {
+			return res.status(404).json({ error: "Nie znaleziono zadania" });
+		}
+
+		// Sprawdź czy użytkownik jest przypisany do zadania
+		if (task.assigned_to !== parseInt(userId)) {
+			return res.status(403).json({
+				error: "Tylko osoba przypisana może ocenić zadanie",
+			});
+		}
+
+		// Sprawdź czy zadanie jest zakończone
+		if (task.status !== "done") {
+			return res.status(400).json({
+				error: "Zadanie musi być zakończone przed oceną",
+			});
+		}
+
+		// Sprawdź czy ocena już została dodana
+		if (task.rated_at !== null) {
+			return res.status(400).json({
+				error: "To zadanie zostało już ocenione",
+			});
+		}
+
+		// ✅ Zapisz ocenę
+		const updatedTask = await prisma.task.update({
+			where: { id: taskId },
+			data: {
+				rating: rating,
+				rating_comment: comment || null,
+				rated_at: new Date(),
+				rated_by: parseInt(userId),
+			},
+		});
+
+		console.log("✅ [RATING] Zapisano ocenę dla zadania:", taskId);
+
+		res.json({
+			success: true,
+			message: "Ocena została zapisana",
+			rating: updatedTask.rating,
+			rating_comment: updatedTask.rating_comment,
+			rated_at: updatedTask.rated_at,
+		});
+	} catch (error) {
+		console.error("❌ Błąd zapisu oceny:", error);
+		res.status(500).json({
+			error: "Nie udało się zapisać oceny",
+			details: error instanceof Error ? error.message : "Unknown error",
+		});
+	}
+});
 app.post(
 	"/api/tutorials",
 	authMiddleware,
 	upload.array("files", 5),
 	async (req: any, res) => {
 		try {
-			// 			logger.debug("📥 POST /tutorials");
-			// 			logger.debug("📁 Pliki:", req.files?.length || 0);
-
 			let tutorialData;
 			try {
 				tutorialData = JSON.parse(req.body.data);
@@ -1519,8 +1846,16 @@ app.post(
 				tutorialData = req.body;
 			}
 
-			const { title, description, category, access, content, functionalRoles } =
-				tutorialData;
+			// ✅ POBIERZ author z formularza
+			const {
+				title,
+				description,
+				category,
+				access,
+				content,
+				functionalRoles,
+				author,
+			} = tutorialData;
 
 			if (!title) {
 				return res.status(400).json({ error: "Tytuł jest wymagany" });
@@ -1546,6 +1881,8 @@ app.post(
 					description: description || null,
 					category: category || "new_member",
 					access: access || "all",
+					// ✅ UŻYJ AUTORA Z FORMULARZA
+					author: author || "Nieznany",
 					author_id: req.user?.id ? parseInt(req.user.id) : null,
 					content: content || null,
 					attachments:
@@ -1563,7 +1900,8 @@ app.post(
 				description: tutorial.description,
 				category: tutorial.category || "new_member",
 				access: tutorial.access || "all",
-				author: "Admin",
+				// ✅ ZWRÓĆ AUTORA Z BAZY
+				author: tutorial.author || "Nieznany",
 				createdAt: tutorial.created_at.toISOString().split("T")[0],
 				updatedAt: tutorial.updated_at.toISOString().split("T")[0],
 				content: tutorial.content || "",
@@ -1573,7 +1911,7 @@ app.post(
 				isUpdated: false,
 			});
 		} catch (error) {
-			// 			logger.error("❌ Błąd tworzenia poradnika:", error);
+			logger.error("❌ Błąd tworzenia poradnika:", error);
 
 			const files = req.files as Express.Multer.File[];
 			if (files) {
@@ -1847,8 +2185,6 @@ app.put(
 	async (req: any, res) => {
 		try {
 			const id = parseInt(req.params.id);
-			// 			logger.debug(`📥 PUT /tutorials/${id}`);
-			// 			logger.debug("📁 Pliki:", req.files?.length || 0);
 
 			let tutorialData;
 			try {
@@ -1865,6 +2201,7 @@ app.put(
 				content,
 				attachments: existingAttachments,
 				functionalRoles,
+				author, // ✅ POBIERZ AUTORA
 			} = tutorialData;
 
 			const newAttachments: any[] = [];
@@ -1893,6 +2230,8 @@ app.put(
 					description: description || null,
 					category: category || "new_member",
 					access: access || "all",
+					// ✅ ZAKTUALIZUJ AUTORA
+					author: author || undefined, // jeśli nie ma, zachowaj stary
 					content: content || null,
 					attachments:
 						allAttachments.length > 0 ? JSON.stringify(allAttachments) : null,
@@ -1909,7 +2248,8 @@ app.put(
 				description: tutorial.description,
 				category: tutorial.category || "new_member",
 				access: tutorial.access || "all",
-				author: "Admin",
+				// ✅ ZWRÓĆ AUTORA Z BAZY
+				author: tutorial.author || "Nieznany",
 				createdAt: tutorial.created_at.toISOString().split("T")[0],
 				updatedAt: tutorial.updated_at.toISOString().split("T")[0],
 				content: tutorial.content || "",
@@ -1919,7 +2259,7 @@ app.put(
 				isUpdated: true,
 			});
 		} catch (error) {
-			// 			logger.error("❌ Błąd aktualizacji poradnika:", error);
+			logger.error("❌ Błąd aktualizacji poradnika:", error);
 
 			const files = req.files as Express.Multer.File[];
 			if (files) {
@@ -5188,226 +5528,6 @@ app.get("/api/tasks/:id", authMiddleware, async (req: any, res) => {
 		res.status(500).json({ error: "Nie udało się pobrać zadania" });
 	}
 });
-app.get("/api/tasks", authMiddleware, async (req: any, res) => {
-	try {
-		const userId = req.user?.id;
-		const userRole = req.user?.role;
-		const userPillar = req.user?.pillarName; // ← Pobierz filar użytkownika
-		const isLeader = req.user?.isLeader || false;
-
-		let whereCondition: any = {};
-
-		// ============================================================
-		// 1. ADMIN i ZARZĄD - widzą WSZYSTKIE zadania
-		// ============================================================
-		if (userRole === "admin" || userRole === "board") {
-			whereCondition = {};
-		}
-		// ============================================================
-		// 2. KOORDYNATOR/LIDER - widzi zadania z filaru + swoje
-		// ============================================================
-		else if (userRole === "coordinator" || isLeader === true) {
-			// Pobierz filary w których użytkownik jest liderem
-			const leaderTeams = await prisma.teamMember.findMany({
-				where: {
-					user_id: parseInt(userId),
-					is_leader: true,
-					team: {
-						name: { contains: "Filar" },
-					},
-				},
-				include: {
-					team: true,
-				},
-			});
-
-			const pillarNames = leaderTeams
-				.map((tm: any) => tm.team?.name?.replace("Filar ", ""))
-				.filter(Boolean);
-
-			// Jeśli użytkownik jest liderem w filarach
-			if (pillarNames.length > 0) {
-				whereCondition = {
-					OR: [
-						// ✅ WSZYSTKIE zadania z filarów w których jest liderem
-						{ pillar: { in: pillarNames } },
-						// ✅ Zadania przypisane do niego (jeśli nie są już w filarze)
-						{ assigned_to: parseInt(userId) },
-					],
-				};
-			} else {
-				// Jeśli nie ma filarów, tylko swoje zadania
-				whereCondition = { assigned_to: parseInt(userId) };
-			}
-		}
-		// ============================================================
-		// 3. ZWYKŁY CZŁONEK - widzi tylko swoje zadania
-		// ============================================================
-		else {
-			whereCondition = { assigned_to: parseInt(userId) };
-		}
-
-		// ============================================================
-		// 🔥 DODATKOWO - obsługa parametrów z frontendu
-		// ============================================================
-		// Jeśli frontend wysyła parametry (leaderId, pillarId, teamId)
-		if (req.query.leaderId) {
-			const leaderId = parseInt(req.query.leaderId as string);
-			const pillarId = req.query.pillarId
-				? parseInt(req.query.pillarId as string)
-				: null;
-			const teamId = req.query.teamId
-				? parseInt(req.query.teamId as string)
-				: null;
-
-			// Pobierz nazwy filarów dla lidera
-			let leaderPillars: string[] = [];
-			if (pillarId) {
-				const pillar = await prisma.pillar.findUnique({
-					where: { id: pillarId },
-					select: { name: true },
-				});
-				if (pillar) {
-					leaderPillars.push(pillar.name);
-				}
-			}
-
-			// Jeśli nie ma pillarId, znajdź filary lidera
-			if (leaderPillars.length === 0) {
-				const leaderTeams = await prisma.teamMember.findMany({
-					where: {
-						user_id: leaderId,
-						is_leader: true,
-						team: {
-							name: { contains: "Filar" },
-						},
-					},
-					include: {
-						team: true,
-					},
-				});
-				leaderPillars = leaderTeams
-					.map((tm: any) => tm.team?.name?.replace("Filar ", ""))
-					.filter(Boolean);
-			}
-
-			// Nadpisz whereCondition jeśli są parametry
-			if (leaderPillars.length > 0) {
-				whereCondition = {
-					OR: [{ pillar: { in: leaderPillars } }, { assigned_to: leaderId }],
-				};
-			} else {
-				whereCondition = { assigned_to: leaderId };
-			}
-		}
-
-		// Jeśli frontend wysyła tylko userId (zwykły członek)
-		if (req.query.userId && !req.query.leaderId) {
-			whereCondition = { assigned_to: parseInt(req.query.userId as string) };
-		}
-
-		console.log(
-			"🔍 [BACKEND] Zapytanie do bazy:",
-			JSON.stringify(whereCondition, null, 2),
-		);
-
-		const tasks = await prisma.task.findMany({
-			where: whereCondition,
-			include: {
-				assignedTo: {
-					select: {
-						id: true,
-						first_name: true,
-						last_name: true,
-						email: true,
-					},
-				},
-				createdBy: {
-					select: {
-						id: true,
-						first_name: true,
-						last_name: true,
-						email: true,
-					},
-				},
-				project: {
-					select: {
-						id: true,
-						name: true,
-						pillar: true,
-					},
-				},
-				comments: {
-					include: {
-						user: {
-							select: {
-								id: true,
-								first_name: true,
-								last_name: true,
-							},
-						},
-					},
-				},
-			},
-			orderBy: {
-				created_at: "desc",
-			},
-		});
-
-		const mappedTasks = tasks.map((task: any) => ({
-			id: task.id.toString(),
-			title: task.title,
-			description: task.description,
-			status: task.status || "todo",
-			priority: task.priority || "medium",
-			assignedTo: task.assigned_to?.toString() || "",
-			assignedToName: task.assignedTo
-				? `${task.assignedTo.first_name || ""} ${task.assignedTo.last_name || ""}`.trim()
-				: "Nieprzypisany",
-			assignedUsers: task.assigned_users ? JSON.parse(task.assigned_users) : [],
-			createdBy: task.created_by?.toString() || "",
-			createdByName: task.createdBy
-				? `${task.createdBy.first_name || ""} ${task.createdBy.last_name || ""}`.trim()
-				: "Nieznany",
-			projectId: task.project_id?.toString() || null,
-			projectName: task.project?.name || null,
-			projectPillar: task.project?.pillar || null,
-			pillar: task.pillar || null, // ← DODAJ - filar zadania
-			assignedType: task.assigned_type || "user",
-			assignedGroup: task.assigned_group || null,
-			dueDate: task.due_date?.toISOString() || "",
-			createdAt: task.created_at.toISOString(),
-			updatedAt: task.updated_at.toISOString(),
-			tags: task.tags ? JSON.parse(task.tags) : [],
-			requiresFeedback: task.requires_feedback || false,
-			feedbackType: task.feedback_type || "text",
-			feedbackText: task.feedback_text || null,
-			feedbackFile: task.feedback_file || null,
-			feedbackFileName: task.feedback_file_name || null,
-			feedbackFileSize: task.feedback_file_size || null,
-			feedbackFileType: task.feedback_file_type || null,
-			feedbackSubmittedAt: task.feedback_submitted_at?.toISOString() || null,
-			attachments: task.attachments ? JSON.parse(task.attachments) : [],
-			comments:
-				task.comments?.map((c: any) => ({
-					id: c.id.toString(),
-					userId: c.user_id.toString(),
-					userName: c.user
-						? `${c.user.first_name || ""} ${c.user.last_name || ""}`.trim()
-						: "Nieznany",
-					content: c.content,
-					createdAt: c.created_at.toISOString(),
-				})) || [],
-		}));
-
-		console.log(`✅ [BACKEND] Znaleziono ${mappedTasks.length} zadań`);
-
-		res.json(mappedTasks);
-	} catch (error) {
-		logger.error("❌ Błąd pobierania zadań:", error);
-		res.status(500).json({ error: "Nie udało się pobrać zadań" });
-	}
-});
 
 // POST /api/tasks - utwórz nowe zadanie
 app.post("/api/tasks", authMiddleware, async (req: any, res) => {
@@ -5687,35 +5807,196 @@ app.post(
 		}
 	},
 );
-// DELETE /api/tasks/:id - usuń zadanie
-app.delete("/api/tasks/:id", authMiddleware, async (req: any, res) => {
+// W backend/src/server.ts
+// W backend/src/server.ts - zastąp istniejący endpoint DELETE
+app.delete("/api/tasks/:id", authMiddleware, async (req: any, res: any) => {
 	try {
-		const { id } = req.params;
-		const userRole = req.user?.role;
+		const taskId = parseInt(req.params.id);
+		const userId = req.user?.id;
 
-		const taskId = parseInt(id);
-		if (isNaN(taskId)) {
-			return res.status(400).json({ error: "Nieprawidłowe ID zadania" });
+		console.log(`🗑️ DELETE /api/tasks/${taskId} - user: ${userId}`);
+
+		// Pobierz zadanie
+		const task = await prisma.task.findUnique({
+			where: { id: taskId },
+			include: {
+				assignedTo: true,
+			},
+		});
+
+		if (!task) {
+			return res.status(404).json({ error: "Zadanie nie istnieje" });
 		}
 
+		// Pobierz użytkownika
+		const user = await prisma.user.findUnique({
+			where: { id: userId },
+		});
+
+		if (!user) {
+			return res.status(404).json({ error: "Użytkownik nie znaleziony" });
+		}
+
+		// Pobierz role użytkownika
+		const userRole = await prisma.roles.findUnique({
+			where: { id: user.role_id || 4 },
+		});
+
+		const roleName = userRole?.name || "member";
+
+		// ============================================================
+		// 🔥 SPRAWDZANIE UPRAWNIEŃ
+		// ============================================================
+		let canDelete = false;
+
+		// 1. Admin, Zarząd, Prezes, Wiceprezes - zawsze mogą
 		if (
-			userRole !== "admin" &&
-			userRole !== "board" &&
-			userRole !== "coordinator"
+			roleName === "admin" ||
+			roleName === "board" ||
+			roleName === "Prezes" ||
+			roleName === "Wiceprezes"
 		) {
-			return res
-				.status(403)
-				.json({ error: "Brak uprawnień do usuwania zadań" });
+			canDelete = true;
+			console.log("✅ Admin/Zarząd/Prezes - może usuwać");
 		}
 
+		// 2. Sprawdź czy użytkownik jest liderem (koordynatorem)
+		const isLeader = await prisma.teamMember.findFirst({
+			where: {
+				user_id: userId,
+				is_leader: true,
+			},
+		});
+
+		if (isLeader) {
+			// 2a. Sprawdź czy zadanie ma filar i czy pasuje do filaru użytkownika
+			if (task.pillar && user.pillars && user.pillars.includes(task.pillar)) {
+				canDelete = true;
+				console.log(
+					`✅ Koordynator - może usuwać (filar pasuje: ${task.pillar})`,
+				);
+			}
+			// 2b. Sprawdź czy zadanie jest w zespole użytkownika
+			else if (task.assigned_group && user.team === task.assigned_group) {
+				canDelete = true;
+				console.log(
+					`✅ Koordynator - może usuwać (zespół pasuje: ${task.assigned_group})`,
+				);
+			}
+			// 2c. Koordynator może usuwać zadania przypisane do niego
+			else if (task.assigned_to === userId) {
+				canDelete = true;
+				console.log(
+					"✅ Koordynator - może usuwać (zadanie przypisane do niego)",
+				);
+			}
+		}
+
+		// 3. Twórca zadania może usuwać
+		if (task.created_by === userId) {
+			canDelete = true;
+			console.log("✅ Twórca zadania - może usuwać");
+		}
+
+		console.log(`📊 canDelete: ${canDelete}`);
+		console.log(`📌 task.pillar: ${task.pillar}`);
+		console.log(`📌 user.pillars: ${user.pillars}`);
+
+		if (!canDelete) {
+			return res.status(403).json({
+				error: "Brak uprawnień do usuwania zadań",
+				details: {
+					role: roleName,
+					isLeader: !!isLeader,
+					taskPillar: task.pillar,
+					userPillars: user.pillars,
+					assignedTo: task.assigned_to,
+					createdBy: task.created_by,
+				},
+			});
+		}
+
+		// Usuń zadanie
 		await prisma.task.delete({
 			where: { id: taskId },
 		});
 
-		res.status(204).send();
+		console.log(`✅ Usunięto zadanie ${taskId} - "${task.title}"`);
+		res.json({ success: true });
 	} catch (error) {
-		logger.error("❌ Błąd usuwania zadania:", error);
+		console.error("❌ Błąd usuwania:", error);
 		res.status(500).json({ error: "Nie udało się usunąć zadania" });
+	}
+});
+// 🔥 NOWY ENDPOINT - logowanie przez Google z access_token
+app.post("/api/auth/google-token", async (req: any, res: any) => {
+	try {
+		const { accessToken } = req.body;
+
+		// Pobierz dane użytkownika z Google
+		const userInfoRes = await fetch(
+			"https://www.googleapis.com/oauth2/v3/userinfo",
+			{
+				headers: {
+					Authorization: `Bearer ${accessToken}`,
+				},
+			},
+		);
+
+		if (!userInfoRes.ok) {
+			return res.status(400).json({ error: "Nieprawidłowy token Google" });
+		}
+
+		const userInfo = await userInfoRes.json();
+
+		if (!userInfo.email) {
+			return res.status(400).json({ error: "Brak email w profilu Google" });
+		}
+
+		// Znajdź użytkownika w systemie
+		const user = await prisma.user.findUnique({
+			where: { email: userInfo.email },
+		});
+
+		if (!user) {
+			return res
+				.status(404)
+				.json({ error: "Użytkownik nie istnieje w systemie" });
+		}
+
+		// Wygeneruj własny JWT
+		const token = jwt.sign(
+			{
+				id: user.id,
+				email: user.email,
+				role: mapRoleId(user.role_id),
+				first_name: user.first_name,
+				last_name: user.last_name,
+			},
+			JWT_SECRET,
+			{ expiresIn: "24h" },
+		);
+
+		const refreshToken = jwt.sign({ id: user.id }, JWT_SECRET, {
+			expiresIn: "7d",
+		});
+
+		res.json({
+			accessToken: token,
+			refreshToken: refreshToken,
+			user: {
+				id: user.id,
+				email: user.email,
+				first_name: user.first_name,
+				last_name: user.last_name,
+				role: mapRoleId(user.role_id),
+				team: user.team,
+				status: user.status,
+			},
+		});
+	} catch (error) {
+		console.error("❌ Błąd logowania przez Google token:", error);
+		res.status(500).json({ error: "Błąd logowania" });
 	}
 });
 app.get("/api/admin/available-users", authMiddleware, async (req: any, res) => {

@@ -8,12 +8,14 @@ import {
 	Megaphone,
 	Settings,
 	CheckSquare,
+	Calendar,
 } from "lucide-react";
 
 export const NAV_ITEMS = [
 	{ key: "dashboard", label: "Panel główny", icon: Home },
 	{ key: "structure", label: "Struktura SM", icon: Users },
 	{ key: "projects", label: "Projekty", icon: FolderKanban },
+	{ key: "calendar", label: "Kalendarz", icon: Calendar },
 	{ key: "tasks", label: "Zadania", icon: CheckSquare },
 	{ key: "guides", label: "Poradniki", icon: BookOpen },
 	{ key: "members", label: "Członkowie", icon: Users },

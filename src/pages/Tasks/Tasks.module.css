@@ -746,6 +746,7 @@
 
 .detailSection {
 	margin-bottom: 16px;
+	width: 100%;
 }
 
 .detailSectionTitle {
@@ -1102,6 +1103,7 @@
    ============================================================ */
 
 .commentsSection {
+	width: 100% !important;
 	margin-top: 16px;
 	padding-top: 16px;
 	border-top: 1px solid #e2e8f0;
@@ -1210,7 +1212,7 @@
 	border-radius: 8px;
 	font-size: 14px;
 	font-family: inherit;
-	resize: vertical;
+	resize: none;
 	min-height: 44px;
 	max-height: 100px;
 	outline: none;
@@ -1274,4 +1276,192 @@
 	.commentsList {
 		max-height: 200px;
 	}
+}
+
+/* ============================================================
+   STYLE DLA INPUT FILE W TASKDETAILMODAL
+   ============================================================ */
+
+.fileInputWrapper {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	padding: 12px 16px;
+	border: 2px dashed #d1d5db;
+	border-radius: 12px;
+	background: #f9fafb;
+	transition: all 0.2s ease;
+	cursor: pointer;
+}
+
+.fileInputWrapper:hover {
+	border-color: #8b5cf6;
+	background: #f3f4f6;
+}
+
+.fileInputWrapper input[type="file"] {
+	display: none;
+}
+
+.fileInputLabel {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	font-size: 14px;
+	color: #6b7280;
+	cursor: pointer;
+	width: 100%;
+}
+
+.fileInputLabel svg {
+	flex-shrink: 0;
+	color: #8b5cf6;
+}
+
+.fileInputText {
+	flex: 1;
+}
+
+.fileName {
+	font-size: 13px;
+	color: #1f2937;
+	font-weight: 500;
+	word-break: break-all;
+}
+
+.fileRemoveBtn {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: 4px;
+	background: none;
+	border: none;
+	color: #9ca3af;
+	cursor: pointer;
+	border-radius: 6px;
+	transition: all 0.2s;
+}
+
+.fileRemoveBtn:hover {
+	color: #ef4444;
+	background: #fef2f2;
+}
+/* ============================================================
+   STYLE DLA PRZYCISKU POBIERANIA ZAŁĄCZNIKA
+   ============================================================ */
+
+.feedbackFile {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	padding: 10px 14px;
+	background: #f9fafb;
+	border: 1px solid #e5e7eb;
+	border-radius: 10px;
+	margin-top: 8px;
+	flex-wrap: wrap;
+}
+
+.feedbackFile strong {
+	font-size: 13px;
+	font-weight: 600;
+	color: #374151;
+}
+
+.feedbackDownloadBtn {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	padding: 6px 14px;
+	background: transparent;
+	border: 1px solid #d1d5db;
+	border-radius: 8px;
+	font-size: 13px;
+	font-weight: 500;
+	color: #1f2937;
+	cursor: pointer;
+	transition: all 0.2s ease;
+	text-decoration: none;
+}
+
+.feedbackDownloadBtn:hover {
+	background: #f3f4f6;
+	border-color: #9ca3af;
+}
+
+.feedbackDownloadBtn:active {
+	transform: scale(0.97);
+}
+
+/* ============================================================
+   STYLE DLA OCENY ZADANIA W DETAIL MODAL
+   ============================================================ */
+
+.ratingDisplay {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	padding: 12px 16px;
+	background: #f8fafc;
+	border-radius: 12px;
+	border: 1px solid #e5e7eb;
+}
+
+.ratingStars {
+	display: flex;
+	align-items: center;
+	gap: 2px;
+}
+
+.ratingStar {
+	font-size: 24px;
+	color: #d1d5db;
+	transition: color 0.2s;
+	line-height: 1;
+}
+
+.ratingStarFilled {
+	color: #f59e0b;
+}
+
+.ratingValue {
+	font-size: 16px;
+	font-weight: 600;
+	color: #1f2937;
+	margin-left: 8px;
+}
+
+.ratingComment {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	padding-top: 8px;
+	border-top: 1px solid #e5e7eb;
+}
+
+.ratingComment strong {
+	font-size: 13px;
+	font-weight: 600;
+	color: #4b5563;
+}
+
+.ratingComment p {
+	margin: 0;
+	font-size: 14px;
+	color: #1f2937;
+	line-height: 1.5;
+}
+
+.ratingMeta {
+	display: flex;
+	gap: 16px;
+	font-size: 12px;
+	color: #6b7280;
+	padding-top: 4px;
+}
+
+.ratingMeta span {
+	display: flex;
+	align-items: center;
+	gap: 4px;
 }

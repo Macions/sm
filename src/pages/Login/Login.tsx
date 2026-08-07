@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import { safeNavigate } from "@/utils/safeNavigation";
 import { useUser } from "@/context/UserContext";
 import { useNavigate } from "react-router-dom";
-import { GoogleLogin } from "@react-oauth/google";
+import { GoogleLogin, useGoogleLogin } from "@react-oauth/google";
 import styles from "./Login.module.css";
 import { logger } from "@/utils/logger";
 
@@ -15,7 +15,7 @@ const Login: React.FC = () => {
 	const [error, setError] = useState<string | null>(null);
 
 	const navigate = useNavigate();
-	const { refetch } = useUser();  // ← DODAJ
+	const { refetch } = useUser();
 
 	const getGreeting = () => {
 		const hour = new Date().getHours();
@@ -25,10 +25,9 @@ const Login: React.FC = () => {
 		return "Fioletowego dnia!";
 	};
 
+	// 🔥 NOWA FUNKCJA - logowanie przez Google z zakresami kalendarza
 	const handleGoogleSuccess = async (credentialResponse: any) => {
 		logger.debug("🚀 === ROZPOCZĘCIE LOGOWANIA PRZEZ GOOGLE ===");
-		logger.debug("Pełny credentialResponse:", credentialResponse);
-		logger.debug("credential:", credentialResponse?.credential);
 		setLoading(true);
 		setError(null);
 
@@ -43,28 +42,19 @@ const Login: React.FC = () => {
 				}),
 			});
 
-			logger.debug("📡 Status odpowiedzi google login:", response.status);
-
 			const data = await response.json();
 
 			if (!response.ok) {
-				logger.debug("❌ Błąd logowania przez Google:", data);
-
 				throw new Error(data.error || "Błąd logowania przez Google");
 			}
-
-			logger.debug("✅ Logowanie przez Google poprawne");
 
 			localStorage.setItem("accessToken", data.accessToken);
 			localStorage.setItem("refreshToken", data.refreshToken);
 			localStorage.setItem("user", JSON.stringify(data.user));
 
-			// 🔥 DODAJ - odśwież dane usera z profilu
 			await refetch();
-
 			await checkOnboardingStatus();
 		} catch (error) {
-			logger.debug("❌ BŁĄD logowania przez Google:", error);
 			setError(
 				error instanceof Error
 					? error.message
@@ -76,20 +66,72 @@ const Login: React.FC = () => {
 	};
 
 	const handleGoogleError = () => {
-		logger.debug("❌ Błąd logowania przez Google");
 		setError("Nie udało się zalogować przez Google. Spróbuj ponownie.");
 	};
 
-	const checkOnboardingStatus = async () => {
-		logger.debug("🔍 === ROZPOCZĘCIE SPRAWDZANIA ONBOARDINGU ===");
+	const loginWithCalendarScopes = useGoogleLogin({
+		onSuccess: async (tokenResponse) => {
+			logger.debug("✅ Logowanie z zakresami kalendarza - sukces!");
 
+			setLoading(true);
+			setError(null);
+
+			try {
+				// 🔥 UŻYJ TOKENA GOOGLE JAKO CREDENTIAL
+				// Tak jak w standardowym handleGoogleSuccess
+				const response = await fetch("/api/auth/google", {
+					method: "POST",
+					headers: {
+						"Content-Type": "application/json",
+					},
+					body: JSON.stringify({
+						credential: tokenResponse.access_token, // ✅ TO JEST KLUCZOWE!
+					}),
+				});
+
+				const data = await response.json();
+
+				if (!response.ok) {
+					throw new Error(data.error || "Błąd logowania przez Google");
+				}
+
+				// ✅ ZAPISZ TOKEN Z BACKENDU
+				localStorage.setItem("accessToken", data.accessToken);
+				localStorage.setItem("refreshToken", data.refreshToken);
+				localStorage.setItem("user", JSON.stringify(data.user));
+
+				logger.debug("🔑 Token zapisany w localStorage");
+
+				await refetch();
+				await checkOnboardingStatus();
+			} catch (error) {
+				logger.error("❌ Błąd logowania:", error);
+				setError(
+					error instanceof Error
+						? error.message
+						: "Wystąpił błąd podczas logowania",
+				);
+			} finally {
+				setLoading(false);
+			}
+		},
+		onError: (error) => {
+			logger.error("❌ Błąd logowania Google:", error);
+			setError(
+				"Nie udało się zalogować z dostępem do kalendarza. Spróbuj ponownie.",
+			);
+		},
+		scope: [
+			"email",
+			"profile",
+			"https://www.googleapis.com/auth/calendar.events",
+			"https://www.googleapis.com/auth/calendar.readonly",
+		].join(" "),
+	});
+
+	const checkOnboardingStatus = async () => {
 		try {
 			const token = localStorage.getItem("accessToken");
-			logger.debug(
-				"🔑 Token do sprawdzenia onboardingu:",
-				token ? "Jest (długość: " + token.length + ")" : "BRAK",
-			);
-
 			const onboardingResponse = await fetch("/api/auth/onboarding-status", {
 				method: "GET",
 				headers: {
@@ -98,30 +140,16 @@ const Login: React.FC = () => {
 				},
 			});
 
-			logger.debug(
-				"📡 Status odpowiedzi onboarding-status:",
-				onboardingResponse.status,
-			);
-
 			let onboardingCompleted = false;
 
 			if (onboardingResponse.ok) {
 				const rawResponse = await onboardingResponse.json();
-				logger.debug("📋 Pełna odpowiedź API onboarding-status:", rawResponse);
 				onboardingCompleted = rawResponse.completed === true;
-			} else {
-				logger.debug(
-					`⚠️ Błąd sprawdzania onboardingu (${onboardingResponse.status})`,
-				);
-				onboardingCompleted = false;
 			}
 
 			localStorage.setItem(
 				"onboardingCompleted",
 				onboardingCompleted ? "true" : "false",
-			);
-			logger.debug(
-				`💾 Zapisano w localStorage onboardingCompleted = ${onboardingCompleted ? "true" : "false"}`,
 			);
 
 			if (onboardingCompleted) {
@@ -130,7 +158,6 @@ const Login: React.FC = () => {
 				safeNavigate("/onboarding", navigate);
 			}
 		} catch (onboardingError) {
-			logger.debug("❌ BŁĄD podczas sprawdzania onboardingu:", onboardingError);
 			localStorage.setItem("onboardingCompleted", "false");
 			safeNavigate("/onboarding", navigate);
 		}
@@ -140,8 +167,6 @@ const Login: React.FC = () => {
 		e.preventDefault();
 		setLoading(true);
 		setError(null);
-
-		logger.debug("🚀 === ROZPOCZĘCIE PROCESU LOGOWANIA ===");
 
 		try {
 			const response = await fetch("/api/auth/login", {
@@ -155,27 +180,19 @@ const Login: React.FC = () => {
 				}),
 			});
 
-			logger.debug("📡 Status odpowiedzi login:", response.status);
-
 			const data = await response.json();
 
 			if (!response.ok) {
-				logger.debug("❌ Błąd logowania:", data);
 				throw new Error(data.error || "Błąd logowania");
 			}
-
-			logger.debug("✅ Logowanie poprawne");
 
 			localStorage.setItem("accessToken", data.accessToken);
 			localStorage.setItem("refreshToken", data.refreshToken);
 			localStorage.setItem("user", JSON.stringify(data.user));
 
-			// 🔥 DODAJ - odśwież dane usera z profilu
 			await refetch();
-
 			await checkOnboardingStatus();
 		} catch (error) {
-			logger.debug("❌ BŁĄD logowania:", error);
 			setError(
 				error instanceof Error
 					? error.message
@@ -183,10 +200,9 @@ const Login: React.FC = () => {
 			);
 		} finally {
 			setLoading(false);
-			logger.debug("⏱️ Proces logowania zakończony");
 		}
 	};
-	logger.debug("GOOGLE CLIENT ID:", import.meta.env.VITE_GOOGLE_CLIENT_ID);
+
 	return (
 		<div className={styles.loginContainer}>
 			<div className={styles.loginCard}>
@@ -266,6 +282,7 @@ const Login: React.FC = () => {
 							<span>lub</span>
 						</div>
 
+						{/* 🔥 STANDARDOWE LOGOWANIE GOOGLE */}
 						<div className={styles.googleButtonWrapper}>
 							<GoogleLogin
 								onSuccess={handleGoogleSuccess}
@@ -278,6 +295,27 @@ const Login: React.FC = () => {
 								type="standard"
 								useOneTap={false}
 							/>
+						</div>
+
+						{/* 🔥 OPCJONALNIE - przycisk z dostępem do kalendarza */}
+						{/* 🔥 LOGOWANIE Z DOSTĘPEM DO KALENDARZA - UŻYWA STANDARDOWEGO GoogleLogin */}
+						<div className={styles.calendarScopeWrapper}>
+							<div className={styles.googleButtonWrapper}>
+								<GoogleLogin
+									onSuccess={handleGoogleSuccess}
+									onError={handleGoogleError}
+									theme="outline"
+									size="large"
+									text="signin_with"
+									shape="rectangular"
+									logo_alignment="left"
+									type="standard"
+									useOneTap={false}
+								/>
+							</div>
+							<span className={styles.calendarScopeInfo}>
+								🔐 Zaloguj się przez Google z dostępem do Kalendarza
+							</span>
 						</div>
 					</div>
 				</div>

@@ -255,7 +255,6 @@ body {
 	background: #106ebe;
 }
 
-
 @media (width <= 1024px) {
 	.loginCard {
 		width: 92vw;
@@ -279,7 +278,6 @@ body {
 		font-size: 24px;
 	}
 }
-
 
 @media (width <= 768px) {
 	html,
@@ -381,7 +379,6 @@ body {
 	}
 }
 
-
 @media (width <= 420px) {
 	.loginContainer {
 		padding: 12px;
@@ -423,7 +420,6 @@ body {
 	}
 }
 
-
 @media (height <= 650px) and (width <= 768px) {
 	.loginContainer {
 		padding: 10px;
@@ -453,8 +449,6 @@ body {
 		display: none;
 	}
 }
-
-
 
 .divider {
 	display: flex;
@@ -490,4 +484,49 @@ body {
 .googleButtonWrapper iframe {
 	width: 100% !important;
 	max-width: 300px;
+}
+
+/* W Login.module.css - na końcu pliku */
+
+.calendarScopeWrapper {
+	margin-top: 12px;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 6px;
+}
+
+.calendarScopeBtn {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 10px;
+	width: 100%;
+	padding: 10px 16px;
+	background: #fff;
+	border: 2px solid #4285f4;
+	border-radius: 8px;
+	color: #4285f4;
+	font-size: 14px;
+	font-weight: 500;
+	cursor: pointer;
+	transition: all 0.2s;
+}
+
+.calendarScopeBtn:hover:not(:disabled) {
+	background: #4285f4;
+	color: #fff;
+	transform: translateY(-1px);
+	box-shadow: 0 4px 12px rgba(66, 133, 244, 0.3);
+}
+
+.calendarScopeBtn:disabled {
+	opacity: 0.6;
+	cursor: not-allowed;
+}
+
+.calendarScopeInfo {
+	font-size: 12px;
+	color: #64748b;
+	text-align: center;
 }

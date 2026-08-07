@@ -1,7 +1,10 @@
 import { useUser } from "@/context/UserContext";
 import { useState, useEffect, useMemo } from "react";
 import { hasPermission } from "../../utils/permissions";
+import { toast } from "react-hot-toast";
+import React from "react";
 import { logger } from "@/utils/logger";
+import { ConfirmDialog } from "../../components/common/ConfirmDialog";
 import {
 	BookOpen,
 	Search,
@@ -107,7 +110,7 @@ const downloadFile = async (url: string, fileName: string) => {
 	try {
 		const fullUrl = url.startsWith("/uploads") ? `/api${url}` : url;
 
-		logger.debug("📥 Pobieranie:", fullUrl);
+		logger.debug("Pobieranie:", fullUrl);
 
 		const token = localStorage.getItem("accessToken");
 		const response = await fetch(fullUrl, {
@@ -121,7 +124,7 @@ const downloadFile = async (url: string, fileName: string) => {
 		}
 
 		const blob = await response.blob();
-		logger.debug("📦 Rozmiar pliku:", blob.size, "Typ:", blob.type);
+		logger.debug("Rozmiar pliku:", blob.size, "Typ:", blob.type);
 
 		const downloadUrl = window.URL.createObjectURL(blob);
 		const link = document.createElement("a");
@@ -134,9 +137,11 @@ const downloadFile = async (url: string, fileName: string) => {
 		setTimeout(() => {
 			window.URL.revokeObjectURL(downloadUrl);
 		}, 1000);
+
+		toast.success("Plik pobrany pomyślnie!"); // ← DODAJ
 	} catch (error) {
-		logger.error("❌ Błąd pobierania:", error);
-		alert("Nie udało się pobrać pliku");
+		logger.error("Błąd pobierania:", error);
+		toast.error("Nie udało się pobrać pliku"); // ← ZMIEŃ NA TOAST
 	}
 };
 
@@ -170,9 +175,9 @@ function TutorialCard({
 
 	const getAccessLabel = () => {
 		if (tutorial.access === "all") return "Dla wszystkich";
-		if (tutorial.access === "coordinator") return "🔒 Dla koordynatorów";
-		if (tutorial.access === "functional") return "🔒 Dla osób funkcyjnych";
-		return "🔒 Dla zarządu";
+		if (tutorial.access === "coordinator") return "Dla koordynatorów";
+		if (tutorial.access === "functional") return "Dla osób funkcyjnych";
+		return "Dla zarządu";
 	};
 
 	if (!canView) return null;
@@ -442,9 +447,15 @@ function TutorialModal({
 			const savedTutorial = await response.json();
 			onSave(savedTutorial);
 			onClose();
+			toast.success(
+				tutorial?.id
+					? "Poradnik został zaktualizowany!"
+					: "Poradnik został dodany!",
+			);
+			// NOWE
 		} catch (error) {
-			logger.error("❌ Błąd zapisu:", error);
-			alert("Nie udało się zapisać: " + (error as Error).message);
+			logger.error("Błąd zapisu:", error);
+			toast.error(`Nie udało się zapisać: ${(error as Error).message}`); // ← ZMIEŃ
 		} finally {
 			setIsUploading(false);
 			setLoading(false);
@@ -452,8 +463,9 @@ function TutorialModal({
 	};
 
 	const handleFileUpload = (file: File) => {
+		// NOWE
 		if (file.size > 10 * 1024 * 1024) {
-			alert("Plik jest za duży. Maksymalny rozmiar: 10MB");
+			toast.error("Plik jest za duży. Maksymalny rozmiar: 10MB"); // ← ZMIEŃ
 			return;
 		}
 
@@ -472,6 +484,7 @@ function TutorialModal({
 		}));
 
 		setNewAttachment({ name: "", url: "", size: "" });
+		toast.success(`Dodano plik: ${file.name}`);
 	};
 
 	const removeAttachment = async (index: number) => {
@@ -493,17 +506,25 @@ function TutorialModal({
 				if (!response.ok) {
 					throw new Error("Nie udało się usunąć pliku");
 				}
+				// NOWE - toast po udanym usunięciu z API
+				toast.success(`️ Usunięto plik: ${attachment.name}`);
 			} catch (error) {
-				logger.error("❌ Błąd usuwania pliku:", error);
-				alert("Nie udało się usunąć pliku");
+				logger.error("Błąd usuwania pliku:", error);
+				toast.error("Nie udało się usunąć pliku");
 				return;
 			}
+		} else if (attachment) {
+			// Jeśli nie ma ID (nowy plik nie zapisany w bazie)
+			toast.success(`️ Usunięto plik: ${attachment.name}`);
 		}
 
-		setFormData({
-			...formData,
-			attachments: formData.attachments?.filter((_, i) => i !== index) || [],
-		});
+		// Usuń z listy tylko jeśli attachment istnieje
+		if (attachment) {
+			setFormData({
+				...formData,
+				attachments: formData.attachments?.filter((_, i) => i !== index) || [],
+			});
+		}
 	};
 
 	const addAttachment = () => {
@@ -926,14 +947,21 @@ export default function Tutorials() {
 	);
 	const [isModalOpen, setIsModalOpen] = useState(false);
 	const [editingTutorial, setEditingTutorial] = useState<Tutorial | null>(null);
-
+	const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+	const [deletingTutorialId, setDeletingTutorialId] = useState<string | null>(
+		null,
+	);
+	const [deletingTutorialTitle, setDeletingTutorialTitle] =
+		useState<string>("");
 	const currentUser = useMemo(() => {
 		if (!contextUser) return null;
 		return {
 			id: String(contextUser.id),
 			name: `${contextUser.firstName} ${contextUser.lastName}`,
+			// ROZSZERZ TYP - dodaj "admin" i "board"
 			role: contextUser.role as
 				| "admin"
+				| "board"
 				| "coordinator"
 				| "functional"
 				| "member",
@@ -941,12 +969,29 @@ export default function Tutorials() {
 				(contextUser as any).function ||
 				(contextUser as any).functional_role ||
 				"",
+			isLeader: (contextUser as any).isLeader === true,
+			isTeamCoordinator: (contextUser as any).isTeamCoordinator === true,
+			isPillarCoordinator: (contextUser as any).isPillarCoordinator === true,
 		};
 	}, [contextUser]);
 
-	const canManageTutorials = currentUser
-		? hasPermission(currentUser.role, "canManageGuides")
-		: false;
+	// Kto może zarządzać poradnikami?
+	const canManageTutorials = useMemo(() => {
+		if (!currentUser) return false;
+
+		// Admin i Zarząd zawsze mogą
+		if (currentUser.role === "admin" || currentUser.role === "board") {
+			return true;
+		}
+
+		// Koordynator/Lider może zarządzać
+		if (currentUser.isLeader === true) {
+			return true;
+		}
+
+		// Sprawdź uprawnienia
+		return hasPermission(currentUser.role, "canManageGuides");
+	}, [currentUser]);
 	useEffect(() => {
 		const fetchUserAndTutorials = async () => {
 			try {
@@ -967,7 +1012,7 @@ export default function Tutorials() {
 				const tutorialsData = await tutorialsResponse.json();
 				setTutorials(tutorialsData);
 			} catch (error) {
-				logger.error("❌ Błąd:", error);
+				logger.error("Błąd:", error);
 				setTutorials([]);
 			} finally {
 				setLoading(false);
@@ -977,16 +1022,35 @@ export default function Tutorials() {
 		fetchUserAndTutorials();
 	}, []);
 	const canViewTutorial = (tutorial: Tutorial): boolean => {
-		if (tutorial.access === "all") return true;
+		// Admin i Zarząd widzą wszystko
 		if (
-			tutorial.access === "coordinator" &&
-			hasPermission(currentUser?.role, "canManageGuides")
-		)
-			return true;
-		if (
-			tutorial.access === "functional" &&
-			hasPermission(currentUser?.role, "canManageGuides")
+			(currentUser?.role as any) === "admin" ||
+			(currentUser?.role as any) === "board"
 		) {
+			return true;
+		}
+
+		// Koordynatorzy widzą więcej
+		const isCoordinator = currentUser?.isLeader === true;
+
+		if (tutorial.access === "all") return true;
+
+		if (tutorial.access === "coordinator") {
+			return (
+				isCoordinator ||
+				currentUser?.role === "admin" ||
+				currentUser?.role === "board"
+			);
+		}
+
+		if (tutorial.access === "functional") {
+			if (
+				isCoordinator ||
+				currentUser?.role === "admin" ||
+				currentUser?.role === "board"
+			) {
+				return true;
+			}
 			if (tutorial.functionalRoles) {
 				if (!currentUser) return false;
 				return tutorial.functionalRoles.includes(
@@ -995,11 +1059,11 @@ export default function Tutorials() {
 			}
 			return true;
 		}
-		if (
-			tutorial.access === "board" &&
-			hasPermission(currentUser?.role, "canManageTeams")
-		)
-			return true;
+
+		if (tutorial.access === "board") {
+			return currentUser?.role === "admin" || currentUser?.role === "board";
+		}
+
 		return false;
 	};
 
@@ -1031,13 +1095,18 @@ export default function Tutorials() {
 		setIsModalOpen(true);
 	};
 
-	const handleDeleteTutorial = async (id: string) => {
-		if (!window.confirm("Czy na pewno chcesz usunąć ten poradnik?")) return;
+	const handleDeleteTutorial = (id: string, title: string) => {
+		setDeletingTutorialId(id);
+		setDeletingTutorialTitle(title);
+		setIsDeleteDialogOpen(true);
+	};
+	const confirmDeleteTutorial = async () => {
+		if (!deletingTutorialId) return;
 
 		try {
 			const token = localStorage.getItem("accessToken");
 
-			const response = await fetch(`/api/tutorials/${id}`, {
+			const response = await fetch(`/api/tutorials/${deletingTutorialId}`, {
 				method: "DELETE",
 				headers: {
 					Authorization: `Bearer ${token}`,
@@ -1048,6 +1117,7 @@ export default function Tutorials() {
 				throw new Error("Błąd usuwania");
 			}
 
+			// Odśwież listę
 			const fetchResponse = await fetch("/api/tutorials", {
 				headers: {
 					Authorization: `Bearer ${token}`,
@@ -1056,14 +1126,19 @@ export default function Tutorials() {
 			});
 			const allTutorials = await fetchResponse.json();
 			setTutorials(allTutorials);
+
+			toast.success(`🗑️ Poradnik "${deletingTutorialTitle}" został usunięty!`);
 		} catch (error) {
 			logger.error("❌ Błąd usuwania:", error);
-			alert("Nie udało się usunąć poradnika");
+			toast.error("❌ Nie udało się usunąć poradnika");
+		} finally {
+			setIsDeleteDialogOpen(false);
+			setDeletingTutorialId(null);
+			setDeletingTutorialTitle("");
 		}
 	};
-
 	const handleSaveTutorial = async (savedTutorial: Tutorial) => {
-		logger.debug("✅ Otrzymano zapisany poradnik:", savedTutorial);
+		logger.debug("Otrzymano zapisany poradnik:", savedTutorial);
 
 		try {
 			const token = localStorage.getItem("accessToken");
@@ -1082,9 +1157,9 @@ export default function Tutorials() {
 			const allTutorials = await response.json();
 			setTutorials(allTutorials);
 
-			logger.debug("✅ Odświeżono listę poradników");
+			logger.debug("Odświeżono listę poradników");
 		} catch (error) {
-			logger.error("❌ Błąd odświeżania:", error);
+			logger.error("Błąd odświeżania:", error);
 
 			setTutorials((prev) => {
 				const exists = prev.some((t) => t.id === savedTutorial.id);
@@ -1244,14 +1319,33 @@ export default function Tutorials() {
 					</div>
 				) : (
 					filteredTutorials.map((tutorial) => (
-						<TutorialCard
-							key={tutorial.id}
-							tutorial={tutorial}
-							onEdit={handleEditTutorial}
-							onDelete={handleDeleteTutorial}
-							canEdit={canManageTutorials}
-							canView={canViewTutorial(tutorial)}
-						/>
+						<React.Fragment key={tutorial.id}>
+							{" "}
+							{/* ✅ LUB <> */}
+							<TutorialCard
+								key={tutorial.id}
+								tutorial={tutorial}
+								onEdit={handleEditTutorial}
+								onDelete={() =>
+									handleDeleteTutorial(tutorial.id, tutorial.title)
+								}
+								canEdit={canManageTutorials}
+								canView={canViewTutorial(tutorial)}
+							/>
+							<ConfirmDialog
+								isOpen={isDeleteDialogOpen}
+								title="Usuń poradnik"
+								message={`Czy na pewno chcesz usunąć poradnik "${deletingTutorialTitle}"? Tej operacji nie można cofnąć.`}
+								confirmText="Usuń"
+								cancelText="Anuluj"
+								onConfirm={confirmDeleteTutorial}
+								onCancel={() => {
+									setIsDeleteDialogOpen(false);
+									setDeletingTutorialId(null);
+									setDeletingTutorialTitle("");
+								}}
+							/>
+						</React.Fragment>
 					))
 				)}
 			</div>

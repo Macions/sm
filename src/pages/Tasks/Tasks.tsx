@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { toast } from "react-hot-toast";
+import { ConfirmDialog } from "../../components/common/ConfirmDialog";
 import {
 	Plus,
 	Search,
@@ -14,10 +15,13 @@ import {
 	X,
 	FolderKanban,
 	Send,
+	File as FileIcon,
 	MessageCircle,
 } from "lucide-react";
+import { FiInfo } from "react-icons/fi";
 import styles from "./Tasks.module.css";
 import { logger } from "@/utils/logger";
+import { TaskRatingModal } from "./TaskRatingModal";
 
 type TaskStatus = "todo" | "in_progress" | "review" | "done";
 type TaskPriority = "low" | "medium" | "high" | "urgent";
@@ -47,7 +51,7 @@ type Task = {
 	feedbackFileSize?: number;
 	feedbackFileType?: string;
 	feedbackSubmittedAt?: string;
-	// 🔥 NOWE POLA
+	// NOWE POLA
 	assignedType?: "user" | "team" | "pillar" | "role";
 	assignedGroup?: string;
 	isRecurring?: boolean;
@@ -69,13 +73,19 @@ type Task = {
 		createdAt: string;
 	}[];
 	pillar?: string;
+	// ✅ DODAJ TE POLA
+	rating?: number;
+	rating_comment?: string;
+	rated_at?: string;
+	rated_by?: string;
+	rated_by_name?: string;
 };
 
 type User = {
 	id: string;
 	name: string;
 	role: string;
-	// 🔥 NOWE POLA Z BAZY
+	// NOWE POLA Z BAZY
 	teamId?: string;
 	teamName?: string;
 	pillarId?: string;
@@ -88,7 +98,7 @@ type User = {
 const STATUS_LABELS: Record<TaskStatus, string> = {
 	todo: "Do zrobienia",
 	in_progress: "W trakcie",
-	review: "Do review",
+	review: "Do weryfikacji",
 	done: "Zakończone",
 };
 
@@ -112,27 +122,44 @@ const PRIORITY_COLORS: Record<TaskPriority, string> = {
 	high: styles.priorityHigh,
 	urgent: styles.priorityUrgent,
 };
-// ✅ SPRAWDZANIE CZY UŻYTKOWNIK MOŻE ZARZĄDZAĆ
-const canManageUser = (user: User): boolean => {
-	if (!user) return false;
-
-	// Admin i Zarząd (specjalne role) - zawsze mogą
+// SPRAWDZANIE CZY UŻYTKOWNIK MOŻE ZARZĄDZAĆ
+// ZASTĄP STARĄ FUNKCJĘ canManageUser() TĄ:
+// SPRAWDZANIE CZY UŻYTKOWNIK MOŻE ZARZĄDZAĆ KONKRETNYM ZADANIEM
+const canManageTask = (user: User, task: Task): boolean => {
+	// 1. Admin i Zarząd - zawsze mogą usuwać
 	if (user.role === "admin" || user.role === "board") {
 		return true;
 	}
 
-	// Lider/koordynator - może zarządzać
-	if (user.isLeader === true) {
-		return true;
-	}
-
-	// Jeśli ktoś ma specjalną rolę (np. Prezes, Wiceprezes) - może zarządzać
+	// 2. Prezes/Wiceprezes - zawsze mogą usuwać
 	if (user.role === "Prezes" || user.role === "Wiceprezes") {
 		return true;
 	}
 
+	// 3. Sprawdź czy użytkownik jest liderem/koordynatorem
+	if (user.isLeader === true) {
+		// 3a. Koordynator filaru - może usuwać tylko zadania z swojego filaru
+		if (user.pillarName && task.pillar && task.pillar === user.pillarName) {
+			return true;
+		}
+
+		// 3b. Koordynator zespołu - może usuwać tylko zadania z swojego zespołu
+		if (
+			user.teamName &&
+			task.assignedGroup &&
+			task.assignedGroup === user.teamName
+		) {
+			return true;
+		}
+
+		// 3c. Koordynator zespołu - może usuwać zadania przypisane do członków jego zespołu
+		// (to wymaga dostępu do listy members, więc pomijamy w tej funkcji)
+		// Można to sprawdzać w komponencie jeśli potrzebne
+	}
+
 	return false;
 };
+
 interface TaskCardProps {
 	task: Task;
 	currentUser: User;
@@ -362,26 +389,64 @@ function FeedbackModal({
 								<label className={styles.modal__label}>
 									Załącz plik <span className={styles.modal__required}>*</span>
 								</label>
-								<input
-									type="file"
-									className={`${styles.modal__input} ${errors.file ? styles.modal__inputError : ""}`}
-									onChange={(e) => {
-										if (e.target.files && e.target.files.length > 0) {
-											setFile(e.target.files[0]);
-											if (errors.file) setErrors({ ...errors, file: "" });
-										}
-									}}
-								/>
+
+								{/* ✅ NOWY INPUT FILE */}
+								<div className={styles.fileInputWrapper}>
+									<input
+										type="file"
+										id="feedbackFileInput"
+										className={styles.fileInputHidden}
+										onChange={(e) => {
+											if (e.target.files && e.target.files.length > 0) {
+												setFile(e.target.files[0]);
+												if (errors.file) setErrors({ ...errors, file: "" });
+											}
+										}}
+									/>
+									<label
+										htmlFor="feedbackFileInput"
+										className={styles.fileInputLabel}
+									>
+										<FileIcon size={18} />
+
+										<span className={styles.fileInputText}>
+											{file ? (
+												<span className={styles.fileName}>{file.name}</span>
+											) : (
+												"Kliknij lub przeciągnij plik"
+											)}
+										</span>
+										{file && (
+											<button
+												type="button"
+												className={styles.fileRemoveBtn}
+												onClick={(e) => {
+													e.stopPropagation();
+													setFile(null);
+													// Reset input
+													const input = document.getElementById(
+														"feedbackFileInput",
+													) as HTMLInputElement;
+													if (input) input.value = "";
+												}}
+											>
+												<X size={14} />
+											</button>
+										)}
+									</label>
+								</div>
+
 								{errors.file && (
 									<span className={styles.modal__error}>{errors.file}</span>
 								)}
 								{file && (
 									<p className={styles.fileInfo}>
-										📎 {file.name} ({(file.size / 1024).toFixed(1)} KB)
+										{file.name} ({(file.size / 1024).toFixed(1)} KB)
 									</p>
 								)}
 							</div>
 						)}
+						{/* Ocena zadania */}
 					</div>
 
 					<div className={styles.modal__actions}>
@@ -431,10 +496,16 @@ function TaskDetailModal({
 			// 🔥 DEKODUJ NAZWĘ PLIKU
 			const decodedFileName = decodeURIComponent(fileName);
 
-			console.log("📁 Pobieram plik z:", fileUrl);
+			// 🔥 DODAJ /api/ PRZED URL
+			let fullUrl = fileUrl;
+			if (fileUrl.startsWith("/uploads")) {
+				fullUrl = `/api${fileUrl}`;
+			}
+
+			console.log("📁 Pobieram plik z:", fullUrl);
 			console.log("📁 Nazwa pliku:", decodedFileName);
 
-			const response = await fetch(fileUrl, {
+			const response = await fetch(fullUrl, {
 				headers: {
 					Authorization: `Bearer ${token}`,
 				},
@@ -445,35 +516,29 @@ function TaskDetailModal({
 			}
 
 			const blob = await response.blob();
-
-			// 🔥 SPRAWDŹ CZY TO NA PEWNO PDF
-			if (
-				blob.type !== "application/pdf" &&
-				!fileName.toLowerCase().endsWith(".pdf")
-			) {
-				console.warn("⚠️ Nieoczekiwany typ pliku:", blob.type);
-			}
-
 			const url = window.URL.createObjectURL(blob);
 			const link = document.createElement("a");
 			link.href = url;
-			link.download = decodedFileName; // UŻYJ ZDEKODOWANEJ NAZWY
+			link.download = decodedFileName;
 			document.body.appendChild(link);
 			link.click();
 			document.body.removeChild(link);
-			window.URL.revokeObjectURL(url);
 
-			toast.success("Plik pobrany!");
+			setTimeout(() => {
+				window.URL.revokeObjectURL(url);
+			}, 5000);
+
+			toast.success("✅ Plik pobrany!");
 		} catch (error) {
 			console.error("❌ Błąd pobierania pliku:", error);
-			toast.error("Nie udało się pobrać pliku");
+			toast.error("❌ Nie udało się pobrać pliku");
 		}
 	};
 	const getStatusLabel = (status: TaskStatus) => {
 		const labels: Record<TaskStatus, string> = {
 			todo: "Do zrobienia",
 			in_progress: "W trakcie",
-			review: "Do review",
+			review: "Do weryfikacji",
 			done: "Zakończone",
 		};
 		return labels[status] || status;
@@ -583,7 +648,7 @@ function TaskDetailModal({
 							<h4 className={styles.detailSectionTitle}>
 								Odpowiedź zwrotna
 								{task.feedbackSubmittedAt ? (
-									<span className={styles.feedbackSubmitted}>✅ Przesłana</span>
+									<span className={styles.feedbackSubmitted}>Przesłana</span>
 								) : (
 									<span className={styles.feedbackPending}>Oczekuje</span>
 								)}
@@ -611,7 +676,7 @@ function TaskDetailModal({
 													)
 												}
 											>
-												📎 {task.feedbackFileName || "Pobierz plik"}
+												{task.feedbackFileName || "Pobierz plik"}
 											</button>
 											{/* Komentarze */}
 											<div className={styles.detailSection}>
@@ -625,6 +690,44 @@ function TaskDetailModal({
 							)}
 						</div>
 					)}
+
+					{/* Ocena zadania - TYLKO W TaskDetailModal */}
+					{task.rating !== undefined &&
+						task.rating !== null &&
+						task.rating > 0 && (
+							<div className={styles.detailSection}>
+								<h4 className={styles.detailSectionTitle}>
+									Ocena trudności zadania
+								</h4>
+								<div className={styles.ratingDisplay}>
+									<div className={styles.ratingStars}>
+										{[1, 2, 3, 4, 5].map((star) => (
+											<span
+												key={star}
+												className={`${styles.ratingStar} ${star <= (task.rating || 0) ? styles.ratingStarFilled : ""}`}
+											>
+												★
+											</span>
+										))}
+										<span className={styles.ratingValue}>{task.rating}/5</span>
+									</div>
+									{task.rating_comment && (
+										<div className={styles.ratingComment}>
+											<strong>Komentarz:</strong>
+											<p>{task.rating_comment}</p>
+										</div>
+									)}
+									{task.rated_at && (
+										<div className={styles.ratingMeta}>
+											<span>Oceniono: {formatDate(task.rated_at)}</span>
+											{task.rated_by_name && (
+												<span>Ocenił: {task.rated_by_name}</span>
+											)}
+										</div>
+									)}
+								</div>
+							</div>
+						)}
 				</div>
 
 				<div className={styles.modal__actions}>
@@ -632,7 +735,7 @@ function TaskDetailModal({
 						<button className={styles.modal__btnCancel} onClick={onClose}>
 							Zamknij
 						</button>
-						{onEdit && (
+						{onEdit && canManageTask(currentUser, task) && (
 							<button className={styles.modal__btnSave} onClick={onEdit}>
 								<Edit size={16} />
 								Edytuj
@@ -653,9 +756,9 @@ function TaskCard({
 	onStatusChange,
 	onFeedback,
 }: TaskCardProps) {
-	// ✅ POPRAWIONE
-	// ✅ POPRAWNIE - zawsze boolean
-	const canManage = canManageUser(currentUser);
+	// POPRAWIONE
+	// POPRAWNIE - zawsze boolean
+	const canManage = canManageTask(currentUser, task);
 
 	const isAssigned = task.assignedTo === currentUser.id;
 
@@ -757,10 +860,10 @@ function TaskCard({
 						<button
 							className={styles.taskCard__statusBtn}
 							onClick={() => onStatusChange(task, "review")}
-							title="Prześlij do review"
+							title="Prześlij do weryfikacji"
 						>
 							<Eye size={16} />
-							Prześlij do review
+							Prześlij do weryfikacji
 						</button>
 					)}
 				</div>
@@ -785,7 +888,16 @@ function TaskCard({
 					{canManage && (
 						<button
 							className={`${styles.taskCard__actionBtn} ${styles.taskCard__actionBtnDanger}`}
-							onClick={() => onDelete?.(task)}
+							onClick={() => {
+								console.log("🗑️ KLIKNIĘTO USUŃ - TaskCard");
+								console.log("📌 task:", task);
+								console.log("📌 onDelete:", onDelete);
+								if (onDelete) {
+									onDelete(task);
+								} else {
+									console.error("❌ onDelete jest undefined!");
+								}
+							}}
 							title="Usuń"
 						>
 							<Trash2 size={16} />
@@ -805,7 +917,7 @@ function TaskCard({
 							</button>
 						)}
 
-					{/* 🔥 POKAŻ STATUS ODPOWIEDZI */}
+					{/* POKAŻ STATUS ODPOWIEDZI */}
 					{task.requiresFeedback && task.feedbackSubmittedAt && (
 						<span className={styles.taskCard__feedbackDone}>
 							<Check size={14} />
@@ -824,8 +936,8 @@ interface TaskModalProps {
 	currentUser: User;
 	members: { id: string; name: string }[];
 	projects: { id: string; name: string }[];
-	teams?: string[]; // 🔥 DODAJ
-	pillars?: string[]; // 🔥 DODAJ
+	teams?: string[]; // DODAJ
+	pillars?: string[]; // DODAJ
 	onClose: () => void;
 	onSave: (task: Task) => void;
 	onDelete?: (task: Task) => void;
@@ -837,8 +949,8 @@ function TaskModal({
 	currentUser,
 	members,
 	projects,
-	teams = [], // 🔥 DODAJ
-	pillars = [], // 🔥 DODAJ
+	teams = [], // DODAJ
+	pillars = [], // DODAJ
 	onClose,
 	onSave,
 	onDelete,
@@ -859,9 +971,9 @@ function TaskModal({
 		assignedTo: "",
 		dueDate: "",
 		tags: [],
-		projectId: "", // 🔥 DODAJ
-		requiresFeedback: false, // 🔥 DODAJ
-		feedbackType: "text", // 🔥 DODAJ
+		projectId: "", // DODAJ
+		requiresFeedback: false, // DODAJ
+		feedbackType: "text", // DODAJ
 		assignedType: "user",
 		assignedGroup: "",
 		isRecurring: false,
@@ -886,11 +998,11 @@ function TaskModal({
 				isRecurring: task.isRecurring || false,
 				recurrencePattern: task.recurrencePattern || "weekly",
 				recurrenceEndDate: task.recurrenceEndDate || "",
-				// 🔥 DODAJ - ustaw assignedTo z task
+				// DODAJ - ustaw assignedTo z task
 				assignedTo: task.assignedTo || "",
 			});
 
-			// 🔥 DODAJ - ustaw selectedUsers z task
+			// DODAJ - ustaw selectedUsers z task
 			if (task.assignedTo) {
 				setSelectedUsers([
 					{
@@ -900,7 +1012,7 @@ function TaskModal({
 				]);
 			}
 
-			// 🔥 DODAJ - jeśli są przypisani użytkownicy
+			// DODAJ - jeśli są przypisani użytkownicy
 			if (task.assignedUsers && task.assignedUsers.length > 0) {
 				const users = task.assignedUsers.map((id) => {
 					const member = members.find((m) => m.id === id);
@@ -934,16 +1046,14 @@ function TaskModal({
 	if (!isOpen) return null;
 
 	const isEdit = !!task;
-	// ✅ POPRAWIONE
-	// ✅ POPRAWNIE - zawsze boolean
-	const canManage = canManageUser(currentUser);
+	// POPRAWIONE
 
 	const validateForm = () => {
 		const newErrors: Record<string, string> = {};
 		if (!formData.title?.trim()) newErrors.title = "Tytuł jest wymagany";
 		if (!formData.description?.trim())
 			newErrors.description = "Opis jest wymagany";
-		// 🔥 SPRAWDZAJ selectedUsers ZAMIAST formData.assignedTo
+		// SPRAWDZAJ selectedUsers ZAMIAST formData.assignedTo
 		if (formData.assignedType === "user" && selectedUsers.length === 0) {
 			newErrors.assignedTo = "Wybierz przynajmniej jednego użytkownika";
 		}
@@ -978,7 +1088,7 @@ function TaskModal({
 			projectId: formData.projectId || undefined,
 			requiresFeedback: formData.requiresFeedback || false,
 			feedbackType: formData.feedbackType || "text",
-			// 🔥 DODAJ NOWE POLA
+			// DODAJ NOWE POLA
 			assignedType:
 				(formData.assignedType as "user" | "team" | "pillar" | "role") ||
 				"user",
@@ -990,6 +1100,7 @@ function TaskModal({
 			recurrenceEndDate: formData.recurrenceEndDate || "",
 			attachments: task?.attachments || [],
 			comments: task?.comments || [],
+			pillar: formData.pillar || "",
 			feedbackText: undefined,
 			feedbackFile: undefined,
 			feedbackFileName: undefined,
@@ -1100,7 +1211,7 @@ function TaskModal({
 								>
 									<option value="todo">Do zrobienia</option>
 									<option value="in_progress">W trakcie</option>
-									<option value="review">Do review</option>
+									<option value="review">Do weryfikacji</option>
 									<option value="done">Zakończone</option>
 								</select>
 							</div>
@@ -1299,7 +1410,7 @@ function TaskModal({
 													className={styles.userSuggestionItem}
 													onMouseDown={(e) => {
 														e.preventDefault();
-														// ✅ DODAJEMY WIELU UŻYTKOWNIKÓW
+														// DODAJEMY WIELU UŻYTKOWNIKÓW
 														if (!selectedUsers.find((u) => u.id === user.id)) {
 															setSelectedUsers([...selectedUsers, user]);
 															// Nie ustawiamy assignedTo na pojedynczego użytkownika
@@ -1486,7 +1597,7 @@ function TaskModal({
 					</div>
 
 					<div className={styles.modal__actions}>
-						{isEdit && canManage && (
+						{isEdit && canManageTask(currentUser, task) && (
 							<button
 								type="button"
 								className={styles.modal__btnDelete}
@@ -1522,10 +1633,16 @@ export default function Tasks() {
 	const [searchTerm, setSearchTerm] = useState("");
 	const [filterStatus, setFilterStatus] = useState<string>("all");
 	const [teams, setTeams] = useState<string[]>([]);
+	const [isRatingModalOpen, setIsRatingModalOpen] = useState(false);
+	const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+	const [taskToDelete, setTaskToDelete] = useState<Task | null>(null);
+	const [ratingTask, setRatingTask] = useState<Task | null>(null);
 	const [pillars, setPillars] = useState<string[]>([]);
 	const [filterPriority, setFilterPriority] = useState<string>("all");
 	const [isModalOpen, setIsModalOpen] = useState(false);
 	const [isUpdating, setIsUpdating] = useState(false);
+	const [isDeleting, setIsDeleting] = useState(false);
+
 	const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
 	const [feedbackTask, setFeedbackTask] = useState<Task | null>(null);
 	const [editingTask, setEditingTask] = useState<Task | null>(null);
@@ -1570,8 +1687,88 @@ export default function Tasks() {
 		fetchTeamsAndPillars();
 	}, []);
 
-	// ✅ POPRAWNIE - zawsze boolean
-	const canManage = canManageUser(currentUser);
+	// POPRAWNIE - zawsze boolean
+	const canManage =
+		currentUser.role === "admin" ||
+		currentUser.role === "board" ||
+		currentUser.role === "Prezes" ||
+		currentUser.role === "Wiceprezes" ||
+		currentUser.isLeader === true;
+
+	const handleOpenRating = (task: Task) => {
+		// ✅ Sprawdź czy zadanie już ma ocenę (użyj rated_at)
+		if (task.rated_at) {
+			toast("To zadanie zostało już ocenione!", {
+				icon: <FiInfo />,
+				duration: 4000,
+			});
+			return;
+		}
+		setRatingTask(task);
+		setIsRatingModalOpen(true);
+	};
+
+	const handleSubmitRating = async (
+		taskId: string,
+		rating: number,
+		comment: string,
+	) => {
+		try {
+			const token = localStorage.getItem("accessToken");
+			const response = await fetch(`/api/tasks/${taskId}/rate`, {
+				method: "POST",
+				headers: {
+					Authorization: `Bearer ${token}`,
+					"Content-Type": "application/json",
+				},
+				body: JSON.stringify({ rating, comment }),
+			});
+
+			const data = await response.json();
+
+			if (!response.ok) {
+				if (data.error === "To zadanie zostało już ocenione") {
+					toast("To zadanie zostało już przez Ciebie ocenione!", {
+						icon: <FiInfo />,
+						duration: 4000,
+					});
+					setIsRatingModalOpen(false);
+					setRatingTask(null);
+					return;
+				}
+				throw new Error(data.error || "Błąd zapisu oceny");
+			}
+
+			await fetchData();
+			await sendRatingNotification(taskId, rating);
+			toast.success("✅ Ocena została zapisana!");
+			setIsRatingModalOpen(false);
+			setRatingTask(null);
+		} catch (error) {
+			console.error("Błąd zapisu oceny:", error);
+			toast.error("❌ Nie udało się zapisać oceny");
+		}
+	};
+
+	const sendRatingNotification = async (taskId: string, rating: number) => {
+		try {
+			const token = localStorage.getItem("accessToken");
+			await fetch("/api/notifications/task-rated", {
+				method: "POST",
+				headers: {
+					Authorization: `Bearer ${token}`,
+					"Content-Type": "application/json",
+				},
+				body: JSON.stringify({
+					taskId,
+					rating,
+					ratedBy: currentUser.name,
+				}),
+			});
+		} catch (error) {
+			console.error("Błąd wysyłki powiadomienia:", error);
+		}
+	};
 
 	useEffect(() => {
 		fetchData();
@@ -1594,14 +1791,14 @@ export default function Tasks() {
 			return true;
 		}
 
-		// 🔥 Lider/Koordynator - widzi WSZYSTKIE zadania z jego filaru
+		// Lider/Koordynator - widzi WSZYSTKIE zadania z jego filaru
 		if (user.isLeader === true) {
-			// ✅ Sprawdź czy zadanie ma filar
+			// Sprawdź czy zadanie ma filar
 			if (task.pillar === user.pillarName) {
 				return true; // ← Koordynator widzi WSZYSTKIE zadania z tego filaru!
 			}
 
-			// ✅ Sprawdź czy zadanie jest przypisane do niego
+			// Sprawdź czy zadanie jest przypisane do niego
 			if (
 				task.assignedTo === user.id ||
 				(task.assignedUsers && task.assignedUsers.includes(user.id))
@@ -1615,7 +1812,8 @@ export default function Tasks() {
 		// Zwykły członek - widzi tylko swoje zadania
 		return (
 			task.assignedTo === user.id ||
-			(task.assignedUsers && task.assignedUsers.includes(user.id))
+			(Array.isArray(task.assignedUsers) &&
+				task.assignedUsers.includes(user.id))
 		);
 	};
 	const handleSubmitFeedback = async (
@@ -1626,7 +1824,7 @@ export default function Tasks() {
 		try {
 			const token = localStorage.getItem("accessToken");
 
-			// 🔥 UŻYJ FormData TYLKO gdy jest plik, inaczej wyślij JSON
+			// UŻYJ FormData TYLKO gdy jest plik, inaczej wyślij JSON
 			let response;
 
 			if (file) {
@@ -1706,7 +1904,7 @@ export default function Tasks() {
 			setLoading(true);
 			const token = localStorage.getItem("accessToken");
 
-			// ✅ ZDEFINIUJ userData PRZED UŻYCIEM
+			// ZDEFINIUJ userData PRZED UŻYCIEM
 			let userData = null;
 
 			// Pobierz profil użytkownika
@@ -1755,12 +1953,12 @@ export default function Tasks() {
 				);
 			}
 
-			// ✅ SPRAWDŹ CZY userData ISTNIEJE
+			// SPRAWDŹ CZY userData ISTNIEJE
 			if (!userData) {
 				throw new Error("Nie udało się pobrać danych użytkownika");
 			}
 
-			// ✅ TERAZ userData jest zdefiniowane i możemy go użyć
+			// TERAZ userData jest zdefiniowane i możemy go użyć
 			const getTasksUrl = () => {
 				const baseUrl = "/api/tasks";
 				const params = new URLSearchParams();
@@ -1852,26 +2050,49 @@ export default function Tasks() {
 		setIsModalOpen(true);
 	};
 
-	const handleDeleteTask = async (task: Task) => {
+	const handleDeleteTask = (task: Task) => {
+		// Otwórz dialog zamiast od razu usuwać
+		setTaskToDelete(task);
+		setIsConfirmOpen(true);
+	};
+	const handleConfirmDelete = async () => {
+		if (!taskToDelete) return;
+
+		setIsDeleting(true); // 🔥 WŁĄCZ ŁADOWANIE
+
 		try {
 			const token = localStorage.getItem("accessToken");
-			const response = await fetch(`/api/tasks/${task.id}`, {
+			const response = await fetch(`/api/tasks/${taskToDelete.id}`, {
 				method: "DELETE",
 				headers: { Authorization: `Bearer ${token}` },
 			});
+
 			if (response.ok) {
-				// ✅ FILTRUJ PO USUNIĘCIU
-				setTasks((prev) => prev.filter((t) => t.id !== task.id));
-				toast.success(`Zadanie "${task.title}" zostało usunięte`);
+				setTasks((prev) => prev.filter((t) => t.id !== taskToDelete.id));
+				toast.success(`Zadanie "${taskToDelete.title}" zostało usunięte`);
+			} else {
+				const error = await response.text();
+				toast.error(`Nie udało się usunąć: ${error}`);
 			}
 		} catch (error) {
-			logger.error("Błąd usuwania zadania:", error);
-			setTasks((prev) => prev.filter((t) => t.id !== task.id));
-			toast.success(`Zadanie "${task.title}" zostało usunięte lokalnie`);
+			console.error("❌ Błąd usuwania:", error);
+			setTasks((prev) => prev.filter((t) => t.id !== taskToDelete.id));
+			toast.success(
+				`Zadanie "${taskToDelete.title}" zostało usunięte lokalnie`,
+			);
+		} finally {
+			setIsDeleting(false); // 🔥 WYŁĄCZ ŁADOWANIE
+			setIsConfirmOpen(false);
+			setTaskToDelete(null);
 		}
 	};
+
+	const handleCancelDelete = () => {
+		setIsConfirmOpen(false);
+		setTaskToDelete(null);
+	};
 	const handleSaveTask = async (task: Task) => {
-		console.log("💾 [SAVE TASK] START", task.id, task.status);
+		console.log("[SAVE TASK] START", task.id, task.status);
 
 		try {
 			const token = localStorage.getItem("accessToken");
@@ -1927,7 +2148,7 @@ export default function Tasks() {
 				isEdit && isNumericId ? `/api/tasks/${task.id}` : "/api/tasks";
 			const method = isEdit && isNumericId ? "PUT" : "POST";
 
-			console.log("💾 URL:", url, "Method:", method);
+			console.log("URL:", url, "Method:", method);
 
 			const payload = {
 				title: task.title,
@@ -1946,9 +2167,10 @@ export default function Tasks() {
 				isRecurring: task.isRecurring || false,
 				recurrencePattern: task.recurrencePattern || "weekly",
 				recurrenceEndDate: task.recurrenceEndDate || null,
+				pillar: task.pillar || null,
 			};
 
-			console.log("💾 Wysyłam zapytanie...");
+			console.log("Wysyłam zapytanie...");
 
 			const response = await fetch(url, {
 				method,
@@ -1959,7 +2181,7 @@ export default function Tasks() {
 				body: JSON.stringify(payload),
 			});
 
-			console.log("💾 Response status:", response.status);
+			console.log("Response status:", response.status);
 
 			if (response.ok) {
 				const data = await response.json();
@@ -2006,11 +2228,11 @@ export default function Tasks() {
 				toast.success(`Zadanie "${task.title}" zostało zaktualizowane`);
 			} else {
 				const errorText = await response.text();
-				console.error("💾 Błąd response:", response.status, errorText);
+				console.error("Błąd response:", response.status, errorText);
 				throw new Error(`Błąd zapisu: ${response.status}`);
 			}
 		} catch (error) {
-			console.error("💾 Błąd zapisywania zadania:", error);
+			console.error("Błąd zapisywania zadania:", error);
 			setTasks((prevTasks) => {
 				if (prevTasks.some((t) => t.id === task.id)) {
 					return prevTasks.map((t) => (t.id === task.id ? task : t));
@@ -2023,7 +2245,7 @@ export default function Tasks() {
 	};
 	const sendTaskNotification = async (
 		userId: string,
-		taskId: string, // 🔥 DODAJ
+		taskId: string, // DODAJ
 		taskTitle: string,
 		createdByName: string,
 	) => {
@@ -2067,18 +2289,23 @@ export default function Tasks() {
 
 				if (response.ok) {
 					const data = await response.json();
-					// ✅ POŁĄCZ W JEDNO setTasks z filtrowaniem
-					setTasks(
-						(prev) =>
-							prev
-								.map((t) =>
-									t.id === task.id
-										? { ...t, status: data.status || newStatus }
-										: t,
-								)
-								.filter((t) => canViewTask(t, currentUser)), // 🔥 FILTRUJ
+					setTasks((prev) =>
+						prev
+							.map((t) =>
+								t.id === task.id
+									? { ...t, status: data.status || newStatus }
+									: t,
+							)
+							.filter((t) => canViewTask(t, currentUser)),
 					);
-					toast.success(`Status zmieniony na ${STATUS_LABELS[newStatus]}`);
+
+					// Jeśli zmieniamy na "done", otwórz modal oceny
+					if (newStatus === "done") {
+						toast.success(`Zadanie zakończone! Oceń je teraz.`);
+						handleOpenRating({ ...task, status: newStatus });
+					} else {
+						toast.success(`Status zmieniony na ${STATUS_LABELS[newStatus]}`);
+					}
 				}
 			} catch (error) {
 				console.error("Błąd zmiany statusu:", error);
@@ -2087,7 +2314,7 @@ export default function Tasks() {
 				setIsUpdating(false);
 			}
 		},
-		[isUpdating, currentUser], // ✅ DODAJ currentUser do zależności
+		[isUpdating, currentUser],
 	);
 
 	const filteredTasks = tasks
@@ -2163,7 +2390,7 @@ export default function Tasks() {
 						<option value="all">Wszystkie statusy</option>
 						<option value="todo">Do zrobienia</option>
 						<option value="in_progress">W trakcie</option>
-						<option value="review">Do review</option>
+						<option value="review">Do weryfikacji</option>
 						<option value="done">Zakończone</option>
 					</select>
 
@@ -2236,7 +2463,11 @@ export default function Tasks() {
 					setIsDetailOpen(false);
 					setSelectedTask(null);
 				}}
-				onEdit={canManage ? handleEditFromDetail : undefined}
+				onEdit={
+					selectedTask && canManageTask(currentUser, selectedTask)
+						? handleEditFromDetail
+						: undefined
+				}
 			/>
 			<TaskModal
 				isOpen={isModalOpen}
@@ -2244,14 +2475,33 @@ export default function Tasks() {
 				currentUser={currentUser}
 				members={members}
 				projects={projects}
-				teams={teams} // 🔥 DODAJ
-				pillars={pillars} // 🔥 DODAJ
+				teams={teams} // DODAJ
+				pillars={pillars} // DODAJ
 				onClose={() => {
 					setIsModalOpen(false);
 					setEditingTask(null);
 				}}
 				onSave={handleSaveTask}
 				onDelete={canManage ? handleDeleteTask : undefined}
+			/>
+			<TaskRatingModal
+				isOpen={isRatingModalOpen}
+				task={ratingTask}
+				onClose={() => {
+					setIsRatingModalOpen(false);
+					setRatingTask(null);
+				}}
+				onSubmit={handleSubmitRating}
+			/>
+			<ConfirmDialog
+				isOpen={isConfirmOpen}
+				title="Potwierdź usunięcie"
+				message={`Czy na pewno chcesz usunąć zadanie "${taskToDelete?.title || ""}"? Tej operacji nie można cofnąć.`}
+				confirmText="Usuń"
+				cancelText="Anuluj"
+				isLoading={isDeleting}
+				onConfirm={handleConfirmDelete}
+				onCancel={handleCancelDelete}
 			/>
 		</div>
 	);
