@@ -128,7 +128,8 @@ export default defineConfig({
 		allowedHosts: ["turbine-protector-aluminum.ngrok-free.dev"],
 		proxy: {
 			"/api": {
-				target: "http://backend:3000",
+				// target: "http://backend:3000",
+				target: "http://localhost:3000",
 				changeOrigin: true,
 				secure: false,
 				rewrite: (path) => path,

@@ -209,7 +209,7 @@ const Login: React.FC = () => {
 				<div className={styles.leftPanel}>
 					<div className={styles.illustration}>
 						<img
-							src="/sm/assets/images/sm-logo.png"
+							src="/assets/images/sm-logo.png"
 							alt="Siła Młodych logo"
 							className={styles.clipboardImg}
 						/>
@@ -282,21 +282,6 @@ const Login: React.FC = () => {
 							<span>lub</span>
 						</div>
 
-						{/* 🔥 STANDARDOWE LOGOWANIE GOOGLE */}
-						<div className={styles.googleButtonWrapper}>
-							<GoogleLogin
-								onSuccess={handleGoogleSuccess}
-								onError={handleGoogleError}
-								theme="outline"
-								size="large"
-								text="signin_with"
-								shape="rectangular"
-								logo_alignment="left"
-								type="standard"
-								useOneTap={false}
-							/>
-						</div>
-
 						{/* 🔥 OPCJONALNIE - przycisk z dostępem do kalendarza */}
 						{/* 🔥 LOGOWANIE Z DOSTĘPEM DO KALENDARZA - UŻYWA STANDARDOWEGO GoogleLogin */}
 						<div className={styles.calendarScopeWrapper}>
@@ -313,9 +298,6 @@ const Login: React.FC = () => {
 									useOneTap={false}
 								/>
 							</div>
-							<span className={styles.calendarScopeInfo}>
-								🔐 Zaloguj się przez Google z dostępem do Kalendarza
-							</span>
 						</div>
 					</div>
 				</div>

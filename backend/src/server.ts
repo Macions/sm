@@ -8,6 +8,7 @@ import { authMiddleware } from "./middleware/auth.middleware";
 import mysql from "mysql2/promise";
 import memberRoutes from "./routes/member.routes";
 import contributionRoutes from "./routes/contribution.routes";
+import calendarRoutes from "./routes/calendar.routes";
 import { syncContributions } from "./jobs/syncContributions";
 import { syncAttendance } from "./jobs/syncAttendance";
 import cron from "node-cron";
@@ -55,6 +56,7 @@ const PUBLIC_ENDPOINTS = [
 	"/api/health",
 	"/api/status",
 	"/uploads",
+	"/api/calendar/callback", // ← DODAJ TĘ LINIĘ!
 ];
 const tasksUploadDir = path.join(__dirname, "uploads/tasks");
 if (!fs.existsSync(tasksUploadDir)) {
@@ -406,15 +408,13 @@ app.use(async (req: any, res: any, next: any) => {
 		"/api/auth/login",
 		"/api/auth/register",
 		"/api/auth/refresh-token",
+		"/api/calendar/callback",
 	];
 	if (publicPaths.some((p) => req.path === p || req.path.startsWith(p))) {
-		// logger.debug(
-		// 	`🔓 [MIDDLEWARE] Pomijam publiczny endpoint: ${req.method} ${req.path}`,
-		// );
+
 		return next();
 	}
 
-	// logger.debug(`🔍 [MIDDLEWARE] ${req.method} ${req.originalUrl}`);
 
 	const originalJson = res.json;
 	const originalStatus = res.status;
@@ -3592,7 +3592,7 @@ app.delete(
 		}
 	},
 );
-
+app.use("/api/calendar", calendarRoutes);
 app.use(
 	(
 		err: any,
