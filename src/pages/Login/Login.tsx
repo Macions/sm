@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import { safeNavigate } from "@/utils/safeNavigation";
 import { useUser } from "@/context/UserContext";
 import { useNavigate } from "react-router-dom";
-import { GoogleLogin, useGoogleLogin } from "@react-oauth/google";
+import { useGoogleLogin } from "@react-oauth/google"; // ✅ TYLKO useGoogleLogin
 import styles from "./Login.module.css";
 import { logger } from "@/utils/logger";
 
@@ -24,110 +24,6 @@ const Login: React.FC = () => {
 		}
 		return "Fioletowego dnia!";
 	};
-
-	// 🔥 NOWA FUNKCJA - logowanie przez Google z zakresami kalendarza
-	const handleGoogleSuccess = async (credentialResponse: any) => {
-		logger.debug("🚀 === ROZPOCZĘCIE LOGOWANIA PRZEZ GOOGLE ===");
-		setLoading(true);
-		setError(null);
-
-		try {
-			const response = await fetch("/api/auth/google", {
-				method: "POST",
-				headers: {
-					"Content-Type": "application/json",
-				},
-				body: JSON.stringify({
-					credential: credentialResponse.credential,
-				}),
-			});
-
-			const data = await response.json();
-
-			if (!response.ok) {
-				throw new Error(data.error || "Błąd logowania przez Google");
-			}
-
-			localStorage.setItem("accessToken", data.accessToken);
-			localStorage.setItem("refreshToken", data.refreshToken);
-			localStorage.setItem("user", JSON.stringify(data.user));
-
-			await refetch();
-			await checkOnboardingStatus();
-		} catch (error) {
-			setError(
-				error instanceof Error
-					? error.message
-					: "Wystąpił błąd podczas logowania przez Google",
-			);
-		} finally {
-			setLoading(false);
-		}
-	};
-
-	const handleGoogleError = () => {
-		setError("Nie udało się zalogować przez Google. Spróbuj ponownie.");
-	};
-
-	const loginWithCalendarScopes = useGoogleLogin({
-		onSuccess: async (tokenResponse) => {
-			logger.debug("✅ Logowanie z zakresami kalendarza - sukces!");
-
-			setLoading(true);
-			setError(null);
-
-			try {
-				// 🔥 UŻYJ TOKENA GOOGLE JAKO CREDENTIAL
-				// Tak jak w standardowym handleGoogleSuccess
-				const response = await fetch("/api/auth/google", {
-					method: "POST",
-					headers: {
-						"Content-Type": "application/json",
-					},
-					body: JSON.stringify({
-						credential: tokenResponse.access_token, // ✅ TO JEST KLUCZOWE!
-					}),
-				});
-
-				const data = await response.json();
-
-				if (!response.ok) {
-					throw new Error(data.error || "Błąd logowania przez Google");
-				}
-
-				// ✅ ZAPISZ TOKEN Z BACKENDU
-				localStorage.setItem("accessToken", data.accessToken);
-				localStorage.setItem("refreshToken", data.refreshToken);
-				localStorage.setItem("user", JSON.stringify(data.user));
-
-				logger.debug("🔑 Token zapisany w localStorage");
-
-				await refetch();
-				await checkOnboardingStatus();
-			} catch (error) {
-				logger.error("❌ Błąd logowania:", error);
-				setError(
-					error instanceof Error
-						? error.message
-						: "Wystąpił błąd podczas logowania",
-				);
-			} finally {
-				setLoading(false);
-			}
-		},
-		onError: (error) => {
-			logger.error("❌ Błąd logowania Google:", error);
-			setError(
-				"Nie udało się zalogować z dostępem do kalendarza. Spróbuj ponownie.",
-			);
-		},
-		scope: [
-			"email",
-			"profile",
-			"https://www.googleapis.com/auth/calendar.events",
-			"https://www.googleapis.com/auth/calendar.readonly",
-		].join(" "),
-	});
 
 	const checkOnboardingStatus = async () => {
 		try {
@@ -162,6 +58,67 @@ const Login: React.FC = () => {
 			safeNavigate("/onboarding", navigate);
 		}
 	};
+
+	// ✅ LOGOWANIE PRZEZ GOOGLE Z DOSTĘPEM DO KALENDARZA
+	// frontend/src/pages/Login.tsx
+
+	const loginWithCalendar = useGoogleLogin({
+		onSuccess: async (tokenResponse) => {
+			logger.debug("✅ Logowanie z zakresami kalendarza - sukces!");
+			setLoading(true);
+			setError(null);
+			console.log('Access Token:', tokenResponse.access_token);
+
+			try {
+				// ✅ ZMIEŃ NA /api/auth/google-token
+				const response = await fetch("/api/auth/google-token", {  // ← TU ZMIANA!
+					method: "POST",
+					headers: {
+						"Content-Type": "application/json",
+					},
+					body: JSON.stringify({
+						accessToken: tokenResponse.access_token,  // ← TU ZMIANA NA accessToken
+					}),
+				});
+
+				const data = await response.json();
+
+				if (!response.ok) {
+					throw new Error(data.error || "Błąd logowania przez Google");
+				}
+
+				localStorage.setItem("accessToken", data.accessToken);
+				localStorage.setItem("refreshToken", data.refreshToken);
+				localStorage.setItem("user", JSON.stringify(data.user));
+
+				logger.debug("🔑 Token zapisany w localStorage");
+
+				await refetch();
+				await checkOnboardingStatus();
+			} catch (error) {
+				logger.error("❌ Błąd logowania:", error);
+				setError(
+					error instanceof Error
+						? error.message
+						: "Wystąpił błąd podczas logowania",
+				);
+			} finally {
+				setLoading(false);
+			}
+		},
+		onError: (error) => {
+			logger.error("❌ Błąd logowania Google:", error);
+			setError(
+				"Nie udało się zalogować z dostępem do kalendarza. Spróbuj ponownie.",
+			);
+		},
+		scope: [
+			"email",
+			"profile",
+			"https://www.googleapis.com/auth/calendar.events",
+			"https://www.googleapis.com/auth/calendar.readonly",
+		].join(" "),
+	});
 
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
@@ -282,22 +239,20 @@ const Login: React.FC = () => {
 							<span>lub</span>
 						</div>
 
-						{/* 🔥 OPCJONALNIE - przycisk z dostępem do kalendarza */}
-						{/* 🔥 LOGOWANIE Z DOSTĘPEM DO KALENDARZA - UŻYWA STANDARDOWEGO GoogleLogin */}
+						{/* ✅ PRZYCISK LOGOWANIA PRZEZ GOOGLE Z DOSTĘPEM DO KALENDARZA */}
 						<div className={styles.calendarScopeWrapper}>
-							<div className={styles.googleButtonWrapper}>
-								<GoogleLogin
-									onSuccess={handleGoogleSuccess}
-									onError={handleGoogleError}
-									theme="outline"
-									size="large"
-									text="signin_with"
-									shape="rectangular"
-									logo_alignment="left"
-									type="standard"
-									useOneTap={false}
+							<button
+								onClick={() => loginWithCalendar()}
+								className={styles.googleBtn}
+								disabled={loading}
+							>
+								<img
+									src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"
+									alt="Google"
+									className={styles.googleIcon}
 								/>
-							</div>
+								Zaloguj przez Google z dostępem do kalendarza
+							</button>
 						</div>
 					</div>
 				</div>

@@ -21,6 +21,12 @@ import fs from "fs";
 import multer from "multer";
 import { logger } from "./utils/logger";
 import { syncMembers } from "./jobs/syncMembers";
+import dotenv from 'dotenv';
+dotenv.config(); // ⚠️ TO MUSI BYĆ NA POCZĄTKU!
+
+console.log("🔑 GOOGLE_CLIENT_ID:", process.env.GOOGLE_CLIENT_ID);
+console.log("🔑 GOOGLE_CLIENT_SECRET:", process.env.GOOGLE_CLIENT_SECRET ? "✅ ZNALEZIONO" : "❌ BRAK");
+console.log("🔑 GOOGLE_REDIRECT_URI:", process.env.GOOGLE_REDIRECT_URI);
 
 updateLeaveStatus();
 
@@ -49,6 +55,7 @@ cron.schedule("0 3 */2 * *", async () => {
 const PUBLIC_ENDPOINTS = [
 	"/api/auth/login",
 	"/api/auth/google",
+	"/api/auth/google-token",  // ← DODAJ TĘ LINIĘ!
 	"/api/auth/register",
 	"/api/auth/refresh-token",
 	"/api/auth/forgot-password",
@@ -56,7 +63,7 @@ const PUBLIC_ENDPOINTS = [
 	"/api/health",
 	"/api/status",
 	"/uploads",
-	"/api/calendar/callback", // ← DODAJ TĘ LINIĘ!
+	"/api/calendar/callback",
 ];
 const tasksUploadDir = path.join(__dirname, "uploads/tasks");
 if (!fs.existsSync(tasksUploadDir)) {
@@ -401,11 +408,82 @@ app.use(
 	"/uploads/tasks",
 	express.static(path.join(__dirname, "uploads/tasks")),
 );
+// 🔥 NOWY ENDPOINT - logowanie przez Google z access_token
+app.post("/api/auth/google-token", async (req: any, res: any) => {
+	try {
+		const { accessToken } = req.body;
 
+		// Pobierz dane użytkownika z Google
+		const userInfoRes = await fetch(
+			"https://www.googleapis.com/oauth2/v3/userinfo",
+			{
+				headers: {
+					Authorization: `Bearer ${accessToken}`,
+				},
+			},
+		);
+
+		if (!userInfoRes.ok) {
+			return res.status(400).json({ error: "Nieprawidłowy token Google" });
+		}
+
+		const userInfo = await userInfoRes.json();
+
+		if (!userInfo.email) {
+			return res.status(400).json({ error: "Brak email w profilu Google" });
+		}
+
+		// Znajdź użytkownika w systemie
+		const user = await prisma.user.findUnique({
+			where: { email: userInfo.email },
+		});
+
+		if (!user) {
+			return res
+				.status(404)
+				.json({ error: "Użytkownik nie istnieje w systemie" });
+		}
+
+		// Wygeneruj własny JWT
+		const token = jwt.sign(
+			{
+				id: user.id,
+				email: user.email,
+				role: mapRoleId(user.role_id),
+				first_name: user.first_name,
+				last_name: user.last_name,
+			},
+			JWT_SECRET,
+			{ expiresIn: "24h" },
+		);
+
+		const refreshToken = jwt.sign({ id: user.id }, JWT_SECRET, {
+			expiresIn: "7d",
+		});
+
+		res.json({
+			accessToken: token,
+			refreshToken: refreshToken,
+			user: {
+				id: user.id,
+				email: user.email,
+				first_name: user.first_name,
+				last_name: user.last_name,
+				role: mapRoleId(user.role_id),
+				team: user.team,
+				status: user.status,
+			},
+		});
+	} catch (error) {
+		console.error("❌ Błąd logowania przez Google token:", error);
+		res.status(500).json({ error: "Błąd logowania" });
+	}
+});
 app.use(async (req: any, res: any, next: any) => {
 	const publicPaths = [
 		"/api/auth/google",
 		"/api/auth/login",
+		"/api/auth/google-token",
 		"/api/auth/register",
 		"/api/auth/refresh-token",
 		"/api/calendar/callback",
@@ -1114,11 +1192,11 @@ app.get("/api/members", authMiddleware, async (req: any, res) => {
 					user.created_at.toISOString().split("T")[0],
 				vacation: activeLeave
 					? {
-							startDate: activeLeave.start_date.toISOString().split("T")[0],
-							endDate: activeLeave.end_date.toISOString().split("T")[0],
-							type: activeLeave.scope === "team" ? "team" : "organization",
-							teamId: activeLeave.affected_teams || undefined,
-						}
+						startDate: activeLeave.start_date.toISOString().split("T")[0],
+						endDate: activeLeave.end_date.toISOString().split("T")[0],
+						type: activeLeave.scope === "team" ? "team" : "organization",
+						teamId: activeLeave.affected_teams || undefined,
+					}
 					: null,
 				onboarding_data: onboarding,
 			};
@@ -2002,7 +2080,7 @@ app.get("/api/applications", authMiddleware, async (req: any, res) => {
 				userId: app.user_id.toString(),
 				userName: app.user
 					? `${app.user.first_name || ""} ${app.user.last_name || ""}`.trim() ||
-						"Nieznany"
+					"Nieznany"
 					: "Nieznany",
 				userEmail: app.user?.email || "",
 				message: app.message || "",
@@ -2123,7 +2201,7 @@ app.get(
 					userId: app.user_id.toString(),
 					userName: app.user
 						? `${app.user.first_name || ""} ${app.user.last_name || ""}`.trim() ||
-							"Nieznany"
+						"Nieznany"
 						: "Nieznany",
 					userEmail: app.user?.email || "",
 					message: app.message || "",
@@ -3349,11 +3427,11 @@ app.put("/api/leaves/:id", authMiddleware, async (req: any, res) => {
 				status: status || existingLeave.status,
 				...(status === "approved" || status === "rejected"
 					? {
-							approved_by:
-								`${currentUser?.first_name || ""} ${currentUser?.last_name || ""}`.trim() ||
-								"Nieznany",
-							approved_at: new Date(),
-						}
+						approved_by:
+							`${currentUser?.first_name || ""} ${currentUser?.last_name || ""}`.trim() ||
+							"Nieznany",
+						approved_at: new Date(),
+					}
 					: {}),
 			},
 		});
@@ -5928,77 +6006,7 @@ app.delete("/api/tasks/:id", authMiddleware, async (req: any, res: any) => {
 		res.status(500).json({ error: "Nie udało się usunąć zadania" });
 	}
 });
-// 🔥 NOWY ENDPOINT - logowanie przez Google z access_token
-app.post("/api/auth/google-token", async (req: any, res: any) => {
-	try {
-		const { accessToken } = req.body;
 
-		// Pobierz dane użytkownika z Google
-		const userInfoRes = await fetch(
-			"https://www.googleapis.com/oauth2/v3/userinfo",
-			{
-				headers: {
-					Authorization: `Bearer ${accessToken}`,
-				},
-			},
-		);
-
-		if (!userInfoRes.ok) {
-			return res.status(400).json({ error: "Nieprawidłowy token Google" });
-		}
-
-		const userInfo = await userInfoRes.json();
-
-		if (!userInfo.email) {
-			return res.status(400).json({ error: "Brak email w profilu Google" });
-		}
-
-		// Znajdź użytkownika w systemie
-		const user = await prisma.user.findUnique({
-			where: { email: userInfo.email },
-		});
-
-		if (!user) {
-			return res
-				.status(404)
-				.json({ error: "Użytkownik nie istnieje w systemie" });
-		}
-
-		// Wygeneruj własny JWT
-		const token = jwt.sign(
-			{
-				id: user.id,
-				email: user.email,
-				role: mapRoleId(user.role_id),
-				first_name: user.first_name,
-				last_name: user.last_name,
-			},
-			JWT_SECRET,
-			{ expiresIn: "24h" },
-		);
-
-		const refreshToken = jwt.sign({ id: user.id }, JWT_SECRET, {
-			expiresIn: "7d",
-		});
-
-		res.json({
-			accessToken: token,
-			refreshToken: refreshToken,
-			user: {
-				id: user.id,
-				email: user.email,
-				first_name: user.first_name,
-				last_name: user.last_name,
-				role: mapRoleId(user.role_id),
-				team: user.team,
-				status: user.status,
-			},
-		});
-	} catch (error) {
-		console.error("❌ Błąd logowania przez Google token:", error);
-		res.status(500).json({ error: "Błąd logowania" });
-	}
-});
 app.get("/api/admin/available-users", authMiddleware, async (req: any, res) => {
 	try {
 		const userRole = req.user?.role;
@@ -6525,4 +6533,4 @@ app.get(
 	},
 );
 
-app.listen(port, () => {});
+app.listen(port, () => { });

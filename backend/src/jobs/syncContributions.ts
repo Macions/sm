@@ -258,7 +258,7 @@ export async function syncContributions() {
 					}
 
 					pendingCount++;
-					logger.debug(`⚠️ [CONTRIBUTIONS] ${member.full_name}: nieopłacone`);
+					// logger.debug(`⚠️ [CONTRIBUTIONS] ${member.full_name}: nieopłacone`);
 				}
 			} catch (error) {
 				console.error(

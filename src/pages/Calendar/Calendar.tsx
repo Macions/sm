@@ -10,6 +10,8 @@ import {
 	Tag,
 	Calendar as CalendarIcon,
 	CalendarDays,
+	Video,
+	Link2,
 } from "lucide-react";
 
 type TaskStatus = "todo" | "in_progress" | "review" | "done";
@@ -26,6 +28,11 @@ type CalendarTask = {
 	assignedToName: string;
 	pillar?: string;
 	tags: string[];
+	source?: "google" | "system";
+	type?: "event" | "task";
+	hangoutLink?: string | null;
+	hasMeeting?: boolean;
+	htmlLink?: string;
 };
 
 const STATUS_COLORS: Record<TaskStatus, string> = {
@@ -62,6 +69,8 @@ type User = {
 	role: string;
 };
 
+const API_URL = "http://localhost:3000";
+
 export default function Calendar() {
 	const [currentDate, setCurrentDate] = useState(new Date());
 	const [tasks, setTasks] = useState<CalendarTask[]>([]);
@@ -81,13 +90,11 @@ export default function Calendar() {
 	const currentYear = currentDate.getFullYear();
 	const currentMonth = currentDate.getMonth();
 
-	// Pobierz zadania
 	useEffect(() => {
 		fetchData();
 		checkGoogleAuth();
 	}, []);
 
-	// Sprawdź parametry w URL (callback z Google)
 	useEffect(() => {
 		const params = new URLSearchParams(window.location.search);
 		if (params.get("auth") === "success") {
@@ -103,7 +110,7 @@ export default function Calendar() {
 	const checkGoogleAuth = async () => {
 		try {
 			const token = localStorage.getItem("accessToken");
-			const res = await fetch("/api/calendar/status", {
+			const res = await fetch(`${API_URL}/api/calendar/status`, {
 				headers: { Authorization: `Bearer ${token}` },
 			});
 			const data = await res.json();
@@ -116,7 +123,7 @@ export default function Calendar() {
 	const fetchGoogleEvents = async () => {
 		try {
 			const token = localStorage.getItem("accessToken");
-			const res = await fetch("/api/calendar/events", {
+			const res = await fetch(`${API_URL}/api/calendar/events`, {
 				headers: { Authorization: `Bearer ${token}` },
 			});
 
@@ -125,14 +132,17 @@ export default function Calendar() {
 				console.log("📅 Google Events:", data);
 				setGoogleEvents(data);
 			} else if (res.status === 401) {
-				setIsGoogleAuth(false);
+				const data = await res.json();
+				if (data.needAuth) {
+					setIsGoogleAuth(false);
+					toast.error("Wymagana autoryzacja Google Calendar");
+				}
 			}
 		} catch (error) {
 			console.error("❌ Błąd pobierania wydarzeń z Google:", error);
 		}
 	};
 
-	// Gdy zmieni się isGoogleAuth - pobierz wydarzenia
 	useEffect(() => {
 		if (isGoogleAuth) {
 			fetchGoogleEvents();
@@ -144,7 +154,7 @@ export default function Calendar() {
 			setLoading(true);
 			const token = localStorage.getItem("accessToken");
 
-			const tasksRes = await fetch("/api/tasks", {
+			const tasksRes = await fetch(`${API_URL}/api/tasks`, {
 				headers: { Authorization: `Bearer ${token}` },
 			});
 
@@ -160,15 +170,14 @@ export default function Calendar() {
 		}
 	};
 
-	// 🔥 SYNCHRONIZACJA Z GOOGLE CALENDAR
 	const handleSyncToGoogle = async (task: CalendarTask) => {
 		setIsSyncing(true);
 		try {
 			const token = localStorage.getItem("accessToken");
 
 			if (!isGoogleAuth) {
-				const authRes = await fetch("/api/calendar/auth", {
-					headers: { Authorization: `Bearer ${token}` },
+				const authRes = await fetch(`${API_URL}/api/calendar/auth`, {
+					headers: { Authorization: `Bearer ${token}` }
 				});
 				const authData = await authRes.json();
 
@@ -190,7 +199,7 @@ export default function Calendar() {
 
 					const checkInterval = setInterval(async () => {
 						try {
-							const statusRes = await fetch("/api/calendar/status", {
+							const statusRes = await fetch(`${API_URL}/api/calendar/status`, {
 								headers: { Authorization: `Bearer ${token}` },
 							});
 							const statusData = await statusRes.json();
@@ -220,7 +229,7 @@ export default function Calendar() {
 
 	const syncTask = async (task: CalendarTask) => {
 		const token = localStorage.getItem("accessToken");
-		const response = await fetch("/api/calendar/sync", {
+		const response = await fetch(`${API_URL}/api/calendar/sync`, {
 			method: "POST",
 			headers: {
 				Authorization: `Bearer ${token}`,
@@ -237,8 +246,8 @@ export default function Calendar() {
 				icon: "⚠️",
 				duration: 4000,
 			});
-			const authRes = await fetch("/api/calendar/auth", {
-				headers: { Authorization: `Bearer ${token}` },
+			const authRes = await fetch(`${API_URL}/api/calendar/auth`, {
+				headers: { Authorization: `Bearer ${token}` }
 			});
 			const authData = await authRes.json();
 			if (authData.authUrl) {
@@ -257,7 +266,6 @@ export default function Calendar() {
 		}
 	};
 
-	// Nawigacja
 	const goToPreviousMonth = () => {
 		setCurrentDate(new Date(currentYear, currentMonth - 1, 1));
 	};
@@ -270,7 +278,6 @@ export default function Calendar() {
 		setCurrentDate(new Date());
 	};
 
-	// Generowanie dni w miesiącu
 	const getDaysInMonth = (year: number, month: number) => {
 		return new Date(year, month + 1, 0).getDate();
 	};
@@ -282,12 +289,10 @@ export default function Calendar() {
 	const daysInMonth = getDaysInMonth(currentYear, currentMonth);
 	const firstDay = getFirstDayOfMonth(currentYear, currentMonth);
 
-	// 🔥 NOWA FUNKCJA - pobiera zadania i wydarzenia Google dla danego dnia
 	const getEventsForDay = (day: number) => {
 		const date = new Date(currentYear, currentMonth, day);
 		const dateStr = date.toISOString().split("T")[0];
 
-		// Zadania z systemu
 		const taskEvents = tasks
 			.filter((task) => {
 				const taskDate = new Date(task.dueDate);
@@ -299,7 +304,6 @@ export default function Calendar() {
 				type: "task" as const,
 			}));
 
-		// Wydarzenia z Google
 		const googleEventsForDay = googleEvents
 			.filter((event) => {
 				const eventDate = new Date(event.start?.dateTime || event.start?.date);
@@ -319,12 +323,13 @@ export default function Calendar() {
 				pillar: undefined,
 				tags: [],
 				htmlLink: event.htmlLink || "",
+				hangoutLink: event.hangoutLink || event.conferenceData?.entryPoints?.[0]?.uri || null,
+				hasMeeting: !!(event.hangoutLink || event.conferenceData?.entryPoints?.length > 0),
 			}));
 
 		return [...taskEvents, ...googleEventsForDay];
 	};
 
-	// Sprawdź czy data jest dzisiaj
 	const isToday = (day: number) => {
 		const today = new Date();
 		return (
@@ -334,7 +339,6 @@ export default function Calendar() {
 		);
 	};
 
-	// Sprawdź czy data jest w przeszłości
 	const isPast = (day: number) => {
 		const date = new Date(currentYear, currentMonth, day);
 		const today = new Date();
@@ -366,7 +370,6 @@ export default function Calendar() {
 	};
 
 	const handleTaskClick = (task: any) => {
-		// Jeśli to wydarzenie Google - otwórz link
 		if (task.source === "google" && task.htmlLink) {
 			window.open(task.htmlLink, "_blank");
 			return;
@@ -381,18 +384,8 @@ export default function Calendar() {
 	};
 
 	const monthNames = [
-		"Styczeń",
-		"Luty",
-		"Marzec",
-		"Kwiecień",
-		"Maj",
-		"Czerwiec",
-		"Lipiec",
-		"Sierpień",
-		"Wrzesień",
-		"Październik",
-		"Listopad",
-		"Grudzień",
+		"Styczeń", "Luty", "Marzec", "Kwiecień", "Maj", "Czerwiec",
+		"Lipiec", "Sierpień", "Wrzesień", "Październik", "Listopad", "Grudzień",
 	];
 
 	const dayNames = ["Pon", "Wt", "Śr", "Czw", "Pt", "Sob", "Niedz"];
@@ -410,13 +403,10 @@ export default function Calendar() {
 
 	return (
 		<div className={styles.calendar}>
-			{/* Nagłówek */}
 			<div className={styles.header}>
 				<div className={styles.headerLeft}>
 					<h1 className={styles.title}>Kalendarz</h1>
-					<p className={styles.subtitle}>
-						Przeglądaj swoje zadania w kalendarzu
-					</p>
+					<p className={styles.subtitle}>Przeglądaj swoje zadania w kalendarzu</p>
 				</div>
 				<div className={styles.headerRight}>
 					<button className={styles.todayBtn} onClick={goToToday}>
@@ -426,7 +416,6 @@ export default function Calendar() {
 				</div>
 			</div>
 
-			{/* Kontrolki */}
 			<div className={styles.controls}>
 				<div className={styles.navigation}>
 					<button className={styles.navBtn} onClick={goToPreviousMonth}>
@@ -441,39 +430,30 @@ export default function Calendar() {
 				</div>
 			</div>
 
-			{/* Siatka kalendarza */}
 			<div className={styles.calendarGrid}>
-				{/* Dni tygodnia */}
 				<div className={styles.weekDays}>
 					{dayNames.map((day) => (
-						<div key={day} className={styles.weekDay}>
-							{day}
-						</div>
+						<div key={day} className={styles.weekDay}>{day}</div>
 					))}
 				</div>
 
-				{/* Dni miesiąca */}
 				<div className={styles.daysGrid}>
-					{/* Puste dni przed pierwszym dniem miesiąca */}
 					{Array.from({ length: firstDay === 0 ? 6 : firstDay - 1 }).map(
 						(_, index) => (
 							<div key={`empty-${index}`} className={styles.emptyDay} />
 						),
 					)}
 
-					{/* Dni miesiąca */}
 					{Array.from({ length: daysInMonth }).map((_, index) => {
 						const day = index + 1;
-						const dayEvents = getEventsForDay(day); // 🔥 ZMIENIONE
+						const dayEvents = getEventsForDay(day);
 						const isTodayDate = isToday(day);
 						const isPastDate = isPast(day);
 
 						return (
 							<div
 								key={day}
-								className={`${styles.day} 
-                                    ${isTodayDate ? styles.today : ""} 
-                                    ${isPastDate ? styles.past : ""}`}
+								className={`${styles.day} ${isTodayDate ? styles.today : ""} ${isPastDate ? styles.past : ""}`}
 								onClick={() => handleDayClick(day)}
 							>
 								<div className={styles.dayHeader}>
@@ -486,9 +466,13 @@ export default function Calendar() {
 									{dayEvents.slice(0, 3).map((event) => (
 										<div
 											key={event.id}
-											className={`${styles.taskDot} ${event.source === "google" ? styles.googleDot : ""}`}
+											className={`${styles.taskDot} ${event.source === "google" ? styles.googleDot : ""} ${event.hasMeeting ? styles.hasMeeting : ""}`}
 											onClick={(e) => {
 												e.stopPropagation();
+												if (event.source === "google" && event.hangoutLink) {
+													window.open(event.hangoutLink, "_blank");
+													return;
+												}
 												if (event.source === "google") {
 													window.open(event.htmlLink || "#", "_blank");
 												} else {
@@ -498,25 +482,28 @@ export default function Calendar() {
 											style={{
 												backgroundColor:
 													event.source === "google"
-														? "#4285f4"
+														? (event.hasMeeting ? "#0b57d0" : "#4285f4")
 														: PRIORITY_COLORS[event.priority as TaskPriority],
 											}}
-											title={event.title}
+											title={event.title + (event.hasMeeting ? " 📹 Spotkanie" : "")}
 										/>
 									))}
 									{dayEvents.length > 3 && (
-										<span className={styles.moreTasks}>
-											+{dayEvents.length - 3}
-										</span>
+										<span className={styles.moreTasks}>+{dayEvents.length - 3}</span>
 									)}
 								</div>
+								{/* 🆕 POKAŻ IKONKĘ MEET NA KALENDARZU */}
+								{dayEvents.some(e => e.hasMeeting) && (
+									<div className={styles.meetIndicator}>
+										<Video size={12} />
+									</div>
+								)}
 							</div>
 						);
 					})}
 				</div>
 			</div>
 
-			{/* Modal szczegółów */}
 			{isModalOpen && (
 				<div className={styles.modalOverlay} onClick={closeModal}>
 					<div className={styles.modal} onClick={(e) => e.stopPropagation()}>
@@ -531,7 +518,6 @@ export default function Calendar() {
 
 						<div className={styles.modalBody}>
 							{selectedTask ? (
-								// Szczegóły zadania
 								<div className={styles.taskDetail}>
 									<p className={styles.taskDescription}>
 										{selectedTask.description}
@@ -553,9 +539,7 @@ export default function Calendar() {
 										<div className={styles.metaItem}>
 											<span
 												className={styles.statusBadge}
-												style={{
-													backgroundColor: STATUS_COLORS[selectedTask.status],
-												}}
+												style={{ backgroundColor: STATUS_COLORS[selectedTask.status] }}
 											>
 												{STATUS_LABELS[selectedTask.status]}
 											</span>
@@ -563,10 +547,7 @@ export default function Calendar() {
 										<div className={styles.metaItem}>
 											<span
 												className={styles.priorityBadge}
-												style={{
-													backgroundColor:
-														PRIORITY_COLORS[selectedTask.priority],
-												}}
+												style={{ backgroundColor: PRIORITY_COLORS[selectedTask.priority] }}
 											>
 												{PRIORITY_LABELS[selectedTask.priority]}
 											</span>
@@ -575,6 +556,15 @@ export default function Calendar() {
 											<div className={styles.metaItem}>
 												<Tag size={16} />
 												<span>{selectedTask.pillar}</span>
+											</div>
+										)}
+										{/* 🆕 POKAŻ LINK DO MEET W SZCZEGÓŁACH */}
+										{selectedTask.source === "google" && selectedTask.hasMeeting && (
+											<div className={styles.metaItem} style={{ gridColumn: "1 / -1", background: "#e8f0fe" }}>
+												<Video size={16} color="#1a73e8" />
+												<span style={{ fontWeight: 600, color: "#1a73e8" }}>
+													Spotkanie Google Meet
+												</span>
 											</div>
 										)}
 									</div>
@@ -590,7 +580,20 @@ export default function Calendar() {
 										</div>
 									)}
 
-									{/* 🔥 PRZYCISK SYNCHRONIZACJI Z GOOGLE CALENDAR */}
+									{/* 🆕 PRZYCISK DO MEET */}
+									{selectedTask.source === "google" && selectedTask.hangoutLink && (
+										<a
+											href={selectedTask.hangoutLink}
+											target="_blank"
+											rel="noopener noreferrer"
+											className={styles.meetButton}
+										>
+											<Video size={18} />
+											Dołącz do spotkania Google Meet
+											<Link2 size={14} />
+										</a>
+									)}
+
 									<div className={styles.syncSection}>
 										<button
 											className={styles.syncBtn}
@@ -617,20 +620,21 @@ export default function Calendar() {
 									</div>
 								</div>
 							) : (
-								// Lista zadań dla wybranego dnia
 								<div className={styles.dayTasksList}>
 									<p className={styles.dayTasksTitle}>
 										Zadania na {selectedDate ? formatDate(selectedDate) : ""}
 									</p>
 									{selectedDate && (
 										<div className={styles.tasksList}>
-											{getEventsForDay(
-												parseInt(selectedDate.split("-")[2]),
-											).map((event: any) => (
+											{getEventsForDay(parseInt(selectedDate.split("-")[2])).map((event: any) => (
 												<div
 													key={event.id}
 													className={`${styles.taskItem} ${event.source === "google" ? styles.googleTaskItem : ""}`}
 													onClick={() => {
+														if (event.source === "google" && event.hangoutLink) {
+															window.open(event.hangoutLink, "_blank");
+															return;
+														}
 														if (event.source === "google") {
 															window.open(event.htmlLink || "#", "_blank");
 														} else {
@@ -643,7 +647,7 @@ export default function Calendar() {
 														style={{
 															backgroundColor:
 																event.source === "google"
-																	? "#4285f4"
+																	? (event.hasMeeting ? "#0b57d0" : "#4285f4")
 																	: STATUS_COLORS[event.status as TaskStatus],
 														}}
 													/>
@@ -651,9 +655,14 @@ export default function Calendar() {
 														<span className={styles.taskTitle}>
 															{event.title}
 															{event.source === "google" && (
-																<span className={styles.googleBadge}>
-																	Google
-																</span>
+																<>
+																	<span className={styles.googleBadge}>Google</span>
+																	{event.hasMeeting && (
+																		<span className={styles.meetBadge}>
+																			<Video size={12} /> Meet
+																		</span>
+																	)}
+																</>
 															)}
 														</span>
 														<span className={styles.taskAssignedTo}>
@@ -663,23 +672,15 @@ export default function Calendar() {
 													{event.source !== "google" && (
 														<span
 															className={styles.taskPriority}
-															style={{
-																color:
-																	PRIORITY_COLORS[
-																		event.priority as TaskPriority
-																	],
-															}}
+															style={{ color: PRIORITY_COLORS[event.priority as TaskPriority] }}
 														>
 															{PRIORITY_LABELS[event.priority as TaskPriority]}
 														</span>
 													)}
 												</div>
 											))}
-											{getEventsForDay(parseInt(selectedDate.split("-")[2]))
-												.length === 0 && (
-												<p className={styles.noTasks}>
-													Brak wydarzeń na ten dzień
-												</p>
+											{getEventsForDay(parseInt(selectedDate.split("-")[2])).length === 0 && (
+												<p className={styles.noTasks}>Brak wydarzeń na ten dzień</p>
 											)}
 										</div>
 									)}

@@ -14,30 +14,29 @@ import "@fontsource/ubuntu/300.css";
 import "@fontsource/ubuntu/500.css";
 import "@fontsource/ubuntu/700.css";
 
-// ❌ USUŃ TO:
-// const API_URL = "http://localhost:3000";
-// console.log(`🔗 [main.tsx] API_URL: ${API_URL}`);
+// ✅ DODAJ LOGI:
+console.log('🔍 === SPRAWDZAM ENV ===');
+console.log('🔍 VITE_GOOGLE_CLIENT_ID:', import.meta.env.VITE_GOOGLE_CLIENT_ID);
+console.log('🔍 GOOGLE_CLIENT_ID:', import.meta.env.GOOGLE_CLIENT_ID);
+console.log('🔍 Czy jest undefined?', import.meta.env.VITE_GOOGLE_CLIENT_ID === undefined);
+console.log('🔍 Całe import.meta.env:', import.meta.env);
 
-// ❌ USUŃ CAŁY TEN BLOK:
-// const originalFetch = window.fetch;
-// window.fetch = function (...args) {
-// 	const [url, options] = args;
-// 	if (typeof url === "string" && url.startsWith("/api/")) {
-// 		const newUrl = `${API_URL}${url}`;
-// 		logger.debug(`🔄 [fetch] ${url} -> ${newUrl}`);
-// 		return originalFetch(newUrl, options);
-// 	}
-// 	return originalFetch(url, options);
-// };
+const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 
-// (window as any).goTo = (path: string) => {
-// 	logger.debug(`🔄 [goTo] -> ${path}`);
-// 	const hash = path.startsWith("#") ? path : `#${path}`;
-// 	window.location.hash = hash;
-// };
+// ✅ DODAJ FALLBACK DLA TESTOWANIA:
+if (!clientId) {
+	console.error('❌ BRAKUJE VITE_GOOGLE_CLIENT_ID w env! Używam fallbacka...');
+	// Użyj sztywnego ID tylko do testów!
+	// clientId = '848834850023-l0e4gobn16tfqhhletocuab6t0356qo8.apps.googleusercontent.com';
+}
+
+console.log('🔍 Używam clientId:', clientId);
 
 createRoot(document.getElementById("root")!).render(
-	<GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID} onScriptLoadError={() => console.error('Google script error')}>
+	<GoogleOAuthProvider
+		clientId={clientId}
+		onScriptLoadError={() => console.error('❌ Google script error')}
+	>
 		<UserProvider>
 			<HashRouter>
 				<App />

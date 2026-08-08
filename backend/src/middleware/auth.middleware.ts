@@ -13,14 +13,20 @@ export interface AuthRequest extends Request {
 }
 
 const PUBLIC_ENDPOINTS = [
-	"/api/auth/login",
-	"/api/auth/google",
-	"/api/auth/register",
-	"/api/auth/refresh-token",
-	"/api/auth/forgot-password",
-	"/api/auth/reset-password",
-	"/api/health",
-	"/api/status",
+    "/api/auth/login",
+    "/api/auth/google",
+    "/api/auth/register",
+    "/api/auth/refresh-token",
+    "/api/auth/forgot-password",
+    "/api/auth/reset-password",
+    "/api/health",
+    "/api/status",
+    "/api/calendar/auth",
+    "/api/calendar/callback",
+    "/calendar/auth",          // ← DODAJ!
+    "/calendar/callback",      // ← DODAJ!
+    "/auth",                   // ← DODAJ!
+    "/callback",               // ← DODAJ!
 ];
 
 const isPublicPath = (path: string): boolean => {
@@ -55,9 +61,9 @@ export const authMiddleware = (
 			email: decoded.email,
 			role: decoded.role,
 		};
-		logger.debug(
-			`✅ Autoryzacja dla: ${req.method} ${req.path} - użytkownik: ${decoded.email}`,
-		);
+		// logger.debug(
+		// 	`✅ Autoryzacja dla: ${req.method} ${req.path} - użytkownik: ${decoded.email}`,
+		// );
 		next();
 	} catch (error) {
 		logger.debug(`❌ Błąd autoryzacji dla: ${req.method} ${req.path}`);

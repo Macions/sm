@@ -530,3 +530,43 @@ body {
 	color: #64748b;
 	text-align: center;
 }
+
+/* frontend/src/pages/Login/Login.module.css */
+
+.googleBtn {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 12px;
+	width: 100%;
+	padding: 14px 20px;
+	background: #ffffff;
+	border: 1px solid #dadce0;
+	border-radius: 8px;
+	font-size: 16px;
+	font-weight: 500;
+	color: #3c4043;
+	cursor: pointer;
+	transition: all 0.2s ease;
+	height: 56px; /* Ta sama wysokość co inne przyciski */
+}
+
+.googleBtn:hover {
+	background: #f8f9fa;
+	box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.googleBtn:active {
+	background: #e8eaed;
+}
+
+.googleBtn:disabled {
+	opacity: 0.6;
+	cursor: not-allowed;
+}
+
+.googleIcon {
+	width: 20px;
+	height: 20px;
+	flex-shrink: 0;
+}

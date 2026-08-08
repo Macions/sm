@@ -97,7 +97,7 @@ const QUICK_ACTIONS: QuickAction[] = [
 		icon: <FolderKanban size={18} />,
 		color: "#4A6FE8",
 		link: "/projects",
-		roles: ["member"],
+		roles: ["member", "board"],
 	},
 	{
 		id: "add-project",
@@ -105,7 +105,7 @@ const QUICK_ACTIONS: QuickAction[] = [
 		icon: <Plus size={18} />,
 		color: "#4A6FE8",
 		link: "/projects",
-		roles: ["admin", "coordinator"],
+		roles: ["admin", "coordinator", "board"],
 	},
 	{
 		id: "leave-request",
@@ -113,7 +113,7 @@ const QUICK_ACTIONS: QuickAction[] = [
 		icon: <CalendarPlus size={18} />,
 		color: "#2ECC71",
 		link: "/leave/",
-		roles: ["admin", "coordinator", "member"],
+		roles: ["admin", "coordinator", "member", "board"],
 	},
 	{
 		id: "search-member",
@@ -121,7 +121,7 @@ const QUICK_ACTIONS: QuickAction[] = [
 		icon: <Search size={18} />,
 		color: "#F5A623",
 		link: "/members",
-		roles: ["admin", "coordinator", "member"],
+		roles: ["admin", "coordinator", "member", "board"],
 	},
 	{
 		id: "browse-guides",
@@ -129,7 +129,7 @@ const QUICK_ACTIONS: QuickAction[] = [
 		icon: <BookMarked size={18} />,
 		color: "#E84AA9",
 		link: "/guides",
-		roles: ["admin", "coordinator", "member"],
+		roles: ["admin", "coordinator", "member", "board"],
 	},
 ];
 
@@ -166,7 +166,9 @@ const transformPillars = (pillarsString: string): string => {
 export default function Dashboard() {
 	const navigate = useNavigate();
 	const { user, loading: userLoading } = useUser();
-
+	console.log('🔍 [Dashboard] Dane użytkownika:', user);
+	console.log('🔍 [Dashboard] user.pillars:', user?.pillars);
+	console.log('🔍 [Dashboard] user.role:', user?.role);
 	const displayName = user?.firstName || "Użytkowniku";
 
 	const [checkingOnboarding, setCheckingOnboarding] = useState(true);
@@ -437,56 +439,56 @@ export default function Dashboard() {
 			// DODAJ STATYSTYKĘ SKŁADEK TUTAJ (po members)
 			...(contributionStats
 				? [
-						{
-							id: "contribution",
-							label: (() => {
-								const { month, monthName, year, monthsPaid } =
-									contributionStats.currentMonth;
-								if (monthsPaid > 1) {
-									const months = [];
-									for (let i = 0; i < monthsPaid; i++) {
-										const m = ((month - i + 11) % 12) + 1;
-										months.push(m);
-									}
-									const monthNames = months.map((m) => getMonthName(m));
-									return `Składka ${monthNames.reverse().join("-")} ${year}`;
+					{
+						id: "contribution",
+						label: (() => {
+							const { month, monthName, year, monthsPaid } =
+								contributionStats.currentMonth;
+							if (monthsPaid > 1) {
+								const months = [];
+								for (let i = 0; i < monthsPaid; i++) {
+									const m = ((month - i + 11) % 12) + 1;
+									months.push(m);
 								}
-								return `Składka ${monthName} ${year}`;
-							})(),
-							value:
-								contributionStats.hasContributions === false
-									? ""
-									: `${contributionStats.currentMonth.amount.toFixed(2)} zł`,
-							subtext:
-								contributionStats.hasContributions === false
-									? "Nie dotyczy"
-									: contributionStats.currentMonth.status === "paid"
-										? `Opłacona (${contributionStats.currentMonth.monthsPaid} mies.)`
-										: contributionStats.summary.overdueMonths > 0
-											? `${contributionStats.summary.overdueMonths} mies. zaległości`
-											: "Nieopłacona",
-							icon:
-								contributionStats.hasContributions === false ? (
-									<AlertCircle size={24} /> // ← Nowa ikona
-								) : contributionStats.currentMonth.status === "paid" ? (
-									<CreditCard size={24} />
-								) : (
-									<Wallet size={24} />
-								),
-							color:
-								contributionStats.hasContributions === false
-									? "#6B7280" // ← Szary kolor
-									: contributionStats.currentMonth.status === "paid"
-										? "#2ECC71"
-										: "#F5A623",
-							bgColor:
-								contributionStats.hasContributions === false
-									? "#F3F4F6" // ← Jasnoszary
-									: contributionStats.currentMonth.status === "paid"
-										? "#ECFDF5"
-										: "#FEF9E7",
-						},
-					]
+								const monthNames = months.map((m) => getMonthName(m));
+								return `Składka ${monthNames.reverse().join("-")} ${year}`;
+							}
+							return `Składka ${monthName} ${year}`;
+						})(),
+						value:
+							contributionStats.hasContributions === false
+								? ""
+								: `${contributionStats.currentMonth.amount.toFixed(2)} zł`,
+						subtext:
+							contributionStats.hasContributions === false
+								? "Nie dotyczy"
+								: contributionStats.currentMonth.status === "paid"
+									? `Opłacona (${contributionStats.currentMonth.monthsPaid} mies.)`
+									: contributionStats.summary.overdueMonths > 0
+										? `${contributionStats.summary.overdueMonths} mies. zaległości`
+										: "Nieopłacona",
+						icon:
+							contributionStats.hasContributions === false ? (
+								<AlertCircle size={24} /> // ← Nowa ikona
+							) : contributionStats.currentMonth.status === "paid" ? (
+								<CreditCard size={24} />
+							) : (
+								<Wallet size={24} />
+							),
+						color:
+							contributionStats.hasContributions === false
+								? "#6B7280" // ← Szary kolor
+								: contributionStats.currentMonth.status === "paid"
+									? "#2ECC71"
+									: "#F5A623",
+						bgColor:
+							contributionStats.hasContributions === false
+								? "#F3F4F6" // ← Jasnoszary
+								: contributionStats.currentMonth.status === "paid"
+									? "#ECFDF5"
+									: "#FEF9E7",
+					},
+				]
 				: []),
 			{
 				id: "projects",
@@ -609,11 +611,30 @@ export default function Dashboard() {
 									>
 										&nbsp;
 									</span>
-								) : // ✅ TRANSFORMACJA FILARÓW
-								user?.pillars ? (
-									transformPillars(user.pillars)
 								) : (
-									"—"
+									// ✅ NOWA LOGIKA
+									(() => {
+										// 1. Spróbuj wyciągnąć filar z team (dla admina/prezesa)
+										if (user?.team) {
+											const teamParts = user.team.split(',').map((p: string) => p.trim());
+											const pillarPart = teamParts.find((p: string) => p.startsWith('Filar'));
+											if (pillarPart) {
+												return PILLAR_MAP[pillarPart] || pillarPart;
+											}
+										}
+
+										// 2. Spróbuj z pillars (dla zwykłych członków)
+										if (user?.pillars) {
+											return transformPillars(user.pillars);
+										}
+
+										// 3. Fallback dla admina bez filara
+										if (user?.role?.toLowerCase() === 'admin' || user?.role === 'Prezes') {
+											return "Zarząd / Administracja";
+										}
+
+										return "—";
+									})()
 								)}
 							</span>
 							<span className={styles.welcomeCard__divider}>•</span>

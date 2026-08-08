@@ -154,7 +154,7 @@ export async function syncMembers() {
 	const startTime = Date.now();
 
 	try {
-		logger.debug("📥 [SYNC] Pobieranie danych z SM_Ewidencja.members...");
+		// logger.debug("📥 [SYNC] Pobieranie danych z SM_Ewidencja.members...");
 
 		const [rows] = (await externalDb.query(`
             SELECT 
