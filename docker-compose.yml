@@ -43,7 +43,7 @@ services:
       args:
         VITE_GOOGLE_CLIENT_ID: ${VITE_GOOGLE_CLIENT_ID}
     ports:
-      - "8081:80"   # ← ZMIENIONE z 8080 na 8081
+      - "8090:80"
     depends_on:
       - backend
     restart: unless-stopped
