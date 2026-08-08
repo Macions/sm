@@ -116,7 +116,7 @@ export default defineConfig({
 		},
 	],
 
-	base: isGitHubPages ? "/sm/" : "/",
+	base: "/",
 
 	resolve: {
 		alias: {
@@ -128,8 +128,7 @@ export default defineConfig({
 		allowedHosts: ["turbine-protector-aluminum.ngrok-free.dev"],
 		proxy: {
 			"/api": {
-				// target: "https://sm-backend-po9k.onrender.com",
-				target: "http://localhost:3000",
+				target: "http://backend:3000",
 				changeOrigin: true,
 				secure: false,
 				rewrite: (path) => path,
