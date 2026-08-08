@@ -1,13 +1,7 @@
 services:
-  frontend:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    ports:
-      - "80:80"
-    depends_on:
-      - backend
-    restart: unless-stopped
+  # ========================
+  # BACKEND
+  # ========================
 
   backend:
     build:
@@ -16,5 +10,48 @@ services:
     ports:
       - "3000:3000"
     environment:
-      PORT: 3000
+      PORT: ${PORT}
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET}
+      REACT_APP_API_URL: ${REACT_APP_API_URL}
+      DB_HOST: ${DB_HOST}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_NAME: ${DB_NAME}
+      DATABASE_URL: ${DATABASE_URL}
+      EWIDENCJA_DB_HOST: ${EWIDENCJA_DB_HOST}
+      EWIDENCJA_DB_USER: ${EWIDENCJA_DB_USER}
+      EWIDENCJA_DB_PASSWORD: ${EWIDENCJA_DB_PASSWORD}
+      EWIDENCJA_DB_NAME: ${EWIDENCJA_DB_NAME}
+      FREKWENCJA_DB_HOST: ${FREKWENCJA_DB_HOST}
+      FREKWENCJA_DB_USER: ${FREKWENCJA_DB_USER}
+      FREKWENCJA_DB_PASSWORD: ${FREKWENCJA_DB_PASSWORD}
+      FREKWENCJA_DB_NAME: ${FREKWENCJA_DB_NAME}
+      SM_DB_HOST: ${SM_DB_HOST}
+      SM_DB_USER: ${SM_DB_USER}
+      SM_DB_PASSWORD: ${SM_DB_PASSWORD}
+      SM_DB_NAME: ${SM_DB_NAME}
+      LOG_LEVEL: ${LOG_LEVEL}
+      CONTRIBUTIONS_DB_HOST: ${CONTRIBUTIONS_DB_HOST}
+      CONTRIBUTIONS_DB_USER: ${CONTRIBUTIONS_DB_USER}
+      CONTRIBUTIONS_DB_PASSWORD: ${CONTRIBUTIONS_DB_PASSWORD}
+      CONTRIBUTIONS_DB_NAME: ${CONTRIBUTIONS_DB_NAME}
+      CONTRIBUTIONS_DB_PORT: ${CONTRIBUTIONS_DB_PORT}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
+    restart: unless-stopped
+
+  # ========================
+  # FRONTEND
+  # ========================
+
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        VITE_GOOGLE_CLIENT_ID: ${VITE_GOOGLE_CLIENT_ID}
+    ports:
+      - "8080:80"
+    depends_on:
+      - backend
     restart: unless-stopped
