@@ -120,6 +120,7 @@ interface LeaveCardProps {
 	onEdit: (leave: LeaveRequest) => void;
 	onDelete: (id: string) => void;
 	onStatusChange: (id: string, status: LeaveStatus) => void;
+	onCancel: (id: string) => void;
 	canManage: boolean;
 	canViewReason: boolean;
 }
@@ -130,6 +131,7 @@ function LeaveCard({
 	onView,
 	onDelete,
 	onStatusChange,
+	onCancel,  // ⬅️ DODAJ TĘ LINIĘ
 	canManage,
 	canViewReason,
 }: LeaveCardProps) {
@@ -348,6 +350,16 @@ function LeaveCard({
 								</button>
 							</>
 						)}
+						{(currentUser.role === "admin" || currentUser.role === "board" || currentUser.role === "zarząd") &&
+							isLeaveActive(leave) && (
+								<button
+									className={`${styles.leaveCard__actionBtn} ${styles.leaveCard__actionBtnCancel}`}
+									onClick={() => onCancel(leave.id)}
+									title="Anuluj aktywny urlop"
+								>
+									<X size={16} />
+								</button>
+							)}
 
 						{canManage && leave.status === "rejected" && (
 							<>
@@ -1366,6 +1378,75 @@ export default function Leave({ title }: { title?: string }) {
 		);
 	};
 
+	// ✅ DODAJ TĘ FUNKCJĘ w głównym komponencie Leave (obok handleStatusChange)
+	const handleCancelLeave = (id: string) => {
+		if (!canManage) {
+			toast.error("Nie masz uprawnień do anulowania urlopów");
+			return;
+		}
+
+		const leave = leaves.find((l) => l.id === id);
+		if (!leave) {
+			toast.error("Nie znaleziono wniosku");
+			return;
+		}
+
+		// Sprawdź czy urlop jest aktywny (w trakcie trwania)
+		if (!isLeaveActive(leave)) {
+			toast.error("Można anulować tylko aktywne urlopy");
+			return;
+		}
+
+		showConfirm(
+			"Anuluj aktywny urlop",
+			`Czy na pewno chcesz anulować aktywny urlop użytkownika ${leave.userName}? 
+        Urlop trwa od ${new Date(leave.startDate).toLocaleDateString("pl-PL")} do ${new Date(leave.endDate).toLocaleDateString("pl-PL")}.`,
+			"Anuluj urlop",
+			async () => {
+				try {
+					const token = localStorage.getItem("accessToken");
+					toast.loading("Anulowanie urlopu...");
+
+					const response = await fetch(`/api/leaves/${id}`, {
+						method: "PUT",
+						headers: {
+							Authorization: `Bearer ${token}`,
+							"Content-Type": "application/json",
+						},
+						body: JSON.stringify({ status: "cancelled" }),
+					});
+
+					if (!response.ok) {
+						toast.dismiss();
+						toast.error("Nie udało się anulować urlopu");
+						return;
+					}
+
+					// Aktualizuj stan lokalny
+					setLeaves((prevLeaves) =>
+						prevLeaves.map((l) =>
+							l.id === id
+								? {
+									...l,
+									status: "cancelled",
+									approvedBy: currentUser?.name,
+									approvedAt: new Date().toISOString(),
+								}
+								: l,
+						),
+					);
+
+					toast.dismiss();
+					toast.success(`Urlop użytkownika ${leave.userName} został anulowany!`);
+				} catch (error) {
+					logger.error("❌ Błąd anulowania:", error);
+					toast.dismiss();
+					toast.error("Wystąpił błąd podczas anulowania urlopu");
+				}
+			},
+		);
+	};
+
 	const handleSaveLeave = async (leave: LeaveRequest) => {
 		try {
 			const token = localStorage.getItem("accessToken");
@@ -1439,11 +1520,6 @@ export default function Leave({ title }: { title?: string }) {
 		setSearchTerm("");
 		setSelectedStatus("all");
 		setSelectedType("all");
-	};
-
-	const getStatusCount = (status: LeaveStatus) => {
-		// 🔥 LICZ Z WSZYSTKICH leaves, NIE z filteredLeaves
-		return leaves.filter((l) => l.status === status).length;
 	};
 
 	if (loading || !currentUser) {
@@ -1620,6 +1696,7 @@ export default function Leave({ title }: { title?: string }) {
 									onEdit={handleEditLeave}
 									onDelete={handleDeleteLeave}
 									onStatusChange={handleStatusChange}
+									onCancel={handleCancelLeave}
 									canManage={canManage}
 									canViewReason={canViewReason}
 								/>

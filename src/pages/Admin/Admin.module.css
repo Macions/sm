@@ -1156,7 +1156,7 @@
 }
 
 
-@media (width <= 768px) {
+@media (width <=768px) {
     .admin {
         padding: 16px;
     }
@@ -1200,7 +1200,7 @@
     }
 }
 
-@media (width <= 480px) {
+@media (width <=480px) {
     .statsGrid {
         grid-template-columns: 1fr;
     }
@@ -1983,7 +1983,7 @@
     background: #e5e7eb;
 }
 
-@media (width <= 768px) {
+@media (width <=768px) {
     .teamForm__row {
         grid-template-columns: 1fr;
     }
@@ -2126,7 +2126,7 @@
     background: #2563eb;
 }
 
-@media (width <= 640px) {
+@media (width <=640px) {
     .modal__row {
         grid-template-columns: 1fr;
     }
@@ -2478,7 +2478,7 @@
     color: #6b7280;
 }
 
-@media (width <= 768px) {
+@media (width <=768px) {
     .logsFilters {
         flex-direction: column;
     }
@@ -2793,7 +2793,7 @@
 }
 
 
-@media (width <= 768px) {
+@media (width <=768px) {
     .logsFilters {
         flex-direction: column;
         padding: 14px;
@@ -2846,4 +2846,103 @@
     outline: none;
     border-color: #4A6FE8;
     box-shadow: 0 0 0 3px rgb(74 111 232 / 10%);
+}
+
+/* Przycisk "Pokaż wszystkich" */
+.showAllBtn {
+    display: block;
+    width: 100%;
+    padding: 8px 12px;
+    margin-top: 8px;
+    background: #f3f4f6;
+    border: 1px dashed #d1d5db;
+    border-radius: 6px;
+    color: #4b5563;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-align: center;
+}
+
+.showAllBtn:hover {
+    background: #e5e7eb;
+    border-color: #9ca3af;
+    color: #1f2937;
+}
+
+/* Przycisk "Pokaż wszystkich" */
+.showAllBtn {
+    display: block;
+    width: 100%;
+    padding: 8px 12px;
+    margin-top: 8px;
+    background: #f3f4f6;
+    border: 1px dashed #d1d5db;
+    border-radius: 6px;
+    color: #4b5563;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-align: center;
+}
+
+.showAllBtn:hover {
+    background: #e5e7eb;
+    border-color: #9ca3af;
+    color: #1f2937;
+}
+
+/* ============================================================
+   🔥 STYLE DLA ZWIJANIA SEKCJI "Zespoły i członkowie"
+   ============================================================ */
+
+/* Przycisk zwijania sekcji */
+.sectionToggleBtn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    background: #f3f4f6;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    color: #4b5563;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.sectionToggleBtn:hover {
+    background: #e5e7eb;
+    border-color: #9ca3af;
+    color: #1f2937;
+}
+
+.sectionToggleBtn:active {
+    transform: scale(0.95);
+}
+
+/* Przycisk "Pokaż wszystkich" dla listy członków */
+.showAllBtn {
+    display: block;
+    width: 100%;
+    padding: 8px 12px;
+    margin-top: 8px;
+    background: #f3f4f6;
+    border: 1px dashed #d1d5db;
+    border-radius: 6px;
+    color: #4b5563;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-align: center;
+}
+
+.showAllBtn:hover {
+    background: #e5e7eb;
+    border-color: #9ca3af;
+    color: #1f2937;
+}
+
+.showAllBtn:active {
+    transform: scale(0.98);
 }

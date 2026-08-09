@@ -3401,10 +3401,11 @@ app.put("/api/leaves/:id", authMiddleware, async (req: any, res) => {
 			status,
 		} = req.body;
 
-		if (status && (status === "approved" || status === "rejected")) {
+		// ✅ POPRAWKA: DODAJ "cancelled"
+		if (status && (status === "approved" || status === "rejected" || status === "cancelled")) {
 			if (!canApprove) {
 				return res.status(403).json({
-					error: "Tylko Admin lub Zarząd może zatwierdzać lub odrzucać wnioski",
+					error: "Tylko Admin lub Zarząd może zatwierdzać, odrzucać lub anulować wnioski",
 				});
 			}
 		}
@@ -3425,7 +3426,7 @@ app.put("/api/leaves/:id", authMiddleware, async (req: any, res) => {
 					? JSON.stringify(attachments)
 					: existingLeave.attachments,
 				status: status || existingLeave.status,
-				...(status === "approved" || status === "rejected"
+				...(status === "approved" || status === "rejected" || status === "cancelled"
 					? {
 						approved_by:
 							`${currentUser?.first_name || ""} ${currentUser?.last_name || ""}`.trim() ||
@@ -3436,7 +3437,25 @@ app.put("/api/leaves/:id", authMiddleware, async (req: any, res) => {
 			},
 		});
 
-		if (status && (status === "approved" || status === "rejected")) {
+		// ✅ DODAJ POWIADOMIENIE DLA ANULOWANIA
+		if (status === "cancelled") {
+			const userName =
+				`${currentUser?.first_name || ""} ${currentUser?.last_name || ""}`.trim() ||
+				"Nieznany";
+
+			await prisma.notification.create({
+				data: {
+					user_id: existingLeave.user_id,
+					title: "Urlop anulowany",
+					message: `Twój urlop (${new Date(existingLeave.start_date).toLocaleDateString("pl-PL")} - ${new Date(existingLeave.end_date).toLocaleDateString("pl-PL")}) został anulowany przez ${userName}`,
+					type: "warning",
+					read: false,
+					link: `/leave`,
+					target: "all",
+					created_at: new Date(),
+				},
+			});
+		} else if (status === "approved" || status === "rejected") {
 			const statusText = status === "approved" ? "zaakceptowany" : "odrzucony";
 			const userName =
 				`${currentUser?.first_name || ""} ${currentUser?.last_name || ""}`.trim() ||
@@ -3461,7 +3480,7 @@ app.put("/api/leaves/:id", authMiddleware, async (req: any, res) => {
 
 		res.json(leave);
 	} catch (error) {
-		// 		logger.error("❌ Błąd aktualizacji wniosku:", error);
+		logger.error("❌ Błąd aktualizacji wniosku:", error);
 		res.status(500).json({ error: "Nie udało się zaktualizować wniosku" });
 	}
 });
@@ -4942,66 +4961,70 @@ function getDefaultPermissions(role: string): string[] {
 	return defaults[role] || [];
 }
 
-app.get(
-	"/api/admin/permissions/:role",
-	authMiddleware,
-	async (req: any, res) => {
-		try {
-			const { role } = req.params;
+app.get("/api/admin/permissions/:role", authMiddleware, async (req: any, res) => {
+	try {
+		const userRole = req.user?.role;
 
-			const roleData = await prisma.roles.findFirst({
-				where: {
-					name: role,
-				},
-				select: {
-					id: true,
-					name: true,
-					permissions: true,
-				},
-			});
+		// ✅ DODAJ TO:
+		if (userRole !== "admin" && userRole !== "board" && userRole !== "zarząd") {
+			return res.status(403).json({ error: "Brak uprawnień" });
+		}
 
-			if (!roleData) {
-				const defaultPermissions = getDefaultPermissions(role);
-				return res.json({
-					role,
-					permissions: defaultPermissions,
-					fromDefault: true,
-				});
-			}
+		const { role } = req.params;
 
-			let permissions: string[] = [];
-			try {
-				permissions =
-					typeof roleData.permissions === "string"
-						? JSON.parse(roleData.permissions)
-						: roleData.permissions || [];
-			} catch (e) {
-				permissions = [];
-			}
+		const roleData = await prisma.roles.findFirst({
+			where: {
+				name: role,
+			},
+			select: {
+				id: true,
+				name: true,
+				permissions: true,
+			},
+		});
 
-			res.json({
-				role: roleData.name,
-				permissions,
-				fromDefault: false,
-			});
-		} catch (error) {
-			// 			logger.error("❌ Błąd pobierania uprawnień:", error);
-
-			const defaultPermissions = getDefaultPermissions(req.params.role);
-			res.json({
-				role: req.params.role,
+		if (!roleData) {
+			const defaultPermissions = getDefaultPermissions(role);
+			return res.json({
+				role,
 				permissions: defaultPermissions,
 				fromDefault: true,
 			});
 		}
-	},
+
+		let permissions: string[] = [];
+		try {
+			permissions =
+				typeof roleData.permissions === "string"
+					? JSON.parse(roleData.permissions)
+					: roleData.permissions || [];
+		} catch (e) {
+			permissions = [];
+		}
+
+		res.json({
+			role: roleData.name,
+			permissions,
+			fromDefault: false,
+		});
+	} catch (error) {
+		// 			logger.error("❌ Błąd pobierania uprawnień:", error);
+
+		const defaultPermissions = getDefaultPermissions(req.params.role);
+		res.json({
+			role: req.params.role,
+			permissions: defaultPermissions,
+			fromDefault: true,
+		});
+	}
+},
 );
 
 app.get("/api/admin/roles", authMiddleware, async (req: any, res) => {
 	try {
 		const userRole = req.user?.role;
 
-		if (userRole !== "admin") {
+		if (userRole !== "admin" && userRole !== "board" && userRole !== "zarząd") {
 			return res.status(403).json({ error: "Brak uprawnień" });
 		}
 
@@ -5051,7 +5074,7 @@ app.put(
 			const roleId = parseInt(req.params.id);
 			const { permissions } = req.body;
 
-			if (userRole !== "admin") {
+			if (userRole !== "admin" && userRole !== "board" && userRole !== "zarząd") {
 				return res.status(403).json({ error: "Brak uprawnień" });
 			}
 
@@ -5109,7 +5132,7 @@ app.post("/api/admin/roles", authMiddleware, async (req: any, res) => {
 		const userRole = req.user?.role;
 		const { name, description, permissions } = req.body;
 
-		if (userRole !== "admin") {
+		if (userRole !== "admin" && userRole !== "board" && userRole !== "zarząd") {
 			return res.status(403).json({ error: "Brak uprawnień" });
 		}
 
@@ -5171,7 +5194,7 @@ app.delete("/api/admin/roles/:id", authMiddleware, async (req: any, res) => {
 		const userRole = req.user?.role;
 		const roleId = parseInt(req.params.id);
 
-		if (userRole !== "admin") {
+		if (userRole !== "admin" && userRole !== "board" && userRole !== "zarząd") {
 			return res.status(403).json({ error: "Brak uprawnień" });
 		}
 
@@ -5205,7 +5228,7 @@ app.get("/api/admin/teams", authMiddleware, async (req: any, res) => {
 	try {
 		const userRole = req.user?.role;
 
-		if (userRole !== "admin") {
+		if (userRole !== "admin" && userRole !== "board" && userRole !== "zarząd") {
 			return res.status(403).json({ error: "Brak uprawnień" });
 		}
 
@@ -5270,7 +5293,7 @@ app.put("/api/admin/teams/:id", authMiddleware, async (req: any, res) => {
 		const userRole = req.user?.role;
 		const teamId = parseInt(req.params.id);
 
-		if (userRole !== "admin") {
+		if (userRole !== "admin" && userRole !== "board" && userRole !== "zarząd") {
 			return res.status(403).json({ error: "Brak uprawnień" });
 		}
 
@@ -5310,7 +5333,7 @@ app.post("/api/admin/teams", authMiddleware, async (req: any, res) => {
 	try {
 		const userRole = req.user?.role;
 
-		if (userRole !== "admin") {
+		if (userRole !== "admin" && userRole !== "board" && userRole !== "zarząd") {
 			return res.status(403).json({ error: "Brak uprawnień" });
 		}
 
@@ -5355,7 +5378,7 @@ app.delete("/api/admin/teams/:id", authMiddleware, async (req: any, res) => {
 		const userRole = req.user?.role;
 		const teamId = parseInt(req.params.id);
 
-		if (userRole !== "admin") {
+		if (userRole !== "admin" && userRole !== "board" && userRole !== "zarząd") {
 			return res.status(403).json({ error: "Brak uprawnień" });
 		}
 
@@ -5383,7 +5406,7 @@ app.post("/api/admin/team-members", authMiddleware, async (req: any, res) => {
 	try {
 		const userRole = req.user?.role;
 
-		if (userRole !== "admin") {
+		if (userRole !== "admin" && userRole !== "board" && userRole !== "zarząd") {
 			return res.status(403).json({ error: "Brak uprawnień" });
 		}
 
@@ -5469,7 +5492,7 @@ app.delete(
 			const userRole = req.user?.role;
 			const memberId = parseInt(req.params.id);
 
-			if (userRole !== "admin") {
+			if (userRole !== "admin" && userRole !== "board" && userRole !== "zarząd") {
 				return res.status(403).json({ error: "Brak uprawnień" });
 			}
 
@@ -5503,7 +5526,7 @@ app.put(
 			const userRole = req.user?.role;
 			const memberId = parseInt(req.params.id);
 
-			if (userRole !== "admin") {
+			if (userRole !== "admin" && userRole !== "board" && userRole !== "zarząd") {
 				return res.status(403).json({ error: "Brak uprawnień" });
 			}
 
@@ -6010,7 +6033,7 @@ app.get("/api/admin/available-users", authMiddleware, async (req: any, res) => {
 	try {
 		const userRole = req.user?.role;
 
-		if (userRole !== "admin") {
+		if (userRole !== "admin" && userRole !== "board" && userRole !== "zarząd") {
 			return res.status(403).json({ error: "Brak uprawnień" });
 		}
 
@@ -6059,7 +6082,7 @@ app.get("/api/admin/logs", authMiddleware, async (req: any, res) => {
 	try {
 		const userRole = req.user?.role;
 
-		if (userRole !== "admin") {
+		if (userRole !== "admin" && userRole !== "board" && userRole !== "zarząd") {
 			return res.status(403).json({ error: "Brak uprawnień" });
 		}
 

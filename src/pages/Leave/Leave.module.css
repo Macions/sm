@@ -1646,3 +1646,12 @@
 	}
 }
 
+.leaveCard__actionBtnCancel {
+	color: #dc2626;
+	background: #fee2e2;
+}
+
+.leaveCard__actionBtnCancel:hover {
+	background: #fecaca;
+	color: #b91c1c;
+}

@@ -35,7 +35,6 @@ import {
 } from "../../utils/permissions";
 import { ConfirmDialog } from "../../components/common/ConfirmDialog";
 import styles from "./Admin.module.css";
-import { hasPermission } from "../../utils/permissions";
 
 // ---------------------------------------------------------------------------
 // TYPY
@@ -51,25 +50,25 @@ interface SystemLog {
 	user_name: string;
 	user_role: string;
 	action_type:
-		| "CREATE"
-		| "UPDATE"
-		| "DELETE"
-		| "LOGIN"
-		| "LOGOUT"
-		| "APPROVE"
-		| "REJECT";
+	| "CREATE"
+	| "UPDATE"
+	| "DELETE"
+	| "LOGIN"
+	| "LOGOUT"
+	| "APPROVE"
+	| "REJECT";
 	category:
-		| "USER"
-		| "TEAM"
-		| "LEAVE"
-		| "PROJECT"
-		| "VACANCY"
-		| "TUTORIAL"
-		| "SOCIAL_MEDIA"
-		| "PERMISSION"
-		| "STRUCTURE"
-		| "NOTIFICATION"
-		| "AUTH";
+	| "USER"
+	| "TEAM"
+	| "LEAVE"
+	| "PROJECT"
+	| "VACANCY"
+	| "TUTORIAL"
+	| "SOCIAL_MEDIA"
+	| "PERMISSION"
+	| "STRUCTURE"
+	| "NOTIFICATION"
+	| "AUTH";
 	endpoint: string;
 	method: string;
 	entity_id: string | null;
@@ -827,10 +826,13 @@ function StructureManagement({
 		title: "",
 		message: "",
 		confirmText: "Potwierdź",
-		onConfirm: () => {},
-		onCancel: () => {},
+		onConfirm: () => { },
+		onCancel: () => { },
 	});
+	const [expandedTeams, setExpandedTeams] = useState<Record<string, boolean>>({});
 
+	// 🔥 DODAJ TEN STATE:
+	const [isSectionExpanded, setIsSectionExpanded] = useState(true);
 	const resetTeamForm = () => {
 		setTeamForm({
 			name: "",
@@ -846,7 +848,124 @@ function StructureManagement({
 		setSelectedRole("Członek");
 		setIsLeader(false);
 	};
+	// ============================================================
+	// 🔥 NAZWY ZESPOŁÓW DO UKRYCIA
+	// ============================================================
+	const HIDDEN_TEAMS = ["Filary organizacji", "Organy kontrolne", "Siła młodych", "Siła Młodych"];
 
+	// ============================================================
+	// 🔥 KOLEJNOŚĆ ZESPOŁÓW
+	// ============================================================
+	const TEAM_ORDER = [
+		"Zarząd",
+		"Dyrekcja",
+		"Komisja Rewizyjna",
+		"Sąd Koleżeński",
+	];
+
+	// ============================================================
+	// 🔥 CZY TO FILAR?
+	// ============================================================
+	const isPillar = (teamName: string): boolean => {
+		return teamName.includes("Filar");
+	};
+
+	// ============================================================
+	// 🔥 FILTRUJ I SORTUJ ZESPOŁY
+	// ============================================================
+	const getSortedTeams = (): Team[] => {
+		// 1. Odfiltruj ukryte zespoły
+		const filtered = teams.filter(
+			(team) => !HIDDEN_TEAMS.includes(team.name)
+		);
+
+		// 2. Podziel na filary i inne
+		const pillars: Team[] = [];
+		const others: Team[] = [];
+
+		filtered.forEach((team) => {
+			if (isPillar(team.name)) {
+				pillars.push(team);
+			} else {
+				others.push(team);
+			}
+		});
+
+		// 3. Posortuj inne według TEAM_ORDER
+		const sortedOthers = others.sort((a, b) => {
+			const indexA = TEAM_ORDER.indexOf(a.name);
+			const indexB = TEAM_ORDER.indexOf(b.name);
+			if (indexA === -1 && indexB === -1) return a.name.localeCompare(b.name);
+			if (indexA === -1) return 1;
+			if (indexB === -1) return -1;
+			return indexA - indexB;
+		});
+
+		// 4. Posortuj filary alfabetycznie
+		const sortedPillars = pillars.sort((a, b) => a.name.localeCompare(b.name));
+
+		// 5. Połącz: inne + filary
+		return [...sortedOthers, ...sortedPillars];
+	};
+
+	// ============================================================
+	// 🔥 POBRANIE CZŁONKÓW DO WYŚWIETLENIA
+	// ============================================================
+	const getDisplayMembers = (team: Team): { display: TeamMember[]; hidden: TeamMember[]; total: number } => {
+		const isTeamPillar = isPillar(team.name);
+		const isExpanded = expandedTeams[team.id] || false;
+
+		let members = [...team.members];
+
+		// Dla filarów: domyślnie tylko liderzy (koordynatorzy)
+		if (isTeamPillar && !isExpanded) {
+			const leaders = members.filter(m => m.is_leader === true);
+			const nonLeaders = members.filter(m => m.is_leader !== true);
+
+			// Jeśli jest więcej niż 5 członków ogółem, pokaż liderów + przycisk
+			if (members.length > 5) {
+				return {
+					display: leaders,
+					hidden: nonLeaders,
+					total: members.length
+				};
+			}
+			// Jeśli mniej niż 5, pokaż wszystkich
+			return {
+				display: members,
+				hidden: [],
+				total: members.length
+			};
+		}
+
+		// Dla innych zespołów: jeśli >5, pokaż 4 + reszta ukryta
+		if (!isTeamPillar && members.length > 5 && !isExpanded) {
+			const display = members.slice(0, 3); // pokazuje 3
+			const hidden = members.slice(4);
+			return {
+				display,
+				hidden,
+				total: members.length
+			};
+		}
+
+		// Rozwinięte lub mało członków - pokaż wszystkich
+		return {
+			display: members,
+			hidden: [],
+			total: members.length
+		};
+	};
+
+	// ============================================================
+	// 🔥 PRZEŁĄCZANIE "POKAŻ WSZYSTKICH"
+	// ============================================================
+	const toggleShowAll = (teamId: string) => {
+		setExpandedTeams(prev => ({
+			...prev,
+			[teamId]: !prev[teamId]
+		}));
+	};
 	const handleAddTeam = async (e: React.FormEvent) => {
 		e.preventDefault();
 		try {
@@ -1067,7 +1186,30 @@ function StructureManagement({
 
 			<div className={styles.section__header}>
 				<div className={styles.section__headerLeft}>
-					<h2 className={styles.section__title}>Zespoły i członkowie</h2>
+					<div style={{ display: "flex", alignItems: "center", gap: "12px", width: "100%" }}>
+						<h2 className={styles.section__title} style={{ margin: 0 }}>Zespoły i członkowie</h2>
+						<button
+							onClick={() => setIsSectionExpanded(!isSectionExpanded)}
+							style={{
+								display: "inline-flex",
+								alignItems: "center",
+								justifyContent: "center",
+								width: "32px",
+								height: "32px",
+								background: "#f3f4f6",
+								border: "1px solid #e5e7eb",
+								borderRadius: "6px",
+								color: "#4b5563",
+								cursor: "pointer",
+								transition: "all 0.2s ease",
+								flexShrink: 0,
+								marginLeft: "auto"
+							}}
+							title={isSectionExpanded ? "Zwiń sekcję" : "Rozwiń sekcję"}
+						>
+							{isSectionExpanded ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
+						</button>
+					</div>
 					<p className={styles.section__subtitle}>
 						Zarządzanie zespołami oraz przypisywanie członków.
 					</p>
@@ -1082,314 +1224,338 @@ function StructureManagement({
 					</button>
 				)}
 			</div>
-
-			{(isAddingTeam || editingTeam) && (
-				<div
-					className={styles.modalOverlay}
-					onClick={() => {
-						if (isAddingTeam) setIsAddingTeam(false);
-						if (editingTeam) setEditingTeam(null);
-					}}
-				>
-					<div className={styles.modal} onClick={(e) => e.stopPropagation()}>
-						<div className={styles.modal__header}>
-							<h2 className={styles.modal__title}>
-								{editingTeam ? "Edytuj zespół" : "Dodaj nowy zespół"}
-							</h2>
-							<button
-								className={styles.modal__close}
-								onClick={() => {
-									resetTeamForm();
-									setEditingTeam(null);
-								}}
-							>
-								<X size={20} />
-							</button>
-						</div>
-						<form onSubmit={editingTeam ? handleEditTeam : handleAddTeam}>
-							<div className={styles.modal__body}>
-								<div className={styles.modal__field}>
-									<label>Nazwa zespołu *</label>
-									<input
-										type="text"
-										value={teamForm.name}
-										onChange={(e) =>
-											setTeamForm({ ...teamForm, name: e.target.value })
-										}
-										required
-									/>
-								</div>
-								<div className={styles.modal__field}>
-									<label>Email</label>
-									<input
-										type="email"
-										value={teamForm.email}
-										onChange={(e) =>
-											setTeamForm({ ...teamForm, email: e.target.value })
-										}
-									/>
-								</div>
-								<div className={styles.modal__field}>
-									<label>Opis</label>
-									<textarea
-										value={teamForm.description}
-										onChange={(e) =>
-											setTeamForm({ ...teamForm, description: e.target.value })
-										}
-										rows={3}
-									/>
-								</div>
-								<div className={styles.modal__row}>
-									<div className={styles.modal__field}>
-										<label>Typ</label>
-										<input
-											type="text"
-											value={teamForm.role}
-											onChange={(e) =>
-												setTeamForm({ ...teamForm, role: e.target.value })
-											}
-										/>
-									</div>
-									<div className={styles.modal__field}>
-										<label>Ikona</label>
-										<select
-											value={teamForm.icon}
-											onChange={(e) =>
-												setTeamForm({ ...teamForm, icon: e.target.value })
-											}
-										>
-											{ICON_OPTIONS.map((opt) => (
-												<option key={opt.value} value={opt.value}>
-													{opt.label}
-												</option>
-											))}
-										</select>
-									</div>
-								</div>
-								<div
-									className={styles.modal__field}
-									style={{
-										display: "flex",
-										alignItems: "center",
-										gap: "8px",
-										marginTop: "8px",
-									}}
-								>
-									<span>Podgląd ikony:</span>
-									{getIconComponent(teamForm.icon)}
-								</div>
-							</div>
-							<div className={styles.modal__actions}>
-								<button
-									type="button"
-									className={styles.modal__btnCancel}
-									onClick={() => {
-										resetTeamForm();
-										setEditingTeam(null);
-									}}
-								>
-									Anuluj
-								</button>
-								<button type="submit" className={styles.modal__btnSave}>
-									<Save size={16} />
-									{editingTeam ? "Zapisz zmiany" : "Dodaj zespół"}
-								</button>
-							</div>
-						</form>
-					</div>
-				</div>
-			)}
-
-			<div className={styles.teamsGrid}>
-				{teams.map((team) => (
-					<div key={team.id} id={`team-${team.id}`} className={styles.teamCard}>
-						<div className={styles.teamCard__header}>
-							<div className={styles.teamCard__icon}>
-								{getIconComponent(team.icon)}
-							</div>
-							<div className={styles.teamCard__info}>
-								<h3 className={styles.teamCard__name}>{team.name}</h3>
-								<p className={styles.teamCard__description}>
-									{team.description}
-								</p>
-							</div>
-							<div className={styles.teamCard__actions}>
-								{canManage && (
-									<>
-										<button
-											className={styles.teamCard__editBtn}
-											onClick={() => startEditTeam(team)}
-											title="Edytuj zespół"
-										>
-											<Edit size={16} />
-										</button>
-										<button
-											className={styles.teamCard__deleteBtn}
-											onClick={() => showDeleteTeamConfirm(team.id, team.name)}
-											title="Usuń zespół"
-										>
-											<Trash2 size={16} />
-										</button>
-									</>
-								)}
-							</div>
-						</div>
-						<div className={styles.teamCard__body}>
-							<div className={styles.teamCard__meta}>
-								{team.email && (
-									<a
-										href={`mailto:${team.email}`}
-										className={styles.teamCard__email}
+			{isSectionExpanded && (
+				<>
+					{(isAddingTeam || editingTeam) && (
+						<div
+							className={styles.modalOverlay}
+							onClick={() => {
+								if (isAddingTeam) setIsAddingTeam(false);
+								if (editingTeam) setEditingTeam(null);
+							}}
+						>
+							<div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+								<div className={styles.modal__header}>
+									<h2 className={styles.modal__title}>
+										{editingTeam ? "Edytuj zespół" : "Dodaj nowy zespół"}
+									</h2>
+									<button
+										className={styles.modal__close}
+										onClick={() => {
+											resetTeamForm();
+											setEditingTeam(null);
+										}}
 									>
-										<Mail size={14} />
-										{team.email}
-									</a>
-								)}
-								<span className={styles.teamCard__memberCount}>
-									<Users size={14} />
-									{team.members.length} członków
-								</span>
+										<X size={20} />
+									</button>
+								</div>
+								<form onSubmit={editingTeam ? handleEditTeam : handleAddTeam}>
+									<div className={styles.modal__body}>
+										<div className={styles.modal__field}>
+											<label>Nazwa zespołu *</label>
+											<input
+												type="text"
+												value={teamForm.name}
+												onChange={(e) =>
+													setTeamForm({ ...teamForm, name: e.target.value })
+												}
+												required
+											/>
+										</div>
+										<div className={styles.modal__field}>
+											<label>Email</label>
+											<input
+												type="email"
+												value={teamForm.email}
+												onChange={(e) =>
+													setTeamForm({ ...teamForm, email: e.target.value })
+												}
+											/>
+										</div>
+										<div className={styles.modal__field}>
+											<label>Opis</label>
+											<textarea
+												value={teamForm.description}
+												onChange={(e) =>
+													setTeamForm({ ...teamForm, description: e.target.value })
+												}
+												rows={3}
+											/>
+										</div>
+										<div className={styles.modal__row}>
+											<div className={styles.modal__field}>
+												<label>Typ</label>
+												<input
+													type="text"
+													value={teamForm.role}
+													onChange={(e) =>
+														setTeamForm({ ...teamForm, role: e.target.value })
+													}
+												/>
+											</div>
+											<div className={styles.modal__field}>
+												<label>Ikona</label>
+												<select
+													value={teamForm.icon}
+													onChange={(e) =>
+														setTeamForm({ ...teamForm, icon: e.target.value })
+													}
+												>
+													{ICON_OPTIONS.map((opt) => (
+														<option key={opt.value} value={opt.value}>
+															{opt.label}
+														</option>
+													))}
+												</select>
+											</div>
+										</div>
+										<div
+											className={styles.modal__field}
+											style={{
+												display: "flex",
+												alignItems: "center",
+												gap: "8px",
+												marginTop: "8px",
+											}}
+										>
+											<span>Podgląd ikony:</span>
+											{getIconComponent(teamForm.icon)}
+										</div>
+									</div>
+									<div className={styles.modal__actions}>
+										<button
+											type="button"
+											className={styles.modal__btnCancel}
+											onClick={() => {
+												resetTeamForm();
+												setEditingTeam(null);
+											}}
+										>
+											Anuluj
+										</button>
+										<button type="submit" className={styles.modal__btnSave}>
+											<Save size={16} />
+											{editingTeam ? "Zapisz zmiany" : "Dodaj zespół"}
+										</button>
+									</div>
+								</form>
 							</div>
+						</div>
+					)}
 
-							<div className={styles.teamCard__members}>
-								{team.members.map((member) => (
-									<div key={member.id} className={styles.memberItem}>
-										<div className={styles.memberItem__avatar}>
-											{member.first_name[0]}
-											{member.last_name[0]}
+					<div className={styles.teamsGrid}>
+						{getSortedTeams().map((team) => {
+							const { display: displayMembers, hidden: hiddenMembers, total } = getDisplayMembers(team);
+							const hasMore = hiddenMembers.length > 0;
+							const isExpanded = expandedTeams[team.id] || false;
+
+							return (
+								<div key={team.id} id={`team-${team.id}`} className={styles.teamCard}>
+									<div className={styles.teamCard__header}>
+										<div className={styles.teamCard__icon}>
+											{getIconComponent(team.icon)}
 										</div>
-										<div className={styles.memberItem__info}>
-											<span className={styles.memberItem__name}>
-												{member.first_name} {member.last_name}
-											</span>
-											<span className={styles.memberItem__role}>
-												{member.is_leader && <Crown size={12} />}
-												{member.role_in_team}
-												{member.functional_role &&
-													` (${member.functional_role})`}
-											</span>
+										<div className={styles.teamCard__info}>
+											<h3 className={styles.teamCard__name}>{team.name}</h3>
+											<p className={styles.teamCard__description}>
+												{team.description}
+											</p>
 										</div>
-										<div className={styles.memberItem__actions}>
+										<div className={styles.teamCard__actions}>
 											{canManage && (
 												<>
-													{!member.is_leader && (
-														<button
-															className={styles.memberItem__makeLeader}
-															onClick={() =>
-																handleChangeMemberRole(member.id, true, team.id)
-															}
-															title="Ustaw jako lidera"
-														>
-															<Crown size={14} />
-														</button>
-													)}
-													{member.is_leader && (
-														<button
-															className={styles.memberItem__removeLeader}
-															onClick={() =>
-																handleChangeMemberRole(
-																	member.id,
-																	false,
-																	team.id,
-																)
-															}
-															title="Usuń z liderów"
-														>
-															<User size={14} />
-														</button>
-													)}
 													<button
-														className={styles.memberItem__remove}
-														onClick={() =>
-															showRemoveMemberConfirm(
-																member.id,
-																`${member.first_name} ${member.last_name}`,
-																team.id,
-															)
-														}
-														title="Usuń z zespołu"
+														className={styles.teamCard__editBtn}
+														onClick={() => startEditTeam(team)}
+														title="Edytuj zespół"
 													>
-														<X size={14} />
+														<Edit size={16} />
+													</button>
+													<button
+														className={styles.teamCard__deleteBtn}
+														onClick={() => showDeleteTeamConfirm(team.id, team.name)}
+														title="Usuń zespół"
+													>
+														<Trash2 size={16} />
 													</button>
 												</>
 											)}
 										</div>
 									</div>
-								))}
-							</div>
-
-							{canManage && (
-								<div className={styles.teamCard__addMember}>
-									{isAddingMember === team.id ? (
-										<div className={styles.addMemberForm}>
-											<select
-												value={selectedUser}
-												onChange={(e) => setSelectedUser(e.target.value)}
-												className={styles.addMemberForm__select}
-											>
-												<option value="">Wybierz użytkownika...</option>
-												{availableUsers
-													.filter(
-														(u) =>
-															!team.members.some((m) => m.user_id === u.id),
-													)
-													.map((user) => (
-														<option key={user.id} value={user.id}>
-															{user.first_name} {user.last_name} ({user.email})
-														</option>
-													))}
-											</select>
-
-											<input
-												type="text"
-												value={selectedRole}
-												onChange={(e) => setSelectedRole(e.target.value)}
-												placeholder="Rola w zespole (np. Koordynator, Specjalista)"
-												className={styles.addMemberForm__input}
-											/>
-
-											<label className={styles.addMemberForm__leader}>
-												<input
-													type="checkbox"
-													checked={isLeader}
-													onChange={(e) => setIsLeader(e.target.checked)}
-												/>
-												Lider
-											</label>
-											<button
-												className={styles.addMemberForm__save}
-												onClick={() => handleAddMember(team.id)}
-											>
-												<Save size={14} />
-											</button>
-											<button
-												className={styles.addMemberForm__cancel}
-												onClick={() => {
-													setIsAddingMember(null);
-													setSelectedUser("");
-													setSelectedRole("Członek");
-													setIsLeader(false);
-												}}
-											>
-												<X size={14} />
-											</button>
+									<div className={styles.teamCard__body}>
+										<div className={styles.teamCard__meta}>
+											{team.email && (
+												<a
+													href={`mailto:${team.email}`}
+													className={styles.teamCard__email}
+												>
+													<Mail size={14} />
+													{team.email}
+												</a>
+											)}
+											<span className={styles.teamCard__memberCount}>
+												<Users size={14} />
+												{total} członków
+											</span>
 										</div>
-									) : (
-										<button
-											className={styles.teamCard__addMemberBtn}
-											onClick={() => setIsAddingMember(team.id)}
-										>
-											<UserPlus size={16} />
-											Dodaj członka
-										</button>
-									)}
+
+										<div className={styles.teamCard__members}>
+											{displayMembers.map((member) => (
+												<div key={member.id} className={styles.memberItem}>
+													<div className={styles.memberItem__avatar}>
+														{member.first_name[0]}
+														{member.last_name[0]}
+													</div>
+													<div className={styles.memberItem__info}>
+														<span className={styles.memberItem__name}>
+															{member.first_name} {member.last_name}
+														</span>
+														<span className={styles.memberItem__role}>
+															{member.is_leader && <Crown size={12} />}
+															{member.role_in_team}
+															{member.functional_role &&
+																` (${member.functional_role})`}
+														</span>
+													</div>
+													<div className={styles.memberItem__actions}>
+														{canManage && (
+															<>
+																{!member.is_leader && (
+																	<button
+																		className={styles.memberItem__makeLeader}
+																		onClick={() =>
+																			handleChangeMemberRole(member.id, true, team.id)
+																		}
+																		title="Ustaw jako lidera"
+																	>
+																		<Crown size={14} />
+																	</button>
+																)}
+																{member.is_leader && (
+																	<button
+																		className={styles.memberItem__removeLeader}
+																		onClick={() =>
+																			handleChangeMemberRole(
+																				member.id,
+																				false,
+																				team.id,
+																			)
+																		}
+																		title="Usuń z liderów"
+																	>
+																		<User size={14} />
+																	</button>
+																)}
+																<button
+																	className={styles.memberItem__remove}
+																	onClick={() =>
+																		showRemoveMemberConfirm(
+																			member.id,
+																			`${member.first_name} ${member.last_name}`,
+																			team.id,
+																		)
+																	}
+																	title="Usuń z zespołu"
+																>
+																	<X size={14} />
+																</button>
+															</>
+														)}
+													</div>
+												</div>
+											))}
+										</div>
+
+										{/* 🔥 PRZYCISK "POKAŻ WSZYSTKICH" */}
+										{hasMore && (
+											<button
+												className={styles.showAllBtn}
+												onClick={() => toggleShowAll(team.id)}
+											>
+												{isExpanded ? (
+													<>Pokaż mniej</>
+												) : (
+													<>Pokaż wszystkich ({hiddenMembers.length} więcej)</>
+												)}
+											</button>
+										)}
+
+										{canManage && (
+											<div className={styles.teamCard__addMember}>
+												{isAddingMember === team.id ? (
+													<div className={styles.addMemberForm}>
+														<select
+															value={selectedUser}
+															onChange={(e) => setSelectedUser(e.target.value)}
+															className={styles.addMemberForm__select}
+														>
+															<option value="">Wybierz użytkownika...</option>
+															{availableUsers
+																.filter(
+																	(u) =>
+																		!team.members.some((m) => m.user_id === u.id),
+																)
+																.map((user) => (
+																	<option key={user.id} value={user.id}>
+																		{user.first_name} {user.last_name} ({user.email})
+																	</option>
+																))}
+														</select>
+
+														<input
+															type="text"
+															value={selectedRole}
+															onChange={(e) => setSelectedRole(e.target.value)}
+															placeholder="Rola w zespole (np. Koordynator, Specjalista)"
+															className={styles.addMemberForm__input}
+														/>
+
+														<label className={styles.addMemberForm__leader}>
+															<input
+																type="checkbox"
+																checked={isLeader}
+																onChange={(e) => setIsLeader(e.target.checked)}
+															/>
+															Lider
+														</label>
+														<button
+															className={styles.addMemberForm__save}
+															onClick={() => handleAddMember(team.id)}
+														>
+															<Save size={14} />
+														</button>
+														<button
+															className={styles.addMemberForm__cancel}
+															onClick={() => {
+																setIsAddingMember(null);
+																setSelectedUser("");
+																setSelectedRole("Członek");
+																setIsLeader(false);
+															}}
+														>
+															<X size={14} />
+														</button>
+													</div>
+												) : (
+													<button
+														className={styles.teamCard__addMemberBtn}
+														onClick={() => setIsAddingMember(team.id)}
+													>
+														<UserPlus size={16} />
+														Dodaj członka
+													</button>
+												)}
+											</div>
+										)}
+									</div>
 								</div>
-							)}
-						</div>
+							);
+						})}
 					</div>
-				))}
-			</div>
-		</section>
+				</>
+			)
+			}
+		</section >
 	);
 }
 
@@ -1489,7 +1655,7 @@ export default function Admin({ title }: { title?: string }) {
 			const profileData = await profileRes.json();
 			setCurrentUser(profileData);
 
-			if (profileData.role !== "admin") {
+			if (profileData.role !== "admin" && profileData.role !== "board" && profileData.role !== "zarząd") {
 				safeNavigate("/dashboard", navigate);
 				return;
 			}
@@ -1603,13 +1769,13 @@ export default function Admin({ title }: { title?: string }) {
 		);
 	}
 
-	if (!currentUser || currentUser.role !== "admin") {
+	if (!currentUser || (currentUser.role !== "admin" && currentUser.role !== "board" && currentUser.role !== "zarząd")) {
 		return null;
 	}
-
 	const canManage =
-		hasPermission(currentUser?.role, "canEditVacancies") ||
-		hasPermission(currentUser?.role, "canDeleteVacancies");
+		currentUser?.role === "admin" ||
+		currentUser?.role === "board" ||
+		currentUser?.role === "zarząd";
 
 	return (
 		<div className={styles.admin}>
