@@ -154,8 +154,6 @@ export async function syncMembers() {
 	const startTime = Date.now();
 
 	try {
-		// logger.debug("📥 [SYNC] Pobieranie danych z SM_Ewidencja.members...");
-
 		const [rows] = (await externalDb.query(`
             SELECT 
                 id,
@@ -249,7 +247,6 @@ export async function syncMembers() {
 		// ============================================================
 		logger.debug("📥 [SYNC] Pobieranie filarów z SM_Frekwencja...");
 
-		// Pobierz filary dla członków z att_member_pillars
 		const [memberPillars] = (await frekwencjaDb.query(`
             SELECT 
                 mp.member_id,
@@ -258,7 +255,6 @@ export async function syncMembers() {
             INNER JOIN att_pillars p ON p.id = mp.pillar_id
         `)) as any[];
 
-		// Stwórz mapę filarów dla każdego członka - TYLKO DOZWOLONE
 		const pillarMap = new Map<number, string[]>();
 		for (const row of memberPillars) {
 			if (ALLOWED_PILLARS.includes(row.pillar_name)) {
@@ -269,7 +265,6 @@ export async function syncMembers() {
 			}
 		}
 
-		// Pobierz mapowanie email -> member_id z att_members
 		const [attMembers] = (await frekwencjaDb.query(`
             SELECT id, email FROM att_members
         `)) as any[];
@@ -286,15 +281,8 @@ export async function syncMembers() {
 		);
 
 		// ============================================================
-		// 🔥 POBIERANIE KOORDYNATORÓW Z SM_Frekwencja
-		// ============================================================
-		// Pobierz liderów filarów (koordynatorów)
-		const coordinatorMap = new Map<string, string[]>();
-
-		// ============================================================
 		// 🔥 POBIERANIE ZESPOŁÓW (TEAMS) Z GŁÓWNEJ BAZY
 		// ============================================================
-		// Pobierz istniejące zespoły (filarów)
 		const teams = await prisma.team.findMany({
 			where: {
 				name: {
@@ -342,6 +330,7 @@ export async function syncMembers() {
 				pillars: true,
 				team: true,
 				functional_role: true,
+				role_id: true,  // <-- DODAJ TĘ LINIĘ
 			},
 		});
 
@@ -360,6 +349,7 @@ export async function syncMembers() {
 		let duplicateEmails = 0;
 		let teamMembersAdded = 0;
 		let teamMembersUpdated = 0;
+		let pillarsPreserved = 0; // 🔥 NOWE: licznik zachowanych filarów
 
 		const usedEmails = new Set<string>();
 
@@ -389,7 +379,7 @@ export async function syncMembers() {
 				const existing = existingEmails.get(generatedEmail);
 
 				// ============================================================
-				// 🔥 POBIERZ FILARY DLA TEGO CZŁONKA
+				// 🔥 POBIERZ FILARY DLA TEGO CZŁONKA Z SM_Frekwencja
 				// ============================================================
 				const memberId = emailToMemberId.get(generatedEmail);
 				let pillarNames: string[] = [];
@@ -402,13 +392,7 @@ export async function syncMembers() {
 					pillarNames.length > 0 ? pillarNames.join(", ") : null;
 
 				// ============================================================
-				// 🔥 SPRAWDŹ CZY UŻYTKOWNIK JEST KOORDYNATOREM
-				// ============================================================
-				const isCoordinator = false;
-				const coordinatorPillars: string[] = [];
-
-				// ============================================================
-				// 🔥 DANE UŻYTKOWNIKA Z FILARAMI I ROLĄ
+				// 🔥 DANE UŻYTKOWNIKA
 				// ============================================================
 				const userData = {
 					username: generatedEmail.split("@")[0] || generatedEmail,
@@ -424,50 +408,72 @@ export async function syncMembers() {
 					password_hash: "$2b$10$abcdefghijklmnopqrstuvwxyz1234567890",
 					functional_role: "Członek",
 					pillars: pillarString,
-					team: null, // 🔥 DODAJ - synchronizacja NIE nadpisuje team
+					team: null,
 				};
 
 				let userId: number;
 
 				if (existing) {
-					// 🔥 SPRAWDŹ CZY UŻYTKOWNIK MA JUŻ USTAWIONY STATUS W GŁÓWNEJ BAZIE
-					// Jeśli ma status (nie jest pusty) - NIE ZMIENIAJ GO
+					// 🔥 SPRAWDŹ CZY UŻYTKOWNIK MA JUŻ USTAWIONY STATUS
 					const hasExistingStatus = existing.status && existing.status !== "";
 
-					// Przygotuj dane do aktualizacji
-					// Przygotuj dane do aktualizacji
+					// 🔥 SPRAWDŹ CZY UŻYTKOWNIK MA JUŻ USTAWIONE FILARY
+					// Jeśli ma filary (nie są puste) - NIE ZMIENIAJ ICH
+					const hasExistingPillars = existing.pillars && existing.pillars !== "" && existing.pillars !== null;
+
 					const dataToUpdate: any = {
 						first_name: userData.first_name,
 						last_name: userData.last_name,
 						phone: userData.phone,
 						is_active: userData.is_active,
 						functional_role: userData.functional_role,
-						pillars: userData.pillars,
-						team: userData.team, // 🔥 DODAJ
-						role_id: userData.role_id,
+						team: userData.team,
 					};
 
-					// NIE ZMIENIAJ STATUSU jeśli użytkownik ma już jakiś status w głównej bazie
+					// DODAJ TEN WARUNEK:
+					// Sprawdź czy użytkownik ma już rolę (zakładamy że domyślna to 4)
+					const hasExistingRole = existing.role_id && existing.role_id !== 4;
+
+					if (hasExistingRole) {
+						// Zachowaj istniejącą rolę
+						dataToUpdate.role_id = existing.role_id;
+					} else {
+						// Ustaw domyślną rolę (4)
+						dataToUpdate.role_id = userData.role_id;
+					}
+
+					// 🔥 WARUNEK: NIE ZMIENIAJ FILARÓW jeśli użytkownik ma już filary w głównej bazie
+					if (hasExistingPillars) {
+						// Zachowaj istniejące filary - nie nadpisuj!
+						dataToUpdate.pillars = existing.pillars;
+						pillarsPreserved++;
+						logger.debug(
+							`🔒 [SYNC] Zachowano istniejące filary użytkownika ${generatedEmail}: ${existing.pillars}`
+						);
+					} else {
+						// Użytkownik nie ma filarów - nadpisz z synchronizacji
+						dataToUpdate.pillars = userData.pillars;
+					}
+
+					// NIE ZMIENIAJ STATUSU jeśli użytkownik ma już status
 					if (!hasExistingStatus) {
 						dataToUpdate.status = userData.status;
 						dataToUpdate.is_trial = userData.is_trial;
 					} else {
-						// Zachowaj istniejący status
 						dataToUpdate.status = existing.status;
 						dataToUpdate.is_trial = existing.is_trial;
 					}
 
 					// Sprawdź czy są zmiany
-					// Sprawdź czy są zmiany
 					const hasChanges =
 						existing.first_name !== dataToUpdate.first_name ||
 						existing.last_name !== dataToUpdate.last_name ||
 						existing.phone !== dataToUpdate.phone ||
-						existing.pillars !== dataToUpdate.pillars ||
-						existing.team !== dataToUpdate.team || // 🔥 DODAJ
 						existing.functional_role !== dataToUpdate.functional_role ||
+						(!hasExistingPillars && existing.pillars !== dataToUpdate.pillars) ||
 						(!hasExistingStatus && existing.status !== dataToUpdate.status) ||
 						(!hasExistingStatus && existing.is_trial !== dataToUpdate.is_trial);
+
 					if (hasChanges) {
 						const updatedUser = await prisma.user.update({
 							where: { id: existing.id },
@@ -480,8 +486,12 @@ export async function syncMembers() {
 							? `⏭️ status niezmieniony (zachowano: ${existing.status})`
 							: `status: ${member.status} -> ${userData.status}`;
 
+						const pillarsMsg = hasExistingPillars
+							? `🔒 filary zachowane: ${existing.pillars}`
+							: `filary: ${userData.pillars || "brak"}`;
+
 						logger.debug(
-							`🔄 [SYNC] Zaktualizowano: ${generatedEmail} | ${statusMsg} | filary: ${userData.pillars || "brak"}`,
+							`🔄 [SYNC] Zaktualizowano: ${generatedEmail} | ${statusMsg} | ${pillarsMsg}`,
 						);
 					} else {
 						userId = existing.id;
@@ -494,7 +504,7 @@ export async function syncMembers() {
 					userId = newUser.id;
 					added++;
 					logger.debug(
-						`✅ [SYNC] Dodano: ${generatedEmail} (${userData.first_name} ${userData.last_name}) | status: ${userData.status} | filary: ${userData.pillars || "brak"} | koordynator: ${isCoordinator}`,
+						`✅ [SYNC] Dodano: ${generatedEmail} (${userData.first_name} ${userData.last_name}) | status: ${userData.status} | filary: ${userData.pillars || "brak"}`,
 					);
 				}
 
@@ -502,7 +512,6 @@ export async function syncMembers() {
 				// 🔥 SYNCHRONIZACJA TEAM_MEMBERS - DLA FILARÓW
 				// ============================================================
 				if (pillarNames.length > 0) {
-					// Pobierz istniejące członkostwa w filarach dla tego użytkownika
 					const existingTeamMembers = await prisma.teamMember.findMany({
 						where: {
 							user_id: userId,
@@ -521,7 +530,6 @@ export async function syncMembers() {
 						existingTeamMembers.map((tm: any) => tm.team_id),
 					);
 
-					// Dla każdego filaru użytkownika
 					for (const pillarName of pillarNames) {
 						const teamName = `Filar ${pillarName}`;
 						const teamId = teamMap.get(teamName);
@@ -533,13 +541,11 @@ export async function syncMembers() {
 							continue;
 						}
 
-						// Sprawdź czy już istnieje członkostwo
 						const existingMember = existingTeamMembers.find(
 							(tm: any) => tm.team_id === teamId,
 						);
 
 						if (existingMember) {
-							// Już istnieje - nic nie rób
 							existingTeamIds.delete(teamId);
 						} else {
 							await prisma.teamMember.create({
@@ -570,7 +576,6 @@ export async function syncMembers() {
 						);
 					}
 				} else {
-					// Jeśli użytkownik nie ma żadnych filarów - usuń wszystkie członkostwa w filarach
 					await prisma.teamMember.deleteMany({
 						where: {
 							user_id: userId,
@@ -598,7 +603,7 @@ export async function syncMembers() {
 		logger.debug(`   ⏭️${skipped} bez zmian`);
 		logger.debug(`   ⏭️${skippedRezygnacja} pominiętych (rezygnacja)`);
 		logger.debug(`   ➕${teamMembersAdded} dodanych członkostw w filarach`);
-		logger.debug(`   🔄${teamMembersUpdated} zaktualizowanych członkostw`);
+		logger.debug(`   🔒${pillarsPreserved} zachowanych filarów (nie nadpisano)`); // 🔥 NOWE
 		if (duplicateEmails > 0) {
 			logger.debug(`   ⚠️${duplicateEmails} pominiętych (duplikaty emaili)`);
 		}
@@ -613,7 +618,7 @@ export async function syncMembers() {
 					category: "USER",
 					endpoint: "/api/admin/sync-members",
 					method: "SYNC",
-					entity_name: `Synchronizacja członków: +${added} dodanych, ${updated} zaktualizowanych, ${skipped} bez zmian, ${skippedRezygnacja} pominiętych`,
+					entity_name: `Synchronizacja członków: +${added} dodanych, ${updated} zaktualizowanych, ${skipped} bez zmian, ${skippedRezygnacja} pominiętych, ${pillarsPreserved} zachowanych filarów`,
 					changes: {
 						added,
 						updated,
@@ -622,6 +627,7 @@ export async function syncMembers() {
 						duplicateEmails,
 						teamMembersAdded,
 						teamMembersUpdated,
+						pillarsPreserved, // 🔥 DODANE
 						duration,
 						timestamp: new Date().toISOString(),
 					},

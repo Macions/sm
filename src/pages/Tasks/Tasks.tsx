@@ -759,7 +759,8 @@ function TaskCard({
 	// POPRAWIONE
 	// POPRAWNIE - zawsze boolean
 	const canManage = canManageTask(currentUser, task);
-
+	const isAssignedToMe = task.assignedTo === currentUser.id ||
+		(task.assignedUsers && task.assignedUsers.includes(currentUser.id));
 	const isAssigned = task.assignedTo === currentUser.id;
 
 	const formatDate = (date: string) => {
@@ -780,7 +781,7 @@ function TaskCard({
 
 	return (
 		<div
-			className={`${styles.taskCard} ${isOverdue ? styles.taskCardOverdue : ""}`}
+			className={`${styles.taskCard} ${isOverdue ? styles.taskCardOverdue : ""} ${isAssignedToMe ? styles.taskCardMyTask : ""}`}
 		>
 			<div className={styles.taskCard__header}>
 				<div className={styles.taskCard__titleRow}>
@@ -817,6 +818,18 @@ function TaskCard({
 						{formatDate(task.dueDate)}
 					</span>
 				</div>
+				{/* 🔥 DODAJ TUTAJ - BADGE KTO UTWORZYŁ */}
+				{(currentUser.role === "admin" || currentUser.role === "board") && (
+					<div className={styles.taskCard__metaItem}>
+						<span className={styles.taskCard__createdByBadge}>
+							{task.createdBy === currentUser.id ? (
+								"Utworzone przez Ciebie"
+							) : (
+								`Utworzył: ${task.createdByName || "Nieznany"}`
+							)}
+						</span>
+					</div>
+				)}
 				{task.tags.length > 0 && (
 					<div className={styles.taskCard__tags}>
 						{task.tags.slice(0, 2).map((tag) => (
@@ -835,38 +848,42 @@ function TaskCard({
 			</div>
 
 			<div className={styles.taskCard__actions}>
-				<div className={styles.taskCard__statusActions}>
-					{task.status !== "done" && (
-						<button
-							className={styles.taskCard__statusBtn}
-							onClick={() => onStatusChange(task, "done")}
-							title="Zakończ zadanie"
-						>
-							<Check size={16} />
-							Zakończ
-						</button>
+				{/* 🔥 STATUS ACTIONS - TYLKO DLA PRZYPISANEGO UŻYTKOWNIKA */}
+				{(task.assignedTo === currentUser.id ||
+					(task.assignedUsers && task.assignedUsers.includes(currentUser.id))) && (
+						<div className={styles.taskCard__statusActions}>
+							{task.status !== "done" && (
+								<button
+									className={styles.taskCard__statusBtn}
+									onClick={() => onStatusChange(task, "done")}
+									title="Zakończ zadanie"
+								>
+									<Check size={16} />
+									Zakończ
+								</button>
+							)}
+							{task.status === "todo" && (
+								<button
+									className={styles.taskCard__statusBtn}
+									onClick={() => onStatusChange(task, "in_progress")}
+									title="Rozpocznij"
+								>
+									<Clock size={16} />
+									Rozpocznij
+								</button>
+							)}
+							{task.status === "in_progress" && (
+								<button
+									className={styles.taskCard__statusBtn}
+									onClick={() => onStatusChange(task, "review")}
+									title="Prześlij do weryfikacji"
+								>
+									<Eye size={16} />
+									Prześlij do weryfikacji
+								</button>
+							)}
+						</div>
 					)}
-					{task.status === "todo" && (
-						<button
-							className={styles.taskCard__statusBtn}
-							onClick={() => onStatusChange(task, "in_progress")}
-							title="Rozpocznij"
-						>
-							<Clock size={16} />
-							Rozpocznij
-						</button>
-					)}
-					{task.status === "in_progress" && (
-						<button
-							className={styles.taskCard__statusBtn}
-							onClick={() => onStatusChange(task, "review")}
-							title="Prześlij do weryfikacji"
-						>
-							<Eye size={16} />
-							Prześlij do weryfikacji
-						</button>
-					)}
-				</div>
 
 				<div className={styles.taskCard__actionBtns}>
 					<button
@@ -1861,13 +1878,13 @@ export default function Tasks() {
 					tasks.map((t) =>
 						t.id === task.id
 							? {
-									...t,
-									feedbackText: data.feedbackText || feedbackText,
-									feedbackFile: data.feedbackFile,
-									feedbackFileName: data.feedbackFileName,
-									feedbackSubmittedAt:
-										data.feedbackSubmittedAt || new Date().toISOString(),
-								}
+								...t,
+								feedbackText: data.feedbackText || feedbackText,
+								feedbackFile: data.feedbackFile,
+								feedbackFileName: data.feedbackFileName,
+								feedbackSubmittedAt:
+									data.feedbackSubmittedAt || new Date().toISOString(),
+							}
 							: t,
 					),
 				);
@@ -1917,17 +1934,13 @@ export default function Tasks() {
 
 				setCurrentUser({
 					id: userData.id?.toString() || "",
-					name:
-						`${userData.firstName || ""} ${userData.lastName || ""}`.trim() ||
-						"Użytkownik",
+					name: `${userData.firstName || ""} ${userData.lastName || ""}`.trim() || "Użytkownik",
 					role: userData.role || "member",
 					teamId: userData.teamId?.toString(),
 					teamName: userData.teamName,
 					pillarId: userData.pillarId?.toString(),
 					pillarName: userData.pillarName,
 					isLeader: userData.isLeader === true,
-					isTeamCoordinator: userData.isLeader === true,
-					isPillarCoordinator: userData.isLeader === true,
 				});
 			}
 
@@ -2408,7 +2421,7 @@ export default function Tasks() {
 				</div>
 			</div>
 
-			<div className={styles.tasksGrid}>
+			<div className={styles.tasksContainer}>
 				{filteredTasks.length === 0 ? (
 					<div className={styles.emptyState}>
 						<Check size={48} className={styles.emptyState__icon} />
@@ -2431,18 +2444,81 @@ export default function Tasks() {
 						)}
 					</div>
 				) : (
-					filteredTasks.map((task) => (
-						<TaskCard
-							key={task.id}
-							task={task}
-							currentUser={currentUser}
-							onView={handleViewTask}
-							onEdit={canManage ? handleEditTask : undefined}
-							onDelete={canManage ? handleDeleteTask : undefined}
-							onStatusChange={handleStatusChange}
-							onFeedback={handleOpenFeedback}
-						/>
-					))
+					<>
+						{/* 🔥 SEKCJA: TWOJE ZADANIA */}
+						{(() => {
+							const myTasks = filteredTasks.filter(task =>
+								task.assignedTo === currentUser.id ||
+								(task.assignedUsers && task.assignedUsers.includes(currentUser.id))
+							);
+							if (myTasks.length > 0) {
+								return (
+									<div className={styles.tasksSection}>
+										<div className={styles.tasksSectionHeader}>
+											<h2 className={styles.tasksSectionTitle}>
+												Twoje zadania
+												<span className={styles.tasksSectionCount}>
+													{myTasks.length}
+												</span>
+											</h2>
+										</div>
+										<div className={styles.tasksGrid}>
+											{myTasks.map((task) => (
+												<TaskCard
+													key={task.id}
+													task={task}
+													currentUser={currentUser}
+													onView={handleViewTask}
+													onEdit={canManage ? handleEditTask : undefined}
+													onDelete={canManage ? handleDeleteTask : undefined}
+													onStatusChange={handleStatusChange}
+													onFeedback={handleOpenFeedback}
+												/>
+											))}
+										</div>
+									</div>
+								);
+							}
+							return null;
+						})()}
+
+						{/* 🔥 SEKCJA: ZADANIA INNYCH */}
+						{(() => {
+							const otherTasks = filteredTasks.filter(task =>
+								task.assignedTo !== currentUser.id &&
+								!(task.assignedUsers && task.assignedUsers.includes(currentUser.id))
+							);
+							if (otherTasks.length > 0) {
+								return (
+									<div className={styles.tasksSection}>
+										<div className={styles.tasksSectionHeader}>
+											<h2 className={styles.tasksSectionTitle}>
+												Zadania innych
+												<span className={styles.tasksSectionCount}>
+													{otherTasks.length}
+												</span>
+											</h2>
+										</div>
+										<div className={styles.tasksGrid}>
+											{otherTasks.map((task) => (
+												<TaskCard
+													key={task.id}
+													task={task}
+													currentUser={currentUser}
+													onView={handleViewTask}
+													onEdit={canManage ? handleEditTask : undefined}
+													onDelete={canManage ? handleDeleteTask : undefined}
+													onStatusChange={handleStatusChange}
+													onFeedback={handleOpenFeedback}
+												/>
+											))}
+										</div>
+									</div>
+								);
+							}
+							return null;
+						})()}
+					</>
 				)}
 			</div>
 

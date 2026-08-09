@@ -169,90 +169,90 @@ const mapApiUserToMember = (user: ApiUser): Member => {
 		interests:
 			hasOnboardingData && onboarding.development_areas
 				? (() => {
-						try {
-							return JSON.parse(onboarding.development_areas);
-						} catch (e) {
-							return [];
-						}
-					})()
+					try {
+						return JSON.parse(onboarding.development_areas);
+					} catch (e) {
+						return [];
+					}
+				})()
 				: [],
 		skills:
 			hasOnboardingData && onboarding.skills
 				? (() => {
-						try {
-							return JSON.parse(onboarding.skills);
-						} catch (e) {
-							return [];
-						}
-					})()
+					try {
+						return JSON.parse(onboarding.skills);
+					} catch (e) {
+						return [];
+					}
+				})()
 				: [],
 		smAreas:
 			hasOnboardingData && onboarding.development_areas
 				? (() => {
-						try {
-							return JSON.parse(onboarding.development_areas);
-						} catch (e) {
-							return [];
-						}
-					})()
+					try {
+						return JSON.parse(onboarding.development_areas);
+					} catch (e) {
+						return [];
+					}
+				})()
 				: [],
 		email: user.email || "",
 		phone: user.phone || "",
 		joinDate: user.join_date
 			? new Date(user.join_date).toISOString().split("T")[0]
 			: user.created_at?.split("T")[0] ||
-				new Date().toISOString().split("T")[0],
+			new Date().toISOString().split("T")[0],
 		contacts: {
 			salaContacts:
 				hasOnboardingData && onboarding.sala_contacts
 					? (() => {
-							try {
-								return JSON.parse(onboarding.sala_contacts);
-							} catch (e) {
-								return [];
-							}
-						})()
+						try {
+							return JSON.parse(onboarding.sala_contacts);
+						} catch (e) {
+							return [];
+						}
+					})()
 					: [],
 			mpContacts:
 				hasOnboardingData && onboarding.mp_contacts
 					? (() => {
-							try {
-								return JSON.parse(onboarding.mp_contacts);
-							} catch (e) {
-								return [];
-							}
-						})()
+						try {
+							return JSON.parse(onboarding.mp_contacts);
+						} catch (e) {
+							return [];
+						}
+					})()
 					: [],
 			otherContacts: [
 				...(hasOnboardingData && onboarding.institution_contacts
 					? (() => {
-							try {
-								return JSON.parse(onboarding.institution_contacts);
-							} catch (e) {
-								return [];
-							}
-						})()
+						try {
+							return JSON.parse(onboarding.institution_contacts);
+						} catch (e) {
+							return [];
+						}
+					})()
 					: []),
 				...(hasOnboardingData && onboarding.other_contacts
 					? (() => {
-							try {
-								return JSON.parse(onboarding.other_contacts);
-							} catch (e) {
-								return [];
-							}
-						})()
+						try {
+							return JSON.parse(onboarding.other_contacts);
+						} catch (e) {
+							return [];
+						}
+					})()
 					: []),
 			],
 		},
 		trainingAreas:
 			hasOnboardingData && onboarding.skills
 				? (() => {
-						try {
-							return JSON.parse(onboarding.skills);
-						} catch (e) {
-							return [];
-						}
-					})()
+					try {
+						return JSON.parse(onboarding.skills);
+					} catch (e) {
+						return [];
+					}
+				})()
 				: [],
 		contributionInfo: {
 			status: "paid",
@@ -333,11 +333,10 @@ function MemberCard({
 							{/* 🔥 IKONKA STATUSU SKŁADKI - MONETA */}
 							{contributionBadge && contributionBadge !== "none" && (
 								<span
-									className={`${styles.contributionDot} ${
-										contributionBadge === "paid"
+									className={`${styles.contributionDot} ${contributionBadge === "paid"
 											? styles.contributionDotPaid
 											: styles.contributionDotPending
-									}`}
+										}`}
 									title={
 										contributionBadge === "paid"
 											? "Opłacona składka"
@@ -437,11 +436,10 @@ function MemberCard({
 				{/* 🔥 IKONKA STATUSU SKŁADKI - MONETA */}
 				{contributionBadge && contributionBadge !== "none" && (
 					<span
-						className={`${styles.contributionDot} ${
-							contributionBadge === "paid"
+						className={`${styles.contributionDot} ${contributionBadge === "paid"
 								? styles.contributionDotPaid
 								: styles.contributionDotPending
-						}`}
+							}`}
 						title={
 							contributionBadge === "paid"
 								? "Opłacona składka"
@@ -1087,11 +1085,10 @@ function ProfileModal({
 											/>
 										) : contributionStats?.hasContributions ? (
 											<span
-												className={`${styles.contributionBadge} ${
-													contributionStats.currentMonth?.status === "paid"
+												className={`${styles.contributionBadge} ${contributionStats.currentMonth?.status === "paid"
 														? styles.contributionBadgePaid
 														: styles.contributionBadgePending
-												}`}
+													}`}
 											>
 												{contributionStats.currentMonth?.status === "paid" ? (
 													<Coins size={16} />
@@ -1922,13 +1919,12 @@ function ProfileModal({
 														Bieżący miesiąc
 													</span>
 													<span
-														className={`${styles.contributionStatValue} ${
-															contributionStats.currentMonth?.status === "paid"
+														className={`${styles.contributionStatValue} ${contributionStats.currentMonth?.status === "paid"
 																? styles.statusPaid
 																: contributionStats.hasContributions === false
 																	? styles.statusNone
 																	: styles.statusPending
-														}`}
+															}`}
 													>
 														{contributionStats.currentMonth?.status === "paid"
 															? "Opłacona"
@@ -1952,11 +1948,10 @@ function ProfileModal({
 														Zaległości
 													</span>
 													<span
-														className={`${styles.contributionStatValue} ${
-															contributionStats.summary?.overdueMonths > 0
+														className={`${styles.contributionStatValue} ${contributionStats.summary?.overdueMonths > 0
 																? styles.statusOverdue
 																: ""
-														}`}
+															}`}
 													>
 														{contributionStats.summary?.overdueMonths > 0
 															? `️ ${contributionStats.summary.overdueMonths} mies.`
@@ -2496,7 +2491,11 @@ export default function Members({ title }: { title?: string }) {
 				const matchesFunction =
 					selectedFunction === "all" || member.function === selectedFunction;
 
+				// Pełne imię i nazwisko
+				const fullName = `${member.firstName || ""} ${member.lastName || ""}`.toLowerCase();
+
 				const matchesSearch =
+					fullName.includes(searchLower) ||  // <-- DODAJ TĘ LINIĘ (szuka po całym imieniu i nazwisku)
 					(member.firstName || "").toLowerCase().includes(searchLower) ||
 					(member.lastName || "").toLowerCase().includes(searchLower) ||
 					(member.function || "").toLowerCase().includes(searchLower) ||
@@ -2506,7 +2505,6 @@ export default function Members({ title }: { title?: string }) {
 					member.skills.some((s) => s.toLowerCase().includes(searchLower)) ||
 					member.interests.some((i) => i.toLowerCase().includes(searchLower)) ||
 					member.smAreas.some((a) => a.toLowerCase().includes(searchLower));
-
 				const matchesProvince =
 					selectedProvince === "all" || member.province === selectedProvince;
 
@@ -2782,10 +2780,10 @@ export default function Members({ title }: { title?: string }) {
 						selectedTeam !== "all" ||
 						selectedFunction !== "all" || // 🔥 DODANE
 						searchTerm) && (
-						<button className={styles.filters__reset} onClick={clearFilters}>
-							Wyczyść filtry
-						</button>
-					)}
+							<button className={styles.filters__reset} onClick={clearFilters}>
+								Wyczyść filtry
+							</button>
+						)}
 				</div>
 			</div>
 
@@ -2863,8 +2861,8 @@ export default function Members({ title }: { title?: string }) {
 						<h3 className={styles.emptyState__title}>Brak członków</h3>
 						<p className={styles.emptyState__description}>
 							{searchTerm ||
-							selectedProvince !== "all" ||
-							selectedTeam !== "all"
+								selectedProvince !== "all" ||
+								selectedTeam !== "all"
 								? "Nie znaleziono członków spełniających kryteria wyszukiwania."
 								: "Nie ma jeszcze żadnych członków w organizacji."}
 						</p>

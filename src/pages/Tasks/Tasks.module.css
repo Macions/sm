@@ -725,6 +725,7 @@
 	color: #94a3b8;
 	margin-top: 4px;
 }
+
 /* Detail Modal */
 .detailModal {
 	max-width: 700px;
@@ -1075,6 +1076,7 @@
 		padding: 3px 8px 3px 10px;
 	}
 }
+
 /* Tasks.module.css */
 .feedbackDownloadBtn {
 	display: inline-flex;
@@ -1098,6 +1100,7 @@
 .feedbackDownloadBtn:active {
 	transform: scale(0.97);
 }
+
 /* ============================================================
    COMMENTS - KOMENTARZE
    ============================================================ */
@@ -1346,6 +1349,7 @@
 	color: #ef4444;
 	background: #fef2f2;
 }
+
 /* ============================================================
    STYLE DLA PRZYCISKU POBIERANIA ZAŁĄCZNIKA
    ============================================================ */
@@ -1464,4 +1468,102 @@
 	display: flex;
 	align-items: center;
 	gap: 4px;
+}
+
+.taskCard__createdByBadge {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+	padding: 2px 8px;
+	background: #f0f0f0;
+	border-radius: 12px;
+	font-size: 11px;
+	color: #555;
+	border: 1px solid #e0e0e0;
+}
+
+.badgeIcon {
+	font-size: 11px;
+}
+
+/* Dla admin/board - delikatne podświetlenie */
+.taskCard__createdByBadge {
+	background: #e8f0fe;
+	border-color: #c5d8f0;
+	color: #1a5a8c;
+}
+
+/* 🔥 SEKCJE ZADAŃ */
+.tasksContainer {
+	display: flex;
+	flex-direction: column;
+	gap: 32px;
+}
+
+.tasksSection {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+}
+
+.tasksSectionHeader {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding-bottom: 8px;
+	border-bottom: 2px solid #e5e7eb;
+}
+
+.tasksSectionTitle {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	font-size: 18px;
+	font-weight: 600;
+	color: #1f2937;
+	margin: 0;
+}
+
+.tasksSectionCount {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	padding: 0 10px;
+	height: 24px;
+	border-radius: 12px;
+	background: #e5e7eb;
+	font-size: 13px;
+	font-weight: 500;
+	color: #4b5563;
+}
+
+/* 🔥 PODŚWIETLENIE ZADANIA PRZYPISANEGO DO MNIE */
+.taskCardMyTask {
+	box-shadow: 0 1px 3px rgba(59, 130, 246, 0.1) !important;
+}
+
+.taskCardMyTask:hover {
+	box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15) !important;
+	transform: translateY(-2px);
+}
+
+/* Opcjonalnie - badge "MOJE" na karcie */
+.taskCardMyTask .taskCard__title::after {
+	content: " • Twoje";
+	font-size: 12px;
+	font-weight: 400;
+	color: #3b82f6;
+}
+
+/* Responsywność */
+@media (max-width: 768px) {
+	.tasksSectionTitle {
+		font-size: 16px;
+	}
+
+	.tasksSectionCount {
+		font-size: 12px;
+		height: 20px;
+		padding: 0 8px;
+	}
 }

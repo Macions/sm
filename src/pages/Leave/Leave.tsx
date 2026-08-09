@@ -1,7 +1,6 @@
 import { useEffect } from "react";
 import { logger } from "@/utils/logger";
 import toast from "react-hot-toast";
-import { hasPermission } from "../../utils/permissions";
 import { useState, useMemo } from "react";
 import { ConfirmDialog } from "../../components/common/ConfirmDialog";
 
@@ -10,7 +9,6 @@ import {
 	Search,
 	X,
 	Plus,
-	Edit,
 	Trash2,
 	Users,
 	User,
@@ -130,7 +128,6 @@ function LeaveCard({
 	leave,
 	currentUser,
 	onView,
-	onEdit,
 	onDelete,
 	onStatusChange,
 	canManage,
@@ -183,11 +180,16 @@ function LeaveCard({
 					</div>
 				</div>
 				<div className={styles.leaveCard__badges}>
+					{/* W LeaveCard, w sekcji badge'ów */}
 					<span
-						className={`${styles.leaveCard__status} ${STATUS_COLORS[leave.status]}`}
+						className={`${styles.leaveCard__status} ${isLeaveActive(leave) ? styles.statusActive : STATUS_COLORS[leave.status]}`}
 					>
-						{STATUS_ICONS[leave.status]}
-						{STATUS_LABELS[leave.status]}
+						{isLeaveActive(leave) ? (
+							<CheckCircle size={14} />
+						) : (
+							STATUS_ICONS[leave.status]
+						)}
+						{isLeaveActive(leave) ? "Aktywny" : STATUS_LABELS[leave.status]}
 					</span>
 					<span className={styles.leaveCard__type}>
 						{TYPE_ICONS[leave.type]}
@@ -232,13 +234,12 @@ function LeaveCard({
 
 				{leave.approvedBy && (
 					<div
-						className={`${styles.leaveCard__approval} ${
-							leave.status === "approved"
-								? styles.leaveCard__approvalApproved
-								: leave.status === "rejected"
-									? styles.leaveCard__approvalRejected
-									: ""
-						}`}
+						className={`${styles.leaveCard__approval} ${leave.status === "approved"
+							? styles.leaveCard__approvalApproved
+							: leave.status === "rejected"
+								? styles.leaveCard__approvalRejected
+								: ""
+							}`}
 					>
 						{leave.status === "approved" ? (
 							<CheckCircle size={14} />
@@ -299,7 +300,7 @@ function LeaveCard({
 
 				<div className={styles.leaveCard__actions}>
 					{(leave.comments && leave.comments.length > 0) ||
-					(leave.attachments && leave.attachments.length > 0) ? (
+						(leave.attachments && leave.attachments.length > 0) ? (
 						<button
 							className={styles.leaveCard__expandBtn}
 							onClick={() => setIsExpanded(!isExpanded)}
@@ -367,15 +368,9 @@ function LeaveCard({
 							</>
 						)}
 
-						{currentUser.role === "admin" && (
+						{(currentUser.role === "admin" || currentUser.role === "board" || currentUser.role === "zarząd") && (
 							<>
-								<button
-									className={styles.leaveCard__actionBtn}
-									onClick={() => onEdit(leave)}
-									title="Edytuj"
-								>
-									<Edit size={16} />
-								</button>
+
 								<button
 									className={`${styles.leaveCard__actionBtn} ${styles.leaveCard__actionBtnDanger}`}
 									onClick={() => onDelete(leave.id)}
@@ -499,7 +494,16 @@ interface LeaveModalProps {
 	onClose: () => void;
 	onSave?: (leave: LeaveRequest) => void;
 }
-
+// Dodaj przed komponentem Leave (około linii 600)
+const isLeaveActive = (leave: LeaveRequest): boolean => {
+	const today = new Date();
+	today.setHours(0, 0, 0, 0);
+	const start = new Date(leave.startDate);
+	const end = new Date(leave.endDate);
+	start.setHours(0, 0, 0, 0);
+	end.setHours(0, 0, 0, 0);
+	return leave.status === "approved" && start <= today && end >= today;
+};
 function LeaveModal({
 	isOpen,
 	leave,
@@ -864,7 +868,7 @@ function LeaveModal({
 
 										endDate:
 											formData.endDate &&
-											new Date(formData.endDate) < new Date(newStartDate)
+												new Date(formData.endDate) < new Date(newStartDate)
 												? ""
 												: formData.endDate,
 									});
@@ -1021,13 +1025,12 @@ function LeaveModal({
 
 					{leave?.approvedBy && (
 						<div
-							className={`${styles.modal__approval} ${
-								leave.status === "approved"
-									? styles.modal__approvalApproved
-									: leave.status === "rejected"
-										? styles.modal__approvalRejected
-										: ""
-							}`}
+							className={`${styles.modal__approval} ${leave.status === "approved"
+								? styles.modal__approvalApproved
+								: leave.status === "rejected"
+									? styles.modal__approvalRejected
+									: ""
+								}`}
 						>
 							{leave.status === "approved" ? (
 								<CheckCircle size={16} />
@@ -1066,6 +1069,7 @@ export default function Leave({ title }: { title?: string }) {
 	const [leaves, setLeaves] = useState<LeaveRequest[]>([]);
 	const [loading, setLoading] = useState(true);
 	const [searchTerm, setSearchTerm] = useState("");
+	const [leaveFilter, setLeaveFilter] = useState<"all" | "active" | "archived">("all");
 	const [selectedStatus, setSelectedStatus] = useState<LeaveStatus | "all">(
 		"all",
 	);
@@ -1089,22 +1093,23 @@ export default function Leave({ title }: { title?: string }) {
 		title: "",
 		message: "",
 		confirmText: "Potwierdź",
-		onConfirm: () => {},
-		onCancel: () => {},
+		onConfirm: () => { },
+		onCancel: () => { },
 	});
 
-	const canApprove = currentUser
-		? hasPermission(currentUser.role, "canApproveLeaves")
-		: false;
-	const canReject = currentUser
-		? hasPermission(currentUser.role, "canRejectLeaves")
+	const canManage = currentUser
+		? currentUser.role === "admin" ||
+		currentUser.role === "board" ||
+		currentUser.role === "zarząd"
 		: false;
 
-	const canManage = canApprove || canReject;
 	const filteredLeaves = useMemo(() => {
 		if (!currentUser) return [];
 
-		return leaves.filter((leave) => {
+		const today = new Date();
+		today.setHours(0, 0, 0, 0);
+
+		const result = leaves.filter((leave) => {
 			const matchesSearch =
 				(leave.userName || "")
 					.toLowerCase()
@@ -1114,12 +1119,16 @@ export default function Leave({ title }: { title?: string }) {
 					.includes(searchTerm.toLowerCase()) ||
 				(leave.reason || "").toLowerCase().includes(searchTerm.toLowerCase());
 
+			// 🔥 STATUS FILTR - DZIAŁA NIEZALEŻNIE OD leaveFilter
 			const matchesStatus =
 				selectedStatus === "all" || leave.status === selectedStatus;
+
 			const matchesType = selectedType === "all" || leave.type === selectedType;
 
 			let canView = false;
-			if (currentUser?.role === "admin") {
+			if (currentUser?.role === "admin" ||
+				currentUser?.role === "board" ||
+				currentUser?.role === "zarząd") {
 				canView = true;
 			} else if (currentUser?.role === "coordinator") {
 				canView =
@@ -1130,9 +1139,34 @@ export default function Leave({ title }: { title?: string }) {
 				canView = currentUser?.id === leave.userId;
 			}
 
-			return matchesSearch && matchesStatus && matchesType && canView;
+			const isActive = isLeaveActive(leave);
+
+			// 🔥 FILTR AKTYWNOŚCI
+			let matchesActiveFilter = true;
+
+			if (leaveFilter === "active") {
+				matchesActiveFilter = isActive;
+			} else if (leaveFilter === "archived") {
+				const endDate = new Date(leave.endDate);
+				endDate.setHours(0, 0, 0, 0);
+				const archiveDate = new Date(endDate);
+				archiveDate.setDate(archiveDate.getDate() + 7);
+				archiveDate.setHours(0, 0, 0, 0);
+				const isArchived = leave.status === "cancelled" ||
+					leave.status === "rejected" ||
+					(leave.status === "approved" && today > archiveDate);
+				matchesActiveFilter = isArchived;
+			}
+			// leaveFilter === "all" - pokazuje WSZYSTKIE (w tym aktywne)
+
+			return matchesSearch && matchesStatus && matchesType && canView && matchesActiveFilter;
 		});
-	}, [leaves, searchTerm, selectedStatus, selectedType, currentUser]);
+
+		// Sortowanie od najnowszych
+		return result.sort((a, b) => {
+			return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+		});
+	}, [leaves, searchTerm, selectedStatus, selectedType, currentUser, leaveFilter]);
 	useEffect(() => {
 		const fetchAllData = async () => {
 			try {
@@ -1290,15 +1324,15 @@ export default function Leave({ title }: { title?: string }) {
 						prevLeaves.map((l) =>
 							l.id === id
 								? {
-										...l,
-										status,
-										approvedBy:
-											status === "pending" ? undefined : currentUser?.name,
-										approvedAt:
-											status === "pending"
-												? undefined
-												: new Date().toISOString(),
-									}
+									...l,
+									status,
+									approvedBy:
+										status === "pending" ? undefined : currentUser?.name,
+									approvedAt:
+										status === "pending"
+											? undefined
+											: new Date().toISOString(),
+								}
 								: l,
 						),
 					);
@@ -1408,10 +1442,9 @@ export default function Leave({ title }: { title?: string }) {
 	};
 
 	const getStatusCount = (status: LeaveStatus) => {
-		return filteredLeaves.filter((l) => l.status === status).length;
+		// 🔥 LICZ Z WSZYSTKICH leaves, NIE z filteredLeaves
+		return leaves.filter((l) => l.status === status).length;
 	};
-
-	const totalLeaves = filteredLeaves.length;
 
 	if (loading || !currentUser) {
 		return (
@@ -1444,14 +1477,45 @@ export default function Leave({ title }: { title?: string }) {
 
 			<div className={styles.statuses}>
 				<button
-					className={`${styles.statuses__item} ${selectedStatus === "all" ? styles.statuses__itemActive : ""}`}
-					onClick={() => setSelectedStatus("all")}
+					className={`${styles.statuses__item} ${leaveFilter === "all" ? styles.statuses__itemActive : ""}`}
+					onClick={() => setLeaveFilter("all")}
 				>
-					<span className={styles.statuses__count}>{totalLeaves}</span>
+					<span className={styles.statuses__count}>{leaves.length}</span>
 					<span>Wszystkie</span>
 				</button>
+				<button
+					className={`${styles.statuses__item} ${leaveFilter === "active" ? styles.statuses__itemActive : ""}`}
+					onClick={() => setLeaveFilter("active")}
+				>
+					<span className={styles.statuses__count}>
+						{leaves.filter((l) => isLeaveActive(l)).length}
+					</span>
+					<span>Aktywne</span>
+				</button>
+				<button
+					className={`${styles.statuses__item} ${leaveFilter === "archived" ? styles.statuses__itemActive : ""}`}
+					onClick={() => setLeaveFilter("archived")}
+				>
+					<span className={styles.statuses__count}>
+						{leaves.filter((l) => {
+							const today = new Date();
+							today.setHours(0, 0, 0, 0);
+							const end = new Date(l.endDate);
+							end.setHours(0, 0, 0, 0);
+							const archiveDate = new Date(end);
+							archiveDate.setDate(archiveDate.getDate() + 7);
+							archiveDate.setHours(0, 0, 0, 0);
+							return l.status === "cancelled" ||
+								l.status === "rejected" ||
+								(l.status === "approved" && today > archiveDate);
+						}).length}
+					</span>
+					<span>Archiwum</span>
+				</button>
+
+				{/* Reszta statusów (pending, approved, rejected, cancelled) */}
 				{Object.entries(STATUS_LABELS).map(([key, label]) => {
-					const count = getStatusCount(key as LeaveStatus);
+					const count = leaves.filter((l) => l.status === key as LeaveStatus).length;
 					if (count === 0) return null;
 					return (
 						<button
@@ -1508,10 +1572,10 @@ export default function Leave({ title }: { title?: string }) {
 					{(selectedStatus !== "all" ||
 						selectedType !== "all" ||
 						searchTerm) && (
-						<button className={styles.filters__reset} onClick={clearFilters}>
-							Wyczyść filtry
-						</button>
-					)}
+							<button className={styles.filters__reset} onClick={clearFilters}>
+								Wyczyść filtry
+							</button>
+						)}
 				</div>
 			</div>
 
@@ -1523,8 +1587,8 @@ export default function Leave({ title }: { title?: string }) {
 							<h3 className={styles.emptyState__title}>Brak wniosków</h3>
 							<p className={styles.emptyState__description}>
 								{searchTerm ||
-								selectedStatus !== "all" ||
-								selectedType !== "all"
+									selectedStatus !== "all" ||
+									selectedType !== "all"
 									? "Nie znaleziono wniosków spełniających kryteria wyszukiwania."
 									: "Nie ma jeszcze żadnych wniosków urlopowych."}
 							</p>

@@ -3489,8 +3489,7 @@ app.delete("/api/leaves/:id", authMiddleware, async (req: any, res) => {
 			return res.status(404).json({ error: "Nie znaleziono wniosku" });
 		}
 
-		if (userRole !== "admin" && existingLeave.user_id !== userId) {
-			// 			logger.debug(`🔍 [DELETE LEAVE] Brak uprawnień`);
+		if (userRole !== "admin" && userRole !== "board" && userRole !== "zarząd" && existingLeave.user_id !== userId) {
 			return res.status(403).json({ error: "Brak uprawnień" });
 		}
 
@@ -6423,6 +6422,186 @@ app.delete("/api/comments/:id", authMiddleware, async (req: any, res) => {
 	} catch (error) {
 		console.error("❌ Błąd usuwania komentarza:", error);
 		res.status(500).json({ error: "Nie udało się usunąć komentarza" });
+	}
+});
+// ============================================================
+// 📋 GET /api/tasks/completed/:userId - Pobierz ukończone zadania użytkownika
+// ============================================================
+// GET /api/tasks/completed/:userId - Pobierz ukończone zadania z szczegółami
+app.get("/api/tasks/completed/:userId", authMiddleware, async (req: any, res) => {
+	try {
+		const userId = req.params.userId;
+		const currentUserId = req.user?.id;
+
+		const isAuthorized =
+			req.user?.role === "admin" ||
+			req.user?.role === "board" ||
+			parseInt(userId) === currentUserId;
+
+		if (!isAuthorized) {
+			return res.status(403).json({ error: "Brak uprawnień" });
+		}
+
+		const tasks = await prisma.task.findMany({
+			where: {
+				assigned_to: parseInt(userId),
+				status: "done",
+			},
+			select: {
+				id: true,
+				title: true,
+				description: true,
+				status: true,
+				priority: true,
+				created_at: true,
+				updated_at: true,
+				due_date: true,
+				pillar: true,
+				rating: true,
+				rating_comment: true,
+				rated_at: true,
+				assigned_to: true,
+				project: {
+					select: {
+						name: true,
+					},
+				},
+				assignedTo: {
+					select: {
+						id: true,
+						first_name: true,
+						last_name: true,
+					},
+				},
+			},
+			orderBy: {
+				updated_at: "desc",
+			},
+			take: 50,
+		});
+
+		const mappedTasks = tasks.map((task: any) => {
+			const createdAt = new Date(task.created_at);
+			const dueDate = task.due_date ? new Date(task.due_date) : null;
+			const completedAt = new Date(task.updated_at);
+
+			// Oblicz czas realizacji w dniach
+			const daysToComplete = Math.ceil((completedAt.getTime() - createdAt.getTime()) / (1000 * 60 * 60 * 24));
+
+			// Sprawdź czy przed/po terminie
+			let timelineStatus = "on_time";
+			let daysDiff = 0;
+
+			if (dueDate) {
+				daysDiff = Math.ceil((completedAt.getTime() - dueDate.getTime()) / (1000 * 60 * 60 * 24));
+				if (daysDiff < -1) {
+					timelineStatus = "early";
+				} else if (daysDiff > 1) {
+					timelineStatus = "late";
+				} else {
+					timelineStatus = "on_time";
+				}
+			}
+
+			return {
+				id: task.id.toString(),
+				title: task.title,
+				description: task.description,
+				status: task.status,
+				priority: task.priority || "medium",
+				pillar: task.pillar,
+				rating: task.rating,
+				rating_comment: task.rating_comment,
+				rated_at: task.rated_at?.toISOString() || null,
+				projectName: task.project?.name || null,
+				assignedToName: task.assignedTo
+					? `${task.assignedTo.first_name || ""} ${task.assignedTo.last_name || ""}`.trim()
+					: "Nieznany",
+				// Szczegóły czasowe
+				createdAt: task.created_at.toISOString(),
+				dueDate: task.due_date?.toISOString() || null,
+				completedAt: task.updated_at.toISOString(),
+				daysToComplete: daysToComplete,
+				timelineStatus: timelineStatus,
+				daysDiff: daysDiff,
+				// Czy było przed/po terminie
+				isLate: timelineStatus === "late",
+				isEarly: timelineStatus === "early",
+				isOnTime: timelineStatus === "on_time",
+			};
+		});
+
+		res.json({
+			tasks: mappedTasks,
+			total: mappedTasks.length,
+		});
+	} catch (error) {
+		logger.error("❌ Błąd pobierania ukończonych zadań:", error);
+		res.status(500).json({ error: "Nie udało się pobrać zadań" });
+	}
+});
+// ============================================================
+// 📊 GET /api/tasks/stats/:userId - Statystyki zadań użytkownika
+// ============================================================
+app.get("/api/tasks/stats/:userId", authMiddleware, async (req: any, res) => {
+	try {
+		const userId = req.params.userId;
+		const currentUserId = req.user?.id;
+
+		const isAuthorized =
+			req.user?.role === "admin" ||
+			req.user?.role === "board" ||
+			parseInt(userId) === currentUserId;
+
+		if (!isAuthorized) {
+			return res.status(403).json({ error: "Brak uprawnień" });
+		}
+
+		const totalTasks = await prisma.task.count({
+			where: { assigned_to: parseInt(userId) }
+		});
+
+		const completedTasks = await prisma.task.count({
+			where: {
+				assigned_to: parseInt(userId),
+				status: "done"
+			}
+		});
+
+		const inProgressTasks = await prisma.task.count({
+			where: {
+				assigned_to: parseInt(userId),
+				status: "in_progress"
+			}
+		});
+
+		const todoTasks = await prisma.task.count({
+			where: {
+				assigned_to: parseInt(userId),
+				status: "todo"
+			}
+		});
+
+		const avgRating = await prisma.task.aggregate({
+			where: {
+				assigned_to: parseInt(userId),
+				status: "done",
+				rating: { not: null }
+			},
+			_avg: { rating: true }
+		});
+
+		res.json({
+			total: totalTasks,
+			completed: completedTasks,
+			inProgress: inProgressTasks,
+			todo: todoTasks,
+			completionRate: totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0,
+			averageRating: avgRating._avg.rating || 0,
+		});
+	} catch (error) {
+		logger.error("❌ Błąd pobierania statystyk zadań:", error);
+		res.status(500).json({ error: "Nie udało się pobrać statystyk" });
 	}
 });
 // ============================================================

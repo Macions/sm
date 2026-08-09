@@ -172,36 +172,204 @@ export default function Profile({
 
 	const [editData, setEditData] = useState<Partial<Member>>({});
 	const [selectedTab, setSelectedTab] = useState<string>("profile");
+	const [contributionStats, setContributionStats] = useState<any>(null);
+	const [contributionHistory, setContributionHistory] = useState<any[]>([]);
+
+	// Dodaj na początku komponentu, obok innych useState
+	const [isSkillModalOpen, setIsSkillModalOpen] = useState(false);
+	const [newSkillName, setNewSkillName] = useState("");
+	const [isAddingSkill, setIsAddingSkill] = useState(false);
+
+	const [completedTasks, setCompletedTasks] = useState<any[]>([]);
+	const [loadingTasks, setLoadingTasks] = useState(false);
+	const [loadingContributions, setLoadingContributions] = useState(false);
+	const [loadingHistory, _setLoadingHistory] = useState(false);
+
 	const navigate = useNavigate();
-	useEffect(() => {
-		const fetchProfile = async () => {
-			try {
-				setLoading(true);
-				const token = localStorage.getItem("accessToken");
-				const url = userId ? `/api/profile/${userId}` : "/api/profile";
 
-				const response = await fetch(url, {
-					headers: {
-						Authorization: `Bearer ${token}`,
-						"Content-Type": "application/json",
-					},
+	const fetchCompletedTasks = async (userId?: string) => {
+		try {
+			setLoadingTasks(true);
+			const token = localStorage.getItem("accessToken");
+
+			let targetUserId = userId;
+			if (!targetUserId) {
+				const profileRes = await fetch("/api/profile", {
+					headers: { Authorization: `Bearer ${token}` }
 				});
-
-				if (!response.ok) {
-					throw new Error("Nie udało się pobrać profilu");
+				if (profileRes.ok) {
+					const profile = await profileRes.json();
+					targetUserId = profile.id;
 				}
-
-				const data = await response.json();
-				setUser(data);
-			} catch (error) {
-				logger.error("❌ Błąd pobierania profilu:", error);
-				toast.error("Nie udało się pobrać profilu");
-			} finally {
-				setLoading(false);
 			}
-		};
 
+			if (!targetUserId) {
+				console.warn("Brak ID użytkownika");
+				setLoadingTasks(false);
+				return;
+			}
+
+			const url = `/api/tasks/completed/${targetUserId}`;
+
+			const response = await fetch(url, {
+				headers: {
+					Authorization: `Bearer ${token}`,
+					"Content-Type": "application/json",
+				},
+			});
+
+			if (response.ok) {
+				const data = await response.json();
+				setCompletedTasks(data.tasks || []);
+			} else {
+				console.error("Błąd pobierania zadań:", response.status);
+			}
+		} catch (error) {
+			console.error("Błąd:", error);
+		} finally {
+			setLoadingTasks(false);
+		}
+	};
+
+	const fetchProfile = async () => {
+		try {
+			setLoading(true);
+			const token = localStorage.getItem("accessToken");
+			const url = userId ? `/api/profile/${userId}` : "/api/profile";
+
+			const response = await fetch(url, {
+				headers: {
+					Authorization: `Bearer ${token}`,
+					"Content-Type": "application/json",
+				},
+			});
+
+			if (!response.ok) {
+				throw new Error("Nie udało się pobrać profilu");
+			}
+
+			const data = await response.json();
+			setUser(data);
+		} catch (error) {
+			logger.error("Błąd pobierania profilu:", error);
+			toast.error("Nie udało się pobrać profilu");
+		} finally {
+			setLoading(false);
+		}
+	};
+
+	const fetchContributions = async (userId?: string) => {
+		try {
+			setLoadingContributions(true);
+			const token = localStorage.getItem("accessToken");
+
+			let targetUserId = userId;
+			if (!targetUserId) {
+				const profileRes = await fetch("/api/profile", {
+					headers: { Authorization: `Bearer ${token}` }
+				});
+				if (profileRes.ok) {
+					const profile = await profileRes.json();
+					targetUserId = profile.id;
+				}
+			}
+
+			const url = targetUserId
+				? `/api/contributions/history/${targetUserId}`
+				: "/api/contributions/history/me";
+
+			const response = await fetch(url, {
+				headers: {
+					Authorization: `Bearer ${token}`,
+					"Content-Type": "application/json",
+				},
+			});
+
+			if (response.ok) {
+				const data = await response.json();
+
+				if (data.history) {
+					const groupedMap = new Map<string, { month: number; year: number; amount: number; status: string; months: number[] }>();
+
+					data.history.forEach((item: any) => {
+						const key = `${item.month}-${item.year}`;
+						const amount = Number(item.amount) || 0;
+						const isPaid = item.status === "paid" || item.status === "PAID";
+
+						if (groupedMap.has(key)) {
+							const existing = groupedMap.get(key)!;
+							existing.amount += amount;
+							if (isPaid) {
+								existing.status = "PAID";
+							}
+						} else {
+							groupedMap.set(key, {
+								month: item.month,
+								year: item.year,
+								amount: amount,
+								status: isPaid ? "PAID" : "PENDING",
+								months: [item.month]
+							});
+						}
+					});
+
+					const groupedHistory = Array.from(groupedMap.values())
+						.sort((a, b) => {
+							if (a.year !== b.year) return b.year - a.year;
+							return b.month - a.month;
+						});
+
+					setContributionHistory(groupedHistory);
+
+					const totalPaid = groupedHistory.reduce((sum: number, item: any) => {
+						const isPaid = item.status === "paid" || item.status === "PAID";
+						return isPaid ? sum + item.amount : sum;
+					}, 0);
+
+					const currentDate = new Date();
+					const currentMonth = currentDate.getMonth() + 1;
+					const currentYear = currentDate.getFullYear();
+
+					const currentMonthData = groupedHistory.find(
+						(item: any) => item.month === currentMonth && item.year === currentYear
+					);
+
+					const isOverdue = !currentMonthData || currentMonthData.status !== "PAID";
+
+					setContributionStats({
+						currentMonth: currentMonthData || {
+							month: currentMonth,
+							year: currentYear,
+							amount: 0,
+							status: "PENDING",
+							months: [currentMonth]
+						},
+						summary: {
+							totalPaid: totalPaid,
+							totalContributions: groupedHistory.length,
+							overdueMonths: isOverdue ? 1 : 0
+						}
+					});
+				}
+			} else {
+				console.error("Błąd:", response.status);
+			}
+		} catch (error) {
+			console.error("Błąd:", error);
+		} finally {
+			setLoadingContributions(false);
+		}
+	};
+
+	useEffect(() => {
 		fetchProfile();
+		if (userId) {
+			fetchContributions(userId);
+			fetchCompletedTasks(userId);
+		} else {
+			fetchContributions();
+			fetchCompletedTasks();
+		}
 	}, [userId]);
 
 	const handleEditToggle = async () => {
@@ -238,7 +406,7 @@ export default function Profile({
 				setEditData({});
 				toast.success("Profil zaktualizowany!");
 			} catch (error) {
-				logger.error("❌ Błąd zapisu:", error);
+				logger.error("Błąd zapisu:", error);
 				toast.error("Nie udało się zapisać zmian");
 				return;
 			}
@@ -284,35 +452,51 @@ export default function Profile({
 		}
 	};
 
-	const addSkill = async () => {
-		const newSkill = prompt("Podaj nazwę umiejętności:");
-		if (newSkill && newSkill.trim()) {
-			try {
-				const token = localStorage.getItem("accessToken");
-				const response = await fetch("/api/profile/skills", {
-					method: "POST",
-					headers: {
-						Authorization: `Bearer ${token}`,
-						"Content-Type": "application/json",
-					},
-					body: JSON.stringify({ skill: newSkill.trim() }),
-				});
+	const handleOpenSkillModal = () => {
+		setNewSkillName("");
+		setIsSkillModalOpen(true);
+	};
 
-				if (!response.ok) {
-					throw new Error("Nie udało się dodać umiejętności");
-				}
+	const handleCloseSkillModal = () => {
+		setIsSkillModalOpen(false);
+		setNewSkillName("");
+	};
 
-				const data = await response.json();
-				if (isEditing) {
-					handleInputChange("skills", data.skills);
-				} else {
-					setUser({ ...user, skills: data.skills });
-				}
-				toast.success("Umiejętność dodana!");
-			} catch (error) {
-				logger.error("❌ Błąd:", error);
-				toast.error("Nie udało się dodać umiejętności");
+	const handleAddSkill = async () => {
+		if (!newSkillName.trim()) {
+			toast.error("Nazwa umiejętności jest wymagana");
+			return;
+		}
+
+		try {
+			setIsAddingSkill(true);
+			const token = localStorage.getItem("accessToken");
+			const response = await fetch("/api/profile/skills", {
+				method: "POST",
+				headers: {
+					Authorization: `Bearer ${token}`,
+					"Content-Type": "application/json",
+				},
+				body: JSON.stringify({ skill: newSkillName.trim() }),
+			});
+
+			if (!response.ok) {
+				throw new Error("Nie udało się dodać umiejętności");
 			}
+
+			const data = await response.json();
+			if (isEditing) {
+				handleInputChange("skills", data.skills);
+			} else {
+				setUser({ ...user, skills: data.skills });
+			}
+			toast.success("Umiejętność dodana!");
+			handleCloseSkillModal();
+		} catch (error) {
+			logger.error("Błąd dodawania umiejętności:", error);
+			toast.error("Nie udało się dodać umiejętności");
+		} finally {
+			setIsAddingSkill(false);
 		}
 	};
 
@@ -341,7 +525,7 @@ export default function Profile({
 			}
 			toast.success("Umiejętność usunięta!");
 		} catch (error) {
-			logger.error("❌ Błąd:", error);
+			logger.error("Błąd:", error);
 			toast.error("Nie udało się usunąć umiejętności");
 		}
 	};
@@ -366,6 +550,14 @@ export default function Profile({
 		);
 	}
 
+	const getMonthName = (monthNumber: number): string => {
+		const months = [
+			"Styczeń", "Luty", "Marzec", "Kwiecień", "Maj", "Czerwiec",
+			"Lipiec", "Sierpień", "Wrzesień", "Październik", "Listopad", "Grudzień"
+		];
+		return months[monthNumber - 1] || "Nieznany";
+	};
+
 	if (!user || !user.id) {
 		return (
 			<div className={styles.profile}>
@@ -377,6 +569,7 @@ export default function Profile({
 			</div>
 		);
 	}
+
 	return (
 		<div className={styles.profile}>
 			<div className={styles.header}>
@@ -404,23 +597,30 @@ export default function Profile({
 				</div>
 			</div>
 
-			<div className={styles.navigation}>
+			<div className={styles.tabs}>
 				<button
-					className={`${styles.navigation__item} ${selectedTab === "profile" ? styles.navigation__itemActive : ""}`}
+					className={`${styles.tab} ${selectedTab === "profile" ? styles.tabActive : ""}`}
 					onClick={() => setSelectedTab("profile")}
 				>
 					<User size={16} />
 					Profil
 				</button>
 				<button
-					className={`${styles.navigation__item} ${selectedTab === "activity" ? styles.navigation__itemActive : ""}`}
+					className={`${styles.tab} ${selectedTab === "activity" ? styles.tabActive : ""}`}
 					onClick={() => setSelectedTab("activity")}
 				>
 					<TrendingUp size={16} />
 					Aktywność
 				</button>
 				<button
-					className={`${styles.navigation__item} ${selectedTab === "private" ? styles.navigation__itemActive : ""}`}
+					className={`${styles.tab} ${selectedTab === "contributions" ? styles.tabActive : ""}`}
+					onClick={() => setSelectedTab("contributions")}
+				>
+					<CreditCard size={16} />
+					Składki
+				</button>
+				<button
+					className={`${styles.tab} ${selectedTab === "private" ? styles.tabActive : ""}`}
 					onClick={() => setSelectedTab("private")}
 				>
 					<Shield size={16} />
@@ -435,7 +635,7 @@ export default function Profile({
 							<div className={styles.profileCard__avatar}>
 								{displayUser.avatar ||
 									(displayUser.firstName?.[0] || "") +
-										(displayUser.lastName?.[0] || "")}
+									(displayUser.lastName?.[0] || "")}
 							</div>
 							<div className={styles.profileCard__userInfo}>
 								<h2 className={styles.profileCard__name}>
@@ -497,12 +697,13 @@ export default function Profile({
 				</div>
 
 				<div className={styles.sections}>
-					{(selectedTab === "profile" || selectedTab === "all") && (
+					{/* ZAKŁADKA: PROFIL */}
+					{selectedTab === "profile" && (
 						<>
 							<div className={styles.section}>
 								<h3 className={styles.section__title}>
-									<TrendingUp size={20} />
-									Moja działalność w SM
+									<Briefcase size={20} />
+									Dane osobowe
 								</h3>
 								<div className={styles.section__grid}>
 									<div className={styles.section__item}>
@@ -574,19 +775,7 @@ export default function Profile({
 									</div>
 
 									<div className={styles.section__item}>
-										<span className={styles.section__label}>
-											Telefon
-											<span
-												style={{
-													fontSize: "0.75rem",
-													color: "#6b7280",
-													fontWeight: "normal",
-													marginLeft: "0.5rem",
-												}}
-											>
-												(opcjonalny)
-											</span>
-										</span>
+										<span className={styles.section__label}>Telefon</span>
 										{isEditing ? (
 											<input
 												type="tel"
@@ -598,326 +787,16 @@ export default function Profile({
 												placeholder="np. 123 456 789"
 											/>
 										) : (
-											<span
-												className={styles.section__value}
-												style={{
-													color: displayUser.phone ? "inherit" : "#9ca3af",
-													fontStyle: displayUser.phone ? "normal" : "italic",
-												}}
-											>
-												{displayUser.phone || "Brak numeru telefonu"}
+											<span className={styles.section__value}>
+												{displayUser.phone || "Brak numeru"}
 											</span>
 										)}
 									</div>
 
 									<div className={styles.section__item}>
-										<span className={styles.section__label}>
-											Data dołączenia
-										</span>
+										<span className={styles.section__label}>Data dołączenia</span>
 										<span className={styles.section__value}>
 											{formatDate(displayUser.joinDate)}
-										</span>
-									</div>
-								</div>
-
-								<div className={styles.section}>
-									<h3 className={styles.section__title}>
-										<BookOpen size={20} />
-										Zainteresowania i rozwój
-									</h3>
-
-									<div className={styles.section__field}>
-										<label className={styles.section__label}>
-											Obszary, w których chcę się rozwijać
-										</label>
-										<div className={styles.section__areas}>
-											{Object.entries(DEVELOPMENT_AREA_LABELS).map(
-												([key, label]) => {
-													const area = key as DevelopmentArea;
-													const isSelected = (
-														editData.developmentAreas ||
-														user.developmentAreas ||
-														[]
-													).includes(area);
-													return (
-														<button
-															key={key}
-															className={`${styles.section__area} ${isSelected ? styles.section__areaSelected : ""}`}
-															onClick={() =>
-																isEditing ? toggleDevelopmentArea(area) : null
-															}
-															disabled={!isEditing}
-														>
-															{DEVELOPMENT_AREA_ICONS[area]}
-															{label}
-															{isSelected && isEditing && (
-																<CheckCircle size={12} />
-															)}
-														</button>
-													);
-												},
-											)}
-										</div>
-									</div>
-
-									<div className={styles.section__field}>
-										<label className={styles.section__label}>
-											Umiejętności
-										</label>
-										<div className={styles.section__skills}>
-											{(editData.skills || user.skills || []).map((skill) => (
-												<span key={skill} className={styles.section__skill}>
-													{skill}
-													{isEditing && (
-														<button
-															className={styles.section__removeSkill}
-															onClick={() => removeSkill(skill)}
-														>
-															<X size={12} />
-														</button>
-													)}
-												</span>
-											))}
-											{isEditing && (
-												<button
-													className={styles.section__addSkill}
-													onClick={addSkill}
-												>
-													<Plus size={14} />
-													Dodaj umiejętność
-												</button>
-											)}
-										</div>
-									</div>
-
-									<div className={styles.section__field}>
-										<label className={styles.section__label}>Dostępność</label>
-										{isEditing ? (
-											<input
-												type="text"
-												className={styles.section__input}
-												value={editData.availability || user.availability}
-												onChange={(e) =>
-													handleInputChange("availability", e.target.value)
-												}
-											/>
-										) : (
-											<p className={styles.section__value}>
-												{displayUser.availability}
-											</p>
-										)}
-									</div>
-								</div>
-
-								{canViewPrivate && displayUser.contacts && (
-									<div className={styles.section}>
-										<h3 className={styles.section__title}>
-											<Shield size={20} />
-											Kontakty i zasoby
-										</h3>
-										<div className={styles.section__privateNote}>
-											<AlertCircle size={16} />
-											<span>
-												Te dane są prywatne i widoczne tylko dla Ciebie oraz
-												osób posiadających odpowiednie uprawnienia.
-											</span>
-										</div>
-										<div className={styles.section__grid}>
-											{displayUser.contacts.salaContacts.length > 0 && (
-												<div className={styles.section__item}>
-													<span className={styles.section__label}>
-														Kontakty do sal
-													</span>
-													<ul className={styles.section__list}>
-														{displayUser.contacts?.salaContacts?.map(
-															(contact) => <li key={contact}>{contact}</li>,
-														) || <li>Brak kontaktów</li>}
-													</ul>
-												</div>
-											)}
-											{displayUser.contacts.mpContacts.length > 0 && (
-												<div className={styles.section__item}>
-													<span className={styles.section__label}>
-														Kontakty do posłów
-													</span>
-													<ul className={styles.section__list}>
-														{displayUser.contacts.mpContacts.map((contact) => (
-															<li key={contact}>{contact}</li>
-														))}
-													</ul>
-												</div>
-											)}
-											{displayUser.contacts.institutionContacts.length > 0 && (
-												<div className={styles.section__item}>
-													<span className={styles.section__label}>
-														Kontakty do instytucji
-													</span>
-													<ul className={styles.section__list}>
-														{displayUser.contacts.institutionContacts.map(
-															(contact) => (
-																<li key={contact}>{contact}</li>
-															),
-														)}
-													</ul>
-												</div>
-											)}
-											{displayUser.contacts.otherContacts.length > 0 && (
-												<div className={styles.section__item}>
-													<span className={styles.section__label}>
-														Inne możliwości współpracy
-													</span>
-													<ul className={styles.section__list}>
-														{displayUser.contacts.otherContacts.map(
-															(contact) => (
-																<li key={contact}>{contact}</li>
-															),
-														)}
-													</ul>
-												</div>
-											)}
-										</div>
-									</div>
-								)}
-
-								{canViewPrivate && displayUser.contributionInfo && (
-									<div className={styles.section}>
-										<h3 className={styles.section__title}>
-											<CreditCard size={20} />
-											Składki
-										</h3>
-										<div className={styles.section__grid}>
-											<div className={styles.section__item}>
-												<span className={styles.section__label}>
-													Aktualne zadłużenie
-												</span>
-												<span className={styles.section__value}>
-													{displayUser.contributionInfo.arrears} zł
-												</span>
-											</div>
-											<div className={styles.section__item}>
-												<span className={styles.section__label}>
-													Status składek
-												</span>
-												<span
-													className={`${styles.section__status} ${CONTRIBUTION_STATUS_COLORS[displayUser.contributionInfo.status]}`}
-												>
-													{
-														CONTRIBUTION_STATUS_LABELS[
-															displayUser.contributionInfo.status
-														]
-													}
-												</span>
-											</div>
-										</div>
-									</div>
-								)}
-
-								<div className={styles.section}>
-									<h3 className={styles.section__title}>
-										<Umbrella size={20} />
-										Moja dostępność
-									</h3>
-									{displayUser.leave?.isOnLeave ? (
-										<div className={styles.section__leaveWarning}>
-											<AlertCircle size={20} />
-											<span>
-												Nieobecny do: {formatDate(displayUser.leave.endDate!)}
-											</span>
-										</div>
-									) : (
-										<div className={styles.section__leaveActive}>
-											<CheckCircle size={20} />
-											<span>Aktywny</span>
-										</div>
-									)}
-									<div className={styles.section__leaveHistory}>
-										<h4 className={styles.section__subtitle}>
-											Historia zgłoszonych urlopów
-										</h4>
-										<div className={styles.section__leaveList}>
-											{displayUser.leave?.history.map((leave) => (
-												<div
-													key={leave.id}
-													className={styles.section__leaveItem}
-												>
-													<span>
-														{formatDate(leave.startDate)} -{" "}
-														{formatDate(leave.endDate)}
-													</span>
-													<span
-														className={`${styles.section__leaveStatus} ${
-															leave.status === "approved"
-																? styles.leaveApproved
-																: leave.status === "pending"
-																	? styles.leavePending
-																	: styles.leaveRejected
-														}`}
-													>
-														{leave.status === "approved"
-															? "Zatwierdzony"
-															: leave.status === "pending"
-																? "Oczekuje"
-																: "Odrzucony"}
-													</span>
-												</div>
-											))}
-										</div>
-										<button
-											className={styles.section__leaveBtn}
-											onClick={() => safeNavigate("/leave", navigate)}
-										>
-											<Plus size={16} />
-											Zgłoś urlop
-										</button>
-									</div>
-								</div>
-							</div>
-						</>
-					)}
-
-					{selectedTab === "activity" && (
-						<>
-							<div className={styles.section}>
-								<h3 className={styles.section__title}>
-									<TrendingUp size={20} />
-									Moja aktywność
-								</h3>
-								<div className={styles.section__grid}>
-									<div className={styles.section__item}>
-										<span className={styles.section__label}>
-											Aktualne zadania
-										</span>
-										<div className={styles.section__tags}>
-											{displayUser.currentTasks.map((task) => (
-												<span key={task} className={styles.section__tag}>
-													{task}
-												</span>
-											))}
-										</div>
-									</div>
-									<div className={styles.section__item}>
-										<span className={styles.section__label}>Projekty</span>
-										<div className={styles.section__tags}>
-											{displayUser.projects.map((project) => (
-												<span
-													key={project}
-													className={styles.section__tagProject}
-												>
-													{project}
-												</span>
-											))}
-										</div>
-									</div>
-									<div className={styles.section__item}>
-										<span className={styles.section__label}>Funkcja</span>
-										<span className={styles.section__value}>
-											{displayUser.function}
-										</span>
-									</div>
-									<div className={styles.section__item}>
-										<span className={styles.section__label}>Zespół</span>
-										<span className={styles.section__value}>
-											{displayUser.team}
 										</span>
 									</div>
 								</div>
@@ -926,146 +805,140 @@ export default function Profile({
 							<div className={styles.section}>
 								<h3 className={styles.section__title}>
 									<BookOpen size={20} />
-									Rozwój
+									Rozwój i umiejętności
 								</h3>
+
 								<div className={styles.section__field}>
-									<label className={styles.section__label}>
-										Obszary rozwoju
-									</label>
+									<label className={styles.section__label}>Obszary rozwoju</label>
 									<div className={styles.section__areas}>
-										{displayUser.developmentAreas.map((area) => (
-											<span
-												key={area}
-												className={styles.section__areaSelected}
-												style={{ cursor: "default" }}
-											>
-												{DEVELOPMENT_AREA_ICONS[area]}
-												{DEVELOPMENT_AREA_LABELS[area]}
-											</span>
-										))}
+										{Object.entries(DEVELOPMENT_AREA_LABELS).map(
+											([key, label]) => {
+												const area = key as DevelopmentArea;
+												const isSelected = (
+													editData.developmentAreas ||
+													user.developmentAreas ||
+													[]
+												).includes(area);
+												return (
+													<button
+														key={key}
+														className={`${styles.section__area} ${isSelected ? styles.section__areaSelected : ""}`}
+														onClick={() =>
+															isEditing ? toggleDevelopmentArea(area) : null
+														}
+														disabled={!isEditing}
+													>
+														{DEVELOPMENT_AREA_ICONS[area]}
+														{label}
+														{isSelected && isEditing && (
+															<CheckCircle size={12} />
+														)}
+													</button>
+												);
+											},
+										)}
 									</div>
 								</div>
+
 								<div className={styles.section__field}>
 									<label className={styles.section__label}>Umiejętności</label>
 									<div className={styles.section__skills}>
-										{displayUser.skills.map((skill) => (
+										{(editData.skills || user.skills || []).map((skill) => (
 											<span key={skill} className={styles.section__skill}>
 												{skill}
+												{isEditing && (
+													<button
+														className={styles.section__removeSkill}
+														onClick={() => removeSkill(skill)}
+													>
+														<X size={12} />
+													</button>
+												)}
 											</span>
 										))}
+										{isEditing && (
+											<button
+												className={styles.section__addSkill}
+												onClick={handleOpenSkillModal}
+											>
+												<Plus size={14} />
+												Dodaj umiejętność
+											</button>
+										)}
 									</div>
+								</div>
+								{/* MODAL DODAWANIA UMIEJĘTNOŚCI */}
+								{isSkillModalOpen && (
+									<div className={styles.modalOverlay} onClick={handleCloseSkillModal}>
+										<div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+											<div className={styles.modalHeader}>
+												<h3 className={styles.modalTitle}>Dodaj umiejętność</h3>
+												<button className={styles.modalClose} onClick={handleCloseSkillModal}>
+													<X size={20} />
+												</button>
+											</div>
+											<div className={styles.modalBody}>
+												<p className={styles.modalDescription}>
+													Wpisz nazwę umiejętności, którą chcesz dodać do swojego profilu.
+												</p>
+												<input
+													type="text"
+													className={styles.modalInput}
+													value={newSkillName}
+													onChange={(e) => setNewSkillName(e.target.value)}
+													placeholder="np. Python, Projektowanie graficzne, Zarządzanie projektami"
+													autoFocus
+													onKeyDown={(e) => {
+														if (e.key === "Enter") {
+															handleAddSkill();
+														}
+														if (e.key === "Escape") {
+															handleCloseSkillModal();
+														}
+													}}
+												/>
+											</div>
+											<div className={styles.modalFooter}>
+												<button
+													className={styles.modalBtnCancel}
+													onClick={handleCloseSkillModal}
+												>
+													Anuluj
+												</button>
+												<button
+													className={styles.modalBtnSave}
+													onClick={handleAddSkill}
+													disabled={isAddingSkill || !newSkillName.trim()}
+												>
+													{isAddingSkill ? "Dodawanie..." : "Dodaj umiejętność"}
+												</button>
+											</div>
+										</div>
+									</div>
+								)}
+								<div className={styles.section__field}>
+									<label className={styles.section__label}>Dostępność</label>
+									{isEditing ? (
+										<input
+											type="text"
+											className={styles.section__input}
+											value={editData.availability || user.availability}
+											onChange={(e) =>
+												handleInputChange("availability", e.target.value)
+											}
+										/>
+									) : (
+										<p className={styles.section__value}>
+											{displayUser.availability}
+										</p>
+									)}
 								</div>
 							</div>
-						</>
-					)}
-
-					{selectedTab === "private" && (
-						<>
-							{canViewPrivate && displayUser.contacts && (
-								<div className={styles.section}>
-									<h3 className={styles.section__title}>
-										<Shield size={20} />
-										Kontakty i zasoby
-									</h3>
-									<div className={styles.section__privateNote}>
-										<AlertCircle size={16} />
-										<span>
-											Te dane są prywatne i widoczne tylko dla Ciebie oraz osób
-											posiadających odpowiednie uprawnienia.
-										</span>
-									</div>
-									<div className={styles.section__grid}>
-										{displayUser.contacts.salaContacts.length > 0 && (
-											<div className={styles.section__item}>
-												<span className={styles.section__label}>
-													Kontakty do sal
-												</span>
-												<ul className={styles.section__list}>
-													{displayUser.contacts?.salaContacts?.map(
-														(contact) => <li key={contact}>{contact}</li>,
-													) || <li>Brak kontaktów</li>}
-												</ul>
-											</div>
-										)}
-										{displayUser.contacts.mpContacts.length > 0 && (
-											<div className={styles.section__item}>
-												<span className={styles.section__label}>
-													Kontakty do posłów
-												</span>
-												<ul className={styles.section__list}>
-													{displayUser.contacts.mpContacts.map((contact) => (
-														<li key={contact}>{contact}</li>
-													))}
-												</ul>
-											</div>
-										)}
-										{displayUser.contacts.institutionContacts.length > 0 && (
-											<div className={styles.section__item}>
-												<span className={styles.section__label}>
-													Kontakty do instytucji
-												</span>
-												<ul className={styles.section__list}>
-													{displayUser.contacts.institutionContacts.map(
-														(contact) => (
-															<li key={contact}>{contact}</li>
-														),
-													)}
-												</ul>
-											</div>
-										)}
-										{displayUser.contacts.otherContacts.length > 0 && (
-											<div className={styles.section__item}>
-												<span className={styles.section__label}>
-													Inne możliwości współpracy
-												</span>
-												<ul className={styles.section__list}>
-													{displayUser.contacts.otherContacts.map((contact) => (
-														<li key={contact}>{contact}</li>
-													))}
-												</ul>
-											</div>
-										)}
-									</div>
-								</div>
-							)}
-
-							{canViewPrivate && displayUser.contributionInfo && (
-								<div className={styles.section}>
-									<h3 className={styles.section__title}>
-										<CreditCard size={20} />
-										Składki
-									</h3>
-									<div className={styles.section__grid}>
-										<div className={styles.section__item}>
-											<span className={styles.section__label}>
-												Aktualne zadłużenie
-											</span>
-											<span className={styles.section__value}>
-												{displayUser.contributionInfo.arrears} zł
-											</span>
-										</div>
-										<div className={styles.section__item}>
-											<span className={styles.section__label}>
-												Status składek
-											</span>
-											<span
-												className={`${styles.section__status} ${CONTRIBUTION_STATUS_COLORS[displayUser.contributionInfo.status]}`}
-											>
-												{
-													CONTRIBUTION_STATUS_LABELS[
-														displayUser.contributionInfo.status
-													]
-												}
-											</span>
-										</div>
-									</div>
-								</div>
-							)}
 
 							<div className={styles.section}>
 								<h3 className={styles.section__title}>
 									<Umbrella size={20} />
-									Moja dostępność
+									Dostępność
 								</h3>
 								{displayUser.leave?.isOnLeave ? (
 									<div className={styles.section__leaveWarning}>
@@ -1081,24 +954,20 @@ export default function Profile({
 									</div>
 								)}
 								<div className={styles.section__leaveHistory}>
-									<h4 className={styles.section__subtitle}>
-										Historia zgłoszonych urlopów
-									</h4>
+									<h4 className={styles.section__subtitle}>Historia urlopów</h4>
 									<div className={styles.section__leaveList}>
 										{displayUser.leave?.history.map((leave) => (
 											<div key={leave.id} className={styles.section__leaveItem}>
 												<span>
-													{formatDate(leave.startDate)} -{" "}
-													{formatDate(leave.endDate)}
+													{formatDate(leave.startDate)} - {formatDate(leave.endDate)}
 												</span>
 												<span
-													className={`${styles.section__leaveStatus} ${
-														leave.status === "approved"
-															? styles.leaveApproved
-															: leave.status === "pending"
-																? styles.leavePending
-																: styles.leaveRejected
-													}`}
+													className={`${styles.section__leaveStatus} ${leave.status === "approved"
+														? styles.leaveApproved
+														: leave.status === "pending"
+															? styles.leavePending
+															: styles.leaveRejected
+														}`}
 												>
 													{leave.status === "approved"
 														? "Zatwierdzony"
@@ -1118,6 +987,348 @@ export default function Profile({
 									</button>
 								</div>
 							</div>
+						</>
+					)}
+
+					{/* ZAKŁADKA: AKTYWNOŚĆ */}
+					{selectedTab === "activity" && (
+						<>
+							<div className={styles.section}>
+								<h3 className={styles.section__title}>
+									<TrendingUp size={20} />
+									Ukończone zadania
+									{loadingTasks && (
+										<span className={styles.loadingSpinner} style={{ width: 20, height: 20, marginLeft: 8 }} />
+									)}
+									{!loadingTasks && completedTasks.length > 0 && (
+										<span style={{ fontSize: "14px", fontWeight: "normal", color: "#6b7280", marginLeft: "8px" }}>
+											({completedTasks.length})
+										</span>
+									)}
+								</h3>
+
+								{!loadingTasks && completedTasks.length > 0 && (
+									<div className={styles.statsRow}>
+										<div className={styles.statBox}>
+											<span className={styles.statValue}>{completedTasks.length}</span>
+											<span className={styles.statLabel}>Ukończone</span>
+										</div>
+										<div className={styles.statBox}>
+											<span className={styles.statValue}>
+												{completedTasks.filter((t: any) => t.rating && t.rating > 0).length}
+											</span>
+											<span className={styles.statLabel}>Ocenione</span>
+										</div>
+										<div className={styles.statBox}>
+											<span className={styles.statValue}>
+												{completedTasks.length > 0
+													? (completedTasks.reduce((sum: number, t: any) => sum + (t.rating || 0), 0) / completedTasks.length).toFixed(1)
+													: "—"}
+											</span>
+											<span className={styles.statLabel}>Średnia ocena</span>
+										</div>
+										<div className={styles.statBox}>
+											<span className={styles.statValue} style={{ color: "#10b981" }}>
+												{completedTasks.filter((t: any) => t.isEarly).length}
+											</span>
+											<span className={styles.statLabel}>Przed czasem</span>
+										</div>
+										<div className={styles.statBox}>
+											<span className={styles.statValue} style={{ color: "#f59e0b" }}>
+												{completedTasks.filter((t: any) => t.isOnTime).length}
+											</span>
+											<span className={styles.statLabel}>Na czas</span>
+										</div>
+										<div className={styles.statBox}>
+											<span className={styles.statValue} style={{ color: "#ef4444" }}>
+												{completedTasks.filter((t: any) => t.isLate).length}
+											</span>
+											<span className={styles.statLabel}>Po terminie</span>
+										</div>
+									</div>
+								)}
+
+								{loadingTasks ? (
+									<div className={styles.emptyState}>Ładowanie zadań...</div>
+								) : completedTasks.length === 0 ? (
+									<div className={styles.emptyState}>Brak ukończonych zadań</div>
+								) : (
+									<div className={styles.tasksList}>
+										{completedTasks.slice(0, 20).map((task: any, index: number) => {
+											const getTimelineLabel = () => {
+												if (task.isEarly) return { label: "Przed czasem", color: "#10b981" };
+												if (task.isOnTime) return { label: "Na czas", color: "#f59e0b" };
+												if (task.isLate) return { label: "Po terminie", color: "#ef4444" };
+												return { label: "Brak terminu", color: "#6b7280" };
+											};
+											const timeline = getTimelineLabel();
+
+											const getPriorityLabel = (priority: string) => {
+												const map: Record<string, { label: string; color: string }> = {
+													urgent: { label: "Krytyczny", color: "#ef4444" },
+													high: { label: "Wysoki", color: "#f59e0b" },
+													medium: { label: "Średni", color: "#3b82f6" },
+													low: { label: "Niski", color: "#6b7280" },
+												};
+												return map[priority] || map.medium;
+											};
+											const priority = getPriorityLabel(task.priority);
+
+											return (
+												<div
+													key={task.id || index}
+													className={`${styles.taskCard} ${task.isLate ? styles.taskCardLate : styles.taskCardDone}`}
+												>
+													<div className={styles.taskCardHeader}>
+														<div className={styles.taskCardInfo}>
+															<span className={styles.taskCardTitle}>
+																{task.title || "Bez tytułu"}
+															</span>
+															<div className={styles.taskCardTags}>
+																{task.projectName && (
+																	<span className={styles.taskCardTag}>
+																		{task.projectName}
+																	</span>
+																)}
+																{task.pillar && (
+																	<span className={styles.taskCardTag}>
+																		{task.pillar}
+																	</span>
+																)}
+																<span className={styles.taskCardTag} style={{ color: priority.color }}>
+																	{priority.label}
+																</span>
+															</div>
+														</div>
+														<div className={styles.taskCardRating}>
+															{task.rating && task.rating > 0 && (
+																<span className={styles.ratingStars}>
+																	{'⭐'.repeat(Math.min(task.rating, 5))}
+																</span>
+															)}
+														</div>
+													</div>
+
+													<div className={styles.taskCardDetails}>
+														<span>Utworzono: {new Date(task.createdAt).toLocaleDateString("pl-PL")}</span>
+														{task.dueDate && (
+															<span>Termin: {new Date(task.dueDate).toLocaleDateString("pl-PL")}</span>
+														)}
+														<span>Ukończono: {new Date(task.completedAt).toLocaleDateString("pl-PL")}</span>
+														<span>Czas: {task.daysToComplete} dni</span>
+														<span style={{ color: timeline.color, fontWeight: 500 }}>
+															{timeline.label}
+															{task.daysDiff !== 0 && task.dueDate && (
+																task.isEarly ? ` (${Math.abs(task.daysDiff)} dni wcześniej)` :
+																	task.isLate ? ` (${Math.abs(task.daysDiff)} dni później)` :
+																		""
+															)}
+														</span>
+													</div>
+												</div>
+											);
+										})}
+										{completedTasks.length > 20 && (
+											<div className={styles.tasksMore}>
+												+ {completedTasks.length - 20} więcej zadań
+											</div>
+										)}
+									</div>
+								)}
+							</div>
+						</>
+					)}
+
+					{/* ZAKŁADKA: SKŁADKI */}
+					{selectedTab === "contributions" && (
+						<>
+							<div className={styles.section}>
+								<h3 className={styles.section__title}>
+									<CreditCard size={20} />
+									Podsumowanie składek
+									{loadingContributions && (
+										<span className={styles.loadingSpinner} style={{ width: 20, height: 20, marginLeft: 8 }} />
+									)}
+								</h3>
+
+								<div className={styles.contributionsGrid}>
+									<div className={styles.contributionItem}>
+										<span className={styles.contributionLabel}>Bieżący miesiąc</span>
+										<span className={styles.contributionValue}>
+											{loadingContributions ? (
+												"Ładowanie..."
+											) : contributionStats?.currentMonth?.status === "paid" ? (
+												<span className={styles.contributionPaid}>
+													<CheckCircle size={14} />
+													Opłacona ({Number(contributionStats.currentMonth.amount || 0).toFixed(2)} zł)
+												</span>
+											) : contributionStats?.currentMonth?.status === "pending" ? (
+												<span className={styles.contributionPending}>
+													<AlertCircle size={14} />
+													Nieopłacona ({Number(contributionStats.currentMonth.amount || 0).toFixed(2)} zł)
+												</span>
+											) : (
+												"Brak danych"
+											)}
+										</span>
+									</div>
+
+									<div className={styles.contributionItem}>
+										<span className={styles.contributionLabel}>Zaległości</span>
+										<span className={styles.contributionValue}>
+											{loadingContributions ? (
+												"Ładowanie..."
+											) : contributionStats?.summary?.overdueMonths > 0 ? (
+												<span className={styles.contributionOverdue}>
+													<AlertCircle size={14} />
+													{contributionStats.summary.overdueMonths} mies.
+												</span>
+											) : (
+												"Brak zaległości"
+											)}
+										</span>
+									</div>
+
+									<div className={styles.contributionItem}>
+										<span className={styles.contributionLabel}>Łącznie opłacone</span>
+										<span className={styles.contributionValue}>
+											{loadingContributions ? (
+												"Ładowanie..."
+											) : (
+												`${Number(contributionStats?.summary?.totalPaid || 0).toFixed(2)} zł`
+											)}
+										</span>
+									</div>
+								</div>
+
+								<div className={styles.historySection}>
+									<h4 className={styles.historyTitle}>
+										Historia składek
+										{contributionHistory.length > 0 && (
+											<span className={styles.historyRange}>
+												({Math.min(...contributionHistory.map((i: any) => i.year))} - {Math.max(...contributionHistory.map((i: any) => i.year))})
+											</span>
+										)}
+									</h4>
+
+									{loadingHistory ? (
+										<div className={styles.historyEmpty}>Ładowanie historii...</div>
+									) : contributionHistory.length === 0 ? (
+										<div className={styles.historyEmpty}>Brak historii składek</div>
+									) : (
+										<div className={styles.historyList}>
+											{contributionHistory.map((item: any, index: number) => {
+												const isPaid = item.status === "PAID" || item.status?.toLowerCase() === "paid";
+												return (
+													<div
+														key={index}
+														className={`${styles.historyItem} ${isPaid ? styles.historyItemPaid : styles.historyItemPending}`}
+													>
+														<span className={styles.historyMonth}>
+															{getMonthName(item.month)} {item.year}
+														</span>
+														<span className={styles.historyStatus}>
+															{isPaid ? "Opłacona" : "Nieopłacona"}
+														</span>
+														<span className={styles.historyAmount}>
+															{Number(item.amount || 0).toFixed(2)} zł
+														</span>
+													</div>
+												);
+											})}
+										</div>
+									)}
+								</div>
+							</div>
+						</>
+					)}
+
+					{/* ZAKŁADKA: PRYWATNE */}
+					{selectedTab === "private" && (
+						<>
+							{canViewPrivate && displayUser.contacts && (
+								<div className={styles.section}>
+									<h3 className={styles.section__title}>
+										<Shield size={20} />
+										Kontakty i zasoby
+									</h3>
+									<div className={styles.privateNote}>
+										<AlertCircle size={16} />
+										<span>
+											Te dane są prywatne i widoczne tylko dla Ciebie oraz osób
+											posiadających odpowiednie uprawnienia.
+										</span>
+									</div>
+									<div className={styles.contactsGrid}>
+										{displayUser.contacts.salaContacts.length > 0 && (
+											<div className={styles.contactGroup}>
+												<span className={styles.contactLabel}>Kontakty do sal</span>
+												<ul className={styles.contactList}>
+													{displayUser.contacts.salaContacts.map((contact) => (
+														<li key={contact}>{contact}</li>
+													))}
+												</ul>
+											</div>
+										)}
+										{displayUser.contacts.mpContacts.length > 0 && (
+											<div className={styles.contactGroup}>
+												<span className={styles.contactLabel}>Kontakty do posłów</span>
+												<ul className={styles.contactList}>
+													{displayUser.contacts.mpContacts.map((contact) => (
+														<li key={contact}>{contact}</li>
+													))}
+												</ul>
+											</div>
+										)}
+										{displayUser.contacts.institutionContacts.length > 0 && (
+											<div className={styles.contactGroup}>
+												<span className={styles.contactLabel}>Kontakty do instytucji</span>
+												<ul className={styles.contactList}>
+													{displayUser.contacts.institutionContacts.map((contact) => (
+														<li key={contact}>{contact}</li>
+													))}
+												</ul>
+											</div>
+										)}
+										{displayUser.contacts.otherContacts.length > 0 && (
+											<div className={styles.contactGroup}>
+												<span className={styles.contactLabel}>Inne kontakty</span>
+												<ul className={styles.contactList}>
+													{displayUser.contacts.otherContacts.map((contact) => (
+														<li key={contact}>{contact}</li>
+													))}
+												</ul>
+											</div>
+										)}
+									</div>
+								</div>
+							)}
+
+							{canViewPrivate && displayUser.contributionInfo && (
+								<div className={styles.section}>
+									<h3 className={styles.section__title}>
+										<CreditCard size={20} />
+										Informacje o składkach
+									</h3>
+									<div className={styles.contributionInfoGrid}>
+										<div className={styles.contributionInfoItem}>
+											<span className={styles.contributionInfoLabel}>Aktualne zadłużenie</span>
+											<span className={styles.contributionInfoValue}>
+												{displayUser.contributionInfo.arrears} zł
+											</span>
+										</div>
+										<div className={styles.contributionInfoItem}>
+											<span className={styles.contributionInfoLabel}>Status</span>
+											<span
+												className={`${styles.contributionInfoStatus} ${CONTRIBUTION_STATUS_COLORS[displayUser.contributionInfo.status]
+													}`}
+											>
+												{CONTRIBUTION_STATUS_LABELS[displayUser.contributionInfo.status]}
+											</span>
+										</div>
+									</div>
+								</div>
+							)}
 						</>
 					)}
 				</div>

@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "dev": "ts-node-dev src/server.ts",
+    "dev": "ts-node-dev --transpile-only src/server.ts",
     "build": "echo 'Build completed'",
     "start": "tsx src/server.ts",
     "prisma:generate": "prisma generate"

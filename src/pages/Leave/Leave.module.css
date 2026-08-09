@@ -999,7 +999,7 @@
 }
 
 
-@media (width <= 768px) {
+@media (width <=768px) {
 	.leave {
 		padding: 16px;
 	}
@@ -1432,7 +1432,7 @@
 }
 
 
-@media (width <= 768px) {
+@media (width <=768px) {
 	.header__notifDropdown {
 		width: 300px;
 		right: -40px;
@@ -1453,7 +1453,7 @@
 }
 
 
-@media (width <= 768px) {
+@media (width <=768px) {
 	.filters__viewToggle {
 		padding: 3px;
 	}
@@ -1488,7 +1488,7 @@
 	}
 }
 
-@media (width <= 480px) {
+@media (width <=480px) {
 	.calendar__day {
 		min-height: 50px;
 		padding: 2px;
@@ -1568,7 +1568,7 @@
 	color: #0f172a;
 }
 
-@media (width <= 768px) {
+@media (width <=768px) {
 	.filters__group {
 		flex-wrap: wrap;
 		padding: 8px 12px;
@@ -1645,3 +1645,4 @@
 		transform: rotate(360deg);
 	}
 }
+

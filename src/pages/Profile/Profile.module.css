@@ -286,6 +286,9 @@
     background: white;
     border-radius: 16px;
     border: 1px solid #e2e8f0;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
     padding: 24px 28px;
 }
 
@@ -336,6 +339,8 @@
     font-size: 15px;
     color: #0f172a;
     font-weight: 500;
+    padding: 5px 10px;
+    border-radius: 8px;
 }
 
 .section__tags {
@@ -629,7 +634,7 @@
 }
 
 
-@media (width <= 1024px) {
+@media (width <=1024px) {
     .profileCard__header {
         flex-direction: column;
     }
@@ -639,7 +644,7 @@
     }
 }
 
-@media (width <= 768px) {
+@media (width <=768px) {
     .profile {
         padding: 16px;
     }
@@ -708,7 +713,7 @@
     }
 }
 
-@media (width <= 480px) {
+@media (width <=480px) {
     .profileCard__contact {
         min-width: unset;
     }
@@ -779,4 +784,536 @@
     to {
         transform: rotate(360deg);
     }
+}
+
+/* W Profile.module.css */
+.contributionPaid {
+    color: #10b981;
+    font-weight: 600;
+}
+
+.contributionUnpaid {
+    color: #ef4444;
+    font-weight: 600;
+}
+
+.contributionPartial {
+    color: #f59e0b;
+    font-weight: 600;
+}
+
+/* Zakładki */
+.tabs {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 24px;
+    padding: 4px;
+    background: #f1f5f9;
+    border-radius: 12px;
+}
+
+.tab {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    border: none;
+    background: transparent;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    color: #64748b;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.tab:hover {
+    background: rgba(255, 255, 255, 0.5);
+    color: #1e293b;
+}
+
+.tabActive {
+    background: #ffffff;
+    color: #0f172a;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+/* Statystyki */
+.statsRow {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+}
+
+.statBox {
+    flex: 1;
+    min-width: 80px;
+    padding: 12px 16px;
+    background: #f8fafc;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+    text-align: center;
+}
+
+.statValue {
+    font-size: 20px;
+    font-weight: bold;
+    color: #1f2937;
+    display: block;
+}
+
+.statLabel {
+    font-size: 12px;
+    color: #6b7280;
+    display: block;
+    margin-top: 2px;
+}
+
+/* Karty zadań */
+.taskCard {
+    padding: 14px 16px;
+    border-radius: 8px;
+    border: 1px solid #bbf7d0;
+    background: #f0fdf4;
+}
+
+.taskCardLate {
+    border-color: #fecaca;
+    background: #fef2f2;
+}
+
+.taskCardHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 8px;
+}
+
+.taskCardInfo {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.taskCardTitle {
+    font-weight: 600;
+    color: #1f2937;
+}
+
+.taskCardTags {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.taskCardTag {
+    font-size: 12px;
+    color: #6b7280;
+}
+
+.taskCardRating {
+    display: flex;
+    align-items: center;
+}
+
+.ratingStars {
+    color: #f59e0b;
+    font-size: 14px;
+}
+
+.taskCardDetails {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+    font-size: 13px;
+    color: #4b5563;
+    border-top: 1px solid #e5e7eb;
+    padding-top: 8px;
+    margin-top: 4px;
+}
+
+.tasksList {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.tasksMore {
+    text-align: center;
+    padding: 8px;
+    color: #6b7280;
+    font-size: 14px;
+}
+
+/* Składki */
+.contributionsGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.contributionItem {
+    padding: 12px 16px;
+    background: #f8fafc;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+}
+
+.contributionLabel {
+    display: block;
+    font-size: 12px;
+    color: #6b7280;
+    margin-bottom: 4px;
+}
+
+.contributionValue {
+    font-size: 16px;
+    font-weight: 500;
+    color: #1f2937;
+}
+
+.contributionPaid {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    color: #10b981;
+}
+
+.contributionPending {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    color: #f59e0b;
+}
+
+.contributionOverdue {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    color: #ef4444;
+}
+
+/* Historia składek */
+.historySection {
+    margin-top: 24px;
+}
+
+.historyTitle {
+    font-size: 16px;
+    font-weight: 600;
+    color: #1f2937;
+    margin-bottom: 12px;
+}
+
+.historyRange {
+    font-size: 14px;
+    font-weight: 400;
+    color: #6b7280;
+    margin-left: 8px;
+}
+
+.historyList {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.historyItem {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 12px;
+    border-radius: 8px;
+}
+
+.historyItemPaid {
+    background: #f0fdf4;
+    border: 1px solid #bbf7d0;
+}
+
+.historyItemPending {
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+}
+
+.historyMonth {
+    font-weight: 500;
+    color: #1f2937;
+}
+
+.historyStatus {
+    color: #6b7280;
+}
+
+.historyItemPaid .historyStatus {
+    color: #16a34a;
+}
+
+.historyItemPending .historyStatus {
+    color: #dc2626;
+}
+
+.historyAmount {
+    font-weight: 600;
+    color: #1f2937;
+}
+
+.historyEmpty {
+    padding: 16px;
+    text-align: center;
+    color: #6b7280;
+}
+
+/* Kontakty */
+.privateNote {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 16px;
+    background: #fef3c7;
+    border-radius: 8px;
+    border: 1px solid #fcd34d;
+    color: #92400e;
+    font-size: 14px;
+    margin-bottom: 16px;
+}
+
+.contactsGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 16px;
+}
+
+.contactGroup {
+    padding: 12px 16px;
+    background: #f8fafc;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+}
+
+.contactLabel {
+    font-weight: 500;
+    color: #1f2937;
+    display: block;
+    margin-bottom: 8px;
+}
+
+.contactList {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.contactList li {
+    padding: 4px 0;
+    color: #4b5563;
+    font-size: 14px;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.contactList li:last-child {
+    border-bottom: none;
+}
+
+/* Informacje o składkach (prywatne) */
+.contributionInfoGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+}
+
+.contributionInfoItem {
+    padding: 12px 16px;
+    background: #f8fafc;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+}
+
+.contributionInfoLabel {
+    display: block;
+    font-size: 12px;
+    color: #6b7280;
+    margin-bottom: 4px;
+}
+
+.contributionInfoValue {
+    font-size: 16px;
+    font-weight: 500;
+    color: #1f2937;
+}
+
+.contributionInfoStatus {
+    display: inline-block;
+    padding: 2px 12px;
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.emptyState {
+    padding: 24px;
+    text-align: center;
+    color: #6b7280;
+}
+
+/* MODAL DODAWANIA UMIEJĘTNOŚCI */
+.modalOverlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    backdrop-filter: blur(4px);
+    animation: fadeIn 0.2s ease;
+}
+
+.modal {
+    background: #ffffff;
+    border-radius: 16px;
+    max-width: 480px;
+    width: 90%;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    animation: slideUp 0.25s ease;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px) scale(0.95);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.modalHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 24px 16px;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.modalTitle {
+    font-size: 18px;
+    font-weight: 600;
+    color: #1f2937;
+    margin: 0;
+}
+
+.modalClose {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border: none;
+    background: transparent;
+    border-radius: 8px;
+    color: #6b7280;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+
+.modalClose:hover {
+    background: #f3f4f6;
+    color: #1f2937;
+}
+
+.modalBody {
+    padding: 20px 24px;
+}
+
+.modalDescription {
+    font-size: 14px;
+    color: #6b7280;
+    margin: 0 0 16px;
+    line-height: 1.5;
+}
+
+.modalInput {
+    width: 100%;
+    padding: 10px 14px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    font-size: 14px;
+    color: #1f2937;
+    background: #ffffff;
+    transition: border-color 0.15s, box-shadow 0.15s;
+    outline: none;
+}
+
+.modalInput:focus {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+}
+
+.modalInput::placeholder {
+    color: #9ca3af;
+}
+
+.modalFooter {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    padding: 16px 24px 20px;
+    border-top: 1px solid #e5e7eb;
+}
+
+.modalBtnCancel {
+    padding: 8px 20px;
+    border: 1px solid #d1d5db;
+    background: #ffffff;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    color: #6b7280;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+
+.modalBtnCancel:hover {
+    background: #f3f4f6;
+    border-color: #9ca3af;
+}
+
+.modalBtnSave {
+    padding: 8px 24px;
+    border: none;
+    background: #3b82f6;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    color: #ffffff;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+
+.modalBtnSave:hover:not(:disabled) {
+    background: #2563eb;
+}
+
+.modalBtnSave:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
 }

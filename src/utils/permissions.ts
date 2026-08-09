@@ -94,6 +94,12 @@ export const DEFAULT_PERMISSIONS: Record<UserRole, Permission[]> = {
 		"canApproveLeaves",
 		"canRejectLeaves",
 		"canViewAllUsers",
+		"canEditUsers",
+		"canApproveLeaves",   // <-- DODAJ
+		"canRejectLeaves",
+		"canDeleteAllLeaves",   // <-- DODAJ
+		"canEditAllLeaves",
+		"canDeleteUsers",
 		"canManageProjects",
 		"canManageVacancies",
 		"canEditVacancies",
