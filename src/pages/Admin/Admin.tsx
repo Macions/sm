@@ -50,25 +50,25 @@ interface SystemLog {
 	user_name: string;
 	user_role: string;
 	action_type:
-		| "CREATE"
-		| "UPDATE"
-		| "DELETE"
-		| "LOGIN"
-		| "LOGOUT"
-		| "APPROVE"
-		| "REJECT";
+	| "CREATE"
+	| "UPDATE"
+	| "DELETE"
+	| "LOGIN"
+	| "LOGOUT"
+	| "APPROVE"
+	| "REJECT";
 	category:
-		| "USER"
-		| "TEAM"
-		| "LEAVE"
-		| "PROJECT"
-		| "VACANCY"
-		| "TUTORIAL"
-		| "SOCIAL_MEDIA"
-		| "PERMISSION"
-		| "STRUCTURE"
-		| "NOTIFICATION"
-		| "AUTH";
+	| "USER"
+	| "TEAM"
+	| "LEAVE"
+	| "PROJECT"
+	| "VACANCY"
+	| "TUTORIAL"
+	| "SOCIAL_MEDIA"
+	| "PERMISSION"
+	| "STRUCTURE"
+	| "NOTIFICATION"
+	| "AUTH";
 	endpoint: string;
 	method: string;
 	entity_id: string | null;
@@ -813,6 +813,7 @@ function StructureManagement({
 		role: "Zespół",
 		icon: "Users",
 		email: "",
+		parent_id: null as string | null, // <-- DODAJ
 	});
 	const [confirmDialog, setConfirmDialog] = useState<{
 		isOpen: boolean;
@@ -826,8 +827,8 @@ function StructureManagement({
 		title: "",
 		message: "",
 		confirmText: "Potwierdź",
-		onConfirm: () => {},
-		onCancel: () => {},
+		onConfirm: () => { },
+		onCancel: () => { },
 	});
 	const [expandedTeams, setExpandedTeams] = useState<Record<string, boolean>>(
 		{},
@@ -929,6 +930,7 @@ function StructureManagement({
 			role: "Zespół",
 			icon: "Users",
 			email: "",
+			parent_id: null, // <-- DODAJ
 		});
 		setIsAddingTeam(false);
 		setEditingTeam(null);
@@ -1290,6 +1292,7 @@ function StructureManagement({
 			role: team.role || "Zespół",
 			icon: team.icon || "Users",
 			email: team.email || "",
+			parent_id: team.parent_id || null, // <-- DODAJ
 		});
 		setEditingTeam(team);
 	};
@@ -1430,6 +1433,26 @@ function StructureManagement({
 												}
 												rows={3}
 											/>
+										</div>
+										{/* Dodaj pole wyboru rodzica */}
+										<div className={styles.modal__field}>
+											<label>Zespół nadrzędny</label>
+											<select
+												value={teamForm.parent_id || ""}
+												onChange={(e) => setTeamForm({
+													...teamForm,
+													parent_id: e.target.value || null
+												})}
+											>
+												<option value="">Brak</option>
+												{teams
+													.filter(t => t.id !== editingTeam?.id) // Nie można wybrać siebie
+													.map(team => (
+														<option key={team.id} value={team.id}>
+															{team.name}
+														</option>
+													))}
+											</select>
 										</div>
 										<div className={styles.modal__row}>
 											<div className={styles.modal__field}>

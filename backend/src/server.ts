@@ -1193,11 +1193,11 @@ app.get("/api/members", authMiddleware, async (req: any, res) => {
 					user.created_at.toISOString().split("T")[0],
 				vacation: activeLeave
 					? {
-							startDate: activeLeave.start_date.toISOString().split("T")[0],
-							endDate: activeLeave.end_date.toISOString().split("T")[0],
-							type: activeLeave.scope === "team" ? "team" : "organization",
-							teamId: activeLeave.affected_teams || undefined,
-						}
+						startDate: activeLeave.start_date.toISOString().split("T")[0],
+						endDate: activeLeave.end_date.toISOString().split("T")[0],
+						type: activeLeave.scope === "team" ? "team" : "organization",
+						teamId: activeLeave.affected_teams || undefined,
+					}
 					: null,
 				onboarding_data: onboarding,
 			};
@@ -2081,7 +2081,7 @@ app.get("/api/applications", authMiddleware, async (req: any, res) => {
 				userId: app.user_id.toString(),
 				userName: app.user
 					? `${app.user.first_name || ""} ${app.user.last_name || ""}`.trim() ||
-						"Nieznany"
+					"Nieznany"
 					: "Nieznany",
 				userEmail: app.user?.email || "",
 				message: app.message || "",
@@ -2202,7 +2202,7 @@ app.get(
 					userId: app.user_id.toString(),
 					userName: app.user
 						? `${app.user.first_name || ""} ${app.user.last_name || ""}`.trim() ||
-							"Nieznany"
+						"Nieznany"
 						: "Nieznany",
 					userEmail: app.user?.email || "",
 					message: app.message || "",
@@ -3432,14 +3432,14 @@ app.put("/api/leaves/:id", authMiddleware, async (req: any, res) => {
 					: existingLeave.attachments,
 				status: status || existingLeave.status,
 				...(status === "approved" ||
-				status === "rejected" ||
-				status === "cancelled"
+					status === "rejected" ||
+					status === "cancelled"
 					? {
-							approved_by:
-								`${currentUser?.first_name || ""} ${currentUser?.last_name || ""}`.trim() ||
-								"Nieznany",
-							approved_at: new Date(),
-						}
+						approved_by:
+							`${currentUser?.first_name || ""} ${currentUser?.last_name || ""}`.trim() ||
+							"Nieznany",
+						approved_at: new Date(),
+					}
 					: {}),
 			},
 		});
@@ -5323,6 +5323,19 @@ app.put("/api/admin/teams/:id", authMiddleware, async (req: any, res) => {
 		const { name, description, role, icon, email, parent_id, status } =
 			req.body;
 
+		// 🔥 Pobierz aktualny team, żeby sprawdzić czy parent_id został przesłany
+		const currentTeam = await prisma.team.findUnique({
+			where: { id: teamId },
+			select: { parent_id: true }
+		});
+
+		// 🔥 TYLKO jeśli parent_id jest w req.body (nawet jako null) - aktualizuj
+		// Jeśli nie ma klucza parent_id w req.body - zachowaj starą wartość
+		let parentIdValue = undefined;
+		if ('parent_id' in req.body) {
+			parentIdValue = parent_id ? parseInt(parent_id) : null;
+		}
+
 		const team = await prisma.team.update({
 			where: { id: teamId },
 			data: {
@@ -5331,7 +5344,7 @@ app.put("/api/admin/teams/:id", authMiddleware, async (req: any, res) => {
 				role: role || undefined,
 				icon: icon || undefined,
 				email: email !== undefined ? email : undefined,
-				parent_id: parent_id ? parseInt(parent_id) : null,
+				...(parentIdValue !== undefined && { parent_id: parentIdValue }),
 				status: status || undefined,
 			},
 		});
@@ -5347,7 +5360,7 @@ app.put("/api/admin/teams/:id", authMiddleware, async (req: any, res) => {
 			parent_id: team.parent_id?.toString() || null,
 		});
 	} catch (error) {
-		// 		logger.error("❌ Błąd edycji zespołu:", error);
+		logger.error("❌ Błąd edycji zespołu:", error);
 		res.status(500).json({ error: "Nie udało się edytować zespołu" });
 	}
 });
@@ -6800,4 +6813,4 @@ app.get(
 	},
 );
 
-app.listen(port, () => {});
+app.listen(port, () => { });

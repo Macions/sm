@@ -592,7 +592,7 @@ export default function Dashboard() {
 			<div className={styles.welcomeCard}>
 				<div className={styles.welcomeCard__content}>
 					<img
-						src="/sm/assets/images/sm-logo.png"
+						src="/assets/images/sm-logo.png"
 						alt="Siła Młodych logo"
 						className={styles.welcomeCard__logo}
 					/>
