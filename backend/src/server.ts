@@ -21,11 +21,14 @@ import fs from "fs";
 import multer from "multer";
 import { logger } from "./utils/logger";
 import { syncMembers } from "./jobs/syncMembers";
-import dotenv from 'dotenv';
+import dotenv from "dotenv";
 dotenv.config(); // ⚠️ TO MUSI BYĆ NA POCZĄTKU!
 
 console.log("🔑 GOOGLE_CLIENT_ID:", process.env.GOOGLE_CLIENT_ID);
-console.log("🔑 GOOGLE_CLIENT_SECRET:", process.env.GOOGLE_CLIENT_SECRET ? "✅ ZNALEZIONO" : "❌ BRAK");
+console.log(
+	"🔑 GOOGLE_CLIENT_SECRET:",
+	process.env.GOOGLE_CLIENT_SECRET ? "✅ ZNALEZIONO" : "❌ BRAK",
+);
 console.log("🔑 GOOGLE_REDIRECT_URI:", process.env.GOOGLE_REDIRECT_URI);
 
 updateLeaveStatus();
@@ -55,7 +58,7 @@ cron.schedule("0 3 */2 * *", async () => {
 const PUBLIC_ENDPOINTS = [
 	"/api/auth/login",
 	"/api/auth/google",
-	"/api/auth/google-token",  // ← DODAJ TĘ LINIĘ!
+	"/api/auth/google-token", // ← DODAJ TĘ LINIĘ!
 	"/api/auth/register",
 	"/api/auth/refresh-token",
 	"/api/auth/forgot-password",
@@ -489,10 +492,8 @@ app.use(async (req: any, res: any, next: any) => {
 		"/api/calendar/callback",
 	];
 	if (publicPaths.some((p) => req.path === p || req.path.startsWith(p))) {
-
 		return next();
 	}
-
 
 	const originalJson = res.json;
 	const originalStatus = res.status;
@@ -1192,11 +1193,11 @@ app.get("/api/members", authMiddleware, async (req: any, res) => {
 					user.created_at.toISOString().split("T")[0],
 				vacation: activeLeave
 					? {
-						startDate: activeLeave.start_date.toISOString().split("T")[0],
-						endDate: activeLeave.end_date.toISOString().split("T")[0],
-						type: activeLeave.scope === "team" ? "team" : "organization",
-						teamId: activeLeave.affected_teams || undefined,
-					}
+							startDate: activeLeave.start_date.toISOString().split("T")[0],
+							endDate: activeLeave.end_date.toISOString().split("T")[0],
+							type: activeLeave.scope === "team" ? "team" : "organization",
+							teamId: activeLeave.affected_teams || undefined,
+						}
 					: null,
 				onboarding_data: onboarding,
 			};
@@ -2080,7 +2081,7 @@ app.get("/api/applications", authMiddleware, async (req: any, res) => {
 				userId: app.user_id.toString(),
 				userName: app.user
 					? `${app.user.first_name || ""} ${app.user.last_name || ""}`.trim() ||
-					"Nieznany"
+						"Nieznany"
 					: "Nieznany",
 				userEmail: app.user?.email || "",
 				message: app.message || "",
@@ -2201,7 +2202,7 @@ app.get(
 					userId: app.user_id.toString(),
 					userName: app.user
 						? `${app.user.first_name || ""} ${app.user.last_name || ""}`.trim() ||
-						"Nieznany"
+							"Nieznany"
 						: "Nieznany",
 					userEmail: app.user?.email || "",
 					message: app.message || "",
@@ -3402,10 +3403,14 @@ app.put("/api/leaves/:id", authMiddleware, async (req: any, res) => {
 		} = req.body;
 
 		// ✅ POPRAWKA: DODAJ "cancelled"
-		if (status && (status === "approved" || status === "rejected" || status === "cancelled")) {
+		if (
+			status &&
+			(status === "approved" || status === "rejected" || status === "cancelled")
+		) {
 			if (!canApprove) {
 				return res.status(403).json({
-					error: "Tylko Admin lub Zarząd może zatwierdzać, odrzucać lub anulować wnioski",
+					error:
+						"Tylko Admin lub Zarząd może zatwierdzać, odrzucać lub anulować wnioski",
 				});
 			}
 		}
@@ -3426,13 +3431,15 @@ app.put("/api/leaves/:id", authMiddleware, async (req: any, res) => {
 					? JSON.stringify(attachments)
 					: existingLeave.attachments,
 				status: status || existingLeave.status,
-				...(status === "approved" || status === "rejected" || status === "cancelled"
+				...(status === "approved" ||
+				status === "rejected" ||
+				status === "cancelled"
 					? {
-						approved_by:
-							`${currentUser?.first_name || ""} ${currentUser?.last_name || ""}`.trim() ||
-							"Nieznany",
-						approved_at: new Date(),
-					}
+							approved_by:
+								`${currentUser?.first_name || ""} ${currentUser?.last_name || ""}`.trim() ||
+								"Nieznany",
+							approved_at: new Date(),
+						}
 					: {}),
 			},
 		});
@@ -3508,7 +3515,12 @@ app.delete("/api/leaves/:id", authMiddleware, async (req: any, res) => {
 			return res.status(404).json({ error: "Nie znaleziono wniosku" });
 		}
 
-		if (userRole !== "admin" && userRole !== "board" && userRole !== "zarząd" && existingLeave.user_id !== userId) {
+		if (
+			userRole !== "admin" &&
+			userRole !== "board" &&
+			userRole !== "zarząd" &&
+			existingLeave.user_id !== userId
+		) {
 			return res.status(403).json({ error: "Brak uprawnień" });
 		}
 
@@ -4961,63 +4973,70 @@ function getDefaultPermissions(role: string): string[] {
 	return defaults[role] || [];
 }
 
-app.get("/api/admin/permissions/:role", authMiddleware, async (req: any, res) => {
-	try {
-		const userRole = req.user?.role;
+app.get(
+	"/api/admin/permissions/:role",
+	authMiddleware,
+	async (req: any, res) => {
+		try {
+			const userRole = req.user?.role;
 
-		// ✅ DODAJ TO:
-		if (userRole !== "admin" && userRole !== "board" && userRole !== "zarząd") {
-			return res.status(403).json({ error: "Brak uprawnień" });
-		}
+			// ✅ DODAJ TO:
+			if (
+				userRole !== "admin" &&
+				userRole !== "board" &&
+				userRole !== "zarząd"
+			) {
+				return res.status(403).json({ error: "Brak uprawnień" });
+			}
 
-		const { role } = req.params;
+			const { role } = req.params;
 
-		const roleData = await prisma.roles.findFirst({
-			where: {
-				name: role,
-			},
-			select: {
-				id: true,
-				name: true,
-				permissions: true,
-			},
-		});
+			const roleData = await prisma.roles.findFirst({
+				where: {
+					name: role,
+				},
+				select: {
+					id: true,
+					name: true,
+					permissions: true,
+				},
+			});
 
-		if (!roleData) {
-			const defaultPermissions = getDefaultPermissions(role);
-			return res.json({
-				role,
+			if (!roleData) {
+				const defaultPermissions = getDefaultPermissions(role);
+				return res.json({
+					role,
+					permissions: defaultPermissions,
+					fromDefault: true,
+				});
+			}
+
+			let permissions: string[] = [];
+			try {
+				permissions =
+					typeof roleData.permissions === "string"
+						? JSON.parse(roleData.permissions)
+						: roleData.permissions || [];
+			} catch (e) {
+				permissions = [];
+			}
+
+			res.json({
+				role: roleData.name,
+				permissions,
+				fromDefault: false,
+			});
+		} catch (error) {
+			// 			logger.error("❌ Błąd pobierania uprawnień:", error);
+
+			const defaultPermissions = getDefaultPermissions(req.params.role);
+			res.json({
+				role: req.params.role,
 				permissions: defaultPermissions,
 				fromDefault: true,
 			});
 		}
-
-		let permissions: string[] = [];
-		try {
-			permissions =
-				typeof roleData.permissions === "string"
-					? JSON.parse(roleData.permissions)
-					: roleData.permissions || [];
-		} catch (e) {
-			permissions = [];
-		}
-
-		res.json({
-			role: roleData.name,
-			permissions,
-			fromDefault: false,
-		});
-	} catch (error) {
-		// 			logger.error("❌ Błąd pobierania uprawnień:", error);
-
-		const defaultPermissions = getDefaultPermissions(req.params.role);
-		res.json({
-			role: req.params.role,
-			permissions: defaultPermissions,
-			fromDefault: true,
-		});
-	}
-},
+	},
 );
 
 app.get("/api/admin/roles", authMiddleware, async (req: any, res) => {
@@ -5074,7 +5093,11 @@ app.put(
 			const roleId = parseInt(req.params.id);
 			const { permissions } = req.body;
 
-			if (userRole !== "admin" && userRole !== "board" && userRole !== "zarząd") {
+			if (
+				userRole !== "admin" &&
+				userRole !== "board" &&
+				userRole !== "zarząd"
+			) {
 				return res.status(403).json({ error: "Brak uprawnień" });
 			}
 
@@ -5492,7 +5515,11 @@ app.delete(
 			const userRole = req.user?.role;
 			const memberId = parseInt(req.params.id);
 
-			if (userRole !== "admin" && userRole !== "board" && userRole !== "zarząd") {
+			if (
+				userRole !== "admin" &&
+				userRole !== "board" &&
+				userRole !== "zarząd"
+			) {
 				return res.status(403).json({ error: "Brak uprawnień" });
 			}
 
@@ -5526,18 +5553,44 @@ app.put(
 			const userRole = req.user?.role;
 			const memberId = parseInt(req.params.id);
 
-			if (userRole !== "admin" && userRole !== "board" && userRole !== "zarząd") {
+			if (
+				userRole !== "admin" &&
+				userRole !== "board" &&
+				userRole !== "zarząd"
+			) {
 				return res.status(403).json({ error: "Brak uprawnień" });
 			}
 
-			const { role, is_leader } = req.body;
+			// 🔥 POPRAWA: Dodaj `role_in_team` do destruktyzacji
+			const { role, is_leader, role_in_team } = req.body;
+
+			// 🔥 LOGUJ CO PRZYCHODZI
+			console.log("📥 [BACKEND] Aktualizacja członka:", {
+				memberId,
+				role,
+				is_leader,
+				role_in_team,
+			});
+
+			// 🔥 BUDUJ OBIEKT DO AKTUALIZACJI
+			const updateData: any = {};
+
+			if (role !== undefined) {
+				updateData.role = role;
+			}
+			if (is_leader !== undefined) {
+				updateData.is_leader = is_leader;
+			}
+			// 🔥 DODAJ OBSŁUGĘ role_in_team
+			if (role_in_team !== undefined) {
+				updateData.role = role_in_team; // Zapisujemy do kolumny `role`
+			}
+
+			console.log("📥 [BACKEND] Aktualizuję pola:", updateData);
 
 			const teamMember = await prisma.teamMember.update({
 				where: { id: memberId },
-				data: {
-					role: role || undefined,
-					is_leader: is_leader !== undefined ? is_leader : undefined,
-				},
+				data: updateData,
 				include: {
 					user: {
 						select: {
@@ -5552,6 +5605,8 @@ app.put(
 				},
 			});
 
+			console.log("✅ [BACKEND] Zaktualizowano:", teamMember);
+
 			res.json({
 				id: teamMember.id.toString(),
 				team_id: teamMember.team_id.toString(),
@@ -5565,7 +5620,7 @@ app.put(
 				is_leader: teamMember.is_leader || false,
 			});
 		} catch (error) {
-			// 			logger.error("❌ Błąd zmiany roli członka:", error);
+			console.error("❌ Błąd zmiany roli członka:", error);
 			res.status(500).json({ error: "Nie udało się zmienić roli" });
 		}
 	},
@@ -6451,118 +6506,127 @@ app.delete("/api/comments/:id", authMiddleware, async (req: any, res) => {
 // 📋 GET /api/tasks/completed/:userId - Pobierz ukończone zadania użytkownika
 // ============================================================
 // GET /api/tasks/completed/:userId - Pobierz ukończone zadania z szczegółami
-app.get("/api/tasks/completed/:userId", authMiddleware, async (req: any, res) => {
-	try {
-		const userId = req.params.userId;
-		const currentUserId = req.user?.id;
+app.get(
+	"/api/tasks/completed/:userId",
+	authMiddleware,
+	async (req: any, res) => {
+		try {
+			const userId = req.params.userId;
+			const currentUserId = req.user?.id;
 
-		const isAuthorized =
-			req.user?.role === "admin" ||
-			req.user?.role === "board" ||
-			parseInt(userId) === currentUserId;
+			const isAuthorized =
+				req.user?.role === "admin" ||
+				req.user?.role === "board" ||
+				parseInt(userId) === currentUserId;
 
-		if (!isAuthorized) {
-			return res.status(403).json({ error: "Brak uprawnień" });
-		}
-
-		const tasks = await prisma.task.findMany({
-			where: {
-				assigned_to: parseInt(userId),
-				status: "done",
-			},
-			select: {
-				id: true,
-				title: true,
-				description: true,
-				status: true,
-				priority: true,
-				created_at: true,
-				updated_at: true,
-				due_date: true,
-				pillar: true,
-				rating: true,
-				rating_comment: true,
-				rated_at: true,
-				assigned_to: true,
-				project: {
-					select: {
-						name: true,
-					},
-				},
-				assignedTo: {
-					select: {
-						id: true,
-						first_name: true,
-						last_name: true,
-					},
-				},
-			},
-			orderBy: {
-				updated_at: "desc",
-			},
-			take: 50,
-		});
-
-		const mappedTasks = tasks.map((task: any) => {
-			const createdAt = new Date(task.created_at);
-			const dueDate = task.due_date ? new Date(task.due_date) : null;
-			const completedAt = new Date(task.updated_at);
-
-			// Oblicz czas realizacji w dniach
-			const daysToComplete = Math.ceil((completedAt.getTime() - createdAt.getTime()) / (1000 * 60 * 60 * 24));
-
-			// Sprawdź czy przed/po terminie
-			let timelineStatus = "on_time";
-			let daysDiff = 0;
-
-			if (dueDate) {
-				daysDiff = Math.ceil((completedAt.getTime() - dueDate.getTime()) / (1000 * 60 * 60 * 24));
-				if (daysDiff < -1) {
-					timelineStatus = "early";
-				} else if (daysDiff > 1) {
-					timelineStatus = "late";
-				} else {
-					timelineStatus = "on_time";
-				}
+			if (!isAuthorized) {
+				return res.status(403).json({ error: "Brak uprawnień" });
 			}
 
-			return {
-				id: task.id.toString(),
-				title: task.title,
-				description: task.description,
-				status: task.status,
-				priority: task.priority || "medium",
-				pillar: task.pillar,
-				rating: task.rating,
-				rating_comment: task.rating_comment,
-				rated_at: task.rated_at?.toISOString() || null,
-				projectName: task.project?.name || null,
-				assignedToName: task.assignedTo
-					? `${task.assignedTo.first_name || ""} ${task.assignedTo.last_name || ""}`.trim()
-					: "Nieznany",
-				// Szczegóły czasowe
-				createdAt: task.created_at.toISOString(),
-				dueDate: task.due_date?.toISOString() || null,
-				completedAt: task.updated_at.toISOString(),
-				daysToComplete: daysToComplete,
-				timelineStatus: timelineStatus,
-				daysDiff: daysDiff,
-				// Czy było przed/po terminie
-				isLate: timelineStatus === "late",
-				isEarly: timelineStatus === "early",
-				isOnTime: timelineStatus === "on_time",
-			};
-		});
+			const tasks = await prisma.task.findMany({
+				where: {
+					assigned_to: parseInt(userId),
+					status: "done",
+				},
+				select: {
+					id: true,
+					title: true,
+					description: true,
+					status: true,
+					priority: true,
+					created_at: true,
+					updated_at: true,
+					due_date: true,
+					pillar: true,
+					rating: true,
+					rating_comment: true,
+					rated_at: true,
+					assigned_to: true,
+					project: {
+						select: {
+							name: true,
+						},
+					},
+					assignedTo: {
+						select: {
+							id: true,
+							first_name: true,
+							last_name: true,
+						},
+					},
+				},
+				orderBy: {
+					updated_at: "desc",
+				},
+				take: 50,
+			});
 
-		res.json({
-			tasks: mappedTasks,
-			total: mappedTasks.length,
-		});
-	} catch (error) {
-		logger.error("❌ Błąd pobierania ukończonych zadań:", error);
-		res.status(500).json({ error: "Nie udało się pobrać zadań" });
-	}
-});
+			const mappedTasks = tasks.map((task: any) => {
+				const createdAt = new Date(task.created_at);
+				const dueDate = task.due_date ? new Date(task.due_date) : null;
+				const completedAt = new Date(task.updated_at);
+
+				// Oblicz czas realizacji w dniach
+				const daysToComplete = Math.ceil(
+					(completedAt.getTime() - createdAt.getTime()) / (1000 * 60 * 60 * 24),
+				);
+
+				// Sprawdź czy przed/po terminie
+				let timelineStatus = "on_time";
+				let daysDiff = 0;
+
+				if (dueDate) {
+					daysDiff = Math.ceil(
+						(completedAt.getTime() - dueDate.getTime()) / (1000 * 60 * 60 * 24),
+					);
+					if (daysDiff < -1) {
+						timelineStatus = "early";
+					} else if (daysDiff > 1) {
+						timelineStatus = "late";
+					} else {
+						timelineStatus = "on_time";
+					}
+				}
+
+				return {
+					id: task.id.toString(),
+					title: task.title,
+					description: task.description,
+					status: task.status,
+					priority: task.priority || "medium",
+					pillar: task.pillar,
+					rating: task.rating,
+					rating_comment: task.rating_comment,
+					rated_at: task.rated_at?.toISOString() || null,
+					projectName: task.project?.name || null,
+					assignedToName: task.assignedTo
+						? `${task.assignedTo.first_name || ""} ${task.assignedTo.last_name || ""}`.trim()
+						: "Nieznany",
+					// Szczegóły czasowe
+					createdAt: task.created_at.toISOString(),
+					dueDate: task.due_date?.toISOString() || null,
+					completedAt: task.updated_at.toISOString(),
+					daysToComplete: daysToComplete,
+					timelineStatus: timelineStatus,
+					daysDiff: daysDiff,
+					// Czy było przed/po terminie
+					isLate: timelineStatus === "late",
+					isEarly: timelineStatus === "early",
+					isOnTime: timelineStatus === "on_time",
+				};
+			});
+
+			res.json({
+				tasks: mappedTasks,
+				total: mappedTasks.length,
+			});
+		} catch (error) {
+			logger.error("❌ Błąd pobierania ukończonych zadań:", error);
+			res.status(500).json({ error: "Nie udało się pobrać zadań" });
+		}
+	},
+);
+
 // ============================================================
 // 📊 GET /api/tasks/stats/:userId - Statystyki zadań użytkownika
 // ============================================================
@@ -6581,37 +6645,37 @@ app.get("/api/tasks/stats/:userId", authMiddleware, async (req: any, res) => {
 		}
 
 		const totalTasks = await prisma.task.count({
-			where: { assigned_to: parseInt(userId) }
+			where: { assigned_to: parseInt(userId) },
 		});
 
 		const completedTasks = await prisma.task.count({
 			where: {
 				assigned_to: parseInt(userId),
-				status: "done"
-			}
+				status: "done",
+			},
 		});
 
 		const inProgressTasks = await prisma.task.count({
 			where: {
 				assigned_to: parseInt(userId),
-				status: "in_progress"
-			}
+				status: "in_progress",
+			},
 		});
 
 		const todoTasks = await prisma.task.count({
 			where: {
 				assigned_to: parseInt(userId),
-				status: "todo"
-			}
+				status: "todo",
+			},
 		});
 
 		const avgRating = await prisma.task.aggregate({
 			where: {
 				assigned_to: parseInt(userId),
 				status: "done",
-				rating: { not: null }
+				rating: { not: null },
 			},
-			_avg: { rating: true }
+			_avg: { rating: true },
 		});
 
 		res.json({
@@ -6619,7 +6683,8 @@ app.get("/api/tasks/stats/:userId", authMiddleware, async (req: any, res) => {
 			completed: completedTasks,
 			inProgress: inProgressTasks,
 			todo: todoTasks,
-			completionRate: totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0,
+			completionRate:
+				totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0,
 			averageRating: avgRating._avg.rating || 0,
 		});
 	} catch (error) {
@@ -6735,4 +6800,4 @@ app.get(
 	},
 );
 
-app.listen(port, () => { });
+app.listen(port, () => {});

@@ -50,25 +50,25 @@ interface SystemLog {
 	user_name: string;
 	user_role: string;
 	action_type:
-	| "CREATE"
-	| "UPDATE"
-	| "DELETE"
-	| "LOGIN"
-	| "LOGOUT"
-	| "APPROVE"
-	| "REJECT";
+		| "CREATE"
+		| "UPDATE"
+		| "DELETE"
+		| "LOGIN"
+		| "LOGOUT"
+		| "APPROVE"
+		| "REJECT";
 	category:
-	| "USER"
-	| "TEAM"
-	| "LEAVE"
-	| "PROJECT"
-	| "VACANCY"
-	| "TUTORIAL"
-	| "SOCIAL_MEDIA"
-	| "PERMISSION"
-	| "STRUCTURE"
-	| "NOTIFICATION"
-	| "AUTH";
+		| "USER"
+		| "TEAM"
+		| "LEAVE"
+		| "PROJECT"
+		| "VACANCY"
+		| "TUTORIAL"
+		| "SOCIAL_MEDIA"
+		| "PERMISSION"
+		| "STRUCTURE"
+		| "NOTIFICATION"
+		| "AUTH";
 	endpoint: string;
 	method: string;
 	entity_id: string | null;
@@ -826,11 +826,100 @@ function StructureManagement({
 		title: "",
 		message: "",
 		confirmText: "Potwierdź",
-		onConfirm: () => { },
-		onCancel: () => { },
+		onConfirm: () => {},
+		onCancel: () => {},
 	});
-	const [expandedTeams, setExpandedTeams] = useState<Record<string, boolean>>({});
+	const [expandedTeams, setExpandedTeams] = useState<Record<string, boolean>>(
+		{},
+	);
+	// Dodaj te stany po istniejących state'ach
+	const [editingMemberRole, setEditingMemberRole] = useState<{
+		memberId: string;
+		teamId: string;
+		currentRole: string;
+		memberName: string;
+	} | null>(null);
+	const [newRoleValue, setNewRoleValue] = useState<string>("");
+	const scrollToTeamHeader = (teamId: string) => {
+		const element = document.getElementById(`team-${teamId}`);
+		if (element) {
+			// Znajdź nagłówek zespołu (pierwszy element .teamCard__header)
+			const header = element.querySelector(".teamCard__header");
+			if (header) {
+				// Przewiń płynnie do nagłówka z marginesem 80px od góry
+				const headerRect = header.getBoundingClientRect();
+				const offset = 80; // margines od góry
+				const scrollPosition = window.scrollY + headerRect.top - offset;
 
+				window.scrollTo({
+					top: scrollPosition,
+					behavior: "smooth",
+				});
+			} else {
+				// Fallback - przewiń do całego elementu
+				element.scrollIntoView({
+					behavior: "smooth",
+					block: "start",
+					inline: "nearest",
+				});
+			}
+		}
+	};
+	// 🔥 FUNKCJA DO AKTUALIZACJI ROLI CZŁONKA
+	const handleUpdateMemberRole = async (
+		memberId: string,
+		teamId: string,
+		newRole: string,
+	) => {
+		const trimmed = newRole.trim();
+
+		if (!trimmed) {
+			toast.error("Nazwa roli nie może być pusta");
+			return;
+		}
+
+		if (trimmed.length > 100) {
+			toast.error("Nazwa roli nie może przekraczać 100 znaków");
+			return;
+		}
+
+		try {
+			const token = localStorage.getItem("accessToken");
+
+			// 🔥 DODAJ LOG:
+			console.log("📤 Wysyłam request:", {
+				memberId,
+				teamId,
+				role_in_team: trimmed,
+			});
+
+			const response = await fetch(`/api/admin/team-members/${memberId}`, {
+				method: "PUT",
+				headers: {
+					Authorization: `Bearer ${token}`,
+					"Content-Type": "application/json",
+				},
+				body: JSON.stringify({
+					role_in_team: trimmed,
+				}),
+			});
+
+			// 🔥 DODAJ LOG odpowiedzi:
+			const data = await response.json();
+			console.log("📥 Odpowiedź backendu:", data);
+
+			if (!response.ok) throw new Error("Błąd aktualizacji roli");
+
+			toast.success("Rola zaktualizowana!");
+			setEditingMemberRole(null);
+			setNewRoleValue("");
+			await onRefresh();
+			onTeamUpdated(teamId);
+		} catch (error) {
+			logger.error("❌ Błąd:", error);
+			toast.error("Nie udało się zaktualizować roli");
+		}
+	};
 	// 🔥 DODAJ TEN STATE:
 	const [isSectionExpanded, setIsSectionExpanded] = useState(true);
 	const resetTeamForm = () => {
@@ -851,7 +940,12 @@ function StructureManagement({
 	// ============================================================
 	// 🔥 NAZWY ZESPOŁÓW DO UKRYCIA
 	// ============================================================
-	const HIDDEN_TEAMS = ["Filary organizacji", "Organy kontrolne", "Siła młodych", "Siła Młodych"];
+	const HIDDEN_TEAMS = [
+		"Filary organizacji",
+		"Organy kontrolne",
+		"Siła młodych",
+		"Siła Młodych",
+	];
 
 	// ============================================================
 	// 🔥 KOLEJNOŚĆ ZESPOŁÓW
@@ -875,9 +969,7 @@ function StructureManagement({
 	// ============================================================
 	const getSortedTeams = (): Team[] => {
 		// 1. Odfiltruj ukryte zespoły
-		const filtered = teams.filter(
-			(team) => !HIDDEN_TEAMS.includes(team.name)
-		);
+		const filtered = teams.filter((team) => !HIDDEN_TEAMS.includes(team.name));
 
 		// 2. Podziel na filary i inne
 		const pillars: Team[] = [];
@@ -911,61 +1003,99 @@ function StructureManagement({
 	// ============================================================
 	// 🔥 POBRANIE CZŁONKÓW DO WYŚWIETLENIA
 	// ============================================================
-	const getDisplayMembers = (team: Team): { display: TeamMember[]; hidden: TeamMember[]; total: number } => {
+	const getDisplayMembers = (
+		team: Team,
+	): { display: TeamMember[]; hidden: TeamMember[]; total: number } => {
 		const isTeamPillar = isPillar(team.name);
 		const isExpanded = expandedTeams[team.id] || false;
 
 		let members = [...team.members];
 
 		// Dla filarów: domyślnie tylko liderzy (koordynatorzy)
-		if (isTeamPillar && !isExpanded) {
-			const leaders = members.filter(m => m.is_leader === true);
-			const nonLeaders = members.filter(m => m.is_leader !== true);
+		if (isTeamPillar) {
+			const leaders = members.filter((m) => m.is_leader === true);
+			const nonLeaders = members.filter((m) => m.is_leader !== true);
 
-			// Jeśli jest więcej niż 5 członków ogółem, pokaż liderów + przycisk
-			if (members.length > 5) {
+			if (isExpanded) {
 				return {
-					display: leaders,
-					hidden: nonLeaders,
-					total: members.length
+					display: members,
+					hidden: [],
+					total: members.length,
 				};
 			}
-			// Jeśli mniej niż 5, pokaż wszystkich
+
+			return {
+				display: leaders,
+				hidden: nonLeaders,
+				total: members.length,
+			};
+		}
+
+		if (!isTeamPillar) {
+			if (isExpanded) {
+				return {
+					display: members,
+					hidden: [],
+					total: members.length,
+				};
+			}
+
+			if (members.length > 5) {
+				const display = members.slice(0, 3);
+				const hidden = members.slice(3);
+
+				// 🔥 DODAJ TEN LOG:
+				console.log(
+					`🔍 Team: ${team.name}, display: ${display.length}, hidden: ${hidden.length}, hasMore: ${hidden.length > 0}`,
+				);
+
+				return { display, hidden, total: members.length };
+			}
+
 			return {
 				display: members,
 				hidden: [],
-				total: members.length
+				total: members.length,
 			};
 		}
 
-		// Dla innych zespołów: jeśli >5, pokaż 4 + reszta ukryta
-		if (!isTeamPillar && members.length > 5 && !isExpanded) {
-			const display = members.slice(0, 3); // pokazuje 3
-			const hidden = members.slice(4);
-			return {
-				display,
-				hidden,
-				total: members.length
-			};
-		}
-
-		// Rozwinięte lub mało członków - pokaż wszystkich
 		return {
 			display: members,
 			hidden: [],
-			total: members.length
+			total: members.length,
 		};
 	};
 
 	// ============================================================
 	// 🔥 PRZEŁĄCZANIE "POKAŻ WSZYSTKICH"
 	// ============================================================
+	// ============================================================
+	// 🔥 PRZEŁĄCZANIE "POKAŻ WSZYSTKICH" - Z PRZEWIJANIEM
+	// ============================================================
 	const toggleShowAll = (teamId: string) => {
-		setExpandedTeams(prev => ({
-			...prev,
-			[teamId]: !prev[teamId]
-		}));
+		const isCurrentlyExpanded = expandedTeams[teamId] || false;
+
+		// Jeśli był rozwinięty i teraz zwijamy - przewiń do nagłówka
+		if (isCurrentlyExpanded) {
+			// Najpierw zaktualizuj stan (zwinie listę)
+			setExpandedTeams((prev) => ({
+				...prev,
+				[teamId]: false,
+			}));
+
+			// Po zmianie stanu, przewiń do nagłówka
+			setTimeout(() => {
+				scrollToTeamHeader(teamId);
+			}, 100); // małe opóźnienie żeby DOM się zaktualizował
+		} else {
+			// Rozwijamy - tylko zaktualizuj stan
+			setExpandedTeams((prev) => ({
+				...prev,
+				[teamId]: true,
+			}));
+		}
 	};
+
 	const handleAddTeam = async (e: React.FormEvent) => {
 		e.preventDefault();
 		try {
@@ -1105,7 +1235,7 @@ function StructureManagement({
 				body: JSON.stringify({
 					team_id: teamId,
 					user_id: selectedUser,
-					role: selectedRole,
+					role_in_team: selectedRole,
 					is_leader: isLeader,
 				}),
 			});
@@ -1186,8 +1316,17 @@ function StructureManagement({
 
 			<div className={styles.section__header}>
 				<div className={styles.section__headerLeft}>
-					<div style={{ display: "flex", alignItems: "center", gap: "12px", width: "100%" }}>
-						<h2 className={styles.section__title} style={{ margin: 0 }}>Zespoły i członkowie</h2>
+					<div
+						style={{
+							display: "flex",
+							alignItems: "center",
+							gap: "12px",
+							width: "100%",
+						}}
+					>
+						<h2 className={styles.section__title} style={{ margin: 0 }}>
+							Zespoły i członkowie
+						</h2>
 						<button
 							onClick={() => setIsSectionExpanded(!isSectionExpanded)}
 							style={{
@@ -1203,11 +1342,15 @@ function StructureManagement({
 								cursor: "pointer",
 								transition: "all 0.2s ease",
 								flexShrink: 0,
-								marginLeft: "auto"
+								marginLeft: "auto",
 							}}
 							title={isSectionExpanded ? "Zwiń sekcję" : "Rozwiń sekcję"}
 						>
-							{isSectionExpanded ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
+							{isSectionExpanded ? (
+								<ChevronDown size={20} />
+							) : (
+								<ChevronRight size={20} />
+							)}
 						</button>
 					</div>
 					<p className={styles.section__subtitle}>
@@ -1234,7 +1377,10 @@ function StructureManagement({
 								if (editingTeam) setEditingTeam(null);
 							}}
 						>
-							<div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+							<div
+								className={styles.modal}
+								onClick={(e) => e.stopPropagation()}
+							>
 								<div className={styles.modal__header}>
 									<h2 className={styles.modal__title}>
 										{editingTeam ? "Edytuj zespół" : "Dodaj nowy zespół"}
@@ -1277,7 +1423,10 @@ function StructureManagement({
 											<textarea
 												value={teamForm.description}
 												onChange={(e) =>
-													setTeamForm({ ...teamForm, description: e.target.value })
+													setTeamForm({
+														...teamForm,
+														description: e.target.value,
+													})
 												}
 												rows={3}
 											/>
@@ -1345,12 +1494,18 @@ function StructureManagement({
 
 					<div className={styles.teamsGrid}>
 						{getSortedTeams().map((team) => {
-							const { display: displayMembers, hidden: hiddenMembers, total } = getDisplayMembers(team);
-							const hasMore = hiddenMembers.length > 0;
-							const isExpanded = expandedTeams[team.id] || false;
+							const {
+								display: displayMembers,
+								hidden: hiddenMembers,
+								total,
+							} = getDisplayMembers(team);
 
 							return (
-								<div key={team.id} id={`team-${team.id}`} className={styles.teamCard}>
+								<div
+									key={team.id}
+									id={`team-${team.id}`}
+									className={styles.teamCard}
+								>
 									<div className={styles.teamCard__header}>
 										<div className={styles.teamCard__icon}>
 											{getIconComponent(team.icon)}
@@ -1373,7 +1528,9 @@ function StructureManagement({
 													</button>
 													<button
 														className={styles.teamCard__deleteBtn}
-														onClick={() => showDeleteTeamConfirm(team.id, team.name)}
+														onClick={() =>
+															showDeleteTeamConfirm(team.id, team.name)
+														}
 														title="Usuń zespół"
 													>
 														<Trash2 size={16} />
@@ -1417,14 +1574,101 @@ function StructureManagement({
 																` (${member.functional_role})`}
 														</span>
 													</div>
+
+													{/* 🔥 AKCJE - TERAZ NA KOŃCU */}
 													<div className={styles.memberItem__actions}>
 														{canManage && (
 															<>
+																{/* 🔥 EDYCJA ROLI - teraz przed koronką */}
+																{editingMemberRole?.memberId === member.id ? (
+																	// Tryb edycji
+																	<div
+																		className={
+																			styles.memberItem__roleEditInline
+																		}
+																	>
+																		<input
+																			type="text"
+																			value={newRoleValue}
+																			onChange={(e) =>
+																				setNewRoleValue(e.target.value)
+																			}
+																			className={
+																				styles.memberItem__roleInputSmall
+																			}
+																			autoFocus
+																			onFocus={(e) => e.target.select()}
+																			onKeyDown={(e) => {
+																				if (e.key === "Enter") {
+																					handleUpdateMemberRole(
+																						member.id,
+																						team.id,
+																						newRoleValue,
+																					);
+																				}
+																				if (e.key === "Escape") {
+																					setEditingMemberRole(null);
+																					setNewRoleValue("");
+																				}
+																			}}
+																		/>
+																		<button
+																			className={
+																				styles.memberItem__roleSaveSmall
+																			}
+																			onClick={() =>
+																				handleUpdateMemberRole(
+																					member.id,
+																					team.id,
+																					newRoleValue,
+																				)
+																			}
+																			title="Zapisz rolę"
+																		>
+																			<CheckCircle size={14} />
+																		</button>
+																		<button
+																			className={
+																				styles.memberItem__roleCancelSmall
+																			}
+																			onClick={() => {
+																				setEditingMemberRole(null);
+																				setNewRoleValue("");
+																			}}
+																			title="Anuluj"
+																		>
+																			<X size={14} />
+																		</button>
+																	</div>
+																) : (
+																	// Normalny tryb - przycisk edycji
+																	<button
+																		className={styles.memberItem__editRole}
+																		onClick={() => {
+																			setEditingMemberRole({
+																				memberId: member.id,
+																				teamId: team.id,
+																				currentRole: member.role_in_team,
+																				memberName: `${member.first_name} ${member.last_name}`,
+																			});
+																			setNewRoleValue(member.role_in_team);
+																		}}
+																		title="Edytuj rolę w zespole"
+																	>
+																		<Edit size={14} />
+																	</button>
+																)}
+
+																{/* Przyciski lidera */}
 																{!member.is_leader && (
 																	<button
 																		className={styles.memberItem__makeLeader}
 																		onClick={() =>
-																			handleChangeMemberRole(member.id, true, team.id)
+																			handleChangeMemberRole(
+																				member.id,
+																				true,
+																				team.id,
+																			)
 																		}
 																		title="Ustaw jako lidera"
 																	>
@@ -1446,6 +1690,8 @@ function StructureManagement({
 																		<User size={14} />
 																	</button>
 																)}
+
+																{/* Przycisk usuwania */}
 																<button
 																	className={styles.memberItem__remove}
 																	onClick={() =>
@@ -1466,19 +1712,31 @@ function StructureManagement({
 											))}
 										</div>
 
-										{/* 🔥 PRZYCISK "POKAŻ WSZYSTKICH" */}
-										{hasMore && (
-											<button
-												className={styles.showAllBtn}
-												onClick={() => toggleShowAll(team.id)}
-											>
-												{isExpanded ? (
-													<>Pokaż mniej</>
-												) : (
-													<>Pokaż wszystkich ({hiddenMembers.length} więcej)</>
-												)}
-											</button>
-										)}
+										{(() => {
+											const hasMore = hiddenMembers.length > 0;
+											const isExpanded = expandedTeams[team.id] || false;
+											const showToggleButton = hasMore || isExpanded;
+
+											return showToggleButton ? (
+												<button
+													className={styles.showAllBtn}
+													onClick={() => {
+														console.log(
+															`🔄 Kliknięto: ${team.id}, obecny stan: ${isExpanded}`,
+														);
+														toggleShowAll(team.id);
+													}}
+												>
+													{isExpanded ? (
+														<>Pokaż mniej</>
+													) : (
+														<>
+															Pokaż wszystkich ({hiddenMembers.length} więcej)
+														</>
+													)}
+												</button>
+											) : null;
+										})()}
 
 										{canManage && (
 											<div className={styles.teamCard__addMember}>
@@ -1493,11 +1751,14 @@ function StructureManagement({
 															{availableUsers
 																.filter(
 																	(u) =>
-																		!team.members.some((m) => m.user_id === u.id),
+																		!team.members.some(
+																			(m) => m.user_id === u.id,
+																		),
 																)
 																.map((user) => (
 																	<option key={user.id} value={user.id}>
-																		{user.first_name} {user.last_name} ({user.email})
+																		{user.first_name} {user.last_name} (
+																		{user.email})
 																	</option>
 																))}
 														</select>
@@ -1553,9 +1814,8 @@ function StructureManagement({
 						})}
 					</div>
 				</>
-			)
-			}
-		</section >
+			)}
+		</section>
 	);
 }
 
@@ -1655,7 +1915,11 @@ export default function Admin({ title }: { title?: string }) {
 			const profileData = await profileRes.json();
 			setCurrentUser(profileData);
 
-			if (profileData.role !== "admin" && profileData.role !== "board" && profileData.role !== "zarząd") {
+			if (
+				profileData.role !== "admin" &&
+				profileData.role !== "board" &&
+				profileData.role !== "zarząd"
+			) {
 				safeNavigate("/dashboard", navigate);
 				return;
 			}
@@ -1769,7 +2033,12 @@ export default function Admin({ title }: { title?: string }) {
 		);
 	}
 
-	if (!currentUser || (currentUser.role !== "admin" && currentUser.role !== "board" && currentUser.role !== "zarząd")) {
+	if (
+		!currentUser ||
+		(currentUser.role !== "admin" &&
+			currentUser.role !== "board" &&
+			currentUser.role !== "zarząd")
+	) {
 		return null;
 	}
 	const canManage =
