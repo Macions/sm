@@ -1,6 +1,7 @@
 import { Routes, Route, Navigate } from "react-router-dom";
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import { logger } from "@/utils/logger";
+import api from "@/api/axios";
 import Tasks from "../pages/Tasks/Tasks";
 
 const DashboardLayout = lazy(() => import("../layouts/DashboardLayout"));
@@ -52,7 +53,76 @@ const Loading = () => (
 );
 
 function AppRoutes() {
-	const isLoggedIn = !!localStorage.getItem("accessToken");
+	const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+	const [isLoading, setIsLoading] = useState(true);
+
+	useEffect(() => {
+		const verifyToken = async () => {
+			const token = localStorage.getItem("accessToken");
+
+			if (!token) {
+				logger.debug("🔐 [Auth] Brak tokena");
+				setIsAuthenticated(false);
+				setIsLoading(false);
+				return;
+			}
+
+			try {
+				logger.debug("🔐 [Auth] Weryfikacja tokena...");
+				// Spróbuj wywołać endpoint chroniony - np. pobierz profil
+				await api.get("/auth/me"); // lub inny endpoint weryfikacyjny
+				logger.debug("✅ [Auth] Token ważny");
+				setIsAuthenticated(true);
+			} catch (error: any) {
+				logger.warn(
+					"❌ [Auth] Token wygasł lub jest nieprawidłowy",
+					error?.response?.status,
+				);
+				localStorage.removeItem("accessToken");
+				localStorage.removeItem("refreshToken"); // jeśli używasz
+				setIsAuthenticated(false);
+			} finally {
+				setIsLoading(false);
+			}
+		};
+
+		verifyToken();
+	}, []);
+
+	// Nasłuchuj zmian tokena w innych kartach przeglądarki
+	useEffect(() => {
+		const handleStorageChange = (e: StorageEvent) => {
+			if (e.key === "accessToken") {
+				if (!e.newValue) {
+					logger.debug("🔐 [Auth] Token usunięty w innej karcie");
+					setIsAuthenticated(false);
+				} else {
+					// Token został dodany w innej karcie - sprawdź czy jest ważny
+					setIsLoading(true);
+					const verifyNewToken = async () => {
+						try {
+							await api.get("/auth/me");
+							setIsAuthenticated(true);
+						} catch {
+							localStorage.removeItem("accessToken");
+							setIsAuthenticated(false);
+						} finally {
+							setIsLoading(false);
+						}
+					};
+					verifyNewToken();
+				}
+			}
+		};
+
+		window.addEventListener("storage", handleStorageChange);
+		return () => window.removeEventListener("storage", handleStorageChange);
+	}, []);
+
+	// Jeśli sprawdzamy autentykację - pokaż loading
+	if (isLoading) {
+		return <Loading />;
+	}
 
 	logger.debug("═══════════════════════════════════════════════════════════");
 	logger.debug("🚀 [Router] START RENDER");
@@ -61,9 +131,10 @@ function AppRoutes() {
 		"🔑 TOKEN:",
 		localStorage.getItem("accessToken") ? "Jest" : "BRAK",
 	);
+	logger.debug("✅ AUTH:", isAuthenticated ? "ZALOGOWANY" : "NIEZALOGOWANY");
 	logger.debug("═══════════════════════════════════════════════════════════");
 
-	if (!isLoggedIn) {
+	if (!isAuthenticated) {
 		logger.debug("🔐 [Router] NIEZALOGOWANY -> /login");
 		return (
 			<Suspense fallback={<Loading />}>
@@ -82,11 +153,7 @@ function AppRoutes() {
 				<Route
 					path="/login"
 					element={
-						localStorage.getItem("accessToken") ? (
-							<Navigate to="/dashboard" replace />
-						) : (
-							<Login />
-						)
+						isAuthenticated ? <Navigate to="/dashboard" replace /> : <Login />
 					}
 				/>
 				<Route

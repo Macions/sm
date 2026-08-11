@@ -58,15 +58,15 @@ export default function Sidebar({
 		return true;
 	});
 
-	const handleLogout = () => {
-		localStorage.removeItem("accessToken");
-		localStorage.removeItem("refreshToken");
-		localStorage.removeItem("user");
-		localStorage.removeItem("onboardingCompleted");
-		localStorage.removeItem("onboardingData");
-		navigate("/login");
-	};
-
+const handleLogout = () => {
+    // Wyczyść localStorage
+    localStorage.removeItem("accessToken");
+    localStorage.removeItem("user");
+    localStorage.removeItem("refreshToken");
+    
+    // Przekieruj na login
+    window.location.href = "/login";
+};
 	const handleMobileNav = (key: string) => {
 		onSelect(key);
 	};

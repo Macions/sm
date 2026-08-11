@@ -650,7 +650,7 @@ function formatTimeAgo(date: Date): string {
 
 function getIconForTeam(name: string): string {
 	const iconMap: Record<string, string> = {
-		Zarząd: "UserCog",
+		ZarzÄ…d: "UserCog",
 		"Filar Projektowy": "Briefcase",
 		"Filar Konferencyjny": "Megaphone",
 		"Filar Rzeczniczy": "Megaphone",
@@ -2987,7 +2987,7 @@ app.get("/api/structure", authMiddleware, async (req: any, res) => {
 		];
 
 		const ALL_MEMBERS_TEAMS = [
-			"Zarząd",
+			"ZarzÄ…d",
 			"SiĹ‚a MĹ‚odych",
 			"Komisja Rewizyjna",
 			"SÄ…d KoleĹĽeĹ„ski",
@@ -3437,7 +3437,7 @@ app.post("/api/leaves", authMiddleware, async (req: any, res) => {
 		}
 
 		// 		logger.debug("âś… UTOWORZONO URLOP:", leave);
-		// 		logger.debug(`đź“¨ WysĹ‚ano powiadomienia do Admina i Zarządu`);
+		// 		logger.debug(`đź“¨ WysĹ‚ano powiadomienia do Admina i ZarzÄ…du`);
 
 		res.status(201).json({
 			id: leave.id.toString(),
@@ -3484,12 +3484,12 @@ app.put("/api/leaves/:id", authMiddleware, async (req: any, res) => {
 		}
 
 		const canApprove =
-			userRole === "admin" || userRole === "board" || userRole === "Zarząd";
+			userRole === "admin" || userRole === "board" || userRole === "zarzÄ…d";
 
 		if (!canApprove) {
 			return res.status(403).json({
 				error:
-					"Tylko Admin lub Zarząd moĹĽe zatwierdzaÄ‡ lub odrzucaÄ‡ wnioski urlopowe",
+					"Tylko Admin lub ZarzÄ…d moĹĽe zatwierdzaÄ‡ lub odrzucaÄ‡ wnioski urlopowe",
 			});
 		}
 
@@ -3521,7 +3521,7 @@ app.put("/api/leaves/:id", authMiddleware, async (req: any, res) => {
 			if (!canApprove) {
 				return res.status(403).json({
 					error:
-						"Tylko Admin lub Zarząd moĹĽe zatwierdzaÄ‡, odrzucaÄ‡ lub anulowaÄ‡ wnioski",
+						"Tylko Admin lub ZarzÄ…d moĹĽe zatwierdzaÄ‡, odrzucaÄ‡ lub anulowaÄ‡ wnioski",
 				});
 			}
 		}
@@ -3653,7 +3653,7 @@ app.delete("/api/leaves/:id", authMiddleware, async (req: any, res) => {
 		if (
 			userRole !== "admin" &&
 			userRole !== "board" &&
-			userRole !== "Zarząd" &&
+			userRole !== "zarzÄ…d" &&
 			existingLeave.user_id !== userId
 		) {
 			return res.status(403).json({ error: "Brak uprawnieĹ„" });
@@ -5108,7 +5108,7 @@ function getDefaultPermissions(role: string): string[] {
 			"canViewStructure",
 			"canEditProfile",
 		],
-		Zarząd: [
+		zarzÄ…d: [
 			"canViewAllLeaves",
 			"canApproveLeaves",
 			"canRejectLeaves",
@@ -5155,7 +5155,7 @@ app.get(
 			if (
 				userRole !== "admin" &&
 				userRole !== "board" &&
-				userRole !== "Zarząd"
+				userRole !== "zarzÄ…d"
 			) {
 				return res.status(403).json({ error: "Brak uprawnieĹ„" });
 			}
@@ -5214,7 +5214,7 @@ app.get("/api/admin/roles", authMiddleware, async (req: any, res) => {
 	try {
 		const userRole = req.user?.role;
 
-		if (userRole !== "admin" && userRole !== "board" && userRole !== "Zarząd") {
+		if (userRole !== "admin" && userRole !== "board" && userRole !== "zarzÄ…d") {
 			return res.status(403).json({ error: "Brak uprawnieĹ„" });
 		}
 
@@ -5267,7 +5267,7 @@ app.put(
 			if (
 				userRole !== "admin" &&
 				userRole !== "board" &&
-				userRole !== "Zarząd"
+				userRole !== "zarzÄ…d"
 			) {
 				return res.status(403).json({ error: "Brak uprawnieĹ„" });
 			}
@@ -5326,7 +5326,7 @@ app.post("/api/admin/roles", authMiddleware, async (req: any, res) => {
 		const userRole = req.user?.role;
 		const { name, description, permissions } = req.body;
 
-		if (userRole !== "admin" && userRole !== "board" && userRole !== "Zarząd") {
+		if (userRole !== "admin" && userRole !== "board" && userRole !== "zarzÄ…d") {
 			return res.status(403).json({ error: "Brak uprawnieĹ„" });
 		}
 
@@ -5388,7 +5388,7 @@ app.delete("/api/admin/roles/:id", authMiddleware, async (req: any, res) => {
 		const userRole = req.user?.role;
 		const roleId = parseInt(req.params.id);
 
-		if (userRole !== "admin" && userRole !== "board" && userRole !== "Zarząd") {
+		if (userRole !== "admin" && userRole !== "board" && userRole !== "zarzÄ…d") {
 			return res.status(403).json({ error: "Brak uprawnieĹ„" });
 		}
 
@@ -5422,7 +5422,7 @@ app.get("/api/admin/teams", authMiddleware, async (req: any, res) => {
 	try {
 		const userRole = req.user?.role;
 
-		if (userRole !== "admin" && userRole !== "board" && userRole !== "Zarząd") {
+		if (userRole !== "admin" && userRole !== "board" && userRole !== "zarzÄ…d") {
 			return res.status(403).json({ error: "Brak uprawnieĹ„" });
 		}
 
@@ -5487,7 +5487,7 @@ app.put("/api/admin/teams/:id", authMiddleware, async (req: any, res) => {
 		const userRole = req.user?.role;
 		const teamId = parseInt(req.params.id);
 
-		if (userRole !== "admin" && userRole !== "board" && userRole !== "Zarząd") {
+		if (userRole !== "admin" && userRole !== "board" && userRole !== "zarzÄ…d") {
 			return res.status(403).json({ error: "Brak uprawnieĹ„" });
 		}
 
@@ -5540,7 +5540,7 @@ app.post("/api/admin/teams", authMiddleware, async (req: any, res) => {
 	try {
 		const userRole = req.user?.role;
 
-		if (userRole !== "admin" && userRole !== "board" && userRole !== "Zarząd") {
+		if (userRole !== "admin" && userRole !== "board" && userRole !== "zarzÄ…d") {
 			return res.status(403).json({ error: "Brak uprawnieĹ„" });
 		}
 
@@ -5585,7 +5585,7 @@ app.delete("/api/admin/teams/:id", authMiddleware, async (req: any, res) => {
 		const userRole = req.user?.role;
 		const teamId = parseInt(req.params.id);
 
-		if (userRole !== "admin" && userRole !== "board" && userRole !== "Zarząd") {
+		if (userRole !== "admin" && userRole !== "board" && userRole !== "zarzÄ…d") {
 			return res.status(403).json({ error: "Brak uprawnieĹ„" });
 		}
 
@@ -5613,7 +5613,7 @@ app.post("/api/admin/team-members", authMiddleware, async (req: any, res) => {
 	try {
 		const userRole = req.user?.role;
 
-		if (userRole !== "admin" && userRole !== "board" && userRole !== "Zarząd") {
+		if (userRole !== "admin" && userRole !== "board" && userRole !== "zarzÄ…d") {
 			return res.status(403).json({ error: "Brak uprawnieĹ„" });
 		}
 
@@ -5702,7 +5702,7 @@ app.delete(
 			if (
 				userRole !== "admin" &&
 				userRole !== "board" &&
-				userRole !== "Zarząd"
+				userRole !== "zarzÄ…d"
 			) {
 				return res.status(403).json({ error: "Brak uprawnieĹ„" });
 			}
@@ -5740,7 +5740,7 @@ app.put(
 			if (
 				userRole !== "admin" &&
 				userRole !== "board" &&
-				userRole !== "Zarząd"
+				userRole !== "zarzÄ…d"
 			) {
 				return res.status(403).json({ error: "Brak uprawnieĹ„" });
 			}
@@ -5867,57 +5867,7 @@ app.get("/api/tasks/:id", authMiddleware, async (req: any, res) => {
 		res.status(500).json({ error: "Nie udaĹ‚o siÄ™ pobraÄ‡ zadania" });
 	}
 });
-// Dodaj przed app.listen()
-// ============================================================
-// 🔐 GET /api/auth/me - Pobierz dane zalogowanego użytkownika
-// ============================================================
-app.get('/api/auth/me', async (req, res) => {
-    try {
-        const authHeader = req.headers.authorization;
-        if (!authHeader || !authHeader.startsWith('Bearer ')) {
-            return res.status(401).json({ error: 'Brak tokena' });
-        }
 
-        const token = authHeader.split(' ')[1];
-        
-        try {
-            const decoded = jwt.verify(token, JWT_SECRET) as any;
-            
-            const user = await prisma.user.findUnique({
-                where: { id: decoded.id },
-                select: {
-                    id: true,
-                    email: true,
-                    first_name: true,
-                    last_name: true,
-                    role_id: true,
-                    team: true,
-                    status: true
-                }
-            });
-
-            if (!user) {
-                return res.status(404).json({ error: 'Użytkownik nie znaleziony' });
-            }
-
-            res.json({
-                id: user.id.toString(),
-                email: user.email,
-                first_name: user.first_name,
-                last_name: user.last_name,
-                role: mapRoleId(user.role_id),
-                team: user.team,
-                status: user.status
-            });
-        } catch (jwtError) {
-            console.error('❌ Błąd JWT:', jwtError);
-            return res.status(401).json({ error: 'Nieprawidłowy token' });
-        }
-    } catch (error) {
-        console.error('❌ Błąd pobierania profilu:', error);
-        res.status(500).json({ error: 'Błąd serwera' });
-    }
-});
 // POST /api/tasks - utwĂłrz nowe zadanie
 app.post("/api/tasks", authMiddleware, async (req: any, res) => {
 	try {
@@ -6238,7 +6188,7 @@ app.delete("/api/tasks/:id", authMiddleware, async (req: any, res: any) => {
 		// ============================================================
 		let canDelete = false;
 
-		// 1. Admin, Zarząd, Prezes, Wiceprezes - zawsze mogÄ…
+		// 1. Admin, ZarzÄ…d, Prezes, Wiceprezes - zawsze mogÄ…
 		if (
 			roleName === "admin" ||
 			roleName === "board" ||
@@ -6246,7 +6196,7 @@ app.delete("/api/tasks/:id", authMiddleware, async (req: any, res: any) => {
 			roleName === "Wiceprezes"
 		) {
 			canDelete = true;
-			console.log("âś… Admin/Zarząd/Prezes - moĹĽe usuwaÄ‡");
+			console.log("âś… Admin/ZarzÄ…d/Prezes - moĹĽe usuwaÄ‡");
 		}
 
 		// 2. SprawdĹş czy uĹĽytkownik jest liderem (koordynatorem)
@@ -6322,7 +6272,7 @@ app.get("/api/admin/available-users", authMiddleware, async (req: any, res) => {
 	try {
 		const userRole = req.user?.role;
 
-		if (userRole !== "admin" && userRole !== "board" && userRole !== "Zarząd") {
+		if (userRole !== "admin" && userRole !== "board" && userRole !== "zarzÄ…d") {
 			return res.status(403).json({ error: "Brak uprawnieĹ„" });
 		}
 
@@ -6371,7 +6321,7 @@ app.get("/api/admin/logs", authMiddleware, async (req: any, res) => {
 	try {
 		const userRole = req.user?.role;
 
-		if (userRole !== "admin" && userRole !== "board" && userRole !== "Zarząd") {
+		if (userRole !== "admin" && userRole !== "board" && userRole !== "zarzÄ…d") {
 			return res.status(403).json({ error: "Brak uprawnieĹ„" });
 		}
 
@@ -6871,7 +6821,7 @@ app.get("/api/admin/member-access", authMiddleware, async (req: any, res) => {
 	try {
 		const userRole = req.user?.role;
 
-		if (userRole !== "admin" && userRole !== "board" && userRole !== "Zarząd") {
+		if (userRole !== "admin" && userRole !== "board" && userRole !== "zarzÄ…d") {
 			return res.status(403).json({ error: "Brak uprawnieĹ„" });
 		}
 
@@ -6926,11 +6876,11 @@ app.get(
 			const currentUserId = req.user?.id;
 			const userRole = req.user?.role;
 
-			// SprawdĹş uprawnienia - admin/board/Zarząd mogÄ… wszystko, czĹ‚onek tylko swĂłj
+			// SprawdĹş uprawnienia - admin/board/zarzÄ…d mogÄ… wszystko, czĹ‚onek tylko swĂłj
 			if (
 				userRole !== "admin" &&
 				userRole !== "board" &&
-				userRole !== "Zarząd" &&
+				userRole !== "zarzÄ…d" &&
 				userId !== currentUserId
 			) {
 				return res.status(403).json({ error: "Brak uprawnieĹ„" });
@@ -6964,7 +6914,7 @@ app.put(
 			const { access } = req.body; // Array stringĂłw
 			const userRole = req.user?.role;
 
-			if (userRole !== "admin" && userRole !== "board" && userRole !== "Zarząd") {
+			if (userRole !== "admin" && userRole !== "board" && userRole !== "zarzÄ…d") {
 				return res.status(403).json({ error: "Brak uprawnieĹ„" });
 			}
 
@@ -7030,7 +6980,7 @@ app.post(
 			const { access_name } = req.body;
 			const userRole = req.user?.role;
 
-			if (userRole !== "admin" && userRole !== "board" && userRole !== "Zarząd") {
+			if (userRole !== "admin" && userRole !== "board" && userRole !== "zarzÄ…d") {
 				return res.status(403).json({ error: "Brak uprawnieĹ„" });
 			}
 
@@ -7083,7 +7033,7 @@ app.delete(
 			const accessId = parseInt(req.params.accessId);
 			const userRole = req.user?.role;
 
-			if (userRole !== "admin" && userRole !== "board" && userRole !== "Zarząd") {
+			if (userRole !== "admin" && userRole !== "board" && userRole !== "zarzÄ…d") {
 				return res.status(403).json({ error: "Brak uprawnieĹ„" });
 			}
 
@@ -7282,7 +7232,4 @@ app.get(
 app.use('/api', revenueRoutes);
 
 app.listen(port, () => { });
-
-
-
 

@@ -1,7 +1,6 @@
 // frontend/src/main.tsx
-
 import { createRoot } from "react-dom/client";
-import { HashRouter } from "react-router-dom";
+import { BrowserRouter } from "react-router-dom";  // ← ZMIEŃ NA BrowserRouter
 import "@fortawesome/fontawesome-free/css/all.min.css";
 import { GoogleOAuthProvider } from "@react-oauth/google";
 import { UserProvider } from "./context/UserContext";
@@ -14,7 +13,6 @@ import "@fontsource/ubuntu/300.css";
 import "@fontsource/ubuntu/500.css";
 import "@fontsource/ubuntu/700.css";
 
-// ✅ DODAJ LOGI:
 console.log('🔍 === SPRAWDZAM ENV ===');
 console.log('🔍 VITE_GOOGLE_CLIENT_ID:', import.meta.env.VITE_GOOGLE_CLIENT_ID);
 console.log('🔍 GOOGLE_CLIENT_ID:', import.meta.env.GOOGLE_CLIENT_ID);
@@ -23,11 +21,8 @@ console.log('🔍 Całe import.meta.env:', import.meta.env);
 
 const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 
-// ✅ DODAJ FALLBACK DLA TESTOWANIA:
 if (!clientId) {
-	console.error('❌ BRAKUJE VITE_GOOGLE_CLIENT_ID w env! Używam fallbacka...');
-	// Użyj sztywnego ID tylko do testów!
-	// clientId = '848834850023-l0e4gobn16tfqhhletocuab6t0356qo8.apps.googleusercontent.com';
+	console.error('❌ BRAKUJE VITE_GOOGLE_CLIENT_ID w env!');
 }
 
 console.log('🔍 Używam clientId:', clientId);
@@ -38,9 +33,9 @@ createRoot(document.getElementById("root")!).render(
 		onScriptLoadError={() => console.error('❌ Google script error')}
 	>
 		<UserProvider>
-			<HashRouter>
+			<BrowserRouter>  {/* ← ZMIEŃ HashRouter NA BrowserRouter */}
 				<App />
-			</HashRouter>
+			</BrowserRouter>
 		</UserProvider>
 	</GoogleOAuthProvider>,
 );

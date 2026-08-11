@@ -26,37 +26,9 @@ const Login: React.FC = () => {
 	};
 
 	const checkOnboardingStatus = async () => {
-		try {
-			const token = localStorage.getItem("accessToken");
-			const onboardingResponse = await fetch("/api/auth/onboarding-status", {
-				method: "GET",
-				headers: {
-					Authorization: `Bearer ${token}`,
-					"Content-Type": "application/json",
-				},
-			});
-
-			let onboardingCompleted = false;
-
-			if (onboardingResponse.ok) {
-				const rawResponse = await onboardingResponse.json();
-				onboardingCompleted = rawResponse.completed === true;
-			}
-
-			localStorage.setItem(
-				"onboardingCompleted",
-				onboardingCompleted ? "true" : "false",
-			);
-
-			if (onboardingCompleted) {
-				safeNavigate("/dashboard", navigate);
-			} else {
-				safeNavigate("/onboarding", navigate);
-			}
-		} catch (onboardingError) {
-			localStorage.setItem("onboardingCompleted", "false");
-			safeNavigate("/onboarding", navigate);
-		}
+		// 🔥 NAJPROSTSZE ROZWIĄZANIE - ZAWSZE IDŹ DO DASHBOARD
+		console.log("✅ Logowanie udane! Przekierowuję na dashboard...");
+		window.location.href = "/dashboard"; // ← BEZPOŚREDNIE PRZEKIEROWANIE
 	};
 
 	// ✅ LOGOWANIE PRZEZ GOOGLE Z DOSTĘPEM DO KALENDARZA
@@ -67,17 +39,18 @@ const Login: React.FC = () => {
 			logger.debug("✅ Logowanie z zakresami kalendarza - sukces!");
 			setLoading(true);
 			setError(null);
-			console.log('Access Token:', tokenResponse.access_token);
+			console.log("Access Token:", tokenResponse.access_token);
 
 			try {
 				// ✅ ZMIEŃ NA /api/auth/google-token
-				const response = await fetch("/api/auth/google-token", {  // ← TU ZMIANA!
+				const response = await fetch("/api/auth/google-token", {
+					// ← TU ZMIANA!
 					method: "POST",
 					headers: {
 						"Content-Type": "application/json",
 					},
 					body: JSON.stringify({
-						accessToken: tokenResponse.access_token,  // ← TU ZMIANA NA accessToken
+						accessToken: tokenResponse.access_token, // ← TU ZMIANA NA accessToken
 					}),
 				});
 

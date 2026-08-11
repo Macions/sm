@@ -1,47 +1,270 @@
-import { useState, useEffect } from "react";
-import { authService } from "../../backend/src/services/auth.service";
+import { useState, useEffect, useCallback } from "react";
 import { logger } from "@/utils/logger";
+import api from "@/api/axios";
 
 export interface User {
 	id: string;
 	name: string;
+	email?: string;
 	role: "admin" | "coordinator" | "member";
 	teamId?: string;
+	avatar?: string;
+	first_name?: string;
+	last_name?: string;
+}
+
+interface AuthState {
+	user: User | null;
+	loading: boolean;
+	isAuthenticated: boolean;
 }
 
 export function useAuth() {
-	const [user, setUser] = useState<User | null>(null);
-	const [loading, setLoading] = useState(true);
-	const [isAuthenticated, setIsAuthenticated] = useState(false);
+	const [state, setState] = useState<AuthState>({
+		user: null,
+		loading: true,
+		isAuthenticated: false,
+	});
 
+	const verifyToken = useCallback(async () => {
+		const token = localStorage.getItem("accessToken");
+
+		if (!token) {
+			logger.debug("🔐 [useAuth] Brak tokena");
+			setState({
+				user: null,
+				loading: false,
+				isAuthenticated: false,
+			});
+			return false;
+		}
+
+		try {
+			logger.debug("🔐 [useAuth] Weryfikacja tokena...");
+
+			// Próbuj pobrać dane użytkownika z backendu
+			const response = await api.get("/auth/me");
+			const userData = response.data;
+
+			// Mapuj dane z backendu na interfejs User
+			const user: User = {
+				id: userData.id,
+				name:
+					userData.first_name && userData.last_name
+						? `${userData.first_name} ${userData.last_name}`
+						: userData.name || userData.email || "Użytkownik",
+				email: userData.email,
+				role: userData.role as "admin" | "coordinator" | "member",
+				teamId: userData.teamId || userData.team || undefined,
+				avatar: userData.avatar,
+				first_name: userData.first_name,
+				last_name: userData.last_name,
+			};
+
+			setState({
+				user,
+				loading: false,
+				isAuthenticated: true,
+			});
+
+			logger.debug("✅ [useAuth] Użytkownik zalogowany:", user.name);
+			return true;
+		} catch (error: any) {
+			logger.warn(
+				"❌ [useAuth] Token wygasł lub jest nieprawidłowy",
+				error?.response?.status,
+			);
+
+			// Wyczyść nieprawidłowy token
+			localStorage.removeItem("accessToken");
+			localStorage.removeItem("refreshToken");
+
+			setState({
+				user: null,
+				loading: false,
+				isAuthenticated: false,
+			});
+			return false;
+		}
+	}, []);
+
+	// Ładowanie użytkownika przy starcie
 	useEffect(() => {
 		const loadUser = async () => {
-			try {
-				const currentUser = authService.getCurrentUser();
-				if (currentUser) {
-					setUser({
-						id: currentUser.id,
-						name: `${currentUser.first_name} ${currentUser.last_name}`,
-						role: currentUser.role as "admin" | "coordinator" | "member",
-						teamId: currentUser.team || undefined,
-					});
-					setIsAuthenticated(true);
-				}
-			} catch (error) {
-				logger.error("Błąd ładowania użytkownika:", error);
-			} finally {
-				setLoading(false);
-			}
+			await verifyToken();
 		};
 
 		loadUser();
+	}, [verifyToken]);
+
+	// Nasłuchuj zmian tokena w innych kartach
+	useEffect(() => {
+		const handleStorageChange = async (e: StorageEvent) => {
+			if (e.key === "accessToken") {
+				if (!e.newValue) {
+					logger.debug("🔐 [useAuth] Token usunięty w innej karcie");
+					setState({
+						user: null,
+						loading: false,
+						isAuthenticated: false,
+					});
+				} else {
+					logger.debug(
+						"🔐 [useAuth] Token dodany w innej karcie - weryfikacja...",
+					);
+					setState((prev) => ({ ...prev, loading: true }));
+					await verifyToken();
+				}
+			}
+		};
+
+		window.addEventListener("storage", handleStorageChange);
+		return () => window.removeEventListener("storage", handleStorageChange);
+	}, [verifyToken]);
+
+	const login = useCallback(async (email: string, password: string) => {
+		try {
+			setState((prev) => ({ ...prev, loading: true }));
+			logger.debug("🔐 [useAuth] Próba logowania...");
+
+			const response = await api.post("/auth/login", { email, password });
+			const { accessToken, refreshToken, user: userData } = response.data;
+
+			// Zapisz tokeny
+			if (accessToken) {
+				localStorage.setItem("accessToken", accessToken);
+			}
+			if (refreshToken) {
+				localStorage.setItem("refreshToken", refreshToken);
+			}
+
+			// Mapuj dane użytkownika
+			const user: User = {
+				id: userData.id,
+				name:
+					userData.first_name && userData.last_name
+						? `${userData.first_name} ${userData.last_name}`
+						: userData.name || userData.email || "Użytkownik",
+				email: userData.email,
+				role: userData.role as "admin" | "coordinator" | "member",
+				teamId: userData.teamId || userData.team || undefined,
+				avatar: userData.avatar,
+				first_name: userData.first_name,
+				last_name: userData.last_name,
+			};
+
+			setState({
+				user,
+				loading: false,
+				isAuthenticated: true,
+			});
+
+			logger.debug("✅ [useAuth] Zalogowano pomyślnie:", user.name);
+			return { success: true, user };
+		} catch (error: any) {
+			logger.error(
+				"❌ [useAuth] Błąd logowania:",
+				error?.response?.data?.message || error.message,
+			);
+
+			setState((prev) => ({ ...prev, loading: false }));
+			return {
+				success: false,
+				error:
+					error?.response?.data?.message || "Nieprawidłowy email lub hasło",
+			};
+		}
 	}, []);
 
-	const logout = () => {
-		authService.logout();
-		setUser(null);
-		setIsAuthenticated(false);
-	};
+	const logout = useCallback(() => {
+		logger.debug("🔐 [useAuth] Wylogowywanie...");
 
-	return { user, loading, isAuthenticated, logout };
+		// Wywołaj logout na backendzie (opcjonalnie)
+		try {
+			api.post("/auth/logout").catch(() => {});
+		} catch (error) {
+			// Ignoruj błędy przy wylogowywaniu
+		}
+
+		// Wyczyść dane
+		localStorage.removeItem("accessToken");
+		localStorage.removeItem("refreshToken");
+		localStorage.removeItem("user");
+
+		setState({
+			user: null,
+			loading: false,
+			isAuthenticated: false,
+		});
+
+		logger.debug("✅ [useAuth] Wylogowano pomyślnie");
+	}, []);
+
+	const refreshToken = useCallback(async () => {
+		try {
+			const refreshToken = localStorage.getItem("refreshToken");
+			if (!refreshToken) {
+				throw new Error("Brak refresh token");
+			}
+
+			logger.debug("🔄 [useAuth] Odświeżanie tokena...");
+			const response = await api.post("/auth/refresh", { refreshToken });
+			const { accessToken } = response.data;
+
+			if (accessToken) {
+				localStorage.setItem("accessToken", accessToken);
+				logger.debug("✅ [useAuth] Token odświeżony");
+				return true;
+			}
+			return false;
+		} catch (error) {
+			logger.warn("❌ [useAuth] Nie udało się odświeżyć tokena");
+			await logout();
+			return false;
+		}
+	}, [logout]);
+
+	const updateUser = useCallback((updatedData: Partial<User>) => {
+		setState((prev) => ({
+			...prev,
+			user: prev.user ? { ...prev.user, ...updatedData } : null,
+		}));
+	}, []);
+
+	const hasRole = useCallback(
+		(roles: string | string[]) => {
+			if (!state.user) return false;
+
+			const roleArray = Array.isArray(roles) ? roles : [roles];
+			return roleArray.includes(state.user.role);
+		},
+		[state.user],
+	);
+
+	const isAdmin = useCallback(() => {
+		return state.user?.role === "admin";
+	}, [state.user]);
+
+	const isCoordinator = useCallback(() => {
+		return state.user?.role === "coordinator" || state.user?.role === "admin";
+	}, [state.user]);
+
+	return {
+		// Stan
+		user: state.user,
+		loading: state.loading,
+		isAuthenticated: state.isAuthenticated,
+
+		// Metody
+		login,
+		logout,
+		refreshToken,
+		updateUser,
+		verifyToken,
+
+		// Helpers
+		hasRole,
+		isAdmin,
+		isCoordinator,
+	};
 }

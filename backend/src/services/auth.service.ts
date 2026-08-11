@@ -25,69 +25,254 @@ export interface AuthResponse {
 		role: string;
 		team: string | null;
 		status: string;
+		avatar?: string;
 	};
 	onboardingCompleted: boolean;
 }
 
+export interface RefreshTokenResponse {
+	accessToken: string;
+}
+
 class AuthService {
+	private readonly TOKEN_KEY = "accessToken";
+	private readonly REFRESH_TOKEN_KEY = "refreshToken";
+	private readonly USER_KEY = "user";
+
 	async login(credentials: LoginCredentials): Promise<AuthResponse> {
 		try {
+			logger.debug("🔐 [AuthService] Próba logowania dla:", credentials.email);
+
 			const response = await api.post("/api/auth/login", credentials);
 			const data = response.data;
 
-			localStorage.setItem("accessToken", data.accessToken);
-			localStorage.setItem("refreshToken", data.refreshToken);
-			localStorage.setItem("user", JSON.stringify(data.user));
+			// Zapisz dane
+			this.setTokens(data.accessToken, data.refreshToken);
+			this.setUser(data.user);
 
+			logger.debug("✅ [AuthService] Zalogowano pomyślnie:", data.user.email);
 			return data;
-		} catch (error) {
-			logger.error("❌ Błąd logowania:", error);
-			throw error;
+		} catch (error: any) {
+			const errorMessage =
+				error?.response?.data?.message || error.message || "Błąd logowania";
+			logger.error("❌ [AuthService] Błąd logowania:", errorMessage);
+
+			// Wyczyść dane przy błędzie
+			this.clearAuthData();
+			throw new Error(errorMessage);
 		}
 	}
 
 	async register(data: RegisterData): Promise<any> {
 		try {
+			logger.debug("📝 [AuthService] Próba rejestracji dla:", data.email);
+
 			const response = await api.post("/api/auth/register", data);
+
+			logger.debug("✅ [AuthService] Zarejestrowano pomyślnie:", data.email);
 			return response.data;
-		} catch (error) {
-			logger.error("❌ Błąd rejestracji:", error);
-			throw error;
+		} catch (error: any) {
+			const errorMessage =
+				error?.response?.data?.message || error.message || "Błąd rejestracji";
+			logger.error("❌ [AuthService] Błąd rejestracji:", errorMessage);
+			throw new Error(errorMessage);
 		}
 	}
 
-	logout(): void {
-		localStorage.removeItem("accessToken");
-		localStorage.removeItem("refreshToken");
-		localStorage.removeItem("user");
-		throw new Error("Unauthorized - please login");
-	}
+	async logout(): Promise<void> {
+		try {
+			logger.debug("🔐 [AuthService] Wylogowywanie...");
 
-	getCurrentUser(): AuthResponse["user"] | null {
-		const user = localStorage.getItem("user");
-		return user ? JSON.parse(user) : null;
-	}
-
-	isAuthenticated(): boolean {
-		return !!localStorage.getItem("accessToken");
+			// Spróbuj powiadomić backend o wylogowaniu
+			const refreshToken = this.getRefreshToken();
+			if (refreshToken) {
+				await api.post("/api/auth/logout", { refreshToken }).catch(() => {
+					// Ignoruj błędy przy wylogowaniu
+				});
+			}
+		} catch (error) {
+			// Ignoruj błędy przy wylogowaniu
+		} finally {
+			// Zawsze czyść dane lokalnie
+			this.clearAuthData();
+			logger.debug("✅ [AuthService] Wylogowano pomyślnie");
+		}
 	}
 
 	async refreshToken(): Promise<string> {
 		try {
-			const refreshToken = localStorage.getItem("refreshToken");
+			const refreshToken = this.getRefreshToken();
 			if (!refreshToken) {
 				throw new Error("Brak tokena odświeżania");
 			}
 
-			const response = await api.post("/api/auth/refresh", { refreshToken });
+			logger.debug("🔄 [AuthService] Odświeżanie tokena...");
+
+			const response = await api.post<RefreshTokenResponse>(
+				"/api/auth/refresh",
+				{ refreshToken },
+			);
 			const newToken = response.data.accessToken;
-			localStorage.setItem("accessToken", newToken);
+
+			if (!newToken) {
+				throw new Error("Brak nowego tokena w odpowiedzi");
+			}
+
+			localStorage.setItem(this.TOKEN_KEY, newToken);
+			logger.debug("✅ [AuthService] Token odświeżony pomyślnie");
 			return newToken;
-		} catch (error) {
-			logger.error("❌ Błąd odświeżania tokena:", error);
-			this.logout();
-			throw error;
+		} catch (error: any) {
+			const errorMessage =
+				error?.response?.data?.message ||
+				error.message ||
+				"Błąd odświeżania tokena";
+			logger.error("❌ [AuthService] Błąd odświeżania tokena:", errorMessage);
+
+			// Wyczyść dane przy błędzie
+			this.clearAuthData();
+			throw new Error(errorMessage);
 		}
+	}
+
+	// Metody pomocnicze
+	getCurrentUser(): AuthResponse["user"] | null {
+		try {
+			const userStr = localStorage.getItem(this.USER_KEY);
+			if (userStr) {
+				return JSON.parse(userStr);
+			}
+			return null;
+		} catch (error) {
+			logger.error("❌ [AuthService] Błąd parsowania użytkownika:", error);
+			return null;
+		}
+	}
+
+	getAccessToken(): string | null {
+		return localStorage.getItem(this.TOKEN_KEY);
+	}
+
+	getRefreshToken(): string | null {
+		return localStorage.getItem(this.REFRESH_TOKEN_KEY);
+	}
+
+	isAuthenticated(): boolean {
+		const token = this.getAccessToken();
+		if (!token) return false;
+
+		// Sprawdź czy token nie wygasł (opcjonalnie)
+		try {
+			const payload = JSON.parse(atob(token.split(".")[1]));
+			const exp = payload.exp * 1000;
+			return Date.now() < exp;
+		} catch {
+			// Jeśli nie można zdekodować - token nieprawidłowy
+			return false;
+		}
+	}
+
+	isTokenExpired(): boolean {
+		const token = this.getAccessToken();
+		if (!token) return true;
+
+		try {
+			const payload = JSON.parse(atob(token.split(".")[1]));
+			const exp = payload.exp * 1000;
+			return Date.now() >= exp;
+		} catch {
+			return true;
+		}
+	}
+
+	getTokenExpiryTime(): number | null {
+		const token = this.getAccessToken();
+		if (!token) return null;
+
+		try {
+			const payload = JSON.parse(atob(token.split(".")[1]));
+			return payload.exp * 1000; // ms
+		} catch {
+			return null;
+		}
+	}
+
+	// Metody prywatne
+	private setTokens(accessToken: string, refreshToken: string): void {
+		localStorage.setItem(this.TOKEN_KEY, accessToken);
+		localStorage.setItem(this.REFRESH_TOKEN_KEY, refreshToken);
+	}
+
+	private setUser(user: AuthResponse["user"]): void {
+		localStorage.setItem(this.USER_KEY, JSON.stringify(user));
+	}
+
+	private clearAuthData(): void {
+		localStorage.removeItem(this.TOKEN_KEY);
+		localStorage.removeItem(this.REFRESH_TOKEN_KEY);
+		localStorage.removeItem(this.USER_KEY);
+	}
+
+	// Metoda do aktualizacji danych użytkownika
+	updateUser(userData: Partial<AuthResponse["user"]>): void {
+		const currentUser = this.getCurrentUser();
+		if (currentUser) {
+			const updatedUser = { ...currentUser, ...userData };
+			localStorage.setItem(this.USER_KEY, JSON.stringify(updatedUser));
+			logger.debug("✅ [AuthService] Zaktualizowano dane użytkownika");
+		}
+	}
+
+	// Metoda do sprawdzania roli
+	hasRole(role: string | string[]): boolean {
+		const user = this.getCurrentUser();
+		if (!user) return false;
+
+		const roles = Array.isArray(role) ? role : [role];
+		return roles.includes(user.role);
+	}
+
+	isAdmin(): boolean {
+		return this.hasRole("admin");
+	}
+
+	isCoordinator(): boolean {
+		return this.hasRole(["admin", "coordinator"]);
+	}
+
+	// Metoda do automatycznego odświeżania tokena przed wygaśnięciem
+	setupAutoRefresh(): () => void {
+		let timeoutId: NodeJS.Timeout | null = null;
+
+		const scheduleRefresh = () => {
+			const expiryTime = this.getTokenExpiryTime();
+			if (!expiryTime) return;
+
+			// Oblicz czas do wygaśnięcia - 1 minuta przed
+			const timeToExpiry = expiryTime - Date.now() - 60000;
+
+			if (timeToExpiry > 0) {
+				timeoutId = setTimeout(async () => {
+					try {
+						logger.debug("🔄 [AuthService] Automatyczne odświeżanie tokena...");
+						await this.refreshToken();
+					} catch (error) {
+						logger.warn(
+							"❌ [AuthService] Automatyczne odświeżanie nie powiodło się",
+						);
+					}
+				}, timeToExpiry);
+			}
+		};
+
+		scheduleRefresh();
+
+		// Zwróć funkcję do czyszczenia
+		return () => {
+			if (timeoutId) {
+				clearTimeout(timeoutId);
+				timeoutId = null;
+			}
+		};
 	}
 }
 
