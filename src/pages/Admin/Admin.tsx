@@ -1841,7 +1841,584 @@ function StructureManagement({
 		</section>
 	);
 }
+// ---- Komponent zarządzania dostępami ----
+// ---- Komponent zarządzania dostępami ----
+// ---- Komponent zarządzania dostępami ----
+// ---- Komponent zarządzania dostępami ----
+// ---- Komponent zarządzania dostępami ----
+// ---- Komponent zarządzania dostępami ----
+function AccessManagement() {
+	const [showSuggestions, setShowSuggestions] = useState(false);
+	const [members, setMembers] = useState<any[]>([]);
+	const [loading, setLoading] = useState(true);
+	const [selectedMember, setSelectedMember] = useState<any>(null);
+	const [accessItems, setAccessItems] = useState<string[]>([]);
+	const [newAccess, setNewAccess] = useState("");
+	const [editingMemberId, setEditingMemberId] = useState<string | null>(null);
+	const [showAddModal, setShowAddModal] = useState(false);
+	const [selectedUserId, setSelectedUserId] = useState("");
+	const [newAccessForUser, setNewAccessForUser] = useState("");
+	const [userSearchInput, setUserSearchInput] = useState("");
+	const [showUserSuggestions, setShowUserSuggestions] = useState(false);
 
+	// Predefiniowane opcje dostępu
+	const ACCESS_OPTIONS = [
+		{ label: "Instagram", category: "Social Media" },
+		{ label: "Facebook", category: "Social Media" },
+		{ label: "Twitter / X", category: "Social Media" },
+		{ label: "LinkedIn", category: "Social Media" },
+		{ label: "YouTube", category: "Social Media" },
+		{ label: "TikTok", category: "Social Media" },
+		{ label: "Discord", category: "Social Media" },
+		{ label: "WhatsApp", category: "Social Media" },
+		{ label: "Telegram", category: "Social Media" },
+		{ label: "Messenger", category: "Social Media" },
+		{ label: "Slack", category: "Platformy" },
+		{ label: "Teams", category: "Platformy" },
+		{ label: "Zoom", category: "Platformy" },
+		{ label: "Google Meet", category: "Platformy" },
+		{ label: "Asana", category: "Narzędzia" },
+		{ label: "Trello", category: "Narzędzia" },
+		{ label: "Jira", category: "Narzędzia" },
+		{ label: "ClickUp", category: "Narzędzia" },
+		{ label: "Monday.com", category: "Narzędzia" },
+		{ label: "Google Drive", category: "Systemy" },
+		{ label: "Dropbox", category: "Systemy" },
+		{ label: "OneDrive", category: "Systemy" },
+		{ label: "SharePoint", category: "Systemy" },
+		{ label: "CRM", category: "Systemy" },
+		{ label: "Mailchimp", category: "Marketing" },
+		{ label: "Canva", category: "Narzędzia" },
+		{ label: "Figma", category: "Narzędzia" },
+		{ label: "GitHub", category: "Narzędzia" },
+		{ label: "GitLab", category: "Narzędzia" },
+		{ label: "Bitbucket", category: "Narzędzia" },
+	];
+
+	// Pobierz członków z dostępami
+	const fetchMembers = async () => {
+		try {
+			setLoading(true);
+			const token = localStorage.getItem("accessToken");
+			const response = await fetch("/api/admin/member-access", {
+				headers: { Authorization: `Bearer ${token}` },
+			});
+
+			if (!response.ok) throw new Error("Błąd pobierania członków");
+
+			const data = await response.json();
+			setMembers(data);
+		} catch (error) {
+			logger.error("❌ Błąd:", error);
+			toast.error("Nie udało się pobrać członków");
+		} finally {
+			setLoading(false);
+		}
+	};
+
+	// Pobierz wszystkich użytkowników do wyboru
+	const [allUsers, setAllUsers] = useState<any[]>([]);
+
+	const fetchAllUsers = async () => {
+		try {
+			const token = localStorage.getItem("accessToken");
+			const response = await fetch("/api/admin/available-users", {
+				headers: { Authorization: `Bearer ${token}` },
+			});
+			if (response.ok) {
+				const data = await response.json();
+				setAllUsers(data);
+			}
+		} catch (error) {
+			logger.error("❌ Błąd:", error);
+		}
+	};
+
+	// 🔥 POPRAWIONA - pokazuje wszystkie sugestie
+	const getSuggestions = (input: string) => {
+		if (!input.trim()) return [];
+
+		// 🔥 WEŹ OSTATNIĄ CZĘŚĆ PO PRZECINKU
+		const parts = input.split(/[,;，、\n]+/);
+		const lastPart = parts[parts.length - 1]?.trim() || "";
+
+		if (!lastPart) return [];
+
+		const lowerInput = lastPart.toLowerCase();
+		return ACCESS_OPTIONS.filter(
+			(opt) => opt.label.toLowerCase().includes(lowerInput)
+		);
+	};
+
+	const getUserSuggestions = (input: string) => {
+		if (!input.trim()) return [];
+		const lowerInput = input.toLowerCase();
+		return allUsers
+			.filter(
+				(u) =>
+					u.first_name.toLowerCase().includes(lowerInput) ||
+					u.last_name.toLowerCase().includes(lowerInput) ||
+					u.email.toLowerCase().includes(lowerInput)
+			)
+			.slice(0, 10);
+	};
+
+	const getSelectedUser = () => {
+		return allUsers.find((u) => u.id === selectedUserId);
+	};
+
+	const getSelectedUserName = () => {
+		const user = getSelectedUser();
+		if (user) return `${user.first_name} ${user.last_name}`;
+		return userSearchInput;
+	};
+
+	const handleAddAccessToUser = async () => {
+		if (!selectedUserId || !newAccessForUser.trim()) {
+			toast.error("Wybierz osobę i wpisz nazwę dostępu");
+			return;
+		}
+
+		// 🔥 PODZIEL NA WIELOKROTNIE DOSTĘPY (przecinki, średniki, spacje)
+		const accessNames = newAccessForUser
+			.split(/[,;，、\n]+/) // podziel po przecinku, średniku, nowej linii
+			.map(name => name.trim())
+			.filter(name => name.length > 0);
+
+		if (accessNames.length === 0) {
+			toast.error("Wpisz poprawną nazwę dostępu");
+			return;
+		}
+
+		try {
+			const token = localStorage.getItem("accessToken");
+
+			// 🔥 DODAJ WSZYSTKIE DOSTĘPY PO KOLEI
+			let addedCount = 0;
+			const errors: string[] = [];
+
+			for (const name of accessNames) {
+				try {
+					const response = await fetch(`/api/members/${selectedUserId}/access`, {
+						method: "POST",
+						headers: {
+							Authorization: `Bearer ${token}`,
+							"Content-Type": "application/json",
+						},
+						body: JSON.stringify({ access_name: name }),
+					});
+
+					if (response.ok) {
+						addedCount++;
+					} else {
+						const error = await response.json();
+						errors.push(`${name}: ${error.error || "błąd"}`);
+					}
+				} catch (e) {
+					errors.push(`${name}: błąd sieci`);
+				}
+			}
+
+			if (addedCount > 0) {
+				toast.success(`Dodano ${addedCount} dostępów!`);
+			}
+			if (errors.length > 0) {
+				toast.error(`Nie udało się dodać: ${errors.join(", ")}`);
+			}
+
+			setShowAddModal(false);
+			setSelectedUserId("");
+			setUserSearchInput("");
+			setNewAccessForUser("");
+			await fetchMembers();
+		} catch (error) {
+			logger.error("❌ Błąd:", error);
+			toast.error("Nie udało się dodać dostępów");
+		}
+	};
+
+	const handleEditAccess = (member: any) => {
+		setSelectedMember(member);
+		setAccessItems(member.access || []);
+		setEditingMemberId(member.id);
+	};
+
+	const handleCloseEdit = () => {
+		setEditingMemberId(null);
+		setSelectedMember(null);
+		setAccessItems([]);
+		setNewAccess("");
+	};
+
+	const handleSaveEdit = async () => {
+		if (!selectedMember) return;
+
+		try {
+			const token = localStorage.getItem("accessToken");
+			const response = await fetch(`/api/members/${selectedMember.id}/access`, {
+				method: "PUT",
+				headers: {
+					Authorization: `Bearer ${token}`,
+					"Content-Type": "application/json",
+				},
+				body: JSON.stringify({ access: accessItems }),
+			});
+
+			if (!response.ok) {
+				const error = await response.json();
+				throw new Error(error.error || "Błąd zapisu");
+			}
+
+			toast.success("Dostęp zaktualizowany!");
+			handleCloseEdit();
+			await fetchMembers();
+		} catch (error) {
+			logger.error("❌ Błąd:", error);
+			toast.error(error instanceof Error ? error.message : "Nie udało się zapisać");
+		}
+	};
+
+	useEffect(() => {
+		fetchMembers();
+		fetchAllUsers();
+	}, []);
+
+	const membersWithAccess = members.filter((m) => m.access && m.access.length > 0);
+
+	if (loading) {
+		return (
+			<section className={styles.section}>
+				<div className={styles.loading}>
+					<div className={styles.loading__spinner} />
+					<span>Ładowanie członków...</span>
+				</div>
+			</section>
+		);
+	}
+
+	return (
+		<section className={styles.section}>
+			<div className={styles.section__header}>
+				<div className={styles.section__headerLeft}>
+					<h2 className={styles.section__title}>Zarządzanie dostępami</h2>
+					<p className={styles.section__subtitle}>
+						Przypisywanie dostępu do narzędzi i platform dla członków.
+					</p>
+				</div>
+				<button
+					className={styles.section__addBtn}
+					onClick={() => setShowAddModal(true)}
+				>
+					<Plus size={18} />
+					Dodaj dostęp
+				</button>
+			</div>
+
+			{/* Lista osób z dostępami */}
+			{membersWithAccess.length === 0 ? (
+				<div className={styles.accessEmpty}>
+					<Shield size={48} />
+					<h3>Brak przypisanych dostępów</h3>
+					<p>Kliknij "Dodaj dostęp" aby przypisać pierwszy dostęp dla członka.</p>
+				</div>
+			) : (
+				<div className={styles.accessList}>
+					{membersWithAccess.map((member) => (
+						<div key={member.id} className={styles.accessItem}>
+							<div className={styles.accessItem__header}>
+								<div className={styles.accessItem__avatar}>
+									{member.first_name[0]}
+									{member.last_name[0]}
+								</div>
+								<div className={styles.accessItem__info}>
+									<span className={styles.accessItem__name}>
+										{member.first_name} {member.last_name}
+									</span>
+									<span className={styles.accessItem__email}>
+										{member.email}
+									</span>
+									<div className={styles.accessItem__tags}>
+										{member.access.map((item: string) => (
+											<span key={item} className={styles.accessTag}>
+												{item}
+											</span>
+										))}
+									</div>
+								</div>
+								<button
+									className={styles.accessItem__editBtn}
+									onClick={() => handleEditAccess(member)}
+								>
+									<Edit size={16} />
+									Edytuj dostęp
+								</button>
+							</div>
+						</div>
+					))}
+				</div>
+			)}
+
+			{/* Panel edycji dostępu dla członka */}
+			{editingMemberId && selectedMember && (
+				<div className={styles.modalOverlay} onClick={handleCloseEdit}>
+					<div className={styles.modal} style={{ maxWidth: "600px" }} onClick={(e) => e.stopPropagation()}>
+						<div className={styles.modal__header}>
+							<h2 className={styles.modal__title}>
+								Edytuj dostęp dla {selectedMember.first_name} {selectedMember.last_name}
+							</h2>
+							<button className={styles.modal__close} onClick={handleCloseEdit}>
+								<X size={20} />
+							</button>
+						</div>
+
+						<div className={styles.modal__body}>
+							<div className={styles.modal__field}>
+								<label>Dodaj nowy dostęp</label>
+								<div style={{ display: "flex", gap: "8px", position: "relative" }}>
+									<input
+										type="text"
+										placeholder="Wpisz nazwę dostępu (np. Instagram)..."
+										value={newAccess}
+										onChange={(e) => setNewAccess(e.target.value)}
+										style={{ flex: 1 }}
+									/>
+									<button
+										className={styles.modal__btnSave}
+										onClick={() => {
+											if (!newAccess.trim()) {
+												toast.error("Wpisz nazwę dostępu");
+												return;
+											}
+											if (accessItems.includes(newAccess.trim())) {
+												toast.error("Ten dostęp już istnieje");
+												return;
+											}
+											setAccessItems([...accessItems, newAccess.trim()]);
+											setNewAccess("");
+										}}
+									>
+										<Plus size={16} />
+										Dodaj
+									</button>
+									{/* 🔥 SUGESTIE */}
+									{newAccess.trim() && (
+										<div className={styles.accessSuggestions} style={{ position: "absolute", top: "100%", left: 0, right: 0, background: "#fff", border: "1px solid #e5e7eb", borderRadius: "8px", boxShadow: "0 10px 25px rgba(0,0,0,0.1)", maxHeight: "200px", overflowY: "auto", zIndex: 9999, padding: "8px 0" }}>
+											{getSuggestions(newAccess).map((item) => (
+												<button
+													key={item.label}
+													style={{ display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%", padding: "8px 16px", background: "none", border: "none", fontSize: "14px", color: "#1f2937", cursor: "pointer", textAlign: "left" }}
+													onMouseDown={(e) => {
+														e.preventDefault();
+														if (!accessItems.includes(item.label)) {
+															setAccessItems([...accessItems, item.label]);
+															setNewAccess("");
+														}
+													}}
+													onMouseEnter={(e) => e.currentTarget.style.background = "#f3f4f6"}
+													onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
+												>
+													{item.label}
+													<span style={{ fontSize: "11px", color: "#6b7280" }}>
+														{item.category}
+													</span>
+												</button>
+											))}
+										</div>
+									)}
+								</div>
+							</div>
+
+							<div className={styles.modal__field}>
+								<label>Obecne dostępy ({accessItems.length})</label>
+								<div style={{ display: "flex", flexWrap: "wrap", gap: "8px", marginTop: "8px" }}>
+									{accessItems.length === 0 ? (
+										<span style={{ color: "#6b7280", fontSize: "14px" }}>
+											Brak przypisanych dostępów
+										</span>
+									) : (
+										accessItems.map((item) => (
+											<span key={item} className={styles.accessTag}>
+												{item}
+												<button
+													className={styles.accessTag__remove}
+													onClick={() => setAccessItems(accessItems.filter((i) => i !== item))}
+												>
+													<X size={12} />
+												</button>
+											</span>
+										))
+									)}
+								</div>
+							</div>
+						</div>
+
+						<div className={styles.modal__actions}>
+							<button type="button" className={styles.modal__btnCancel} onClick={handleCloseEdit}>
+								Anuluj
+							</button>
+							<button
+								type="submit"
+								className={styles.modal__btnSave}
+								onClick={handleSaveEdit}
+								disabled={accessItems.length === 0}
+							>
+								<Save size={16} />
+								Zapisz zmiany
+							</button>
+						</div>
+					</div>
+				</div>
+			)}
+
+			{/* Modal do dodawania dostępu */}
+			{showAddModal && (
+				<div className={styles.modalOverlay} onClick={() => setShowAddModal(false)}>
+					<div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+						<div className={styles.modal__header}>
+							<h2 className={styles.modal__title}>Dodaj dostęp dla członka</h2>
+							<button className={styles.modal__close} onClick={() => setShowAddModal(false)}>
+								<X size={20} />
+							</button>
+						</div>
+
+						<div className={styles.modal__body}>
+							<div className={styles.modal__field}>
+								<label>Wybierz członka *</label>
+								<div style={{ position: "relative" }}>
+									<input
+										type="text"
+										placeholder="Szukaj członka po imieniu, nazwisku lub email..."
+										value={getSelectedUserName()}
+										onChange={(e) => {
+											const value = e.target.value;
+											setUserSearchInput(value);
+											setSelectedUserId("");
+											setShowUserSuggestions(true);
+										}}
+										onFocus={() => setShowUserSuggestions(true)}
+									/>
+									{showUserSuggestions && userSearchInput.trim() && (
+										<div className={styles.accessSuggestions}>
+											{getUserSuggestions(userSearchInput).map((user) => (
+												<button
+													key={user.id}
+													className={styles.accessSuggestions__item}
+													onMouseDown={(e) => {
+														e.preventDefault();
+														setSelectedUserId(user.id);
+														setUserSearchInput(`${user.first_name} ${user.last_name}`);
+														setShowUserSuggestions(false);
+													}}
+												>
+													{user.first_name} {user.last_name}
+													<span className={styles.accessSuggestions__category}>
+														{user.email}
+													</span>
+												</button>
+											))}
+										</div>
+									)}
+								</div>
+							</div>
+
+							{/* Nazwa dostępu */}
+							{/* Nazwa dostępu */}
+							<div className={styles.modal__field}>
+								<label>Nazwa dostępu *</label>
+								<div style={{ position: "relative" }}>
+									<input
+										type="text"
+										placeholder="Wpisz nazwy dostępu oddzielone przecinkami (np. Instagram, Slack, GitHub)..."
+										value={newAccessForUser}
+										onChange={(e) => {
+											setNewAccessForUser(e.target.value);
+											setShowSuggestions(true);
+										}}
+										onFocus={() => setShowSuggestions(true)}
+										onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
+									/>
+
+									{showSuggestions && newAccessForUser.trim() && (
+										<div className={styles.accessSuggestions}>
+											{getSuggestions(newAccessForUser).map((item) => {
+												// 🔥 SPRAWDŹ CZY JUŻ ISTNIEJE W LIŚCIE
+												const parts = newAccessForUser
+													.split(/[,;，、\n]+/)
+													.map(s => s.trim())
+													.filter(s => s.length > 0);
+
+												// POMIŃ OSTATNIĄ CZĘŚĆ (TĘ KTÓRĄ WPISUJESZ)
+												const existingNames = parts.slice(0, -1);
+
+												// SPRAWDŹ CZY DOSTĘP JUŻ ISTNIEJE
+												if (existingNames.includes(item.label)) return null;
+
+												return (
+													<button
+														key={item.label}
+														className={styles.accessSuggestions__item}
+														onMouseDown={(e) => {
+															e.preventDefault();
+
+															// 🔥 POBERZ WSZYSTKIE CZĘŚCI
+															const allParts = newAccessForUser
+																.split(/[,;，、\n]+/)
+																.map(s => s.trim())
+																.filter(s => s.length > 0);
+
+															// USUŃ OSTATNIĄ CZĘŚĆ (TĘ KTÓRĄ WPISUJESZ)
+															allParts.pop();
+
+															// DODAJ NOWY DOSTĘP (TYLKO JEDEN)
+															allParts.push(item.label);
+
+															// ZŁĄCZ Z PRZECINKAMI I SPACJĄ
+															setNewAccessForUser(allParts.join(", "));
+															setShowSuggestions(false);
+														}}
+													>
+														{item.label}
+														<span className={styles.accessSuggestions__category}>
+															{item.category}
+														</span>
+													</button>
+												);
+											})}
+										</div>
+									)}
+								</div>
+							</div>
+						</div>
+
+						<div className={styles.modal__actions}>
+							<button
+								type="button"
+								className={styles.modal__btnCancel}
+								onClick={() => {
+									setShowAddModal(false);
+									setSelectedUserId("");
+									setUserSearchInput("");
+									setNewAccessForUser("");
+								}}
+							>
+								Anuluj
+							</button>
+							<button
+								type="submit"
+								className={styles.modal__btnSave}
+								onClick={handleAddAccessToUser}
+								disabled={!selectedUserId || !newAccessForUser.trim()}
+							>
+								<Plus size={16} />
+								Dodaj dostęp
+							</button>
+						</div>
+					</div>
+				</div>
+			)}
+		</section>
+	);
+}
 // ---- Komponent statystyk ----
 function ActivityMonitoring({
 	teams,
@@ -2097,7 +2674,7 @@ export default function Admin({ title }: { title?: string }) {
 				onRefresh={handleRefresh}
 				onTeamUpdated={handleTeamUpdated}
 			/>
-
+			<AccessManagement />
 			<ActivityMonitoring teams={teams} roles={roles} />
 			<LogsManagement />
 		</div>

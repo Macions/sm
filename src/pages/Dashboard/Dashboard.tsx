@@ -187,7 +187,6 @@ export default function Dashboard() {
 	useEffect(() => {
 		const checkOnboarding = async () => {
 			try {
-				// Krok 1: Sprawdź cache w localStorage
 				const cachedStatus = localStorage.getItem("onboardingCompleted");
 				const cachedData = localStorage.getItem("onboardingData");
 
@@ -197,7 +196,6 @@ export default function Dashboard() {
 					return;
 				}
 
-				// Krok 2: Sprawdź w API
 				const token = localStorage.getItem("accessToken");
 				if (!token) {
 					setCheckingOnboarding(false);
@@ -216,7 +214,6 @@ export default function Dashboard() {
 					const data = await response.json();
 					const completed = data.completed === true;
 
-					// Krok 3: Zapisz w cache
 					localStorage.setItem(
 						"onboardingCompleted",
 						completed ? "true" : "false",
@@ -230,13 +227,12 @@ export default function Dashboard() {
 
 					if (!completed) {
 						logger.debug("🔄 [Dashboard] Przekierowanie do onboardingu");
-						navigate("/onboarding");
+						// 🔥 UŻYJ `window.location.href` ZAMIAST `navigate`
+						window.location.href = "/onboarding";
 						return;
 					}
 				} else {
-					logger.warn(
-						"⚠️ [Dashboard] Nie udało się sprawdzić statusu onboardingu",
-					);
+					logger.warn("⚠️ [Dashboard] Nie udało się sprawdzić statusu onboardingu");
 				}
 			} catch (error) {
 				logger.error("❌ [Dashboard] Błąd sprawdzania onboardingu:", error);
@@ -246,7 +242,7 @@ export default function Dashboard() {
 		};
 
 		checkOnboarding();
-	}, [navigate]);
+	}, []); // 🔥 PUSTA TABLICA - TYLKO RAZ
 	useEffect(() => {
 		console.log("🚀 [Dashboard] useEffect START");
 		const controller = new AbortController();

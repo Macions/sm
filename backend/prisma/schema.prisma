@@ -72,7 +72,8 @@ model User {
   // tasks                     Task[]               ← USUŃ TĘ LINIĘ!
 
   // ✅ DODAJ - zadania ocenione przez użytkownika
-  ratedTasks Task[] @relation("TaskRatedBy")
+  ratedTasks Task[]         @relation("TaskRatedBy")
+  access     MemberAccess[]
 
   @@index([role_id], map: "idx_users_role_id")
   @@index([status], map: "idx_users_status")
@@ -188,6 +189,7 @@ model Task {
   // ============================================================
   // 🔥 INDEKSY
   // ============================================================
+  @@index([rated_by])
   @@index([assigned_to])
   @@index([created_by])
   @@index([project_id])
@@ -196,7 +198,6 @@ model Task {
   @@index([due_date])
   @@index([assigned_type])
   @@index([assigned_group])
-  @@index([rated_by]) // ✅ DODAJ INDEKS DLA rated_by
   @@index([pillar])
   @@map("tasks")
 }
@@ -644,4 +645,17 @@ model Contribution {
   @@index([paidAt])
   @@index([status])
   @@index([month, year])
+}
+
+model MemberAccess {
+  id          Int      @id @default(autoincrement())
+  user_id     Int
+  access_name String   @db.VarChar(100)
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+
+  user User @relation(fields: [user_id], references: [id], onDelete: Restrict)
+
+  @@unique([user_id, access_name])
+  @@map("member_access")
 }

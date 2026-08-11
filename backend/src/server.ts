@@ -185,11 +185,56 @@ app.post("/api/auth/google", async (req, res) => {
 		});
 
 		if (!user) {
+			// 🔥 LOGUJ NIEUDANE LOGOWANIE PRZEZ GOOGLE
+			try {
+				await prisma.systemLog.create({
+					data: {
+						user_id: 0,
+						user_name: payload.email || "Nieznany",
+						user_role: "unknown",
+						action_type: "LOGIN",
+						category: "AUTH",
+						endpoint: "/api/auth/google",
+						method: "POST",
+						entity_name: `Nieudane logowanie przez Google: ${payload.email}`,
+						changes: { email: payload.email, success: false },
+						status: "error",
+						error_message: "Użytkownik nie istnieje w systemie",
+					},
+				});
+			} catch (logError) {
+				logger.error("❌ Błąd zapisu logu:", logError);
+			}
+
 			// 			logger.debug(`❌ Użytkownik ${payload.email} nie istnieje w systemie`);
 			return res.status(403).json({
 				error:
 					"To konto Google nie jest zarejestrowane w systemie Siły Młodych. Użyj innego.",
 			});
+		}
+
+		// ✅ LOGOWANIE UDANE PRZEZ GOOGLE
+		try {
+			await prisma.systemLog.create({
+				data: {
+					user_id: user.id,
+					user_name: user.email || "Nieznany",
+					user_role: mapRoleId(user.role_id),
+					action_type: "LOGIN",
+					category: "AUTH",
+					endpoint: "/api/auth/google",
+					method: "POST",
+					entity_name: `Logowanie przez Google: ${user.email}`,
+					changes: {
+						email: user.email,
+						success: true,
+						role: mapRoleId(user.role_id),
+					},
+					status: "success",
+				},
+			});
+		} catch (logError) {
+			logger.error("❌ Błąd zapisu logu:", logError);
 		}
 
 		// 		logger.debug(
@@ -290,6 +335,8 @@ function getCategoryFromUrl(url: string): LogCategory {
 	return "STRUCTURE";
 }
 
+// ZMIEŃ FUNKCJĘ logAction (linie ~70-120) NA TO:
+
 async function logAction(
 	req: any,
 	actionType: LogActionType,
@@ -301,40 +348,48 @@ async function logAction(
 	errorMessage: string | null = null,
 ) {
 	try {
-		// 		logger.debug(
-		// 	`🔍 [logAction] START - ${actionType} ${category} ${entityName || "unknown"}`,
-		// );
-
-		if (!prisma.systemLog) {
-			// 			logger.warn("⚠️ [logAction] Model systemLog nie istnieje w Prisma!");
-			return;
-		}
-
+		// Pobierz dane użytkownika
 		const userId = req.user?.id || 0;
-		const userName =
-			req.user?.first_name && req.user?.last_name
+		const userName = req.user?.email ||
+			(req.user?.first_name && req.user?.last_name
 				? `${req.user.first_name} ${req.user.last_name}`
-				: req.user?.email || "System";
+				: "System");
 		const userRole = req.user?.role || "unknown";
 
-		// 		logger.debug(
-		// 	`🔍 [logAction] Dane: userId=${userId}, userName=${userName}, userRole=${userRole}`,
-		// );
+		// Pobierz IP i User-Agent
+		const ipAddress = req.headers['x-forwarded-for'] ||
+			req.socket?.remoteAddress ||
+			null;
+		const userAgent = req.headers['user-agent'] || null;
 
-		const ipAddress =
-			req.headers["x-forwarded-for"] || req.socket?.remoteAddress || null;
-		const userAgent = req.headers["user-agent"] || null;
+		// 🔥 TWÓRZ BARDZIEJ SZCZEGÓŁOWY OPIS
+		let detailedEntityName = entityName || "unknown";
+
+		// Jeśli to urlop, dodaj więcej szczegółów
+		if (category === "LEAVE" && changes) {
+			if (changes.startDate && changes.endDate) {
+				detailedEntityName = `Urlop: ${changes.startDate} - ${changes.endDate}`;
+			}
+			if (changes.status) {
+				detailedEntityName += ` (${changes.status})`;
+			}
+		}
+
+		// Jeśli to zadanie, dodaj tytuł
+		if (category === "PROJECT" && changes?.title) {
+			detailedEntityName = `Zadanie: ${changes.title}`;
+		}
 
 		const data = {
 			user_id: userId,
-			user_name: userName,
+			user_name: userName, // ← TO JEST WAŻNE!
 			user_role: userRole,
 			action_type: actionType,
 			category: category,
 			endpoint: req.originalUrl || req.url || "/",
 			method: req.method || "UNKNOWN",
 			entity_id: entityId,
-			entity_name: entityName,
+			entity_name: detailedEntityName, // ← WIĘCEJ SZCZEGÓŁÓW
 			changes: changes,
 			ip_address: typeof ipAddress === "string" ? ipAddress : null,
 			user_agent: userAgent,
@@ -342,22 +397,9 @@ async function logAction(
 			error_message: errorMessage,
 		};
 
-		// 		logger.debug(
-		// 	`🔍 [logAction] Dane do zapisu:`,
-		// 	JSON.stringify(data, null, 2),
-		// );
-
-		const result = await prisma.systemLog.create({
-			data: data,
-		});
-
-		// 		logger.debug(`✅ [logAction] Zapisano log ID: ${result.id}`);
+		await prisma.systemLog.create({ data });
 	} catch (error) {
-		// 		logger.error("❌ [logAction] Błąd zapisu loga:", error);
-		// 		logger.error(
-		// 	"❌ [logAction] Stack:",
-		// 	error instanceof Error ? error.stack : "No stack",
-		// );
+		logger.error("❌ Błąd zapisu loga:", error);
 	}
 }
 
@@ -634,12 +676,78 @@ app.post("/api/auth/login", async (req, res) => {
 		});
 
 		if (!user) {
+			// 🔥 LOGUJ NIEUDANE LOGOWANIE
+			try {
+				await prisma.systemLog.create({
+					data: {
+						user_id: 0,
+						user_name: email || "Nieznany",
+						user_role: "unknown",
+						action_type: "LOGIN",
+						category: "AUTH",
+						endpoint: "/api/auth/login",
+						method: "POST",
+						entity_name: `Nieudane logowanie: ${email}`,
+						changes: { email, success: false },
+						status: "error",
+						error_message: "Nieprawidłowy email lub hasło",
+					},
+				});
+			} catch (logError) {
+				logger.error("❌ Błąd zapisu logu:", logError);
+			}
+
 			return res.status(401).json({ error: "Nieprawidłowy email lub hasło" });
 		}
 
 		const isPasswordValid = await bcrypt.compare(password, user.password_hash);
 		if (!isPasswordValid) {
+			// 🔥 LOGUJ NIEUDANE LOGOWANIE (złe hasło)
+			try {
+				await prisma.systemLog.create({
+					data: {
+						user_id: user.id,
+						user_name: user.email || "Nieznany",
+						user_role: mapRoleId(user.role_id),
+						action_type: "LOGIN",
+						category: "AUTH",
+						endpoint: "/api/auth/login",
+						method: "POST",
+						entity_name: `Nieudane logowanie: ${user.email}`,
+						changes: { email: user.email, success: false },
+						status: "error",
+						error_message: "Nieprawidłowe hasło",
+					},
+				});
+			} catch (logError) {
+				logger.error("❌ Błąd zapisu logu:", logError);
+			}
+
 			return res.status(401).json({ error: "Nieprawidłowy email lub hasło" });
+		}
+
+		// ✅ LOGOWANIE UDANE
+		try {
+			await prisma.systemLog.create({
+				data: {
+					user_id: user.id,
+					user_name: user.email || "Nieznany",
+					user_role: mapRoleId(user.role_id),
+					action_type: "LOGIN",
+					category: "AUTH",
+					endpoint: "/api/auth/login",
+					method: "POST",
+					entity_name: `Logowanie: ${user.email}`,
+					changes: {
+						email: user.email,
+						success: true,
+						role: mapRoleId(user.role_id),
+					},
+					status: "success",
+				},
+			});
+		} catch (logError) {
+			logger.error("❌ Błąd zapisu logu:", logError);
 		}
 
 		const token = jwt.sign(
@@ -673,7 +781,7 @@ app.post("/api/auth/login", async (req, res) => {
 			onboardingCompleted: true,
 		});
 	} catch (error) {
-		// 		logger.error("❌ Błąd logowania:", error);
+		logger.error("❌ Błąd logowania:", error);
 		res.status(500).json({ error: "Wystąpił błąd podczas logowania" });
 	}
 });
@@ -3420,28 +3528,19 @@ app.put("/api/leaves/:id", authMiddleware, async (req: any, res) => {
 			data: {
 				type: type || existingLeave.type,
 				scope: scope || existingLeave.scope,
-				affected_teams: affectedTeams
-					? JSON.stringify(affectedTeams)
-					: existingLeave.affected_teams,
+				affected_teams: affectedTeams ? JSON.stringify(affectedTeams) : existingLeave.affected_teams,
 				start_date: startDate ? new Date(startDate) : existingLeave.start_date,
 				end_date: endDate ? new Date(endDate) : existingLeave.end_date,
 				reason: reason !== undefined ? reason : existingLeave.reason,
 				reason_visibility: reasonVisibility || existingLeave.reason_visibility,
-				attachments: attachments
-					? JSON.stringify(attachments)
-					: existingLeave.attachments,
+				attachments: attachments ? JSON.stringify(attachments) : existingLeave.attachments,
 				status: status || existingLeave.status,
-				...(status === "approved" ||
-					status === "rejected" ||
-					status === "cancelled"
-					? {
-						approved_by:
-							`${currentUser?.first_name || ""} ${currentUser?.last_name || ""}`.trim() ||
-							"Nieznany",
-						approved_at: new Date(),
-					}
-					: {}),
+				...(status === "approved" || status === "rejected" || status === "cancelled" ? {
+					approved_by: `${currentUser?.first_name || ""} ${currentUser?.last_name || ""}`.trim() || "Nieznany",
+					approved_at: new Date(),
+				} : {}),
 			},
+			include: { user: true }, // ← 🔥 DODAJ TĘ LINIĘ!
 		});
 
 		// ✅ DODAJ POWIADOMIENIE DLA ANULOWANIA
@@ -3485,6 +3584,38 @@ app.put("/api/leaves/:id", authMiddleware, async (req: any, res) => {
 			});
 		}
 
+		const userEmail = req.user?.email || "Nieznany";
+
+		// Zamiast automatycznego logowania przez middleware,
+		// dodaj ręczne logowanie z większą ilością szczegółów
+
+		try {
+			await prisma.systemLog.create({
+				data: {
+					user_id: req.user?.id || 0,
+					user_name: userEmail, // ← EMAIL ZAMIAST "System"!
+					user_role: req.user?.role || "unknown",
+					action_type: "UPDATE",
+					category: "LEAVE",
+					endpoint: req.originalUrl || req.url,
+					method: req.method,
+					entity_id: req.params.id,
+					entity_name: `Urlop ${leave.user?.first_name || ''} ${leave.user?.last_name || ''}`.trim(),
+					changes: {
+						status: status || existingLeave.status,
+						startDate: leave.start_date?.toISOString().split('T')[0],
+						endDate: leave.end_date?.toISOString().split('T')[0],
+						affectedTeams: leave.affected_teams ? JSON.parse(leave.affected_teams) : [],
+					},
+					ip_address: req.headers['x-forwarded-for'] || req.socket?.remoteAddress || null,
+					user_agent: req.headers['user-agent'] || null,
+					status: "success",
+				},
+			});
+		} catch (logError) {
+			logger.error("❌ Błąd zapisu logu:", logError);
+		}
+
 		res.json(leave);
 	} catch (error) {
 		logger.error("❌ Błąd aktualizacji wniosku:", error);
@@ -3498,6 +3629,7 @@ app.delete("/api/leaves/:id", authMiddleware, async (req: any, res) => {
 		const userId = req.user?.id;
 		const userRole = req.user?.role;
 		const leaveId = parseInt(req.params.id);
+		const userEmail = req.user?.email || "Nieznany";
 
 		// 		logger.debug(
 		// 	`🔍 [DELETE LEAVE] userId: ${userId}, userRole: ${userRole}, leaveId: ${leaveId}`,
@@ -3535,6 +3667,42 @@ app.delete("/api/leaves/:id", authMiddleware, async (req: any, res) => {
 			message: "Wniosek urlopowy usunięty",
 			id: leaveId,
 		});
+		const leaveToDelete = await prisma.leave.findUnique({
+			where: { id: leaveId },
+			include: { user: true },
+		});
+
+		if (leaveToDelete) {
+			try {
+				await prisma.systemLog.create({
+					data: {
+						user_id: req.user?.id || 0,
+						user_name: userEmail, // ← EMAIL!
+						user_role: req.user?.role || "unknown",
+						action_type: "DELETE",
+						category: "LEAVE",
+						endpoint: req.originalUrl || req.url,
+						method: req.method,
+						entity_id: req.params.id,
+						entity_name: `Urlop ${leaveToDelete.user?.first_name || ''} ${leaveToDelete.user?.last_name || ''}`.trim(),
+						changes: {
+							startDate: leaveToDelete.start_date?.toISOString().split('T')[0],
+							endDate: leaveToDelete.end_date?.toISOString().split('T')[0],
+							status: leaveToDelete.status,
+						},
+						ip_address: req.headers['x-forwarded-for'] || req.socket?.remoteAddress || null,
+						user_agent: req.headers['user-agent'] || null,
+						status: "success",
+					},
+				});
+			} catch (logError) {
+				logger.error("❌ Błąd zapisu logu:", logError);
+			}
+		}
+
+		await prisma.leave.delete({ where: { id: leaveId } });
+
+		res.status(200).json({ success: true, message: "Usunięto" });
 	} catch (error) {
 		// 		logger.error(`🔍 [DELETE LEAVE] BŁĄD:`, error);
 
@@ -6639,7 +6807,246 @@ app.get(
 		}
 	},
 );
+// GET /api/admin/member-access - Pobierz wszystkich członków z dostępami
+app.get("/api/admin/member-access", authMiddleware, async (req: any, res) => {
+	try {
+		const userRole = req.user?.role;
 
+		if (userRole !== "admin" && userRole !== "board" && userRole !== "zarząd") {
+			return res.status(403).json({ error: "Brak uprawnień" });
+		}
+
+		const members = await prisma.user.findMany({
+			where: {
+				is_active: true,
+			},
+			select: {
+				id: true,
+				first_name: true,
+				last_name: true,
+				email: true,
+				pillars: true,
+				functional_role: true,
+				team: true,
+				access: {
+					select: {
+						id: true,
+						access_name: true,
+					},
+				},
+			},
+			orderBy: {
+				first_name: "asc",
+			},
+		});
+
+		const formattedMembers = members.map((member: any) => ({
+			id: member.id.toString(),
+			first_name: member.first_name,
+			last_name: member.last_name,
+			email: member.email,
+			pillars: member.pillars,
+			functional_role: member.functional_role,
+			team: member.team,
+			access: member.access.map((a: any) => a.access_name),
+		}));
+
+		res.json(formattedMembers);
+	} catch (error) {
+		logger.error("❌ Błąd pobierania dostępów:", error);
+		res.status(500).json({ error: "Nie udało się pobrać dostępów" });
+	}
+});
+// GET /api/members/:id/access - Pobierz dostępy członka
+app.get(
+	"/api/members/:id/access",
+	authMiddleware,
+	async (req: any, res) => {
+		try {
+			const userId = parseInt(req.params.id);
+			const currentUserId = req.user?.id;
+			const userRole = req.user?.role;
+
+			// Sprawdź uprawnienia - admin/board/zarząd mogą wszystko, członek tylko swój
+			if (
+				userRole !== "admin" &&
+				userRole !== "board" &&
+				userRole !== "zarząd" &&
+				userId !== currentUserId
+			) {
+				return res.status(403).json({ error: "Brak uprawnień" });
+			}
+
+			const access = await prisma.memberAccess.findMany({
+				where: { user_id: userId },
+				select: {
+					id: true,
+					access_name: true,
+				},
+				orderBy: {
+					access_name: "asc",
+				},
+			});
+
+			res.json(access.map((a) => a.access_name));
+		} catch (error) {
+			logger.error("❌ Błąd pobierania dostępów członka:", error);
+			res.status(500).json({ error: "Nie udało się pobrać dostępów" });
+		}
+	}
+);
+// PUT /api/members/:id/access - Zapisz dostępy członka
+app.put(
+	"/api/members/:id/access",
+	authMiddleware,
+	async (req: any, res) => {
+		try {
+			const userId = parseInt(req.params.id);
+			const { access } = req.body; // Array stringów
+			const userRole = req.user?.role;
+
+			if (userRole !== "admin" && userRole !== "board" && userRole !== "zarząd") {
+				return res.status(403).json({ error: "Brak uprawnień" });
+			}
+
+			if (!access || !Array.isArray(access)) {
+				return res.status(400).json({ error: "Dane są nieprawidłowe" });
+			}
+
+			// Walidacja - max 50 znaków na nazwę dostępu
+			const validAccess = access.filter(
+				(name) => typeof name === "string" && name.trim().length > 0 && name.trim().length <= 50
+			);
+
+			// Usuń stare dostępy
+			await prisma.memberAccess.deleteMany({
+				where: { user_id: userId },
+			});
+
+			// Dodaj nowe
+			if (validAccess.length > 0) {
+				await prisma.memberAccess.createMany({
+					data: validAccess.map((name) => ({
+						user_id: userId,
+						access_name: name.trim(),
+					})),
+				});
+			}
+
+			// Log akcji
+			const user = await prisma.user.findUnique({
+				where: { id: userId },
+				select: { first_name: true, last_name: true, email: true },
+			});
+
+			await logAction(
+				req,
+				"UPDATE",
+				"USER",
+				userId.toString(),
+				`${user?.first_name || ""} ${user?.last_name || ""}`.trim() || "Nieznany",
+				{ access: validAccess },
+				"success",
+				null,
+			);
+
+			res.json({
+				success: true,
+				message: "Dostęp zaktualizowany",
+				access: validAccess,
+			});
+		} catch (error) {
+			logger.error("❌ Błąd zapisu dostępów:", error);
+			res.status(500).json({ error: "Nie udało się zapisać dostępów" });
+		}
+	}
+);
+// POST /api/members/:id/access - Dodaj pojedynczy dostęp
+app.post(
+	"/api/members/:id/access",
+	authMiddleware,
+	async (req: any, res) => {
+		try {
+			const userId = parseInt(req.params.id);
+			const { access_name } = req.body;
+			const userRole = req.user?.role;
+
+			if (userRole !== "admin" && userRole !== "board" && userRole !== "zarząd") {
+				return res.status(403).json({ error: "Brak uprawnień" });
+			}
+
+			if (!access_name || typeof access_name !== "string" || access_name.trim().length === 0) {
+				return res.status(400).json({ error: "Nazwa dostępu jest wymagana" });
+			}
+
+			if (access_name.trim().length > 50) {
+				return res.status(400).json({ error: "Nazwa dostępu nie może przekraczać 50 znaków" });
+			}
+
+			// Sprawdź czy już istnieje
+			const existing = await prisma.memberAccess.findUnique({
+				where: {
+					user_id_access_name: {
+						user_id: userId,
+						access_name: access_name.trim(),
+					},
+				},
+			});
+
+			if (existing) {
+				return res.status(400).json({ error: "Ten dostęp już został dodany" });
+			}
+
+			const newAccess = await prisma.memberAccess.create({
+				data: {
+					user_id: userId,
+					access_name: access_name.trim(),
+				},
+			});
+
+			res.status(201).json({
+				id: newAccess.id.toString(),
+				access_name: newAccess.access_name,
+			});
+		} catch (error) {
+			logger.error("❌ Błąd dodawania dostępu:", error);
+			res.status(500).json({ error: "Nie udało się dodać dostępu" });
+		}
+	}
+);
+// DELETE /api/members/:id/access/:accessId - Usuń pojedynczy dostęp
+app.delete(
+	"/api/members/:id/access/:accessId",
+	authMiddleware,
+	async (req: any, res) => {
+		try {
+			const userId = parseInt(req.params.id);
+			const accessId = parseInt(req.params.accessId);
+			const userRole = req.user?.role;
+
+			if (userRole !== "admin" && userRole !== "board" && userRole !== "zarząd") {
+				return res.status(403).json({ error: "Brak uprawnień" });
+			}
+
+			const access = await prisma.memberAccess.findUnique({
+				where: { id: accessId },
+			});
+
+			if (!access || access.user_id !== userId) {
+				return res.status(404).json({ error: "Nie znaleziono dostępu" });
+			}
+
+			await prisma.memberAccess.delete({
+				where: { id: accessId },
+			});
+
+			res.json({ success: true, message: "Dostęp usunięty" });
+		} catch (error) {
+			logger.error("❌ Błąd usuwania dostępu:", error);
+			res.status(500).json({ error: "Nie udało się usunąć dostępu" });
+		}
+	}
+);
 // ============================================================
 // 📊 GET /api/tasks/stats/:userId - Statystyki zadań użytkownika
 // ============================================================

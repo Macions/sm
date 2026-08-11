@@ -420,13 +420,13 @@ export async function syncMembers() {
 					// 🔥 SPRAWDŹ CZY UŻYTKOWNIK MA JUŻ USTAWIONE FILARY
 					// Jeśli ma filary (nie są puste) - NIE ZMIENIAJ ICH
 					const hasExistingPillars = existing.pillars && existing.pillars !== "" && existing.pillars !== null;
-
+					// 🔥 SPRAWDŹ CZY UŻYTKOWNIK MA JUŻ FUNKCJONALNĄ ROLĘ
+					const hasExistingFunctionalRole = existing.functional_role && existing.functional_role !== "";
 					const dataToUpdate: any = {
 						first_name: userData.first_name,
 						last_name: userData.last_name,
 						phone: userData.phone,
 						is_active: userData.is_active,
-						functional_role: userData.functional_role,
 						team: userData.team,
 					};
 
@@ -442,16 +442,30 @@ export async function syncMembers() {
 						dataToUpdate.role_id = userData.role_id;
 					}
 
-					// 🔥 WARUNEK: NIE ZMIENIAJ FILARÓW jeśli użytkownik ma już filary w głównej bazie
-					if (hasExistingPillars) {
-						// Zachowaj istniejące filary - nie nadpisuj!
-						dataToUpdate.pillars = existing.pillars;
-						pillarsPreserved++;
-						logger.debug(
-							`🔒 [SYNC] Zachowano istniejące filary użytkownika ${generatedEmail}: ${existing.pillars}`
-						);
+					// 🔥 ZACHOWAJ LUB USTAW FUNKCJONALNĄ ROLĘ
+					if (hasExistingFunctionalRole) {
+						dataToUpdate.functional_role = existing.functional_role;
 					} else {
-						// Użytkownik nie ma filarów - nadpisz z synchronizacji
+						dataToUpdate.functional_role = userData.functional_role;
+					}
+
+					// 🔥 WARUNEK: NIE ZMIENIAJ FILARÓW jeśli użytkownik ma już filary w głównej bazie
+					// 🔥 ZAWSZE ZACHOWUJ ISTNIEJĄCE FILARY - NIGDY NIE NADPISUJ!
+					if (existing.pillars !== undefined) {
+						// Zachowaj istniejące filary - nawet jeśli są puste!
+						dataToUpdate.pillars = existing.pillars;
+						if (existing.pillars && existing.pillars !== "") {
+							pillarsPreserved++;
+							logger.debug(
+								`🔒 [SYNC] Zachowano istniejące filary użytkownika ${generatedEmail}: ${existing.pillars}`
+							);
+						} else {
+							logger.debug(
+								`⏭️ [SYNC] Użytkownik ${generatedEmail} nie ma filarów - pozostawiam puste`
+							);
+						}
+					} else {
+						// Tylko jeśli pole pillars nie istnieje w bazie (nowy użytkownik)
 						dataToUpdate.pillars = userData.pillars;
 					}
 
@@ -469,7 +483,7 @@ export async function syncMembers() {
 						existing.first_name !== dataToUpdate.first_name ||
 						existing.last_name !== dataToUpdate.last_name ||
 						existing.phone !== dataToUpdate.phone ||
-						existing.functional_role !== dataToUpdate.functional_role ||
+						(hasExistingFunctionalRole ? existing.functional_role !== dataToUpdate.functional_role : false) ||
 						(!hasExistingPillars && existing.pillars !== dataToUpdate.pillars) ||
 						(!hasExistingStatus && existing.status !== dataToUpdate.status) ||
 						(!hasExistingStatus && existing.is_trial !== dataToUpdate.is_trial);
@@ -490,8 +504,12 @@ export async function syncMembers() {
 							? `🔒 filary zachowane: ${existing.pillars}`
 							: `filary: ${userData.pillars || "brak"}`;
 
+						const functionalRoleMsg = hasExistingFunctionalRole
+							? `🔒 funkcjonalna rola zachowana: ${existing.functional_role}`
+							: `funkcjonalna rola: ${userData.functional_role}`;
+
 						logger.debug(
-							`🔄 [SYNC] Zaktualizowano: ${generatedEmail} | ${statusMsg} | ${pillarsMsg}`,
+							`🔄 [SYNC] Zaktualizowano: ${generatedEmail} | ${statusMsg} | ${pillarsMsg} | ${functionalRoleMsg}`,
 						);
 					} else {
 						userId = existing.id;
@@ -612,7 +630,7 @@ export async function syncMembers() {
 			await prisma.systemLog.create({
 				data: {
 					user_id: 0,
-					user_name: "System",
+					user_name: "Synchronizacja członków",
 					user_role: "system",
 					action_type: "UPDATE",
 					category: "USER",

@@ -1,4 +1,4 @@
-import { defineConfig } from "vite";
+import { defineConfig } from "vitest/config";
 import react from "@vitejs/plugin-react";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -6,10 +6,6 @@ import { visualizer } from "rollup-plugin-visualizer";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-
-// ⭐ WYKRYWA CZY JESTEŚMY NA GITHUB PAGES
-const isGitHubPages =
-	process.env.GITHUB_PAGES === "true" || process.env.NODE_ENV === "production";
 
 // 🔒 LISTA PODEJRZANYCH WZORCÓW (blokowane zapytania)
 const SUSPICIOUS_PATTERNS = [
@@ -128,7 +124,6 @@ export default defineConfig({
 		allowedHosts: ["turbine-protector-aluminum.ngrok-free.dev"],
 		proxy: {
 			"/api": {
-				// target: "http://backend:3000",
 				target: "http://localhost:3000",
 				changeOrigin: true,
 				secure: false,
@@ -170,9 +165,32 @@ export default defineConfig({
 			},
 		},
 	},
+
+	// ============================================================
+	// 🔥 KONFIGURACJA TESTOW - POPRAWIONA
+	// ============================================================
+	test: {
+		globals: true,
+		environment: "jsdom",
+		setupFiles: "./src/test/setup.ts",
+		css: true,
+		reporters: ["verbose"],
+		coverage: {
+			provider: "v8",
+			reporter: ["text", "json", "html"],
+			exclude: [
+				"node_modules/",
+				"src/test/",
+				"**/*.test.ts",
+				"**/*.test.tsx",
+				"**/*.spec.ts",
+				"**/*.spec.tsx",
+			],
+		},
+	},
+
 	define: {
 		"process.env.VITE_API_URL": JSON.stringify(
-			// "https://sm-backend-po9k.onrender.com",
 			"http://localhost:3000",
 		),
 	},
