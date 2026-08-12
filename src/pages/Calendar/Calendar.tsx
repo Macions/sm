@@ -81,6 +81,7 @@ export default function Calendar() {
 	const [isSyncing, setIsSyncing] = useState(false);
 	const [googleEvents, setGoogleEvents] = useState<any[]>([]);
 	const [isGoogleAuth, setIsGoogleAuth] = useState(false);
+	const [isGoogleLoading, setIsGoogleLoading] = useState(false); // 👈 DODAJ
 	const [_currentUser] = useState<User>({
 		id: "",
 		name: "",
@@ -90,23 +91,17 @@ export default function Calendar() {
 	const currentYear = currentDate.getFullYear();
 	const currentMonth = currentDate.getMonth();
 
+	// ============================================================
+	// 1. NAJPIERW ŁADUJ ZADANIA SYSTEMOWE (ZAWSZE!)
+	// ============================================================
 	useEffect(() => {
-		fetchData();
+		fetchTasks();
 		checkGoogleAuth();
 	}, []);
 
-	useEffect(() => {
-		const params = new URLSearchParams(window.location.search);
-		if (params.get("auth") === "success") {
-			toast.success("✅ Autoryzacja Google Calendar zakończona!");
-			setIsGoogleAuth(true);
-			window.history.replaceState({}, "", window.location.pathname);
-		} else if (params.get("auth") === "error") {
-			toast.error("❌ Autoryzacja nie powiodła się");
-			window.history.replaceState({}, "", window.location.pathname);
-		}
-	}, []);
-
+	// ============================================================
+	// 2. SPRAWDŹ AUTORYZACJĘ GOOGLE (NIE BLOKUJE!)
+	// ============================================================
 	const checkGoogleAuth = async () => {
 		try {
 			const token = localStorage.getItem("accessToken");
@@ -115,12 +110,24 @@ export default function Calendar() {
 			});
 			const data = await res.json();
 			setIsGoogleAuth(data.authenticated);
+
+			// Jeśli autoryzacja jest - pobierz wydarzenia
+			if (data.authenticated) {
+				await fetchGoogleEvents();
+			}
 		} catch (error) {
+			console.log("ℹ️ Google Calendar nie dostępny - kontynuuję bez niego");
 			setIsGoogleAuth(false);
 		}
 	};
 
+	// ============================================================
+	// 3. POBIERZ WYDARZENIA Z GOOGLE (TYLKO JAK JEST AUTORYZACJA)
+	// ============================================================
 	const fetchGoogleEvents = async () => {
+		if (!isGoogleAuth) return; // 👈 NIE PRÓBUJ JAK NIE MA AUTORYZACJI
+
+		setIsGoogleLoading(true);
 		try {
 			const token = localStorage.getItem("accessToken");
 			const res = await fetch(`${API_URL}/api/calendar/events`, {
@@ -139,17 +146,17 @@ export default function Calendar() {
 				}
 			}
 		} catch (error) {
-			console.error("❌ Błąd pobierania wydarzeń z Google:", error);
+			console.log("ℹ️ Nie udało się pobrać wydarzeń z Google - kontynuuję bez nich");
+			// Nie pokazuj toastu - to nie jest krytyczne
+		} finally {
+			setIsGoogleLoading(false);
 		}
 	};
 
-	useEffect(() => {
-		if (isGoogleAuth) {
-			fetchGoogleEvents();
-		}
-	}, [isGoogleAuth]);
-
-	const fetchData = async () => {
+	// ============================================================
+	// 4. POBIERZ ZADANIA SYSTEMOWE (ZAWSZE DZIAŁA)
+	// ============================================================
+	const fetchTasks = async () => {
 		try {
 			setLoading(true);
 			const token = localStorage.getItem("accessToken");
@@ -170,12 +177,15 @@ export default function Calendar() {
 		}
 	};
 
+	// ============================================================
+	// 5. SYNCHRONIZACJA Z GOOGLE - TYLKO JEST AUTORYZACJA
+	// ============================================================
 	const handleSyncToGoogle = async (task: CalendarTask) => {
-		setIsSyncing(true);
-		try {
-			const token = localStorage.getItem("accessToken");
-
-			if (!isGoogleAuth) {
+		// 👈 NAJPIERW SPRAWDŹ CZY JEST AUTORYZACJA
+		if (!isGoogleAuth) {
+			// Próbuj autoryzować
+			try {
+				const token = localStorage.getItem("accessToken");
 				const authRes = await fetch(`${API_URL}/api/calendar/auth`, {
 					headers: { Authorization: `Bearer ${token}` }
 				});
@@ -192,11 +202,13 @@ export default function Calendar() {
 						"Autoryzacja Google Calendar",
 						`width=${width},height=${height},left=${left},top=${top}`,
 					);
+
 					toast("📱 Zaloguj się do Google i zatwierdź uprawnienia", {
 						icon: "ℹ️",
 						duration: 5000,
 					});
 
+					// Sprawdzaj czy autoryzacja się powiodła
 					const checkInterval = setInterval(async () => {
 						try {
 							const statusRes = await fetch(`${API_URL}/api/calendar/status`, {
@@ -206,6 +218,8 @@ export default function Calendar() {
 							if (statusData.authenticated) {
 								setIsGoogleAuth(true);
 								clearInterval(checkInterval);
+								toast.success("✅ Autoryzacja zakończona!");
+								// Po autoryzacji - spróbuj zsynchronizować
 								await syncTask(task);
 							}
 						} catch (e) {
@@ -216,9 +230,48 @@ export default function Calendar() {
 					setTimeout(() => clearInterval(checkInterval), 300000);
 					return;
 				}
+			} catch (error) {
+				toast.error("❌ Nie udało się rozpocząć autoryzacji");
+				return;
+			}
+		}
+
+		// Jeśli jest autoryzacja - synchronizuj
+		await syncTask(task);
+	};
+
+	const syncTask = async (task: CalendarTask) => {
+		setIsSyncing(true);
+		try {
+			const token = localStorage.getItem("accessToken");
+			const response = await fetch(`${API_URL}/api/calendar/sync`, {
+				method: "POST",
+				headers: {
+					Authorization: `Bearer ${token}`,
+					"Content-Type": "application/json",
+				},
+				body: JSON.stringify({ taskId: task.id }),
+			});
+
+			const data = await response.json();
+
+			if (response.status === 401 && data.needAuth) {
+				setIsGoogleAuth(false);
+				toast("Wymagana ponowna autoryzacja", {
+					icon: "⚠️",
+					duration: 4000,
+				});
+				return;
 			}
 
-			await syncTask(task);
+			if (response.ok) {
+				toast.success("✅ Zadanie dodane do Google Calendar!");
+				if (data.eventUrl) {
+					window.open(data.eventUrl, "_blank");
+				}
+			} else {
+				toast.error(`❌ Błąd: ${data.error || "Nieznany błąd"}`);
+			}
 		} catch (error) {
 			console.error("❌ Błąd synchronizacji:", error);
 			toast.error("Nie udało się zsynchronizować z Google Calendar");
@@ -227,44 +280,7 @@ export default function Calendar() {
 		}
 	};
 
-	const syncTask = async (task: CalendarTask) => {
-		const token = localStorage.getItem("accessToken");
-		const response = await fetch(`${API_URL}/api/calendar/sync`, {
-			method: "POST",
-			headers: {
-				Authorization: `Bearer ${token}`,
-				"Content-Type": "application/json",
-			},
-			body: JSON.stringify({ taskId: task.id }),
-		});
-
-		const data = await response.json();
-
-		if (response.status === 401 && data.needAuth) {
-			setIsGoogleAuth(false);
-			toast("Wymagana ponowna autoryzacja", {
-				icon: "⚠️",
-				duration: 4000,
-			});
-			const authRes = await fetch(`${API_URL}/api/calendar/auth`, {
-				headers: { Authorization: `Bearer ${token}` }
-			});
-			const authData = await authRes.json();
-			if (authData.authUrl) {
-				window.open(authData.authUrl, "_blank", "width=600,height=700");
-			}
-			return;
-		}
-
-		if (response.ok) {
-			toast.success("✅ Zadanie dodane do Google Calendar!");
-			if (data.eventUrl) {
-				window.open(data.eventUrl, "_blank");
-			}
-		} else {
-			toast.error(`❌ Błąd: ${data.error || "Nieznany błąd"}`);
-		}
-	};
+	// ... reszta funkcji (goToPreviousMonth, goToNextMonth, itd.) bez zmian ...
 
 	const goToPreviousMonth = () => {
 		setCurrentDate(new Date(currentYear, currentMonth - 1, 1));
@@ -289,10 +305,14 @@ export default function Calendar() {
 	const daysInMonth = getDaysInMonth(currentYear, currentMonth);
 	const firstDay = getFirstDayOfMonth(currentYear, currentMonth);
 
+	// ============================================================
+	// 6. ŁĄCZENIE WYDARZEŃ - ZAWSZE SĄ ZADANIA SYSTEMOWE
+	// ============================================================
 	const getEventsForDay = (day: number) => {
 		const date = new Date(currentYear, currentMonth, day);
 		const dateStr = date.toISOString().split("T")[0];
 
+		// ZAWSZE pobieramy zadania systemowe
 		const taskEvents = tasks
 			.filter((task) => {
 				const taskDate = new Date(task.dueDate);
@@ -304,28 +324,32 @@ export default function Calendar() {
 				type: "task" as const,
 			}));
 
-		const googleEventsForDay = googleEvents
-			.filter((event) => {
-				const eventDate = new Date(event.start?.dateTime || event.start?.date);
-				return eventDate.toISOString().split("T")[0] === dateStr;
-			})
-			.map((event) => ({
-				id: `google-${event.id}`,
-				title: event.summary || "Bez tytułu",
-				description: event.description || "",
-				status: "todo" as TaskStatus,
-				priority: "medium" as TaskPriority,
-				dueDate: event.start?.dateTime || event.start?.date || "",
-				assignedTo: "",
-				assignedToName: "Google Calendar",
-				source: "google" as const,
-				type: "event" as const,
-				pillar: undefined,
-				tags: [],
-				htmlLink: event.htmlLink || "",
-				hangoutLink: event.hangoutLink || event.conferenceData?.entryPoints?.[0]?.uri || null,
-				hasMeeting: !!(event.hangoutLink || event.conferenceData?.entryPoints?.length > 0),
-			}));
+		// Wydarzenia z Google - TYLKO JEST AUTORYZACJA
+		let googleEventsForDay: any[] = [];
+		if (isGoogleAuth && googleEvents.length > 0) {
+			googleEventsForDay = googleEvents
+				.filter((event) => {
+					const eventDate = new Date(event.start?.dateTime || event.start?.date);
+					return eventDate.toISOString().split("T")[0] === dateStr;
+				})
+				.map((event) => ({
+					id: `google-${event.id}`,
+					title: event.summary || "Bez tytułu",
+					description: event.description || "",
+					status: "todo" as TaskStatus,
+					priority: "medium" as TaskPriority,
+					dueDate: event.start?.dateTime || event.start?.date || "",
+					assignedTo: "",
+					assignedToName: "Google Calendar",
+					source: "google" as const,
+					type: "event" as const,
+					pillar: undefined,
+					tags: [],
+					htmlLink: event.htmlLink || "",
+					hangoutLink: event.hangoutLink || event.conferenceData?.entryPoints?.[0]?.uri || null,
+					hasMeeting: !!(event.hangoutLink || event.conferenceData?.entryPoints?.length > 0),
+				}));
+		}
 
 		return [...taskEvents, ...googleEventsForDay];
 	};
@@ -413,6 +437,12 @@ export default function Calendar() {
 						<CalendarDays size={16} />
 						Dzisiaj
 					</button>
+					{/* 👈 INFORMACJA O STATUSIE GOOGLE */}
+					{isGoogleAuth ? (
+						<span className={styles.googleStatusOn}>✅ Google Calendar</span>
+					) : (
+						<span className={styles.googleStatusOff}>⏳ Google Calendar (opcjonalny)</span>
+					)}
 				</div>
 			</div>
 
@@ -492,7 +522,6 @@ export default function Calendar() {
 										<span className={styles.moreTasks}>+{dayEvents.length - 3}</span>
 									)}
 								</div>
-								{/* 🆕 POKAŻ IKONKĘ MEET NA KALENDARZU */}
 								{dayEvents.some(e => e.hasMeeting) && (
 									<div className={styles.meetIndicator}>
 										<Video size={12} />
@@ -558,7 +587,6 @@ export default function Calendar() {
 												<span>{selectedTask.pillar}</span>
 											</div>
 										)}
-										{/* 🆕 POKAŻ LINK DO MEET W SZCZEGÓŁACH */}
 										{selectedTask.source === "google" && selectedTask.hasMeeting && (
 											<div className={styles.metaItem} style={{ gridColumn: "1 / -1", background: "#e8f0fe" }}>
 												<Video size={16} color="#1a73e8" />
@@ -580,7 +608,6 @@ export default function Calendar() {
 										</div>
 									)}
 
-									{/* 🆕 PRZYCISK DO MEET */}
 									{selectedTask.source === "google" && selectedTask.hangoutLink && (
 										<a
 											href={selectedTask.hangoutLink}
@@ -594,30 +621,33 @@ export default function Calendar() {
 										</a>
 									)}
 
-									<div className={styles.syncSection}>
-										<button
-											className={styles.syncBtn}
-											onClick={() => handleSyncToGoogle(selectedTask)}
-											disabled={isSyncing}
-										>
-											{isSyncing ? (
-												<>
-													<span className={styles.spinner}></span>
-													Synchronizacja...
-												</>
-											) : (
-												<>
-													<CalendarIcon size={16} />
-													Dodaj do Google Calendar
-												</>
+									{/* 👈 PRZYCISK SYNCHRONIZACJI - TYLKO DLA ZADAŃ SYSTEMOWYCH */}
+									{selectedTask.source !== "google" && (
+										<div className={styles.syncSection}>
+											<button
+												className={styles.syncBtn}
+												onClick={() => handleSyncToGoogle(selectedTask)}
+												disabled={isSyncing}
+											>
+												{isSyncing ? (
+													<>
+														<span className={styles.spinner}></span>
+														Synchronizacja...
+													</>
+												) : (
+													<>
+														<CalendarIcon size={16} />
+														Dodaj do Google Calendar
+													</>
+												)}
+											</button>
+											{!isGoogleAuth && (
+												<span className={styles.authInfo}>
+													⚠️ Wymagana autoryzacja Google (kliknij aby się zalogować)
+												</span>
 											)}
-										</button>
-										{!isGoogleAuth && (
-											<span className={styles.authInfo}>
-												⚠️ Wymagana autoryzacja Google
-											</span>
-										)}
-									</div>
+										</div>
+									)}
 								</div>
 							) : (
 								<div className={styles.dayTasksList}>
