@@ -1,6 +1,5 @@
 ﻿import { Routes, Route, Navigate } from "react-router-dom";
 import { lazy, Suspense, useEffect, useState } from "react";
-import { logger } from "@/utils/logger";
 import api from "@/api/axios";
 
 const DashboardLayout = lazy(() => import("@/layouts/DashboardLayout"));
@@ -55,7 +54,8 @@ function AppRoutes() {
                 return;
             }
             try {
-                const response = await api.get("/api/auth/me");
+                const response = await api.get("/auth/me");
+
                 console.log("✅ Token ważny:", response.data);
                 setIsAuthenticated(true);
             } catch (error) {

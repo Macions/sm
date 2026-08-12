@@ -1,9 +1,10 @@
-﻿import { Router } from 'express';
+﻿// backend/src/routes/revenue.routes.ts
+import { Router } from 'express';
 import { revenueService } from '../services/revenue.service';
 
 const router = Router();
 
-// 🔥 ZMIEŃ - użyj query parameter zamiast :year?
+// GET /api/revenue?year=2026
 router.get('/revenue', async (req, res) => {
     try {
         const year = parseInt(req.query.year as string) || new Date().getFullYear();
@@ -11,33 +12,47 @@ router.get('/revenue', async (req, res) => {
         res.json({ success: true, data });
     } catch (error) {
         console.error('❌ Błąd:', error);
-        res.status(500).json({ 
-            success: false, 
-            message: 'Błąd pobierania danych przychodów' 
+        res.status(500).json({
+            success: false,
+            message: 'Błąd pobierania danych przychodów'
         });
     }
 });
 
-// 🔥 DODAJ endpoint POST - jeśli potrzebujesz
-router.post('/revenue', async (req, res) => {
+// GET /api/revenue/details?year=2026&month=1
+router.get('/revenue/details', async (req, res) => {
     try {
-        const { month, year, revenue } = req.body;
-        if (!month || !year || revenue === undefined) {
-            return res.status(400).json({ 
-                success: false, 
-                message: 'Brak wymaganych danych: month, year, revenue' 
+        const year = parseInt(req.query.year as string) || new Date().getFullYear();
+        const month = parseInt(req.query.month as string) || 1;
+
+        if (month < 1 || month > 12) {
+            return res.status(400).json({
+                success: false,
+                message: 'Miesiąc musi być między 1 a 12'
             });
         }
-        // 🔥 TYMCZASOWO - zwróć błąd, bo metoda nie istnieje
-        res.status(501).json({ 
-            success: false, 
-            message: 'Dodawanie przychodów nie jest jeszcze zaimplementowane' 
-        });
+
+        // 👇 Ta metoda istnieje w RevenueService
+        const details = await revenueService.getMonthlyDetails(year, month);
+        res.json({ success: true, data: details });
     } catch (error) {
         console.error('❌ Błąd:', error);
-        res.status(500).json({ 
-            success: false, 
-            message: 'Błąd dodawania przychodu' 
+        res.status(500).json({
+            success: false,
+            message: 'Błąd pobierania szczegółów'
+        });
+    }
+});
+router.get('/revenue/categories', async (req, res) => {
+    try {
+        const year = parseInt(req.query.year as string) || new Date().getFullYear();
+        const data = await revenueService.getRevenueByCategory(year);
+        res.json({ success: true, data });
+    } catch (error) {
+        console.error('❌ Błąd:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Błąd pobierania kategorii'
         });
     }
 });

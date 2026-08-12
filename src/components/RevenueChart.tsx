@@ -7,7 +7,9 @@ import {
     CartesianGrid,
     Tooltip,
     ResponsiveContainer,
-    Cell,
+    Legend,
+    ComposedChart,
+    Line,
 } from 'recharts';
 import api from '@/api/axios';
 import { logger } from '@/utils/logger';
@@ -25,17 +27,30 @@ interface RevenueData {
     months: MonthlyRevenue[];
     totalRevenue: number;
     averageRevenue: number;
+    totalExpenses?: number;
+    netProfit?: number;
 }
-
-const COLORS = ['#4A6FE8', '#5B7FF0', '#6C8FF8', '#7D9FFF', '#8EAFE8', '#9FBFF0'];
 
 interface RevenueChartProps {
     year?: number;
     title?: string;
 }
 
-export function RevenueChart({ year = new Date().getFullYear(), title = 'Przychód miesięczny' }: RevenueChartProps) {
+const COLORS = {
+    revenue: '#4A6FE8',
+    expenses: '#EF4444',
+    profit: '#10B981',
+    składki: '#4A6FE8',
+    granty: '#8B5CF6',
+    darowizny: '#F59E0B',
+    faktury: '#EC4899',
+    inne: '#6B7280',
+    wydatki: '#EF4444',
+};
+
+export function RevenueChart({ year = new Date().getFullYear(), title = 'Przychody i wydatki' }: RevenueChartProps) {
     const [data, setData] = useState<RevenueData | null>(null);
+    const [categoryData, setCategoryData] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [selectedYear, setSelectedYear] = useState(year);
@@ -47,12 +62,19 @@ export function RevenueChart({ year = new Date().getFullYear(), title = 'Przych�
             try {
                 setLoading(true);
                 setError(null);
-                
-                const response = await api.get(`/api/revenue?year=${selectedYear}`);
+
+                // Pobierz główne dane
+                const response = await api.get(`/revenue?year=${selectedYear}`);
                 if (response.data.success) {
                     setData(response.data.data);
                 } else {
                     setError('Nie udało się pobrać danych');
+                }
+
+                // Pobierz dane kategorii
+                const categoryResponse = await api.get(`/revenue/categories?year=${selectedYear}`);
+                if (categoryResponse.data.success) {
+                    setCategoryData(categoryResponse.data.data);
                 }
             } catch (err: any) {
                 setError(err.message || 'Błąd pobierania danych');
@@ -77,7 +99,7 @@ export function RevenueChart({ year = new Date().getFullYear(), title = 'Przych�
     if (loading) {
         return (
             <div style={{ padding: '40px', textAlign: 'center' }}>
-                <div style={{ 
+                <div style={{
                     display: 'inline-block',
                     width: '32px',
                     height: '32px',
@@ -107,15 +129,21 @@ export function RevenueChart({ year = new Date().getFullYear(), title = 'Przych�
         );
     }
 
+    // Przygotuj dane dla wykresu warstwowego
     const chartData = data.months.map((item: MonthlyRevenue) => ({
         name: item.month.substring(0, 3),
         month: item.month,
         revenue: item.revenue,
+        expenses: item.expenses || 0,
+        profit: item.profit || 0,
     }));
 
-    const maxValue = Math.max(...chartData.map((item: { revenue: number }) => item.revenue));
-    const yAxisMax = Math.ceil(maxValue / 10000) * 10000 + 5000;
+    const maxValue = Math.max(
+        ...chartData.map((item) => Math.max(item.revenue, item.expenses || 0))
+    );
+    const yAxisMax = Math.ceil(maxValue * 1.2);
 
+    // W tooltip - dodaj informację o wydatkach z faktur
     const CustomTooltip = ({ active, payload }: any) => {
         if (active && payload && payload.length) {
             const data = payload[0].payload;
@@ -130,6 +158,20 @@ export function RevenueChart({ year = new Date().getFullYear(), title = 'Przych�
                     <p style={{ margin: 0, fontWeight: 'bold' }}>{data.month}</p>
                     <p style={{ margin: '4px 0', color: '#4A6FE8' }}>
                         Przychód: {formatCurrency(data.revenue)}
+                    </p>
+                    <p style={{ margin: '4px 0', color: '#EF4444' }}>
+                        Wydatki (payments): {formatCurrency(data.expenses - (data.expensesFromInvoices || 0))}
+                    </p>
+                    {data.expensesFromInvoices > 0 && (
+                        <p style={{ margin: '4px 0', color: '#F59E0B' }}>
+                            Wydatki (faktury): {formatCurrency(data.expensesFromInvoices)}
+                        </p>
+                    )}
+                    <p style={{ margin: '4px 0', color: '#EF4444' }}>
+                        Wydatki łącznie: {formatCurrency(data.expenses || 0)}
+                    </p>
+                    <p style={{ margin: '4px 0', color: '#10B981' }}>
+                        Zysk: {formatCurrency(data.profit || 0)}
                     </p>
                 </div>
             );
@@ -192,46 +234,113 @@ export function RevenueChart({ year = new Date().getFullYear(), title = 'Przych�
                             {formatCurrency(data.totalRevenue)}
                         </span>
                     </div>
-                    <div style={{ fontSize: '14px' }}>
-                        <span style={{ color: '#6B7280' }}>Średnia: </span>
-                        <span style={{ fontWeight: 'bold', color: '#10B981' }}>
-                            {formatCurrency(data.averageRevenue)}
-                        </span>
-                    </div>
+                    {data.totalExpenses !== undefined && (
+                        <div style={{ fontSize: '14px' }}>
+                            <span style={{ color: '#6B7280' }}>Wydatki: </span>
+                            <span style={{ fontWeight: 'bold', color: '#EF4444' }}>
+                                {formatCurrency(data.totalExpenses)}
+                            </span>
+                        </div>
+                    )}
+                    {data.netProfit !== undefined && (
+                        <div style={{ fontSize: '14px' }}>
+                            <span style={{ color: '#6B7280' }}>Zysk netto: </span>
+                            <span style={{ fontWeight: 'bold', color: '#10B981' }}>
+                                {formatCurrency(data.netProfit)}
+                            </span>
+                        </div>
+                    )}
                 </div>
             </div>
 
-            <div style={{ width: '100%', height: '350px' }}>
+            <div style={{ width: '100%', height: '400px' }}>
                 <ResponsiveContainer>
-                    <BarChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                    <ComposedChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
                         <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" vertical={false} />
-                        <XAxis 
-                            dataKey="name" 
+                        <XAxis
+                            dataKey="name"
                             tick={{ fill: '#6B7280', fontSize: 12 }}
                             axisLine={{ stroke: '#e5e7eb' }}
                             tickLine={false}
                         />
-                        <YAxis 
-                            tickFormatter={(value: number) => `${(value / 1000).toFixed(0)}k`}
+                        <YAxis
+                            tickFormatter={(value: number) => `${value} zł`}
                             tick={{ fill: '#6B7280', fontSize: 12 }}
                             axisLine={{ stroke: '#e5e7eb' }}
                             tickLine={false}
                             domain={[0, yAxisMax]}
                         />
                         <Tooltip content={<CustomTooltip />} />
-                        <Bar 
-                            dataKey="revenue" 
-                            fill="#4A6FE8" 
-                            radius={[6, 6, 0, 0]} 
-                            name="Przychód"
-                        >
-                            {chartData.map((_entry: any, index: number) => (
-                                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                            ))}
-                        </Bar>
-                    </BarChart>
+                        <Legend />
+
+                        {/* Przychody - słupki */}
+                        <Bar
+                            dataKey="revenue"
+                            fill={COLORS.revenue}
+                            radius={[4, 4, 0, 0]}
+                            name="Przychody"
+                            barSize={30}
+                        />
+
+                        {/* Wydatki - słupki (ujemne) */}
+                        <Bar
+                            dataKey="expenses"
+                            fill={COLORS.expenses}
+                            radius={[4, 4, 0, 0]}
+                            name="Wydatki"
+                            barSize={30}
+                        />
+
+                        {/* Linia zysku */}
+                        <Line
+                            type="monotone"
+                            dataKey="profit"
+                            stroke={COLORS.profit}
+                            strokeWidth={2}
+                            name="Zysk netto"
+                            dot={{ fill: COLORS.profit }}
+                        />
+                    </ComposedChart>
                 </ResponsiveContainer>
             </div>
+
+            {/* Sekcja z kategoriami */}
+            {categoryData.length > 0 && (
+                <div style={{ marginTop: '32px', borderTop: '1px solid #e5e7eb', paddingTop: '24px' }}>
+                    <h3 style={{ fontSize: '16px', fontWeight: '600', color: '#1f2937', marginBottom: '16px' }}>
+                        Struktura przychodów według kategorii
+                    </h3>
+                    <div style={{ width: '100%', height: '300px' }}>
+                        <ResponsiveContainer>
+                            <BarChart data={categoryData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" vertical={false} />
+                                <XAxis
+                                    dataKey="month"
+                                    tick={{ fill: '#6B7280', fontSize: 12 }}
+                                    axisLine={{ stroke: '#e5e7eb' }}
+                                    tickLine={false}
+                                />
+                                <YAxis
+                                    tickFormatter={(value: number) => `${value} zł`}
+                                    tick={{ fill: '#6B7280', fontSize: 12 }}
+                                    axisLine={{ stroke: '#e5e7eb' }}
+                                    tickLine={false}
+                                />
+                                <Tooltip
+                                    formatter={(value: any) => formatCurrency(Number(value))}
+                                />
+                                <Legend />
+                                <Bar dataKey="Składki" stackId="a" fill={COLORS.składki} />
+                                <Bar dataKey="Granty" stackId="a" fill={COLORS.granty} />
+                                <Bar dataKey="Darowizny" stackId="a" fill={COLORS.darowizny} />
+                                <Bar dataKey="Faktury" stackId="a" fill={COLORS.faktury} />
+                                <Bar dataKey="Inne przychody" stackId="a" fill={COLORS.inne} />
+                                <Bar dataKey="Wydatki" stackId="b" fill={COLORS.wydatki} />
+                            </BarChart>
+                        </ResponsiveContainer>
+                    </div>
+                </div>
+            )}
 
             <div style={{
                 marginTop: '16px',
@@ -244,15 +353,11 @@ export function RevenueChart({ year = new Date().getFullYear(), title = 'Przych�
                 flexWrap: 'wrap',
                 gap: '8px',
             }}>
-                <span>📊 {data.months.length} miesięcy</span>
+                <span>{data.months.filter(m => m.revenue > 0).length} miesięcy z przychodami</span>
                 <span>
-                    {data.months.length > 1 && 
-                     data.months[data.months.length - 1].revenue > data.months[0].revenue 
-                        ? '📈 Trend wzrostowy' 
-                        : '📉 Trend spadkowy'
-                    }
+                    {data.netProfit && data.netProfit > 0 ? 'Zyskowny rok' : '📉 Stratny rok'}
                 </span>
-                <span>💰 Łączny przychód: {formatCurrency(data.totalRevenue)}</span>
+                <span>Łączny przychód: {formatCurrency(data.totalRevenue)}</span>
             </div>
 
             <style>{`

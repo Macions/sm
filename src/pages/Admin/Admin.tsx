@@ -42,7 +42,7 @@ import styles from "./Admin.module.css";
 // ---------------------------------------------------------------------------
 
 // ---------------------------------------------------------------------------
-// TYPY DLA LOGĂ“W
+// TYPY DLA LOGÓW
 // ---------------------------------------------------------------------------
 
 interface SystemLog {
@@ -51,25 +51,25 @@ interface SystemLog {
 	user_name: string;
 	user_role: string;
 	action_type:
-		| "CREATE"
-		| "UPDATE"
-		| "DELETE"
-		| "LOGIN"
-		| "LOGOUT"
-		| "APPROVE"
-		| "REJECT";
+	| "CREATE"
+	| "UPDATE"
+	| "DELETE"
+	| "LOGIN"
+	| "LOGOUT"
+	| "APPROVE"
+	| "REJECT";
 	category:
-		| "USER"
-		| "TEAM"
-		| "LEAVE"
-		| "PROJECT"
-		| "VACANCY"
-		| "TUTORIAL"
-		| "SOCIAL_MEDIA"
-		| "PERMISSION"
-		| "STRUCTURE"
-		| "NOTIFICATION"
-		| "AUTH";
+	| "USER"
+	| "TEAM"
+	| "LEAVE"
+	| "PROJECT"
+	| "VACANCY"
+	| "TUTORIAL"
+	| "SOCIAL_MEDIA"
+	| "PERMISSION"
+	| "STRUCTURE"
+	| "NOTIFICATION"
+	| "AUTH";
 	endpoint: string;
 	method: string;
 	entity_id: string | null;
@@ -92,8 +92,8 @@ interface LogsResponse {
 
 type UserRole = "admin" | "board" | "coordinator" | "member" | "mentor";
 
-// ---- Komponent zarzÄ…dzania logami ----
-// ---- Komponent zarzÄ…dzania logami ----
+// ---- Komponent zarządzania logami ----
+// ---- Komponent zarządzania logami ----
 function LogsManagement() {
 	const [logs, setLogs] = useState<SystemLog[]>([]);
 	const [loading, setLoading] = useState(true);
@@ -107,13 +107,13 @@ function LogsManagement() {
 	const [selectedStatus, setSelectedStatus] = useState<string>("all");
 
 	const categoryLabels: Record<string, string> = {
-		USER: "UĹĽytkownicy",
-		TEAM: "ZespoĹ‚y",
-		LEAVE: "Urlopy i nieobecnoĹ›ci",
+		USER: "Użytkownicy",
+		TEAM: "Zespoły",
+		LEAVE: "Urlopy i nieobecności",
 		PROJECT: "Projekty",
 		VACANCY: "Rekrutacja",
 		TUTORIAL: "Poradniki",
-		SOCIAL_MEDIA: "Media spoĹ‚ecznoĹ›ciowe",
+		SOCIAL_MEDIA: "Media społecznościowe",
 		PERMISSION: "Uprawnienia",
 		STRUCTURE: "Struktura organizacji",
 		NOTIFICATION: "Powiadomienia",
@@ -123,7 +123,7 @@ function LogsManagement() {
 	const actionLabels: Record<string, string> = {
 		CREATE: "Dodanie",
 		UPDATE: "Modyfikacja",
-		DELETE: "UsuniÄ™cie",
+		DELETE: "Usunięcie",
 		LOGIN: "Logowanie",
 		LOGOUT: "Wylogowanie",
 		APPROVE: "Zatwierdzenie",
@@ -135,8 +135,8 @@ function LogsManagement() {
 		{ label: string; icon: string; color: string }
 	> = {
 		success: { label: "Powodzenie", icon: "âś“", color: "#059669" },
-		error: { label: "BĹ‚Ä…d", icon: "âś—", color: "#dc2626" },
-		warning: { label: "OstrzeĹĽenie", icon: "âš ", color: "#d97706" },
+		error: { label: "Błąd", icon: "âś—", color: "#dc2626" },
+		warning: { label: "Ostrzeżenie", icon: "âš ", color: "#d97706" },
 	};
 
 	const getHumanReadableDescription = (log: SystemLog): string => {
@@ -144,10 +144,10 @@ function LogsManagement() {
 		const category = categoryLabels[log.category] || log.category;
 
 		if (log.category === "LEAVE" && log.action_type === "CREATE") {
-			return `ZgĹ‚oszono nowy wniosek urlopowy przez ${log.user_name}`;
+			return `Zgłoszono nowy wniosek urlopowy przez ${log.user_name}`;
 		}
 		if (log.category === "LEAVE" && log.action_type === "DELETE") {
-			return `UsuniÄ™to wniosek urlopowy (${log.entity_name || "brak danych"})`;
+			return `Usunięto wniosek urlopowy (${log.entity_name || "brak danych"})`;
 		}
 		if (log.category === "LEAVE" && log.action_type === "APPROVE") {
 			return `Zatwierdzono wniosek urlopowy`;
@@ -156,22 +156,22 @@ function LogsManagement() {
 			return `Odrzucono wniosek urlopowy`;
 		}
 		if (log.category === "TEAM" && log.action_type === "CREATE") {
-			return `Utworzono nowy zespĂłĹ‚: ${log.entity_name || "brak nazwy"}`;
+			return `Utworzono nowy zespół: ${log.entity_name || "brak nazwy"}`;
 		}
 		if (log.category === "TEAM" && log.action_type === "DELETE") {
-			return `UsuniÄ™to zespĂłĹ‚: ${log.entity_name || "brak nazwy"}`;
+			return `Usunięto zespół: ${log.entity_name || "brak nazwy"}`;
 		}
 		if (log.category === "USER" && log.action_type === "UPDATE") {
-			return `Zaktualizowano dane profilu uĹĽytkownika ${log.user_name}`;
+			return `Zaktualizowano dane profilu użytkownika ${log.user_name}`;
 		}
 		if (log.category === "PERMISSION" && log.action_type === "UPDATE") {
 			return `Zmieniono uprawnienia dla roli`;
 		}
 		if (log.category === "AUTH" && log.action_type === "LOGIN") {
-			return `UĹĽytkownik ${log.user_name} zalogowaĹ‚ siÄ™ do systemu`;
+			return `Użytkownik ${log.user_name} zalogował się do systemu`;
 		}
 		if (log.category === "AUTH" && log.action_type === "LOGOUT") {
-			return `UĹĽytkownik ${log.user_name} wylogowaĹ‚ siÄ™ z systemu`;
+			return `Użytkownik ${log.user_name} wylogował się z systemu`;
 		}
 
 		return `${action} w kategorii ${category.toLowerCase()}`;
@@ -192,17 +192,17 @@ function LogsManagement() {
 
 			if (log.category === "USER" && log.action_type === "UPDATE") {
 				const fields: string[] = [];
-				if (changes.firstName) fields.push(`imiÄ™ na "${changes.firstName}"`);
+				if (changes.firstName) fields.push(`imię na "${changes.firstName}"`);
 				if (changes.lastName) fields.push(`nazwisko na "${changes.lastName}"`);
 				if (changes.description) fields.push(`opis profilu`);
-				if (changes.skills !== undefined) fields.push(`umiejÄ™tnoĹ›ci`);
-				if (changes.availability) fields.push(`dostÄ™pnoĹ›Ä‡`);
+				if (changes.skills !== undefined) fields.push(`umiejętności`);
+				if (changes.availability) fields.push(`dostępność`);
 				if (fields.length === 0) return "Zaktualizowano dane profilu";
 				return `Zmieniono: ${fields.join(", ")}`;
 			}
 
 			if (log.category === "TEAM" && changes.name) {
-				return `Nazwa zespoĹ‚u: "${changes.name}"`;
+				return `Nazwa zespołu: "${changes.name}"`;
 			}
 
 			const keys = Object.keys(changes);
@@ -238,18 +238,18 @@ function LogsManagement() {
 		const diffHour = Math.floor(diffMin / 60);
 		const diffDay = Math.floor(diffHour / 24);
 
-		if (diffMin < 1) return "przed chwilÄ…";
+		if (diffMin < 1) return "przed chwilą";
 		if (diffMin < 60) return `${diffMin} min temu`;
 		if (diffHour < 24) return `${diffHour} godz. temu`;
 		if (diffDay === 1) return "wczoraj";
 		if (diffDay < 7) return `${diffDay} dni temu`;
 		if (diffDay < 30) {
 			const weeks = Math.floor(diffDay / 7);
-			return `${weeks} ${weeks === 1 ? "tydzieĹ„" : "tygodnie"} temu`;
+			return `${weeks} ${weeks === 1 ? "tydzień" : "tygodnie"} temu`;
 		}
 		if (diffDay < 365) {
 			const months = Math.floor(diffDay / 30);
-			return `${months} ${months === 1 ? "miesiÄ…c" : "miesiÄ™cy"} temu`;
+			return `${months} ${months === 1 ? "miesiąc" : "miesięcy"} temu`;
 		}
 		const years = Math.floor(diffDay / 365);
 		return `${years} ${years === 1 ? "rok" : "lat"} temu`;
@@ -273,15 +273,15 @@ function LogsManagement() {
 				},
 			});
 
-			if (!response.ok) throw new Error("BĹ‚Ä…d pobierania logĂłw");
+			if (!response.ok) throw new Error("Błąd pobierania logów");
 
 			const data: LogsResponse = await response.json();
 			setLogs(data.logs);
 			setTotal(data.total);
 			setTotalPages(data.totalPages);
 		} catch (error) {
-			logger.error("âťŚ BĹ‚Ä…d:", error);
-			toast.error("Nie udaĹ‚o siÄ™ pobraÄ‡ logĂłw");
+			logger.error("âťŚ Błąd:", error);
+			toast.error("Nie udało się pobrać logów");
 		} finally {
 			setLoading(false);
 		}
@@ -298,7 +298,7 @@ function LogsManagement() {
 		<section className={styles.section}>
 			<div className={styles.section__header}>
 				<div className={styles.section__headerLeft}>
-					<h2 className={styles.section__title}>Historia dziaĹ‚aĹ„</h2>
+					<h2 className={styles.section__title}>Historia działań</h2>
 					<p className={styles.section__subtitle}>
 						Rejestr wszystkich operacji wykonanych w systemie.
 					</p>
@@ -309,7 +309,7 @@ function LogsManagement() {
 						setPage(1);
 						fetchLogs();
 					}}
-					title="OdĹ›wieĹĽ logi"
+					title="Odśwież logi"
 				>
 					<RefreshCw size={16} />
 				</button>
@@ -320,7 +320,7 @@ function LogsManagement() {
 					<input
 						type="text"
 						className={styles.logsFilters__input}
-						placeholder="Szukaj po nazwie uĹĽytkownika lub opisie..."
+						placeholder="Szukaj po nazwie użytkownika lub opisie..."
 						value={searchTerm}
 						onChange={(e) => {
 							setSearchTerm(e.target.value);
@@ -380,20 +380,20 @@ function LogsManagement() {
 					>
 						<option value="all">Wszystkie statusy</option>
 						<option value="success">âś“ Powodzenie</option>
-						<option value="error">âś— BĹ‚Ä…d</option>
-						<option value="warning">âš  OstrzeĹĽenie</option>
+						<option value="error">âś— Błąd</option>
+						<option value="warning">âš  Ostrzeżenie</option>
 					</select>
 				</div>
 			</div>
 
 			{loading ? (
-				<div className={styles.logsLoading}>Ĺadowanie historii...</div>
+				<div className={styles.logsLoading}>Ładowanie historii...</div>
 			) : logs.length === 0 ? (
 				<div className={styles.logsEmpty}>
 					<Shield size={48} />
-					<h3>Brak zapisanych dziaĹ‚aĹ„</h3>
+					<h3>Brak zapisanych działań</h3>
 					<p>
-						Nie znaleziono ĹĽadnych wpisĂłw speĹ‚niajÄ…cych kryteria wyszukiwania.
+						Nie znaleziono żadnych wpisów spełniających kryteria wyszukiwania.
 					</p>
 				</div>
 			) : (
@@ -440,14 +440,14 @@ function LogsManagement() {
 										{changes && (
 											<div className={styles.logItem__changes}>
 												<span className={styles.logItem__changesLabel}>
-													SzczegĂłĹ‚y: {changes}
+													Szczegóły: {changes}
 												</span>
 											</div>
 										)}
 
 										{log.error_message && (
 											<div className={styles.logItem__error}>
-												BĹ‚Ä…d: {log.error_message}
+												Błąd: {log.error_message}
 											</div>
 										)}
 
@@ -467,8 +467,8 @@ function LogsManagement() {
 
 					<div className={styles.pagination}>
 						<div className={styles.pagination__info}>
-							WyĹ›wietlono {(page - 1) * limit + 1} -{" "}
-							{Math.min(page * limit, total)} z {total} wpisĂłw
+							Wyświetlono {(page - 1) * limit + 1} -{" "}
+							{Math.min(page * limit, total)} z {total} wpisów
 						</div>
 						<div className={styles.pagination__controls}>
 							<button
@@ -486,7 +486,7 @@ function LogsManagement() {
 								onClick={() => setPage(page + 1)}
 								disabled={page === totalPages}
 							>
-								NastÄ™pna strona
+								Następna strona
 							</button>
 						</div>
 					</div>
@@ -544,16 +544,16 @@ interface AvailableUser {
 // ---------------------------------------------------------------------------
 
 const ROLE_LABELS: Record<UserRole, string> = {
-	admin: "Administrator gĹ‚Ăłwny",
-	board: "ZarzÄ…d",
+	admin: "Administrator główny",
+	board: "Zarząd",
 	coordinator: "Koordynator",
-	member: "CzĹ‚onek",
+	member: "Członek",
 	mentor: "Mentor",
 };
 
 const ICON_OPTIONS = [
-	{ value: "Users", label: "UĹĽytkownicy", icon: Users },
-	{ value: "UserCog", label: "Ustawienia uĹĽytkownika", icon: UserCog },
+	{ value: "Users", label: "Użytkownicy", icon: Users },
+	{ value: "UserCog", label: "Ustawienia użytkownika", icon: UserCog },
 	{ value: "Building2", label: "Budynki", icon: Building2 },
 	{ value: "Briefcase", label: "Teczka", icon: Briefcase },
 	{ value: "Megaphone", label: "Megafon", icon: Megaphone },
@@ -564,7 +564,7 @@ const ICON_OPTIONS = [
 // KOMPONENTY
 // ---------------------------------------------------------------------------
 
-// ---- Komponent zarzÄ…dzania rolami ----
+// ---- Komponent zarządzania rolami ----
 function RolesManagement({
 	roles,
 	canManage,
@@ -639,8 +639,8 @@ function RolesManagement({
 			setSelectedPermissions([]);
 			toast.success("Uprawnienia zaktualizowane!");
 		} catch (error) {
-			logger.error("âťŚ BĹ‚Ä…d:", error);
-			toast.error("Nie udaĹ‚o siÄ™ zaktualizowaÄ‡ uprawnieĹ„");
+			logger.error("âťŚ Błąd:", error);
+			toast.error("Nie udało się zaktualizować uprawnień");
 		} finally {
 			setUpdating(false);
 		}
@@ -652,7 +652,7 @@ function RolesManagement({
 				<div className={styles.section__headerLeft}>
 					<h2 className={styles.section__title}>Role i uprawnienia</h2>
 					<p className={styles.section__subtitle}>
-						ZarzÄ…dzanie dostÄ™pami i uprawnieniami uĹĽytkownikĂłw.
+						Zarządzanie dostępami i uprawnieniami użytkowników.
 					</p>
 				</div>
 				<div className={styles.section__headerRight}>
@@ -660,7 +660,7 @@ function RolesManagement({
 						className={styles.section__refreshBtn}
 						onClick={onRefresh}
 						disabled={refreshing}
-						title="OdĹ›wieĹĽ uprawnienia"
+						title="Odśwież uprawnienia"
 					>
 						<RefreshCw
 							size={16}
@@ -670,7 +670,7 @@ function RolesManagement({
 					{canManage && (
 						<button className={styles.section__addBtn}>
 							<Plus size={18} />
-							Dodaj rolÄ™
+							Dodaj rolę
 						</button>
 					)}
 				</div>
@@ -756,7 +756,7 @@ function RolesManagement({
 												))
 											) : (
 												<span className={styles.roleCard__noPermissions}>
-													Brak uprawnieĹ„
+													Brak uprawnień
 												</span>
 											)}
 										</div>
@@ -773,7 +773,7 @@ function RolesManagement({
 													className={`${styles.roleCard__actionBtn} ${styles.roleCard__actionBtnDanger}`}
 												>
 													<Trash2 size={16} />
-													UsuĹ„ rolÄ™
+													Usuń rolę
 												</button>
 											</div>
 										)}
@@ -788,7 +788,7 @@ function RolesManagement({
 	);
 }
 
-// ---- Komponent zarzÄ…dzania strukturÄ… ----
+// ---- Komponent zarządzania strukturą ----
 function StructureManagement({
 	teams,
 	canManage,
@@ -806,12 +806,12 @@ function StructureManagement({
 	const [editingTeam, setEditingTeam] = useState<Team | null>(null);
 	const [isAddingMember, setIsAddingMember] = useState<string | null>(null);
 	const [selectedUser, setSelectedUser] = useState<string>("");
-	const [selectedRole, setSelectedRole] = useState<string>("CzĹ‚onek");
+	const [selectedRole, setSelectedRole] = useState<string>("Członek");
 	const [isLeader, setIsLeader] = useState(false);
 	const [teamForm, setTeamForm] = useState({
 		name: "",
 		description: "",
-		role: "ZespĂłĹ‚",
+		role: "Zespół",
 		icon: "Users",
 		email: "",
 		parent_id: null as string | null, // <-- DODAJ
@@ -827,14 +827,14 @@ function StructureManagement({
 		isOpen: false,
 		title: "",
 		message: "",
-		confirmText: "PotwierdĹş",
-		onConfirm: () => {},
-		onCancel: () => {},
+		confirmText: "Potwierdź",
+		onConfirm: () => { },
+		onCancel: () => { },
 	});
 	const [expandedTeams, setExpandedTeams] = useState<Record<string, boolean>>(
 		{},
 	);
-	// Dodaj te stany po istniejÄ…cych state'ach
+	// Dodaj te stany po istniejących state'ach
 	const [editingMemberRole, setEditingMemberRole] = useState<{
 		memberId: string;
 		teamId: string;
@@ -845,12 +845,12 @@ function StructureManagement({
 	const scrollToTeamHeader = (teamId: string) => {
 		const element = document.getElementById(`team-${teamId}`);
 		if (element) {
-			// ZnajdĹş nagĹ‚Ăłwek zespoĹ‚u (pierwszy element .teamCard__header)
+			// Znajdź nagłówek zespołu (pierwszy element .teamCard__header)
 			const header = element.querySelector(".teamCard__header");
 			if (header) {
-				// PrzewiĹ„ pĹ‚ynnie do nagĹ‚Ăłwka z marginesem 80px od gĂłry
+				// Przewiń płynnie do nagłówka z marginesem 80px od góry
 				const headerRect = header.getBoundingClientRect();
-				const offset = 80; // margines od gĂłry
+				const offset = 80; // margines od góry
 				const scrollPosition = window.scrollY + headerRect.top - offset;
 
 				window.scrollTo({
@@ -858,7 +858,7 @@ function StructureManagement({
 					behavior: "smooth",
 				});
 			} else {
-				// Fallback - przewiĹ„ do caĹ‚ego elementu
+				// Fallback - przewiń do całego elementu
 				element.scrollIntoView({
 					behavior: "smooth",
 					block: "start",
@@ -867,7 +867,7 @@ function StructureManagement({
 			}
 		}
 	};
-	// đź”Ą FUNKCJA DO AKTUALIZACJI ROLI CZĹONKA
+	// đź”Ą FUNKCJA DO AKTUALIZACJI ROLI CZŁONKA
 	const handleUpdateMemberRole = async (
 		memberId: string,
 		teamId: string,
@@ -876,12 +876,12 @@ function StructureManagement({
 		const trimmed = newRole.trim();
 
 		if (!trimmed) {
-			toast.error("Nazwa roli nie moĹĽe byÄ‡ pusta");
+			toast.error("Nazwa roli nie może być pusta");
 			return;
 		}
 
 		if (trimmed.length > 100) {
-			toast.error("Nazwa roli nie moĹĽe przekraczaÄ‡ 100 znakĂłw");
+			toast.error("Nazwa roli nie może przekraczać 100 znaków");
 			return;
 		}
 
@@ -889,7 +889,7 @@ function StructureManagement({
 			const token = localStorage.getItem("accessToken");
 
 			// đź”Ą DODAJ LOG:
-			console.log("đź“¤ WysyĹ‚am request:", {
+			console.log("đź“¤ Wysyłam request:", {
 				memberId,
 				teamId,
 				role_in_team: trimmed,
@@ -908,9 +908,9 @@ function StructureManagement({
 
 			// đź”Ą DODAJ LOG odpowiedzi:
 			const data = await response.json();
-			console.log("đź“Ą OdpowiedĹş backendu:", data);
+			console.log("đź“Ą Odpowiedź backendu:", data);
 
-			if (!response.ok) throw new Error("BĹ‚Ä…d aktualizacji roli");
+			if (!response.ok) throw new Error("Błąd aktualizacji roli");
 
 			toast.success("Rola zaktualizowana!");
 			setEditingMemberRole(null);
@@ -918,8 +918,8 @@ function StructureManagement({
 			await onRefresh();
 			onTeamUpdated(teamId);
 		} catch (error) {
-			logger.error("âťŚ BĹ‚Ä…d:", error);
-			toast.error("Nie udaĹ‚o siÄ™ zaktualizowaÄ‡ roli");
+			logger.error("âťŚ Błąd:", error);
+			toast.error("Nie udało się zaktualizować roli");
 		}
 	};
 	// đź”Ą DODAJ TEN STATE:
@@ -928,7 +928,7 @@ function StructureManagement({
 		setTeamForm({
 			name: "",
 			description: "",
-			role: "ZespĂłĹ‚",
+			role: "Zespół",
 			icon: "Users",
 			email: "",
 			parent_id: null, // <-- DODAJ
@@ -937,27 +937,27 @@ function StructureManagement({
 		setEditingTeam(null);
 		setIsAddingMember(null);
 		setSelectedUser("");
-		setSelectedRole("CzĹ‚onek");
+		setSelectedRole("Członek");
 		setIsLeader(false);
 	};
 	// ============================================================
-	// đź”Ą NAZWY ZESPOĹĂ“W DO UKRYCIA
+	// đź”Ą NAZWY ZESPOŁÓW DO UKRYCIA
 	// ============================================================
 	const HIDDEN_TEAMS = [
 		"Filary organizacji",
 		"Organy kontrolne",
-		"SiĹ‚a mĹ‚odych",
-		"SiĹ‚a MĹ‚odych",
+		"Siła młodych",
+		"Siła Młodych",
 	];
 
 	// ============================================================
-	// đź”Ą KOLEJNOĹšÄ† ZESPOĹĂ“W
+	// đź”Ą KOLEJNOŚĆ ZESPOŁÓW
 	// ============================================================
 	const TEAM_ORDER = [
-		"ZarzÄ…d",
+		"Zarząd",
 		"Dyrekcja",
 		"Komisja Rewizyjna",
-		"SÄ…d KoleĹĽeĹ„ski",
+		"Sąd Koleżeński",
 	];
 
 	// ============================================================
@@ -968,10 +968,10 @@ function StructureManagement({
 	};
 
 	// ============================================================
-	// đź”Ą FILTRUJ I SORTUJ ZESPOĹY
+	// đź”Ą FILTRUJ I SORTUJ ZESPOŁY
 	// ============================================================
 	const getSortedTeams = (): Team[] => {
-		// 1. Odfiltruj ukryte zespoĹ‚y
+		// 1. Odfiltruj ukryte zespoły
 		const filtered = teams.filter((team) => !HIDDEN_TEAMS.includes(team.name));
 
 		// 2. Podziel na filary i inne
@@ -986,7 +986,7 @@ function StructureManagement({
 			}
 		});
 
-		// 3. Posortuj inne wedĹ‚ug TEAM_ORDER
+		// 3. Posortuj inne według TEAM_ORDER
 		const sortedOthers = others.sort((a, b) => {
 			const indexA = TEAM_ORDER.indexOf(a.name);
 			const indexB = TEAM_ORDER.indexOf(b.name);
@@ -999,12 +999,12 @@ function StructureManagement({
 		// 4. Posortuj filary alfabetycznie
 		const sortedPillars = pillars.sort((a, b) => a.name.localeCompare(b.name));
 
-		// 5. PoĹ‚Ä…cz: inne + filary
+		// 5. Połącz: inne + filary
 		return [...sortedOthers, ...sortedPillars];
 	};
 
 	// ============================================================
-	// đź”Ą POBRANIE CZĹONKĂ“W DO WYĹšWIETLENIA
+	// đź”Ą POBRANIE CZŁONKÓW DO WYŚWIETLENIA
 	// ============================================================
 	const getDisplayMembers = (
 		team: Team,
@@ -1014,7 +1014,7 @@ function StructureManagement({
 
 		let members = [...team.members];
 
-		// Dla filarĂłw: domyĹ›lnie tylko liderzy (koordynatorzy)
+		// Dla filarów: domyślnie tylko liderzy (koordynatorzy)
 		if (isTeamPillar) {
 			const leaders = members.filter((m) => m.is_leader === true);
 			const nonLeaders = members.filter((m) => m.is_leader !== true);
@@ -1070,26 +1070,26 @@ function StructureManagement({
 	};
 
 	// ============================================================
-	// đź”Ą PRZEĹÄ„CZANIE "POKAĹ» WSZYSTKICH"
+	// đź”Ą PRZEŁĄCZANIE "POKAŻ WSZYSTKICH"
 	// ============================================================
 	// ============================================================
-	// đź”Ą PRZEĹÄ„CZANIE "POKAĹ» WSZYSTKICH" - Z PRZEWIJANIEM
+	// đź”Ą PRZEŁĄCZANIE "POKAŻ WSZYSTKICH" - Z PRZEWIJANIEM
 	// ============================================================
 	const toggleShowAll = (teamId: string) => {
 		const isCurrentlyExpanded = expandedTeams[teamId] || false;
 
-		// JeĹ›li byĹ‚ rozwiniÄ™ty i teraz zwijamy - przewiĹ„ do nagĹ‚Ăłwka
+		// Jeśli był rozwinięty i teraz zwijamy - przewiń do nagłówka
 		if (isCurrentlyExpanded) {
-			// Najpierw zaktualizuj stan (zwinie listÄ™)
+			// Najpierw zaktualizuj stan (zwinie listę)
 			setExpandedTeams((prev) => ({
 				...prev,
 				[teamId]: false,
 			}));
 
-			// Po zmianie stanu, przewiĹ„ do nagĹ‚Ăłwka
+			// Po zmianie stanu, przewiń do nagłówka
 			setTimeout(() => {
 				scrollToTeamHeader(teamId);
-			}, 100); // maĹ‚e opĂłĹşnienie ĹĽeby DOM siÄ™ zaktualizowaĹ‚
+			}, 100); // małe opóźnienie żeby DOM się zaktualizował
 		} else {
 			// Rozwijamy - tylko zaktualizuj stan
 			setExpandedTeams((prev) => ({
@@ -1112,14 +1112,14 @@ function StructureManagement({
 				body: JSON.stringify(teamForm),
 			});
 
-			if (!response.ok) throw new Error("BĹ‚Ä…d dodawania zespoĹ‚u");
+			if (!response.ok) throw new Error("Błąd dodawania zespołu");
 
-			toast.success("ZespĂłĹ‚ dodany!");
+			toast.success("Zespół dodany!");
 			resetTeamForm();
 			await onRefresh();
 		} catch (error) {
-			logger.error("âťŚ BĹ‚Ä…d:", error);
-			toast.error("Nie udaĹ‚o siÄ™ dodaÄ‡ zespoĹ‚u");
+			logger.error("âťŚ Błąd:", error);
+			toast.error("Nie udało się dodać zespołu");
 		}
 	};
 
@@ -1138,26 +1138,26 @@ function StructureManagement({
 				body: JSON.stringify(teamForm),
 			});
 
-			if (!response.ok) throw new Error("BĹ‚Ä…d edycji zespoĹ‚u");
+			if (!response.ok) throw new Error("Błąd edycji zespołu");
 
-			toast.success("ZespĂłĹ‚ zaktualizowany!");
+			toast.success("Zespół zaktualizowany!");
 			const teamId = editingTeam.id;
 			resetTeamForm();
 			await onRefresh();
 
 			onTeamUpdated(teamId);
 		} catch (error) {
-			logger.error("âťŚ BĹ‚Ä…d:", error);
-			toast.error("Nie udaĹ‚o siÄ™ zaktualizowaÄ‡ zespoĹ‚u");
+			logger.error("âťŚ Błąd:", error);
+			toast.error("Nie udało się zaktualizować zespołu");
 		}
 	};
 
 	const showDeleteTeamConfirm = (teamId: string, teamName: string) => {
 		setConfirmDialog({
 			isOpen: true,
-			title: "UsuĹ„ zespĂłĹ‚",
-			message: `Czy na pewno chcesz usunÄ…Ä‡ zespĂłĹ‚ "${teamName}"? Tej operacji nie moĹĽna cofnÄ…Ä‡.`,
-			confirmText: "UsuĹ„",
+			title: "Usuń zespół",
+			message: `Czy na pewno chcesz usunąć zespół "${teamName}"? Tej operacji nie można cofnąć.`,
+			confirmText: "Usuń",
 			onConfirm: async () => {
 				try {
 					const token = localStorage.getItem("accessToken");
@@ -1168,13 +1168,13 @@ function StructureManagement({
 						},
 					});
 
-					if (!response.ok) throw new Error("BĹ‚Ä…d usuwania zespoĹ‚u");
+					if (!response.ok) throw new Error("Błąd usuwania zespołu");
 
-					toast.success("ZespĂłĹ‚ usuniÄ™ty!");
+					toast.success("Zespół usunięty!");
 					await onRefresh();
 				} catch (error) {
-					logger.error("âťŚ BĹ‚Ä…d:", error);
-					toast.error("Nie udaĹ‚o siÄ™ usunÄ…Ä‡ zespoĹ‚u");
+					logger.error("âťŚ Błąd:", error);
+					toast.error("Nie udało się usunąć zespołu");
 				}
 				setConfirmDialog((prev) => ({ ...prev, isOpen: false }));
 			},
@@ -1191,9 +1191,9 @@ function StructureManagement({
 	) => {
 		setConfirmDialog({
 			isOpen: true,
-			title: "UsuĹ„ czĹ‚onka z zespoĹ‚u",
-			message: `Czy na pewno chcesz usunÄ…Ä‡ "${memberName}" z zespoĹ‚u?`,
-			confirmText: "UsuĹ„",
+			title: "Usuń członka z zespołu",
+			message: `Czy na pewno chcesz usunąć "${memberName}" z zespołu?`,
+			confirmText: "Usuń",
 			onConfirm: async () => {
 				try {
 					const token = localStorage.getItem("accessToken");
@@ -1204,14 +1204,14 @@ function StructureManagement({
 						},
 					});
 
-					if (!response.ok) throw new Error("BĹ‚Ä…d usuwania czĹ‚onka");
+					if (!response.ok) throw new Error("Błąd usuwania członka");
 
-					toast.success("CzĹ‚onek usuniÄ™ty z zespoĹ‚u!");
+					toast.success("Członek usunięty z zespołu!");
 					await onRefresh();
 					onTeamUpdated(teamId);
 				} catch (error) {
-					logger.error("âťŚ BĹ‚Ä…d:", error);
-					toast.error("Nie udaĹ‚o siÄ™ usunÄ…Ä‡ czĹ‚onka");
+					logger.error("âťŚ Błąd:", error);
+					toast.error("Nie udało się usunąć członka");
 				}
 				setConfirmDialog((prev) => ({ ...prev, isOpen: false }));
 			},
@@ -1223,7 +1223,7 @@ function StructureManagement({
 
 	const handleAddMember = async (teamId: string) => {
 		if (!selectedUser) {
-			toast.error("Wybierz uĹĽytkownika");
+			toast.error("Wybierz użytkownika");
 			return;
 		}
 
@@ -1243,17 +1243,17 @@ function StructureManagement({
 				}),
 			});
 
-			if (!response.ok) throw new Error("BĹ‚Ä…d dodawania czĹ‚onka");
+			if (!response.ok) throw new Error("Błąd dodawania członka");
 
-			toast.success("CzĹ‚onek dodany!");
+			toast.success("Członek dodany!");
 			setIsAddingMember(null);
 			setSelectedUser("");
 			setIsLeader(false);
 			await onRefresh();
 			onTeamUpdated(teamId);
 		} catch (error) {
-			logger.error("âťŚ BĹ‚Ä…d:", error);
-			toast.error("Nie udaĹ‚o siÄ™ dodaÄ‡ czĹ‚onka");
+			logger.error("âťŚ Błąd:", error);
+			toast.error("Nie udało się dodać członka");
 		}
 	};
 
@@ -1273,16 +1273,16 @@ function StructureManagement({
 				body: JSON.stringify({ is_leader: isLeader }),
 			});
 
-			if (!response.ok) throw new Error("BĹ‚Ä…d zmiany roli");
+			if (!response.ok) throw new Error("Błąd zmiany roli");
 
 			toast.success(
-				isLeader ? "Ustawiono jako lidera!" : "UsuniÄ™to z liderĂłw!",
+				isLeader ? "Ustawiono jako lidera!" : "Usunięto z liderów!",
 			);
 			await onRefresh();
 			onTeamUpdated(teamId);
 		} catch (error) {
-			logger.error("âťŚ BĹ‚Ä…d:", error);
-			toast.error("Nie udaĹ‚o siÄ™ zmieniÄ‡ roli");
+			logger.error("âťŚ Błąd:", error);
+			toast.error("Nie udało się zmienić roli");
 		}
 	};
 
@@ -1290,7 +1290,7 @@ function StructureManagement({
 		setTeamForm({
 			name: team.name,
 			description: team.description || "",
-			role: team.role || "ZespĂłĹ‚",
+			role: team.role || "Zespół",
 			icon: team.icon || "Users",
 			email: team.email || "",
 			parent_id: team.parent_id || null, // <-- DODAJ
@@ -1329,7 +1329,7 @@ function StructureManagement({
 						}}
 					>
 						<h2 className={styles.section__title} style={{ margin: 0 }}>
-							ZespoĹ‚y i czĹ‚onkowie
+							Zespoły i członkowie
 						</h2>
 						<button
 							onClick={() => setIsSectionExpanded(!isSectionExpanded)}
@@ -1348,7 +1348,7 @@ function StructureManagement({
 								flexShrink: 0,
 								marginLeft: "auto",
 							}}
-							title={isSectionExpanded ? "ZwiĹ„ sekcjÄ™" : "RozwiĹ„ sekcjÄ™"}
+							title={isSectionExpanded ? "Zwiń sekcję" : "Rozwiń sekcję"}
 						>
 							{isSectionExpanded ? (
 								<ChevronDown size={20} />
@@ -1358,7 +1358,7 @@ function StructureManagement({
 						</button>
 					</div>
 					<p className={styles.section__subtitle}>
-						ZarzÄ…dzanie zespoĹ‚ami oraz przypisywanie czĹ‚onkĂłw.
+						Zarządzanie zespołami oraz przypisywanie członków.
 					</p>
 				</div>
 				{canManage && (
@@ -1367,7 +1367,7 @@ function StructureManagement({
 						onClick={() => setIsAddingTeam(true)}
 					>
 						<Plus size={18} />
-						Dodaj zespĂłĹ‚
+						Dodaj zespół
 					</button>
 				)}
 			</div>
@@ -1387,7 +1387,7 @@ function StructureManagement({
 							>
 								<div className={styles.modal__header}>
 									<h2 className={styles.modal__title}>
-										{editingTeam ? "Edytuj zespĂłĹ‚" : "Dodaj nowy zespĂłĹ‚"}
+										{editingTeam ? "Edytuj zespół" : "Dodaj nowy zespół"}
 									</h2>
 									<button
 										className={styles.modal__close}
@@ -1402,7 +1402,7 @@ function StructureManagement({
 								<form onSubmit={editingTeam ? handleEditTeam : handleAddTeam}>
 									<div className={styles.modal__body}>
 										<div className={styles.modal__field}>
-											<label>Nazwa zespoĹ‚u *</label>
+											<label>Nazwa zespołu *</label>
 											<input
 												type="text"
 												value={teamForm.name}
@@ -1437,7 +1437,7 @@ function StructureManagement({
 										</div>
 										{/* Dodaj pole wyboru rodzica */}
 										<div className={styles.modal__field}>
-											<label>ZespĂłĹ‚ nadrzÄ™dny</label>
+											<label>Zespół nadrzędny</label>
 											<select
 												value={teamForm.parent_id || ""}
 												onChange={(e) =>
@@ -1449,7 +1449,7 @@ function StructureManagement({
 											>
 												<option value="">Brak</option>
 												{teams
-													.filter((t) => t.id !== editingTeam?.id) // Nie moĹĽna wybraÄ‡ siebie
+													.filter((t) => t.id !== editingTeam?.id) // Nie można wybrać siebie
 													.map((team) => (
 														<option key={team.id} value={team.id}>
 															{team.name}
@@ -1493,7 +1493,7 @@ function StructureManagement({
 												marginTop: "8px",
 											}}
 										>
-											<span>PodglÄ…d ikony:</span>
+											<span>Podgląd ikony:</span>
 											{getIconComponent(teamForm.icon)}
 										</div>
 									</div>
@@ -1510,7 +1510,7 @@ function StructureManagement({
 										</button>
 										<button type="submit" className={styles.modal__btnSave}>
 											<Save size={16} />
-											{editingTeam ? "Zapisz zmiany" : "Dodaj zespĂłĹ‚"}
+											{editingTeam ? "Zapisz zmiany" : "Dodaj zespół"}
 										</button>
 									</div>
 								</form>
@@ -1548,7 +1548,7 @@ function StructureManagement({
 													<button
 														className={styles.teamCard__editBtn}
 														onClick={() => startEditTeam(team)}
-														title="Edytuj zespĂłĹ‚"
+														title="Edytuj zespół"
 													>
 														<Edit size={16} />
 													</button>
@@ -1557,7 +1557,7 @@ function StructureManagement({
 														onClick={() =>
 															showDeleteTeamConfirm(team.id, team.name)
 														}
-														title="UsuĹ„ zespĂłĹ‚"
+														title="Usuń zespół"
 													>
 														<Trash2 size={16} />
 													</button>
@@ -1578,7 +1578,7 @@ function StructureManagement({
 											)}
 											<span className={styles.teamCard__memberCount}>
 												<Users size={14} />
-												{total} czĹ‚onkĂłw
+												{total} członków
 											</span>
 										</div>
 
@@ -1605,7 +1605,7 @@ function StructureManagement({
 													<div className={styles.memberItem__actions}>
 														{canManage && (
 															<>
-																{/* đź”Ą EDYCJA ROLI - teraz przed koronkÄ… */}
+																{/* đź”Ą EDYCJA ROLI - teraz przed koronką */}
 																{editingMemberRole?.memberId === member.id ? (
 																	// Tryb edycji
 																	<div
@@ -1649,7 +1649,7 @@ function StructureManagement({
 																					newRoleValue,
 																				)
 																			}
-																			title="Zapisz rolÄ™"
+																			title="Zapisz rolę"
 																		>
 																			<CheckCircle size={14} />
 																		</button>
@@ -1679,7 +1679,7 @@ function StructureManagement({
 																			});
 																			setNewRoleValue(member.role_in_team);
 																		}}
-																		title="Edytuj rolÄ™ w zespole"
+																		title="Edytuj rolę w zespole"
 																	>
 																		<Edit size={14} />
 																	</button>
@@ -1711,7 +1711,7 @@ function StructureManagement({
 																				team.id,
 																			)
 																		}
-																		title="UsuĹ„ z liderĂłw"
+																		title="Usuń z liderów"
 																	>
 																		<User size={14} />
 																	</button>
@@ -1727,7 +1727,7 @@ function StructureManagement({
 																			team.id,
 																		)
 																	}
-																	title="UsuĹ„ z zespoĹ‚u"
+																	title="Usuń z zespołu"
 																>
 																	<X size={14} />
 																</button>
@@ -1748,16 +1748,16 @@ function StructureManagement({
 													className={styles.showAllBtn}
 													onClick={() => {
 														console.log(
-															`đź”„ KlikniÄ™to: ${team.id}, obecny stan: ${isExpanded}`,
+															`đź”„ Kliknięto: ${team.id}, obecny stan: ${isExpanded}`,
 														);
 														toggleShowAll(team.id);
 													}}
 												>
 													{isExpanded ? (
-														<>PokaĹĽ mniej</>
+														<>Pokaż mniej</>
 													) : (
 														<>
-															PokaĹĽ wszystkich ({hiddenMembers.length} wiÄ™cej)
+															Pokaż wszystkich ({hiddenMembers.length} więcej)
 														</>
 													)}
 												</button>
@@ -1773,7 +1773,7 @@ function StructureManagement({
 															onChange={(e) => setSelectedUser(e.target.value)}
 															className={styles.addMemberForm__select}
 														>
-															<option value="">Wybierz uĹĽytkownika...</option>
+															<option value="">Wybierz użytkownika...</option>
 															{availableUsers
 																.filter(
 																	(u) =>
@@ -1816,7 +1816,7 @@ function StructureManagement({
 															onClick={() => {
 																setIsAddingMember(null);
 																setSelectedUser("");
-																setSelectedRole("CzĹ‚onek");
+																setSelectedRole("Członek");
 																setIsLeader(false);
 															}}
 														>
@@ -1829,7 +1829,7 @@ function StructureManagement({
 														onClick={() => setIsAddingMember(team.id)}
 													>
 														<UserPlus size={16} />
-														Dodaj czĹ‚onka
+														Dodaj członka
 													</button>
 												)}
 											</div>
@@ -1844,12 +1844,12 @@ function StructureManagement({
 		</section>
 	);
 }
-// ---- Komponent zarzÄ…dzania dostÄ™pami ----
-// ---- Komponent zarzÄ…dzania dostÄ™pami ----
-// ---- Komponent zarzÄ…dzania dostÄ™pami ----
-// ---- Komponent zarzÄ…dzania dostÄ™pami ----
-// ---- Komponent zarzÄ…dzania dostÄ™pami ----
-// ---- Komponent zarzÄ…dzania dostÄ™pami ----
+// ---- Komponent zarządzania dostępami ----
+// ---- Komponent zarządzania dostępami ----
+// ---- Komponent zarządzania dostępami ----
+// ---- Komponent zarządzania dostępami ----
+// ---- Komponent zarządzania dostępami ----
+// ---- Komponent zarządzania dostępami ----
 function AccessManagement() {
 	const [showSuggestions, setShowSuggestions] = useState(false);
 	const [members, setMembers] = useState<any[]>([]);
@@ -1864,7 +1864,7 @@ function AccessManagement() {
 	const [userSearchInput, setUserSearchInput] = useState("");
 	const [showUserSuggestions, setShowUserSuggestions] = useState(false);
 
-	// Predefiniowane opcje dostÄ™pu
+	// Predefiniowane opcje dostępu
 	const ACCESS_OPTIONS = [
 		{ label: "Instagram", category: "Social Media" },
 		{ label: "Facebook", category: "Social Media" },
@@ -1880,25 +1880,25 @@ function AccessManagement() {
 		{ label: "Teams", category: "Platformy" },
 		{ label: "Zoom", category: "Platformy" },
 		{ label: "Google Meet", category: "Platformy" },
-		{ label: "Asana", category: "NarzÄ™dzia" },
-		{ label: "Trello", category: "NarzÄ™dzia" },
-		{ label: "Jira", category: "NarzÄ™dzia" },
-		{ label: "ClickUp", category: "NarzÄ™dzia" },
-		{ label: "Monday.com", category: "NarzÄ™dzia" },
+		{ label: "Asana", category: "Narzędzia" },
+		{ label: "Trello", category: "Narzędzia" },
+		{ label: "Jira", category: "Narzędzia" },
+		{ label: "ClickUp", category: "Narzędzia" },
+		{ label: "Monday.com", category: "Narzędzia" },
 		{ label: "Google Drive", category: "Systemy" },
 		{ label: "Dropbox", category: "Systemy" },
 		{ label: "OneDrive", category: "Systemy" },
 		{ label: "SharePoint", category: "Systemy" },
 		{ label: "CRM", category: "Systemy" },
 		{ label: "Mailchimp", category: "Marketing" },
-		{ label: "Canva", category: "NarzÄ™dzia" },
-		{ label: "Figma", category: "NarzÄ™dzia" },
-		{ label: "GitHub", category: "NarzÄ™dzia" },
-		{ label: "GitLab", category: "NarzÄ™dzia" },
-		{ label: "Bitbucket", category: "NarzÄ™dzia" },
+		{ label: "Canva", category: "Narzędzia" },
+		{ label: "Figma", category: "Narzędzia" },
+		{ label: "GitHub", category: "Narzędzia" },
+		{ label: "GitLab", category: "Narzędzia" },
+		{ label: "Bitbucket", category: "Narzędzia" },
 	];
 
-	// Pobierz czĹ‚onkĂłw z dostÄ™pami
+	// Pobierz członków z dostępami
 	const fetchMembers = async () => {
 		try {
 			setLoading(true);
@@ -1907,19 +1907,19 @@ function AccessManagement() {
 				headers: { Authorization: `Bearer ${token}` },
 			});
 
-			if (!response.ok) throw new Error("BĹ‚Ä…d pobierania czĹ‚onkĂłw");
+			if (!response.ok) throw new Error("Błąd pobierania członków");
 
 			const data = await response.json();
 			setMembers(data);
 		} catch (error) {
-			logger.error("âťŚ BĹ‚Ä…d:", error);
-			toast.error("Nie udaĹ‚o siÄ™ pobraÄ‡ czĹ‚onkĂłw");
+			logger.error("âťŚ Błąd:", error);
+			toast.error("Nie udało się pobrać członków");
 		} finally {
 			setLoading(false);
 		}
 	};
 
-	// Pobierz wszystkich uĹĽytkownikĂłw do wyboru
+	// Pobierz wszystkich użytkowników do wyboru
 	const [allUsers, setAllUsers] = useState<any[]>([]);
 
 	const fetchAllUsers = async () => {
@@ -1933,7 +1933,7 @@ function AccessManagement() {
 				setAllUsers(data);
 			}
 		} catch (error) {
-			logger.error("âťŚ BĹ‚Ä…d:", error);
+			logger.error("âťŚ Błąd:", error);
 		}
 	};
 
@@ -1941,7 +1941,7 @@ function AccessManagement() {
 	const getSuggestions = (input: string) => {
 		if (!input.trim()) return [];
 
-		// đź”Ą WEĹą OSTATNIÄ„ CZÄĹšÄ† PO PRZECINKU
+		// đź”Ą WEŹ OSTATNIĄ CZÄŚĆ PO PRZECINKU
 		const parts = input.split(/[,;ďĽŚă€\n]+/);
 		const lastPart = parts[parts.length - 1]?.trim() || "";
 
@@ -1978,18 +1978,18 @@ function AccessManagement() {
 
 	const handleAddAccessToUser = async () => {
 		if (!selectedUserId || !newAccessForUser.trim()) {
-			toast.error("Wybierz osobÄ™ i wpisz nazwÄ™ dostÄ™pu");
+			toast.error("Wybierz osobę i wpisz nazwę dostępu");
 			return;
 		}
 
-		// đź”Ą PODZIEL NA WIELOKROTNIE DOSTÄPY (przecinki, Ĺ›redniki, spacje)
+		// đź”Ą PODZIEL NA WIELOKROTNIE DOSTÄPY (przecinki, średniki, spacje)
 		const accessNames = newAccessForUser
-			.split(/[,;ďĽŚă€\n]+/) // podziel po przecinku, Ĺ›redniku, nowej linii
+			.split(/[,;ďĽŚă€\n]+/) // podziel po przecinku, średniku, nowej linii
 			.map((name) => name.trim())
 			.filter((name) => name.length > 0);
 
 		if (accessNames.length === 0) {
-			toast.error("Wpisz poprawnÄ… nazwÄ™ dostÄ™pu");
+			toast.error("Wpisz poprawną nazwę dostępu");
 			return;
 		}
 
@@ -2018,18 +2018,18 @@ function AccessManagement() {
 						addedCount++;
 					} else {
 						const error = await response.json();
-						errors.push(`${name}: ${error.error || "bĹ‚Ä…d"}`);
+						errors.push(`${name}: ${error.error || "błąd"}`);
 					}
 				} catch (e) {
-					errors.push(`${name}: bĹ‚Ä…d sieci`);
+					errors.push(`${name}: błąd sieci`);
 				}
 			}
 
 			if (addedCount > 0) {
-				toast.success(`Dodano ${addedCount} dostÄ™pĂłw!`);
+				toast.success(`Dodano ${addedCount} dostępów!`);
 			}
 			if (errors.length > 0) {
-				toast.error(`Nie udaĹ‚o siÄ™ dodaÄ‡: ${errors.join(", ")}`);
+				toast.error(`Nie udało się dodać: ${errors.join(", ")}`);
 			}
 
 			setShowAddModal(false);
@@ -2038,8 +2038,8 @@ function AccessManagement() {
 			setNewAccessForUser("");
 			await fetchMembers();
 		} catch (error) {
-			logger.error("âťŚ BĹ‚Ä…d:", error);
-			toast.error("Nie udaĹ‚o siÄ™ dodaÄ‡ dostÄ™pĂłw");
+			logger.error("âťŚ Błąd:", error);
+			toast.error("Nie udało się dodać dostępów");
 		}
 	};
 
@@ -2072,16 +2072,16 @@ function AccessManagement() {
 
 			if (!response.ok) {
 				const error = await response.json();
-				throw new Error(error.error || "BĹ‚Ä…d zapisu");
+				throw new Error(error.error || "Błąd zapisu");
 			}
 
-			toast.success("DostÄ™p zaktualizowany!");
+			toast.success("Dostęp zaktualizowany!");
 			handleCloseEdit();
 			await fetchMembers();
 		} catch (error) {
-			logger.error("âťŚ BĹ‚Ä…d:", error);
+			logger.error("âťŚ Błąd:", error);
 			toast.error(
-				error instanceof Error ? error.message : "Nie udaĹ‚o siÄ™ zapisaÄ‡",
+				error instanceof Error ? error.message : "Nie udało się zapisać",
 			);
 		}
 	};
@@ -2100,7 +2100,7 @@ function AccessManagement() {
 			<section className={styles.section}>
 				<div className={styles.loading}>
 					<div className={styles.loading__spinner} />
-					<span>Ĺadowanie czĹ‚onkĂłw...</span>
+					<span>Ładowanie członków...</span>
 				</div>
 			</section>
 		);
@@ -2110,9 +2110,9 @@ function AccessManagement() {
 		<section className={styles.section}>
 			<div className={styles.section__header}>
 				<div className={styles.section__headerLeft}>
-					<h2 className={styles.section__title}>ZarzÄ…dzanie dostÄ™pami</h2>
+					<h2 className={styles.section__title}>Zarządzanie dostępami</h2>
 					<p className={styles.section__subtitle}>
-						Przypisywanie dostÄ™pu do narzÄ™dzi i platform dla czĹ‚onkĂłw.
+						Przypisywanie dostępu do narzędzi i platform dla członków.
 					</p>
 				</div>
 				<button
@@ -2120,17 +2120,17 @@ function AccessManagement() {
 					onClick={() => setShowAddModal(true)}
 				>
 					<Plus size={18} />
-					Dodaj dostÄ™p
+					Dodaj dostęp
 				</button>
 			</div>
 
-			{/* Lista osĂłb z dostÄ™pami */}
+			{/* Lista osób z dostępami */}
 			{membersWithAccess.length === 0 ? (
 				<div className={styles.accessEmpty}>
 					<Shield size={48} />
-					<h3>Brak przypisanych dostÄ™pĂłw</h3>
+					<h3>Brak przypisanych dostępów</h3>
 					<p>
-						Kliknij "Dodaj dostÄ™p" aby przypisaÄ‡ pierwszy dostÄ™p dla czĹ‚onka.
+						Kliknij "Dodaj dostęp" aby przypisać pierwszy dostęp dla członka.
 					</p>
 				</div>
 			) : (
@@ -2162,7 +2162,7 @@ function AccessManagement() {
 									onClick={() => handleEditAccess(member)}
 								>
 									<Edit size={16} />
-									Edytuj dostÄ™p
+									Edytuj dostęp
 								</button>
 							</div>
 						</div>
@@ -2170,7 +2170,7 @@ function AccessManagement() {
 				</div>
 			)}
 
-			{/* Panel edycji dostÄ™pu dla czĹ‚onka */}
+			{/* Panel edycji dostępu dla członka */}
 			{editingMemberId && selectedMember && (
 				<div className={styles.modalOverlay} onClick={handleCloseEdit}>
 					<div
@@ -2180,7 +2180,7 @@ function AccessManagement() {
 					>
 						<div className={styles.modal__header}>
 							<h2 className={styles.modal__title}>
-								Edytuj dostÄ™p dla {selectedMember.first_name}{" "}
+								Edytuj dostęp dla {selectedMember.first_name}{" "}
 								{selectedMember.last_name}
 							</h2>
 							<button className={styles.modal__close} onClick={handleCloseEdit}>
@@ -2190,13 +2190,13 @@ function AccessManagement() {
 
 						<div className={styles.modal__body}>
 							<div className={styles.modal__field}>
-								<label>Dodaj nowy dostÄ™p</label>
+								<label>Dodaj nowy dostęp</label>
 								<div
 									style={{ display: "flex", gap: "8px", position: "relative" }}
 								>
 									<input
 										type="text"
-										placeholder="Wpisz nazwÄ™ dostÄ™pu (np. Instagram)..."
+										placeholder="Wpisz nazwę dostępu (np. Instagram)..."
 										value={newAccess}
 										onChange={(e) => setNewAccess(e.target.value)}
 										style={{ flex: 1 }}
@@ -2205,11 +2205,11 @@ function AccessManagement() {
 										className={styles.modal__btnSave}
 										onClick={() => {
 											if (!newAccess.trim()) {
-												toast.error("Wpisz nazwÄ™ dostÄ™pu");
+												toast.error("Wpisz nazwę dostępu");
 												return;
 											}
 											if (accessItems.includes(newAccess.trim())) {
-												toast.error("Ten dostÄ™p juĹĽ istnieje");
+												toast.error("Ten dostęp już istnieje");
 												return;
 											}
 											setAccessItems([...accessItems, newAccess.trim()]);
@@ -2280,7 +2280,7 @@ function AccessManagement() {
 							</div>
 
 							<div className={styles.modal__field}>
-								<label>Obecne dostÄ™py ({accessItems.length})</label>
+								<label>Obecne dostępy ({accessItems.length})</label>
 								<div
 									style={{
 										display: "flex",
@@ -2291,7 +2291,7 @@ function AccessManagement() {
 								>
 									{accessItems.length === 0 ? (
 										<span style={{ color: "#6b7280", fontSize: "14px" }}>
-											Brak przypisanych dostÄ™pĂłw
+											Brak przypisanych dostępów
 										</span>
 									) : (
 										accessItems.map((item) => (
@@ -2336,7 +2336,7 @@ function AccessManagement() {
 				</div>
 			)}
 
-			{/* Modal do dodawania dostÄ™pu */}
+			{/* Modal do dodawania dostępu */}
 			{showAddModal && (
 				<div
 					className={styles.modalOverlay}
@@ -2344,7 +2344,7 @@ function AccessManagement() {
 				>
 					<div className={styles.modal} onClick={(e) => e.stopPropagation()}>
 						<div className={styles.modal__header}>
-							<h2 className={styles.modal__title}>Dodaj dostÄ™p dla czĹ‚onka</h2>
+							<h2 className={styles.modal__title}>Dodaj dostęp dla członka</h2>
 							<button
 								className={styles.modal__close}
 								onClick={() => setShowAddModal(false)}
@@ -2355,11 +2355,11 @@ function AccessManagement() {
 
 						<div className={styles.modal__body}>
 							<div className={styles.modal__field}>
-								<label>Wybierz czĹ‚onka *</label>
+								<label>Wybierz członka *</label>
 								<div style={{ position: "relative" }}>
 									<input
 										type="text"
-										placeholder="Szukaj czĹ‚onka po imieniu, nazwisku lub email..."
+										placeholder="Szukaj członka po imieniu, nazwisku lub email..."
 										value={getSelectedUserName()}
 										onChange={(e) => {
 											const value = e.target.value;
@@ -2395,14 +2395,14 @@ function AccessManagement() {
 								</div>
 							</div>
 
-							{/* Nazwa dostÄ™pu */}
-							{/* Nazwa dostÄ™pu */}
+							{/* Nazwa dostępu */}
+							{/* Nazwa dostępu */}
 							<div className={styles.modal__field}>
-								<label>Nazwa dostÄ™pu *</label>
+								<label>Nazwa dostępu *</label>
 								<div style={{ position: "relative" }}>
 									<input
 										type="text"
-										placeholder="Wpisz nazwy dostÄ™pu oddzielone przecinkami (np. Instagram, Slack, GitHub)..."
+										placeholder="Wpisz nazwy dostępu oddzielone przecinkami (np. Instagram, Slack, GitHub)..."
 										value={newAccessForUser}
 										onChange={(e) => {
 											setNewAccessForUser(e.target.value);
@@ -2417,16 +2417,16 @@ function AccessManagement() {
 									{showSuggestions && newAccessForUser.trim() && (
 										<div className={styles.accessSuggestions}>
 											{getSuggestions(newAccessForUser).map((item) => {
-												// đź”Ą SPRAWDĹą CZY JUĹ» ISTNIEJE W LIĹšCIE
+												// đź”Ą SPRAWDŹ CZY JUŻ ISTNIEJE W LIŚCIE
 												const parts = newAccessForUser
 													.split(/[,;ďĽŚă€\n]+/)
 													.map((s) => s.trim())
 													.filter((s) => s.length > 0);
 
-												// POMIĹ OSTATNIÄ„ CZÄĹšÄ† (TÄ KTĂ“RÄ„ WPISUJESZ)
+												// POMIĹ OSTATNIĄ CZÄŚĆ (TÄ KTÓRĄ WPISUJESZ)
 												const existingNames = parts.slice(0, -1);
 
-												// SPRAWDĹą CZY DOSTÄP JUĹ» ISTNIEJE
+												// SPRAWDŹ CZY DOSTÄP JUŻ ISTNIEJE
 												if (existingNames.includes(item.label)) return null;
 
 												return (
@@ -2436,19 +2436,19 @@ function AccessManagement() {
 														onMouseDown={(e) => {
 															e.preventDefault();
 
-															// đź”Ą POBERZ WSZYSTKIE CZÄĹšCI
+															// đź”Ą POBERZ WSZYSTKIE CZÄŚCI
 															const allParts = newAccessForUser
 																.split(/[,;ďĽŚă€\n]+/)
 																.map((s) => s.trim())
 																.filter((s) => s.length > 0);
 
-															// USUĹ OSTATNIÄ„ CZÄĹšÄ† (TÄ KTĂ“RÄ„ WPISUJESZ)
+															// USUĹ OSTATNIĄ CZÄŚĆ (TÄ KTÓRĄ WPISUJESZ)
 															allParts.pop();
 
 															// DODAJ NOWY DOSTÄP (TYLKO JEDEN)
 															allParts.push(item.label);
 
-															// ZĹÄ„CZ Z PRZECINKAMI I SPACJÄ„
+															// ZŁĄCZ Z PRZECINKAMI I SPACJĄ
 															setNewAccessForUser(allParts.join(", "));
 															setShowSuggestions(false);
 														}}
@@ -2488,7 +2488,7 @@ function AccessManagement() {
 								disabled={!selectedUserId || !newAccessForUser.trim()}
 							>
 								<Plus size={16} />
-								Dodaj dostÄ™p
+								Dodaj dostęp
 							</button>
 						</div>
 					</div>
@@ -2531,7 +2531,7 @@ function ActivityMonitoring({
 					</div>
 					<div className={styles.statCard__content}>
 						<span className={styles.statCard__value}>{totalMembers}</span>
-						<span className={styles.statCard__label}>CzĹ‚onkĂłw</span>
+						<span className={styles.statCard__label}>Członków</span>
 					</div>
 				</div>
 				<div className={styles.statCard}>
@@ -2543,7 +2543,7 @@ function ActivityMonitoring({
 					</div>
 					<div className={styles.statCard__content}>
 						<span className={styles.statCard__value}>{teams.length}</span>
-						<span className={styles.statCard__label}>ZespoĹ‚Ăłw</span>
+						<span className={styles.statCard__label}>Zespołów</span>
 					</div>
 				</div>
 				<div className={styles.statCard}>
@@ -2555,7 +2555,7 @@ function ActivityMonitoring({
 					</div>
 					<div className={styles.statCard__content}>
 						<span className={styles.statCard__value}>{roles.length}</span>
-						<span className={styles.statCard__label}>RĂłl</span>
+						<span className={styles.statCard__label}>Ról</span>
 					</div>
 				</div>
 			</div>
@@ -2564,7 +2564,7 @@ function ActivityMonitoring({
 }
 
 // ---------------------------------------------------------------------------
-// GĹĂ“WNY KOMPONENT
+// GŁÓWNY KOMPONENT
 // ---------------------------------------------------------------------------
 
 export default function Admin({ title }: { title?: string }) {
@@ -2587,7 +2587,7 @@ export default function Admin({ title }: { title?: string }) {
 			});
 
 			if (!profileRes.ok) {
-				throw new Error("BĹ‚Ä…d pobierania profilu");
+				throw new Error("Błąd pobierania profilu");
 			}
 
 			const profileData = await profileRes.json();
@@ -2596,7 +2596,7 @@ export default function Admin({ title }: { title?: string }) {
 			if (
 				profileData.role !== "admin" &&
 				profileData.role !== "board" &&
-				profileData.role !== "zarzÄ…d"
+				profileData.role !== "zarząd"
 			) {
 				safeNavigate("/dashboard", navigate);
 				return;
@@ -2609,7 +2609,7 @@ export default function Admin({ title }: { title?: string }) {
 			if (teamsRes.ok) {
 				const teamsData = await teamsRes.json();
 				setTeams(teamsData);
-				logger.debug("đź”Ť [Admin] ZespoĹ‚y pobrane:", teamsData);
+				logger.debug("đź”Ť [Admin] Zespoły pobrane:", teamsData);
 			}
 
 			const usersRes = await fetch("/api/admin/available-users", {
@@ -2639,8 +2639,8 @@ export default function Admin({ title }: { title?: string }) {
 
 			clearPermissionsCache();
 		} catch (error) {
-			logger.error("âťŚ BĹ‚Ä…d pobierania danych:", error);
-			toast.error("Nie udaĹ‚o siÄ™ pobraÄ‡ danych");
+			logger.error("âťŚ Błąd pobierania danych:", error);
+			toast.error("Nie udało się pobrać danych");
 		} finally {
 			setLoading(false);
 			setRefreshing(false);
@@ -2651,7 +2651,7 @@ export default function Admin({ title }: { title?: string }) {
 		setRefreshing(true);
 		await fetchData();
 		setRefreshing(false);
-		toast.success("Dane odĹ›wieĹĽone");
+		toast.success("Dane odświeżone");
 	};
 
 	const handleUpdatePermissions = async (
@@ -2669,11 +2669,11 @@ export default function Admin({ title }: { title?: string }) {
 				clearPermissionsCache();
 				toast.success("Uprawnienia zaktualizowane!");
 			} else {
-				throw new Error("Nie udaĹ‚o siÄ™ zaktualizowaÄ‡ uprawnieĹ„");
+				throw new Error("Nie udało się zaktualizować uprawnień");
 			}
 		} catch (error) {
-			logger.error("âťŚ BĹ‚Ä…d:", error);
-			toast.error("Nie udaĹ‚o siÄ™ zaktualizowaÄ‡ uprawnieĹ„");
+			logger.error("âťŚ Błąd:", error);
+			toast.error("Nie udało się zaktualizować uprawnień");
 			throw error;
 		}
 	};
@@ -2714,14 +2714,14 @@ export default function Admin({ title }: { title?: string }) {
 		!currentUser ||
 		(currentUser.role !== "admin" &&
 			currentUser.role !== "board" &&
-			currentUser.role !== "zarzÄ…d")
+			currentUser.role !== "zarząd")
 	) {
 		return null;
 	}
 	const canManage =
 		currentUser?.role === "admin" ||
 		currentUser?.role === "board" ||
-		currentUser?.role === "zarzÄ…d";
+		currentUser?.role === "zarząd";
 
 	return (
 		<div className={styles.admin}>
@@ -2731,16 +2731,16 @@ export default function Admin({ title }: { title?: string }) {
 						{title ?? "Administracja systemu"}
 					</h1>
 					<p className={styles.header__subtitle}>
-						Panel zarzÄ…dzania rolami, uprawnieniami, zespoĹ‚ami i czĹ‚onkami.
+						Panel zarządzania rolami, uprawnieniami, zespołami i członkami.
 					</p>
 				</div>
 			</div>
 
 			<div style={{ marginBottom: '32px' }}>
-            <RevenueChart year={2026} title='Monthly Revenue' />
-        </div>
+				<RevenueChart year={2026} title="Przychody i wydatki" />
+			</div>
 
-        <RolesManagement
+			<RolesManagement
 				roles={roles}
 				canManage={canManage}
 				onUpdatePermissions={handleUpdatePermissions}
