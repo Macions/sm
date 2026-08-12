@@ -69,8 +69,10 @@ type User = {
 	role: string;
 };
 
-const API_URL = "http://localhost:3000";
-
+const API_URL = import.meta.env.VITE_API_URL || 
+                (window.location.hostname === 'panel.silamlodych.pl' 
+                    ? 'https://api.silamlodych.pl'  // 👈 DODAJ SWÓJ PRODUKCYJNY URL
+                    : 'http://localhost:3000');
 export default function Calendar() {
 	const [currentDate, setCurrentDate] = useState(new Date());
 	const [tasks, setTasks] = useState<CalendarTask[]>([]);
