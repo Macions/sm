@@ -11,9 +11,6 @@ RUN npm ci
 # ✅ Kopiuj resztę plików
 COPY . .
 
-# ❌ USUŃ TĘ LINIĘ CAŁKOWICIE:
-# RUN npx prisma generate
-
 EXPOSE 3000
 
 CMD ["npm", "start"]
