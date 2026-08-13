@@ -45,7 +45,7 @@ services:
       dockerfile: Dockerfile # ← ZMIENIONE Z Dockerfile.backend na Dockerfile!
       args:
         - VITE_GOOGLE_CLIENT_ID=${VITE_GOOGLE_CLIENT_ID}
-        - VITE_API_URL=http://backend:3000
+        - VITE_API_URL=https://panel.silamlodych.pl:3000
         - VITE_HOST=0.0.0.0
         - DOCKER_ENV=true
         - VITE_ALLOWED_HOSTS=turbine-protector-aluminum.ngrok-free.dev
