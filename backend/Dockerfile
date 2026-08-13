@@ -2,12 +2,17 @@ FROM node:22-alpine
 
 WORKDIR /app
 
-COPY package*.json ./
+# ✅ Kopiuj package.json z backend
+COPY backend/package*.json ./
 RUN npm ci
 
-COPY . .
+# ✅ Kopiuj cały backend
+COPY backend/ .
 
-RUN npx prisma generate
+# ✅ Generuj Prisma
+RUN if [ -f prisma/schema.prisma ]; then \
+        npx prisma generate; \
+    fi
 
 EXPOSE 3000
 

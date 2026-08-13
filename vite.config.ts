@@ -1,4 +1,5 @@
 import { defineConfig } from "vitest/config";
+import { loadEnv } from "vite";
 import react from "@vitejs/plugin-react";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -30,28 +31,27 @@ const SUSPICIOUS_PATTERNS = [
 ];
 
 export default defineConfig(({ mode }) => {
-	// 🔥 AUTOMATYCZNE WYKRYWANIE ŚRODOWISKA
-	const isDocker = process.env.DOCKER_ENV === 'true' || mode === 'production';
-	const isDevelopment = mode === 'development';
+	// ✅ ŁADUJ ZMIENNE Z PLIKU .env
+	const env = loadEnv(mode, process.cwd(), '');
 
-	// URL API - dynamicznie dobierany
-	const apiUrl = process.env.VITE_API_URL || (isDocker
+	const isDevelopment = mode === 'development';
+	const isDocker = env.DOCKER_ENV === 'true' || mode === 'production';  // ✅ DODAJ isDocker
+	const apiUrl = env.VITE_API_URL || (isDocker
 		? 'http://backend:3000'  // w Dockerze/Portainerze
 		: 'http://localhost:3000' // lokalnie
 	);
 
-	// 🔥 DODAJ LOGI:
 	console.log('🚀 ===== KONFIGURACJA VITE =====');
 	console.log('📌 Mode:', mode);
 	console.log('📌 isDocker:', isDocker);
 	console.log('📌 isDevelopment:', isDevelopment);
-	console.log('📌 process.env.VITE_API_URL:', process.env.VITE_API_URL);
+	console.log('📌 VITE_API_URL z env:', env.VITE_API_URL);
 	console.log('📌 apiUrl:', apiUrl);
 	console.log('📌 ================================');
 
 	// Host i port
-	const host = process.env.VITE_HOST || (isDocker ? '0.0.0.0' : 'localhost');
-	const port = parseInt(process.env.PORT || '5173');
+	const host = env.VITE_HOST || (isDocker ? '0.0.0.0' : 'localhost');
+	const port = parseInt(env.PORT || '5173');
 
 	// Dozwolone hosty
 	const allowedHosts = [
@@ -61,8 +61,8 @@ export default defineConfig(({ mode }) => {
 	];
 
 	// Dodaj hosty z zmiennej środowiskowej
-	if (process.env.VITE_ALLOWED_HOSTS) {
-		allowedHosts.push(...process.env.VITE_ALLOWED_HOSTS.split(','));
+	if (env.VITE_ALLOWED_HOSTS) {
+		allowedHosts.push(...env.VITE_ALLOWED_HOSTS.split(','));
 	}
 
 	return {
@@ -226,7 +226,7 @@ export default defineConfig(({ mode }) => {
 		},
 
 		define: {
-			// ✅ TO JEST KLUCZOWE!
+			// ✅ WAŻNE - dla import.meta.env
 			'import.meta.env.VITE_API_URL': JSON.stringify(apiUrl),
 			'process.env.VITE_API_URL': JSON.stringify(apiUrl),
 		},
