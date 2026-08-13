@@ -50,7 +50,7 @@ services:
         - DOCKER_ENV=true
         - VITE_ALLOWED_HOSTS=turbine-protector-aluminum.ngrok-free.dev
     ports:
-      - "8080:80"
+      - "8090:80"
     networks:
       - app-network
     depends_on:
