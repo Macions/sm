@@ -1,4 +1,4 @@
-# JEDEN DOCKERFILE DLA WSZYSTKIEGO
+# DOCKERFILE DLA FRONTENDU
 FROM node:22-alpine AS build
 
 WORKDIR /app
@@ -8,7 +8,7 @@ RUN npm ci
 
 COPY . .
 
-# ✅ DODAJ ARGUMENTY DLA VITE
+# ✅ ARGUMENTY DLA VITE
 ARG VITE_GOOGLE_CLIENT_ID
 ARG VITE_API_URL
 ARG VITE_HOST
@@ -27,9 +27,6 @@ RUN echo "🔧 Building with VITE_API_URL: $VITE_API_URL"
 
 # ✅ ZBUDUJ FRONTEND
 RUN npm run build
-
-# ✅ ZBUDUJ BACKEND (jeśli potrzebujesz)
-RUN npx prisma generate
 
 # ✅ ETAP PRODUKCYJNY - NGINX dla frontendu
 FROM nginx:alpine
