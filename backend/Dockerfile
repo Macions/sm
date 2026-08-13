@@ -5,19 +5,14 @@ WORKDIR /app
 # ✅ Kopiuj package.json
 COPY package*.json ./
 
-# ✅ Zainstaluj zależności (w tym prisma)
+# ✅ Zainstaluj zależności
 RUN npm ci
 
-# ✅ Kopiuj resztę plików backendu
+# ✅ Kopiuj resztę plików
 COPY . .
 
-# ✅ Sprawdź czy schema istnieje i wygeneruj
-RUN if [ -f prisma/schema.prisma ]; then \
-        echo "✅ Generuję Prisma..." && \
-        npx prisma generate; \
-    else \
-        echo "⚠️ Brak schema.prisma - pomijam"; \
-    fi
+# ❌ USUŃ TĘ LINIĘ CAŁKOWICIE:
+# RUN npx prisma generate
 
 EXPOSE 3000
 
