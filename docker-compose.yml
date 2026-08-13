@@ -35,15 +35,32 @@ services:
       CONTRIBUTIONS_DB_PORT: ${CONTRIBUTIONS_DB_PORT}
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
     restart: unless-stopped
+    networks:
+      - app-network # ✅ DODAJ sieć dla backend
 
   frontend:
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.frontend
       args:
-        VITE_GOOGLE_CLIENT_ID: ${VITE_GOOGLE_CLIENT_ID}
+        - VITE_GOOGLE_CLIENT_ID=${VITE_GOOGLE_CLIENT_ID}
+        - VITE_API_URL=http://backend:3000
+        - VITE_HOST=0.0.0.0
+        - DOCKER_ENV=true
+        - VITE_ALLOWED_HOSTS=turbine-protector-aluminum.ngrok-free.dev
+    environment:
+      - VITE_API_URL=http://backend:3000
+      - VITE_HOST=0.0.0.0
+      - DOCKER_ENV=true
     ports:
-      - "8090:80"
+      - "80:80"
+    networks:
+      - app-network # ✅ DODAJ sieć dla frontend
     depends_on:
-      - backend
+      - backend # ✅ Frontend czeka na backend
     restart: unless-stopped
+
+# ✅ ZDEFINIUJ SIEC
+networks:
+  app-network:
+    driver: bridge
