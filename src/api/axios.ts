@@ -2,9 +2,11 @@
 import axios from "axios";
 import { logger } from "@/utils/logger";
 
-// ✅ POPRAWIONE - usuń /api z default i z VITE_API_URL
+// ✅ NA SZTYWNO - DLA PRODUKCJI
+const API_URL = 'http://panel.silamlodych.pl:3000';
+
 const api = axios.create({
-    baseURL: import.meta.env.VITE_API_URL || 'http://localhost:3000',
+    baseURL: API_URL,
     headers: {
         "Content-Type": "application/json",
     },
