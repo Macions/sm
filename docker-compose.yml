@@ -36,9 +36,9 @@ services:
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
     restart: unless-stopped
     networks:
-      - app-network # ✅ DODAJ sieć dla backend
+      - app-network
 
-   frontend:
+  frontend:
     build:
       context: .
       dockerfile: Dockerfile
@@ -52,4 +52,10 @@ services:
       - "80:80"
     networks:
       - app-network
+    depends_on:
+      - backend
     restart: unless-stopped
+
+networks:
+  app-network:
+    driver: bridge
