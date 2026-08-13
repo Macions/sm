@@ -83,7 +83,7 @@ export default function Calendar() {
 	const [isSyncing, setIsSyncing] = useState(false);
 	const [googleEvents, setGoogleEvents] = useState<any[]>([]);
 	const [isGoogleAuth, setIsGoogleAuth] = useState(false);
-	const [isGoogleLoading, setIsGoogleLoading] = useState(false); // 👈 DODAJ
+	const [_isGoogleLoading, setIsGoogleLoading] = useState(false); // 👈 DODAJ
 	const [_currentUser] = useState<User>({
 		id: "",
 		name: "",
@@ -439,12 +439,6 @@ export default function Calendar() {
 						<CalendarDays size={16} />
 						Dzisiaj
 					</button>
-					{/* 👈 INFORMACJA O STATUSIE GOOGLE */}
-					{isGoogleAuth ? (
-						<span className={styles.googleStatusOn}>✅ Google Calendar</span>
-					) : (
-						<span className={styles.googleStatusOff}>⏳ Google Calendar (opcjonalny)</span>
-					)}
 				</div>
 			</div>
 

@@ -54,7 +54,7 @@ function AppRoutes() {
                 return;
             }
             try {
-                const response = await api.get("/auth/me");
+                const response = await api.get("/api/auth/me");
 
                 console.log("✅ Token ważny:", response.data);
                 setIsAuthenticated(true);
