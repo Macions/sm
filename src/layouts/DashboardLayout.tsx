@@ -3,7 +3,7 @@ import { logger } from "@/utils/logger";
 import { safeNavigate } from "@/utils/safeNavigation";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import Sidebar from "../components/layout/Sidebar/Sidebar";
-import Header from "../components/layout/Header/Header"; // 👈 IMPORT HEADER
+import Header from "../components/layout/Header/Header";
 import styles from "./DashboardLayout.module.css";
 
 export default function DashboardLayout() {
@@ -14,7 +14,10 @@ export default function DashboardLayout() {
 	const [isSocialMember, setIsSocialMember] = useState(false);
 	const [loading, setLoading] = useState(true);
 	const [userData, setUserData] = useState<any>(null);
-	const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false); // 👈 DODANE
+	const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+	const [globalSearchQuery, setGlobalSearchQuery] = useState("");
+	const [isSearching, setIsSearching] = useState(false);
+	const [searchResults, setSearchResults] = useState([]);
 
 	useEffect(() => {
 		const checkSocialMediaAccess = async () => {
@@ -130,20 +133,41 @@ export default function DashboardLayout() {
 			</div>
 		);
 	}
+	const handleGlobalSearch = async (query: string) => {
+		setGlobalSearchQuery(query);
 
+		if (!query || query.length < 2) {
+			setSearchResults([]);
+			setIsSearching(false);
+			return;
+		}
+
+		setIsSearching(true);
+
+		try {
+			const token = localStorage.getItem("accessToken");
+			const response = await fetch(
+				`/api/search?q=${encodeURIComponent(query)}`,
+				{
+					headers: {
+						Authorization: `Bearer ${token}`,
+						"Content-Type": "application/json",
+					},
+				},
+			);
+
+			if (response.ok) {
+				const data = await response.json();
+				setSearchResults(data.results || []);
+			}
+		} catch (error) {
+			logger.error("Błąd wyszukiwania:", error);
+		} finally {
+			setIsSearching(false);
+		}
+	};
 	return (
 		<div className={styles.layout}>
-			{/* 👇 HEADER – na górze, cała szerokość */}
-			<Header
-				title={getPageTitle()}
-				onMenuClick={toggleSidebar}
-				collapsed={sidebarCollapsed}
-				onMobileMenuToggle={toggleMobileMenu}
-				isMobileMenuOpen={isMobileMenuOpen}
-				userRole={userData?.role || null}
-			/>
-
-			{/* 👇 KONTENER POD HEADEREM – Sidebar + Main */}
 			<div className={styles.content}>
 				<Sidebar
 					activeKey={activeNav}
@@ -156,9 +180,25 @@ export default function DashboardLayout() {
 					isMobileMenuOpen={isMobileMenuOpen}
 					onMobileMenuToggle={toggleMobileMenu}
 				/>
-				<main className={styles.main}>
-					<Outlet />
-				</main>
+
+				{/* 👇 KONTENER DLA HEADER + MAIN */}
+				<div className={styles.mainWrapper}>
+					<Header
+						title={getPageTitle()}
+						onMenuClick={toggleSidebar}
+						collapsed={sidebarCollapsed}
+						onMobileMenuToggle={toggleMobileMenu}
+						isMobileMenuOpen={isMobileMenuOpen}
+						userRole={userData?.role || null}
+						onSearch={handleGlobalSearch}
+						searchQuery={globalSearchQuery}
+						isSearching={isSearching}
+						searchResults={searchResults}
+					/>
+					<main className={styles.main}>
+						<Outlet />
+					</main>
+				</div>
 			</div>
 		</div>
 	);

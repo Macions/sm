@@ -50,6 +50,7 @@ model User {
   vacancies                 Vacancy[]
   vacancyApplications       VacancyApplication[]
   lastContributionPaidAt    DateTime?
+  items                     MemberItem[]
   contributionStatus        ContributionStatus?  @default(PENDING)
   contributionOverdueMonths Int                  @default(0)
   pillars                   String?              @db.Text
@@ -658,4 +659,18 @@ model MemberAccess {
 
   @@unique([user_id, access_name])
   @@map("member_access")
+}
+
+model MemberItem {
+  id         Int      @id @default(autoincrement())
+  user_id    Int
+  name       String
+  value      Float?
+  notes      String?
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@map("member_items")
 }

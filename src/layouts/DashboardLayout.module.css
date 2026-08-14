@@ -4,8 +4,9 @@
 
 .layout {
 	display: flex;
-	flex-direction: column; /* 👈 KOLUMNA – Header na górze */
+	flex-direction: row; /* 👈 ZMIENIONE: RZĄD, a nie kolumna */
 	min-height: 100vh;
+	height: 100vh; /* 👈 DODANE: pełna wysokość */
 	background: var(--bg-app, #f1f1f7);
 	font-family:
 		Inter,
@@ -18,14 +19,24 @@
 	padding: 0;
 	margin: 0;
 	box-sizing: border-box;
-	overflow-x: hidden;
+	overflow: hidden; /* 👈 ZMIENIONE: ukryj overflow na poziomie layout */
 }
 
-/* 👇 KONTENER POD HEADEREM – Sidebar + Main w rzędzie */
+/* 👇 KONTENER – Sidebar + (Header + Main) w rzędzie */
 .content {
 	display: flex;
 	flex: 1;
 	min-height: 0;
+	overflow: hidden;
+}
+
+/* 👇 NOWY KONTENER DLA HEADER + MAIN */
+.mainWrapper {
+	display: flex;
+	flex-direction: column;
+	flex: 1;
+	min-height: 0;
+	overflow: hidden;
 }
 
 /* 👇 GŁÓWNA ZAWARTOŚĆ – TYLKO OUTLET */
@@ -36,7 +47,9 @@
 	display: flex;
 	flex-direction: column;
 	transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+	overflow-y: auto; /* 👈 DODANE: przewijanie tylko main */
 	overflow-x: hidden;
+	background: var(--bg-app, #f1f1f7);
 }
 
 /* 👇 ŁADOWANIE */
@@ -74,6 +87,22 @@
 }
 
 @media (width <= 768px) {
+	.layout {
+		flex-direction: column; /* 👈 ZMIENIONE: na mobilkach z powrotem kolumna */
+		height: 100vh;
+	}
+
+	.content {
+		flex-direction: column;
+		flex: 1;
+		min-height: 0;
+	}
+
+	.mainWrapper {
+		flex: 1;
+		min-height: 0;
+	}
+
 	.main {
 		padding: 16px;
 	}

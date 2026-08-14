@@ -1,4 +1,4 @@
-﻿import revenueRoutes from './routes/revenue.routes';
+﻿import revenueRoutes from "./routes/revenue.routes";
 import express from "express";
 import cors from "cors";
 import { OAuth2Client } from "google-auth-library";
@@ -351,17 +351,17 @@ async function logAction(
 	try {
 		// Pobierz dane użytkownika
 		const userId = req.user?.id || 0;
-		const userName = req.user?.email ||
+		const userName =
+			req.user?.email ||
 			(req.user?.first_name && req.user?.last_name
 				? `${req.user.first_name} ${req.user.last_name}`
 				: "System");
 		const userRole = req.user?.role || "unknown";
 
 		// Pobierz IP i User-Agent
-		const ipAddress = req.headers['x-forwarded-for'] ||
-			req.socket?.remoteAddress ||
-			null;
-		const userAgent = req.headers['user-agent'] || null;
+		const ipAddress =
+			req.headers["x-forwarded-for"] || req.socket?.remoteAddress || null;
+		const userAgent = req.headers["user-agent"] || null;
 
 		// đź”Ą TWÓRZ BARDZIEJ SZCZEGÓŁOWY OPIS
 		let detailedEntityName = entityName || "unknown";
@@ -1003,7 +1003,7 @@ app.post("/api/ideas", authMiddleware, async (req: any, res) => {
 // server.ts - dodaj endpoint do pobierania plików z zadań
 // server.ts - dodaj gdzieś przed app.use('/api', revenueRoutes);
 
-app.listen()
+app.listen();
 app.get("/uploads/tasks/:filename", authMiddleware, async (req: any, res) => {
 	try {
 		// đź”Ą DEKODUJ NAZWÄ PLIKU
@@ -1304,11 +1304,11 @@ app.get("/api/members", authMiddleware, async (req: any, res) => {
 					user.created_at.toISOString().split("T")[0],
 				vacation: activeLeave
 					? {
-						startDate: activeLeave.start_date.toISOString().split("T")[0],
-						endDate: activeLeave.end_date.toISOString().split("T")[0],
-						type: activeLeave.scope === "team" ? "team" : "organization",
-						teamId: activeLeave.affected_teams || undefined,
-					}
+							startDate: activeLeave.start_date.toISOString().split("T")[0],
+							endDate: activeLeave.end_date.toISOString().split("T")[0],
+							type: activeLeave.scope === "team" ? "team" : "organization",
+							teamId: activeLeave.affected_teams || undefined,
+						}
 					: null,
 				onboarding_data: onboarding,
 			};
@@ -2192,7 +2192,7 @@ app.get("/api/applications", authMiddleware, async (req: any, res) => {
 				userId: app.user_id.toString(),
 				userName: app.user
 					? `${app.user.first_name || ""} ${app.user.last_name || ""}`.trim() ||
-					"Nieznany"
+						"Nieznany"
 					: "Nieznany",
 				userEmail: app.user?.email || "",
 				message: app.message || "",
@@ -2313,7 +2313,7 @@ app.get(
 					userId: app.user_id.toString(),
 					userName: app.user
 						? `${app.user.first_name || ""} ${app.user.last_name || ""}`.trim() ||
-						"Nieznany"
+							"Nieznany"
 						: "Nieznany",
 					userEmail: app.user?.email || "",
 					message: app.message || "",
@@ -3531,17 +3531,27 @@ app.put("/api/leaves/:id", authMiddleware, async (req: any, res) => {
 			data: {
 				type: type || existingLeave.type,
 				scope: scope || existingLeave.scope,
-				affected_teams: affectedTeams ? JSON.stringify(affectedTeams) : existingLeave.affected_teams,
+				affected_teams: affectedTeams
+					? JSON.stringify(affectedTeams)
+					: existingLeave.affected_teams,
 				start_date: startDate ? new Date(startDate) : existingLeave.start_date,
 				end_date: endDate ? new Date(endDate) : existingLeave.end_date,
 				reason: reason !== undefined ? reason : existingLeave.reason,
 				reason_visibility: reasonVisibility || existingLeave.reason_visibility,
-				attachments: attachments ? JSON.stringify(attachments) : existingLeave.attachments,
+				attachments: attachments
+					? JSON.stringify(attachments)
+					: existingLeave.attachments,
 				status: status || existingLeave.status,
-				...(status === "approved" || status === "rejected" || status === "cancelled" ? {
-					approved_by: `${currentUser?.first_name || ""} ${currentUser?.last_name || ""}`.trim() || "Nieznany",
-					approved_at: new Date(),
-				} : {}),
+				...(status === "approved" ||
+				status === "rejected" ||
+				status === "cancelled"
+					? {
+							approved_by:
+								`${currentUser?.first_name || ""} ${currentUser?.last_name || ""}`.trim() ||
+								"Nieznany",
+							approved_at: new Date(),
+						}
+					: {}),
 			},
 			include: { user: true }, // â† đź”Ą DODAJ TÄ LINIÄ!
 		});
@@ -3603,15 +3613,19 @@ app.put("/api/leaves/:id", authMiddleware, async (req: any, res) => {
 					endpoint: req.originalUrl || req.url,
 					method: req.method,
 					entity_id: req.params.id,
-					entity_name: `Urlop ${leave.user?.first_name || ''} ${leave.user?.last_name || ''}`.trim(),
+					entity_name:
+						`Urlop ${leave.user?.first_name || ""} ${leave.user?.last_name || ""}`.trim(),
 					changes: {
 						status: status || existingLeave.status,
-						startDate: leave.start_date?.toISOString().split('T')[0],
-						endDate: leave.end_date?.toISOString().split('T')[0],
-						affectedTeams: leave.affected_teams ? JSON.parse(leave.affected_teams) : [],
+						startDate: leave.start_date?.toISOString().split("T")[0],
+						endDate: leave.end_date?.toISOString().split("T")[0],
+						affectedTeams: leave.affected_teams
+							? JSON.parse(leave.affected_teams)
+							: [],
 					},
-					ip_address: req.headers['x-forwarded-for'] || req.socket?.remoteAddress || null,
-					user_agent: req.headers['user-agent'] || null,
+					ip_address:
+						req.headers["x-forwarded-for"] || req.socket?.remoteAddress || null,
+					user_agent: req.headers["user-agent"] || null,
 					status: "success",
 				},
 			});
@@ -3687,14 +3701,18 @@ app.delete("/api/leaves/:id", authMiddleware, async (req: any, res) => {
 						endpoint: req.originalUrl || req.url,
 						method: req.method,
 						entity_id: req.params.id,
-						entity_name: `Urlop ${leaveToDelete.user?.first_name || ''} ${leaveToDelete.user?.last_name || ''}`.trim(),
+						entity_name:
+							`Urlop ${leaveToDelete.user?.first_name || ""} ${leaveToDelete.user?.last_name || ""}`.trim(),
 						changes: {
-							startDate: leaveToDelete.start_date?.toISOString().split('T')[0],
-							endDate: leaveToDelete.end_date?.toISOString().split('T')[0],
+							startDate: leaveToDelete.start_date?.toISOString().split("T")[0],
+							endDate: leaveToDelete.end_date?.toISOString().split("T")[0],
 							status: leaveToDelete.status,
 						},
-						ip_address: req.headers['x-forwarded-for'] || req.socket?.remoteAddress || null,
-						user_agent: req.headers['user-agent'] || null,
+						ip_address:
+							req.headers["x-forwarded-for"] ||
+							req.socket?.remoteAddress ||
+							null,
+						user_agent: req.headers["user-agent"] || null,
 						status: "success",
 					},
 				});
@@ -5497,13 +5515,13 @@ app.put("/api/admin/teams/:id", authMiddleware, async (req: any, res) => {
 		// đź”Ą Pobierz aktualny team, żeby sprawdzić czy parent_id został przesłany
 		const currentTeam = await prisma.team.findUnique({
 			where: { id: teamId },
-			select: { parent_id: true }
+			select: { parent_id: true },
 		});
 
 		// đź”Ą TYLKO jeśli parent_id jest w req.body (nawet jako null) - aktualizuj
 		// Jeśli nie ma klucza parent_id w req.body - zachowaj starą wartość
 		let parentIdValue = undefined;
-		if ('parent_id' in req.body) {
+		if ("parent_id" in req.body) {
 			parentIdValue = parent_id ? parseInt(parent_id) : null;
 		}
 
@@ -5871,52 +5889,52 @@ app.get("/api/tasks/:id", authMiddleware, async (req: any, res) => {
 // ============================================================
 // 🔐 GET /api/auth/me - Pobierz dane zalogowanego użytkownika
 // ============================================================
-app.get('/api/auth/me', async (req, res) => {
-    try {
-        const authHeader = req.headers.authorization;
-        if (!authHeader || !authHeader.startsWith('Bearer ')) {
-            return res.status(401).json({ error: 'Brak tokena' });
-        }
+app.get("/api/auth/me", async (req, res) => {
+	try {
+		const authHeader = req.headers.authorization;
+		if (!authHeader || !authHeader.startsWith("Bearer ")) {
+			return res.status(401).json({ error: "Brak tokena" });
+		}
 
-        const token = authHeader.split(' ')[1];
-        
-        try {
-            const decoded = jwt.verify(token, JWT_SECRET) as any;
-            
-            const user = await prisma.user.findUnique({
-                where: { id: decoded.id },
-                select: {
-                    id: true,
-                    email: true,
-                    first_name: true,
-                    last_name: true,
-                    role_id: true,
-                    team: true,
-                    status: true
-                }
-            });
+		const token = authHeader.split(" ")[1];
 
-            if (!user) {
-                return res.status(404).json({ error: 'Użytkownik nie znaleziony' });
-            }
+		try {
+			const decoded = jwt.verify(token, JWT_SECRET) as any;
 
-            res.json({
-                id: user.id.toString(),
-                email: user.email,
-                first_name: user.first_name,
-                last_name: user.last_name,
-                role: mapRoleId(user.role_id),
-                team: user.team,
-                status: user.status
-            });
-        } catch (jwtError) {
-            console.error('❌ Błąd JWT:', jwtError);
-            return res.status(401).json({ error: 'Nieprawidłowy token' });
-        }
-    } catch (error) {
-        console.error('❌ Błąd pobierania profilu:', error);
-        res.status(500).json({ error: 'Błąd serwera' });
-    }
+			const user = await prisma.user.findUnique({
+				where: { id: decoded.id },
+				select: {
+					id: true,
+					email: true,
+					first_name: true,
+					last_name: true,
+					role_id: true,
+					team: true,
+					status: true,
+				},
+			});
+
+			if (!user) {
+				return res.status(404).json({ error: "Użytkownik nie znaleziony" });
+			}
+
+			res.json({
+				id: user.id.toString(),
+				email: user.email,
+				first_name: user.first_name,
+				last_name: user.last_name,
+				role: mapRoleId(user.role_id),
+				team: user.team,
+				status: user.status,
+			});
+		} catch (jwtError) {
+			console.error("❌ Błąd JWT:", jwtError);
+			return res.status(401).json({ error: "Nieprawidłowy token" });
+		}
+	} catch (error) {
+		console.error("❌ Błąd pobierania profilu:", error);
+		res.status(500).json({ error: "Błąd serwera" });
+	}
 });
 // POST /api/tasks - utwórz nowe zadanie
 app.post("/api/tasks", authMiddleware, async (req: any, res) => {
@@ -6474,7 +6492,7 @@ setTimeout(async () => {
 }, 5000);
 // server.ts - dodaj przed app.use('/api', revenueRoutes);
 
-app.listen()
+app.listen();
 // Na backendzie:
 app.post(
 	"/api/notifications/task-created",
@@ -6511,7 +6529,7 @@ app.post(
 
 // server.ts - dodaj przed app.use('/api', revenueRoutes);
 
-app.listen()
+app.listen();
 app.post("/api/tasks/recurring", authMiddleware, async (req: any, res) => {
 	try {
 		const userId = req.user?.id;
@@ -6613,7 +6631,7 @@ app.post("/api/tasks/recurring", authMiddleware, async (req: any, res) => {
 
 // server.ts - dodaj przed app.use('/api', revenueRoutes);
 
-app.listen()
+app.listen();
 
 // GET /api/tasks/:taskId/comments
 app.get(
@@ -6867,13 +6885,20 @@ app.get(
 	},
 );
 // GET /api/admin/member-access - Pobierz wszystkich członków z dostępami
+// GET /api/admin/member-access - Pobierz wszystkich członków z dostępami i przedmiotami
+// GET /api/admin/member-access - Pobierz wszystkich członków z dostępami i przedmiotami
 app.get("/api/admin/member-access", authMiddleware, async (req: any, res) => {
 	try {
 		const userRole = req.user?.role;
 
+		console.log("🔍 [member-access] Sprawdzanie uprawnień:", userRole);
+
 		if (userRole !== "admin" && userRole !== "board" && userRole !== "Zarząd") {
+			console.log("❌ [member-access] Brak uprawnień:", userRole);
 			return res.status(403).json({ error: "Brak uprawnień" });
 		}
+
+		console.log("🔍 [member-access] Pobieranie członków...");
 
 		const members = await prisma.user.findMany({
 			where: {
@@ -6893,11 +6918,37 @@ app.get("/api/admin/member-access", authMiddleware, async (req: any, res) => {
 						access_name: true,
 					},
 				},
+				items: {
+					select: {
+						id: true,
+						name: true,
+						value: true,
+						notes: true,
+						created_at: true,
+					},
+				},
 			},
 			orderBy: {
 				first_name: "asc",
 			},
 		});
+
+		console.log(`🔍 [member-access] Znaleziono ${members.length} członków`);
+
+		// Loguj pierwszego członka dla sprawdzenia
+		if (members.length > 0) {
+			console.log("🔍 [member-access] Przykładowy członek:", {
+				id: members[0].id,
+				name: `${members[0].first_name} ${members[0].last_name}`,
+				access: members[0].access.length,
+				items: members[0].items.length,
+				itemsData: members[0].items,
+			});
+		}
+
+		// Sprawdź czy są jakieś przedmioty w ogóle
+		const totalItems = members.reduce((sum, m) => sum + m.items.length, 0);
+		console.log(`🔍 [member-access] Łącznie przedmiotów: ${totalItems}`);
 
 		const formattedMembers = members.map((member: any) => ({
 			id: member.id.toString(),
@@ -6908,171 +6959,386 @@ app.get("/api/admin/member-access", authMiddleware, async (req: any, res) => {
 			functional_role: member.functional_role,
 			team: member.team,
 			access: member.access.map((a: any) => a.access_name),
+			items: member.items.map((item: any) => ({
+				id: item.id.toString(),
+				name: item.name,
+				value: item.value,
+				notes: item.notes,
+				created_at: item.created_at,
+			})),
 		}));
 
+		console.log("✅ [member-access] Odpowiedź wysłana");
 		res.json(formattedMembers);
 	} catch (error) {
-		logger.error("âťŚ Błąd pobierania dostępów:", error);
+		console.error("❌ [member-access] Błąd:", error);
 		res.status(500).json({ error: "Nie udało się pobrać dostępów" });
 	}
 });
 // GET /api/members/:id/access - Pobierz dostępy członka
-app.get(
-	"/api/members/:id/access",
-	authMiddleware,
-	async (req: any, res) => {
-		try {
-			const userId = parseInt(req.params.id);
-			const currentUserId = req.user?.id;
-			const userRole = req.user?.role;
+app.get("/api/members/:id/access", authMiddleware, async (req: any, res) => {
+	try {
+		const userId = parseInt(req.params.id);
+		const currentUserId = req.user?.id;
+		const userRole = req.user?.role;
 
-			// Sprawdź uprawnienia - admin/board/Zarząd mogą wszystko, członek tylko swój
-			if (
-				userRole !== "admin" &&
-				userRole !== "board" &&
-				userRole !== "Zarząd" &&
-				userId !== currentUserId
-			) {
-				return res.status(403).json({ error: "Brak uprawnień" });
-			}
-
-			const access = await prisma.memberAccess.findMany({
-				where: { user_id: userId },
-				select: {
-					id: true,
-					access_name: true,
-				},
-				orderBy: {
-					access_name: "asc",
-				},
-			});
-
-			res.json(access.map((a) => a.access_name));
-		} catch (error) {
-			logger.error("âťŚ Błąd pobierania dostępów członka:", error);
-			res.status(500).json({ error: "Nie udało się pobrać dostępów" });
+		// Sprawdź uprawnienia - admin/board/Zarząd mogą wszystko, członek tylko swój
+		if (
+			userRole !== "admin" &&
+			userRole !== "board" &&
+			userRole !== "Zarząd" &&
+			userId !== currentUserId
+		) {
+			return res.status(403).json({ error: "Brak uprawnień" });
 		}
+
+		const access = await prisma.memberAccess.findMany({
+			where: { user_id: userId },
+			select: {
+				id: true,
+				access_name: true,
+			},
+			orderBy: {
+				access_name: "asc",
+			},
+		});
+
+		res.json(access.map((a) => a.access_name));
+	} catch (error) {
+		logger.error("âťŚ Błąd pobierania dostępów członka:", error);
+		res.status(500).json({ error: "Nie udało się pobrać dostępów" });
 	}
-);
+});
 // PUT /api/members/:id/access - Zapisz dostępy członka
-app.put(
-	"/api/members/:id/access",
-	authMiddleware,
-	async (req: any, res) => {
-		try {
-			const userId = parseInt(req.params.id);
-			const { access } = req.body; // Array stringów
-			const userRole = req.user?.role;
+app.put("/api/members/:id/access", authMiddleware, async (req: any, res) => {
+	try {
+		const userId = parseInt(req.params.id);
+		const { access } = req.body; // Array stringów
+		const userRole = req.user?.role;
 
-			if (userRole !== "admin" && userRole !== "board" && userRole !== "Zarząd") {
-				return res.status(403).json({ error: "Brak uprawnień" });
-			}
-
-			if (!access || !Array.isArray(access)) {
-				return res.status(400).json({ error: "Dane są nieprawidłowe" });
-			}
-
-			// Walidacja - max 50 znaków na nazwę dostępu
-			const validAccess = access.filter(
-				(name) => typeof name === "string" && name.trim().length > 0 && name.trim().length <= 50
-			);
-
-			// Usuń stare dostępy
-			await prisma.memberAccess.deleteMany({
-				where: { user_id: userId },
-			});
-
-			// Dodaj nowe
-			if (validAccess.length > 0) {
-				await prisma.memberAccess.createMany({
-					data: validAccess.map((name) => ({
-						user_id: userId,
-						access_name: name.trim(),
-					})),
-				});
-			}
-
-			// Log akcji
-			const user = await prisma.user.findUnique({
-				where: { id: userId },
-				select: { first_name: true, last_name: true, email: true },
-			});
-
-			await logAction(
-				req,
-				"UPDATE",
-				"USER",
-				userId.toString(),
-				`${user?.first_name || ""} ${user?.last_name || ""}`.trim() || "Nieznany",
-				{ access: validAccess },
-				"success",
-				null,
-			);
-
-			res.json({
-				success: true,
-				message: "Dostęp zaktualizowany",
-				access: validAccess,
-			});
-		} catch (error) {
-			logger.error("âťŚ Błąd zapisu dostępów:", error);
-			res.status(500).json({ error: "Nie udało się zapisać dostępów" });
+		if (userRole !== "admin" && userRole !== "board" && userRole !== "Zarząd") {
+			return res.status(403).json({ error: "Brak uprawnień" });
 		}
+
+		if (!access || !Array.isArray(access)) {
+			return res.status(400).json({ error: "Dane są nieprawidłowe" });
+		}
+
+		// Walidacja - max 50 znaków na nazwę dostępu
+		const validAccess = access.filter(
+			(name) =>
+				typeof name === "string" &&
+				name.trim().length > 0 &&
+				name.trim().length <= 50,
+		);
+
+		// Usuń stare dostępy
+		await prisma.memberAccess.deleteMany({
+			where: { user_id: userId },
+		});
+
+		// Dodaj nowe
+		if (validAccess.length > 0) {
+			await prisma.memberAccess.createMany({
+				data: validAccess.map((name) => ({
+					user_id: userId,
+					access_name: name.trim(),
+				})),
+			});
+		}
+
+		// Log akcji
+		const user = await prisma.user.findUnique({
+			where: { id: userId },
+			select: { first_name: true, last_name: true, email: true },
+		});
+
+		await logAction(
+			req,
+			"UPDATE",
+			"USER",
+			userId.toString(),
+			`${user?.first_name || ""} ${user?.last_name || ""}`.trim() || "Nieznany",
+			{ access: validAccess },
+			"success",
+			null,
+		);
+
+		res.json({
+			success: true,
+			message: "Dostęp zaktualizowany",
+			access: validAccess,
+		});
+	} catch (error) {
+		logger.error("âťŚ Błąd zapisu dostępów:", error);
+		res.status(500).json({ error: "Nie udało się zapisać dostępów" });
 	}
-);
-// POST /api/members/:id/access - Dodaj pojedynczy dostęp
-app.post(
-	"/api/members/:id/access",
-	authMiddleware,
-	async (req: any, res) => {
-		try {
-			const userId = parseInt(req.params.id);
-			const { access_name } = req.body;
-			const userRole = req.user?.role;
+});
+// GET /api/members/:id/items - Pobierz przedmioty członka
+app.get("/api/members/:id/items", authMiddleware, async (req: any, res) => {
+	try {
+		const userId = parseInt(req.params.id);
+		const currentUserId = req.user?.id;
+		const userRole = req.user?.role;
 
-			if (userRole !== "admin" && userRole !== "board" && userRole !== "Zarząd") {
-				return res.status(403).json({ error: "Brak uprawnień" });
-			}
+		if (
+			userRole !== "admin" &&
+			userRole !== "board" &&
+			userRole !== "Zarząd" &&
+			userId !== currentUserId
+		) {
+			return res.status(403).json({ error: "Brak uprawnień" });
+		}
 
-			if (!access_name || typeof access_name !== "string" || access_name.trim().length === 0) {
-				return res.status(400).json({ error: "Nazwa dostępu jest wymagana" });
-			}
+		const items = await prisma.memberItem.findMany({
+			where: { user_id: userId },
+			select: {
+				id: true,
+				name: true,
+				value: true,
+				notes: true,
+				created_at: true,
+			},
+			orderBy: { created_at: "desc" },
+		});
 
-			if (access_name.trim().length > 50) {
-				return res.status(400).json({ error: "Nazwa dostępu nie może przekraczać 50 znaków" });
-			}
+		res.json(items);
+	} catch (error) {
+		logger.error("❌ Błąd pobierania przedmiotów:", error);
+		res.status(500).json({ error: "Nie udało się pobrać przedmiotów" });
+	}
+});
+// POST /api/members/:id/items - Dodaj przedmiot
+app.post("/api/members/:id/items", authMiddleware, async (req: any, res) => {
+	try {
+		const userId = parseInt(req.params.id);
+		const { name, value, notes } = req.body;
+		const userRole = req.user?.role;
 
-			// Sprawdź czy już istnieje
-			const existing = await prisma.memberAccess.findUnique({
-				where: {
-					user_id_access_name: {
-						user_id: userId,
-						access_name: access_name.trim(),
+		if (userRole !== "admin" && userRole !== "board" && userRole !== "Zarząd") {
+			return res.status(403).json({ error: "Brak uprawnień" });
+		}
+
+		if (!name || name.trim().length === 0) {
+			return res.status(400).json({ error: "Nazwa przedmiotu jest wymagana" });
+		}
+
+		const item = await prisma.memberItem.create({
+			data: {
+				user_id: userId,
+				name: name.trim(),
+				value: value || null,
+				notes: notes?.trim() || null,
+			},
+		});
+
+		await logAction(
+			req,
+			"CREATE",
+			"USER",
+			item.id.toString(),
+			name.trim(),
+			{ name: name.trim(), value, notes },
+			"success",
+			null,
+		);
+
+		res.status(201).json({
+			id: item.id.toString(),
+			name: item.name,
+			value: item.value,
+			notes: item.notes,
+			created_at: item.created_at,
+		});
+	} catch (error) {
+		logger.error("❌ Błąd dodawania przedmiotu:", error);
+		res.status(500).json({ error: "Nie udało się dodać przedmiotu" });
+	}
+});
+// PUT /api/items/:id - Edytuj przedmiot
+app.put("/api/items/:id", authMiddleware, async (req: any, res) => {
+	try {
+		const itemId = parseInt(req.params.id);
+		const { name, value, notes } = req.body;
+		const userRole = req.user?.role;
+
+		if (userRole !== "admin" && userRole !== "board" && userRole !== "Zarząd") {
+			return res.status(403).json({ error: "Brak uprawnień" });
+		}
+
+		const existingItem = await prisma.memberItem.findUnique({
+			where: { id: itemId },
+		});
+
+		if (!existingItem) {
+			return res.status(404).json({ error: "Nie znaleziono przedmiotu" });
+		}
+
+		const updatedItem = await prisma.memberItem.update({
+			where: { id: itemId },
+			data: {
+				name: name?.trim() || existingItem.name,
+				value: value !== undefined ? value : existingItem.value,
+				notes: notes !== undefined ? notes?.trim() || null : existingItem.notes,
+			},
+		});
+
+		await logAction(
+			req,
+			"UPDATE",
+			"USER",
+			updatedItem.id.toString(),
+			updatedItem.name,
+			{
+				name: updatedItem.name,
+				value: updatedItem.value,
+				notes: updatedItem.notes,
+			},
+			"success",
+			null,
+		);
+
+		res.json({
+			id: updatedItem.id.toString(),
+			name: updatedItem.name,
+			value: updatedItem.value,
+			notes: updatedItem.notes,
+			created_at: updatedItem.created_at,
+		});
+	} catch (error) {
+		logger.error("❌ Błąd edycji przedmiotu:", error);
+		res.status(500).json({ error: "Nie udało się edytować przedmiotu" });
+	}
+});
+// DELETE /api/items/:id - Usuń przedmiot
+app.delete("/api/items/:id", authMiddleware, async (req: any, res) => {
+	try {
+		const itemId = parseInt(req.params.id);
+		const userRole = req.user?.role;
+
+		if (userRole !== "admin" && userRole !== "board" && userRole !== "Zarząd") {
+			return res.status(403).json({ error: "Brak uprawnień" });
+		}
+
+		const existingItem = await prisma.memberItem.findUnique({
+			where: { id: itemId },
+		});
+
+		if (!existingItem) {
+			return res.status(404).json({ error: "Nie znaleziono przedmiotu" });
+		}
+
+		await prisma.memberItem.delete({
+			where: { id: itemId },
+		});
+
+		await logAction(
+			req,
+			"DELETE",
+			"USER",
+			itemId.toString(),
+			existingItem.name,
+			{ deleted: true },
+			"success",
+			null,
+		);
+
+		res.json({ success: true, message: "Przedmiot usunięty" });
+	} catch (error) {
+		logger.error("❌ Błąd usuwania przedmiotu:", error);
+		res.status(500).json({ error: "Nie udało się usunąć przedmiotu" });
+	}
+});
+// GET /api/admin/member-items - Pobierz wszystkich członków z przedmiotami
+app.get("/api/admin/member-items", authMiddleware, async (req: any, res) => {
+	try {
+		const userRole = req.user?.role;
+
+		if (userRole !== "admin" && userRole !== "board" && userRole !== "Zarząd") {
+			return res.status(403).json({ error: "Brak uprawnień" });
+		}
+
+		const members = await prisma.user.findMany({
+			where: { is_active: true },
+			select: {
+				id: true,
+				first_name: true,
+				last_name: true,
+				email: true,
+				items: {
+					select: {
+						id: true,
+						name: true,
+						value: true,
+						notes: true,
+						created_at: true,
 					},
 				},
-			});
+			},
+			orderBy: { first_name: "asc" },
+		});
 
-			if (existing) {
-				return res.status(400).json({ error: "Ten dostęp już został dodany" });
-			}
+		res.json(members);
+	} catch (error) {
+		logger.error("❌ Błąd pobierania przedmiotów:", error);
+		res.status(500).json({ error: "Nie udało się pobrać przedmiotów" });
+	}
+});
+// POST /api/members/:id/access - Dodaj pojedynczy dostęp
+app.post("/api/members/:id/access", authMiddleware, async (req: any, res) => {
+	try {
+		const userId = parseInt(req.params.id);
+		const { access_name } = req.body;
+		const userRole = req.user?.role;
 
-			const newAccess = await prisma.memberAccess.create({
-				data: {
+		if (userRole !== "admin" && userRole !== "board" && userRole !== "Zarząd") {
+			return res.status(403).json({ error: "Brak uprawnień" });
+		}
+
+		if (
+			!access_name ||
+			typeof access_name !== "string" ||
+			access_name.trim().length === 0
+		) {
+			return res.status(400).json({ error: "Nazwa dostępu jest wymagana" });
+		}
+
+		if (access_name.trim().length > 50) {
+			return res
+				.status(400)
+				.json({ error: "Nazwa dostępu nie może przekraczać 50 znaków" });
+		}
+
+		// Sprawdź czy już istnieje
+		const existing = await prisma.memberAccess.findUnique({
+			where: {
+				user_id_access_name: {
 					user_id: userId,
 					access_name: access_name.trim(),
 				},
-			});
+			},
+		});
 
-			res.status(201).json({
-				id: newAccess.id.toString(),
-				access_name: newAccess.access_name,
-			});
-		} catch (error) {
-			logger.error("âťŚ Błąd dodawania dostępu:", error);
-			res.status(500).json({ error: "Nie udało się dodać dostępu" });
+		if (existing) {
+			return res.status(400).json({ error: "Ten dostęp już został dodany" });
 		}
+
+		const newAccess = await prisma.memberAccess.create({
+			data: {
+				user_id: userId,
+				access_name: access_name.trim(),
+			},
+		});
+
+		res.status(201).json({
+			id: newAccess.id.toString(),
+			access_name: newAccess.access_name,
+		});
+	} catch (error) {
+		logger.error("âťŚ Błąd dodawania dostępu:", error);
+		res.status(500).json({ error: "Nie udało się dodać dostępu" });
 	}
-);
+});
 // DELETE /api/members/:id/access/:accessId - Usuń pojedynczy dostęp
 app.delete(
 	"/api/members/:id/access/:accessId",
@@ -7083,7 +7349,11 @@ app.delete(
 			const accessId = parseInt(req.params.accessId);
 			const userRole = req.user?.role;
 
-			if (userRole !== "admin" && userRole !== "board" && userRole !== "Zarząd") {
+			if (
+				userRole !== "admin" &&
+				userRole !== "board" &&
+				userRole !== "Zarząd"
+			) {
 				return res.status(403).json({ error: "Brak uprawnień" });
 			}
 
@@ -7104,7 +7374,7 @@ app.delete(
 			logger.error("âťŚ Błąd usuwania dostępu:", error);
 			res.status(500).json({ error: "Nie udało się usunąć dostępu" });
 		}
-	}
+	},
 );
 // ============================================================
 // đź“Š GET /api/tasks/stats/:userId - Statystyki zadań użytkownika
@@ -7169,6 +7439,422 @@ app.get("/api/tasks/stats/:userId", authMiddleware, async (req: any, res) => {
 	} catch (error) {
 		logger.error("âťŚ Błąd pobierania statystyk zadań:", error);
 		res.status(500).json({ error: "Nie udało się pobrać statystyk" });
+	}
+});
+// ============================================================
+// 🔍 SEARCH - ZAAWANSOWANE WYSZUKIWANIE
+// ============================================================
+app.get("/api/search", authMiddleware, async (req: any, res) => {
+	try {
+		const query = req.query.q as string;
+		const limit = parseInt(req.query.limit as string) || 10;
+
+		if (!query || query.length < 2) {
+			return res.json({ results: [], query });
+		}
+
+		const searchLower = query.toLowerCase();
+		const results: any[] = [];
+
+		// ============================================================
+		// 1. SZUKAJ W CZŁONKACH (users)
+		// ============================================================
+		const members = await prisma.user.findMany({
+			where: {
+				is_active: true,
+				OR: [
+					{ first_name: { contains: query } },
+					{ last_name: { contains: query } },
+					{ email: { contains: query } },
+					{ functional_role: { contains: query } },
+					{ province: { contains: query } },
+				],
+			},
+			select: {
+				id: true,
+				first_name: true,
+				last_name: true,
+				email: true,
+				functional_role: true,
+				province: true,
+				team: true,
+			},
+			take: limit,
+		});
+
+		members.forEach((member: any) => {
+			const fullName =
+				`${member.first_name || ""} ${member.last_name || ""}`.trim();
+			results.push({
+				id: `member-${member.id}`,
+				type: "member",
+				title: fullName || "Nieznany",
+				subtitle: member.functional_role || "Członek",
+				description: member.email || "",
+				link: `/members/${member.id}`,
+				icon: "Users",
+				province: member.province,
+				team: member.team,
+			});
+		});
+
+		// ============================================================
+		// 2. SZUKAJ W PROJEKTACH
+		// ============================================================
+		const projects = await prisma.project.findMany({
+			where: {
+				is_active: 1,
+				OR: [
+					{ name: { contains: query } },
+					{ description: { contains: query } },
+					{ pillar: { contains: query } },
+				],
+			},
+			select: {
+				id: true,
+				name: true,
+				description: true,
+				pillar: true,
+				status: true,
+			},
+			take: limit,
+		});
+
+		projects.forEach((project: any) => {
+			results.push({
+				id: `project-${project.id}`,
+				type: "project",
+				title: project.name,
+				subtitle: project.pillar || "Projekt",
+				description: project.description?.substring(0, 100) || "",
+				link: `/projects/${project.id}`,
+				icon: "Briefcase",
+				status: project.status,
+			});
+		});
+
+		// ============================================================
+		// 3. SZUKAJ W PORADNIKACH (guides)
+		// ============================================================
+		const guides = await prisma.guide.findMany({
+			where: {
+				is_published: 1,
+				OR: [
+					{ title: { contains: query } },
+					{ description: { contains: query } },
+					{ content: { contains: query } },
+					{ author: { contains: query } },
+				],
+			},
+			select: {
+				id: true,
+				title: true,
+				description: true,
+				author: true,
+				category: true,
+			},
+			take: limit,
+		});
+
+		guides.forEach((guide: any) => {
+			results.push({
+				id: `guide-${guide.id}`,
+				type: "guide",
+				title: guide.title,
+				subtitle: guide.author || "Autor nieznany",
+				description: guide.description?.substring(0, 100) || "",
+				link: `/guides/${guide.id}`,
+				icon: "GraduationCap",
+				category: guide.category,
+			});
+		});
+
+		// ============================================================
+		// 4. SZUKAJ W ZADANIACH (tasks)
+		// ============================================================
+		const userId = req.user?.id;
+		const userRole = req.user?.role;
+
+		let taskWhere: any = {
+			OR: [
+				{ title: { contains: query } },
+				{ description: { contains: query } },
+			],
+		};
+
+		// Ogranicz widoczność zadań dla zwykłych członków
+		if (userRole !== "admin" && userRole !== "board") {
+			taskWhere = {
+				...taskWhere,
+				OR: [...taskWhere.OR, { assigned_to: parseInt(userId) }],
+			};
+		}
+
+		const tasks = await prisma.task.findMany({
+			where: taskWhere,
+			select: {
+				id: true,
+				title: true,
+				description: true,
+				status: true,
+				priority: true,
+				assigned_to: true,
+				assignedTo: {
+					select: {
+						first_name: true,
+						last_name: true,
+					},
+				},
+				project: {
+					select: {
+						name: true,
+					},
+				},
+			},
+			take: limit,
+		});
+
+		tasks.forEach((task: any) => {
+			const assignedName = task.assignedTo
+				? `${task.assignedTo.first_name || ""} ${task.assignedTo.last_name || ""}`.trim()
+				: "Nieprzypisany";
+
+			results.push({
+				id: `task-${task.id}`,
+				type: "task",
+				title: task.title,
+				subtitle: `Zadanie • ${task.status || "todo"}`,
+				description: `Przypisane do: ${assignedName}${task.project?.name ? ` • ${task.project.name}` : ""}`,
+				link: `/tasks/${task.id}`,
+				icon: "CheckCircle",
+				status: task.status,
+				priority: task.priority,
+			});
+		});
+
+		// ============================================================
+		// 5. SZUKAJ W WAKATACH (vacancies)
+		// ============================================================
+		const vacancies = await prisma.vacancy.findMany({
+			where: {
+				is_active: true,
+				OR: [
+					{ title: { contains: query } },
+					{ description: { contains: query } },
+					{ team: { contains: query } },
+					{ pillar: { contains: query } },
+				],
+			},
+			select: {
+				id: true,
+				title: true,
+				description: true,
+				team: true,
+				pillar: true,
+				status: true,
+			},
+			take: limit,
+		});
+
+		vacancies.forEach((vacancy: any) => {
+			results.push({
+				id: `vacancy-${vacancy.id}`,
+				type: "vacancy",
+				title: vacancy.title,
+				subtitle: vacancy.team || vacancy.pillar || "Wakat",
+				description: vacancy.description?.substring(0, 100) || "",
+				link: `/vacancies/${vacancy.id}`,
+				icon: "Briefcase",
+				status: vacancy.status,
+			});
+		});
+
+		// ============================================================
+		// 6. SZUKAJ W STRUKTURZE (teams)
+		// ============================================================
+		const teams = await prisma.team.findMany({
+			where: {
+				status: "active",
+				OR: [
+					{ name: { contains: query } },
+					{ description: { contains: query } },
+					{ role: { contains: query } },
+				],
+			},
+			select: {
+				id: true,
+				name: true,
+				description: true,
+				role: true,
+				email: true,
+			},
+			take: limit,
+		});
+
+		teams.forEach((team: any) => {
+			results.push({
+				id: `structure-${team.id}`,
+				type: "structure",
+				title: team.name,
+				subtitle: team.role || "Zespół",
+				description: team.description?.substring(0, 100) || "",
+				link: `/structure`,
+				icon: "Users",
+				email: team.email,
+			});
+		});
+
+		// ============================================================
+		// 7. SZUKAJ W SOCIAL MEDIA (publications)
+		// ============================================================
+		const publications = await prisma.publication.findMany({
+			where: {
+				OR: [
+					{ title: { contains: query } },
+					{ description: { contains: query } },
+					{ platform: { contains: query } },
+				],
+			},
+			select: {
+				id: true,
+				title: true,
+				description: true,
+				platform: true,
+				type: true,
+				status: true,
+			},
+			take: limit,
+		});
+
+		publications.forEach((pub: any) => {
+			results.push({
+				id: `social-${pub.id}`,
+				type: "social",
+				title: pub.title,
+				subtitle: `${pub.platform || "Social"} • ${pub.type || "post"}`,
+				description: pub.description?.substring(0, 100) || "",
+				link: `/social`,
+				icon: "Megaphone",
+				status: pub.status,
+			});
+		});
+
+		// ============================================================
+		// POSORTOWANIE WYNIKÓW - najlepsze dopasowanie na górze
+		// ============================================================
+		const sortedResults = results
+			.map((result: any) => {
+				let score = 0;
+				const titleLower = result.title?.toLowerCase() || "";
+				const subtitleLower = result.subtitle?.toLowerCase() || "";
+				const descLower = result.description?.toLowerCase() || "";
+
+				// Dokładne dopasowanie w tytule - najwyższa waga
+				if (titleLower === searchLower) score += 100;
+				else if (titleLower.includes(searchLower)) score += 50;
+
+				// Dopasowanie w podtytule
+				if (subtitleLower.includes(searchLower)) score += 30;
+
+				// Dopasowanie w opisie
+				if (descLower.includes(searchLower)) score += 15;
+
+				// Wyższy priorytet dla członków i projektów
+				if (result.type === "member") score += 10;
+				if (result.type === "project") score += 5;
+
+				return { ...result, score };
+			})
+			.sort((a: any, b: any) => b.score - a.score)
+			.slice(0, limit * 2); // Zwróć max 2x limit
+
+		res.json({
+			query,
+			total: sortedResults.length,
+			results: sortedResults,
+		});
+	} catch (error) {
+		logger.error("❌ Błąd wyszukiwania:", error);
+		res.status(500).json({
+			error: "Nie udało się wykonać wyszukiwania",
+			details: error instanceof Error ? error.message : "Unknown error",
+		});
+	}
+});
+// ============================================================
+// 📊 GET /api/search/data - Pobierz wszystkie dane do wyszukiwania (dla frontendu)
+// ============================================================
+app.get("/api/search/data", authMiddleware, async (req: any, res) => {
+	try {
+		const userId = req.user?.id;
+		const userRole = req.user?.role;
+
+		// Pobierz wszystkich członków (podstawowe dane)
+		const members = await prisma.user.findMany({
+			where: { is_active: true },
+			select: {
+				id: true,
+				first_name: true,
+				last_name: true,
+				email: true,
+				functional_role: true,
+				province: true,
+				team: true,
+			},
+			take: 500,
+		});
+
+		// Pobierz projekty
+		const projects = await prisma.project.findMany({
+			where: { is_active: 1 },
+			select: {
+				id: true,
+				name: true,
+				description: true,
+				pillar: true,
+			},
+			take: 200,
+		});
+
+		// Pobierz poradniki
+		const guides = await prisma.guide.findMany({
+			where: { is_published: 1 },
+			select: {
+				id: true,
+				title: true,
+				description: true,
+				author: true,
+			},
+			take: 200,
+		});
+
+		res.json({
+			members: members.map((m: any) => ({
+				id: m.id.toString(),
+				firstName: m.first_name,
+				lastName: m.last_name,
+				fullName: `${m.first_name || ""} ${m.last_name || ""}`.trim(),
+				email: m.email,
+				role: m.functional_role || "Członek",
+				province: m.province,
+				team: m.team,
+			})),
+			projects: projects.map((p: any) => ({
+				id: p.id.toString(),
+				name: p.name,
+				description: p.description,
+				pillar: p.pillar,
+			})),
+			guides: guides.map((g: any) => ({
+				id: g.id.toString(),
+				title: g.title,
+				description: g.description,
+				author: g.author,
+			})),
+		});
+	} catch (error) {
+		logger.error("❌ Błąd pobierania danych do wyszukiwania:", error);
+		res.status(500).json({ error: "Nie udało się pobrać danych" });
 	}
 });
 // ============================================================
@@ -7279,10 +7965,6 @@ app.get(
 	},
 );
 
-app.use('/api', revenueRoutes);
+app.use("/api", revenueRoutes);
 
-app.listen(port, () => { });
-
-
-
-
+app.listen(port, () => {});

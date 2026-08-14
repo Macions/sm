@@ -3,7 +3,7 @@ import { safeNavigate } from "@/utils/safeNavigation";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import { logger } from "@/utils/logger";
-import { RevenueChart } from '@/components/RevenueChart';
+import { RevenueChart } from "@/components/RevenueChart";
 
 import {
 	Users,
@@ -51,25 +51,25 @@ interface SystemLog {
 	user_name: string;
 	user_role: string;
 	action_type:
-	| "CREATE"
-	| "UPDATE"
-	| "DELETE"
-	| "LOGIN"
-	| "LOGOUT"
-	| "APPROVE"
-	| "REJECT";
+		| "CREATE"
+		| "UPDATE"
+		| "DELETE"
+		| "LOGIN"
+		| "LOGOUT"
+		| "APPROVE"
+		| "REJECT";
 	category:
-	| "USER"
-	| "TEAM"
-	| "LEAVE"
-	| "PROJECT"
-	| "VACANCY"
-	| "TUTORIAL"
-	| "SOCIAL_MEDIA"
-	| "PERMISSION"
-	| "STRUCTURE"
-	| "NOTIFICATION"
-	| "AUTH";
+		| "USER"
+		| "TEAM"
+		| "LEAVE"
+		| "PROJECT"
+		| "VACANCY"
+		| "TUTORIAL"
+		| "SOCIAL_MEDIA"
+		| "PERMISSION"
+		| "STRUCTURE"
+		| "NOTIFICATION"
+		| "AUTH";
 	endpoint: string;
 	method: string;
 	entity_id: string | null;
@@ -828,8 +828,8 @@ function StructureManagement({
 		title: "",
 		message: "",
 		confirmText: "Potwierdź",
-		onConfirm: () => { },
-		onCancel: () => { },
+		onConfirm: () => {},
+		onCancel: () => {},
 	});
 	const [expandedTeams, setExpandedTeams] = useState<Record<string, boolean>>(
 		{},
@@ -1863,9 +1863,27 @@ function AccessManagement() {
 	const [newAccessForUser, setNewAccessForUser] = useState("");
 	const [userSearchInput, setUserSearchInput] = useState("");
 	const [showUserSuggestions, setShowUserSuggestions] = useState(false);
+	const [filterCategory, setFilterCategory] = useState<string>("all");
 
+	const CATEGORY_COLORS: Record<string, string> = {
+		"Social Media": "#1d4ed8",
+		Sprzęt: "#059669",
+		Platformy: "#7c3aed",
+		Narzędzia: "#d97706",
+		Systemy: "#dc2626",
+		Marketing: "#ec4899",
+		Programowanie: "#2563eb",
+		Inne: "#6b7280", // szary dla innych
+	};
+
+	// ===== NOWE STANY DLA PRZEDMIOTÓW =====
+	const [entryType, setEntryType] = useState<"access" | "item">("access");
+	const [itemName, setItemName] = useState("");
+	const [itemValue, setItemValue] = useState("");
+	const [itemNotes, setItemNotes] = useState("");
 	// Predefiniowane opcje dostępu
 	const ACCESS_OPTIONS = [
+		// ===== SOCIAL MEDIA =====
 		{ label: "Instagram", category: "Social Media" },
 		{ label: "Facebook", category: "Social Media" },
 		{ label: "Twitter / X", category: "Social Media" },
@@ -1876,6 +1894,33 @@ function AccessManagement() {
 		{ label: "WhatsApp", category: "Social Media" },
 		{ label: "Telegram", category: "Social Media" },
 		{ label: "Messenger", category: "Social Media" },
+		{ label: "Snapchat", category: "Social Media" },
+		{ label: "Pinterest", category: "Social Media" },
+		{ label: "Reddit", category: "Social Media" },
+		{ label: "Twitch", category: "Social Media" },
+
+		// ===== ZASOBY / SPRZĘT =====
+		{ label: "Mikrofon", category: "Sprzęt" },
+		{ label: "Mikrofon bezprzewodowy", category: "Sprzęt" },
+		{ label: "Kamera", category: "Sprzęt" },
+		{ label: "Kamera 4K", category: "Sprzęt" },
+		{ label: "Aparat fotograficzny", category: "Sprzęt" },
+		{ label: "Statyw", category: "Sprzęt" },
+		{ label: "Statyw z głowicą", category: "Sprzęt" },
+		{ label: "Oświetlenie LED", category: "Sprzęt" },
+		{ label: "Oświetlenie studyjne", category: "Sprzęt" },
+		{ label: "Green screen", category: "Sprzęt" },
+		{ label: "Laptop", category: "Sprzęt" },
+		{ label: "Tablet", category: "Sprzęt" },
+		{ label: "Gimbal", category: "Sprzęt" },
+		{ label: "Gimbal do telefonu", category: "Sprzęt" },
+		{ label: "Słuchawki", category: "Sprzęt" },
+		{ label: "Słuchawki studyjne", category: "Sprzęt" },
+		{ label: "Monitor", category: "Sprzęt" },
+		{ label: "Drukarka", category: "Sprzęt" },
+		{ label: "Skaner", category: "Sprzęt" },
+
+		// ===== PLATFORMY I NARZĘDZIA =====
 		{ label: "Slack", category: "Platformy" },
 		{ label: "Teams", category: "Platformy" },
 		{ label: "Zoom", category: "Platformy" },
@@ -1885,17 +1930,39 @@ function AccessManagement() {
 		{ label: "Jira", category: "Narzędzia" },
 		{ label: "ClickUp", category: "Narzędzia" },
 		{ label: "Monday.com", category: "Narzędzia" },
+		{ label: "Notion", category: "Narzędzia" },
+		{ label: "Miro", category: "Narzędzia" },
+		{ label: "Figma", category: "Narzędzia" },
+
+		// ===== SYSTEMY =====
 		{ label: "Google Drive", category: "Systemy" },
 		{ label: "Dropbox", category: "Systemy" },
 		{ label: "OneDrive", category: "Systemy" },
 		{ label: "SharePoint", category: "Systemy" },
 		{ label: "CRM", category: "Systemy" },
+		{ label: "ERP", category: "Systemy" },
+
+		// ===== MARKETING =====
 		{ label: "Mailchimp", category: "Marketing" },
-		{ label: "Canva", category: "Narzędzia" },
-		{ label: "Figma", category: "Narzędzia" },
-		{ label: "GitHub", category: "Narzędzia" },
-		{ label: "GitLab", category: "Narzędzia" },
-		{ label: "Bitbucket", category: "Narzędzia" },
+		{ label: "Canva", category: "Marketing" },
+		{ label: "Adobe Creative Cloud", category: "Marketing" },
+		{ label: "Buffer", category: "Marketing" },
+		{ label: "Hootsuite", category: "Marketing" },
+		{ label: "Sendinblue", category: "Marketing" },
+
+		// ===== PROGRAMOWANIE =====
+		{ label: "GitHub", category: "Programowanie" },
+		{ label: "GitLab", category: "Programowanie" },
+		{ label: "Bitbucket", category: "Programowanie" },
+		{ label: "VS Code", category: "Programowanie" },
+		{ label: "IntelliJ", category: "Programowanie" },
+		{ label: "Postman", category: "Programowanie" },
+
+		// ===== INNE =====
+		{ label: "Klucze do biura", category: "Inne" },
+		{ label: "Karta dostępu", category: "Inne" },
+		{ label: "Parking", category: "Inne" },
+		{ label: "Magazyn", category: "Inne" },
 	];
 
 	// Pobierz członków z dostępami
@@ -1941,18 +2008,20 @@ function AccessManagement() {
 	const getSuggestions = (input: string) => {
 		if (!input.trim()) return [];
 
-		// đź”Ą WEŹ OSTATNIĄ CZÄŚĆ PO PRZECINKU
-		const parts = input.split(/[,;ďĽŚă€\n]+/);
+		const parts = input.split(/[,;，、\n]+/);
 		const lastPart = parts[parts.length - 1]?.trim() || "";
 
 		if (!lastPart) return [];
 
 		const lowerInput = lastPart.toLowerCase();
-		return ACCESS_OPTIONS.filter((opt) =>
-			opt.label.toLowerCase().includes(lowerInput),
-		);
-	};
 
+		return ACCESS_OPTIONS.filter((opt) => {
+			const matchesSearch = opt.label.toLowerCase().includes(lowerInput);
+			const matchesCategory =
+				filterCategory === "all" || opt.category === filterCategory;
+			return matchesSearch && matchesCategory;
+		});
+	};
 	const getUserSuggestions = (input: string) => {
 		if (!input.trim()) return [];
 		const lowerInput = input.toLowerCase();
@@ -1975,71 +2044,120 @@ function AccessManagement() {
 		if (user) return `${user.first_name} ${user.last_name}`;
 		return userSearchInput;
 	};
-
+	const resetModal = () => {
+		setShowAddModal(false);
+		setSelectedUserId("");
+		setUserSearchInput("");
+		setNewAccessForUser("");
+		setItemName("");
+		setItemValue("");
+		setItemNotes("");
+		setEntryType("access");
+	};
 	const handleAddAccessToUser = async () => {
-		if (!selectedUserId || !newAccessForUser.trim()) {
-			toast.error("Wybierz osobę i wpisz nazwę dostępu");
+		if (!selectedUserId) {
+			toast.error("Wybierz osobę");
 			return;
 		}
 
-		// đź”Ą PODZIEL NA WIELOKROTNIE DOSTÄPY (przecinki, średniki, spacje)
-		const accessNames = newAccessForUser
-			.split(/[,;ďĽŚă€\n]+/) // podziel po przecinku, średniku, nowej linii
-			.map((name) => name.trim())
-			.filter((name) => name.length > 0);
+		if (entryType === "access") {
+			// ===== DOSTĘP =====
+			if (!newAccessForUser.trim()) {
+				toast.error("Wpisz nazwę dostępu");
+				return;
+			}
 
-		if (accessNames.length === 0) {
-			toast.error("Wpisz poprawną nazwę dostępu");
-			return;
-		}
+			const accessNames = newAccessForUser
+				.split(/[,;，、\n]+/)
+				.map((name) => name.trim())
+				.filter((name) => name.length > 0);
 
-		try {
-			const token = localStorage.getItem("accessToken");
+			if (accessNames.length === 0) {
+				toast.error("Wpisz poprawną nazwę dostępu");
+				return;
+			}
 
-			// đź”Ą DODAJ WSZYSTKIE DOSTÄPY PO KOLEI
-			let addedCount = 0;
-			const errors: string[] = [];
+			try {
+				const token = localStorage.getItem("accessToken");
+				let addedCount = 0;
+				const errors: string[] = [];
 
-			for (const name of accessNames) {
-				try {
-					const response = await fetch(
-						`/api/members/${selectedUserId}/access`,
-						{
-							method: "POST",
-							headers: {
-								Authorization: `Bearer ${token}`,
-								"Content-Type": "application/json",
+				for (const name of accessNames) {
+					try {
+						const response = await fetch(
+							`/api/members/${selectedUserId}/access`,
+							{
+								method: "POST",
+								headers: {
+									Authorization: `Bearer ${token}`,
+									"Content-Type": "application/json",
+								},
+								body: JSON.stringify({ access_name: name }),
 							},
-							body: JSON.stringify({ access_name: name }),
-						},
-					);
+						);
 
-					if (response.ok) {
-						addedCount++;
-					} else {
-						const error = await response.json();
-						errors.push(`${name}: ${error.error || "błąd"}`);
+						if (response.ok) {
+							addedCount++;
+						} else {
+							const error = await response.json();
+							errors.push(`${name}: ${error.error || "błąd"}`);
+						}
+					} catch (e) {
+						errors.push(`${name}: błąd sieci`);
 					}
-				} catch (e) {
-					errors.push(`${name}: błąd sieci`);
 				}
+
+				if (addedCount > 0) {
+					toast.success(`Dodano ${addedCount} dostępów!`);
+				}
+				if (errors.length > 0) {
+					toast.error(`Nie udało się dodać: ${errors.join(", ")}`);
+				}
+
+				resetModal();
+				await fetchMembers();
+			} catch (error) {
+				logger.error("Błąd:", error);
+				toast.error("Nie udało się dodać dostępów");
+			}
+		} else {
+			// ===== PRZEDMIOT =====
+			if (!itemName.trim()) {
+				toast.error("Podaj nazwę przedmiotu");
+				return;
 			}
 
-			if (addedCount > 0) {
-				toast.success(`Dodano ${addedCount} dostępów!`);
-			}
-			if (errors.length > 0) {
-				toast.error(`Nie udało się dodać: ${errors.join(", ")}`);
-			}
+			try {
+				const token = localStorage.getItem("accessToken");
+				const response = await fetch(`/api/members/${selectedUserId}/items`, {
+					method: "POST",
+					headers: {
+						Authorization: `Bearer ${token}`,
+						"Content-Type": "application/json",
+					},
+					body: JSON.stringify({
+						name: itemName.trim(),
+						value: itemValue ? parseFloat(itemValue) : null,
+						notes: itemNotes.trim() || null,
+					}),
+				});
 
-			setShowAddModal(false);
-			setSelectedUserId("");
-			setUserSearchInput("");
-			setNewAccessForUser("");
-			await fetchMembers();
-		} catch (error) {
-			logger.error("âťŚ Błąd:", error);
-			toast.error("Nie udało się dodać dostępów");
+				if (!response.ok) {
+					const error = await response.json();
+					throw new Error(error.error || "Błąd dodawania przedmiotu");
+				}
+
+				toast.success("Przedmiot dodany!");
+				resetModal();
+				await fetchMembers();
+			} catch (error) {
+				logger.error("Błąd:", error);
+				toast.error(
+					error instanceof Error
+						? error.message
+						: "Nie udało się dodać przedmiotu",
+				);
+			}
 		}
 	};
 
@@ -2110,9 +2228,10 @@ function AccessManagement() {
 		<section className={styles.section}>
 			<div className={styles.section__header}>
 				<div className={styles.section__headerLeft}>
-					<h2 className={styles.section__title}>Zarządzanie dostępami</h2>
+					<h2 className={styles.section__title}>Dostępy i zasoby SM</h2>
 					<p className={styles.section__subtitle}>
-						Przypisywanie dostępu do narzędzi i platform dla członków.
+						Przypisywanie dostępu do mediów społecznościowych, sprzętu, narzędzi
+						i platform.
 					</p>
 				</div>
 				<button
@@ -2171,6 +2290,7 @@ function AccessManagement() {
 			)}
 
 			{/* Panel edycji dostępu dla członka */}
+			{/* Panel edycji dostępu dla członka */}
 			{editingMemberId && selectedMember && (
 				<div className={styles.modalOverlay} onClick={handleCloseEdit}>
 					<div
@@ -2188,7 +2308,82 @@ function AccessManagement() {
 							</button>
 						</div>
 
+						{/* PRZEŁĄCZNIK TYPU */}
+						<div
+							className={styles.modal__field}
+							style={{ padding: "0 24px", marginTop: "8px" }}
+						>
+							<label>Typ wpisu</label>
+							<div style={{ display: "flex", gap: "16px", marginTop: "4px" }}>
+								<label
+									style={{
+										display: "flex",
+										alignItems: "center",
+										gap: "6px",
+										cursor: "pointer",
+									}}
+								>
+									<input
+										type="radio"
+										value="access"
+										checked={entryType === "access"}
+										onChange={() => {
+											setEntryType("access");
+											setItemName("");
+											setItemValue("");
+											setItemNotes("");
+										}}
+									/>
+									Dostęp
+								</label>
+								<label
+									style={{
+										display: "flex",
+										alignItems: "center",
+										gap: "6px",
+										cursor: "pointer",
+									}}
+								>
+									<input
+										type="radio"
+										value="item"
+										checked={entryType === "item"}
+										onChange={() => {
+											setEntryType("item");
+										}}
+									/>
+									Przedmiot
+								</label>
+							</div>
+						</div>
+
 						<div className={styles.modal__body}>
+							{/* FILTR KATEGORII */}
+							<div className={styles.modal__field}>
+								<label>Filtruj kategorię</label>
+								<select
+									value={filterCategory}
+									onChange={(e) => setFilterCategory(e.target.value)}
+									style={{
+										width: "100%",
+										padding: "8px 12px",
+										borderRadius: "8px",
+										border: "1px solid #e5e7eb",
+									}}
+								>
+									<option value="all">Wszystkie kategorie</option>
+									<option value="Social Media">Social Media</option>
+									<option value="Sprzęt">Sprzęt</option>
+									<option value="Platformy">Platformy</option>
+									<option value="Narzędzia">Narzędzia</option>
+									<option value="Systemy">Systemy</option>
+									<option value="Marketing">Marketing</option>
+									<option value="Programowanie">Programowanie</option>
+									<option value="Inne">Inne</option>
+								</select>
+							</div>
+
+							{/* DODAWANIE NOWEGO DOSTĘPU */}
 							<div className={styles.modal__field}>
 								<label>Dodaj nowy dostęp</label>
 								<div
@@ -2219,66 +2414,10 @@ function AccessManagement() {
 										<Plus size={16} />
 										Dodaj
 									</button>
-									{/* đź”Ą SUGESTIE */}
-									{newAccess.trim() && (
-										<div
-											className={styles.accessSuggestions}
-											style={{
-												position: "absolute",
-												top: "100%",
-												left: 0,
-												right: 0,
-												background: "#fff",
-												border: "1px solid #e5e7eb",
-												borderRadius: "8px",
-												boxShadow: "0 10px 25px rgba(0,0,0,0.1)",
-												maxHeight: "200px",
-												overflowY: "auto",
-												zIndex: 9999,
-												padding: "8px 0",
-											}}
-										>
-											{getSuggestions(newAccess).map((item) => (
-												<button
-													key={item.label}
-													style={{
-														display: "flex",
-														justifyContent: "space-between",
-														alignItems: "center",
-														width: "100%",
-														padding: "8px 16px",
-														background: "none",
-														border: "none",
-														fontSize: "14px",
-														color: "#1f2937",
-														cursor: "pointer",
-														textAlign: "left",
-													}}
-													onMouseDown={(e) => {
-														e.preventDefault();
-														if (!accessItems.includes(item.label)) {
-															setAccessItems([...accessItems, item.label]);
-															setNewAccess("");
-														}
-													}}
-													onMouseEnter={(e) =>
-														(e.currentTarget.style.background = "#f3f4f6")
-													}
-													onMouseLeave={(e) =>
-														(e.currentTarget.style.background = "transparent")
-													}
-												>
-													{item.label}
-													<span style={{ fontSize: "11px", color: "#6b7280" }}>
-														{item.category}
-													</span>
-												</button>
-											))}
-										</div>
-									)}
 								</div>
 							</div>
 
+							{/* LISTA OBECNYCH DOSTĘPÓW */}
 							<div className={styles.modal__field}>
 								<label>Obecne dostępy ({accessItems.length})</label>
 								<div
@@ -2312,6 +2451,72 @@ function AccessManagement() {
 									)}
 								</div>
 							</div>
+
+							{/* SUGESTIE DOSTĘPÓW */}
+							{newAccess.trim() && (
+								<div
+									className={styles.accessSuggestions}
+									style={{
+										position: "relative",
+										marginTop: "-8px",
+										marginBottom: "8px",
+										background: "#fff",
+										border: "1px solid #e5e7eb",
+										borderRadius: "8px",
+										boxShadow: "0 10px 25px rgba(0,0,0,0.1)",
+										maxHeight: "200px",
+										overflowY: "auto",
+										zIndex: 9999,
+										padding: "8px 0",
+									}}
+								>
+									{getSuggestions(newAccess).map((item) => (
+										<button
+											key={item.label}
+											style={{
+												display: "flex",
+												justifyContent: "space-between",
+												alignItems: "center",
+												width: "100%",
+												padding: "8px 16px",
+												background: "none",
+												border: "none",
+												fontSize: "14px",
+												color: "#1f2937",
+												cursor: "pointer",
+												textAlign: "left",
+											}}
+											onMouseDown={(e) => {
+												e.preventDefault();
+												if (!accessItems.includes(item.label)) {
+													setAccessItems([...accessItems, item.label]);
+													setNewAccess("");
+												}
+											}}
+											onMouseEnter={(e) =>
+												(e.currentTarget.style.background = "#f3f4f6")
+											}
+											onMouseLeave={(e) =>
+												(e.currentTarget.style.background = "transparent")
+											}
+										>
+											{item.label}
+											<span
+												style={{
+													fontSize: "11px",
+													color: "#fff",
+													backgroundColor:
+														CATEGORY_COLORS[item.category] || "#e5e7eb",
+													padding: "2px 8px",
+													borderRadius: "12px",
+												}}
+											>
+												{item.category}
+											</span>
+										</button>
+									))}
+								</div>
+							)}
 						</div>
 
 						<div className={styles.modal__actions}>
@@ -2344,16 +2549,89 @@ function AccessManagement() {
 				>
 					<div className={styles.modal} onClick={(e) => e.stopPropagation()}>
 						<div className={styles.modal__header}>
-							<h2 className={styles.modal__title}>Dodaj dostęp dla członka</h2>
-							<button
-								className={styles.modal__close}
-								onClick={() => setShowAddModal(false)}
-							>
+							<h2 className={styles.modal__title}>
+								{entryType === "access"
+									? "Dodaj dostęp dla członka"
+									: "Dodaj przedmiot"}
+							</h2>
+							<button className={styles.modal__close} onClick={resetModal}>
 								<X size={20} />
 							</button>
 						</div>
 
 						<div className={styles.modal__body}>
+							{/* 1. PRZEŁĄCZNIK TYPU */}
+							<div className={styles.modal__field}>
+								<label>Typ wpisu</label>
+								<div style={{ display: "flex", gap: "16px", marginTop: "4px" }}>
+									<label
+										style={{
+											display: "flex",
+											alignItems: "center",
+											gap: "6px",
+											cursor: "pointer",
+										}}
+									>
+										<input
+											type="radio"
+											value="access"
+											checked={entryType === "access"}
+											onChange={() => {
+												setEntryType("access");
+												setItemName("");
+												setItemValue("");
+												setItemNotes("");
+											}}
+										/>
+										Dostęp
+									</label>
+									<label
+										style={{
+											display: "flex",
+											alignItems: "center",
+											gap: "6px",
+											cursor: "pointer",
+										}}
+									>
+										<input
+											type="radio"
+											value="item"
+											checked={entryType === "item"}
+											onChange={() => {
+												setEntryType("item");
+											}}
+										/>
+										Przedmiot
+									</label>
+								</div>
+							</div>
+
+							{/* 2. FILTR KATEGORII */}
+							<div className={styles.modal__field}>
+								<label>Filtruj kategorię</label>
+								<select
+									value={filterCategory}
+									onChange={(e) => setFilterCategory(e.target.value)}
+									style={{
+										width: "100%",
+										padding: "8px 12px",
+										borderRadius: "8px",
+										border: "1px solid #e5e7eb",
+									}}
+								>
+									<option value="all">Wszystkie kategorie</option>
+									<option value="Social Media">Social Media</option>
+									<option value="Sprzęt">Sprzęt</option>
+									<option value="Platformy">Platformy</option>
+									<option value="Narzędzia">Narzędzia</option>
+									<option value="Systemy">Systemy</option>
+									<option value="Marketing">Marketing</option>
+									<option value="Programowanie">Programowanie</option>
+									<option value="Inne">Inne</option>
+								</select>
+							</div>
+
+							{/* 3. WYBÓR CZŁONKA */}
 							<div className={styles.modal__field}>
 								<label>Wybierz członka *</label>
 								<div style={{ position: "relative" }}>
@@ -2395,89 +2673,138 @@ function AccessManagement() {
 								</div>
 							</div>
 
-							{/* Nazwa dostępu */}
-							{/* Nazwa dostępu */}
-							<div className={styles.modal__field}>
-								<label>Nazwa dostępu *</label>
-								<div style={{ position: "relative" }}>
-									<input
-										type="text"
-										placeholder="Wpisz nazwy dostępu oddzielone przecinkami (np. Instagram, Slack, GitHub)..."
-										value={newAccessForUser}
-										onChange={(e) => {
-											setNewAccessForUser(e.target.value);
-											setShowSuggestions(true);
+							{/* 4. POLA DLA PRZEDMIOTU (warunkowo) */}
+							{/* 4. POLA DLA PRZEDMIOTU (warunkowo) */}
+							{entryType === "item" && (
+								<div
+									className={styles.modal__itemFields}
+									style={{
+										border: "1px solid #e5e7eb",
+										borderRadius: "8px",
+										padding: "16px",
+										marginTop: "12px",
+										background: "#f9fafb",
+									}}
+								>
+									<h4
+										style={{
+											margin: "0 0 12px 0",
+											fontSize: "14px",
+											fontWeight: "600",
 										}}
-										onFocus={() => setShowSuggestions(true)}
-										onBlur={() =>
-											setTimeout(() => setShowSuggestions(false), 200)
-										}
-									/>
+									>
+										Dane przedmiotu
+									</h4>
 
-									{showSuggestions && newAccessForUser.trim() && (
-										<div className={styles.accessSuggestions}>
-											{getSuggestions(newAccessForUser).map((item) => {
-												// đź”Ą SPRAWDŹ CZY JUŻ ISTNIEJE W LIŚCIE
-												const parts = newAccessForUser
-													.split(/[,;ďĽŚă€\n]+/)
-													.map((s) => s.trim())
-													.filter((s) => s.length > 0);
+									{/* Nazwa przedmiotu */}
+									<div className={styles.modal__field}>
+										<label>Nazwa przedmiotu *</label>
+										<input
+											type="text"
+											placeholder="np. Kamera Sony A7III, Mikrofon Rode..."
+											value={itemName}
+											onChange={(e) => setItemName(e.target.value)}
+											required
+										/>
+									</div>
 
-												// POMIĹ OSTATNIĄ CZÄŚĆ (TÄ KTÓRĄ WPISUJESZ)
-												const existingNames = parts.slice(0, -1);
+									{/* Wartość */}
+									<div className={styles.modal__field}>
+										<label>Wartość (PLN)</label>
+										<input
+											type="number"
+											placeholder="np. 2500"
+											value={itemValue}
+											onChange={(e) => setItemValue(e.target.value)}
+											min="0"
+											step="0.01"
+										/>
+									</div>
 
-												// SPRAWDŹ CZY DOSTÄP JUŻ ISTNIEJE
-												if (existingNames.includes(item.label)) return null;
-
-												return (
-													<button
-														key={item.label}
-														className={styles.accessSuggestions__item}
-														onMouseDown={(e) => {
-															e.preventDefault();
-
-															// đź”Ą POBERZ WSZYSTKIE CZÄŚCI
-															const allParts = newAccessForUser
-																.split(/[,;ďĽŚă€\n]+/)
-																.map((s) => s.trim())
-																.filter((s) => s.length > 0);
-
-															// USUĹ OSTATNIĄ CZÄŚĆ (TÄ KTÓRĄ WPISUJESZ)
-															allParts.pop();
-
-															// DODAJ NOWY DOSTÄP (TYLKO JEDEN)
-															allParts.push(item.label);
-
-															// ZŁĄCZ Z PRZECINKAMI I SPACJĄ
-															setNewAccessForUser(allParts.join(", "));
-															setShowSuggestions(false);
-														}}
-													>
-														{item.label}
-														<span
-															className={styles.accessSuggestions__category}
-														>
-															{item.category}
-														</span>
-													</button>
-												);
-											})}
-										</div>
-									)}
+									{/* Notatki */}
+									<div className={styles.modal__field}>
+										<label>Notatki</label>
+										<textarea
+											placeholder="Dodatkowe informacje o przedmiocie..."
+											value={itemNotes}
+											onChange={(e) => setItemNotes(e.target.value)}
+											rows={2}
+											style={{ resize: "vertical" }}
+										/>
+									</div>
 								</div>
-							</div>
+							)}
+							{/* 5. NAZWA DOSTĘPU (warunkowo) */}
+							{entryType === "access" && (
+								<div className={styles.modal__field}>
+									<label>Nazwa dostępu *</label>
+									<div style={{ position: "relative" }}>
+										<input
+											type="text"
+											placeholder="Wpisz nazwy oddzielone przecinkami (np. Instagram, Slack, GitHub)..."
+											value={newAccessForUser}
+											onChange={(e) => {
+												setNewAccessForUser(e.target.value);
+												setShowSuggestions(true);
+											}}
+											onFocus={() => setShowSuggestions(true)}
+											onBlur={() =>
+												setTimeout(() => setShowSuggestions(false), 200)
+											}
+										/>
+
+										{showSuggestions && newAccessForUser.trim() && (
+											<div className={styles.accessSuggestions}>
+												{getSuggestions(newAccessForUser).map((item) => {
+													const parts = newAccessForUser
+														.split(/[,;，、\n]+/)
+														.map((s) => s.trim())
+														.filter((s) => s.length > 0);
+
+													const existingNames = parts.slice(0, -1);
+
+													if (existingNames.includes(item.label)) return null;
+
+													return (
+														<button
+															key={item.label}
+															className={styles.accessSuggestions__item}
+															onMouseDown={(e) => {
+																e.preventDefault();
+
+																const allParts = newAccessForUser
+																	.split(/[,;，、\n]+/)
+																	.map((s) => s.trim())
+																	.filter((s) => s.length > 0);
+
+																allParts.pop();
+																allParts.push(item.label);
+
+																setNewAccessForUser(allParts.join(", "));
+																setShowSuggestions(false);
+															}}
+														>
+															{item.label}
+															<span
+																className={styles.accessSuggestions__category}
+															>
+																{item.category}
+															</span>
+														</button>
+													);
+												})}
+											</div>
+										)}
+									</div>
+								</div>
+							)}
 						</div>
 
 						<div className={styles.modal__actions}>
 							<button
 								type="button"
 								className={styles.modal__btnCancel}
-								onClick={() => {
-									setShowAddModal(false);
-									setSelectedUserId("");
-									setUserSearchInput("");
-									setNewAccessForUser("");
-								}}
+								onClick={resetModal}
 							>
 								Anuluj
 							</button>
@@ -2485,10 +2812,14 @@ function AccessManagement() {
 								type="submit"
 								className={styles.modal__btnSave}
 								onClick={handleAddAccessToUser}
-								disabled={!selectedUserId || !newAccessForUser.trim()}
+								disabled={
+									entryType === "access"
+										? !selectedUserId || !newAccessForUser.trim()
+										: !selectedUserId || !itemName.trim()
+								}
 							>
 								<Plus size={16} />
-								Dodaj dostęp
+								{entryType === "access" ? "Dodaj dostęp" : "Dodaj przedmiot"}
 							</button>
 						</div>
 					</div>
@@ -2736,7 +3067,7 @@ export default function Admin({ title }: { title?: string }) {
 				</div>
 			</div>
 
-			<div style={{ marginBottom: '32px' }}>
+			<div style={{ marginBottom: "32px" }}>
 				<RevenueChart year={2026} title="Przychody i wydatki" />
 			</div>
 
@@ -2761,6 +3092,3 @@ export default function Admin({ title }: { title?: string }) {
 		</div>
 	);
 }
-
-
-

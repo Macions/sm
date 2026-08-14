@@ -12,8 +12,29 @@ import {
 	AlertCircle,
 	ChevronDown,
 	Menu,
+	Users,
+	Briefcase,
+	GraduationCap,
+	Building2,
+	Megaphone,
 } from "lucide-react";
 import styles from "./Header.module.css";
+
+export interface SearchResult {
+	id: string;
+	type:
+		| "member"
+		| "project"
+		| "guide"
+		| "task"
+		| "vacancy"
+		| "structure"
+		| "social";
+	title: string;
+	subtitle?: string;
+	description?: string;
+	link: string;
+}
 
 interface HeaderProps {
 	title: string;
@@ -23,8 +44,12 @@ interface HeaderProps {
 	userRole?: "MEMBER" | "COORDINATOR" | "SOCIAL_MEDIA" | "ADMIN" | "BOARD";
 	userName?: string;
 	userId?: string;
-	onMobileMenuToggle?: () => void; // 👈 NOWY PROP
+	onMobileMenuToggle?: () => void;
 	isMobileMenuOpen?: boolean;
+	onSearch?: (query: string) => void;
+	searchQuery?: string;
+	isSearching?: boolean;
+	searchResults?: any[];
 }
 
 type NotificationType = "info" | "success" | "warning" | "error";
@@ -45,8 +70,12 @@ export default function Header({
 	onMenuClick,
 	collapsed,
 	hideNotifications = false,
-	onMobileMenuToggle, // 👈 DODAJEMY
+	onMobileMenuToggle,
 	isMobileMenuOpen = false,
+	onSearch,
+	searchQuery = "",
+	isSearching = false,
+	searchResults = [],
 }: HeaderProps) {
 	const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
 	const [notifications, setNotifications] = useState<Notification[]>([]);
@@ -54,12 +83,13 @@ export default function Header({
 	const [_loading, setLoading] = useState(false);
 	const [visibleCount, setVisibleCount] = useState(15);
 	const dropdownRef = useRef<HTMLDivElement>(null);
-
-	// 🔥 DODAJ FLAGĘ - zapobiega wielokrotnym zapytaniom
+	const [localSearchQuery, setLocalSearchQuery] = useState(searchQuery);
+	const searchTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+	const inputRef = useRef<HTMLInputElement>(null);
 	const isFetching = useRef(false);
+	const [isSearchFocused, setIsSearchFocused] = useState(false);
 
 	const fetchNotifications = async () => {
-		// 🔥 ZAPOBIEGA WIELOKROTNEMU WYWOŁANIU
 		if (isFetching.current) return;
 
 		try {
@@ -94,7 +124,6 @@ export default function Header({
 	};
 
 	const fetchUnreadCount = async () => {
-		// 🔥 ZAPOBIEGA WIELOKROTNEMU WYWOŁANIU
 		if (isFetching.current) return;
 
 		try {
@@ -133,7 +162,6 @@ export default function Header({
 				prev.map((n) => (n.id === id ? { ...n, read: true } : n)),
 			);
 
-			// 🔥 AKTUALIZUJ LICZNIK
 			setUnreadCount((prev) => Math.max(0, prev - 1));
 		} catch (error) {
 			logger.error("Błąd oznaczania jako przeczytane:", error);
@@ -181,24 +209,19 @@ export default function Header({
 	const displayedNotifications = filteredNotifications.slice(0, visibleCount);
 	const hasMore = filteredNotifications.length > visibleCount;
 
-	// 🔥 TYLKO JEDEN useEffect - pobierz dane raz
 	useEffect(() => {
-		// Pobierz powiadomienia przy starcie
 		fetchNotifications();
 
-		// 🔥 INTERVAL TYLKO DLA LICZNIKA - NIE DLA PEŁNYCH POWIADOMIEŃ
 		const interval = setInterval(() => {
-			// Pobierz tylko licznik (lekkie zapytanie)
 			fetchUnreadCount();
-		}, 30000); // co 30 sekund
+		}, 30000);
 
 		return () => {
 			clearInterval(interval);
 			isFetching.current = false;
 		};
-	}, []); // 🔥 PUSTA TABLICA = WYKONAJ RAZ
+	}, []);
 
-	// Click outside - bez zmian
 	useEffect(() => {
 		const handleClickOutside = (event: MouseEvent) => {
 			if (
@@ -246,38 +269,166 @@ export default function Header({
 		}
 	};
 
+	const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+		const value = e.target.value;
+		setLocalSearchQuery(value);
+
+		if (searchTimeout.current) {
+			clearTimeout(searchTimeout.current);
+		}
+
+		if (value.length >= 2) {
+			searchTimeout.current = setTimeout(() => {
+				if (onSearch) {
+					onSearch(value);
+				}
+			}, 300);
+		} else if (value.length === 0) {
+			if (onSearch) {
+				onSearch("");
+			}
+		}
+	};
+
+	const handleSearchClear = () => {
+		setLocalSearchQuery("");
+		if (onSearch) {
+			onSearch("");
+		}
+		if (inputRef.current) {
+			inputRef.current.focus();
+		}
+	};
+
 	return (
 		<div className={styles.topbar}>
 			{/* 👇 LEWA STRONA – PRZYCISKI */}
 			<div className={styles.topbar__left}>
-				{/* Przycisk zwijania sidebaru (desktop) */}
 				<button
 					className={styles.topbar__menu}
 					onClick={onMenuClick}
 					aria-label="Zwiń sidebar"
 				>
-					{collapsed ? <PanelLeftOpen size={22} /> : <PanelLeftClose size={22} />}
+					{collapsed ? (
+						<PanelLeftOpen size={22} />
+					) : (
+						<PanelLeftClose size={22} />
+					)}
 				</button>
 
-				{/* 👇 BURGER – WIDOCZNY TYLKO NA MOBILNYCH */}
 				<button
-					className={`${styles.topbar__burger} ${isMobileMenuOpen ? styles.topbar__burgerActive : ""}`}
+					className={`${styles.topbar__burger} ${
+						isMobileMenuOpen ? styles.topbar__burgerHidden : ""
+					}`}
 					onClick={onMobileMenuToggle}
 					aria-label="Menu mobilne"
 				>
-					{isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+					<Menu size={24} />
 				</button>
 			</div>
 
 			<h1 className={styles.topbar__title}>{title}</h1>
 
+			{/* 👇 WYSZUKIWANIE */}
 			<div className={styles.topbar__search}>
 				<Search size={16} />
 				<input
+					ref={inputRef}
 					type="text"
-					placeholder="Szukaj członków, projektów, poradników..."
+					placeholder="Szukaj członków, projektów, poradników... (Ctrl+K)"
+					value={localSearchQuery}
+					onChange={handleSearchChange}
+					onFocus={() => setIsSearchFocused(true)}
+					onBlur={() => {
+						setTimeout(() => setIsSearchFocused(false), 200);
+					}}
 				/>
+				{isSearching && (
+					<div className={styles.searchLoader}>
+						<div className={styles.spinner}></div>
+					</div>
+				)}
+				{localSearchQuery && !isSearching && (
+					<button
+						className={styles.topbar__searchClear}
+						onClick={handleSearchClear}
+						aria-label="Wyczyść"
+					>
+						<X size={14} />
+					</button>
+				)}
+
+				{/* 👇 WYNIKI WYSZUKIWANIA */}
+				{isSearchFocused && localSearchQuery.length >= 2 && (
+					<div className={styles.searchResultsDropdown}>
+						{searchResults && searchResults.length > 0 ? (
+							<>
+								<div className={styles.searchResultsHeader}>
+									<span>Znaleziono {searchResults.length} wyników</span>
+								</div>
+								<div className={styles.searchResultsList}>
+									{searchResults.map((result: any) => (
+										<a
+											key={result.id}
+											href={result.link}
+											className={styles.searchResultItem}
+											onClick={(e) => {
+												e.preventDefault();
+												setIsSearchFocused(false);
+												handleSearchClear();
+												if (result.link) {
+													window.location.href = result.link;
+												}
+											}}
+										>
+											<div className={styles.searchResultIcon}>
+												{result.type === "member" && <Users size={16} />}
+												{result.type === "project" && <Briefcase size={16} />}
+												{result.type === "guide" && <GraduationCap size={16} />}
+												{result.type === "task" && <CheckCircle size={16} />}
+												{result.type === "vacancy" && <Briefcase size={16} />}
+												{result.type === "structure" && <Building2 size={16} />}
+												{result.type === "social" && <Megaphone size={16} />}
+											</div>
+											<div className={styles.searchResultContent}>
+												<div className={styles.searchResultTitle}>
+													{result.title}
+												</div>
+												<div className={styles.searchResultSubtitle}>
+													{result.subtitle}
+												</div>
+												{result.description && (
+													<div className={styles.searchResultDescription}>
+														{result.description}
+													</div>
+												)}
+											</div>
+											<div className={styles.searchResultType}>
+												<span className={styles.searchResultBadge}>
+													{result.type === "member" && "Członek"}
+													{result.type === "project" && "Projekt"}
+													{result.type === "guide" && "Poradnik"}
+													{result.type === "task" && "Zadanie"}
+													{result.type === "vacancy" && "Wakat"}
+													{result.type === "structure" && "Struktura"}
+													{result.type === "social" && "Social"}
+												</span>
+											</div>
+										</a>
+									))}
+								</div>
+							</>
+						) : (
+							<div className={styles.searchResultsEmpty}>
+								<Search size={24} />
+								<span>Brak wyników dla "{localSearchQuery}"</span>
+							</div>
+						)}
+					</div>
+				)}
 			</div>
+
+			{/* 👇 POWIADOMIENIA */}
 			<div className={styles.topbar__actions}>
 				{!hideNotifications && (
 					<div className={styles.notificationsWrapper} ref={dropdownRef}>

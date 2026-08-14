@@ -1,7 +1,6 @@
 import { NAV_ITEMS } from "../../../data/navigation";
 import styles from "./Sidebar.module.css";
-import { LogOut } from "lucide-react";
-import { useState } from "react";
+import { LogOut, X } from "lucide-react";
 
 interface SidebarProps {
 	activeKey: string;
@@ -21,7 +20,6 @@ export default function Sidebar({
 	collapsed = false,
 	isSocialMember = false,
 	userRole,
-	onToggleCollapse,
 	isMobileMenuOpen = false,
 	onMobileMenuToggle,
 }: SidebarProps) {
@@ -62,8 +60,18 @@ export default function Sidebar({
 				}}
 			>
 				<div className={styles.mobileMenuHeader}>
-					<div className={styles.logo__mark}>SM</div>
-					<span className={styles.logo__text}>Siła Młodych</span>
+					<div className={styles.mobileMenuHeaderLeft}>
+						<div className={styles.logo__mark}>SM</div>
+						<span className={styles.logo__text}>Siła Młodych</span>
+					</div>
+					{/* 👇 PRZYCISK ZAMYKANIA */}
+					<button
+						className={styles.mobileMenuClose}
+						onClick={onMobileMenuToggle}
+						aria-label="Zamknij menu"
+					>
+						<X size={24} />
+					</button>
 				</div>
 
 				<nav className={styles.mobileNav}>
