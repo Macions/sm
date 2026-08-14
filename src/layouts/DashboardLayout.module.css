@@ -4,50 +4,7 @@
 
 .layout {
 	display: flex;
-	min-height: 100vh;
-	background: var(--bg-app, #f1f1f7);
-	font-family:
-		Inter,
-		"Segoe UI",
-		-apple-system,
-		BlinkMacSystemFont,
-		sans-serif;
-	color: var(--text-dark, #201a3b);
-}
-
-.main {
-	flex: 1;
-	padding: 26px 34px 50px;
-	min-width: 0;
-	display: flex;
-	flex-direction: column;
-}
-
-
-@media (width <= 980px) {
-	.main {
-		padding: 20px;
-	}
-}
-
-@media (width <= 768px) {
-	.main {
-		padding: 16px;
-	}
-}
-
-@media (width <= 480px) {
-	.main {
-		padding: 12px;
-	}
-}
-
-/* ==========================================================================
-   Dashboard Layout - Główny szablon
-   ========================================================================== */
-
-.layout {
-	display: flex;
+	flex-direction: column; /* 👈 KOLUMNA – Header na górze */
 	min-height: 100vh;
 	background: var(--bg-app, #f1f1f7);
 	font-family:
@@ -58,13 +15,20 @@
 		sans-serif;
 	color: var(--text-dark, #201a3b);
 	transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+	padding: 0;
+	margin: 0;
+	box-sizing: border-box;
+	overflow-x: hidden;
 }
 
-
-.layoutCollapsed .main {
-	margin-left: 0;
+/* 👇 KONTENER POD HEADEREM – Sidebar + Main w rzędzie */
+.content {
+	display: flex;
+	flex: 1;
+	min-height: 0;
 }
 
+/* 👇 GŁÓWNA ZAWARTOŚĆ – TYLKO OUTLET */
 .main {
 	flex: 1;
 	padding: 26px 34px 50px;
@@ -72,73 +36,10 @@
 	display: flex;
 	flex-direction: column;
 	transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+	overflow-x: hidden;
 }
 
-
-@media (width <= 980px) {
-	.main {
-		padding: 20px;
-	}
-}
-
-@media (width <= 768px) {
-	.main {
-		padding: 16px;
-	}
-}
-
-@media (width <= 480px) {
-	.main {
-		padding: 12px;
-	}
-}
-
-
-@media (width <= 480px) {
-	.toggleBtn {
-		display: none !important;
-	}
-}
-
-
-
-.toggleBtn {
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	width: 40px;
-	height: 40px;
-	border: none;
-	border-radius: 50%;
-	background: rgb(255 255 255 / 10%);
-	color: #fff;
-	cursor: pointer;
-	transition: all 0.2s ease;
-	flex-shrink: 0;
-}
-
-.toggleBtn:hover {
-	background: rgb(255 255 255 / 20%);
-	transform: scale(1.05);
-}
-
-.toggleBtn:active {
-	transform: scale(0.95);
-}
-
-.toggleBtn svg {
-	width: 20px;
-	height: 20px;
-	transition: transform 0.3s ease;
-}
-
-
-@media (width <= 480px) {
-	.toggleBtn {
-		display: none !important;
-	}
-}
-
+/* 👇 ŁADOWANIE */
 .loadingContainer {
 	display: flex;
 	justify-content: center;
@@ -159,5 +60,27 @@
 @keyframes spin {
 	to {
 		transform: rotate(360deg);
+	}
+}
+
+/* ============================================================
+   RESPONSYWNOŚĆ
+   ============================================================ */
+
+@media (width <= 980px) {
+	.main {
+		padding: 20px;
+	}
+}
+
+@media (width <= 768px) {
+	.main {
+		padding: 16px;
+	}
+}
+
+@media (width <= 480px) {
+	.main {
+		padding: 12px;
 	}
 }

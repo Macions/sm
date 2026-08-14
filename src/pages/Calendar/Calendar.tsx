@@ -81,7 +81,7 @@ export default function Calendar() {
 	const [isModalOpen, setIsModalOpen] = useState(false);
 	const [selectedTask, setSelectedTask] = useState<CalendarTask | null>(null);
 	const [loading, setLoading] = useState(true);
-	const [isSyncing, setIsSyncing] = useState(false);
+	const [_isSyncing, _setIsSyncing] = useState(false);
 	const [googleEvents, setGoogleEvents] = useState<any[]>([]);
 	const [isGoogleAuth, setIsGoogleAuth] = useState(false);
 	const [_isGoogleLoading, setIsGoogleLoading] = useState(false);
@@ -157,86 +157,6 @@ export default function Calendar() {
 		}
 	};
 
-	const handleSyncToGoogle = async (task: CalendarTask) => {
-		if (!isGoogleAuth) {
-			try {
-				const token = localStorage.getItem("accessToken");
-				const authRes = await fetch(`${API_URL}/api/calendar/auth`, {
-					headers: { Authorization: `Bearer ${token}` }
-				});
-				const authData = await authRes.json();
-				if (authData.authUrl) {
-					const width = 600;
-					const height = 700;
-					const left = window.screenX + (window.outerWidth - width) / 2;
-					const top = window.screenY + (window.outerHeight - height) / 2;
-					window.open(
-						authData.authUrl,
-						"Autoryzacja Google Calendar",
-						`width=${width},height=${height},left=${left},top=${top}`,
-					);
-					toast("Zaloguj się do Google i zatwierdź uprawnienia", {
-						icon: "ℹ️",
-						duration: 5000,
-					});
-					const checkInterval = setInterval(async () => {
-						try {
-							const statusRes = await fetch(`${API_URL}/api/calendar/status`, {
-								headers: { Authorization: `Bearer ${token}` },
-							});
-							const statusData = await statusRes.json();
-							if (statusData.authenticated) {
-								setIsGoogleAuth(true);
-								clearInterval(checkInterval);
-								toast.success("Autoryzacja zakończona!");
-								await syncTask(task);
-							}
-						} catch (e) { }
-					}, 3000);
-					setTimeout(() => clearInterval(checkInterval), 300000);
-					return;
-				}
-			} catch (error) {
-				toast.error("Nie udało się rozpocząć autoryzacji");
-				return;
-			}
-		}
-		await syncTask(task);
-	};
-
-	const syncTask = async (task: CalendarTask) => {
-		setIsSyncing(true);
-		try {
-			const token = localStorage.getItem("accessToken");
-			const response = await fetch(`${API_URL}/api/calendar/sync`, {
-				method: "POST",
-				headers: {
-					Authorization: `Bearer ${token}`,
-					"Content-Type": "application/json",
-				},
-				body: JSON.stringify({ taskId: task.id }),
-			});
-			const data = await response.json();
-			if (response.status === 401 && data.needAuth) {
-				setIsGoogleAuth(false);
-				toast("Wymagana ponowna autoryzacja", { icon: "️", duration: 4000 });
-				return;
-			}
-			if (response.ok) {
-				toast.success("Zadanie dodane do Google Calendar!");
-				if (data.eventUrl) {
-					window.open(data.eventUrl, "_blank");
-				}
-			} else {
-				toast.error(`Błąd: ${data.error || "Nieznany błąd"}`);
-			}
-		} catch (error) {
-			console.error("Błąd synchronizacji:", error);
-			toast.error("Nie udało się zsynchronizować z Google Calendar");
-		} finally {
-			setIsSyncing(false);
-		}
-	};
 
 	const goToPreviousMonth = () => {
 		setCurrentDate(new Date(currentYear, currentMonth - 1, 1));

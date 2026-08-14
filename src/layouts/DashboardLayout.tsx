@@ -3,17 +3,18 @@ import { logger } from "@/utils/logger";
 import { safeNavigate } from "@/utils/safeNavigation";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import Sidebar from "../components/layout/Sidebar/Sidebar";
-import Header from "../components/layout/Header/Header";
+import Header from "../components/layout/Header/Header"; // 👈 IMPORT HEADER
 import styles from "./DashboardLayout.module.css";
 
 export default function DashboardLayout() {
 	const location = useLocation();
 	const navigate = useNavigate();
-	const [activeNav, setActiveNav] = useState("dashboard");
 	const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+	const [activeNav, setActiveNav] = useState("dashboard");
 	const [isSocialMember, setIsSocialMember] = useState(false);
 	const [loading, setLoading] = useState(true);
 	const [userData, setUserData] = useState<any>(null);
+	const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false); // 👈 DODANE
 
 	useEffect(() => {
 		const checkSocialMediaAccess = async () => {
@@ -89,6 +90,10 @@ export default function DashboardLayout() {
 		setSidebarCollapsed(!sidebarCollapsed);
 	};
 
+	const toggleMobileMenu = () => {
+		setIsMobileMenuOpen(!isMobileMenuOpen);
+	};
+
 	const getPageTitle = () => {
 		switch (activeNav) {
 			case "projects":
@@ -127,26 +132,34 @@ export default function DashboardLayout() {
 	}
 
 	return (
-		<div
-			className={`${styles.layout} ${sidebarCollapsed ? styles.layoutCollapsed : ""}`}
-		>
-			<Sidebar
-				activeKey={activeNav}
-				onSelect={handleNavSelect}
+		<div className={styles.layout}>
+			{/* 👇 HEADER – na górze, cała szerokość */}
+			<Header
+				title={getPageTitle()}
+				onMenuClick={toggleSidebar}
 				collapsed={sidebarCollapsed}
-				isSocialMember={isSocialMember}
+				onMobileMenuToggle={toggleMobileMenu}
+				isMobileMenuOpen={isMobileMenuOpen}
 				userRole={userData?.role || null}
 			/>
-			<main className={styles.main}>
-				<Header
-					title={getPageTitle()}
-					userRole={userData?.role || null}
-					userName={userData?.firstName + " " + userData?.lastName || "Użytkownik"}
+
+			{/* 👇 KONTENER POD HEADEREM – Sidebar + Main */}
+			<div className={styles.content}>
+				<Sidebar
+					activeKey={activeNav}
+					onSelect={handleNavSelect}
 					collapsed={sidebarCollapsed}
-					onMenuClick={toggleSidebar}
+					isSocialMember={isSocialMember}
+					userRole={userData?.role || null}
+					onToggleCollapse={toggleSidebar}
+					pageTitle={getPageTitle()}
+					isMobileMenuOpen={isMobileMenuOpen}
+					onMobileMenuToggle={toggleMobileMenu}
 				/>
-				<Outlet />
-			</main>
+				<main className={styles.main}>
+					<Outlet />
+				</main>
+			</div>
 		</div>
 	);
 }

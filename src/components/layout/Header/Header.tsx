@@ -11,6 +11,7 @@ import {
 	CheckCircle,
 	AlertCircle,
 	ChevronDown,
+	Menu,
 } from "lucide-react";
 import styles from "./Header.module.css";
 
@@ -22,6 +23,8 @@ interface HeaderProps {
 	userRole?: "MEMBER" | "COORDINATOR" | "SOCIAL_MEDIA" | "ADMIN" | "BOARD";
 	userName?: string;
 	userId?: string;
+	onMobileMenuToggle?: () => void; // 👈 NOWY PROP
+	isMobileMenuOpen?: boolean;
 }
 
 type NotificationType = "info" | "success" | "warning" | "error";
@@ -42,6 +45,8 @@ export default function Header({
 	onMenuClick,
 	collapsed,
 	hideNotifications = false,
+	onMobileMenuToggle, // 👈 DODAJEMY
+	isMobileMenuOpen = false,
 }: HeaderProps) {
 	const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
 	const [notifications, setNotifications] = useState<Notification[]>([]);
@@ -243,13 +248,26 @@ export default function Header({
 
 	return (
 		<div className={styles.topbar}>
-			<button
-				className={styles.topbar__menu}
-				onClick={onMenuClick}
-				aria-label="Menu"
-			>
-				{collapsed ? <PanelLeftOpen size={22} /> : <PanelLeftClose size={22} />}
-			</button>
+			{/* 👇 LEWA STRONA – PRZYCISKI */}
+			<div className={styles.topbar__left}>
+				{/* Przycisk zwijania sidebaru (desktop) */}
+				<button
+					className={styles.topbar__menu}
+					onClick={onMenuClick}
+					aria-label="Zwiń sidebar"
+				>
+					{collapsed ? <PanelLeftOpen size={22} /> : <PanelLeftClose size={22} />}
+				</button>
+
+				{/* 👇 BURGER – WIDOCZNY TYLKO NA MOBILNYCH */}
+				<button
+					className={`${styles.topbar__burger} ${isMobileMenuOpen ? styles.topbar__burgerActive : ""}`}
+					onClick={onMobileMenuToggle}
+					aria-label="Menu mobilne"
+				>
+					{isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+				</button>
+			</div>
 
 			<h1 className={styles.topbar__title}>{title}</h1>
 
@@ -260,7 +278,6 @@ export default function Header({
 					placeholder="Szukaj członków, projektów, poradników..."
 				/>
 			</div>
-
 			<div className={styles.topbar__actions}>
 				{!hideNotifications && (
 					<div className={styles.notificationsWrapper} ref={dropdownRef}>
