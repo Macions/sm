@@ -1303,32 +1303,6 @@ export default function Profile({
 									</div>
 								</div>
 							)}
-
-							{canViewPrivate && displayUser.contributionInfo && (
-								<div className={styles.section}>
-									<h3 className={styles.section__title}>
-										<CreditCard size={20} />
-										Informacje o składkach
-									</h3>
-									<div className={styles.contributionInfoGrid}>
-										<div className={styles.contributionInfoItem}>
-											<span className={styles.contributionInfoLabel}>Aktualne zadłużenie</span>
-											<span className={styles.contributionInfoValue}>
-												{displayUser.contributionInfo.arrears} zł
-											</span>
-										</div>
-										<div className={styles.contributionInfoItem}>
-											<span className={styles.contributionInfoLabel}>Status</span>
-											<span
-												className={`${styles.contributionInfoStatus} ${CONTRIBUTION_STATUS_COLORS[displayUser.contributionInfo.status]
-													}`}
-											>
-												{CONTRIBUTION_STATUS_LABELS[displayUser.contributionInfo.status]}
-											</span>
-										</div>
-									</div>
-								</div>
-							)}
 						</>
 					)}
 				</div>

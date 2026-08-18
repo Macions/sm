@@ -79,9 +79,11 @@ interface AddCreatorModalProps {
 }
 
 interface CreatorsSectionProps {
-	creators: ContentCreator[];
-	canManage: boolean;
-	onAddCreator?: () => void;
+    creators: ContentCreator[];
+    canManage: boolean;
+    onAddCreator?: () => void;
+    onEditCreator?: (creator: ContentCreator) => void;  // ✅ DODAJ
+    onDeleteCreator?: (id: string) => void;             // ✅ DODAJ
 }
 interface TeamMember {
 	id: string;
@@ -1032,6 +1034,8 @@ interface TeamSectionProps {
 	members: TeamMember[];
 	canManage: boolean;
 	onAddMember?: () => void;
+	onEditMember?: (member: TeamMember) => void; // ✅ DODAJ
+	onDeleteMember?: (id: string) => void; // ✅ DODAJ
 }
 
 interface PublicationsSectionProps {
@@ -1998,7 +2002,13 @@ function AddContactModal({
 	);
 }
 
-function TeamSection({ members, canManage, onAddMember }: TeamSectionProps) {
+function TeamSection({
+	members,
+	canManage,
+	onAddMember,
+	onEditMember, // ✅ DODAJ
+	onDeleteMember, // ✅ DODAJ
+}: TeamSectionProps) {
 	const [searchTerm, setSearchTerm] = useState("");
 	const [selectedRole, setSelectedRole] = useState<SocialRole | "all">("all");
 
@@ -2119,6 +2129,24 @@ function TeamSection({ members, canManage, onAddMember }: TeamSectionProps) {
 								{member.status === "vacation" ? "Urlop" : "Aktywny"}
 							</span>
 						</div>
+						{canManage && (
+							<div className={styles.teamCard__actions}>
+								<button
+									className={styles.teamCard__editBtn}
+									onClick={() => onEditMember?.(member)}
+									title="Edytuj"
+								>
+									<Edit size={14} />
+								</button>
+								<button
+									className={styles.teamCard__deleteBtn}
+									onClick={() => onDeleteMember?.(member.id)}
+									title="Usuń"
+								>
+									<Trash2 size={14} />
+								</button>
+							</div>
+						)}
 					</div>
 				))}
 			</div>
@@ -2127,9 +2155,11 @@ function TeamSection({ members, canManage, onAddMember }: TeamSectionProps) {
 }
 
 function CreatorsSection({
-	creators,
-	canManage,
-	onAddCreator,
+    creators,
+    canManage,
+    onAddCreator,
+    onEditCreator,   // ✅ DODAJ
+    onDeleteCreator  // ✅ DODAJ
 }: CreatorsSectionProps) {
 	const [searchTerm, setSearchTerm] = useState("");
 
@@ -2206,6 +2236,24 @@ function CreatorsSection({
 								{creator.experience === "advanced" && "Zaawansowany"}
 							</div>
 						</div>
+						{canManage && (
+							<div className={styles.creatorCard__actions}>
+								<button
+									className={styles.creatorCard__editBtn}
+									onClick={() => onEditCreator?.(creator)}
+									title="Edytuj"
+								>
+									<Edit size={14} />
+								</button>
+								<button
+									className={styles.creatorCard__deleteBtn}
+									onClick={() => onDeleteCreator?.(creator.id)}
+									title="Usuń"
+								>
+									<Trash2 size={14} />
+								</button>
+							</div>
+						)}
 					</div>
 				))}
 			</div>
@@ -2713,7 +2761,7 @@ export default function SocialMedia({ title }: { title?: string }) {
 	const [isPublicationModalOpen, setIsPublicationModalOpen] = useState(false);
 	const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
 	const [isCreatorModalOpen, setIsCreatorModalOpen] = useState(false);
-
+	const [canView, setCanView] = useState(false);
 	const [isContactModalOpen, setIsContactModalOpen] = useState(false);
 	const [availableUsers, setAvailableUsers] = useState<any[]>([]);
 	const [editingPublication, setEditingPublication] =
@@ -2748,6 +2796,59 @@ export default function SocialMedia({ title }: { title?: string }) {
 			logger.error("❌ Błąd:", error);
 			toast.error("Nie udało się dodać twórcy");
 		}
+	};
+	const handleEditMember = (member: TeamMember) => {
+		console.log("Edytuj członka:", member);
+		// TODO: otwórz modal edycji
+	};
+
+	const handleDeleteMember = async (id: string) => {
+		showConfirm(
+			"Usuń członka zespołu",
+			"Czy na pewno chcesz usunąć tego członka?",
+			"Usuń",
+			async () => {
+				try {
+					const token = localStorage.getItem("accessToken");
+					const response = await fetch(`/api/social/members/${id}`, {
+						method: "DELETE",
+						headers: { Authorization: `Bearer ${token}` },
+					});
+					if (!response.ok) throw new Error("Błąd usuwania");
+					setMembers(members.filter((m) => m.id !== id));
+					toast.success("Członek usunięty!");
+				} catch (error) {
+					toast.error("Nie udało się usunąć członka");
+				}
+			},
+		);
+	};
+
+	const handleEditCreator = (creator: ContentCreator) => {
+		console.log("Edytuj twórcę:", creator);
+		// TODO: otwórz modal edycji
+	};
+
+	const handleDeleteCreator = async (id: string) => {
+		showConfirm(
+			"Usuń twórcę",
+			"Czy na pewno chcesz usunąć tego twórcę?",
+			"Usuń",
+			async () => {
+				try {
+					const token = localStorage.getItem("accessToken");
+					const response = await fetch(`/api/social/creators/${id}`, {
+						method: "DELETE",
+						headers: { Authorization: `Bearer ${token}` },
+					});
+					if (!response.ok) throw new Error("Błąd usuwania");
+					setCreators(creators.filter((c) => c.id !== id));
+					toast.success("Twórca usunięty!");
+				} catch (error) {
+					toast.error("Nie udało się usunąć twórcy");
+				}
+			},
+		);
 	};
 	const handleUpdateMaterial = async (id: string, data: MaterialFormData) => {
 		try {
@@ -2842,10 +2943,15 @@ export default function SocialMedia({ title }: { title?: string }) {
 					headers: { Authorization: `Bearer ${token}` },
 				});
 				const userData = await userRes.json();
-				setCanManage(
-					userData.role === "admin" || userData.role === "coordinator",
-				);
+				const role = userData.role?.toLowerCase();
+				const isAdmin = role === "admin";
+				const isCoordinator = role === "coordinator";
+				const isBoard = role === "board" || role === "zarząd";
 
+				const canManageAll = isAdmin || isCoordinator || isBoard; // ✅ WSZYSCY MOGĄ WSZYSTKO
+
+				setCanManage(canManageAll); // ✅ DODAWANIE, EDYTOWANIE, USUWANIE
+				setCanView(canManageAll); // ✅ WIDZENIE
 				const [
 					membersRes,
 					creatorsRes,
@@ -3193,12 +3299,16 @@ export default function SocialMedia({ title }: { title?: string }) {
 				members={members}
 				canManage={canManage}
 				onAddMember={() => setIsMemberModalOpen(true)}
+				onEditMember={handleEditMember} // ✅ DODAJ
+				onDeleteMember={handleDeleteMember} // ✅ DODAJ
 			/>
 
 			<CreatorsSection
 				creators={creators}
 				canManage={canManage}
 				onAddCreator={() => setIsCreatorModalOpen(true)}
+				onEditCreator={handleEditCreator} // ✅ DODAJ
+				onDeleteCreator={handleDeleteCreator} // ✅ DODAJ
 			/>
 
 			<MaterialsBoard

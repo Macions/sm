@@ -170,6 +170,7 @@ export default function Onboarding({ initialData = {} }: OnboardingProps) {
 		otherContacts: initialData.otherContacts || [],
 		joinMonth: initialData.joinMonth || "",
 		joinYear: initialData.joinYear || "",
+		isTrial: initialData.isTrial !== undefined ? initialData.isTrial : false,
 	});
 
 	console.log("📋 [DEBUG] Initial formData:", formData);
@@ -500,21 +501,20 @@ export default function Onboarding({ initialData = {} }: OnboardingProps) {
 					if (response.ok) {
 						const data = await response.json();
 						console.log("📋 [DEBUG] Dane z /api/profile:", data);
-						console.log("📋 [DEBUG] data.firstName:", data.firstName);
-						console.log("📋 [DEBUG] data.lastName:", data.lastName);
+
+						// ✅ POBIERZ isTrial z API
+						if (data.isTrial !== undefined) {
+							console.log("📋 [DEBUG] isTrial z API:", data.isTrial);
+							handleInputChange(
+								"isTrial",
+								data.isTrial === true || data.isTrial === 1,
+							);
+						}
 
 						if (data.firstName && !formData.firstName) {
-							console.log(
-								"✅ [DEBUG] Ustawiam firstName z API na:",
-								data.firstName,
-							);
 							handleInputChange("firstName", data.firstName);
 						}
 						if (data.lastName && !formData.lastName) {
-							console.log(
-								"✅ [DEBUG] Ustawiam lastName z API na:",
-								data.lastName,
-							);
 							handleInputChange("lastName", data.lastName);
 						}
 						if (data.province && !formData.province) {
@@ -903,72 +903,69 @@ export default function Onboarding({ initialData = {} }: OnboardingProps) {
 									))}
 								</div>
 							</div>
-							<div className={styles.form__grid}>
-								<div className={styles.form__field}>
-									<label className={styles.form__label}>
-										Od kiedy jesteś w SM? *
-									</label>
-									<select
-										className={styles.form__select}
-										value={formData.joinMonth || ""}
-										onChange={(e) =>
-											handleInputChange("joinMonth", parseInt(e.target.value))
-										}
-									>
-										<option value="">Miesiąc</option>
-										{Array.from({ length: 12 }, (_, i) => i + 1).map(
-											(month) => (
-												<option key={month} value={month}>
-													{new Date(2000, month - 1, 1).toLocaleString(
-														"pl-PL",
-														{ month: "long" },
-													)}
-												</option>
-											),
-										)}
-									</select>
+							{!formData.isTrial && (
+								<div className={styles.form__grid}>
+									<div className={styles.form__field}>
+										<label className={styles.form__label}>
+											Od kiedy jesteś w SM? *
+										</label>
+										<select
+											className={styles.form__select}
+											value={formData.joinMonth || ""}
+											onChange={(e) =>
+												handleInputChange("joinMonth", parseInt(e.target.value))
+											}
+										>
+											<option value="">Miesiąc</option>
+											{Array.from({ length: 12 }, (_, i) => i + 1).map(
+												(month) => (
+													<option key={month} value={month}>
+														{new Date(2000, month - 1, 1).toLocaleString(
+															"pl-PL",
+															{
+																month: "long",
+															},
+														)}
+													</option>
+												),
+											)}
+										</select>
+									</div>
+									<div className={styles.form__field}>
+										<label className={styles.form__label}>Rok *</label>
+										<select
+											className={styles.form__select}
+											value={formData.joinYear || ""}
+											onChange={(e) =>
+												handleInputChange("joinYear", parseInt(e.target.value))
+											}
+										>
+											<option value="">Rok</option>
+											{Array.from(
+												{ length: new Date().getFullYear() - 2024 + 1 },
+												(_, i) => 2024 + i,
+											)
+												.reverse()
+												.map((year) => (
+													<option key={year} value={year}>
+														{year}
+													</option>
+												))}
+										</select>
+									</div>
 								</div>
-								<div className={styles.form__field}>
-									<label className={styles.form__label}>Rok *</label>
-									<select
-										className={styles.form__select}
-										value={formData.joinYear || ""}
-										onChange={(e) =>
-											handleInputChange("joinYear", parseInt(e.target.value))
-										}
-									>
-										<option value="">Rok</option>
-										{Array.from(
-											{ length: new Date().getFullYear() - 2024 + 1 },
-											(_, i) => 2024 + i,
-										)
-											.reverse()
-											.map((year) => (
-												<option key={year} value={year}>
-													{year}
-												</option>
-											))}
-									</select>
-								</div>
-							</div>
+							)}
 
 							<div className={styles.form__field}>
 								<label className={styles.form__checkbox}>
 									<input
 										type="checkbox"
-										checked={formData.isTrial}
-										onChange={(e) =>
-											handleInputChange("isTrial", e.target.checked)
-										}
+										checked={formData.isTrial === true}
+										disabled={true} // ✅ ZABLOKOWANY
+										className={styles.form__checkboxDisabled}
 									/>
-									<span>Jestem na okresie próbnym</span>
+									<span>Jestem na okresie próbnym {formData.isTrial}</span>
 								</label>
-								{formData.isTrial && (
-									<p className={styles.form__hint}>
-										Jeśli jesteś na okresie próbnym, nie będziemy wyświetlać
-										Twojego stażu na dashboardzie.
-									</p>
-								)}
 							</div>
 						</div>
 					)}
@@ -1137,7 +1134,7 @@ export default function Onboarding({ initialData = {} }: OnboardingProps) {
 										className={styles.form__input}
 										value={newSalaContact}
 										onChange={(e) => setNewSalaContact(e.target.value)}
-										placeholder="np. Sala nr 3 - Centrum Konferencyjne"
+										placeholder="np. Centrum NGO w Poznaniu"
 										onKeyDown={(e) => {
 											if (e.key === "Enter") {
 												e.preventDefault();
@@ -1195,7 +1192,7 @@ export default function Onboarding({ initialData = {} }: OnboardingProps) {
 										className={styles.form__input}
 										value={newMpContact}
 										onChange={(e) => setNewMpContact(e.target.value)}
-										placeholder="np. Poseł Anna Kowalska"
+										placeholder="np. Poseł Paweł Bejda"
 										onKeyDown={(e) => {
 											if (e.key === "Enter") {
 												e.preventDefault();
@@ -1255,7 +1252,7 @@ export default function Onboarding({ initialData = {} }: OnboardingProps) {
 										className={styles.form__input}
 										value={newInstitutionContact}
 										onChange={(e) => setNewInstitutionContact(e.target.value)}
-										placeholder="np. Fundacja Rozwoju Młodzieży"
+										placeholder="np. Polska Rada Organizacji Młodzieżowych"
 										onKeyDown={(e) => {
 											if (e.key === "Enter") {
 												e.preventDefault();
@@ -1316,7 +1313,7 @@ export default function Onboarding({ initialData = {} }: OnboardingProps) {
 										className={styles.form__input}
 										value={newOtherContact}
 										onChange={(e) => setNewOtherContact(e.target.value)}
-										placeholder="np. Redaktor naczelny Gazety Młodych"
+										placeholder="np. Rzeczpospolita"
 										onKeyDown={(e) => {
 											if (e.key === "Enter") {
 												e.preventDefault();
@@ -1369,8 +1366,7 @@ export default function Onboarding({ initialData = {} }: OnboardingProps) {
 							<div className={styles.form__privateNote}>
 								<AlertCircle size={16} />
 								<span>
-									Te dane są prywatne i widoczne tylko dla Ciebie oraz
-									koordynatorów.
+									Te dane są prywatne i widoczne tylko dla Ciebie, zarządu i zespołu Social Media.
 								</span>
 							</div>
 						</div>

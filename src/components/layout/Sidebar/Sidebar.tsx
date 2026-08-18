@@ -28,7 +28,7 @@ export default function Sidebar({
 
 	const filteredNavItems = NAV_ITEMS.filter((item) => {
 		if (item.key === "social") {
-			return isSocialMember;
+			return isSocialMember || isAdminOrBoard;
 		}
 		if (item.key === "admin") {
 			return isAdminOrBoard;

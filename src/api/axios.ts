@@ -3,8 +3,7 @@ import axios from "axios";
 import { logger } from "@/utils/logger";
 
 // ✅ NA SZTYWNO - DLA PRODUKCJI
-const API_URL = 'http://panel.silamlodych.pl:3000';
-
+const API_URL = ''; 
 const api = axios.create({
     baseURL: API_URL,
     headers: {

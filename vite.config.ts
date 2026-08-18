@@ -109,7 +109,7 @@ export default defineConfig(({ mode }) => {
 								"style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://fonts.gstatic.com https://accounts.google.com",
 								"img-src 'self' data: https: http://localhost:*",
 								"font-src 'self' data: https://fonts.gstatic.com https://fonts.googleapis.com",
-								`connect-src 'self' http://localhost:* http://backend:* http://panel.silamlodych.pl:3000 https://*.ngrok-free.dev https://sm-backend-po9k.onrender.com https://api.silamlodych.pl https://accounts.google.com https://*.googleapis.com`,
+								`connect-src 'self' http://localhost:* http://backend:* https://panel.silamlodych.pl https://*.ngrok-free.dev https://sm-backend-po9k.onrender.com https://api.silamlodych.pl https://accounts.google.com https://*.googleapis.com`,
 								"frame-src https://accounts.google.com https://*.google.com",
 								"base-uri 'self'",
 								"form-action 'self'",

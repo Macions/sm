@@ -1,9 +1,7 @@
 // frontend/src/pages/Login.tsx
 
 import React, { useState } from "react";
-import { safeNavigate } from "@/utils/safeNavigation";
 import { useUser } from "@/context/UserContext";
-import { useNavigate } from "react-router-dom";
 import { useGoogleLogin } from "@react-oauth/google"; // ✅ TYLKO useGoogleLogin
 import styles from "./Login.module.css";
 import { logger } from "@/utils/logger";
@@ -14,7 +12,6 @@ const Login: React.FC = () => {
 	const [loading, setLoading] = useState(false);
 	const [error, setError] = useState<string | null>(null);
 
-	const navigate = useNavigate();
 	const { refetch } = useUser();
 
 	const getGreeting = () => {

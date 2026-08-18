@@ -10,21 +10,29 @@ const oauth2Client = new google.auth.OAuth2(
 	process.env.GOOGLE_CLIENT_ID,
 	process.env.GOOGLE_CLIENT_SECRET,
 	process.env.GOOGLE_REDIRECT_URI ||
-	"http://localhost:3000/api/calendar/callback" || "http://panel.silamlodych.pl/api/calendar/callback"
+		(process.env.NODE_ENV === "production"
+			? "https://panel.silamlodych.pl/api/calendar/callback" // ✅ PRZEZ NGINX, BEZ PORTU
+			: "http://localhost:3000/api/calendar/callback"),
 );
 router.use((req, res, next) => {
 	console.log("🔍 [CALENDAR] Ścieżka:", req.path);
 	// Pomijamy autoryzację dla callback i auth
-	if (req.path === '/callback' || req.path === '/auth' ||
-		req.path === '/api/calendar/callback' || req.path === '/api/calendar/auth' ||
-		req.path.includes('callback') || req.path.includes('auth')) {
+	if (
+		req.path === "/callback" ||
+		req.path === "/auth" ||
+		req.path === "/api/calendar/callback" ||
+		req.path === "/api/calendar/auth" ||
+		req.path.includes("callback") ||
+		req.path.includes("auth")
+	) {
 		console.log(`🔓 [CALENDAR] Pomijam autoryzację dla: ${req.path}`);
 		return next();
 	}
 	next();
 });
 
-router.get("/status", authMiddleware, async (req: any, res) => {  // ← DODAJ authMiddleware
+router.get("/status", authMiddleware, async (req: any, res) => {
+	// ← DODAJ authMiddleware
 	try {
 		const userId = req.user?.id;
 		if (!userId) {
@@ -89,7 +97,12 @@ router.get("/events", authMiddleware, async (req: any, res) => {
 		const endDate = new Date(now);
 		endDate.setDate(endDate.getDate() + 30);
 
-		console.log("📅 [EVENTS] Zakres dat:", startDate.toISOString(), "do", endDate.toISOString());
+		console.log(
+			"📅 [EVENTS] Zakres dat:",
+			startDate.toISOString(),
+			"do",
+			endDate.toISOString(),
+		);
 
 		const response = await calendar.events.list({
 			calendarId: "primary",
@@ -100,7 +113,10 @@ router.get("/events", authMiddleware, async (req: any, res) => {
 			orderBy: "startTime",
 		});
 
-		console.log("📅 [EVENTS] Znaleziono eventów:", response.data.items?.length || 0);
+		console.log(
+			"📅 [EVENTS] Znaleziono eventów:",
+			response.data.items?.length || 0,
+		);
 		res.json(response.data.items || []);
 	} catch (error) {
 		console.error("❌ [EVENTS] Błąd:", error);
@@ -114,7 +130,8 @@ router.get("/events", authMiddleware, async (req: any, res) => {
 // ============================================================
 // 📌 ENDPOINT: Synchronizuj zadanie z Google Calendar
 // ============================================================
-router.post("/sync", authMiddleware, async (req: any, res) => {  // ← DODAJ authMiddleware
+router.post("/sync", authMiddleware, async (req: any, res) => {
+	// ← DODAJ authMiddleware
 	try {
 		const userId = req.user?.id;
 		const { taskId } = req.body;
@@ -190,15 +207,19 @@ router.post("/sync", authMiddleware, async (req: any, res) => {  // ← DODAJ au
 // ============================================================
 // 📌 ENDPOINT: Rozpocznij autoryzację Google Calendar
 // ============================================================
-router.get("/auth", async (req: any, res) => {  // ← USUŃ authMiddleware!
+router.get("/auth", async (req: any, res) => {
+	// ← USUŃ authMiddleware!
 	try {
 		// Pobierz userId z tokena RĘCZNIE
 		let userId = null;
 		const authHeader = req.headers.authorization;
-		if (authHeader && authHeader.startsWith('Bearer ')) {
-			const token = authHeader.split(' ')[1];
+		if (authHeader && authHeader.startsWith("Bearer ")) {
+			const token = authHeader.split(" ")[1];
 			try {
-				const decoded = jwt.verify(token, process.env.JWT_SECRET || "your-secret-key");
+				const decoded = jwt.verify(
+					token,
+					process.env.JWT_SECRET || "your-secret-key",
+				);
 				if (typeof decoded !== "string" && decoded && "id" in decoded) {
 					userId = decoded.id as string;
 				}
@@ -225,7 +246,9 @@ router.get("/auth", async (req: any, res) => {  // ← USUŃ authMiddleware!
 			],
 			include_granted_scopes: true,
 			state: stateData,
-			redirect_uri: process.env.GOOGLE_REDIRECT_URI || "http://localhost:3000/api/calendar/callback",
+			redirect_uri:
+				process.env.GOOGLE_REDIRECT_URI ||
+				"http://localhost:3000/api/calendar/callback",
 		});
 
 		res.json({ authUrl });
@@ -235,9 +258,9 @@ router.get("/auth", async (req: any, res) => {  // ← USUŃ authMiddleware!
 	}
 });
 
-
 // ✅ CALLBACK NIE MOŻE MIEĆ authMiddleware!
-router.get("/callback", async (req: any, res) => {  // ← BEZ authMiddleware!
+router.get("/callback", async (req: any, res) => {
+	// ← BEZ authMiddleware!
 	try {
 		const { code, state } = req.query;
 
@@ -288,14 +311,18 @@ router.get("/callback", async (req: any, res) => {  // ← BEZ authMiddleware!
 			// Spróbuj znaleźć po emailu
 			const firstUser = await prisma.user.findFirst();
 			if (firstUser) {
-				console.log(`👉 [CALLBACK] Używam pierwszego użytkownika: ${firstUser.id}`);
+				console.log(
+					`👉 [CALLBACK] Używam pierwszego użytkownika: ${firstUser.id}`,
+				);
 				await prisma.user.update({
 					where: { id: firstUser.id },
 					data: {
 						google_calendar_token: JSON.stringify(tokens),
 					},
 				});
-				return res.redirect(`${process.env.FRONTEND_URL}/calendar?auth=success`);
+				return res.redirect(
+					`${process.env.FRONTEND_URL}/calendar?auth=success`,
+				);
 			}
 			return res.redirect(`${process.env.FRONTEND_URL}/calendar?auth=error`);
 		}

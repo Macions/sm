@@ -3189,6 +3189,7 @@ app.get("/api/profile", authMiddleware, async (req: any, res) => {
 			joinDate:
 				user.join_date?.toISOString().split("T")[0] ||
 				user.created_at.toISOString().split("T")[0],
+			isTrial: !!user.is_trial, 
 			currentTasks: [],
 			projects: [],
 			developmentAreas: onboarding.development_areas
