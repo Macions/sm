@@ -70,9 +70,9 @@ type User = {
 };
 
 const API_URL = import.meta.env.VITE_API_URL ||
-	(window.location.hostname === 'panel.silamlodych.pl'
-		? 'https://api.silamlodych.pl'
-		: 'http://localhost:3000');
+  (window.location.hostname === 'panel.silamlodych.pl'
+    ? 'https://panel.silamlodych.pl:3000'  // ✅ HTTPS na porcie 3000
+    : 'http://localhost:3000');
 
 export default function Calendar() {
 	const [currentDate, setCurrentDate] = useState(new Date());

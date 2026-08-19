@@ -42,7 +42,7 @@ services:
   frontend:
     build:
       context: .
-      dockerfile: Dockerfile # ← ZMIENIONE Z Dockerfile.backend na Dockerfile!
+      dockerfile: Dockerfile
       args:
         - VITE_GOOGLE_CLIENT_ID=${VITE_GOOGLE_CLIENT_ID}
         - VITE_API_URL=https://panel.silamlodych.pl
@@ -51,6 +51,12 @@ services:
         - VITE_ALLOWED_HOSTS=turbine-protector-aluminum.ngrok-free.dev
     ports:
       - "8090:80"
+    environment:
+      # ← DODAJ TĘ SEKCJĘ!
+      - VITE_GOOGLE_CLIENT_ID=${VITE_GOOGLE_CLIENT_ID}
+      - VITE_API_URL=https://panel.silamlodych.pl
+      - VITE_ALLOWED_HOSTS=turbine-protector-aluminum.ngrok-free.dev
+      - VITE_HOST=0.0.0.0
     networks:
       - app-network
     depends_on:
