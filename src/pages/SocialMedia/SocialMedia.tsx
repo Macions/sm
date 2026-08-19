@@ -79,11 +79,11 @@ interface AddCreatorModalProps {
 }
 
 interface CreatorsSectionProps {
-    creators: ContentCreator[];
-    canManage: boolean;
-    onAddCreator?: () => void;
-    onEditCreator?: (creator: ContentCreator) => void;  // ✅ DODAJ
-    onDeleteCreator?: (id: string) => void;             // ✅ DODAJ
+	creators: ContentCreator[];
+	canManage: boolean;
+	onAddCreator?: () => void;
+	onEditCreator?: (creator: ContentCreator) => void;  // ✅ DODAJ
+	onDeleteCreator?: (id: string) => void;             // ✅ DODAJ
 }
 interface TeamMember {
 	id: string;
@@ -1277,11 +1277,10 @@ function AddCreatorModal({
 											return (
 												<div
 													key={user.id}
-													className={`${styles.searchableSelect__item} ${
-														formData.user_id === user.id
+													className={`${styles.searchableSelect__item} ${formData.user_id === user.id
 															? styles.searchableSelect__itemSelected
 															: ""
-													}`}
+														}`}
 													onClick={() => handleSelectUser(user.id)}
 												>
 													<span className={styles.searchableSelect__itemName}>
@@ -1487,11 +1486,10 @@ function AddMemberModal({
 											return (
 												<div
 													key={user.id}
-													className={`${styles.searchableSelect__item} ${
-														formData.user_id === user.id
+													className={`${styles.searchableSelect__item} ${formData.user_id === user.id
 															? styles.searchableSelect__itemSelected
 															: ""
-													}`}
+														}`}
 													onClick={() => handleSelectUser(user.id)}
 												>
 													<span className={styles.searchableSelect__itemName}>
@@ -2155,11 +2153,11 @@ function TeamSection({
 }
 
 function CreatorsSection({
-    creators,
-    canManage,
-    onAddCreator,
-    onEditCreator,   // ✅ DODAJ
-    onDeleteCreator  // ✅ DODAJ
+	creators,
+	canManage,
+	onAddCreator,
+	onEditCreator,   // ✅ DODAJ
+	onDeleteCreator  // ✅ DODAJ
 }: CreatorsSectionProps) {
 	const [searchTerm, setSearchTerm] = useState("");
 
@@ -2608,13 +2606,12 @@ function TasksSection({
 							<h3 className={styles.taskCard__title}>{task.name}</h3>
 							<div className={styles.taskCard__actions}>
 								<span
-									className={`${styles.taskCard__status} ${
-										task.status === "done"
+									className={`${styles.taskCard__status} ${task.status === "done"
 											? styles.taskStatusDone
 											: task.status === "in_progress"
 												? styles.taskStatusInProgress
 												: styles.taskStatusPending
-									}`}
+										}`}
 								>
 									{TASK_STATUS_LABELS[task.status]}
 								</span>
@@ -2747,6 +2744,155 @@ function ContactsSection({
 		</section>
 	);
 }
+interface EditMemberModalProps {
+	isOpen: boolean;
+	member: TeamMember | null;
+	onClose: () => void;
+	onSave: (id: string, data: { role: SocialRole }) => void;
+}
+
+function EditMemberModal({ isOpen, member, onClose, onSave }: EditMemberModalProps) {
+	const [role, setRole] = useState<SocialRole>("content_creator");
+
+	useEffect(() => {
+		if (member) {
+			setRole(member.role);
+		}
+	}, [member]);
+
+	if (!isOpen || !member) return null;
+
+	const handleSubmit = (e: React.FormEvent) => {
+		e.preventDefault();
+		onSave(member.id, { role });
+		onClose();
+	};
+
+	return (
+		<div className={styles.modalOverlay} onClick={onClose}>
+			<div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+				<div className={styles.modal__header}>
+					<h2 className={styles.modal__title}>
+						Edytuj członka: {member.firstName} {member.lastName}
+					</h2>
+					<button className={styles.modal__close} onClick={onClose}>
+						<X size={20} />
+					</button>
+				</div>
+				<form onSubmit={handleSubmit} className={styles.modal__form}>
+					<div className={styles.modal__field}>
+						<label className={styles.modal__label}>Rola *</label>
+						<select
+							className={styles.modal__select}
+							value={role}
+							onChange={(e) => setRole(e.target.value as SocialRole)}
+							required
+						>
+							{Object.entries(ROLE_LABELS).map(([key, label]) => (
+								<option key={key} value={key}>{label}</option>
+							))}
+						</select>
+					</div>
+					<div className={styles.modal__actions}>
+						<button
+							type="button"
+							className={styles.modal__btnCancel}
+							onClick={onClose}
+						>
+							Anuluj
+						</button>
+						<button type="submit" className={styles.modal__btnSave}>
+							Zapisz zmiany
+						</button>
+					</div>
+				</form>
+			</div>
+		</div>
+	);
+}
+
+// ============================================================
+// 📝 MODAL EDYCJI TWÓRCY ROLEK
+// ============================================================
+interface EditCreatorModalProps {
+    isOpen: boolean;
+    creator: ContentCreator | null;
+    onClose: () => void;
+    onSave: (id: string, data: { availability: string; experience: string }) => void;
+}
+
+function EditCreatorModal({ isOpen, creator, onClose, onSave }: EditCreatorModalProps) {
+    const [availability, setAvailability] = useState("");
+    const [experience, setExperience] = useState<string>("none");
+
+    useEffect(() => {
+        if (creator) {
+            setAvailability(creator.availability || "");
+            setExperience(creator.experience || "none");
+        }
+    }, [creator]);
+
+    if (!isOpen || !creator) return null;
+
+    const handleSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        onSave(creator.id, { availability, experience });
+        onClose();
+    };
+
+    return (
+        <div className={styles.modalOverlay} onClick={onClose}>
+            <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+                <div className={styles.modal__header}>
+                    <h2 className={styles.modal__title}>
+                        Edytuj twórcę: {creator.firstName} {creator.lastName}
+                    </h2>
+                    <button className={styles.modal__close} onClick={onClose}>
+                        <X size={20} />
+                    </button>
+                </div>
+                <form onSubmit={handleSubmit} className={styles.modal__form}>
+                    <div className={styles.modal__field}>
+                        <label className={styles.modal__label}>Dostępność *</label>
+                        <input
+                            type="text"
+                            className={styles.modal__input}
+                            value={availability}
+                            onChange={(e) => setAvailability(e.target.value)}
+                            placeholder="np. Codziennie, Weekendy..."
+                            required
+                        />
+                    </div>
+                    <div className={styles.modal__field}>
+                        <label className={styles.modal__label}>Doświadczenie</label>
+                        <select
+                            className={styles.modal__select}
+                            value={experience}
+                            onChange={(e) => setExperience(e.target.value)}
+                        >
+                            <option value="none">Brak</option>
+                            <option value="beginner">Początkujący</option>
+                            <option value="intermediate">Średniozaawansowany</option>
+                            <option value="advanced">Zaawansowany</option>
+                        </select>
+                    </div>
+                    <div className={styles.modal__actions}>
+                        <button
+                            type="button"
+                            className={styles.modal__btnCancel}
+                            onClick={onClose}
+                        >
+                            Anuluj
+                        </button>
+                        <button type="submit" className={styles.modal__btnSave}>
+                            Zapisz zmiany
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    );
+}
 
 export default function SocialMedia({ title }: { title?: string }) {
 	const [members, setMembers] = useState<TeamMember[]>([]);
@@ -2754,6 +2900,11 @@ export default function SocialMedia({ title }: { title?: string }) {
 	const [publications, setPublications] = useState<Publication[]>([]);
 	const [materials, setMaterials] = useState<Material[]>([]);
 	const [tasks, setTasks] = useState<Task[]>([]);
+	// W głównym komponencie SocialMedia, obok innych useState:
+	const [editingMember, setEditingMember] = useState<TeamMember | null>(null);
+	const [isEditMemberModalOpen, setIsEditMemberModalOpen] = useState(false);
+	const [editingCreator, setEditingCreator] = useState<ContentCreator | null>(null);
+	const [isEditCreatorModalOpen, setIsEditCreatorModalOpen] = useState(false);
 	const [contacts, setContacts] = useState<MediaContact[]>([]);
 	const [loading, setLoading] = useState(true);
 	const [canManage, setCanManage] = useState(false);
@@ -2777,6 +2928,47 @@ export default function SocialMedia({ title }: { title?: string }) {
 		setEditingMaterial(material);
 		setIsEditMaterialModalOpen(true);
 	};
+	const handleUpdateMember = async (id: string, data: { role: SocialRole }) => {
+    try {
+        const token = localStorage.getItem("accessToken");
+        const response = await fetch(`/api/social/members/${id}`, {
+            method: "PUT",
+            headers: {
+                Authorization: `Bearer ${token}`,
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify(data),
+        });
+        if (!response.ok) throw new Error("Błąd aktualizacji");
+        const updated = await response.json();
+        setMembers(members.map((m) => (m.id === id ? updated : m)));
+        toast.success("Członek zaktualizowany!");
+    } catch (error) {
+        logger.error("❌ Błąd:", error);
+        toast.error("Nie udało się zaktualizować członka");
+    }
+};
+
+const handleUpdateCreator = async (id: string, data: { availability: string; experience: string }) => {
+    try {
+        const token = localStorage.getItem("accessToken");
+        const response = await fetch(`/api/social/creators/${id}`, {
+            method: "PUT",
+            headers: {
+                Authorization: `Bearer ${token}`,
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify(data),
+        });
+        if (!response.ok) throw new Error("Błąd aktualizacji");
+        const updated = await response.json();
+        setCreators(creators.map((c) => (c.id === id ? updated : c)));
+        toast.success("Twórca zaktualizowany!");
+    } catch (error) {
+        logger.error("❌ Błąd:", error);
+        toast.error("Nie udało się zaktualizować twórcy");
+    }
+};
 	const handleAddCreator = async (data: CreatorFormData) => {
 		try {
 			const token = localStorage.getItem("accessToken");
@@ -2798,9 +2990,11 @@ export default function SocialMedia({ title }: { title?: string }) {
 		}
 	};
 	const handleEditMember = (member: TeamMember) => {
-		console.log("Edytuj członka:", member);
-		// TODO: otwórz modal edycji
+		setEditingMember(member);
+		setIsEditMemberModalOpen(true);
 	};
+
+
 
 	const handleDeleteMember = async (id: string) => {
 		showConfirm(
@@ -2825,9 +3019,10 @@ export default function SocialMedia({ title }: { title?: string }) {
 	};
 
 	const handleEditCreator = (creator: ContentCreator) => {
-		console.log("Edytuj twórcę:", creator);
-		// TODO: otwórz modal edycji
+		setEditingCreator(creator);
+		setIsEditCreatorModalOpen(true);
 	};
+
 
 	const handleDeleteCreator = async (id: string) => {
 		showConfirm(
@@ -2930,8 +3125,8 @@ export default function SocialMedia({ title }: { title?: string }) {
 		title: "",
 		message: "",
 		confirmText: "Potwierdź",
-		onConfirm: () => {},
-		onCancel: () => {},
+		onConfirm: () => { },
+		onCancel: () => { },
 	});
 	useEffect(() => {
 		const fetchAllData = async () => {

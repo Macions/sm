@@ -1304,11 +1304,11 @@ app.get("/api/members", authMiddleware, async (req: any, res) => {
 					user.created_at.toISOString().split("T")[0],
 				vacation: activeLeave
 					? {
-							startDate: activeLeave.start_date.toISOString().split("T")[0],
-							endDate: activeLeave.end_date.toISOString().split("T")[0],
-							type: activeLeave.scope === "team" ? "team" : "organization",
-							teamId: activeLeave.affected_teams || undefined,
-						}
+						startDate: activeLeave.start_date.toISOString().split("T")[0],
+						endDate: activeLeave.end_date.toISOString().split("T")[0],
+						type: activeLeave.scope === "team" ? "team" : "organization",
+						teamId: activeLeave.affected_teams || undefined,
+					}
 					: null,
 				onboarding_data: onboarding,
 			};
@@ -2192,7 +2192,7 @@ app.get("/api/applications", authMiddleware, async (req: any, res) => {
 				userId: app.user_id.toString(),
 				userName: app.user
 					? `${app.user.first_name || ""} ${app.user.last_name || ""}`.trim() ||
-						"Nieznany"
+					"Nieznany"
 					: "Nieznany",
 				userEmail: app.user?.email || "",
 				message: app.message || "",
@@ -2313,7 +2313,7 @@ app.get(
 					userId: app.user_id.toString(),
 					userName: app.user
 						? `${app.user.first_name || ""} ${app.user.last_name || ""}`.trim() ||
-							"Nieznany"
+						"Nieznany"
 						: "Nieznany",
 					userEmail: app.user?.email || "",
 					message: app.message || "",
@@ -3189,7 +3189,7 @@ app.get("/api/profile", authMiddleware, async (req: any, res) => {
 			joinDate:
 				user.join_date?.toISOString().split("T")[0] ||
 				user.created_at.toISOString().split("T")[0],
-			isTrial: !!user.is_trial, 
+			isTrial: !!user.is_trial,
 			currentTasks: [],
 			projects: [],
 			developmentAreas: onboarding.development_areas
@@ -3544,14 +3544,14 @@ app.put("/api/leaves/:id", authMiddleware, async (req: any, res) => {
 					: existingLeave.attachments,
 				status: status || existingLeave.status,
 				...(status === "approved" ||
-				status === "rejected" ||
-				status === "cancelled"
+					status === "rejected" ||
+					status === "cancelled"
 					? {
-							approved_by:
-								`${currentUser?.first_name || ""} ${currentUser?.last_name || ""}`.trim() ||
-								"Nieznany",
-							approved_at: new Date(),
-						}
+						approved_by:
+							`${currentUser?.first_name || ""} ${currentUser?.last_name || ""}`.trim() ||
+							"Nieznany",
+						approved_at: new Date(),
+					}
 					: {}),
 			},
 			include: { user: true }, // â† đź”Ą DODAJ TÄ LINIÄ!
@@ -6885,6 +6885,67 @@ app.get(
 		}
 	},
 );
+// ============================================================
+// 🗑️ USUŃ CZŁONKA ZESPOŁU SOCIAL MEDIA
+// ============================================================
+app.delete("/api/social/members/:id", authMiddleware, async (req: any, res) => {
+	try {
+		const userId = req.user.id;
+		const memberId = req.params.id;
+
+		// Sprawdź czy użytkownik ma uprawnienia (admin, coordinator, board)
+		const user = await prisma.user.findUnique({
+			where: { id: parseInt(userId) },
+			select: { role_id: true }
+		});
+
+		if (!user || (user.role_id !== 1 && user.role_id !== 2 && user.role_id !== 3)) {
+			return res.status(403).json({ error: "Brak uprawnień do usuwania członków" });
+		}
+
+		// Usuń członka z social_media_team
+		const result = await prisma.$queryRaw`
+            DELETE FROM social_media_team 
+            WHERE id = ${parseInt(memberId)}
+        `;
+
+		res.json({ success: true, message: "Członek usunięty" });
+	} catch (error) {
+		logger.error("❌ Błąd usuwania członka:", error);
+		res.status(500).json({ error: "Nie udało się usunąć członka" });
+	}
+});
+
+// ============================================================
+// 🗑️ USUŃ TWÓRCĘ ROLEK
+// ============================================================
+app.delete("/api/social/creators/:id", authMiddleware, async (req: any, res) => {
+	try {
+		const userId = req.user.id;
+		const creatorId = req.params.id;
+
+		// Sprawdź czy użytkownik ma uprawnienia (admin, coordinator, board)
+		const user = await prisma.user.findUnique({
+			where: { id: parseInt(userId) },
+			select: { role_id: true }
+		});
+
+		if (!user || (user.role_id !== 1 && user.role_id !== 2 && user.role_id !== 3)) {
+			return res.status(403).json({ error: "Brak uprawnień do usuwania twórców" });
+		}
+
+		// Usuń twórcę z social_media_creators
+		const result = await prisma.$queryRaw`
+            DELETE FROM social_media_creators 
+            WHERE id = ${parseInt(creatorId)}
+        `;
+
+		res.json({ success: true, message: "Twórca usunięty" });
+	} catch (error) {
+		logger.error("❌ Błąd usuwania twórcy:", error);
+		res.status(500).json({ error: "Nie udało się usunąć twórcy" });
+	}
+});
 // GET /api/admin/member-access - Pobierz wszystkich członków z dostępami
 // GET /api/admin/member-access - Pobierz wszystkich członków z dostępami i przedmiotami
 // GET /api/admin/member-access - Pobierz wszystkich członków z dostępami i przedmiotami
@@ -7968,4 +8029,4 @@ app.get(
 
 app.use("/api", revenueRoutes);
 
-app.listen(port, () => {});
+app.listen(port, () => { });
