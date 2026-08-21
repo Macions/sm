@@ -71,7 +71,7 @@ type User = {
 
 const API_URL = import.meta.env.VITE_API_URL ||
   (window.location.hostname === 'panel.silamlodych.pl'
-    ? 'https://panel.silamlodych.pl:3000'  // ✅ HTTPS na porcie 3000
+    ? '/api'  // ✅ Użyj proxy przez Nginx/Apache
     : 'http://localhost:3000');
 
 export default function Calendar() {
