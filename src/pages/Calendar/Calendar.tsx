@@ -70,9 +70,9 @@ type User = {
 };
 
 const API_URL = import.meta.env.VITE_API_URL ||
-  (window.location.hostname === 'panel.silamlodych.pl'
-    ? '/api'  // ✅ Użyj proxy przez Nginx/Apache
-    : 'http://localhost:3000');
+	(window.location.hostname === 'panel.silamlodych.pl'
+		? ''  // ✅ Puste - użyje tej samej domeny (https://panel.silamlodych.pl)
+		: 'http://localhost:3000');
 
 export default function Calendar() {
 	const [currentDate, setCurrentDate] = useState(new Date());
@@ -519,7 +519,7 @@ export default function Calendar() {
 										</a>
 									)}
 
-									
+
 								</div>
 							) : (
 								// LISTA WSZYSTKICH WYDARZEŃ NA DZIEŃ
