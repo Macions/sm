@@ -109,8 +109,8 @@ export default function DashboardLayout() {
 				return "Poradniki";
 			case "tasks":
 				return "Zadania";
-			case "calendar":
-				return "Kalendarz";
+			// case "calendar":
+			// 	return "Kalendarz";
 			case "vacancies":
 				return "Aktualne wakaty";
 			case "structure":

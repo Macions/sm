@@ -628,43 +628,47 @@ function ProfileModal({
 	const [newOtherContact, setNewOtherContact] = useState("");
 	const [newTrainingArea, setNewTrainingArea] = useState("");
 
-	useEffect(() => {
-		if (member) {
-			const newFormData = {
-				id: member.id,
-				firstName: member.firstName || "",
-				lastName: member.lastName || "",
-				function: member.function || "",
-				team: member.team || "",
-				teamId: member.teamId || "",
-				pillars: member.pillars || "",
-				province: member.province || "",
-				status: (member.status as MemberStatus) || "trial",
-				interests: member.interests || [],
-				skills: member.skills || [],
-				smAreas: member.smAreas || [],
-				email: member.email || "",
-				phone: member.phone || "",
+useEffect(() => {
+	if (member) {
+		// 🔥 SPRAWDŹ CZY NALEŻY DO ZESPOŁU "MENTORZY"
+		const teams = member.team ? member.team.split(", ") : [];
+		const isMentor = teams.includes("Mentorzy");
+		
+		const newFormData = {
+			id: member.id,
+			firstName: member.firstName || "",
+			lastName: member.lastName || "",
+			function: member.function || "",
+			team: member.team || "",
+			teamId: member.teamId || "",
+			pillars: member.pillars || "",
+			province: member.province || "",
+			// 🔥 KLUCZOWA ZMIANA - jeśli mentor to status = "mentor"
+			status: isMentor ? "mentor" : (member.status as MemberStatus) || "trial",
+			interests: member.interests || [],
+			skills: member.skills || [],
+			smAreas: member.smAreas || [],
+			email: member.email || "",
+			phone: member.phone || "",
+			joinDate: member.joinDate
+				? new Date(member.joinDate).toISOString().split("T")[0]
+				: "",
+			vacation: member.vacation,
+			contacts: member.contacts || {
+				salaContacts: [],
+				mpContacts: [],
+				otherContacts: [],
+			},
+			trainingAreas: member.trainingAreas || [],
+			contributionInfo: member.contributionInfo || {
+				status: "paid",
+				arrears: 0,
+			},
+			formData: member.formData || {},
+		};
 
-				joinDate: member.joinDate
-					? new Date(member.joinDate).toISOString().split("T")[0]
-					: "",
-				vacation: member.vacation,
-				contacts: member.contacts || {
-					salaContacts: [],
-					mpContacts: [],
-					otherContacts: [],
-				},
-				trainingAreas: member.trainingAreas || [],
-				contributionInfo: member.contributionInfo || {
-					status: "paid",
-					arrears: 0,
-				},
-				formData: member.formData || {},
-			};
-
-			setFormData(newFormData);
-		} else {
+		setFormData(newFormData);
+	} else {
 			setFormData({
 				firstName: "",
 				lastName: "",
