@@ -56,6 +56,23 @@ interface MaterialFormData {
 	priority: "low" | "medium" | "high";
 	stage: MaterialStage;
 }
+interface OnboardingContact {
+	id: string;
+	userId: string;
+	userName: string;
+	email: string;
+	phone?: string;
+	province: string;
+	salaContacts: string[];
+	mpContacts: string[];
+	institutionContacts: string[];
+	otherContacts: string[];
+	developmentAreas: string[];
+	skills: string[];
+	experience: string;
+	availability: string;
+	description: string;
+}
 
 interface EditMaterialModalProps {
 	isOpen: boolean;
@@ -433,6 +450,200 @@ interface MaterialsBoardProps {
 	onAddMaterial?: () => void;
 	onEditMaterial?: (material: Material) => void;
 	onDeleteMaterial?: (id: string) => void;
+}
+// Dodaj nowy komponent dla kontaktów z onboardingu
+function OnboardingContactsSection({
+	contacts,
+	canManage,
+}: {
+	contacts: OnboardingContact[];
+	canManage: boolean;
+}) {
+	const [searchTerm, setSearchTerm] = useState("");
+
+	// 🔥 FILTRUJ TYLKO KONTAKTY KTÓRE MAJĄ JAKIEŚ DANE
+	const filteredContacts = useMemo(() => {
+		// Najpierw sprawdź czy w ogóle są jakieś kontakty
+		const contactsWithData = contacts.filter((c) => {
+			const hasAnyContact =
+				c.salaContacts.length > 0 ||
+				c.mpContacts.length > 0 ||
+				c.institutionContacts.length > 0 ||
+				c.otherContacts.length > 0;
+			return hasAnyContact;
+		});
+
+		// Jeśli nie ma wyszukiwania, zwróć wszystkie z danymi
+		if (!searchTerm.trim()) {
+			return contactsWithData;
+		}
+
+		// Wyszukiwanie
+		const search = searchTerm.toLowerCase();
+		return contactsWithData.filter((c) => {
+			return (
+				c.userName.toLowerCase().includes(search) ||
+				c.email.toLowerCase().includes(search) ||
+				c.province.toLowerCase().includes(search) ||
+				(c.phone && c.phone.toLowerCase().includes(search)) ||
+				c.salaContacts.some((item) => item.toLowerCase().includes(search)) ||
+				c.mpContacts.some((item) => item.toLowerCase().includes(search)) ||
+				c.institutionContacts.some((item) =>
+					item.toLowerCase().includes(search),
+				) ||
+				c.otherContacts.some((item) => item.toLowerCase().includes(search))
+			);
+		});
+	}, [contacts, searchTerm]);
+
+	// 🔥 ZAWSZE POKAZUJ SEKCJĘ - nawet jak nie ma kontaktów
+	return (
+		<section className={styles.section}>
+			<div className={styles.section__header}>
+				<div className={styles.section__headerLeft}>
+					<h2 className={styles.section__title}>Kontakty innych</h2>
+					<p className={styles.section__subtitle}>
+						Kontakty dodane przez członków podczas onboardingu (sale, posłowie,
+						instytucje).
+					</p>
+				</div>
+				<span className={styles.section__badge}>
+					{filteredContacts.length} członków
+				</span>
+			</div>
+
+			{/* 🔥 SEARCH ZAWSZE WIDOCZNY */}
+			<div className={styles.section__filters}>
+				<div className={styles.section__search}>
+					<Search size={18} className={styles.section__searchIcon} />
+					<input
+						type="text"
+						className={styles.section__searchInput}
+						placeholder="Szukaj po imieniu, nazwisku, telefonie, kontakcie..."
+						value={searchTerm}
+						onChange={(e) => setSearchTerm(e.target.value)}
+					/>
+					{searchTerm && (
+						<button
+							className={styles.searchClear}
+							onClick={() => setSearchTerm("")}
+							title="Wyczyść wyszukiwanie"
+						>
+							<X size={14} />
+						</button>
+					)}
+				</div>
+			</div>
+
+			{/* LISTA KONTAKTÓW */}
+			{filteredContacts.length === 0 ? (
+				<div className={styles.emptyState}>
+					<User size={48} className={styles.emptyState__icon} />
+					<h3 className={styles.emptyState__title}>
+						{searchTerm ? "Nie znaleziono kontaktów" : "Brak kontaktów"}
+					</h3>
+					<p className={styles.emptyState__description}>
+						{searchTerm
+							? `Nie znaleziono kontaktów dla frazy "${searchTerm}".`
+							: "Żaden członek nie dodał jeszcze kontaktów podczas onboardingu."}
+					</p>
+				</div>
+			) : (
+				<div className={styles.onboardingContactsGrid}>
+					{filteredContacts.map((contact) => (
+						<div key={contact.id} className={styles.onboardingContactCard}>
+							<div className={styles.onboardingContactCard__header}>
+								<div className={styles.onboardingContactCard__user}>
+									<div className={styles.onboardingContactCard__avatar}>
+										{contact.userName
+											.split(" ")
+											.map((n) => n[0])
+											.join("")
+											.toUpperCase()
+											.slice(0, 2)}
+									</div>
+									<div>
+										<h3 className={styles.onboardingContactCard__name}>
+											{contact.userName}
+										</h3>
+										{contact.phone && (
+											<div className={styles.onboardingContactCard__phone}>
+												<Phone size={14} />
+												<a href={`tel:${contact.phone}`}>{contact.phone}</a>
+											</div>
+										)}
+									</div>
+								</div>
+								<div className={styles.onboardingContactCard__meta}>
+									<span className={styles.onboardingContactCard__province}>
+										<MapPin size={14} />
+										{contact.province || "Brak danych"}
+									</span>
+								</div>
+							</div>
+
+							{/* KONTAKTY */}
+							<div className={styles.onboardingContactCard__contacts}>
+								{contact.salaContacts.length > 0 && (
+									<div className={styles.onboardingContactCard__contactGroup}>
+										<span className={styles.contactGroupLabel}>Sala:</span>
+										<div className={styles.onboardingContactCard__tags}>
+											{contact.salaContacts.map((item) => (
+												<span key={item} className={styles.tagSala}>
+													{item}
+												</span>
+											))}
+										</div>
+									</div>
+								)}
+
+								{contact.mpContacts.length > 0 && (
+									<div className={styles.onboardingContactCard__contactGroup}>
+										<span className={styles.contactGroupLabel}>Posłowie:</span>
+										<div className={styles.onboardingContactCard__tags}>
+											{contact.mpContacts.map((item) => (
+												<span key={item} className={styles.tagMp}>
+													{item}
+												</span>
+											))}
+										</div>
+									</div>
+								)}
+
+								{contact.institutionContacts.length > 0 && (
+									<div className={styles.onboardingContactCard__contactGroup}>
+										<span className={styles.contactGroupLabel}>
+											Instytucje:
+										</span>
+										<div className={styles.onboardingContactCard__tags}>
+											{contact.institutionContacts.map((item) => (
+												<span key={item} className={styles.tagInstitution}>
+													{item}
+												</span>
+											))}
+										</div>
+									</div>
+								)}
+
+								{contact.otherContacts.length > 0 && (
+									<div className={styles.onboardingContactCard__contactGroup}>
+										<span className={styles.contactGroupLabel}>Inne:</span>
+										<div className={styles.onboardingContactCard__tags}>
+											{contact.otherContacts.map((item) => (
+												<span key={item} className={styles.tagOther}>
+													{item}
+												</span>
+											))}
+										</div>
+									</div>
+								)}
+							</div>
+						</div>
+					))}
+				</div>
+			)}
+		</section>
+	);
 }
 function EditPublicationModal({
 	isOpen,
@@ -2917,6 +3128,11 @@ export default function SocialMedia({ title }: { title?: string }) {
 	const [creators, setCreators] = useState<ContentCreator[]>([]);
 	const [publications, setPublications] = useState<Publication[]>([]);
 	const [materials, setMaterials] = useState<Material[]>([]);
+	const [onboardingContacts, setOnboardingContacts] = useState<
+		OnboardingContact[]
+	>([]);
+	const [isOnboardingContactsOpen, setIsOnboardingContactsOpen] =
+		useState(false);
 	const [tasks, setTasks] = useState<Task[]>([]);
 	// W głównym komponencie SocialMedia, obok innych useState:
 	const [editingMember, setEditingMember] = useState<TeamMember | null>(null);
@@ -2990,6 +3206,29 @@ export default function SocialMedia({ title }: { title?: string }) {
 		} catch (error) {
 			logger.error("❌ Błąd:", error);
 			toast.error("Nie udało się zaktualizować twórcy");
+		}
+	};
+	const fetchOnboardingContacts = async () => {
+		try {
+			console.log("📋 [onboarding] Pobieranie kontaktów...");
+			const token = localStorage.getItem("accessToken");
+			const response = await fetch("/api/admin/onboarding-contacts", {
+				headers: { Authorization: `Bearer ${token}` },
+			});
+
+			console.log("📋 [onboarding] Status odpowiedzi:", response.status);
+
+			if (response.ok) {
+				const data = await response.json();
+				console.log("📋 [onboarding] Otrzymane dane:", data);
+				console.log("📋 [onboarding] Liczba kontaktów:", data.length);
+				setOnboardingContacts(data);
+			} else {
+				const error = await response.json();
+				console.error("❌ [onboarding] Błąd:", error);
+			}
+		} catch (error) {
+			logger.error("❌ Błąd pobierania kontaktów onboardingu:", error);
 		}
 	};
 	const handleAddCreator = async (data: CreatorFormData) => {
@@ -3206,6 +3445,7 @@ export default function SocialMedia({ title }: { title?: string }) {
 				if (tasksRes.ok) setTasks(await tasksRes.json());
 				if (contactsRes.ok) setContacts(await contactsRes.json());
 				if (usersRes.ok) setAvailableUsers(await usersRes.json());
+				await fetchOnboardingContacts();
 			} catch (error) {
 				logger.error("❌ Błąd pobierania danych:", error);
 				toast.error("Nie udało się pobrać danych");
@@ -3579,7 +3819,10 @@ export default function SocialMedia({ title }: { title?: string }) {
 				onEditContact={handleEditContact}
 				onDeleteContact={handleDeleteContact}
 			/>
-
+			<OnboardingContactsSection
+				contacts={onboardingContacts}
+				canManage={canManage}
+			/>
 			<section className={styles.section}>
 				<div className={styles.infoBox}>
 					<div className={styles.infoBox__icon}>

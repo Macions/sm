@@ -2368,3 +2368,694 @@
 		transform: rotate(360deg);
 	}
 }
+
+/* ============================================================
+   STYLE DLA PRZYCISKÓW EDYCJI I USUWANIA W KARTACH ZESPOŁU
+   ============================================================ */
+
+.teamCard__actions {
+	display: flex;
+	align-items: center;
+	gap: 4px;
+	flex-shrink: 0;
+	margin-left: auto;
+}
+
+.teamCard__editBtn,
+.teamCard__deleteBtn {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 32px;
+	height: 32px;
+	border: none;
+	border-radius: 8px;
+	background: transparent;
+	color: #8b8fa7;
+	cursor: pointer;
+	transition: all 0.2s ease;
+}
+
+.teamCard__editBtn:hover {
+	background: #eef2ff;
+	color: #4f46e5;
+}
+
+.teamCard__deleteBtn:hover {
+	background: #fef2f2;
+	color: #ef4444;
+}
+
+/* ============================================================
+   STYLE DLA PRZYCISKÓW EDYCJI I USUWANIA W KARTACH TWÓRCÓW
+   ============================================================ */
+
+.creatorCard__actions {
+	display: flex;
+	align-items: center;
+	gap: 4px;
+	flex-shrink: 0;
+	margin-left: auto;
+}
+
+.creatorCard__editBtn,
+.creatorCard__deleteBtn {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 32px;
+	height: 32px;
+	border: none;
+	border-radius: 8px;
+	background: transparent;
+	color: #8b8fa7;
+	cursor: pointer;
+	transition: all 0.2s ease;
+}
+
+.creatorCard__editBtn:hover {
+	background: #eef2ff;
+	color: #4f46e5;
+}
+
+.creatorCard__deleteBtn:hover {
+	background: #fef2f2;
+	color: #ef4444;
+}
+
+/* ============================================================
+   DODATKOWE STYLE DLA KART - ULEPSZONE WYŚWIETLANIE
+   ============================================================ */
+
+.teamCard {
+	display: flex;
+	align-items: center;
+	gap: 16px;
+	padding: 16px 20px;
+	background: white;
+	border-radius: 12px;
+	border: 1px solid #e2e8f0;
+	transition: all 0.2s;
+	position: relative;
+}
+
+.teamCard:hover {
+	box-shadow: 0 4px 12px rgb(0 0 0 / 5%);
+	transform: translateY(-2px);
+}
+
+.teamCard__info {
+	flex: 1;
+	min-width: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 5px;
+}
+
+.teamCard__status {
+	flex-shrink: 0;
+	margin-left: 8px;
+}
+
+.creatorCard {
+	display: flex;
+	gap: 16px;
+	padding: 16px 20px;
+	background: white;
+	border-radius: 12px;
+	border: 1px solid #e2e8f0;
+	transition: all 0.2s;
+	position: relative;
+}
+
+.creatorCard:hover {
+	box-shadow: 0 4px 12px rgb(0 0 0 / 5%);
+}
+
+.creatorCard__info {
+	flex: 1;
+	min-width: 0;
+}
+
+.creatorCard__actions {
+	display: flex;
+	align-items: center;
+	gap: 4px;
+	flex-shrink: 0;
+	margin-left: auto;
+}
+
+/* ============================================================
+   DOSTOSOWANIE DO MOBILNYCH
+   ============================================================ */
+
+@media (width <= 768px) {
+	.teamCard {
+		flex-wrap: wrap;
+		gap: 12px;
+	}
+
+	.teamCard__actions {
+		margin-left: 0;
+		width: 100%;
+		justify-content: flex-end;
+		padding-top: 8px;
+		border-top: 1px solid #f1f5f9;
+	}
+
+	.creatorCard {
+		flex-wrap: wrap;
+		gap: 12px;
+	}
+
+	.creatorCard__actions {
+		margin-left: 0;
+		width: 100%;
+		justify-content: flex-end;
+		padding-top: 8px;
+		border-top: 1px solid #f1f5f9;
+	}
+}
+
+@media (width <= 480px) {
+	.teamCard {
+		flex-direction: column;
+		align-items: center;
+		text-align: center;
+	}
+
+	.teamCard__info {
+		align-items: center;
+	}
+
+	.teamCard__details {
+		justify-content: center;
+	}
+
+	.teamCard__contact {
+		justify-content: center;
+	}
+
+	.teamCard__actions {
+		justify-content: center;
+	}
+
+	.creatorCard {
+		flex-direction: column;
+		align-items: center;
+		text-align: center;
+	}
+
+	.creatorCard__info {
+		align-items: center;
+	}
+
+	.creatorCard__details {
+		justify-content: center;
+	}
+
+	.creatorCard__actions {
+		justify-content: center;
+	}
+}
+
+/* ============================================================
+   STYLE DLA STATUSÓW W KARTACH ZESPOŁU
+   ============================================================ */
+
+.teamCard__status span {
+	display: inline-block;
+	padding: 4px 12px;
+	border-radius: 20px;
+	font-size: 12px;
+	font-weight: 500;
+}
+
+.statusActive {
+	background: #dcfce7;
+	color: #166534;
+}
+
+.statusVacation {
+	background: #fef3c7;
+	color: #92400e;
+}
+
+.statusTrial {
+	background: #dbeafe;
+	color: #1e40af;
+}
+
+.statusMentor {
+	background: #ede9fe;
+	color: #5b21b6;
+}
+/* ============================================================
+   KONTAKTY Z ONBOARDINGU
+   ============================================================ */
+
+.onboardingContactsGrid {
+	display: grid;
+	grid-template-columns: 1fr;
+	gap: 16px;
+}
+
+.onboardingContactCard {
+	background: white;
+	border-radius: 12px;
+	border: 1px solid #e2e8f0;
+	padding: 16px 20px;
+	transition: all 0.2s;
+}
+
+.onboardingContactCard:hover {
+	box-shadow: 0 4px 12px rgb(0 0 0 / 5%);
+}
+
+.onboardingContactCard__header {
+	display: flex;
+	justify-content: space-between;
+	align-items: flex-start;
+	gap: 16px;
+	flex-wrap: wrap;
+}
+
+.onboardingContactCard__user {
+	display: flex;
+	align-items: flex-start;
+	gap: 12px;
+	flex: 1;
+}
+
+.onboardingContactCard__avatar {
+	width: 44px;
+	height: 44px;
+	border-radius: 50%;
+	background: linear-gradient(135deg, #7c3aed, #6d28d9);
+	color: white;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-weight: 600;
+	font-size: 16px;
+	flex-shrink: 0;
+}
+
+.onboardingContactCard__name {
+	font-size: 16px;
+	font-weight: 600;
+	color: #0f172a;
+	margin: 0 0 4px;
+}
+
+.onboardingContactCard__email,
+.onboardingContactCard__phone {
+	display: flex;
+	align-items: center;
+	gap: 4px;
+	font-size: 13px;
+	color: #64748b;
+}
+
+.onboardingContactCard__email a,
+.onboardingContactCard__phone a {
+	color: #7c3aed;
+	text-decoration: none;
+}
+
+.onboardingContactCard__email a:hover,
+.onboardingContactCard__phone a:hover {
+	text-decoration: underline;
+}
+
+.onboardingContactCard__meta {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	flex-wrap: wrap;
+}
+
+.onboardingContactCard__province {
+	display: flex;
+	align-items: center;
+	gap: 4px;
+	font-size: 13px;
+	color: #64748b;
+}
+
+.onboardingContactCard__toggle {
+	padding: 6px 14px;
+	background: #f1f5f9;
+	border: none;
+	border-radius: 8px;
+	font-size: 13px;
+	color: #475569;
+	cursor: pointer;
+	transition: all 0.2s;
+}
+
+.onboardingContactCard__toggle:hover {
+	background: #e2e8f0;
+	color: #1e293b;
+}
+
+.onboardingContactCard__body {
+	margin-top: 16px;
+	padding-top: 16px;
+	border-top: 1px solid #f1f5f9;
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+}
+
+.onboardingContactCard__section {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+}
+
+.onboardingContactCard__sectionTitle {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	font-size: 14px;
+	font-weight: 600;
+	color: #0f172a;
+	margin: 0;
+}
+
+.onboardingContactCard__tags {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 6px;
+}
+
+.tag,
+.tagSala,
+.tagMp,
+.tagInstitution,
+.tagOther {
+	display: inline-block;
+	padding: 4px 12px;
+	border-radius: 20px;
+	font-size: 12px;
+	font-weight: 500;
+}
+
+.tag {
+	background: #f1f5f9;
+	color: #475569;
+}
+
+.tagSala {
+	background: #dbeafe;
+	color: #1e40af;
+}
+
+.tagMp {
+	background: #ede9fe;
+	color: #5b21b6;
+}
+
+.tagInstitution {
+	background: #d1fae5;
+	color: #065f46;
+}
+
+.tagOther {
+	background: #fef3c7;
+	color: #92400e;
+}
+
+.section__badge {
+	padding: 4px 14px;
+	background: #f1f5f9;
+	border-radius: 20px;
+	font-size: 14px;
+	font-weight: 500;
+	color: #475569;
+}
+
+.emptyState {
+	text-align: center;
+	padding: 40px 20px;
+	color: #64748b;
+}
+
+.emptyState__icon {
+	color: #94a3b8;
+	margin-bottom: 12px;
+}
+
+.emptyState__title {
+	font-size: 18px;
+	font-weight: 600;
+	color: #0f172a;
+	margin: 0 0 8px;
+}
+
+.emptyState__description {
+	font-size: 14px;
+	margin: 0;
+}
+
+/* ============================================================
+   KONTAKTY Z ONBOARDINGU - UPROSZCZONE
+   ============================================================ */
+
+.onboardingContactsGrid {
+	display: grid;
+	grid-template-columns: 1fr;
+	gap: 12px;
+}
+
+.onboardingContactCard {
+	background: white;
+	border-radius: 12px;
+	border: 1px solid #e2e8f0;
+	padding: 16px 20px;
+	transition: all 0.2s;
+}
+
+.onboardingContactCard:hover {
+	box-shadow: 0 4px 12px rgb(0 0 0 / 5%);
+}
+
+.onboardingContactCard__header {
+	display: flex;
+	justify-content: space-between;
+	align-items: flex-start;
+	gap: 16px;
+	flex-wrap: wrap;
+}
+
+.onboardingContactCard__user {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	flex: 1;
+}
+
+.onboardingContactCard__avatar {
+	width: 40px;
+	height: 40px;
+	border-radius: 50%;
+	background: linear-gradient(135deg, #7c3aed, #6d28d9);
+	color: white;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-weight: 600;
+	font-size: 14px;
+	flex-shrink: 0;
+}
+
+.onboardingContactCard__name {
+	font-size: 15px;
+	font-weight: 600;
+	color: #0f172a;
+	margin: 0 0 2px;
+}
+
+.onboardingContactCard__phone {
+	display: flex;
+	align-items: center;
+	gap: 4px;
+	font-size: 13px;
+	color: #64748b;
+}
+
+.onboardingContactCard__phone a {
+	color: #7c3aed;
+	text-decoration: none;
+}
+
+.onboardingContactCard__phone a:hover {
+	text-decoration: underline;
+}
+
+.onboardingContactCard__meta {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	flex-wrap: wrap;
+	flex-shrink: 0;
+}
+
+.onboardingContactCard__province {
+	display: flex;
+	align-items: center;
+	gap: 4px;
+	font-size: 13px;
+	color: #64748b;
+}
+
+/* 🔥 KONTAKTY - BEZ ROZWIJANIA */
+.onboardingContactCard__contacts {
+	margin-top: 12px;
+	padding-top: 12px;
+	border-top: 1px solid #f1f5f9;
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+}
+
+.onboardingContactCard__contactGroup {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	flex-wrap: wrap;
+}
+
+.contactGroupLabel {
+	font-size: 12px;
+	font-weight: 600;
+	color: #64748b;
+	min-width: 70px;
+}
+
+.onboardingContactCard__tags {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 4px;
+}
+
+.tagSala,
+.tagMp,
+.tagInstitution,
+.tagOther {
+	display: inline-block;
+	padding: 2px 10px;
+	border-radius: 14px;
+	font-size: 12px;
+	font-weight: 500;
+}
+
+.tagSala {
+	background: #dbeafe;
+	color: #1e40af;
+}
+
+.tagMp {
+	background: #ede9fe;
+	color: #5b21b6;
+}
+
+.tagInstitution {
+	background: #d1fae5;
+	color: #065f46;
+}
+
+.tagOther {
+	background: #fef3c7;
+	color: #92400e;
+}
+
+.section__badge {
+	padding: 4px 14px;
+	background: #f1f5f9;
+	border-radius: 20px;
+	font-size: 14px;
+	font-weight: 500;
+	color: #475569;
+	white-space: nowrap;
+}
+
+/* Responsywność */
+@media (width <= 640px) {
+	.onboardingContactCard__header {
+		flex-direction: column;
+	}
+
+	.onboardingContactCard__meta {
+		width: 100%;
+		justify-content: flex-start;
+	}
+
+	.onboardingContactCard__contactGroup {
+		flex-direction: column;
+		align-items: flex-start;
+		gap: 4px;
+	}
+
+	.contactGroupLabel {
+		min-width: auto;
+	}
+}
+/* ============================================================
+   PRZYCISK CZYSZCZENIA WYSZUKIWANIA
+   ============================================================ */
+
+.section__search {
+	flex: 1;
+	position: relative;
+	min-width: 200px;
+}
+
+.section__searchIcon {
+	position: absolute;
+	left: 12px;
+	top: 50%;
+	transform: translateY(-50%);
+	color: #94a3b8;
+	pointer-events: none;
+}
+
+.section__searchInput {
+	width: 100%;
+	padding: 8px 36px 8px 36px;
+	border: 2px solid #e2e8f0;
+	border-radius: 10px;
+	font-size: 14px;
+	background: white;
+	transition: all 0.2s;
+	color: #0f172a;
+}
+
+.section__searchInput:focus {
+	outline: none;
+	border-color: #7c3aed;
+	box-shadow: 0 0 0 3px rgb(124 58 237 / 10%);
+}
+
+.searchClear {
+	position: absolute;
+	right: 8px;
+	top: 50%;
+	transform: translateY(-50%);
+	background: none;
+	border: none;
+	cursor: pointer;
+	color: #94a3b8;
+	padding: 4px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	border-radius: 50%;
+	transition: all 0.2s;
+}
+
+.searchClear:hover {
+	background: #f1f5f9;
+	color: #475569;
+}

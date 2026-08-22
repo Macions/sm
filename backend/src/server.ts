@@ -131,16 +131,16 @@ app.get("/api/health", (req, res) => {
 		uptime: process.uptime(),
 	});
 });
+// backend/src/server.ts
+// backend/src/server.ts
 app.use(
 	cors({
-		origin: "*",
+		origin: '*',
 		methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
 		allowedHeaders: ["Content-Type", "Authorization"],
-		credentials: true,
 		maxAge: 3600,
 	}),
 );
-
 app.use((_req, res, next) => {
 	res.setHeader("X-Frame-Options", "DENY");
 
@@ -1003,7 +1003,6 @@ app.post("/api/ideas", authMiddleware, async (req: any, res) => {
 // server.ts - dodaj endpoint do pobierania plików z zadań
 // server.ts - dodaj gdzieś przed app.use('/api', revenueRoutes);
 
-app.listen();
 app.get("/uploads/tasks/:filename", authMiddleware, async (req: any, res) => {
 	try {
 		// đź”Ą DEKODUJ NAZWÄ PLIKU
@@ -1261,20 +1260,10 @@ app.get("/api/members", authMiddleware, async (req: any, res) => {
 
 		const mappedUsers = users.map((user: any) => {
 			const onboarding = user.onboarding_data?.[0] || {};
-
 			const teams = user.team_members
 				.map((tm: any) => tm.team?.name)
 				.filter(Boolean);
-
 			const teamString = teams.length > 0 ? teams.join(", ") : "Brak zespołu";
-
-			// ============================================================
-			// đź”Ą POBRANIE FILARÓW Z POLA `pillars`
-			// ============================================================
-			const pillarList = user.pillars
-				? user.pillars.split(", ").filter(Boolean)
-				: [];
-			const pillarString = pillarList.length > 0 ? pillarList.join(", ") : null;
 
 			const today = new Date();
 			today.setHours(0, 0, 0, 0);
@@ -1294,21 +1283,22 @@ app.get("/api/members", authMiddleware, async (req: any, res) => {
 				email: user.email,
 				phone: user.phone,
 				province: user.province,
+				// 🔥 PO PROSTU STATUS Z TABELI users
 				status: user.status || "active",
 				team: teamString,
 				team_id: teams.length > 0 ? teams.join("-") : "",
-				pillars: pillarString, // â† FILARY z SM_Frekwencja
+				pillars: user.pillars || null,
 				functional_role: user.functional_role || "Członek",
 				join_date:
 					user.join_date?.toISOString().split("T")[0] ||
 					user.created_at.toISOString().split("T")[0],
 				vacation: activeLeave
 					? {
-						startDate: activeLeave.start_date.toISOString().split("T")[0],
-						endDate: activeLeave.end_date.toISOString().split("T")[0],
-						type: activeLeave.scope === "team" ? "team" : "organization",
-						teamId: activeLeave.affected_teams || undefined,
-					}
+							startDate: activeLeave.start_date.toISOString().split("T")[0],
+							endDate: activeLeave.end_date.toISOString().split("T")[0],
+							type: activeLeave.scope === "team" ? "team" : "organization",
+							teamId: activeLeave.affected_teams || undefined,
+						}
 					: null,
 				onboarding_data: onboarding,
 			};
@@ -1316,7 +1306,7 @@ app.get("/api/members", authMiddleware, async (req: any, res) => {
 
 		res.json(mappedUsers);
 	} catch (error) {
-		// 		logger.error("âťŚ Błąd pobierania członków:", error);
+		logger.error("❌ Błąd pobierania członków:", error);
 		res.status(500).json({ error: "Nie udało się pobrać członków" });
 	}
 });
@@ -2192,7 +2182,7 @@ app.get("/api/applications", authMiddleware, async (req: any, res) => {
 				userId: app.user_id.toString(),
 				userName: app.user
 					? `${app.user.first_name || ""} ${app.user.last_name || ""}`.trim() ||
-					"Nieznany"
+						"Nieznany"
 					: "Nieznany",
 				userEmail: app.user?.email || "",
 				message: app.message || "",
@@ -2313,7 +2303,7 @@ app.get(
 					userId: app.user_id.toString(),
 					userName: app.user
 						? `${app.user.first_name || ""} ${app.user.last_name || ""}`.trim() ||
-						"Nieznany"
+							"Nieznany"
 						: "Nieznany",
 					userEmail: app.user?.email || "",
 					message: app.message || "",
@@ -3544,14 +3534,14 @@ app.put("/api/leaves/:id", authMiddleware, async (req: any, res) => {
 					: existingLeave.attachments,
 				status: status || existingLeave.status,
 				...(status === "approved" ||
-					status === "rejected" ||
-					status === "cancelled"
+				status === "rejected" ||
+				status === "cancelled"
 					? {
-						approved_by:
-							`${currentUser?.first_name || ""} ${currentUser?.last_name || ""}`.trim() ||
-							"Nieznany",
-						approved_at: new Date(),
-					}
+							approved_by:
+								`${currentUser?.first_name || ""} ${currentUser?.last_name || ""}`.trim() ||
+								"Nieznany",
+							approved_at: new Date(),
+						}
 					: {}),
 			},
 			include: { user: true }, // â† đź”Ą DODAJ TÄ LINIÄ!
@@ -3891,6 +3881,9 @@ app.delete(
 	},
 );
 app.use("/api/calendar", calendarRoutes);
+// ============================================================
+// 🔥 HANDLER BŁĘDÓW - POPRAWIONY
+// ============================================================
 app.use(
 	(
 		err: any,
@@ -3898,7 +3891,13 @@ app.use(
 		res: express.Response,
 		next: express.NextFunction,
 	) => {
-		// 		logger.error("âťŚ Błąd:", err);
+		console.error("❌ Błąd:", err);
+
+		// Sprawdź czy odpowiedź już została wysłana
+		if (res.headersSent) {
+			console.warn("⚠️ Odpowiedź już została wysłana - pomijam handler błędów");
+			return next(err);
+		}
 
 		// Sprawdź czy to błąd multer
 		if (err instanceof multer.MulterError) {
@@ -3922,29 +3921,20 @@ app.use(
 			return res.status(400).json({ error: err.message });
 		}
 
-		// đź”Ą POPRAWNY HANDLER BŁÄDÓW - BEZPIECZNIEJSZY
+		// Bezpieczne wysłanie odpowiedzi
 		try {
-			if (typeof res.status === "function") {
-				res
-					.status(500)
-					.json({ error: err.message || "Wewnętrzny błąd serwera" });
-			} else {
-				// Jeśli res.status nie jest funkcją, użyj alternatywnego sposobu
-				res.statusCode = 500;
-				res.setHeader("Content-Type", "application/json");
-				res.end(
-					JSON.stringify({ error: err.message || "Wewnętrzny błąd serwera" }),
-				);
+			if (!res.headersSent) {
+				const statusCode = err.statusCode || 500;
+				const message = err.message || "Wewnętrzny błąd serwera";
+				res.status(statusCode).json({ error: message });
 			}
 		} catch (e) {
+			console.error("💥 Krytyczny błąd w handlerze błędów:", e);
 			// Ostateczna deska ratunku
-			try {
+			if (!res.headersSent) {
 				res.statusCode = 500;
 				res.setHeader("Content-Type", "application/json");
 				res.end(JSON.stringify({ error: "Wewnętrzny błąd serwera" }));
-			} catch (finalError) {
-				console.error("đź’€ Krytyczny błąd w handlerze błędów:", finalError);
-				// Nawet to nie działa - nic więcej nie możemy zrobić
 			}
 		}
 	},
@@ -5886,7 +5876,6 @@ app.get("/api/tasks/:id", authMiddleware, async (req: any, res) => {
 		res.status(500).json({ error: "Nie udało się pobrać zadania" });
 	}
 });
-// Dodaj przed app.listen()
 // ============================================================
 // 🔐 GET /api/auth/me - Pobierz dane zalogowanego użytkownika
 // ============================================================
@@ -6492,8 +6481,89 @@ setTimeout(async () => {
 	}
 }, 5000);
 // server.ts - dodaj przed app.use('/api', revenueRoutes);
+// ============================================================
+// 📋 GET /api/admin/onboarding-contacts - Pobierz kontakty z onboardingu
+// ============================================================
+app.get("/api/admin/onboarding-contacts", authMiddleware, async (req: any, res: any) => {
+	try {
+		const userRole = req.user?.role;
 
-app.listen();
+		// Sprawdź uprawnienia - tylko admin/board/Zarząd
+		if (userRole !== "admin" && userRole !== "board" && userRole !== "Zarząd") {
+			return res.status(403).json({ error: "Brak uprawnień" });
+		}
+
+		// Pobierz wszystkich użytkowników z danymi onboardingu
+		const users = await prisma.user.findMany({
+			where: {
+				is_active: true,
+			},
+			select: {
+				id: true,
+				first_name: true,
+				last_name: true,
+				email: true,
+				phone: true,
+				province: true,
+				onboarding_data: {
+					orderBy: { created_at: "desc" },
+					take: 1,
+				},
+			},
+		});
+
+		const formattedContacts = users
+			.map((user: any) => {
+				const onboarding = user.onboarding_data?.[0] || {};
+
+				// Sprawdź czy są jakieś kontakty
+				const hasContacts = 
+					(onboarding.sala_contacts && onboarding.sala_contacts !== "[]" && onboarding.sala_contacts !== '[""]') ||
+					(onboarding.mp_contacts && onboarding.mp_contacts !== "[]" && onboarding.mp_contacts !== '[""]') ||
+					(onboarding.institution_contacts && onboarding.institution_contacts !== "[]" && onboarding.institution_contacts !== '[""]') ||
+					(onboarding.other_contacts && onboarding.other_contacts !== "[]" && onboarding.other_contacts !== '[""]');
+
+				if (!hasContacts) return null;
+
+				const parseJSON = (data: any) => {
+					if (!data) return [];
+					try {
+						const parsed = JSON.parse(data);
+						return Array.isArray(parsed) ? parsed : [];
+					} catch (e) {
+						return [];
+					}
+				};
+
+				return {
+					id: user.id.toString(),
+					userId: user.id.toString(),
+					userName: `${user.first_name || ""} ${user.last_name || ""}`.trim() || "Nieznany",
+					email: user.email || "",
+					phone: user.phone || "",
+					province: user.province || "",
+					salaContacts: parseJSON(onboarding.sala_contacts),
+					mpContacts: parseJSON(onboarding.mp_contacts),
+					institutionContacts: parseJSON(onboarding.institution_contacts),
+					otherContacts: parseJSON(onboarding.other_contacts),
+					developmentAreas: parseJSON(onboarding.development_areas),
+					skills: parseJSON(onboarding.skills),
+					experience: onboarding.experience || "none",
+					availability: onboarding.availability || "",
+					description: onboarding.description || "",
+				};
+			})
+			.filter(Boolean);
+
+		res.json(formattedContacts);
+	} catch (error) {
+		console.error("❌ Błąd pobierania kontaktów onboardingu:", error);
+		res.status(500).json({ 
+			error: "Nie udało się pobrać kontaktów",
+			details: error instanceof Error ? error.message : "Unknown error"
+		});
+	}
+});
 // Na backendzie:
 app.post(
 	"/api/notifications/task-created",
@@ -6530,7 +6600,6 @@ app.post(
 
 // server.ts - dodaj przed app.use('/api', revenueRoutes);
 
-app.listen();
 app.post("/api/tasks/recurring", authMiddleware, async (req: any, res) => {
 	try {
 		const userId = req.user?.id;
@@ -6631,8 +6700,6 @@ app.post("/api/tasks/recurring", authMiddleware, async (req: any, res) => {
 });
 
 // server.ts - dodaj przed app.use('/api', revenueRoutes);
-
-app.listen();
 
 // GET /api/tasks/:taskId/comments
 app.get(
@@ -6888,64 +6955,328 @@ app.get(
 // ============================================================
 // 🗑️ USUŃ CZŁONKA ZESPOŁU SOCIAL MEDIA
 // ============================================================
-app.delete("/api/social/members/:id", authMiddleware, async (req: any, res) => {
-	try {
-		const userId = req.user.id;
-		const memberId = req.params.id;
+// ============================================================
+// 🔥 PUT /api/social/members/:id - Aktualizuj członka zespołu
+// ============================================================
+app.put(
+	"/api/social/members/:id",
+	authMiddleware,
+	async (req: any, res: any) => {
+		try {
+			const memberId = parseInt(req.params.id);
+			const { role } = req.body;
+			const userRole = req.user?.role;
 
-		// Sprawdź czy użytkownik ma uprawnienia (admin, coordinator, board)
-		const user = await prisma.user.findUnique({
-			where: { id: parseInt(userId) },
-			select: { role_id: true }
-		});
+			console.log(`🔄 [MEMBERS] Aktualizacja członka ${memberId}`);
 
-		if (!user || (user.role_id !== 1 && user.role_id !== 2 && user.role_id !== 3)) {
-			return res.status(403).json({ error: "Brak uprawnień do usuwania członków" });
+			// Sprawdź uprawnienia
+			if (
+				userRole !== "admin" &&
+				userRole !== "board" &&
+				userRole !== "Zarząd"
+			) {
+				return res.status(403).json({ error: "Brak uprawnień" });
+			}
+
+			if (!role) {
+				return res.status(400).json({ error: "Rola jest wymagana" });
+			}
+
+			// Sprawdź czy członek istnieje
+			const existingMember = await prisma.socialMediaMember.findUnique({
+				where: { id: memberId },
+				include: {
+					user: {
+						select: {
+							id: true,
+							first_name: true,
+							last_name: true,
+							email: true,
+							phone: true,
+							province: true,
+							team: true,
+						},
+					},
+				},
+			});
+
+			if (!existingMember) {
+				return res.status(404).json({ error: "Nie znaleziono członka" });
+			}
+
+			// Aktualizuj
+			const updatedMember = await prisma.socialMediaMember.update({
+				where: { id: memberId },
+				data: {
+					role: role,
+					updated_at: new Date(),
+				},
+				include: {
+					user: {
+						select: {
+							id: true,
+							first_name: true,
+							last_name: true,
+							email: true,
+							phone: true,
+							province: true,
+							team: true,
+						},
+					},
+				},
+			});
+
+			// Formatuj odpowiedź
+			const formattedMember = {
+				id: updatedMember.id.toString(),
+				user_id: updatedMember.user_id.toString(),
+				firstName: updatedMember.user.first_name,
+				lastName: updatedMember.user.last_name,
+				role: updatedMember.role,
+				email: updatedMember.user.email,
+				phone: updatedMember.user.phone || "",
+				province: updatedMember.user.province || "",
+				team: updatedMember.user.team || "",
+				joinDate: updatedMember.created_at.toISOString().split("T")[0],
+				status: updatedMember.is_active ? "active" : "inactive",
+			};
+
+			return res.json(formattedMember);
+		} catch (error) {
+			console.error("❌ [MEMBERS] Błąd aktualizacji:", error);
+
+			if (res.headersSent) {
+				console.warn("⚠️ Odpowiedź już wysłana, pomijam");
+				return;
+			}
+
+			return res.status(500).json({
+				error: "Nie udało się zaktualizować członka",
+				details: error instanceof Error ? error.message : "Unknown error",
+			});
 		}
+	},
+);
+// ============================================================
+// 🔥 DELETE /api/social/members/:id - Usuń członka zespołu
+// ============================================================
+app.delete(
+	"/api/social/members/:id",
+	authMiddleware,
+	async (req: any, res: any) => {
+		try {
+			const memberId = parseInt(req.params.id);
+			const userRole = req.user?.role;
 
-		// Usuń członka z social_media_team
-		const result = await prisma.$queryRaw`
-            DELETE FROM social_media_team 
-            WHERE id = ${parseInt(memberId)}
-        `;
+			console.log(`🗑️ [MEMBERS] Usuwanie członka ${memberId}`);
 
-		res.json({ success: true, message: "Członek usunięty" });
-	} catch (error) {
-		logger.error("❌ Błąd usuwania członka:", error);
-		res.status(500).json({ error: "Nie udało się usunąć członka" });
-	}
-});
+			if (
+				userRole !== "admin" &&
+				userRole !== "board" &&
+				userRole !== "Zarząd"
+			) {
+				return res.status(403).json({ error: "Brak uprawnień" });
+			}
+
+			const existingMember = await prisma.socialMediaMember.findUnique({
+				where: { id: memberId },
+			});
+
+			if (!existingMember) {
+				return res.status(404).json({ error: "Nie znaleziono członka" });
+			}
+
+			await prisma.socialMediaMember.delete({
+				where: { id: memberId },
+			});
+
+			return res.json({
+				success: true,
+				message: "Członek usunięty",
+			});
+		} catch (error) {
+			console.error("❌ [MEMBERS] Błąd usuwania:", error);
+
+			if (res.headersSent) {
+				console.warn("⚠️ Odpowiedź już wysłana, pomijam");
+				return;
+			}
+
+			return res.status(500).json({
+				error: "Nie udało się usunąć członka",
+				details: error instanceof Error ? error.message : "Unknown error",
+			});
+		}
+	},
+);
 
 // ============================================================
 // 🗑️ USUŃ TWÓRCĘ ROLEK
 // ============================================================
-app.delete("/api/social/creators/:id", authMiddleware, async (req: any, res) => {
-	try {
-		const userId = req.user.id;
-		const creatorId = req.params.id;
+// ============================================================
+// 🔥 PUT /api/social/creators/:id - Aktualizuj twórcę
+// ============================================================
+app.put(
+	"/api/social/creators/:id",
+	authMiddleware,
+	async (req: any, res: any) => {
+		try {
+			const creatorId = parseInt(req.params.id);
+			const { availability, experience } = req.body;
+			const userRole = req.user?.role;
 
-		// Sprawdź czy użytkownik ma uprawnienia (admin, coordinator, board)
-		const user = await prisma.user.findUnique({
-			where: { id: parseInt(userId) },
-			select: { role_id: true }
-		});
+			console.log(`🔄 [CREATORS] Aktualizacja twórcy ${creatorId}`);
 
-		if (!user || (user.role_id !== 1 && user.role_id !== 2 && user.role_id !== 3)) {
-			return res.status(403).json({ error: "Brak uprawnień do usuwania twórców" });
+			// Sprawdź uprawnienia
+			if (
+				userRole !== "admin" &&
+				userRole !== "board" &&
+				userRole !== "Zarząd"
+			) {
+				return res.status(403).json({ error: "Brak uprawnień" });
+			}
+
+			// Walidacja
+			if (!availability) {
+				return res.status(400).json({ error: "Dostępność jest wymagana" });
+			}
+
+			// Sprawdź czy twórca istnieje
+			const existingCreator = await prisma.socialMediaCreator.findUnique({
+				where: { id: creatorId },
+				include: {
+					user: {
+						select: {
+							id: true,
+							first_name: true,
+							last_name: true,
+							email: true,
+							phone: true,
+							province: true,
+							team: true,
+						},
+					},
+				},
+			});
+
+			if (!existingCreator) {
+				return res.status(404).json({ error: "Nie znaleziono twórcy" });
+			}
+
+			// Aktualizuj
+			const updatedCreator = await prisma.socialMediaCreator.update({
+				where: { id: creatorId },
+				data: {
+					availability: availability,
+					experience: experience || existingCreator.experience,
+					updated_at: new Date(),
+				},
+				include: {
+					user: {
+						select: {
+							id: true,
+							first_name: true,
+							last_name: true,
+							email: true,
+							phone: true,
+							province: true,
+							team: true,
+						},
+					},
+				},
+			});
+
+			// Formatuj odpowiedź
+			const formattedCreator = {
+				id: updatedCreator.id.toString(),
+				user_id: updatedCreator.user_id.toString(),
+				firstName: updatedCreator.user.first_name,
+				lastName: updatedCreator.user.last_name,
+				email: updatedCreator.user.email,
+				phone: updatedCreator.user.phone || "",
+				province: updatedCreator.user.province || "",
+				team: updatedCreator.user.team || "",
+				availability: updatedCreator.availability || "",
+				experience: updatedCreator.experience || "none",
+				topics: updatedCreator.topics ? JSON.parse(updatedCreator.topics) : [],
+				active: updatedCreator.is_active,
+			};
+
+			// ✅ WYŚLIJ ODPOWIEDŹ TYLKO RAZ
+			return res.json(formattedCreator);
+		} catch (error) {
+			console.error("❌ [CREATORS] Błąd aktualizacji:", error);
+
+			// ✅ SPRAWDŹ CZY ODPOWIEDŹ JUŻ ZOSTAŁA WYSŁANA
+			if (res.headersSent) {
+				console.warn("⚠️ Odpowiedź już wysłana, pomijam");
+				return;
+			}
+
+			return res.status(500).json({
+				error: "Nie udało się zaktualizować twórcy",
+				details: error instanceof Error ? error.message : "Unknown error",
+			});
 		}
+	},
+);
+// ============================================================
+// 🔥 DELETE /api/social/creators/:id - Usuń twórcę
+// ============================================================
+app.delete(
+	"/api/social/creators/:id",
+	authMiddleware,
+	async (req: any, res: any) => {
+		try {
+			const creatorId = parseInt(req.params.id);
+			const userRole = req.user?.role;
 
-		// Usuń twórcę z social_media_creators
-		const result = await prisma.$queryRaw`
-            DELETE FROM social_media_creators 
-            WHERE id = ${parseInt(creatorId)}
-        `;
+			console.log(`🗑️ [CREATORS] Usuwanie twórcy ${creatorId}`);
 
-		res.json({ success: true, message: "Twórca usunięty" });
-	} catch (error) {
-		logger.error("❌ Błąd usuwania twórcy:", error);
-		res.status(500).json({ error: "Nie udało się usunąć twórcy" });
-	}
-});
+			// Sprawdź uprawnienia
+			if (
+				userRole !== "admin" &&
+				userRole !== "board" &&
+				userRole !== "Zarząd"
+			) {
+				return res.status(403).json({ error: "Brak uprawnień" });
+			}
+
+			// Sprawdź czy twórca istnieje
+			const existingCreator = await prisma.socialMediaCreator.findUnique({
+				where: { id: creatorId },
+			});
+
+			if (!existingCreator) {
+				return res.status(404).json({ error: "Nie znaleziono twórcy" });
+			}
+
+			// Usuń
+			await prisma.socialMediaCreator.delete({
+				where: { id: creatorId },
+			});
+
+			// ✅ WYŚLIJ ODPOWIEDŹ TYLKO RAZ
+			return res.json({
+				success: true,
+				message: "Twórca usunięty",
+			});
+		} catch (error) {
+			console.error("❌ [CREATORS] Błąd usuwania:", error);
+
+			// ✅ SPRAWDŹ CZY ODPOWIEDŹ JUŻ ZOSTAŁA WYSŁANA
+			if (res.headersSent) {
+				console.warn("⚠️ Odpowiedź już wysłana, pomijam");
+				return;
+			}
+
+			return res.status(500).json({
+				error: "Nie udało się usunąć twórcy",
+				details: error instanceof Error ? error.message : "Unknown error",
+			});
+		}
+	},
+);
 // GET /api/admin/member-access - Pobierz wszystkich członków z dostępami
 // GET /api/admin/member-access - Pobierz wszystkich członków z dostępami i przedmiotami
 // GET /api/admin/member-access - Pobierz wszystkich członków z dostępami i przedmiotami
@@ -7071,6 +7402,80 @@ app.get("/api/members/:id/access", authMiddleware, async (req: any, res) => {
 		res.status(500).json({ error: "Nie udało się pobrać dostępów" });
 	}
 });
+// ============================================================
+// 🔥 PUT /api/members/:id/status - Zmień status członka
+// ============================================================
+// ============================================================
+// 🔥 PUT /api/members/:id/status - Zmień status członka
+// ============================================================
+app.put(
+	"/api/members/:id/status",
+	authMiddleware,
+	async (req: any, res: any) => {
+		try {
+			const userId = parseInt(req.params.id);
+			const { status } = req.body;
+			const userRole = req.user?.role;
+
+			console.log(`🔄 [STATUS] Zmiana statusu dla user ${userId} na ${status}`);
+
+			// Sprawdź uprawnienia
+			if (
+				userRole !== "admin" &&
+				userRole !== "board" &&
+				userRole !== "Zarząd"
+			) {
+				return res.status(403).json({ error: "Brak uprawnień" });
+			}
+
+			// Walidacja statusu
+			const validStatuses = ["active", "trial", "mentor", "vacation"];
+			if (!validStatuses.includes(status)) {
+				return res.status(400).json({
+					error:
+						"Nieprawidłowy status. Dozwolone: active, trial, mentor, vacation",
+				});
+			}
+
+			// Sprawdź czy użytkownik istnieje
+			const user = await prisma.user.findUnique({
+				where: { id: userId },
+			});
+
+			if (!user) {
+				return res.status(404).json({ error: "Użytkownik nie istnieje" });
+			}
+
+			// 🔥 AKTUALIZUJ TYLKO status - BEZ updated_at!
+			const updatedUser = await prisma.user.update({
+				where: { id: userId },
+				data: {
+					status: status,
+					// ❌ USUŃ: updated_at: new Date()
+				},
+			});
+
+			console.log(
+				`✅ [STATUS] Status zmieniony z ${user.status} na ${updatedUser.status}`,
+			);
+
+			res.json({
+				success: true,
+				message: "Status został zaktualizowany",
+				user: {
+					id: updatedUser.id.toString(),
+					status: updatedUser.status,
+				},
+			});
+		} catch (error) {
+			console.error("❌ [STATUS] Błąd:", error);
+			res.status(500).json({
+				error: "Nie udało się zmienić statusu",
+				details: error instanceof Error ? error.message : "Unknown error",
+			});
+		}
+	},
+);
 // PUT /api/members/:id/access - Zapisz dostępy członka
 app.put("/api/members/:id/access", authMiddleware, async (req: any, res) => {
 	try {
@@ -8028,5 +8433,6 @@ app.get(
 );
 
 app.use("/api", revenueRoutes);
-
-app.listen(port, () => { });
+app.listen(port, () => {
+	console.log(`🚀 Serwer działa na porcie ${port}`);
+});

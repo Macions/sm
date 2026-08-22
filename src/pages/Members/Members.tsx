@@ -165,94 +165,95 @@ const mapApiUserToMember = (user: ApiUser): Member => {
 		teamId: user.team_id || (teams.length > 0 ? teams.join("-") : ""),
 		pillars: user.pillars || "",
 		province: user.province || "",
+		// 🔥 UŻYJ STATUSU Z BAZY - NIE NADPISUJ!
 		status: (user.status || "trial") as MemberStatus,
 		interests:
 			hasOnboardingData && onboarding.development_areas
 				? (() => {
-					try {
-						return JSON.parse(onboarding.development_areas);
-					} catch (e) {
-						return [];
-					}
-				})()
+						try {
+							return JSON.parse(onboarding.development_areas);
+						} catch (e) {
+							return [];
+						}
+					})()
 				: [],
 		skills:
 			hasOnboardingData && onboarding.skills
 				? (() => {
-					try {
-						return JSON.parse(onboarding.skills);
-					} catch (e) {
-						return [];
-					}
-				})()
+						try {
+							return JSON.parse(onboarding.skills);
+						} catch (e) {
+							return [];
+						}
+					})()
 				: [],
 		smAreas:
 			hasOnboardingData && onboarding.development_areas
 				? (() => {
-					try {
-						return JSON.parse(onboarding.development_areas);
-					} catch (e) {
-						return [];
-					}
-				})()
+						try {
+							return JSON.parse(onboarding.development_areas);
+						} catch (e) {
+							return [];
+						}
+					})()
 				: [],
 		email: user.email || "",
 		phone: user.phone || "",
 		joinDate: user.join_date
 			? new Date(user.join_date).toISOString().split("T")[0]
 			: user.created_at?.split("T")[0] ||
-			new Date().toISOString().split("T")[0],
+				new Date().toISOString().split("T")[0],
 		contacts: {
 			salaContacts:
 				hasOnboardingData && onboarding.sala_contacts
 					? (() => {
-						try {
-							return JSON.parse(onboarding.sala_contacts);
-						} catch (e) {
-							return [];
-						}
-					})()
+							try {
+								return JSON.parse(onboarding.sala_contacts);
+							} catch (e) {
+								return [];
+							}
+						})()
 					: [],
 			mpContacts:
 				hasOnboardingData && onboarding.mp_contacts
 					? (() => {
-						try {
-							return JSON.parse(onboarding.mp_contacts);
-						} catch (e) {
-							return [];
-						}
-					})()
+							try {
+								return JSON.parse(onboarding.mp_contacts);
+							} catch (e) {
+								return [];
+							}
+						})()
 					: [],
 			otherContacts: [
 				...(hasOnboardingData && onboarding.institution_contacts
 					? (() => {
-						try {
-							return JSON.parse(onboarding.institution_contacts);
-						} catch (e) {
-							return [];
-						}
-					})()
+							try {
+								return JSON.parse(onboarding.institution_contacts);
+							} catch (e) {
+								return [];
+							}
+						})()
 					: []),
 				...(hasOnboardingData && onboarding.other_contacts
 					? (() => {
-						try {
-							return JSON.parse(onboarding.other_contacts);
-						} catch (e) {
-							return [];
-						}
-					})()
+							try {
+								return JSON.parse(onboarding.other_contacts);
+							} catch (e) {
+								return [];
+							}
+						})()
 					: []),
 			],
 		},
 		trainingAreas:
 			hasOnboardingData && onboarding.skills
 				? (() => {
-					try {
-						return JSON.parse(onboarding.skills);
-					} catch (e) {
-						return [];
-					}
-				})()
+						try {
+							return JSON.parse(onboarding.skills);
+						} catch (e) {
+							return [];
+						}
+					})()
 				: [],
 		contributionInfo: {
 			status: "paid",
@@ -333,10 +334,11 @@ function MemberCard({
 							{/* 🔥 IKONKA STATUSU SKŁADKI - MONETA */}
 							{contributionBadge && contributionBadge !== "none" && (
 								<span
-									className={`${styles.contributionDot} ${contributionBadge === "paid"
+									className={`${styles.contributionDot} ${
+										contributionBadge === "paid"
 											? styles.contributionDotPaid
 											: styles.contributionDotPending
-										}`}
+									}`}
 									title={
 										contributionBadge === "paid"
 											? "Opłacona składka"
@@ -363,7 +365,7 @@ function MemberCard({
 								{transformPillars(member.pillars)}
 							</span>
 						)}
-
+						// W MemberCard, w widoku listy (linia ~200)
 						{/* Zespoły (pomijając filary) */}
 						{member.team && member.team !== "Brak zespołu" && (
 							<span className={styles.memberCard__detail}>
@@ -371,6 +373,8 @@ function MemberCard({
 								{member.team
 									.split(", ")
 									.filter((team) => team !== "Brak zespołu")
+									// 🔥 DODAJ - WYKLUCZ "Mentorzy"
+									.filter((team) => team !== "Mentorzy")
 									.filter((team) => {
 										if (member.pillars) {
 											const pillars = member.pillars.split(", ");
@@ -383,7 +387,6 @@ function MemberCard({
 									.join(", ")}
 							</span>
 						)}
-
 						{/* Województwo */}
 						{member.province &&
 							member.province !== "" &&
@@ -436,10 +439,11 @@ function MemberCard({
 				{/* 🔥 IKONKA STATUSU SKŁADKI - MONETA */}
 				{contributionBadge && contributionBadge !== "none" && (
 					<span
-						className={`${styles.contributionDot} ${contributionBadge === "paid"
+						className={`${styles.contributionDot} ${
+							contributionBadge === "paid"
 								? styles.contributionDotPaid
 								: styles.contributionDotPending
-							}`}
+						}`}
 						title={
 							contributionBadge === "paid"
 								? "Opłacona składka"
@@ -451,7 +455,6 @@ function MemberCard({
 				)}
 			</h3>
 			<p className={styles.memberCard__function}>{member.function}</p>
-
 			{/* TYLKO FILARY - BEZ DUPLIKOWANIA */}
 			{/* FILARY I ZESPOŁY */}
 			{/* FILARY */}
@@ -462,18 +465,17 @@ function MemberCard({
 					{transformPillars(member.pillars)}
 				</p>
 			)}
-
-			{/* ZESPOŁY - tylko te które NIE są filarami */}
+			
 			{member.team && member.team !== "Brak zespołu" && (
 				<div className={styles.memberCard__teams}>
 					{member.team
 						.split(", ")
 						.filter((team) => team !== "Brak zespołu")
+						// 🔥 DODAJ - WYKLUCZ "Mentorzy"
+						.filter((team) => team !== "Mentorzy")
 						.filter((team) => {
-							// 🔥 POKAŻ TYLKO ZESPOŁY KTÓRE NIE SĄ FILARAMI
 							if (member.pillars) {
 								const pillars = member.pillars.split(", ");
-								// Sprawdź czy ten team NIE jest w filarach
 								return !pillars.some(
 									(p) => PILLAR_MAP[p] === team || p === team,
 								);
@@ -487,7 +489,6 @@ function MemberCard({
 						))}
 				</div>
 			)}
-
 			{member.province &&
 				member.province !== "" &&
 				member.province !== "Brak" &&
@@ -505,7 +506,6 @@ function MemberCard({
 					{STATUS_LABELS[member.status]}
 				</span>
 			</div>
-
 			<div className={styles.memberCard__skills}>
 				{(member.skills || []).slice(0, 3).map((skill) => (
 					<span key={skill} className={styles.memberCard__skillTag}>
@@ -628,47 +628,47 @@ function ProfileModal({
 	const [newOtherContact, setNewOtherContact] = useState("");
 	const [newTrainingArea, setNewTrainingArea] = useState("");
 
-useEffect(() => {
-	if (member) {
-		// 🔥 SPRAWDŹ CZY NALEŻY DO ZESPOŁU "MENTORZY"
-		const teams = member.team ? member.team.split(", ") : [];
-		const isMentor = teams.includes("Mentorzy");
-		
-		const newFormData = {
-			id: member.id,
-			firstName: member.firstName || "",
-			lastName: member.lastName || "",
-			function: member.function || "",
-			team: member.team || "",
-			teamId: member.teamId || "",
-			pillars: member.pillars || "",
-			province: member.province || "",
-			// 🔥 KLUCZOWA ZMIANA - jeśli mentor to status = "mentor"
-			status: isMentor ? "mentor" : (member.status as MemberStatus) || "trial",
-			interests: member.interests || [],
-			skills: member.skills || [],
-			smAreas: member.smAreas || [],
-			email: member.email || "",
-			phone: member.phone || "",
-			joinDate: member.joinDate
-				? new Date(member.joinDate).toISOString().split("T")[0]
-				: "",
-			vacation: member.vacation,
-			contacts: member.contacts || {
-				salaContacts: [],
-				mpContacts: [],
-				otherContacts: [],
-			},
-			trainingAreas: member.trainingAreas || [],
-			contributionInfo: member.contributionInfo || {
-				status: "paid",
-				arrears: 0,
-			},
-			formData: member.formData || {},
-		};
+	useEffect(() => {
+		if (member) {
+			// 🔥 USUŃ TĘ LOGIKĘ - nie nadpisuj statusu na podstawie zespołu!
+			// const teams = member.team ? member.team.split(", ") : [];
+			// const isMentor = teams.includes("Mentorzy");
 
-		setFormData(newFormData);
-	} else {
+			const newFormData = {
+				id: member.id,
+				firstName: member.firstName || "",
+				lastName: member.lastName || "",
+				function: member.function || "",
+				team: member.team || "",
+				teamId: member.teamId || "",
+				pillars: member.pillars || "",
+				province: member.province || "",
+				// 🔥 UŻYJ ORYGINALNEGO STATUSU Z BAZY, NIE NADPISUJ!
+				status: (member.status as MemberStatus) || "trial",
+				interests: member.interests || [],
+				skills: member.skills || [],
+				smAreas: member.smAreas || [],
+				email: member.email || "",
+				phone: member.phone || "",
+				joinDate: member.joinDate
+					? new Date(member.joinDate).toISOString().split("T")[0]
+					: "",
+				vacation: member.vacation,
+				contacts: member.contacts || {
+					salaContacts: [],
+					mpContacts: [],
+					otherContacts: [],
+				},
+				trainingAreas: member.trainingAreas || [],
+				contributionInfo: member.contributionInfo || {
+					status: "paid",
+					arrears: 0,
+				},
+				formData: member.formData || {},
+			};
+
+			setFormData(newFormData);
+		} else {
 			setFormData({
 				firstName: "",
 				lastName: "",
@@ -802,51 +802,20 @@ useEffect(() => {
 
 	const handleSubmit = (e: React.FormEvent) => {
 		e.preventDefault();
-		console.log("🔍 [handleSubmit] formData.pillars:", formData.pillars);
-
-		if (isEdit && (!formData.pillars || formData.pillars.trim() === "")) {
-			toast.error("Członek musi być przypisany do przynajmniej jednego filaru");
-			return;
-		}
 
 		if (isEdit && !formData.status) {
-			alert("Wybierz status członka");
+			toast.error("Wybierz status członka");
 			return;
 		}
-		if (onSave && canEdit) {
-			logger.debug("formData w handleSubmit:", formData);
 
+		if (onSave && canEdit) {
+			// 🔥 Wywołaj onSave z nowym statusem
+			// Endpoint PUT /api/members/:id/status zostanie wywołany w handleSaveMember
 			const saveData: Member = {
-				id: currentMember.id,
-				firstName: formData.firstName || currentMember.firstName,
-				lastName: formData.lastName || currentMember.lastName,
-				function: formData.function || currentMember.function,
-				team: formData.team || currentMember.team,
-				teamId: formData.teamId || currentMember.teamId,
-				pillars: formData.pillars || currentMember.pillars || "",
-				province: formData.province || currentMember.province,
+				...currentMember,
+				...formData,
 				status: (formData.status as MemberStatus) || "active",
-				interests: formData.interests || currentMember.interests,
-				skills: formData.skills || currentMember.skills,
-				smAreas: formData.smAreas || currentMember.smAreas,
-				email: formData.email || currentMember.email,
-				phone: formData.phone || currentMember.phone,
-				joinDate: formData.joinDate || currentMember.joinDate,
-				vacation: currentMember.vacation,
-				contacts: canViewSensitive
-					? formData.contacts || currentMember.contacts
-					: undefined,
-				trainingAreas: canViewSensitive
-					? formData.trainingAreas || currentMember.trainingAreas
-					: undefined,
-				contributionInfo: canViewSensitive
-					? formData.contributionInfo || currentMember.contributionInfo
-					: undefined,
-				formData: canViewSensitive
-					? formData.formData || currentMember.formData
-					: undefined,
 			};
-			logger.debug("saveData:", saveData);
 
 			onSave(saveData);
 		}
@@ -1089,10 +1058,11 @@ useEffect(() => {
 											/>
 										) : contributionStats?.hasContributions ? (
 											<span
-												className={`${styles.contributionBadge} ${contributionStats.currentMonth?.status === "paid"
+												className={`${styles.contributionBadge} ${
+													contributionStats.currentMonth?.status === "paid"
 														? styles.contributionBadgePaid
 														: styles.contributionBadgePending
-													}`}
+												}`}
 											>
 												{contributionStats.currentMonth?.status === "paid" ? (
 													<Coins size={16} />
@@ -1923,12 +1893,13 @@ useEffect(() => {
 														Bieżący miesiąc
 													</span>
 													<span
-														className={`${styles.contributionStatValue} ${contributionStats.currentMonth?.status === "paid"
+														className={`${styles.contributionStatValue} ${
+															contributionStats.currentMonth?.status === "paid"
 																? styles.statusPaid
 																: contributionStats.hasContributions === false
 																	? styles.statusNone
 																	: styles.statusPending
-															}`}
+														}`}
 													>
 														{contributionStats.currentMonth?.status === "paid"
 															? "Opłacona"
@@ -1952,10 +1923,11 @@ useEffect(() => {
 														Zaległości
 													</span>
 													<span
-														className={`${styles.contributionStatValue} ${contributionStats.summary?.overdueMonths > 0
+														className={`${styles.contributionStatValue} ${
+															contributionStats.summary?.overdueMonths > 0
 																? styles.statusOverdue
 																: ""
-															}`}
+														}`}
 													>
 														{contributionStats.summary?.overdueMonths > 0
 															? `️ ${contributionStats.summary.overdueMonths} mies.`
@@ -2496,10 +2468,11 @@ export default function Members({ title }: { title?: string }) {
 					selectedFunction === "all" || member.function === selectedFunction;
 
 				// Pełne imię i nazwisko
-				const fullName = `${member.firstName || ""} ${member.lastName || ""}`.toLowerCase();
+				const fullName =
+					`${member.firstName || ""} ${member.lastName || ""}`.toLowerCase();
 
 				const matchesSearch =
-					fullName.includes(searchLower) ||  // <-- DODAJ TĘ LINIĘ (szuka po całym imieniu i nazwisku)
+					fullName.includes(searchLower) || // <-- DODAJ TĘ LINIĘ (szuka po całym imieniu i nazwisku)
 					(member.firstName || "").toLowerCase().includes(searchLower) ||
 					(member.lastName || "").toLowerCase().includes(searchLower) ||
 					(member.function || "").toLowerCase().includes(searchLower) ||
@@ -2583,10 +2556,57 @@ export default function Members({ title }: { title?: string }) {
 		setSelectedMember(member);
 		setIsEditOpen(true);
 	}, []);
+	const handleStatusChange = useCallback(
+		async (member: Member, newStatus: MemberStatus) => {
+			try {
+				const token = localStorage.getItem("accessToken");
+				if (!token) {
+					logger.warn("Brak tokena - przekierowanie do logowania");
+					safeNavigate("/login", navigate);
+					return;
+				}
 
+				const response = await fetch(`/api/members/${member.id}/status`, {
+					method: "PUT",
+					headers: {
+						Authorization: `Bearer ${token}`,
+						"Content-Type": "application/json",
+					},
+					body: JSON.stringify({ status: newStatus }),
+				});
+
+				if (!response.ok) {
+					const errorData = await response.json();
+					throw new Error(errorData.error || "Błąd zmiany statusu");
+				}
+
+				const data = await response.json();
+
+				// Odśwież listę
+				const membersResponse = await fetch("/api/members", {
+					headers: { Authorization: `Bearer ${token}` },
+				});
+				if (membersResponse.ok) {
+					const freshMembers = await membersResponse.json();
+					const mappedMembers = freshMembers.map(mapApiUserToMember);
+					setMembers(mappedMembers);
+				}
+
+				toast.success(`Status zmieniony na ${newStatus}`);
+			} catch (error) {
+				logger.error("Błąd zmiany statusu:", error);
+				toast.error(
+					error instanceof Error
+						? error.message
+						: "Nie udało się zmienić statusu",
+				);
+			}
+		},
+		[navigate],
+	);
 	const handleSaveMember = useCallback(
 		async (updatedMember: Member) => {
-			// 🔥 DODAJ NA POCZĄTKU FUNKCJI
+			// Walidacja filarów
 			const pillarsArray = updatedMember.pillars
 				? updatedMember.pillars.split(", ").filter(Boolean)
 				: [];
@@ -2601,7 +2621,6 @@ export default function Members({ title }: { title?: string }) {
 				return;
 			}
 
-			// Potem idzie istniejący kod:
 			try {
 				const token = localStorage.getItem("accessToken");
 				if (!token) {
@@ -2610,48 +2629,58 @@ export default function Members({ title }: { title?: string }) {
 					return;
 				}
 
+				// 1. ZMIEŃ STATUS
+				await handleStatusChange(updatedMember, updatedMember.status);
+
+				// 2. ZAKTUALIZUJ RESZTĘ DANYCH
 				const response = await fetch(`/api/members/${updatedMember.id}`, {
 					method: "PUT",
 					headers: {
 						Authorization: `Bearer ${token}`,
 						"Content-Type": "application/json",
 					},
-					body: JSON.stringify(updatedMember),
+					body: JSON.stringify({
+						firstName: updatedMember.firstName,
+						lastName: updatedMember.lastName,
+						function: updatedMember.function,
+						team: updatedMember.team,
+						pillars: updatedMember.pillars,
+						province: updatedMember.province,
+						email: updatedMember.email,
+						phone: updatedMember.phone,
+						joinDate: updatedMember.joinDate,
+						// ... inne pola
+					}),
 				});
 
 				if (!response.ok) {
-					throw new Error("Błąd aktualizacji członka");
+					throw new Error("Błąd aktualizacji danych");
 				}
 
-				const savedMember = await response.json();
-
-				// 🔥🔥🔥 PROBLEM JEST TUTAJ - ODŚWIEŻ LISTĘ 🔥🔥🔥
-				// Zamiast używać savedMember, pobierz ŚWIEŻĄ listę z API
+				// Odśwież listę
 				const membersResponse = await fetch("/api/members", {
 					headers: { Authorization: `Bearer ${token}` },
 				});
 
 				if (membersResponse.ok) {
 					const freshMembers = await membersResponse.json();
-					console.log("🔄 [handleSaveMember] Świeża lista:", freshMembers);
 					const mappedMembers = freshMembers.map(mapApiUserToMember);
 					setMembers(mappedMembers);
-				} else {
-					// Fallback - zaktualizuj tylko jednego członka
-					const mappedMember = mapApiUserToMember(savedMember);
-					setMembers(
-						members.map((m) => (m.id === mappedMember.id ? mappedMember : m)),
-					);
 				}
 
 				setIsEditOpen(false);
 				setSelectedMember(null);
 				toast.success("Dane członka zostały zaktualizowane!");
 			} catch (error) {
-				toast.error("Nie udało się zaktualizować danych");
+				logger.error("Błąd aktualizacji:", error);
+				toast.error(
+					error instanceof Error
+						? error.message
+						: "Nie udało się zaktualizować danych",
+				);
 			}
 		},
-		[members, navigate],
+		[members, navigate, handleStatusChange],
 	);
 
 	const clearFilters = useCallback(() => {
@@ -2784,10 +2813,10 @@ export default function Members({ title }: { title?: string }) {
 						selectedTeam !== "all" ||
 						selectedFunction !== "all" || // 🔥 DODANE
 						searchTerm) && (
-							<button className={styles.filters__reset} onClick={clearFilters}>
-								Wyczyść filtry
-							</button>
-						)}
+						<button className={styles.filters__reset} onClick={clearFilters}>
+							Wyczyść filtry
+						</button>
+					)}
 				</div>
 			</div>
 
@@ -2865,8 +2894,8 @@ export default function Members({ title }: { title?: string }) {
 						<h3 className={styles.emptyState__title}>Brak członków</h3>
 						<p className={styles.emptyState__description}>
 							{searchTerm ||
-								selectedProvince !== "all" ||
-								selectedTeam !== "all"
+							selectedProvince !== "all" ||
+							selectedTeam !== "all"
 								? "Nie znaleziono członków spełniających kryteria wyszukiwania."
 								: "Nie ma jeszcze żadnych członków w organizacji."}
 						</p>
