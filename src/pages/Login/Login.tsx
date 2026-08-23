@@ -167,7 +167,7 @@ const Login: React.FC = () => {
 
 						{error && <div className={styles.errorMessage}>{error}</div>}
 
-						<form onSubmit={handleSubmit} >
+						<form onSubmit={handleSubmit} hidden>
 							<div className={styles.inputGroup}>
 								<input
 									type="email"
