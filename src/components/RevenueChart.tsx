@@ -137,7 +137,7 @@ export function RevenueChart({ year = 2026, title = "Przychody i wydatki" }: Rev
 			// ============================================
 			// 1. Pobierz dane główne (przychody/wydatki)
 			// ============================================
-			const response = await fetch(`http://localhost:3000/api/revenue?year=${selectedYear}`, {
+			const response = await fetch(`/api/revenue?year=${selectedYear}`, {
 				headers: {
 					'Authorization': `Bearer ${token}`,
 					'Content-Type': 'application/json'
@@ -156,7 +156,7 @@ export function RevenueChart({ year = 2026, title = "Przychody i wydatki" }: Rev
 			// ============================================
 			let categoriesData = null;
 			try {
-				const categoriesResponse = await fetch(`http://localhost:3000/api/revenue/categories?year=${selectedYear}`, {
+				const categoriesResponse = await fetch(`/api/revenue/categories?year=${selectedYear}`, {
 					headers: {
 						'Authorization': `Bearer ${token}`,
 						'Content-Type': 'application/json'
