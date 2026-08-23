@@ -1,6 +1,6 @@
 .members {
-	/* padding: 24px 32px; */
-	/* max-width: 1440px; */
+
+
 	margin: 0 auto;
 	width: 100%;
 }
@@ -971,7 +971,7 @@
 	filter: grayscale(0.5);
 }
 
-/* frontend/src/pages/Members/Members.module.css */
+
 
 .contributionStatsGrid {
 	display: grid;
@@ -1078,7 +1078,7 @@
 	border: 1px solid rgba(255, 255, 255, 0.15);
 }
 
-/* Różne kolory dla różnych typów zespołów */
+
 .memberCard__teamBadge--court {
 	background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
 	box-shadow: 0 2px 4px rgba(245, 87, 108, 0.3);
@@ -1112,7 +1112,7 @@
 	box-shadow: 0 2px 4px rgba(108, 92, 231, 0.3);
 }
 
-/* Ikona w badge'u */
+
 .memberCard__teamBadge svg {
 	width: 12px;
 	height: 12px;
@@ -1147,7 +1147,7 @@
 	height: 14px;
 }
 
-/* Dla listy - kolorowe wersje */
+
 .memberCard__detail--team-court {
 	background: #fef2f2;
 	border-color: #fca5a5;
@@ -1259,7 +1259,7 @@
 	flex-shrink: 0;
 }
 
-/* OPŁACONA - ZIELONE */
+
 .contributionBadgePaid {
 	background: #e8f5e9;
 	color: #2e7d32;
@@ -1270,7 +1270,7 @@
 	color: #43a047;
 }
 
-/* NIEOPŁACONA - CZERWONE */
+
 .contributionBadgePending {
 	background: #ffebee;
 	color: #c62828;
@@ -1281,7 +1281,7 @@
 	color: #e53935;
 }
 
-/* BRAK DANYCH - BIAŁE, CZARNY TEKST */
+
 .contributionBadgeNone {
 	display: inline-flex;
 	align-items: center;
@@ -1299,7 +1299,7 @@
 	color: #757575;
 }
 
-/* HOVER - DELIKATNE PODŚWIETLENIE */
+
 .contributionBadge:hover {
 	transform: translateY(-1px);
 	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
@@ -1317,7 +1317,7 @@
 	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
 }
 
-/* WARTOŚĆ W MODALU */
+
 .modal__value {
 	display: flex;
 	align-items: center;
@@ -1380,7 +1380,7 @@
 	color: #9e9e9e;
 	border: 1px solid #e0e0e0;
 }
-/* KROPKA STATUSU SKŁADKI */
+
 .contributionDot {
 	display: inline-flex;
 	align-items: center;
@@ -1395,22 +1395,22 @@
 }
 
 .contributionDotPaid {
-	/* background: #e8f5e9; */
+
 	color: #2e7d32;
-	/* border: 1.5px solid #a5d6a7; */
+
 }
 
 .contributionDotPending {
-	/* background: #ffebee; */
+
 	color: #c62828;
-	/* border: 1.5px solid #ef9a9a; */
+
 }
 
 .contributionDot:hover {
 	transform: scale(1.1);
 }
 
-/* Dla widoku listy - mniejsza kropka */
+
 .memberCardList .contributionDot {
 	width: 18px;
 	height: 18px;
@@ -1440,22 +1440,22 @@
 }
 
 .contributionDotPaid {
-	/* background: #dcfce7; */
+
 	color: #166534;
-	/* border: 1.5px solid #86efac; */
+
 }
 
 .contributionDotPending {
-	/* background: #fee2e2; */
+
 	color: #991b1b;
-	/* border: 1.5px solid #fca5a5; */
+
 }
 
 .contributionDot:hover {
 	transform: scale(1.15);
 }
 
-/* Dla widoku listy - mniejsza kropka */
+
 .memberCardList .contributionDot {
 	width: 16px;
 	height: 16px;
@@ -1518,7 +1518,7 @@
 	color: #9ca3af;
 }
 
-/* Hover efekty */
+
 .contributionBadge:hover {
 	transform: translateY(-1px);
 	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
@@ -1532,7 +1532,7 @@
 	box-shadow: 0 2px 12px rgba(239, 68, 68, 0.15);
 }
 
-/* Wartość w modalu */
+
 .modal__value {
 	display: flex;
 	align-items: center;

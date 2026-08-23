@@ -51,7 +51,7 @@ type Task = {
 	feedbackFileSize?: number;
 	feedbackFileType?: string;
 	feedbackSubmittedAt?: string;
-	// NOWE POLA
+
 	assignedType?: "user" | "team" | "pillar" | "role";
 	assignedGroup?: string;
 	isRecurring?: boolean;
@@ -73,7 +73,7 @@ type Task = {
 		createdAt: string;
 	}[];
 	pillar?: string;
-	// ✅ DODAJ TE POLA
+
 	rating?: number;
 	rating_comment?: string;
 	rated_at?: string;
@@ -85,12 +85,12 @@ type User = {
 	id: string;
 	name: string;
 	role: string;
-	// NOWE POLA Z BAZY
+
 	teamId?: string;
 	teamName?: string;
 	pillarId?: string;
 	pillarName?: string;
-	isLeader?: boolean; // ← z tabeli team_members
+	isLeader?: boolean; 
 	isTeamCoordinator?: boolean;
 	isPillarCoordinator?: boolean;
 };
@@ -122,28 +122,28 @@ const PRIORITY_COLORS: Record<TaskPriority, string> = {
 	high: styles.priorityHigh,
 	urgent: styles.priorityUrgent,
 };
-// SPRAWDZANIE CZY UŻYTKOWNIK MOŻE ZARZĄDZAĆ
-// ZASTĄP STARĄ FUNKCJĘ canManageUser() TĄ:
-// SPRAWDZANIE CZY UŻYTKOWNIK MOŻE ZARZĄDZAĆ KONKRETNYM ZADANIEM
+
+
+
 const canManageTask = (user: User, task: Task): boolean => {
-	// 1. Admin i Zarząd - zawsze mogą usuwać
+
 	if (user.role === "admin" || user.role === "board") {
 		return true;
 	}
 
-	// 2. Prezes/Wiceprezes - zawsze mogą usuwać
+
 	if (user.role === "Prezes" || user.role === "Wiceprezes") {
 		return true;
 	}
 
-	// 3. Sprawdź czy użytkownik jest liderem/koordynatorem
+
 	if (user.isLeader === true) {
-		// 3a. Koordynator filaru - może usuwać tylko zadania z swojego filaru
+
 		if (user.pillarName && task.pillar && task.pillar === user.pillarName) {
 			return true;
 		}
 
-		// 3b. Koordynator zespołu - może usuwać tylko zadania z swojego zespołu
+
 		if (
 			user.teamName &&
 			task.assignedGroup &&
@@ -152,9 +152,9 @@ const canManageTask = (user: User, task: Task): boolean => {
 			return true;
 		}
 
-		// 3c. Koordynator zespołu - może usuwać zadania przypisane do członków jego zespołu
-		// (to wymaga dostępu do listy members, więc pomijamy w tej funkcji)
-		// Można to sprawdzać w komponencie jeśli potrzebne
+
+
+
 	}
 
 	return false;
@@ -423,7 +423,7 @@ function FeedbackModal({
 												onClick={(e) => {
 													e.stopPropagation();
 													setFile(null);
-													// Reset input
+
 													const input = document.getElementById(
 														"feedbackFileInput",
 													) as HTMLInputElement;
@@ -487,23 +487,23 @@ function TaskDetailModal({
 			minute: "2-digit",
 		});
 	};
-	// W TaskDetailModal, przed return:
-	// W TaskDetailModal, przed return:
+
+
 	const handleDownloadFile = async (fileUrl: string, fileName: string) => {
 		try {
 			const token = localStorage.getItem("accessToken");
 
-			// 🔥 DEKODUJ NAZWĘ PLIKU
+
 			const decodedFileName = decodeURIComponent(fileName);
 
-			// 🔥 DODAJ /api/ PRZED URL
+
 			let fullUrl = fileUrl;
 			if (fileUrl.startsWith("/uploads")) {
 				fullUrl = `/api${fileUrl}`;
 			}
 
-			// console.log("📁 Pobieram plik z:", fullUrl);
-			// console.log("📁 Nazwa pliku:", decodedFileName);
+
+
 
 			const response = await fetch(fullUrl, {
 				headers: {
@@ -756,8 +756,8 @@ function TaskCard({
 	onStatusChange,
 	onFeedback,
 }: TaskCardProps) {
-	// POPRAWIONE
-	// POPRAWNIE - zawsze boolean
+
+
 	const canManage = canManageTask(currentUser, task);
 	const isAssignedToMe = task.assignedTo === currentUser.id ||
 		(task.assignedUsers && task.assignedUsers.includes(currentUser.id));
@@ -906,9 +906,9 @@ function TaskCard({
 						<button
 							className={`${styles.taskCard__actionBtn} ${styles.taskCard__actionBtnDanger}`}
 							onClick={() => {
-								// console.log("🗑️ KLIKNIĘTO USUŃ - TaskCard");
-								// console.log("📌 task:", task);
-								// console.log("📌 onDelete:", onDelete);
+
+
+
 								if (onDelete) {
 									onDelete(task);
 								} else {
@@ -953,8 +953,8 @@ interface TaskModalProps {
 	currentUser: User;
 	members: { id: string; name: string }[];
 	projects: { id: string; name: string }[];
-	teams?: string[]; // DODAJ
-	pillars?: string[]; // DODAJ
+	teams?: string[]; 
+	pillars?: string[]; 
 	onClose: () => void;
 	onSave: (task: Task) => void;
 	onDelete?: (task: Task) => void;
@@ -966,8 +966,8 @@ function TaskModal({
 	currentUser,
 	members,
 	projects,
-	teams = [], // DODAJ
-	pillars = [], // DODAJ
+	teams = [], 
+	pillars = [], 
 	onClose,
 	onSave,
 	onDelete,
@@ -988,9 +988,9 @@ function TaskModal({
 		assignedTo: "",
 		dueDate: "",
 		tags: [],
-		projectId: "", // DODAJ
-		requiresFeedback: false, // DODAJ
-		feedbackType: "text", // DODAJ
+		projectId: "", 
+		requiresFeedback: false, 
+		feedbackType: "text", 
 		assignedType: "user",
 		assignedGroup: "",
 		isRecurring: false,
@@ -1015,11 +1015,11 @@ function TaskModal({
 				isRecurring: task.isRecurring || false,
 				recurrencePattern: task.recurrencePattern || "weekly",
 				recurrenceEndDate: task.recurrenceEndDate || "",
-				// DODAJ - ustaw assignedTo z task
+
 				assignedTo: task.assignedTo || "",
 			});
 
-			// DODAJ - ustaw selectedUsers z task
+
 			if (task.assignedTo) {
 				setSelectedUsers([
 					{
@@ -1029,7 +1029,7 @@ function TaskModal({
 				]);
 			}
 
-			// DODAJ - jeśli są przypisani użytkownicy
+
 			if (task.assignedUsers && task.assignedUsers.length > 0) {
 				const users = task.assignedUsers.map((id) => {
 					const member = members.find((m) => m.id === id);
@@ -1063,14 +1063,14 @@ function TaskModal({
 	if (!isOpen) return null;
 
 	const isEdit = !!task;
-	// POPRAWIONE
+
 
 	const validateForm = () => {
 		const newErrors: Record<string, string> = {};
 		if (!formData.title?.trim()) newErrors.title = "Tytuł jest wymagany";
 		if (!formData.description?.trim())
 			newErrors.description = "Opis jest wymagany";
-		// SPRAWDZAJ selectedUsers ZAMIAST formData.assignedTo
+
 		if (formData.assignedType === "user" && selectedUsers.length === 0) {
 			newErrors.assignedTo = "Wybierz przynajmniej jednego użytkownika";
 		}
@@ -1105,7 +1105,7 @@ function TaskModal({
 			projectId: formData.projectId || undefined,
 			requiresFeedback: formData.requiresFeedback || false,
 			feedbackType: formData.feedbackType || "text",
-			// DODAJ NOWE POLA
+
 			assignedType:
 				(formData.assignedType as "user" | "team" | "pillar" | "role") ||
 				"user",
@@ -1427,11 +1427,11 @@ function TaskModal({
 													className={styles.userSuggestionItem}
 													onMouseDown={(e) => {
 														e.preventDefault();
-														// DODAJEMY WIELU UŻYTKOWNIKÓW
+
 														if (!selectedUsers.find((u) => u.id === user.id)) {
 															setSelectedUsers([...selectedUsers, user]);
-															// Nie ustawiamy assignedTo na pojedynczego użytkownika
-															// Będziemy wysyłać tablicę ID
+
+
 														}
 														setSearchUser("");
 														setUserSuggestions([]);
@@ -1677,7 +1677,7 @@ export default function Tasks() {
 			try {
 				const token = localStorage.getItem("accessToken");
 
-				// Pobierz zespoły
+
 				const teamsRes = await fetch("/api/teams", {
 					headers: { Authorization: `Bearer ${token}` },
 				});
@@ -1686,7 +1686,7 @@ export default function Tasks() {
 					setTeams(data.map((t: any) => t.name));
 				}
 
-				// Pobierz filary
+
 				const pillarsRes = await fetch("/api/teams", {
 					headers: { Authorization: `Bearer ${token}` },
 				});
@@ -1704,7 +1704,7 @@ export default function Tasks() {
 		fetchTeamsAndPillars();
 	}, []);
 
-	// POPRAWNIE - zawsze boolean
+
 	const canManage =
 		currentUser.role === "admin" ||
 		currentUser.role === "board" ||
@@ -1713,7 +1713,7 @@ export default function Tasks() {
 		currentUser.isLeader === true;
 
 	const handleOpenRating = (task: Task) => {
-		// ✅ Sprawdź czy zadanie już ma ocenę (użyj rated_at)
+
 		if (task.rated_at) {
 			toast("To zadanie zostało już ocenione!", {
 				icon: <FiInfo />,
@@ -1794,28 +1794,28 @@ export default function Tasks() {
 		setFeedbackTask(task);
 		setIsFeedbackOpen(true);
 	};
-	// Funkcja określająca czy użytkownik widzi dane zadanie
-	// Funkcja określająca czy użytkownik widzi dane zadanie
-	// Funkcja określająca czy użytkownik widzi dane zadanie
+
+
+
 	const canViewTask = (task: Task, user: User): boolean => {
-		// Admin i Zarząd widzą wszystko
+
 		if (user.role === "admin" || user.role === "board") {
 			return true;
 		}
 
-		// Prezes i Wiceprezes widzą wszystko
+
 		if (user.role === "Prezes" || user.role === "Wiceprezes") {
 			return true;
 		}
 
-		// Lider/Koordynator - widzi WSZYSTKIE zadania z jego filaru
+
 		if (user.isLeader === true) {
-			// Sprawdź czy zadanie ma filar
+
 			if (task.pillar === user.pillarName) {
-				return true; // ← Koordynator widzi WSZYSTKIE zadania z tego filaru!
+				return true; 
 			}
 
-			// Sprawdź czy zadanie jest przypisane do niego
+
 			if (
 				task.assignedTo === user.id ||
 				(task.assignedUsers && task.assignedUsers.includes(user.id))
@@ -1826,7 +1826,7 @@ export default function Tasks() {
 			return false;
 		}
 
-		// Zwykły członek - widzi tylko swoje zadania
+
 		return (
 			task.assignedTo === user.id ||
 			(Array.isArray(task.assignedUsers) &&
@@ -1841,11 +1841,11 @@ export default function Tasks() {
 		try {
 			const token = localStorage.getItem("accessToken");
 
-			// UŻYJ FormData TYLKO gdy jest plik, inaczej wyślij JSON
+
 			let response;
 
 			if (file) {
-				// Z plikiem - używamy FormData
+
 				const formData = new FormData();
 				formData.append("feedbackText", feedbackText || "");
 				formData.append("file", file);
@@ -1858,7 +1858,7 @@ export default function Tasks() {
 					body: formData,
 				});
 			} else {
-				// Bez pliku - używamy JSON
+
 				response = await fetch(`/api/tasks/${task.id}/feedback`, {
 					method: "POST",
 					headers: {
@@ -1921,16 +1921,16 @@ export default function Tasks() {
 			setLoading(true);
 			const token = localStorage.getItem("accessToken");
 
-			// ZDEFINIUJ userData PRZED UŻYCIEM
+
 			let userData = null;
 
-			// Pobierz profil użytkownika
+
 			const userRes = await fetch("/api/profile", {
 				headers: { Authorization: `Bearer ${token}` },
 			});
 
 			if (userRes.ok) {
-				userData = await userRes.json(); // ← PRZYPISZ DANE
+				userData = await userRes.json(); 
 
 				setCurrentUser({
 					id: userData.id?.toString() || "",
@@ -1944,7 +1944,7 @@ export default function Tasks() {
 				});
 			}
 
-			// Pobierz członków
+
 			const membersRes = await fetch("/api/members", {
 				headers: { Authorization: `Bearer ${token}` },
 			});
@@ -1966,17 +1966,17 @@ export default function Tasks() {
 				);
 			}
 
-			// SPRAWDŹ CZY userData ISTNIEJE
+
 			if (!userData) {
 				throw new Error("Nie udało się pobrać danych użytkownika");
 			}
 
-			// TERAZ userData jest zdefiniowane i możemy go użyć
+
 			const getTasksUrl = () => {
 				const baseUrl = "/api/tasks";
 				const params = new URLSearchParams();
 
-				// Sprawdź czy userData jest liderem
+
 				if (userData.isLeader === true) {
 					params.append("leaderId", userData.id);
 					if (userData.pillarId) {
@@ -1988,7 +1988,7 @@ export default function Tasks() {
 					return `${baseUrl}?${params.toString()}`;
 				}
 
-				// Zwykły członek - tylko swoje zadania
+
 				params.append("userId", userData.id);
 				return `${baseUrl}?${params.toString()}`;
 			};
@@ -2064,14 +2064,14 @@ export default function Tasks() {
 	};
 
 	const handleDeleteTask = (task: Task) => {
-		// Otwórz dialog zamiast od razu usuwać
+
 		setTaskToDelete(task);
 		setIsConfirmOpen(true);
 	};
 	const handleConfirmDelete = async () => {
 		if (!taskToDelete) return;
 
-		setIsDeleting(true); // 🔥 WŁĄCZ ŁADOWANIE
+		setIsDeleting(true); 
 
 		try {
 			const token = localStorage.getItem("accessToken");
@@ -2094,7 +2094,7 @@ export default function Tasks() {
 				`Zadanie "${taskToDelete.title}" zostało usunięte lokalnie`,
 			);
 		} finally {
-			setIsDeleting(false); // 🔥 WYŁĄCZ ŁADOWANIE
+			setIsDeleting(false); 
 			setIsConfirmOpen(false);
 			setTaskToDelete(null);
 		}
@@ -2105,14 +2105,14 @@ export default function Tasks() {
 		setTaskToDelete(null);
 	};
 	const handleSaveTask = async (task: Task) => {
-		// console.log("[SAVE TASK] START", task.id, task.status);
+
 
 		try {
 			const token = localStorage.getItem("accessToken");
 			const isEdit = tasks.some((t) => t.id === task.id);
 			const isNumericId = /^\d+$/.test(task.id);
 
-			// Obsługa zadań cyklicznych
+
 			if (
 				task.isRecurring &&
 				task.recurrencePattern &&
@@ -2161,7 +2161,7 @@ export default function Tasks() {
 				isEdit && isNumericId ? `/api/tasks/${task.id}` : "/api/tasks";
 			const method = isEdit && isNumericId ? "PUT" : "POST";
 
-			// console.log("URL:", url, "Method:", method);
+
 
 			const payload = {
 				title: task.title,
@@ -2183,7 +2183,7 @@ export default function Tasks() {
 				pillar: task.pillar || null,
 			};
 
-			// console.log("Wysyłam zapytanie...");
+
 
 			const response = await fetch(url, {
 				method,
@@ -2194,7 +2194,7 @@ export default function Tasks() {
 				body: JSON.stringify(payload),
 			});
 
-			// console.log("Response status:", response.status);
+
 
 			if (response.ok) {
 				const data = await response.json();
@@ -2223,7 +2223,7 @@ export default function Tasks() {
 					return newTasks.filter((t) => canViewTask(t, currentUser));
 				});
 
-				// Wyślij powiadomienia
+
 				if (wasNew || task.assignedTo !== oldAssignedTo) {
 					const userIds = task.assignedUsers?.length
 						? task.assignedUsers
@@ -2258,7 +2258,7 @@ export default function Tasks() {
 	};
 	const sendTaskNotification = async (
 		userId: string,
-		taskId: string, // DODAJ
+		taskId: string, 
 		taskTitle: string,
 		createdByName: string,
 	) => {
@@ -2312,7 +2312,7 @@ export default function Tasks() {
 							.filter((t) => canViewTask(t, currentUser)),
 					);
 
-					// Jeśli zmieniamy na "done", otwórz modal oceny
+
 					if (newStatus === "done") {
 						toast.success(`Zadanie zakończone! Oceń je teraz.`);
 						handleOpenRating({ ...task, status: newStatus });
@@ -2551,8 +2551,8 @@ export default function Tasks() {
 				currentUser={currentUser}
 				members={members}
 				projects={projects}
-				teams={teams} // DODAJ
-				pillars={pillars} // DODAJ
+				teams={teams} 
+				pillars={pillars} 
 				onClose={() => {
 					setIsModalOpen(false);
 					setEditingTask(null);

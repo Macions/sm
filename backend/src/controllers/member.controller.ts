@@ -199,7 +199,7 @@ export const createMember = async (req: Request, res: Response) => {
 			contributionInfo,
 		} = req.body;
 
-		// 🔥 DODAJ TUTAJ - WALIDACJA FILARÓW
+
 		if (!pillars || pillars.trim() === "") {
 			logger.debug("❌ [createMember] - Brak filarów");
 			return res.status(400).json({
@@ -314,12 +314,12 @@ export const createMember = async (req: Request, res: Response) => {
 
 				team_members: teamId
 					? {
-							create: {
-								team_id: teamId,
-								role: func || "Członek",
-								is_leader: false,
-							},
-						}
+						create: {
+							team_id: teamId,
+							role: func || "Członek",
+							is_leader: false,
+						},
+					}
 					: undefined,
 			},
 		});
@@ -415,8 +415,8 @@ export const updateMember = async (req: Request, res: Response) => {
 			contributionInfo,
 		} = req.body;
 
-		// 🔥🔥🔥 WALIDACJA NA POCZĄTKU - PRZED WSZYSTKIM 🔥🔥🔥
-		// SPRAWDŹ CZY SĄ FILARY
+
+
 		if (!pillars || pillars.trim() === "") {
 			logger.debug("❌ [updateMember] - Brak filarów");
 			return res.status(400).json({
@@ -424,7 +424,7 @@ export const updateMember = async (req: Request, res: Response) => {
 			});
 		}
 
-		// SPRAWDŹ CZY NIE MA WIĘCEJ NIŻ 2 FILARY
+
 		const pillarsArray = pillars.split(", ").filter(Boolean);
 		if (pillarsArray.length > 2) {
 			logger.debug(
@@ -435,7 +435,7 @@ export const updateMember = async (req: Request, res: Response) => {
 			});
 		}
 
-		// DOPIERO TERAZ SPRAWDŹ CZY UŻYTKOWNIK ISTNIEJE
+
 		const existingUser = await prisma.user.findUnique({
 			where: { id: userId },
 		});
@@ -444,8 +444,8 @@ export const updateMember = async (req: Request, res: Response) => {
 			return res.status(404).json({ error: "Nie znaleziono użytkownika" });
 		}
 
-		// 1. Aktualizacja usera
-		// 1. Aktualizacja usera
+
+
 		const user = await prisma.user.update({
 			where: { id: userId },
 			data: {
@@ -454,7 +454,7 @@ export const updateMember = async (req: Request, res: Response) => {
 				email: email,
 				phone: phone || null,
 				functional_role: func || null,
-				team: team || null, // 🔥 DODAJ TĘ LINIĘ
+				team: team || null, 
 				pillars: pillars || null,
 				province: province || null,
 				status: status || existingUser.status,
@@ -462,7 +462,7 @@ export const updateMember = async (req: Request, res: Response) => {
 			},
 		});
 
-		// 2. Obsługa onboarding_data
+
 		try {
 			const existingOnboarding = await prisma.onboarding_data.findFirst({
 				where: { user_id: userId },
@@ -476,8 +476,8 @@ export const updateMember = async (req: Request, res: Response) => {
 						last_name: lastName,
 						email: email,
 						phone: phone || null,
-						// ❌ USUŃ TĘ LINIĘ:
-						// pillars: pillars || null,
+
+
 						province: province || "",
 						development_areas: JSON.stringify(interests || []),
 						skills: JSON.stringify(skills || []),
@@ -488,14 +488,14 @@ export const updateMember = async (req: Request, res: Response) => {
 					},
 				});
 			} else {
-				// Utwórz nowe - BEZ user_id
+
 				await prisma.onboarding_data.create({
 					data: {
 						first_name: firstName,
 						last_name: lastName,
 						email: email,
 						phone: phone || null,
-						// pillars: pillars || null, // ❌ USUNIĘTE - pole nie istnieje w onboarding_data
+
 						province: province || "",
 						development_areas: JSON.stringify(interests || []),
 						skills: JSON.stringify(skills || []),
@@ -512,12 +512,12 @@ export const updateMember = async (req: Request, res: Response) => {
 				});
 			}
 		} catch (onboardingError) {
-			// Loguj błąd ale nie przerywaj - user już jest zaktualizowany
+
 			logger.error("❌ Błąd przy zapisie onboarding_data:", onboardingError);
-			// Kontynuuj - ważne że user się zaktualizował
+
 		}
 
-		// 3. Zwróć odpowiedź
+
 		const mappedMember = {
 			id: user.id.toString(),
 			firstName: user.first_name,
@@ -525,7 +525,7 @@ export const updateMember = async (req: Request, res: Response) => {
 			function: user.functional_role || func || "Członek",
 			team: user.team || team || "Brak zespołu",
 			teamId: "",
-			pillars: user.pillars || pillars || "", // 🔥 DODAJ TĘ LINIĘ
+			pillars: user.pillars || pillars || "", 
 			province: user.province || province || "",
 			status: user.status || status || "trial",
 			interests: interests || [],

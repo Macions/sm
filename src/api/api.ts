@@ -9,7 +9,7 @@ const api = axios.create({
     timeout: 30000,
 });
 
-// Interceptor request
+
 api.interceptors.request.use(
     (config) => {
         const token = localStorage.getItem("accessToken");
@@ -21,7 +21,7 @@ api.interceptors.request.use(
     (error) => Promise.reject(error)
 );
 
-// Interceptor response
+
 api.interceptors.response.use(
     (response) => response,
     async (error) => {

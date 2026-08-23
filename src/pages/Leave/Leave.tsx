@@ -131,7 +131,7 @@ function LeaveCard({
 	onView,
 	onDelete,
 	onStatusChange,
-	onCancel,  // ⬅️ DODAJ TĘ LINIĘ
+	onCancel,  
 	canManage,
 	canViewReason,
 }: LeaveCardProps) {
@@ -506,7 +506,7 @@ interface LeaveModalProps {
 	onClose: () => void;
 	onSave?: (leave: LeaveRequest) => void;
 }
-// Dodaj przed komponentem Leave (około linii 600)
+
 const isLeaveActive = (leave: LeaveRequest): boolean => {
 	const today = new Date();
 	today.setHours(0, 0, 0, 0);
@@ -1131,7 +1131,7 @@ export default function Leave({ title }: { title?: string }) {
 					.includes(searchTerm.toLowerCase()) ||
 				(leave.reason || "").toLowerCase().includes(searchTerm.toLowerCase());
 
-			// 🔥 STATUS FILTR - DZIAŁA NIEZALEŻNIE OD leaveFilter
+
 			const matchesStatus =
 				selectedStatus === "all" || leave.status === selectedStatus;
 
@@ -1153,7 +1153,7 @@ export default function Leave({ title }: { title?: string }) {
 
 			const isActive = isLeaveActive(leave);
 
-			// 🔥 FILTR AKTYWNOŚCI
+
 			let matchesActiveFilter = true;
 
 			if (leaveFilter === "active") {
@@ -1169,12 +1169,12 @@ export default function Leave({ title }: { title?: string }) {
 					(leave.status === "approved" && today > archiveDate);
 				matchesActiveFilter = isArchived;
 			}
-			// leaveFilter === "all" - pokazuje WSZYSTKIE (w tym aktywne)
+
 
 			return matchesSearch && matchesStatus && matchesType && canView && matchesActiveFilter;
 		});
 
-		// Sortowanie od najnowszych
+
 		return result.sort((a, b) => {
 			return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
 		});
@@ -1378,7 +1378,7 @@ export default function Leave({ title }: { title?: string }) {
 		);
 	};
 
-	// ✅ DODAJ TĘ FUNKCJĘ w głównym komponencie Leave (obok handleStatusChange)
+
 	const handleCancelLeave = (id: string) => {
 		if (!canManage) {
 			toast.error("Nie masz uprawnień do anulowania urlopów");
@@ -1391,7 +1391,7 @@ export default function Leave({ title }: { title?: string }) {
 			return;
 		}
 
-		// Sprawdź czy urlop jest aktywny (w trakcie trwania)
+
 		if (!isLeaveActive(leave)) {
 			toast.error("Można anulować tylko aktywne urlopy");
 			return;
@@ -1422,7 +1422,7 @@ export default function Leave({ title }: { title?: string }) {
 						return;
 					}
 
-					// Aktualizuj stan lokalny
+
 					setLeaves((prevLeaves) =>
 						prevLeaves.map((l) =>
 							l.id === id

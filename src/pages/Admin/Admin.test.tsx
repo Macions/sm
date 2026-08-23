@@ -1,13 +1,13 @@
-// src/pages/Admin/Admin.test.tsx
+
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { BrowserRouter } from 'react-router-dom';
 import Admin from './Admin';
 
-// ============================================================
-// 🔥 MOCKI
-// ============================================================
+
+
+
 
 const mockNavigate = vi.fn();
 vi.mock('react-router-dom', async () => {
@@ -41,9 +41,9 @@ vi.mock('react-hot-toast', () => ({
     Toaster: () => null,
 }));
 
-// ============================================================
-// 🔥 MOCKOWE DANE
-// ============================================================
+
+
+
 
 const mockUser = {
     id: 1,
@@ -105,9 +105,9 @@ const mockLogs = {
     limit: 15,
 };
 
-// ============================================================
-// 🔥 TESTY
-// ============================================================
+
+
+
 
 describe('Admin Panel', () => {
     let useUserMock: any;
@@ -116,7 +116,7 @@ describe('Admin Panel', () => {
         vi.clearAllMocks();
         mockNavigate.mockClear();
 
-        // 🔥 DODAJ MOCK DLA LOGS
+
         globalThis.fetch = vi.fn().mockImplementation((url) => {
             if (url.includes('/api/profile')) {
                 return Promise.resolve({
@@ -148,7 +148,7 @@ describe('Admin Panel', () => {
                     json: () => Promise.resolve(mockMemberAccess),
                 });
             }
-            // 🔥 DODAJ MOCK DLA LOGS
+
             if (url.includes('/api/admin/logs')) {
                 return Promise.resolve({
                     ok: true,
@@ -168,9 +168,9 @@ describe('Admin Panel', () => {
         });
     });
 
-    // ============================================================
-    // ✅ TESTY RENDEROWANIA
-    // ============================================================
+
+
+
 
     it('powinien wyświetlić tytuł panelu administracyjnego', async () => {
         render(
@@ -244,9 +244,9 @@ describe('Admin Panel', () => {
         });
     });
 
-    // ============================================================
-    // ✅ TESTY DOSTĘPU (Tylko jeśli komponent jest widoczny)
-    // ============================================================
+
+
+
 
     it('powinien wyświetlić listę członków z dostępami', async () => {
         render(
@@ -255,7 +255,7 @@ describe('Admin Panel', () => {
             </BrowserRouter>
         );
 
-        // 🔥 CZEKAJ NA ZAŁADOWANIE DANYCH
+
         await waitFor(() => {
             expect(screen.getByText('Jan Kowalski')).toBeInTheDocument();
             expect(screen.getByText('Instagram')).toBeInTheDocument();
@@ -291,9 +291,9 @@ describe('Admin Panel', () => {
         expect(screen.getByText('Dodaj dostęp dla członka')).toBeInTheDocument();
     });
 
-    // ============================================================
-    // ✅ TESTY ZESPOŁÓW
-    // ============================================================
+
+
+
 
     it('powinien wyświetlić listę zespołów', async () => {
         render(
@@ -320,9 +320,9 @@ describe('Admin Panel', () => {
         });
     });
 
-    // ============================================================
-    // ✅ TESTY RÓL
-    // ============================================================
+
+
+
 
     it('powinien wyświetlić listę ról', async () => {
         render(
@@ -332,19 +332,19 @@ describe('Admin Panel', () => {
         );
 
         await waitFor(() => {
-            // 🔥 UŻYJ queryAllByText i sprawdź czy jest więcej niż 0
+
             const adminElements = screen.getAllByText('Administrator główny');
             expect(adminElements.length).toBeGreaterThan(0);
 
-            // 🔥 LUB użyj getAllByText i sprawdź pierwszy
+
             const memberElements = screen.getAllByText('Członek');
             expect(memberElements.length).toBeGreaterThan(0);
         });
     });
 
-    // ============================================================
-    // ✅ TESTY STATYSTYK
-    // ============================================================
+
+
+
 
     it('powinien wyświetlić statystyki organizacji', async () => {
         render(
@@ -360,9 +360,9 @@ describe('Admin Panel', () => {
         });
     });
 
-    // ============================================================
-    // ✅ TESTY BEZPIECZEŃSTWA
-    // ============================================================
+
+
+
 
     it('nie powinien wyświetlić panelu admina dla zwykłego użytkownika', async () => {
         const { useUser } = await import('@/context/UserContext');

@@ -69,8 +69,8 @@ function AppRoutes() {
 
 			try {
 				logger.debug("🔐 [Auth] Weryfikacja tokena...");
-				// Spróbuj wywołać endpoint chroniony - np. pobierz profil
-				await api.get("/auth/me"); // lub inny endpoint weryfikacyjny
+
+				await api.get("/auth/me"); 
 				logger.debug("✅ [Auth] Token ważny");
 				setIsAuthenticated(true);
 			} catch (error: any) {
@@ -79,7 +79,7 @@ function AppRoutes() {
 					error?.response?.status,
 				);
 				localStorage.removeItem("accessToken");
-				localStorage.removeItem("refreshToken"); // jeśli używasz
+				localStorage.removeItem("refreshToken"); 
 				setIsAuthenticated(false);
 			} finally {
 				setIsLoading(false);
@@ -89,7 +89,7 @@ function AppRoutes() {
 		verifyToken();
 	}, []);
 
-	// Nasłuchuj zmian tokena w innych kartach przeglądarki
+
 	useEffect(() => {
 		const handleStorageChange = (e: StorageEvent) => {
 			if (e.key === "accessToken") {
@@ -97,7 +97,7 @@ function AppRoutes() {
 					logger.debug("🔐 [Auth] Token usunięty w innej karcie");
 					setIsAuthenticated(false);
 				} else {
-					// Token został dodany w innej karcie - sprawdź czy jest ważny
+
 					setIsLoading(true);
 					const verifyNewToken = async () => {
 						try {
@@ -119,7 +119,7 @@ function AppRoutes() {
 		return () => window.removeEventListener("storage", handleStorageChange);
 	}, []);
 
-	// Jeśli sprawdzamy autentykację - pokaż loading
+
 	if (isLoading) {
 		return <Loading />;
 	}

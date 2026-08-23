@@ -138,10 +138,10 @@ const downloadFile = async (url: string, fileName: string) => {
 			window.URL.revokeObjectURL(downloadUrl);
 		}, 1000);
 
-		toast.success("Plik pobrany pomyślnie!"); // ← DODAJ
+		toast.success("Plik pobrany pomyślnie!"); 
 	} catch (error) {
 		logger.error("Błąd pobierania:", error);
-		toast.error("Nie udało się pobrać pliku"); // ← ZMIEŃ NA TOAST
+		toast.error("Nie udało się pobrać pliku"); 
 	}
 };
 
@@ -452,10 +452,10 @@ function TutorialModal({
 					? "Poradnik został zaktualizowany!"
 					: "Poradnik został dodany!",
 			);
-			// NOWE
+
 		} catch (error) {
 			logger.error("Błąd zapisu:", error);
-			toast.error(`Nie udało się zapisać: ${(error as Error).message}`); // ← ZMIEŃ
+			toast.error(`Nie udało się zapisać: ${(error as Error).message}`); 
 		} finally {
 			setIsUploading(false);
 			setLoading(false);
@@ -463,9 +463,9 @@ function TutorialModal({
 	};
 
 	const handleFileUpload = (file: File) => {
-		// NOWE
+
 		if (file.size > 10 * 1024 * 1024) {
-			toast.error("Plik jest za duży. Maksymalny rozmiar: 10MB"); // ← ZMIEŃ
+			toast.error("Plik jest za duży. Maksymalny rozmiar: 10MB"); 
 			return;
 		}
 
@@ -506,7 +506,7 @@ function TutorialModal({
 				if (!response.ok) {
 					throw new Error("Nie udało się usunąć pliku");
 				}
-				// NOWE - toast po udanym usunięciu z API
+
 				toast.success(`️ Usunięto plik: ${attachment.name}`);
 			} catch (error) {
 				logger.error("Błąd usuwania pliku:", error);
@@ -514,11 +514,11 @@ function TutorialModal({
 				return;
 			}
 		} else if (attachment) {
-			// Jeśli nie ma ID (nowy plik nie zapisany w bazie)
+
 			toast.success(`️ Usunięto plik: ${attachment.name}`);
 		}
 
-		// Usuń z listy tylko jeśli attachment istnieje
+
 		if (attachment) {
 			setFormData({
 				...formData,
@@ -958,7 +958,7 @@ export default function Tutorials() {
 		return {
 			id: String(contextUser.id),
 			name: `${contextUser.firstName} ${contextUser.lastName}`,
-			// ROZSZERZ TYP - dodaj "admin" i "board"
+
 			role: contextUser.role as
 				| "admin"
 				| "board"
@@ -975,21 +975,21 @@ export default function Tutorials() {
 		};
 	}, [contextUser]);
 
-	// Kto może zarządzać poradnikami?
+
 	const canManageTutorials = useMemo(() => {
 		if (!currentUser) return false;
 
-		// Admin i Zarząd zawsze mogą
+
 		if (currentUser.role === "admin" || currentUser.role === "board") {
 			return true;
 		}
 
-		// Koordynator/Lider może zarządzać
+
 		if (currentUser.isLeader === true) {
 			return true;
 		}
 
-		// Sprawdź uprawnienia
+
 		return hasPermission(currentUser.role, "canManageGuides");
 	}, [currentUser]);
 	useEffect(() => {
@@ -1022,7 +1022,7 @@ export default function Tutorials() {
 		fetchUserAndTutorials();
 	}, []);
 	const canViewTutorial = (tutorial: Tutorial): boolean => {
-		// Admin i Zarząd widzą wszystko
+
 		if (
 			(currentUser?.role as any) === "admin" ||
 			(currentUser?.role as any) === "board"
@@ -1030,7 +1030,7 @@ export default function Tutorials() {
 			return true;
 		}
 
-		// Koordynatorzy widzą więcej
+
 		const isCoordinator = currentUser?.isLeader === true;
 
 		if (tutorial.access === "all") return true;
@@ -1117,7 +1117,7 @@ export default function Tutorials() {
 				throw new Error("Błąd usuwania");
 			}
 
-			// Odśwież listę
+
 			const fetchResponse = await fetch("/api/tutorials", {
 				headers: {
 					Authorization: `Bearer ${token}`,

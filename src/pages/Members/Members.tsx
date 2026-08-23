@@ -29,9 +29,9 @@ import {
 } from "lucide-react";
 import styles from "./Members.module.css";
 
-// ---------------------------------------------------------------------------
-// MAPOWANIE AREAS Z ANGIELSKIEGO NA POLSKI
-// ---------------------------------------------------------------------------
+
+
+
 const PILLAR_MAP: Record<string, string> = {
 	Konferencyjny: "Filar Konferencyjny",
 	Projektowy: "Filar Projektowy",
@@ -60,14 +60,14 @@ const AREA_LABELS: Record<string, string> = {
 	event_organization: "Organizacja wydarzeń",
 };
 
-// Funkcja do mapowania listy obszarów
+
 const mapAreas = (areas: string[]): string[] => {
 	if (!areas || !Array.isArray(areas)) return [];
 	return areas.map((area) => AREA_LABELS[area] || area);
 };
-// ---------------------------------------------------------------------------
-// TYPY
-// ---------------------------------------------------------------------------
+
+
+
 
 type MemberStatus = "active" | "trial" | "mentor" | "vacation" | "";
 type MemberVacation = {
@@ -165,7 +165,7 @@ const mapApiUserToMember = (user: ApiUser): Member => {
 		teamId: user.team_id || (teams.length > 0 ? teams.join("-") : ""),
 		pillars: user.pillars || "",
 		province: user.province || "",
-		// 🔥 UŻYJ STATUSU Z BAZY - NIE NADPISUJ!
+
 		status: (user.status || "trial") as MemberStatus,
 		interests:
 			hasOnboardingData && onboarding.development_areas
@@ -259,8 +259,8 @@ const mapApiUserToMember = (user: ApiUser): Member => {
 			status: "paid",
 			arrears: 0,
 		},
-		// ❌ USUŃ TĘ LINIĘ:
-		// hasOnboarding: hasOnboardingData,
+
+
 	};
 };
 const STATUS_LABELS: Record<MemberStatus, string> = {
@@ -287,9 +287,9 @@ const STATUS_ICONS: Record<MemberStatus, React.ReactNode> = {
 	"": <Clock size={14} />,
 };
 
-// ---------------------------------------------------------------------------
-// KOMPONENT KARTY CZŁONKA
-// ---------------------------------------------------------------------------
+
+
+
 
 interface MemberCardProps {
 	member: Member;
@@ -364,7 +364,7 @@ function MemberCard({
 								{transformPillars(member.pillars)}
 							</span>
 						)}
-						// W MemberCard, w widoku listy (linia ~200)
+
 						{/* Zespoły (pomijając filary) */}
 						{member.team && member.team !== "Brak zespołu" && (
 							<span className={styles.memberCard__detail}>
@@ -372,7 +372,7 @@ function MemberCard({
 								{member.team
 									.split(", ")
 									.filter((team) => team !== "Brak zespołu")
-									// 🔥 DODAJ - WYKLUCZ "Mentorzy"
+
 									.filter((team) => team !== "Mentorzy")
 									.filter((team) => {
 										if (member.pillars) {
@@ -469,7 +469,7 @@ function MemberCard({
 					{member.team
 						.split(", ")
 						.filter((team) => team !== "Brak zespołu")
-						// 🔥 DODAJ - WYKLUCZ "Mentorzy"
+
 						.filter((team) => team !== "Mentorzy")
 						.filter((team) => {
 							if (member.pillars) {
@@ -548,9 +548,9 @@ function MemberCard({
 	);
 }
 
-// ---------------------------------------------------------------------------
-// MODAL PROFILU
-// ---------------------------------------------------------------------------
+
+
+
 
 interface ProfileModalProps {
 	isOpen: boolean;
@@ -586,8 +586,8 @@ function ProfileModal({
 	isEdit = false,
 	onClose,
 	onSave,
-	contributionStats, // ← DODAJ
-	loadingContributions, // ← DODAJ
+	contributionStats, 
+	loadingContributions, 
 }: ProfileModalProps) {
 	const [formData, setFormData] = useState<Partial<Member>>({
 		firstName: "",
@@ -628,9 +628,9 @@ function ProfileModal({
 
 	useEffect(() => {
 		if (member) {
-			// 🔥 USUŃ TĘ LOGIKĘ - nie nadpisuj statusu na podstawie zespołu!
-			// const teams = member.team ? member.team.split(", ") : [];
-			// const isMentor = teams.includes("Mentorzy");
+
+
+
 
 			const newFormData = {
 				id: member.id,
@@ -641,7 +641,7 @@ function ProfileModal({
 				teamId: member.teamId || "",
 				pillars: member.pillars || "",
 				province: member.province || "",
-				// 🔥 UŻYJ ORYGINALNEGO STATUSU Z BAZY, NIE NADPISUJ!
+
 				status: (member.status as MemberStatus) || "trial",
 				interests: member.interests || [],
 				skills: member.skills || [],
@@ -774,12 +774,12 @@ function ProfileModal({
 		!isEdit &&
 		(hasPermission(currentUser?.role, "canViewAllUsers") ||
 			currentUser.id === currentMember?.id);
-	// console.log("[ProfileModal] START");
-	// console.log("[ProfileModal] contributionStats:", contributionStats);
-	// console.log("[ProfileModal] loadingContributions:", loadingContributions);
-	// console.log("[ProfileModal] canViewSensitive:", canViewSensitive);
-	// console.log("[ProfileModal] isOpen:", isOpen);
-	// console.log("[ProfileModal] member:", member?.id);
+
+
+
+
+
+
 	const addItem = (
 		list: string[],
 		setList: (list: string[]) => void,
@@ -807,8 +807,8 @@ function ProfileModal({
 		}
 
 		if (onSave && canEdit) {
-			// 🔥 Wywołaj onSave z nowym statusem
-			// Endpoint PUT /api/members/:id/status zostanie wywołany w handleSaveMember
+
+
 			const saveData: Member = {
 				...currentMember,
 				...formData,
@@ -953,7 +953,7 @@ function ProfileModal({
 															? formData.pillars.split(", ")
 															: [];
 
-														// 🔥 DODAJ TEN WARUNEK
+
 														if (currentPillars.length >= 2) {
 															toast.error("Można dodać maksymalnie 2 filary");
 															e.target.value = "";
@@ -998,14 +998,14 @@ function ProfileModal({
 																const newPillars = currentPillars.filter(
 																	(p) => p !== pillar,
 																);
-																// console.log(
-																// 	"🔍 [removeTag] Przed:",
-																// 	formData.pillars,
-																// );
-																// console.log(
-																// 	"🔍 [removeTag] Po:",
-																// 	newPillars.join(", "),
-																// );
+
+
+
+
+
+
+
+
 																setFormData({
 																	...formData,
 																	pillars: newPillars.join(", "),
@@ -1974,9 +1974,9 @@ function ProfileModal({
 	);
 }
 
-// ---------------------------------------------------------------------------
-// GŁÓWNY KOMPONENT
-// ---------------------------------------------------------------------------
+
+
+
 
 export default function Members({ title }: { title?: string }) {
 	const navigate = useNavigate();
@@ -2027,7 +2027,7 @@ export default function Members({ title }: { title?: string }) {
 				? `/api/dashboard/contributions/${memberId}`
 				: "/api/dashboard/contributions";
 
-			// console.log(`📊 [fetch] Pobieram dla: ${memberId || "ALL"}`);
+
 
 			const response = await fetch(url, {
 				headers: {
@@ -2038,10 +2038,10 @@ export default function Members({ title }: { title?: string }) {
 
 			if (response.ok) {
 				const data = await response.json();
-				// console.log("💰 [fetch] Dane:", data);
+
 				setContributionStats(data);
 
-				// 🔥 WYMUŚ ODSWIEŻENIE - zaktualizuj members
+
 				setMembers((prev) => [...prev]);
 			} else {
 				console.error("❌ [fetch] Błąd:", response.status);
@@ -2073,25 +2073,25 @@ export default function Members({ title }: { title?: string }) {
 		}
 	};
 
-	// Wywołaj przy załadowaniu strony
+
 	useEffect(() => {
 		if (currentUser?.role === "admin" || currentUser?.role === "board") {
 			fetchAllContributions();
 		}
 	}, [currentUser]);
-	// Wywołanie z ID członka
+
 	useEffect(() => {
-		// console.log(
-		// 	"🔄 [useEffect] isProfileOpen:",
-		// 	isProfileOpen,
-		// 	"isEditOpen:",
-		// 	isEditOpen,
-		// 	"selectedMember:",
-		// 	selectedMember?.id,
-		// );
+
+
+
+
+
+
+
+
 		if (isProfileOpen || isEditOpen) {
 			if (selectedMember?.id) {
-				// console.log("📊 [useEffect] Wywołuję fetch dla:", selectedMember.id);
+
 				fetchContributionStats(selectedMember.id);
 			}
 		}
@@ -2152,9 +2152,9 @@ export default function Members({ title }: { title?: string }) {
 				const membersData = await membersResponse.json();
 				logger.debug("Dane z backendu:", membersData);
 
-				// ---------------------------------------------------------------------------
-				// MAPOWANIE API USER -> MEMBER
-				// ---------------------------------------------------------------------------
+
+
+
 				const mappedMembers = membersData.map(mapApiUserToMember);
 
 				logger.debug("Wszyscy członkowie po mapowaniu:", mappedMembers);
@@ -2207,7 +2207,7 @@ export default function Members({ title }: { title?: string }) {
 
 	const handleAddNewMember = useCallback(
 		async (member: Member) => {
-			// 🔥 DODAJ NA POCZĄTKU FUNKCJI
+
 			const pillarsArray = member.pillars
 				? member.pillars.split(", ").filter(Boolean)
 				: [];
@@ -2222,7 +2222,7 @@ export default function Members({ title }: { title?: string }) {
 				return;
 			}
 
-			// Potem idzie istniejący kod:
+
 			if (!member.status) {
 				toast.error("Wybierz status członka");
 				return;
@@ -2377,14 +2377,14 @@ export default function Members({ title }: { title?: string }) {
 	const teams = useMemo(() => {
 		const allTeams = new Set<string>();
 		members.forEach((member) => {
-			// Zespoły z team
+
 			const teamList = member.team.split(", ");
 			teamList.forEach((team) => {
 				if (team && team !== "Brak zespołu") {
 					allTeams.add(team);
 				}
 			});
-			// Filary z pillars
+
 			if (member.pillars) {
 				const pillarList = member.pillars.split(", ");
 				pillarList.forEach((pillar) => {
@@ -2448,7 +2448,7 @@ export default function Members({ title }: { title?: string }) {
 	const filteredMembers = useMemo(() => {
 		const result = members
 			.filter((member) => {
-				// POMIŃ ADMINA SYSTEMOWEGO
+
 				const isSystemAdmin =
 					member.email === "admin@system.pl" ||
 					(member.firstName === "Admin" && member.lastName === "System");
@@ -2462,12 +2462,12 @@ export default function Members({ title }: { title?: string }) {
 				const matchesFunction =
 					selectedFunction === "all" || member.function === selectedFunction;
 
-				// Pełne imię i nazwisko
+
 				const fullName =
 					`${member.firstName || ""} ${member.lastName || ""}`.toLowerCase();
 
 				const matchesSearch =
-					fullName.includes(searchLower) || // <-- DODAJ TĘ LINIĘ (szuka po całym imieniu i nazwisku)
+					fullName.includes(searchLower) || 
 					(member.firstName || "").toLowerCase().includes(searchLower) ||
 					(member.lastName || "").toLowerCase().includes(searchLower) ||
 					(member.function || "").toLowerCase().includes(searchLower) ||
@@ -2493,7 +2493,7 @@ export default function Members({ title }: { title?: string }) {
 			.map((member) => {
 				let contributionBadge: "paid" | "pending" | "none" = "none";
 
-				// 🔥 SPRAWDŹ W MAPIE WSZYSTKICH SKŁADEK
+
 				const contribution = allContributions[member.id];
 				if (contribution) {
 					contributionBadge =
@@ -2537,8 +2537,8 @@ export default function Members({ title }: { title?: string }) {
 		selectedFunction,
 		sortBy,
 		sortOrder,
-		contributionStats, // 🔥 DODAJ
-		selectedMember, // 🔥 DODAJ
+		contributionStats, 
+		selectedMember, 
 		allContributions,
 	]);
 
@@ -2575,7 +2575,7 @@ export default function Members({ title }: { title?: string }) {
 					throw new Error(errorData.error || "Błąd zmiany statusu");
 				}
 
-				// Odśwież listę
+
 				const membersResponse = await fetch("/api/members", {
 					headers: { Authorization: `Bearer ${token}` },
 				});
@@ -2599,7 +2599,7 @@ export default function Members({ title }: { title?: string }) {
 	);
 	const handleSaveMember = useCallback(
 		async (updatedMember: Member) => {
-			// Walidacja filarów
+
 			const pillarsArray = updatedMember.pillars
 				? updatedMember.pillars.split(", ").filter(Boolean)
 				: [];
@@ -2622,10 +2622,10 @@ export default function Members({ title }: { title?: string }) {
 					return;
 				}
 
-				// 1. ZMIEŃ STATUS
+
 				await handleStatusChange(updatedMember, updatedMember.status);
 
-				// 2. ZAKTUALIZUJ RESZTĘ DANYCH
+
 				const response = await fetch(`/api/members/${updatedMember.id}`, {
 					method: "PUT",
 					headers: {
@@ -2642,7 +2642,7 @@ export default function Members({ title }: { title?: string }) {
 						email: updatedMember.email,
 						phone: updatedMember.phone,
 						joinDate: updatedMember.joinDate,
-						// ... inne pola
+
 					}),
 				});
 
@@ -2650,7 +2650,7 @@ export default function Members({ title }: { title?: string }) {
 					throw new Error("Błąd aktualizacji danych");
 				}
 
-				// Odśwież listę
+
 				const membersResponse = await fetch("/api/members", {
 					headers: { Authorization: `Bearer ${token}` },
 				});
@@ -2680,7 +2680,7 @@ export default function Members({ title }: { title?: string }) {
 		setSearchTerm("");
 		setSelectedProvince("all");
 		setSelectedTeam("all");
-		setSelectedFunction("all"); // 🔥 DODAJ TĘ LINIĘ
+		setSelectedFunction("all"); 
 	}, []);
 
 	const toggleSort = useCallback(
@@ -2804,7 +2804,7 @@ export default function Members({ title }: { title?: string }) {
 
 					{(selectedProvince !== "all" ||
 						selectedTeam !== "all" ||
-						selectedFunction !== "all" || // 🔥 DODANE
+						selectedFunction !== "all" || 
 						searchTerm) && (
 							<button className={styles.filters__reset} onClick={clearFilters}>
 								Wyczyść filtry
@@ -2948,9 +2948,9 @@ export default function Members({ title }: { title?: string }) {
 					setIsProfileOpen(false);
 					setSelectedMember(null);
 				}}
-				// ============================================================
-				// DODAJ TE PROPSY:
-				// ============================================================
+
+
+
 				contributionStats={contributionStats}
 				loadingContributions={loadingContributions}
 			/>
@@ -2964,9 +2964,9 @@ export default function Members({ title }: { title?: string }) {
 					setSelectedMember(null);
 				}}
 				onSave={handleSaveMember}
-				// ============================================================
-				// DODAJ TE PROPSY:
-				// ============================================================
+
+
+
 				contributionStats={contributionStats}
 				loadingContributions={loadingContributions}
 			/>

@@ -5,7 +5,7 @@ import App from './App';
 
 describe('App', () => {
     beforeAll(() => {
-        // 🔥 DODAJ ELEMENT #root PRZED TESTEM
+
         const root = document.createElement('div');
         root.id = 'root';
         document.body.appendChild(root);

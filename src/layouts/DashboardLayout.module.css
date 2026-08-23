@@ -22,7 +22,7 @@
 	overflow: hidden; /* 👈 ZMIENIONE: ukryj overflow na poziomie layout */
 }
 
-/* 👇 KONTENER – Sidebar + (Header + Main) w rzędzie */
+
 .content {
 	display: flex;
 	flex: 1;
@@ -30,7 +30,7 @@
 	overflow: hidden;
 }
 
-/* 👇 NOWY KONTENER DLA HEADER + MAIN */
+
 .mainWrapper {
 	display: flex;
 	flex-direction: column;
@@ -39,7 +39,7 @@
 	overflow: hidden;
 }
 
-/* 👇 GŁÓWNA ZAWARTOŚĆ – TYLKO OUTLET */
+
 .main {
 	flex: 1;
 	padding: 26px 34px 50px;
@@ -52,7 +52,7 @@
 	background: var(--bg-app, #f1f1f7);
 }
 
-/* 👇 ŁADOWANIE */
+
 .loadingContainer {
 	display: flex;
 	justify-content: center;

@@ -2910,7 +2910,7 @@
 	color: #64748b;
 }
 
-/* 🔥 KONTAKTY - BEZ ROZWIJANIA */
+
 .onboardingContactCard__contacts {
 	margin-top: 12px;
 	padding-top: 12px;
@@ -2981,7 +2981,7 @@
 	white-space: nowrap;
 }
 
-/* Responsywność */
+
 @media (width <= 640px) {
 	.onboardingContactCard__header {
 		flex-direction: column;

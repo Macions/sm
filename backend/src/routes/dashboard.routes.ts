@@ -1,4 +1,4 @@
-// src/routes/dashboard.routes.ts
+
 
 import { Router } from "express";
 import { DashboardController } from "../controllers/dashboardController";
@@ -25,11 +25,11 @@ router.get(
 	controller.getContributionStats.bind(controller),
 );
 
-// 🔥 POPRAWIONE - używamy `controller`, nie `dashboardController`
+
 router.get(
 	"/contributions/:userId",
 	authMiddleware,
-	controller.getUserContributionStats.bind(controller), // ✅ POPRAWIONE
+	controller.getUserContributionStats.bind(controller), 
 );
 
 router.put(

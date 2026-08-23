@@ -1,4 +1,4 @@
-// backend/src/services/revenue.service.ts
+
 import { smPool, ewidencjaPool } from "../config/db";
 
 interface MonthlyRevenue {
@@ -33,11 +33,11 @@ export class RevenueService {
 		year: number = new Date().getFullYear(),
 	): Promise<RevenueData> {
 		try {
-			// console.log(`📊 Pobieram dane przychodów i wydatków dla roku ${year}...`);
 
-			// ============================================================
-			// 1. Pobierz dane z tabeli payments (przychody + wydatki)
-			// ============================================================
+
+
+
+
 			const [paymentRows]: any[] = await smPool.query(
 				`SELECT 
 					MONTH(payment_date) as month,
@@ -52,9 +52,9 @@ export class RevenueService {
 				[year],
 			);
 
-			// ============================================================
-			// 2. Pobierz dane z tabeli invoices (faktury - wydatki)
-			// ============================================================
+
+
+
 			const [invoiceRows]: any[] = await ewidencjaPool.query(
 				`SELECT 
 					MONTH(invoice_date) as month,
@@ -89,9 +89,9 @@ export class RevenueService {
 				});
 			}
 
-			// ============================================================
-			// STAŁY MIESIĘCZNY WYDATEK NA BIURO - 100 zł miesięcznie
-			// ============================================================
+
+
+
 			const MONTHLY_OFFICE_COST = 60.27;
 
 			const months: MonthlyRevenue[] = monthNames.map((monthName, index) => {
@@ -100,7 +100,7 @@ export class RevenueService {
 				const expensesFromPayments = expensesMap.get(monthNumber) || 0;
 				const expensesFromInvoices = invoiceMap.get(monthNumber) || 0;
 
-				// DODAJ STAŁY WYDATEK NA BIURO DO KAŻDEGO MIESIĄCA
+
 				const totalExpenses = expensesFromPayments + expensesFromInvoices + MONTHLY_OFFICE_COST;
 
 				return {
@@ -141,16 +141,16 @@ export class RevenueService {
 		}
 	}
 
-	// ============================================================
-	// Kategorie przychodów z payments - PEŁNA KATEGORYZACJA
-	// ============================================================
+
+
+
 	async getRevenueByCategory(year: number): Promise<CategoryData[]> {
 		try {
-			// console.log(`🔍 [KATEGORIE] Pobieram kategorie dla roku ${year}...`);
 
-			// ============================================================
-			// Pobierz dane z payments z pełną kategoryzacją
-			// ============================================================
+
+
+
+
 			const [rows]: any[] = await smPool.query(
 				`SELECT 
 					MONTH(payment_date) as month,
@@ -205,21 +205,21 @@ export class RevenueService {
 				[year],
 			);
 
-			// ============================================================
-			// LOGI - zobacz co zostało skategoryzowane
-			// ============================================================
-			// console.log(`📊 [KATEGORIE] Znaleziono ${rows.length} kategorii`);
+
+
+
+
 			if (Array.isArray(rows) && rows.length > 0) {
 				rows.forEach((row: any) => {
-					// console.log(`  - Miesiąc: ${row.month}, Kategoria: ${row.category}, Kwota: ${row.total}`);
+
 				});
 			} else {
-				// console.log(`⚠️ [KATEGORIE] Brak danych dla roku ${year}`);
+
 			}
 
-			// ============================================================
-			// Dodaj wydatki z faktur do kategorii
-			// ============================================================
+
+
+
 			const [invoiceRows]: any[] = await ewidencjaPool.query(
 				`SELECT 
 					MONTH(invoice_date) as month,
@@ -242,7 +242,7 @@ export class RevenueService {
 				[year],
 			);
 
-			// console.log(`📄 [KATEGORIE] Znaleziono ${invoiceRows.length} miesięcy z fakturami`);
+
 
 			const monthNames = [
 				"Styczeń",
@@ -272,7 +272,7 @@ export class RevenueService {
 
 			const result: any = {};
 
-			// Inicjalizuj dane dla każdego miesiąca
+
 			monthNames.forEach((month, index) => {
 				result[month] = { month, monthIndex: index + 1 };
 				categories.forEach((cat) => {
@@ -280,7 +280,7 @@ export class RevenueService {
 				});
 			});
 
-			// Wypełnij danymi z payments
+
 			if (Array.isArray(rows)) {
 				rows.forEach((row: any) => {
 					const monthName = monthNames[row.month - 1];
@@ -295,7 +295,7 @@ export class RevenueService {
 				});
 			}
 
-			// Wypełnij danymi z faktur
+
 			if (Array.isArray(invoiceRows)) {
 				invoiceRows.forEach((row: any) => {
 					const monthName = monthNames[row.month - 1];
@@ -305,10 +305,10 @@ export class RevenueService {
 				});
 			}
 
-			// ============================================================
-			// DODAJ STAŁY WYDATEK BIUROWY DO KAŻDEGO MIESIĄCA
-			// ============================================================
-			const MONTHLY_OFFICE_COST = 60.27; // 100 zł miesięcznie
+
+
+
+			const MONTHLY_OFFICE_COST = 60.27; 
 
 			monthNames.forEach((month) => {
 				if (result[month]) {
@@ -316,13 +316,13 @@ export class RevenueService {
 				}
 			});
 
-			// ============================================================
-			// PODSUMOWANIE - zobacz końcowy wynik
-			// ============================================================
-			// console.log(`✅ [KATEGORIE] Dodano stały wydatek biurowy: ${MONTHLY_OFFICE_COST} zł/miesiąc`);
-			// console.log(`✅ [KATEGORIE] Zakończono kategoryzację dla roku ${year}`);
+
+
+
+
+
 			const resultValues = Object.values(result);
-			// console.log(`📊 [KATEGORIE] Zwracam ${resultValues.length} miesięcy danych`);
+
 
 			return resultValues as CategoryData[];
 		} catch (error) {
@@ -333,7 +333,7 @@ export class RevenueService {
 
 	async getMonthlyDetails(year: number, month: number): Promise<any> {
 		try {
-			// console.log(`📊 Pobieram szczegóły dla ${year}-${month}...`);
+
 
 			const [revenueRows]: any[] = await smPool.query(
 				`SELECT 

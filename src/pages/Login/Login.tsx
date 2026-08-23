@@ -1,8 +1,8 @@
-// frontend/src/pages/Login.tsx
+
 
 import React, { useState } from "react";
 import { useUser } from "@/context/UserContext";
-import { useGoogleLogin } from "@react-oauth/google"; // ✅ TYLKO useGoogleLogin
+import { useGoogleLogin } from "@react-oauth/google";
 import styles from "./Login.module.css";
 import { logger } from "@/utils/logger";
 
@@ -23,31 +23,31 @@ const Login: React.FC = () => {
 	};
 
 	const checkOnboardingStatus = async () => {
-		// 🔥 NAJPROSTSZE ROZWIĄZANIE - ZAWSZE IDŹ DO DASHBOARD
-		// console.log("✅ Logowanie udane! Przekierowuję na dashboard...");
-		window.location.href = "/dashboard"; // ← BEZPOŚREDNIE PRZEKIEROWANIE
+
+
+		window.location.href = "/dashboard";
 	};
 
-	// ✅ LOGOWANIE PRZEZ GOOGLE Z DOSTĘPEM DO KALENDARZA
-	// frontend/src/pages/Login.tsx
+
+
 
 	const loginWithCalendar = useGoogleLogin({
 		onSuccess: async (tokenResponse) => {
 			logger.debug("✅ Logowanie z zakresami kalendarza - sukces!");
 			setLoading(true);
 			setError(null);
-			// console.log("Access Token:", tokenResponse.access_token);
+
 
 			try {
-				// ✅ ZMIEŃ NA /api/auth/google-token
+
 				const response = await fetch("/api/auth/google-token", {
-					// ← TU ZMIANA!
+
 					method: "POST",
 					headers: {
 						"Content-Type": "application/json",
 					},
 					body: JSON.stringify({
-						accessToken: tokenResponse.access_token, // ← TU ZMIANA NA accessToken
+						accessToken: tokenResponse.access_token,
 					}),
 				});
 
@@ -167,7 +167,7 @@ const Login: React.FC = () => {
 
 						{error && <div className={styles.errorMessage}>{error}</div>}
 
-						<form onSubmit={handleSubmit} hidden>
+						<form onSubmit={handleSubmit} >
 							<div className={styles.inputGroup}>
 								<input
 									type="email"

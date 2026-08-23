@@ -18,7 +18,7 @@
 	box-sizing: border-box;
 }
 
-/* 👇 LEWA STRONA TOPBARA */
+
 .topbar__left {
 	display: flex;
 	align-items: center;
@@ -26,7 +26,7 @@
 	flex-shrink: 0;
 }
 
-/* Przycisk zwijania sidebaru (desktop) */
+
 .topbar__menu {
 	display: flex;
 	align-items: center;
@@ -46,7 +46,7 @@
 	color: #1f2937;
 }
 
-/* 👇 BURGER – WIDOCZNY TYLKO NA MOBILNYCH */
+
 .topbar__burger {
 	display: none;
 	align-items: center;
@@ -75,7 +75,7 @@
 	color: #4a6fe8;
 }
 
-/* 👇 TYTUŁ */
+
 .topbar__title {
 	font-size: 20px;
 	font-weight: 600;
@@ -84,7 +84,7 @@
 	flex-shrink: 0;
 }
 
-/* 👇 WYSZUKIWARKA */
+
 .topbar__search {
 	display: flex;
 	align-items: center;
@@ -119,7 +119,7 @@
 	color: #9ca3af;
 }
 
-/* 👇 AKCJE (PRAWA STRONA) */
+
 .topbar__actions {
 	display: flex;
 	align-items: center;
@@ -128,7 +128,7 @@
 	flex-shrink: 0;
 }
 
-/* 👇 PRZYCISK IKONOWY */
+
 .iconBtn {
 	position: relative;
 	display: flex;
@@ -314,7 +314,7 @@
 	background: #f8faff;
 }
 
-/* 👇 POJEDYNCZE POWIADOMIENIE */
+
 .notification {
 	display: flex;
 	gap: 12px;
@@ -434,7 +434,7 @@
    RESPONSYWNOŚĆ
    ============================================================ */
 
-/* Tablety i mniejsze */
+
 @media (max-width: 768px) {
 	.topbar {
 		padding: 8px 16px;
@@ -470,7 +470,7 @@
 	}
 }
 
-/* Telefony */
+
 @media (max-width: 480px) {
 	.topbar {
 		padding: 8px 12px;
@@ -806,7 +806,7 @@
 	color: var(--text-faint, #b8a9e8);
 }
 
-/* 👇 RESPONSYWNOŚĆ DLA WYNIKÓW */
+
 @media (max-width: 768px) {
 	.searchResultsDropdown {
 		position: fixed;

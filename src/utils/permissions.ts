@@ -29,8 +29,8 @@ export type Permission =
 	| "canManageTeams"
 	| "canViewStructure"
 	| "canEditProfile"
-	| "canManageAllProjects" // Admin - zarządza wszystkimi projektami
-	| "canManagePillarProjects" // Koordynator - zarządza projektami w swoim filarze
+	| "canManageAllProjects" 
+	| "canManagePillarProjects" 
 	| "canManagePillarIdeas";
 
 export const PERMISSION_LABELS: Record<Permission, string> = {
@@ -95,9 +95,9 @@ export const DEFAULT_PERMISSIONS: Record<UserRole, Permission[]> = {
 		"canRejectLeaves",
 		"canViewAllUsers",
 		"canEditUsers",
-		"canApproveLeaves",   // <-- DODAJ
+		"canApproveLeaves",   
 		"canRejectLeaves",
-		"canDeleteAllLeaves",   // <-- DODAJ
+		"canDeleteAllLeaves",   
 		"canEditAllLeaves",
 		"canDeleteUsers",
 		"canManageProjects",
@@ -387,8 +387,8 @@ export function isCoordinator(
 	isLeader?: boolean,
 ): boolean {
 	if (!role) return false;
-	// Admin też jest koordynatorem
+
 	if (role === "admin" || role === "board" || role === "zarząd") return true;
-	// Sprawdź czy to koordynator lub lider
+
 	return role === "coordinator" || isLeader === true;
 }

@@ -34,30 +34,30 @@ interface PaymentSummary {
 	totalPaid: number;
 	averageArrears: number;
 }
-// Dodaj tę funkcję przed syncPayments
+
 function findUserByNameAndEmail(
 	users: any[],
 	fullName: string,
 	email: string
 ): any | null {
-	// 1. Najpierw próbuj po email (najdokładniejsze)
+
 	const byEmail = users.find(u => u.email === email);
 	if (byEmail) return byEmail;
 
-	// 2. Rozbij full_name na części
+
 	const nameParts = fullName.trim().split(/\s+/);
 	const firstName = nameParts[0];
 	const lastName = nameParts[nameParts.length - 1];
 	const middleNames = nameParts.slice(1, -1).join(' ');
 
-	// 3. Szukaj po imieniu i nazwisku (dokładne dopasowanie)
+
 	const byExact = users.find(u =>
 		u.first_name === firstName &&
 		u.last_name === lastName
 	);
 	if (byExact) return byExact;
 
-	// 4. Szukaj po nazwisku i pierwszej literze imienia (np. "Oliwia Rolicz" → "O. Rolicz")
+
 	const byInitial = users.find(u =>
 		u.last_name === lastName &&
 		u.first_name &&
@@ -65,7 +65,7 @@ function findUserByNameAndEmail(
 	);
 	if (byInitial) return byInitial;
 
-	// 5. Szukaj po nazwisku i czy imię zaczyna się od tego samego
+
 	const byStartsWith = users.find(u =>
 		u.last_name === lastName &&
 		u.first_name &&
@@ -73,7 +73,7 @@ function findUserByNameAndEmail(
 	);
 	if (byStartsWith) return byStartsWith;
 
-	// 6. Szukaj po częściach imienia (dla dwóch imion)
+
 	const byMiddleName = users.find(u => {
 		if (!u.first_name) return false;
 		const userFirstName = u.first_name.toLowerCase();
@@ -83,7 +83,7 @@ function findUserByNameAndEmail(
 	});
 	if (byMiddleName) return byMiddleName;
 
-	// 7. Szukaj po nazwisku tylko (jeśli unikalne)
+
 	const byLastName = users.find(u =>
 		u.last_name === lastName
 	);
@@ -102,9 +102,9 @@ export async function syncPayments() {
 		connection = await mysql.createConnection(PAYMENTS_DB_CONFIG);
 		logger.debug("✅ [PAYMENTS] Połączono z bazą składek");
 
-		// ============================================================
-		// 1. Pobierz wszystkich użytkowników z głównej bazy (raz)
-		// ============================================================
+
+
+
 		const allUsers = await prisma.user.findMany({
 			select: {
 				id: true,
@@ -165,9 +165,9 @@ export async function syncPayments() {
 
 		for (const record of paymentData) {
 			try {
-				// ============================================================
-				// SZUKAJ UŻYTKOWNIKA
-				// ============================================================
+
+
+
 				let user = await prisma.user.findUnique({
 					where: { email: record.email },
 					select: { id: true },
@@ -179,12 +179,12 @@ export async function syncPayments() {
 					matchedByEmail++;
 					matchMethod = 'email';
 				} else {
-					// Spróbuj znaleźć po nazwie
+
 					const nameParts = record.fullName.trim().split(/\s+/);
 					const firstName = nameParts[0];
 					const lastName = nameParts[nameParts.length - 1];
 
-					// Szukaj po imieniu i nazwisku
+
 					const byName = await prisma.user.findFirst({
 						where: {
 							first_name: firstName,
@@ -199,7 +199,7 @@ export async function syncPayments() {
 						matchMethod = 'name';
 						logger.debug(`🔍 [PAYMENTS] Dopasowano po nazwie: ${record.fullName} → ${firstName} ${lastName}`);
 					} else {
-						// Szukaj po nazwisku i pierwszej literze imienia
+
 						const byInitial = await prisma.user.findFirst({
 							where: {
 								last_name: lastName,

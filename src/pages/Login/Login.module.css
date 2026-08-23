@@ -7,7 +7,7 @@
 html,
 body {
 	height: 100%;
-	/* overflow: hidden; */
+
 }
 
 .loginContainer {
@@ -486,7 +486,7 @@ body {
 	max-width: 300px;
 }
 
-/* W Login.module.css - na końcu pliku */
+
 
 .calendarScopeWrapper {
 	margin-top: 12px;
@@ -531,7 +531,7 @@ body {
 	text-align: center;
 }
 
-/* frontend/src/pages/Login/Login.module.css */
+
 
 .googleBtn {
 	display: flex;

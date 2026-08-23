@@ -1,9 +1,9 @@
-// src/hooks/usePayments.ts
+
 import { useState, useEffect } from 'react';
 import { logger } from '@/utils/logger';
 import toast from 'react-hot-toast';
 
-// 🔥 DOSTOSUJ TYPY DO TEGO CO ZWRACA BACKEND
+
 interface PaymentData {
   id: number;
   memberName: string;
@@ -22,7 +22,7 @@ export const usePayments = () => {
       setLoading(true);
       const token = localStorage.getItem('accessToken');
       
-      // 🔥 SPRÓBUJ RÓŻNE ENDPOINTY:
+
       const endpoints = [
         '/api/payments',
         '/api/payments/status', 
@@ -30,7 +30,7 @@ export const usePayments = () => {
         '/api/profile/payments'
       ];
       
-      // Spróbuj pierwszego, który działa
+
       let response = null;
       let lastError = null;
       

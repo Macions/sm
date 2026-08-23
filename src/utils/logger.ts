@@ -23,7 +23,7 @@ class Logger {
 		);
 	}
 
-	// 🔥 POPRAWA - używaj console bezpośrednio, nie wywołuj loggera
+
 	private output(level: LogLevel, ...args: LogArgs) {
 		if (!this.canLog(level)) return;
 
@@ -34,13 +34,13 @@ class Logger {
 				console.debug(prefix, ...args);
 				break;
 			case "info":
-				console.info(prefix, ...args); // ✅ było logger.info
+				console.info(prefix, ...args); 
 				break;
 			case "warn":
-				console.warn(prefix, ...args); // ✅ było logger.warn
+				console.warn(prefix, ...args); 
 				break;
 			case "error":
-				console.error(prefix, ...args); // ✅ było logger.error
+				console.error(prefix, ...args); 
 				break;
 		}
 	}

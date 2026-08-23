@@ -37,9 +37,9 @@ export function TaskRatingModal({
 		setIsSubmitting(true);
 		try {
 			await onSubmit(task.id, rating, comment || "");
-			// ✅ Toast i zamknięcie są teraz w onSubmit
+
 		} catch (error) {
-			// Error jest obsługiwany w onSubmit
+
 		} finally {
 			setIsSubmitting(false);
 		}

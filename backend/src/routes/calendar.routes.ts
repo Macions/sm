@@ -11,12 +11,12 @@ const oauth2Client = new google.auth.OAuth2(
 	process.env.GOOGLE_CLIENT_SECRET,
 	process.env.GOOGLE_REDIRECT_URI ||
 	(process.env.NODE_ENV === "production"
-		? "https://panel.silamlodych.pl/api/calendar/callback" // ✅ PRZEZ NGINX, BEZ PORTU
+		? "https://panel.silamlodych.pl/api/calendar/callback" 
 		: "http://localhost:3000/api/calendar/callback"),
 );
 router.use((req, res, next) => {
-	// console.log("🔍 [CALENDAR] Ścieżka:", req.path);
-	// Pomijamy autoryzację dla callback i auth
+
+
 	if (
 		req.path === "/callback" ||
 		req.path === "/auth" ||
@@ -25,14 +25,14 @@ router.use((req, res, next) => {
 		req.path.includes("callback") ||
 		req.path.includes("auth")
 	) {
-		// console.log(`🔓 [CALENDAR] Pomijam autoryzację dla: ${req.path}`);
+
 		return next();
 	}
 	next();
 });
 
 router.get("/status", authMiddleware, async (req: any, res) => {
-	// ← DODAJ authMiddleware
+
 	try {
 		const userId = req.user?.id;
 		if (!userId) {
@@ -53,25 +53,25 @@ router.get("/status", authMiddleware, async (req: any, res) => {
 	}
 });
 
-// ============================================================
-// 📌 ENDPOINT: Pobierz eventy z Google Calendar
-// ============================================================
+
+
+
 router.get("/events", authMiddleware, async (req: any, res) => {
 	try {
 		const userId = req.user?.id;
-		// console.log("📅 [EVENTS] Pobieranie dla użytkownika:", userId);
+
 
 		if (!userId) {
 			return res.status(401).json({ error: "Brak autoryzacji" });
 		}
 
-		// Pobierz token z bazy
+
 		const user = await prisma.user.findUnique({
 			where: { id: parseInt(userId) },
 			select: { google_calendar_token: true },
 		});
 
-		// console.log("📅 [EVENTS] Token w bazie:", !!user?.google_calendar_token);
+
 
 		if (!user?.google_calendar_token) {
 			return res.status(401).json({
@@ -81,7 +81,7 @@ router.get("/events", authMiddleware, async (req: any, res) => {
 		}
 
 		const tokenData = JSON.parse(user.google_calendar_token);
-		// console.log("📅 [EVENTS] Token parsed:", !!tokenData);
+
 
 		oauth2Client.setCredentials({
 			access_token: tokenData.access_token,
@@ -90,19 +90,19 @@ router.get("/events", authMiddleware, async (req: any, res) => {
 
 		const calendar = google.calendar({ version: "v3", auth: oauth2Client });
 
-		// Pobierz eventy z ostatnich 30 dni i następnych 30 dni
+
 		const now = new Date();
 		const startDate = new Date(now);
 		startDate.setDate(startDate.getDate() - 30);
 		const endDate = new Date(now);
 		endDate.setDate(endDate.getDate() + 30);
 
-		// console.log(
-		// 	"📅 [EVENTS] Zakres dat:",
-		// 	startDate.toISOString(),
-		// 	"do",
-		// 	endDate.toISOString(),
-		// );
+
+
+
+
+
+
 
 		const response = await calendar.events.list({
 			calendarId: "primary",
@@ -113,10 +113,10 @@ router.get("/events", authMiddleware, async (req: any, res) => {
 			orderBy: "startTime",
 		});
 
-		// console.log(
-		// 	"📅 [EVENTS] Znaleziono eventów:",
-		// 	response.data.items?.length || 0,
-		// );
+
+
+
+
 		res.json(response.data.items || []);
 	} catch (error) {
 		console.error("❌ [EVENTS] Błąd:", error);
@@ -127,11 +127,11 @@ router.get("/events", authMiddleware, async (req: any, res) => {
 	}
 });
 
-// ============================================================
-// 📌 ENDPOINT: Synchronizuj zadanie z Google Calendar
-// ============================================================
+
+
+
 router.post("/sync", authMiddleware, async (req: any, res) => {
-	// ← DODAJ authMiddleware
+
 	try {
 		const userId = req.user?.id;
 		const { taskId } = req.body;
@@ -152,7 +152,7 @@ router.post("/sync", authMiddleware, async (req: any, res) => {
 			});
 		}
 
-		// Pobierz zadanie
+
 		const task = await prisma.task.findUnique({
 			where: { id: parseInt(taskId) },
 		});
@@ -169,7 +169,7 @@ router.post("/sync", authMiddleware, async (req: any, res) => {
 
 		const calendar = google.calendar({ version: "v3", auth: oauth2Client });
 
-		// Utwórz event w Google Calendar
+
 		const event = {
 			summary: task.title,
 			description: task.description || "Zadanie z Siły Młodych",
@@ -180,7 +180,7 @@ router.post("/sync", authMiddleware, async (req: any, res) => {
 			end: {
 				dateTime: new Date(
 					new Date(task.due_date).getTime() + 3600000,
-				).toISOString(), // 1h później
+				).toISOString(), 
 				timeZone: "Europe/Warsaw",
 			},
 		};
@@ -204,13 +204,13 @@ router.post("/sync", authMiddleware, async (req: any, res) => {
 	}
 });
 
-// ============================================================
-// 📌 ENDPOINT: Rozpocznij autoryzację Google Calendar
-// ============================================================
+
+
+
 router.get("/auth", async (req: any, res) => {
-	// ← USUŃ authMiddleware!
+
 	try {
-		// Pobierz userId z tokena RĘCZNIE
+
 		let userId = null;
 		const authHeader = req.headers.authorization;
 		if (authHeader && authHeader.startsWith("Bearer ")) {
@@ -229,11 +229,11 @@ router.get("/auth", async (req: any, res) => {
 		}
 
 		if (!userId) {
-			// console.log("⚠️ [AUTH] Brak userId - używam 1");
+
 			userId = "1";
 		}
 
-		// console.log("🔐 [AUTH] Użytkownik ID:", userId);
+
 
 		const stateData = JSON.stringify({ userId: userId });
 		const authUrl = oauth2Client.generateAuthUrl({
@@ -258,62 +258,62 @@ router.get("/auth", async (req: any, res) => {
 	}
 });
 
-// ✅ CALLBACK NIE MOŻE MIEĆ authMiddleware!
+
 router.get("/callback", async (req: any, res) => {
-	// ← BEZ authMiddleware!
+
 	try {
 		const { code, state } = req.query;
 
-		// console.log("=========================================");
-		// console.log("📥 [CALLBACK] Otrzymano code:", code ? "✅" : "❌");
-		// console.log("📥 [CALLBACK] Code:", code?.substring(0, 20) + "...");
-		// console.log("📥 [CALLBACK] State:", state);
-		// console.log("=========================================");
+
+
+
+
+
 
 		if (!code) {
-			// console.log("❌ [CALLBACK] Brak code");
+
 			return res.redirect(`${process.env.FRONTEND_URL}/calendar?auth=error`);
 		}
 
-		// DEKODUJ STATE
+
 		let userId = null;
 		if (state) {
 			try {
 				const stateObj = JSON.parse(state as string);
 				userId = stateObj.userId || stateObj.user_id;
-				// console.log("✅ [CALLBACK] userId z state:", userId);
+
 			} catch (e) {
 				console.error("❌ [CALLBACK] Błąd parsowania state:", e);
 			}
 		}
 
-		// Jeśli brak userId - użyj domyślnego
+
 		if (!userId) {
-			// console.log("⚠️ [CALLBACK] Brak userId - używam domyślnego (1)");
+
 			userId = "1";
 		}
 
-		// Wymień code na token
-		// console.log("🔐 [CALLBACK] Wymiana kodu na token...");
-		const { tokens } = await oauth2Client.getToken(code as string);
-		// console.log("✅ [CALLBACK] Otrzymano token:", {
-		// 	hasAccessToken: !!tokens.access_token,
-		// 	hasRefreshToken: !!tokens.refresh_token,
-		// });
 
-		// Znajdź użytkownika
+
+		const { tokens } = await oauth2Client.getToken(code as string);
+
+
+
+
+
+
 		const user = await prisma.user.findUnique({
 			where: { id: parseInt(userId) },
 		});
 
 		if (!user) {
 			console.error(`❌ [CALLBACK] Użytkownik ${userId} nie istnieje!`);
-			// Spróbuj znaleźć po emailu
+
 			const firstUser = await prisma.user.findFirst();
 			if (firstUser) {
-				// console.log(
-				// 	`👉 [CALLBACK] Używam pierwszego użytkownika: ${firstUser.id}`,
-				// );
+
+
+
 				await prisma.user.update({
 					where: { id: firstUser.id },
 					data: {
@@ -327,15 +327,15 @@ router.get("/callback", async (req: any, res) => {
 			return res.redirect(`${process.env.FRONTEND_URL}/calendar?auth=error`);
 		}
 
-		// Zapisz token
-		// console.log(`💾 [CALLBACK] Zapisuję token dla: ${user.email}`);
+
+
 		await prisma.user.update({
 			where: { id: parseInt(userId) },
 			data: {
 				google_calendar_token: JSON.stringify(tokens),
 			},
 		});
-		// console.log(`✅ [CALLBACK] Token zapisany!`);
+
 
 		res.redirect(`${process.env.FRONTEND_URL}/calendar?auth=success`);
 	} catch (error) {

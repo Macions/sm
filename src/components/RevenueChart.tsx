@@ -1,4 +1,4 @@
-﻿// frontend/src/components/RevenueChart.tsx
+﻿
 import { useState, useEffect } from "react";
 import {
 	Bar,
@@ -46,7 +46,7 @@ const COLORS = {
 	wydatkiBiurowe: "#F97316",
 };
 
-// Niestandardowy tooltip z pełnymi danymi
+
 const CustomTooltip = ({ active, payload }: any) => {
 	if (active && payload && payload.length) {
 		const data = payload[0].payload;
@@ -107,7 +107,7 @@ const CustomTooltip = ({ active, payload }: any) => {
 	return null;
 };
 
-// Formatowanie waluty
+
 const formatCurrency = (value: number): string => {
 	return new Intl.NumberFormat('pl-PL', {
 		style: 'currency',
@@ -132,11 +132,11 @@ export function RevenueChart({ year = 2026, title = "Przychody i wydatki" }: Rev
 			setLoading(true);
 			const token = localStorage.getItem("accessToken");
 
-			// console.log(`[RevenueChart] Pobieram dane dla roku ${selectedYear}...`);
 
-			// ============================================
-			// 1. Pobierz dane główne (przychody/wydatki)
-			// ============================================
+
+
+
+
 			const response = await fetch(`/api/revenue?year=${selectedYear}`, {
 				headers: {
 					'Authorization': `Bearer ${token}`,
@@ -149,11 +149,11 @@ export function RevenueChart({ year = 2026, title = "Przychody i wydatki" }: Rev
 			}
 
 			const result = await response.json();
-			// console.log('[RevenueChart] Revenue data:', result);
 
-			// ============================================
-			// 2. Pobierz dane kategorii
-			// ============================================
+
+
+
+
 			let categoriesData = null;
 			try {
 				const categoriesResponse = await fetch(`/api/revenue/categories?year=${selectedYear}`, {
@@ -165,7 +165,7 @@ export function RevenueChart({ year = 2026, title = "Przychody i wydatki" }: Rev
 
 				if (categoriesResponse.ok) {
 					const categoriesResult = await categoriesResponse.json();
-					// console.log('[RevenueChart] Categories data:', categoriesResult);
+
 					categoriesData = categoriesResult.data;
 				} else {
 					console.warn('[RevenueChart] Nie udało się pobrać kategorii:', categoriesResponse.status);
@@ -174,12 +174,12 @@ export function RevenueChart({ year = 2026, title = "Przychody i wydatki" }: Rev
 				console.warn('[RevenueChart] Błąd pobierania kategorii:', err);
 			}
 
-			// ============================================
-			// 3. Połącz dane
-			// ============================================
+
+
+
 			if (result.success && result.data && result.data.months) {
 				const mappedData = result.data.months.map((item: any) => {
-					// Znajdź dane kategorii dla tego miesiąca
+
 					const categoryData = categoriesData?.find((c: any) => c.month === item.month);
 
 					return {
@@ -198,7 +198,7 @@ export function RevenueChart({ year = 2026, title = "Przychody i wydatki" }: Rev
 					};
 				});
 
-				// console.log('[RevenueChart] Mapped data:', mappedData);
+
 				setData(mappedData);
 			}
 		} catch (error) {
@@ -444,11 +444,11 @@ export function RevenueChart({ year = 2026, title = "Przychody i wydatki" }: Rev
 						/>
 
 						{chartType === 'bar' ? (
-							// Wykres GRUPOWANY - BEZ stackId
+
 							<>
 								<Bar
 									dataKey="skladki"
-									fill={COLORS.skladki}           // <-- USUŃ stackId="a"
+									fill={COLORS.skladki}           
 									name="skladki"
 									radius={[4, 4, 0, 0]}
 									barSize={30}
@@ -469,7 +469,7 @@ export function RevenueChart({ year = 2026, title = "Przychody i wydatki" }: Rev
 								</Bar>
 								<Bar
 									dataKey="granty"
-									fill={COLORS.granty}            // <-- USUŃ stackId="a"
+									fill={COLORS.granty}            
 									name="granty"
 									radius={[4, 4, 0, 0]}
 									barSize={30}
@@ -484,7 +484,7 @@ export function RevenueChart({ year = 2026, title = "Przychody i wydatki" }: Rev
 								</Bar>
 								<Bar
 									dataKey="darowizny"
-									fill={COLORS.darowizny}         // <-- USUŃ stackId="a"
+									fill={COLORS.darowizny}         
 									name="darowizny"
 									radius={[4, 4, 0, 0]}
 									barSize={30}
@@ -499,7 +499,7 @@ export function RevenueChart({ year = 2026, title = "Przychody i wydatki" }: Rev
 								</Bar>
 								<Bar
 									dataKey="faktury"
-									fill={COLORS.faktury}           // <-- USUŃ stackId="a"
+									fill={COLORS.faktury}           
 									name="faktury"
 									radius={[4, 4, 0, 0]}
 									barSize={30}
@@ -514,7 +514,7 @@ export function RevenueChart({ year = 2026, title = "Przychody i wydatki" }: Rev
 								</Bar>
 								<Bar
 									dataKey="inne"
-									fill={COLORS.inne}              // <-- USUŃ stackId="a"
+									fill={COLORS.inne}              
 									name="inne"
 									radius={[4, 4, 0, 0]}
 									barSize={30}
@@ -530,7 +530,7 @@ export function RevenueChart({ year = 2026, title = "Przychody i wydatki" }: Rev
 								{/* DODAJ NOWY BAR DLA WYDATKÓW BIUROWYCH - BEZ stackId */}
 								<Bar
 									dataKey="wydatkiBiurowe"
-									fill={COLORS.wydatkiBiurowe}    // <-- USUŃ stackId="a"
+									fill={COLORS.wydatkiBiurowe}    
 									name="Wydatki biurowe"
 									radius={[4, 4, 0, 0]}
 									barSize={30}
@@ -545,11 +545,11 @@ export function RevenueChart({ year = 2026, title = "Przychody i wydatki" }: Rev
 								</Bar>
 							</>
 						) : (
-							// Wykres SKUMULOWANY (stacked) - Z stackId="a"
+
 							<>
 								<Bar
 									dataKey="skladki"
-									stackId="a"                    // <-- stackId TYLKO tutaj!
+									stackId="a"                    
 									fill={COLORS.skladki}
 									name="skladki"
 									radius={[4, 4, 0, 0]}
@@ -557,7 +557,7 @@ export function RevenueChart({ year = 2026, title = "Przychody i wydatki" }: Rev
 								/>
 								<Bar
 									dataKey="granty"
-									stackId="a"                    // <-- stackId TYLKO tutaj!
+									stackId="a"                    
 									fill={COLORS.granty}
 									name="granty"
 									radius={[4, 4, 0, 0]}
@@ -565,7 +565,7 @@ export function RevenueChart({ year = 2026, title = "Przychody i wydatki" }: Rev
 								/>
 								<Bar
 									dataKey="darowizny"
-									stackId="a"                    // <-- stackId TYLKO tutaj!
+									stackId="a"                    
 									fill={COLORS.darowizny}
 									name="darowizny"
 									radius={[4, 4, 0, 0]}
@@ -573,7 +573,7 @@ export function RevenueChart({ year = 2026, title = "Przychody i wydatki" }: Rev
 								/>
 								<Bar
 									dataKey="faktury"
-									stackId="a"                    // <-- stackId TYLKO tutaj!
+									stackId="a"                    
 									fill={COLORS.faktury}
 									name="faktury"
 									radius={[4, 4, 0, 0]}
@@ -581,7 +581,7 @@ export function RevenueChart({ year = 2026, title = "Przychody i wydatki" }: Rev
 								/>
 								<Bar
 									dataKey="inne"
-									stackId="a"                    // <-- stackId TYLKO tutaj!
+									stackId="a"                    
 									fill={COLORS.inne}
 									name="inne"
 									radius={[4, 4, 0, 0]}
@@ -589,7 +589,7 @@ export function RevenueChart({ year = 2026, title = "Przychody i wydatki" }: Rev
 								/>
 								<Bar
 									dataKey="wydatkiBiurowe"
-									stackId="a"                    // <-- stackId TYLKO tutaj!
+									stackId="a"                    
 									fill={COLORS.wydatkiBiurowe}
 									name="Wydatki biurowe"
 									radius={[4, 4, 0, 0]}

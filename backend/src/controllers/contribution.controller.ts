@@ -1,4 +1,4 @@
-// src/controllers/contribution.controller.ts
+
 
 import { Request, Response } from "express";
 import { PrismaClient } from "@prisma/client";
@@ -26,7 +26,7 @@ interface HistoryRow {
 	status: 'paid' | 'pending';
 	description: string;
 }
-// Rozszerzenie Request o user (dla auth middleware)
+
 interface AuthRequest extends Request {
 	user?: {
 		id: number;
@@ -61,7 +61,7 @@ export class ContributionController {
 			const currentMonth = currentDate.getMonth() + 1;
 			const currentYear = currentDate.getFullYear();
 
-			// Pobierz wszystkie składki użytkownika
+
 			const contributions = await prisma.contribution.findMany({
 				where: {
 					userId: userId,
@@ -69,12 +69,12 @@ export class ContributionController {
 				orderBy: [{ year: "desc" }, { month: "desc" }],
 			});
 
-			// Znajdź składkę na bieżący miesiąc
+
 			const currentMonthContribution = contributions.find(
 				(c) => c.month === currentMonth && c.year === currentYear,
 			);
 
-			// Oblicz statystyki
+
 			const totalPaid = contributions
 				.filter((c) => c.status === "PAID")
 				.reduce((sum, c) => sum + c.amount, 0);
@@ -87,7 +87,7 @@ export class ContributionController {
 				(c) => c.status === "PAID",
 			).length;
 
-			// Historia ostatnich 12 miesięcy
+
 			const last12Months = [];
 			for (let i = 0; i < 12; i++) {
 				const date = new Date();
@@ -140,7 +140,7 @@ export class ContributionController {
 	 */
 	async getOverdueContributions(req: AuthRequest, res: Response) {
 		try {
-			// Tylko admin/zarząd może to zobaczyć
+
 			if (req.user?.role !== "admin" && req.user?.role !== "board") {
 				return res.status(403).json({ error: "Brak uprawnień" });
 			}
@@ -199,7 +199,7 @@ export class ContributionController {
 	 */
 	async syncContributionsManual(req: AuthRequest, res: Response) {
 		try {
-			// Tylko admin/zarząd może uruchomić ręczną synchronizację
+
 			if (req.user?.role !== "admin" && req.user?.role !== "board") {
 				return res.status(403).json({ error: "Brak uprawnień" });
 			}
@@ -207,7 +207,7 @@ export class ContributionController {
 			const { syncContributions } =
 				await import("../jobs/syncContributions.js");
 
-			// Uruchom synchronizację w tle
+
 			syncContributions()
 				.then(() => {
 					logger.info("✅ [Manual] Synchronizacja składek zakończona");
@@ -231,7 +231,7 @@ export class ContributionController {
 	 */
 	async getAllContributionsSummary(req: AuthRequest, res: Response) {
 		try {
-			// Tylko admin/board może to zobaczyć
+
 			if (req.user?.role !== "admin" && req.user?.role !== "board") {
 				return res.status(403).json({ error: "Brak uprawnień" });
 			}
@@ -240,7 +240,7 @@ export class ContributionController {
 			const currentMonth = currentDate.getMonth() + 1;
 			const currentYear = currentDate.getFullYear();
 
-			// Pobierz wszystkie składki za bieżący miesiąc
+
 			const contributions = await prisma.contribution.findMany({
 				where: {
 					month: currentMonth,
@@ -253,7 +253,7 @@ export class ContributionController {
 				},
 			});
 
-			// Stwórz mapę userId -> status
+
 			const contributionMap = new Map();
 			contributions.forEach((c) => {
 				contributionMap.set(c.userId, {
@@ -281,7 +281,7 @@ export class ContributionController {
 	 */
 	async getUserContributions(req: AuthRequest, res: Response) {
 		try {
-			// Pobierz userId z params lub z zalogowanego użytkownika
+
 			const paramUserId = req.params.userId;
 			let targetUserId: number | undefined;
 
@@ -303,7 +303,7 @@ export class ContributionController {
 				return res.status(401).json({ error: "Nieautoryzowany" });
 			}
 
-			// Jeśli ktoś próbuje pobrać cudze składki, sprawdź uprawnienia
+
 			if (paramUserId && req.user?.id !== targetUserId) {
 				if (req.user?.role !== "admin" && req.user?.role !== "board") {
 					return res.status(403).json({ error: "Brak uprawnień" });
@@ -339,11 +339,11 @@ export class ContributionController {
 				return res.status(400).json({ error: "Brak wymaganych pól" });
 			}
 
-			// 🔥 PRZENIEŚ DEKLARACJĘ NA POCZĄTEK - PRZED UŻYCIEM
+
 			const userIdStr = Array.isArray(userId) ? userId[0] : userId;
 
 			const user = await prisma.user.findUnique({
-				where: { id: parseInt(userIdStr) }, // <-- TERAZ DZIAŁA
+				where: { id: parseInt(userIdStr) }, 
 			});
 
 			if (!user) {
@@ -352,7 +352,7 @@ export class ContributionController {
 
 			const existing = await prisma.contribution.findFirst({
 				where: {
-					userId: parseInt(userIdStr), // <-- UŻYJ userIdStr
+					userId: parseInt(userIdStr), 
 					month,
 					year,
 				},
@@ -366,7 +366,7 @@ export class ContributionController {
 
 			const contribution = await prisma.contribution.create({
 				data: {
-					userId: parseInt(userIdStr), // <-- UŻYJ userIdStr
+					userId: parseInt(userIdStr), 
 					amount,
 					month,
 					year,
@@ -376,7 +376,7 @@ export class ContributionController {
 			});
 
 			await prisma.user.update({
-				where: { id: parseInt(userIdStr) }, // <-- UŻYJ userIdStr
+				where: { id: parseInt(userIdStr) }, 
 				data: {
 					contributionStatus: "PAID",
 					lastContributionPaidAt: paidAt ? new Date(paidAt) : new Date(),
@@ -466,7 +466,7 @@ export class ContributionController {
 			let userId = req.params.userId;
 			const currentUserId = req.user?.id;
 
-			// 🔥 OBSŁUGA "me" - ZAMIEŃ NA ID ZALOGOWANEGO UŻYTKOWNIKA
+
 			if (userId === "me") {
 				if (!currentUserId) {
 					return res.status(401).json({ error: "Nieautoryzowany" });
@@ -478,7 +478,7 @@ export class ContributionController {
 				return res.status(400).json({ error: "Brak ID użytkownika" });
 			}
 
-			// Sprawdź uprawnienia - używamy `role` z req.user zamiast zapytania do bazy
+
 			const userIdStr = Array.isArray(userId) ? userId[0] : userId;
 			const isAuthorized =
 				req.user?.role === "admin" ||
@@ -507,7 +507,7 @@ export class ContributionController {
 
 			const connection = await mysql.createConnection(CONTRIBUTIONS_DB_CONFIG);
 
-			// Pobierz historię składek z ostatnich 12 miesięcy
+
 			const [rows] = await connection.execute(`
                 SELECT 
                     MONTH(payment_date) as month,
@@ -534,10 +534,10 @@ export class ContributionController {
 
 			await connection.end();
 
-			// rows to tablica, sprawdzamy jej długość
+
 			const historyData = Array.isArray(rows) ? (rows as HistoryRow[]) : [];
 
-			// Jeśli brak historii, spróbuj pobrać datę aktywacji
+
 			if (historyData.length === 0) {
 				const connection2 = await mysql.createConnection(CONTRIBUTIONS_DB_CONFIG);
 				const [memberRows] = await connection2.execute(`
@@ -588,7 +588,7 @@ export class ContributionController {
 			let userId = req.params.userId;
 			const currentUserId = req.user?.id;
 
-			// 🔥 OBSŁUGA "me" - ZAMIEŃ NA ID ZALOGOWANEGO UŻYTKOWNIKA
+
 			if (userId === "me") {
 				if (!currentUserId) {
 					return res.status(401).json({ error: "Nieautoryzowany" });
@@ -600,7 +600,7 @@ export class ContributionController {
 				return res.status(400).json({ error: "Brak ID użytkownika" });
 			}
 
-			// Sprawdź uprawnienia - używamy `role` z req.user
+
 			const userIdStr = Array.isArray(userId) ? userId[0] : userId;
 			const isAuthorized =
 				req.user?.role === "admin" ||
@@ -686,10 +686,10 @@ export class ContributionController {
 
 			await connection.end();
 
-			// rows to tablica, bierzemy pierwszy element
+
 			const data = Array.isArray(rows) && rows.length > 0 ? (rows[0] as PaymentRow) : null;
 
-			// Oblicz zaległości
+
 			let overdueMonths = 0;
 			if (data && data.payment_status === 'pending') {
 				const connection2 = await mysql.createConnection(CONTRIBUTIONS_DB_CONFIG);

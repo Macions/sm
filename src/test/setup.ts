@@ -2,12 +2,12 @@ import '@testing-library/jest-dom';
 import { cleanup } from '@testing-library/react';
 import { afterEach, vi } from 'vitest';
 
-// Czyść po każdym teście
+
 afterEach(() => {
     cleanup();
 });
 
-// Mock localStorage
+
 const localStorageMock = {
     getItem: vi.fn(),
     setItem: vi.fn(),
@@ -16,10 +16,10 @@ const localStorageMock = {
 };
 globalThis.localStorage = localStorageMock as any;
 
-// Mock fetch
+
 globalThis.fetch = vi.fn();
 
-// 🔥 POPRAWIONE - mock całego modułu react-hot-toast z Toaster
+
 vi.mock('react-hot-toast', async (importOriginal) => {
     const actual = await importOriginal<typeof import('react-hot-toast')>();
     return {
@@ -30,11 +30,11 @@ vi.mock('react-hot-toast', async (importOriginal) => {
             loading: vi.fn(),
             dismiss: vi.fn(),
         },
-        Toaster: actual.Toaster, // 🔥 DODAJ Toaster
+        Toaster: actual.Toaster, 
     };
 });
 
-// Mock logger
+
 vi.mock('@/utils/logger', () => ({
     logger: {
         debug: vi.fn(),

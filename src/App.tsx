@@ -1,5 +1,5 @@
-// src/App.tsx
-import AppRoutes from "./AppRoutes";  // ← ZMIEŃ NA AppRoutes
+
+import AppRoutes from "./AppRoutes";  
 import { logger } from "@/utils/logger";
 import { Toaster } from "react-hot-toast";
 import { useEffect } from "react";

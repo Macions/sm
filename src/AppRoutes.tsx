@@ -57,7 +57,7 @@ function AppRoutes() {
 				return;
 			}
 			try {
-				// console.log("✅ Token ważny:", response.data);
+
 				setIsAuthenticated(true);
 			} catch (error) {
 				console.error("❌ Błąd weryfikacji:", error);

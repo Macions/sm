@@ -120,14 +120,14 @@ type Task = {
 	priority: string;
 	dueDate: string;
 	assignedToName: string;
-	projectId?: string; // 🔥 DODAJ - potrzebne do filtrowania
+	projectId?: string; 
 	createdAt: string;
 };
 type User = {
 	id: string;
 	name: string;
 	email: string;
-	role: "admin" | "coordinator" | "member" | "board" | "zarząd"; // ← DODAJ "board" i "zarząd"
+	role: "admin" | "coordinator" | "member" | "board" | "zarząd"; 
 	pillar?: string | null;
 	pillars?: string[];
 	coordinatorPillars?: string[];
@@ -226,12 +226,12 @@ const getPillarsArray = (pillars: string | string[] | undefined): string[] => {
 	return [];
 };
 
-// 🔥 DODAJ NOWĄ FUNKCJĘ - normalizuje nazwy filarów
+
 const normalizePillarName = (pillar: string): string => {
-	// Jeśli już ma "Filar " to zwróć jak jest
+
 	if (pillar.startsWith("Filar ")) return pillar;
 
-	// Mapowanie nazw bez prefiksu na nazwy z prefiksem
+
 	const pillarMap: Record<string, string> = {
 		Projektowy: "Filar Projektowy",
 		Konferencyjny: "Filar Konferencyjny",
@@ -508,8 +508,8 @@ interface ProjectModalProps {
 	onClose: () => void;
 	onSave: (project: Project) => void;
 	users: User[];
-	userPillars?: string[]; // <- DODAJ
-	isAdminOrBoard?: boolean; // <- DODAJ
+	userPillars?: string[]; 
+	isAdminOrBoard?: boolean; 
 }
 
 function ProjectModal({
@@ -521,8 +521,8 @@ function ProjectModal({
 	userPillars = [],
 	isAdminOrBoard = false,
 }: ProjectModalProps) {
-	// console.log("🔍 [ProjectModal] userPillars:", userPillars);
-	// console.log("🔍 [ProjectModal] isAdminOrBoard:", isAdminOrBoard);
+
+
 
 	const [formData, setFormData] = useState<Partial<Project>>(
 		project || {
@@ -536,7 +536,7 @@ function ProjectModal({
 		},
 	);
 
-	// ✅ HOOKI PRZED if (!isOpen) - TYLKO JEDNA KOPIA!
+
 	const availablePillars = useMemo(() => {
 		if (isAdminOrBoard) {
 			return Object.keys(PILLAR_LABELS_FALLBACK);
@@ -546,11 +546,11 @@ function ProjectModal({
 			.map((p) => {
 				const entry = Object.entries(PILLAR_LABELS_FALLBACK).find(
 					([key, label]) => {
-						// Sprawdź czy pasuje po pełnej nazwie
+
 						if (label === p) return true;
-						// Sprawdź czy pasuje po skróconej nazwie
+
 						if (key === p) return true;
-						// Sprawdź czy pasuje po nazwie bez "Filar "
+
 						const labelWithoutPrefix = label.replace("Filar ", "");
 						if (labelWithoutPrefix === p) return true;
 						return false;
@@ -563,7 +563,7 @@ function ProjectModal({
 		return userPillarKeys;
 	}, [userPillars, isAdminOrBoard]);
 
-	// Automatycznie wybierz filar jeśli tylko jeden dostępny
+
 	useEffect(() => {
 		if (availablePillars.length === 1 && !formData.pillar && isOpen) {
 			setFormData((prev) => ({
@@ -600,7 +600,7 @@ function ProjectModal({
 		}
 	}, [project]);
 
-	// ✅ TERAZ MOŻE BYĆ if (!isOpen)
+
 	if (!isOpen) return null;
 
 	const handleSubmit = (e: React.FormEvent) => {
@@ -622,7 +622,7 @@ function ProjectModal({
 		onClose();
 	};
 
-	// ❌ USUŃ TEN DUPLIKAT (linie ~680-700):
+
 	/*
 	const availablePillars = useMemo(() => {
 		if (isAdminOrBoard) {
@@ -815,7 +815,7 @@ function TeamSelector({
 	const [filter, setFilter] = useState<"all" | "pillar" | "custom">("all");
 	const [forceUpdate, setForceUpdate] = useState(0);
 
-	// 🔥 DODAJ - automatycznie wybierz wszystkich gdy filter === "all" i selectedTeam jest puste
+
 	useEffect(() => {
 		if (filter === "all" && selectedTeam.length === 0 && users.length > 0) {
 			const allIds = users.map((u) => u.id);
@@ -823,7 +823,7 @@ function TeamSelector({
 		}
 	}, [filter, users, selectedTeam.length, onTeamChange]);
 
-	// Wymuś odświeżenie gdy zmieni się filtr
+
 	useEffect(() => {
 		setForceUpdate((prev) => prev + 1);
 	}, [filter, pillar]);
@@ -1402,7 +1402,7 @@ export default function Projects() {
 				});
 				if (response.ok) {
 					const data = await response.json();
-					// Mapuj dane do typu Task
+
 					const mappedTasks = data.map((task: any) => ({
 						id: task.id,
 						title: task.title,
@@ -1422,7 +1422,7 @@ export default function Projects() {
 		fetchTasks();
 	}, []);
 	const refreshAllData = useCallback(async () => {
-		// console.log("🔄 [REFRESH] Odświeżanie danych...");
+
 
 		const token = localStorage.getItem("accessToken");
 		if (!token) {
@@ -1431,7 +1431,7 @@ export default function Projects() {
 		}
 
 		try {
-			// 1. Odśwież profil
+
 			const profileRes = await fetch("/api/profile", {
 				headers: { Authorization: `Bearer ${token}` },
 			});
@@ -1439,9 +1439,9 @@ export default function Projects() {
 			let profileData = null;
 			if (profileRes.ok) {
 				profileData = await profileRes.json();
-				// console.log("👤 Profil pobrany:", profileData);
 
-				// 🔥 DODAJ - zapisz do localStorage z coordinatorPillars
+
+
 				const userForStorage = {
 					id: profileData.id,
 					firstName: profileData.firstName,
@@ -1454,10 +1454,10 @@ export default function Projects() {
 					coordinatorPillars: profileData.coordinatorPillars || [],
 				};
 				localStorage.setItem("user", JSON.stringify(userForStorage));
-				// console.log(
-				// 	"✅ Zapisano user do localStorage z coordinatorPillars:",
-				// 	userForStorage.coordinatorPillars,
-				// );
+
+
+
+
 
 				setCurrentUser({
 					id: String(profileData.id),
@@ -1470,9 +1470,9 @@ export default function Projects() {
 				});
 			}
 
-			// 🔥 2. Pobierz uprawnienia - NAJPIERW SPRAWDŹ CZY KOORDYNATOR
+
 			if (profileData?.role) {
-				// console.log("🔓 Pobieranie uprawnień...");
+
 
 				const coordRes = await fetch("/api/user/is-coordinator", {
 					headers: { Authorization: `Bearer ${token}` },
@@ -1480,7 +1480,7 @@ export default function Projects() {
 
 				if (coordRes.ok) {
 					const coordData = await coordRes.json();
-					// console.log("👑 Status koordynatora:", coordData);
+
 
 					if (coordData.isCoordinator) {
 						const perms: Permission[] = [
@@ -1491,7 +1491,7 @@ export default function Projects() {
 							perms.push("canManageAllProjects");
 						}
 						setPermissions(perms);
-						// console.log("✅ Uprawnienia koordynatora ustawione:", perms);
+
 					} else {
 						const perms = await getCachedPermissions(profileData.role);
 						setPermissions(perms);
@@ -1502,7 +1502,7 @@ export default function Projects() {
 				}
 			}
 
-			// 3. Odśwież pomysły
+
 			const ideasRes = await fetch("/api/ideas", {
 				headers: { Authorization: `Bearer ${token}` },
 			});
@@ -1525,7 +1525,7 @@ export default function Projects() {
 				setIdeas(mappedIdeas);
 			}
 
-			// 4. Odśwież projekty
+
 			const projectsRes = await fetch("/api/projects", {
 				headers: { Authorization: `Bearer ${token}` },
 			});
@@ -1548,18 +1548,18 @@ export default function Projects() {
 				setProjects(mappedProjects);
 			}
 
-			// console.log("✅ [REFRESH] Dane odświeżone!");
+
 		} catch (error) {
 			console.error("❌ [REFRESH] Błąd odświeżania:", error);
 		}
 	}, []);
 
-	// Nasłuchuj na zmiany HMR
+
 	useEffect(() => {
-		// Obsługa HMR - odśwież dane gdy moduł jest aktualizowany
+
 		if (import.meta.hot) {
 			import.meta.hot.on("vite:afterUpdate", () => {
-				// console.log("🔄 [HMR] Wykryto zmianę kodu - odświeżam dane...");
+
 				setTimeout(() => {
 					refreshAllData();
 				}, 100);
@@ -1567,7 +1567,7 @@ export default function Projects() {
 		}
 	}, [refreshAllData]);
 
-	// Odśwież dane przy montowaniu i po zmianie uprawnień
+
 	useEffect(() => {
 		if (currentUser?.role) {
 			refreshAllData();
@@ -1587,7 +1587,7 @@ export default function Projects() {
 
 				if (response.ok) {
 					const data = await response.json();
-					// console.log("👑 Status koordynatora z endpointu:", data);
+
 
 					if (data.isCoordinator) {
 						const perms: Permission[] = [
@@ -1601,7 +1601,7 @@ export default function Projects() {
 
 						setPermissions(perms);
 
-						// 🔥 DODAJ - zapisz coordinatorPillars do localStorage
+
 						const currentUserData = JSON.parse(
 							localStorage.getItem("user") || "{}",
 						);
@@ -1611,10 +1611,10 @@ export default function Projects() {
 							isCoordinator: true,
 						};
 						localStorage.setItem("user", JSON.stringify(updatedUser));
-						// console.log(
-						// 	"✅ Zaktualizowano localStorage z coordinatorPillars:",
-						// 	updatedUser.coordinatorPillars,
-						// );
+
+
+
+
 
 						setCurrentUser((prev) =>
 							prev
@@ -1641,10 +1641,10 @@ export default function Projects() {
 		};
 		loadPermissions();
 	}, [currentUser?.role]);
-	// Projects.tsx - w useEffect dla contextUser
+
 	useEffect(() => {
 		if (contextUser) {
-			// 🔥 DODAJ - zapisz do localStorage z coordinatorPillars
+
 			const userForStorage = {
 				id: contextUser.id,
 				firstName: contextUser.firstName,
@@ -2085,11 +2085,11 @@ export default function Projects() {
 				logger.debug("📋 Używam MOCK_PROJECTS jako fallback");
 				setProjects(MOCK_PROJECTS);
 			} finally {
-				// console.log("🔄 [Projects] BEFORE setTimeout - loading:", loading);
+
 				setTimeout(() => {
-					// console.log(
-					// 	"🔄 [Projects] INSIDE setTimeout - ustawiam loading na false",
-					// );
+
+
+
 					setLoading(false);
 				}, 300);
 			}
@@ -2111,8 +2111,8 @@ export default function Projects() {
 
 				if (response.ok) {
 					const data = await response.json();
-					// console.log("📦 [fetchUsers] Otrzymano danych:", data.length);
-					// console.log("📦 [fetchUsers] Pierwszy użytkownik:", data[0]);
+
+
 
 					const mappedUsers = data
 						.filter((user: any) => user.id !== 63 && user.id !== "63")
@@ -2126,13 +2126,13 @@ export default function Projects() {
 							email: user.email,
 							role: user.role || "member",
 							pillar: user.pillar || null,
-							pillars: user.pillars || [], // ← TO JEST WAŻNE!
+							pillars: user.pillars || [], 
 						}));
 
-					// console.log(
-					// 	"📦 [fetchUsers] Po mapowaniu - pierwszy:",
-					// 	mappedUsers[0],
-					// );
+
+
+
+
 					setUsers(mappedUsers);
 				}
 			} catch (error) {
@@ -2550,7 +2550,7 @@ export default function Projects() {
 								onDelete={handleDeleteProject}
 								canEdit={canManageProject(project)}
 								users={users}
-								tasks={tasks} // 🔥 DODAJ
+								tasks={tasks} 
 							/>
 						))
 					)}
@@ -2603,7 +2603,7 @@ export default function Projects() {
 				}}
 				onSave={handleSaveProject}
 				users={users}
-				userPillars={getPillarsArray(currentUser?.coordinatorPillars)} // <- TYLKO KOORDYNATOR
+				userPillars={getPillarsArray(currentUser?.coordinatorPillars)} 
 				isAdminOrBoard={
 					permissions.includes("canManageAllProjects") ||
 					currentUser?.role === "admin" ||

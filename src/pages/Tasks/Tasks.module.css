@@ -49,7 +49,7 @@
 	background: #2563eb;
 }
 
-/* Filtry */
+
 .filters {
 	display: flex;
 	gap: 16px;
@@ -119,14 +119,14 @@
 	border-color: #3b82f6;
 }
 
-/* Grid zadań */
+
 .tasksGrid {
 	display: grid;
 	grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
 	gap: 16px;
 }
 
-/* Karta zadania */
+
 .taskCard {
 	background: #fff;
 	border-radius: 12px;
@@ -338,7 +338,7 @@
 	color: #dc2626;
 }
 
-/* Modal */
+
 .modalOverlay {
 	position: fixed;
 	top: 0;
@@ -600,7 +600,7 @@
 	background: #2563eb;
 }
 
-/* Empty state */
+
 .emptyState {
 	grid-column: 1 / -1;
 	display: flex;
@@ -650,7 +650,7 @@
 	background: #2563eb;
 }
 
-/* Loading */
+
 .loading {
 	display: flex;
 	flex-direction: column;
@@ -675,7 +675,7 @@
 	}
 }
 
-/* Responsywność */
+
 @media (max-width: 768px) {
 	.tasks {
 		padding: 16px;
@@ -726,7 +726,7 @@
 	margin-top: 4px;
 }
 
-/* Detail Modal */
+
 .detailModal {
 	max-width: 700px;
 }
@@ -881,7 +881,7 @@
 	margin: 0;
 }
 
-/* Responsywność */
+
 @media (max-width: 768px) {
 	.detailRow {
 		grid-template-columns: 1fr;
@@ -892,7 +892,7 @@
 	}
 }
 
-/* Feedback button */
+
 .taskCard__feedbackBtn {
 	display: flex;
 	align-items: center;
@@ -985,7 +985,7 @@
 	flex-shrink: 0;
 }
 
-/* Wybrani użytkownicy */
+
 .selectedUsers {
 	display: flex;
 	flex-wrap: wrap;
@@ -1031,7 +1031,7 @@
 	background: #fef2f2;
 }
 
-/* Styl dla inputa z sugestiami */
+
 .userSearchWrapper .modal__input {
 	padding-right: 36px;
 }
@@ -1041,7 +1041,7 @@
 	box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
-/* Suggestion scrollbar */
+
 .userSuggestions::-webkit-scrollbar {
 	width: 4px;
 }
@@ -1060,7 +1060,7 @@
 	background: #94a3b8;
 }
 
-/* Responsywność */
+
 @media (max-width: 768px) {
 	.userSuggestions {
 		max-height: 150px;
@@ -1077,7 +1077,7 @@
 	}
 }
 
-/* Tasks.module.css */
+
 .feedbackDownloadBtn {
 	display: inline-flex;
 	align-items: center;
@@ -1200,7 +1200,7 @@
 	padding: 8px 0;
 }
 
-/* Comment input */
+
 .commentInput {
 	display: flex;
 	gap: 8px;
@@ -1264,7 +1264,7 @@
 	opacity: 0.6;
 }
 
-/* Responsywność dla komentarzy */
+
 @media (max-width: 768px) {
 	.commentInput {
 		flex-direction: column;
@@ -1486,14 +1486,14 @@
 	font-size: 11px;
 }
 
-/* Dla admin/board - delikatne podświetlenie */
+
 .taskCard__createdByBadge {
 	background: #e8f0fe;
 	border-color: #c5d8f0;
 	color: #1a5a8c;
 }
 
-/* 🔥 SEKCJE ZADAŃ */
+
 .tasksContainer {
 	display: flex;
 	flex-direction: column;
@@ -1537,7 +1537,7 @@
 	color: #4b5563;
 }
 
-/* 🔥 PODŚWIETLENIE ZADANIA PRZYPISANEGO DO MNIE */
+
 .taskCardMyTask {
 	box-shadow: 0 1px 3px rgba(59, 130, 246, 0.1) !important;
 }
@@ -1547,7 +1547,7 @@
 	transform: translateY(-2px);
 }
 
-/* Opcjonalnie - badge "MOJE" na karcie */
+
 .taskCardMyTask .taskCard__title::after {
 	content: " • Twoje";
 	font-size: 12px;
@@ -1555,7 +1555,7 @@
 	color: #3b82f6;
 }
 
-/* Responsywność */
+
 @media (max-width: 768px) {
 	.tasksSectionTitle {
 		font-size: 16px;

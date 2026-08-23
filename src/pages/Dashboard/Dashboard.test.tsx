@@ -1,12 +1,12 @@
-// src/pages/Dashboard/Dashboard.test.tsx
+
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
 import Dashboard from './Dashboard';
 
-// ============================================================
-// 🔥 MOCKI
-// ============================================================
+
+
+
 
 const mockNavigate = vi.fn();
 vi.mock('react-router-dom', async () => {
@@ -38,9 +38,9 @@ vi.mock('react-hot-toast', () => ({
     Toaster: () => null,
 }));
 
-// ============================================================
-// 🔥 POMOCNICZE
-// ============================================================
+
+
+
 
 const mockUser = (overrides = {}) => ({
     id: 1,
@@ -87,9 +87,9 @@ const mockNotifications = [
     { id: '2', message: 'Projekt zakończony', type: 'success', time: '1 godz temu' },
 ];
 
-// ============================================================
-// 🔥 TESTY
-// ============================================================
+
+
+
 
 describe('Dashboard', () => {
     let useUserMock: any;
@@ -140,9 +140,9 @@ describe('Dashboard', () => {
         vi.restoreAllMocks();
     });
 
-    // ============================================================
-    // ✅ TEST 1: RENDEROWANIE
-    // ============================================================
+
+
+
 
     it('powinien wyświetlić powitanie', async () => {
         render(
@@ -185,9 +185,9 @@ describe('Dashboard', () => {
         });
     });
 
-    // ============================================================
-    // ✅ TEST 2: STATYSTYKI
-    // ============================================================
+
+
+
 
     it('powinien wyświetlić statystyki', async () => {
         render(
@@ -217,9 +217,9 @@ describe('Dashboard', () => {
         });
     });
 
-    // ============================================================
-    // ✅ TEST 3: POWIADOMIENIA
-    // ============================================================
+
+
+
 
     it('powinien wyświetlić powiadomienia', async () => {
         render(
@@ -262,9 +262,9 @@ describe('Dashboard', () => {
         });
     });
 
-    // ============================================================
-    // ✅ TEST 4: SZYBKIE AKCJE
-    // ============================================================
+
+
+
 
     it('powinien wyświetlić szybkie akcje', async () => {
         render(
@@ -310,9 +310,9 @@ describe('Dashboard', () => {
         });
     });
 
-    // ============================================================
-    // ✅ TEST 5: BŁĘDY
-    // ============================================================
+
+
+
 
     it('powinien wyświetlić błąd gdy API zawiedzie', async () => {
         globalThis.fetch = vi.fn().mockImplementation((url) => {
@@ -337,9 +337,9 @@ describe('Dashboard', () => {
         });
     });
 
-    // ============================================================
-    // ✅ TEST 6: ONBOARDING - POPRAWIONY
-    // ============================================================
+
+
+
 
     it.skip('powinien przekierować do onboardingu jeśli nie jest ukończony', async () => {
         globalThis.fetch = vi.fn().mockImplementation((url) => {
@@ -376,12 +376,12 @@ describe('Dashboard', () => {
             </BrowserRouter>
         );
 
-        // 🔥 SPRAWDŹ CZY NIE MA POWITANIA (BO PRZEKIEROWUJE)
+
         await waitFor(() => {
             expect(screen.queryByText(/Dzień dobry/i)).not.toBeInTheDocument();
         });
 
-        // 🔥 SPRAWDŹ CZY `navigate` ZOSTAŁ WYWOŁANY
+
         expect(mockNavigate).toHaveBeenCalledWith('/onboarding');
     });
 
@@ -397,15 +397,15 @@ describe('Dashboard', () => {
         });
     });
 
-    // ============================================================
-    // ✅ TEST 7: FILARY - POPRAWIONY
-    // ============================================================
+
+
+
 
     it('powinien wyświetlić filary użytkownika', async () => {
         useUserMock.mockReturnValue({
             user: mockUser({
                 pillars: 'Konferencyjny, Projektowy',
-                team: 'Filar Konferencyjny' // 🔥 TYLKO JEDEN FILAR W TEAM
+                team: 'Filar Konferencyjny' 
             }),
             loading: false,
         });
@@ -417,7 +417,7 @@ describe('Dashboard', () => {
         );
 
         await waitFor(() => {
-            // 🔥 SZUKAJ POJEDYNCZEGO FILARA
+
             expect(screen.getByText('Filar Konferencyjny')).toBeInTheDocument();
         });
     });
@@ -443,9 +443,9 @@ describe('Dashboard', () => {
         });
     });
 
-    // ============================================================
-    // ✅ TEST 8: CZAS CZŁONKOSTWA - POPRAWIONY
-    // ============================================================
+
+
+
 
     it('powinien wyświetlić czas członkostwa', async () => {
         const joinDate = new Date();
@@ -468,7 +468,7 @@ describe('Dashboard', () => {
             </BrowserRouter>
         );
 
-        // 🔥 SPRAWDŹ CZY KARTA "Jesteś z nami" SIĘ POJAWIA
+
         await waitFor(() => {
             expect(screen.getByText('Jesteś z nami')).toBeInTheDocument();
         });

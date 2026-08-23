@@ -651,7 +651,7 @@
 	}
 }
 
-/* 👇 NOWE STYLE DLA WYŚWIETLANIA ZADAŃ W KALENDARZU */
+
 .dayTaskItem {
 	display: flex;
 	align-items: center;

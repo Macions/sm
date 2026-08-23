@@ -786,7 +786,7 @@
     }
 }
 
-/* W Profile.module.css */
+
 .contributionPaid {
     color: #10b981;
     font-weight: 600;
@@ -802,7 +802,7 @@
     font-weight: 600;
 }
 
-/* Zakładki */
+
 .tabs {
     display: flex;
     gap: 4px;
@@ -811,15 +811,15 @@
     background: #f1f5f9;
     border-radius: 12px;
     overflow-x: auto;
-    /* ← DODAJ - pozwala na scroll w poziomie */
+
     overflow-y: hidden;
-    /* ← DODAJ - ukrywa scroll w pionie */
+
     flex-shrink: 0;
-    /* ← DODAJ - nie pozwala się kurczyć */
+
     scrollbar-width: thin;
-    /* ← DODAJ - cienki pasek scrolla */
+
     -webkit-overflow-scrolling: touch;
-    /* ← DODAJ - płynny scroll na iOS */
+
 }
 
 .tabs::-webkit-scrollbar {
@@ -861,7 +861,7 @@
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
-/* Statystyki */
+
 .statsRow {
     display: flex;
     gap: 12px;
@@ -893,7 +893,7 @@
     margin-top: 2px;
 }
 
-/* Karty zadań */
+
 .taskCard {
     padding: 14px 16px;
     border-radius: 8px;
@@ -970,7 +970,7 @@
     font-size: 14px;
 }
 
-/* Składki */
+
 .contributionsGrid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -1019,7 +1019,7 @@
     color: #ef4444;
 }
 
-/* Historia składek */
+
 .historySection {
     margin-top: 24px;
 }
@@ -1090,7 +1090,7 @@
     color: #6b7280;
 }
 
-/* Kontakty */
+
 .privateNote {
     display: flex;
     align-items: center;
@@ -1141,7 +1141,7 @@
     border-bottom: none;
 }
 
-/* Informacje o składkach (prywatne) */
+
 .contributionInfoGrid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -1182,7 +1182,7 @@
     color: #6b7280;
 }
 
-/* MODAL DODAWANIA UMIEJĘTNOŚCI */
+
 .modalOverlay {
     position: fixed;
     top: 0;

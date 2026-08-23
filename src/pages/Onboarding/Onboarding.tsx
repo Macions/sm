@@ -173,8 +173,8 @@ export default function Onboarding({ initialData = {} }: OnboardingProps) {
 		isTrial: initialData.isTrial !== undefined ? initialData.isTrial : false,
 	});
 
-	// console.log("📋 [DEBUG] Initial formData:", formData);
-	// console.log("📋 [DEBUG] initialData:", initialData);
+
+
 	const [newSkill, setNewSkill] = useState("");
 	const [newSalaContact, setNewSalaContact] = useState("");
 	const [newMpContact, setNewMpContact] = useState("");
@@ -244,7 +244,7 @@ export default function Onboarding({ initialData = {} }: OnboardingProps) {
 		const fetchPillars = async () => {
 			try {
 				const token = localStorage.getItem("accessToken");
-				// console.log("🔍 [DEBUG] Pobieram listę filarów z /api/teams");
+
 
 				const response = await fetch("/api/teams", {
 					headers: {
@@ -253,26 +253,26 @@ export default function Onboarding({ initialData = {} }: OnboardingProps) {
 					},
 				});
 
-				// console.log("📡 [DEBUG] Status /api/teams:", response.status);
+
 
 				if (response.ok) {
 					const data = await response.json();
-					// console.log(
-					// 	"📋 [DEBUG] Wszystkie teamy z /api/teams:",
-					// 	JSON.stringify(data, null, 2),
-					// );
+
+
+
+
 
 					const pillarsList = data.filter((team: any) => {
 						const isPillar =
 							team.name.includes("Filar") && !team.name.includes("Filary");
-						// console.log(`  - ${team.name}: isPillar = ${isPillar}`);
+
 						return isPillar;
 					});
 
-					// console.log("✅ [DEBUG] Przefiltrowane filary:", pillarsList);
+
 					setPillars(pillarsList);
 				} else {
-					// console.log("❌ [DEBUG] Błąd /api/teams - status:", response.status);
+
 				}
 			} catch (error) {
 				console.error("❌ Błąd pobierania filarów:", error);
@@ -287,7 +287,7 @@ export default function Onboarding({ initialData = {} }: OnboardingProps) {
 				const token = localStorage.getItem("accessToken");
 				if (!token) return;
 
-				// console.log("🔍 [DEBUG] Pobieram obecne filary użytkownika...");
+
 
 				const profileResponse = await fetch("/api/profile", {
 					headers: {
@@ -296,25 +296,25 @@ export default function Onboarding({ initialData = {} }: OnboardingProps) {
 					},
 				});
 
-				// console.log(
-				// 	"📡 [DEBUG] Status odpowiedzi /api/profile:",
-				// 	profileResponse.status,
-				// );
+
+
+
+
 
 				if (profileResponse.ok) {
 					const userData = await profileResponse.json();
-					// console.log("📋 [DEBUG] userData.pillars:", userData.pillars);
 
-					// userData.pillars to tablica stringów np. ['Konferencyjny', 'Projektowy']
+
+
 					const userPillarNames = userData.pillars || [];
-					// console.log("📋 [DEBUG] Nazwy filarów użytkownika:", userPillarNames);
+
 
 					if (userPillarNames.length > 0 && pillars.length > 0) {
-						// Dopasuj nazwy filarów do ID z listy pillars
+
 						const matchedPillarIds = pillars
 							.filter((pillar) => {
-								// Sprawdź czy nazwa filara z listy pasuje do którejś z nazw użytkownika
-								// np. "Filar Konferencyjny" pasuje do "Konferencyjny"
+
+
 								return userPillarNames.some((userPillarName: string) => {
 									const pillarNameWithoutPrefix = pillar.name.replace(
 										"Filar ",
@@ -328,21 +328,21 @@ export default function Onboarding({ initialData = {} }: OnboardingProps) {
 							})
 							.map((pillar) => pillar.id);
 
-						// console.log("✅ [DEBUG] Dopasowane ID filarów:", matchedPillarIds);
+
 
 						if (matchedPillarIds.length > 0) {
 							setSelectedPillars(matchedPillarIds);
-							// console.log(
-							// 	"✅ [DEBUG] Ustawiono selectedPillars:",
-							// 	matchedPillarIds,
-							// );
+
+
+
+
 						} else {
-							// console.log("⚠️ [DEBUG] Nie dopasowano żadnych filarów");
+
 						}
 					} else {
-						// console.log(
-						// 	"⚠️ [DEBUG] Brak filarów użytkownika lub lista filarów pusta",
-						// );
+
+
+
 					}
 				}
 			} catch (error) {
@@ -356,16 +356,16 @@ export default function Onboarding({ initialData = {} }: OnboardingProps) {
 	}, [pillars]);
 	useEffect(() => {
 		const userData = localStorage.getItem("user");
-		// console.log("📋 [DEBUG] userData z localStorage:", userData);
+
 
 		if (userData) {
 			try {
 				const user = JSON.parse(userData);
-				// console.log("📋 [DEBUG] Sparsowany user:", user);
-				// console.log("📋 [DEBUG] user.firstName:", user.firstName);
-				// console.log("📋 [DEBUG] user.lastName:", user.lastName);
-				// console.log("📋 [DEBUG] user.first_name:", user.first_name);
-				// console.log("📋 [DEBUG] user.last_name:", user.last_name);
+
+
+
+
+
 
 				const phoneValue =
 					user.phone ||
@@ -375,21 +375,21 @@ export default function Onboarding({ initialData = {} }: OnboardingProps) {
 					user.mobile ||
 					"";
 
-				// Użyj firstName (z dużej) lub first_name (z podkreślnikiem)
+
 				const firstName = user.firstName || user.first_name || "";
 				const lastName = user.lastName || user.last_name || "";
 				const email = user.email || "";
 				const province = user.province || "";
 
-				// console.log("✅ [DEBUG] firstName z localStorage:", firstName);
-				// console.log("✅ [DEBUG] lastName z localStorage:", lastName);
+
+
 
 				if (firstName) {
-					// console.log("✅ [DEBUG] Ustawiam firstName na:", firstName);
+
 					handleInputChange("firstName", firstName);
 				}
 				if (lastName) {
-					// console.log("✅ [DEBUG] Ustawiam lastName na:", lastName);
+
 					handleInputChange("lastName", lastName);
 				}
 				if (email && !formData.email) {
@@ -406,7 +406,7 @@ export default function Onboarding({ initialData = {} }: OnboardingProps) {
 				console.error("❌ Błąd parsowania user data:", e);
 			}
 		} else {
-			// console.log("⚠️ [DEBUG] Brak userData w localStorage");
+
 		}
 	}, []);
 
@@ -482,15 +482,15 @@ export default function Onboarding({ initialData = {} }: OnboardingProps) {
 	}, [formData.firstName, formData.lastName, isEmailManuallyEdited]);
 	useEffect(() => {
 		const fetchProfileIfNeeded = async () => {
-			// Jeśli imię i nazwisko są puste, pobierz z API
+
 			if (!formData.firstName || !formData.lastName) {
 				try {
 					const token = localStorage.getItem("accessToken");
 					if (!token) return;
 
-					// console.log(
-					// 	"🔍 [DEBUG] Pobieram dane z /api/profile (brak imienia/nazwiska)",
-					// );
+
+
+
 					const response = await fetch("/api/profile", {
 						headers: {
 							Authorization: `Bearer ${token}`,
@@ -500,11 +500,11 @@ export default function Onboarding({ initialData = {} }: OnboardingProps) {
 
 					if (response.ok) {
 						const data = await response.json();
-						// console.log("📋 [DEBUG] Dane z /api/profile:", data);
 
-						// ✅ POBIERZ isTrial z API
+
+
 						if (data.isTrial !== undefined) {
-							// console.log("📋 [DEBUG] isTrial z API:", data.isTrial);
+
 							handleInputChange(
 								"isTrial",
 								data.isTrial === true || data.isTrial === 1,
@@ -618,7 +618,7 @@ export default function Onboarding({ initialData = {} }: OnboardingProps) {
 				}
 			}
 
-			// Konwersja ID na nazwy filarów
+
 			const selectedPillarNames = selectedPillars
 				.map((id) => {
 					const pillar = pillars.find((p) => p.id === id);
@@ -627,9 +627,9 @@ export default function Onboarding({ initialData = {} }: OnboardingProps) {
 				.filter((name): name is string => name !== null);
 
 			const pillarsString = selectedPillarNames.join(", ");
-			// console.log("📋 [DEBUG] pillarsString:", pillarsString);
 
-			// 1. Zapisz onboarding
+
+
 			const payload = {
 				...formData,
 				joinDate: joinDate,
@@ -638,7 +638,7 @@ export default function Onboarding({ initialData = {} }: OnboardingProps) {
 				pillars: pillarsString,
 			};
 
-			// console.log("📦 [payload] wysyłane:", JSON.stringify(payload, null, 2));
+
 
 			const response = await fetch("/api/onboarding/save", {
 				method: "POST",
@@ -650,14 +650,14 @@ export default function Onboarding({ initialData = {} }: OnboardingProps) {
 			});
 
 			const result = await response.json();
-			// console.log("📡 [response] onboarding:", result);
+
 
 			if (!response.ok) {
 				throw new Error(result.error || "Błąd zapisu onboardingu");
 			}
 
-			// 2. ZAKTUALIZUJ PROFIL UŻYTKOWNIKA z filarami
-			// console.log("🔍 [DEBUG] Aktualizuję profil użytkownika z filarami...");
+
+
 
 			const profilePayload = {
 				pillars: pillarsString,
@@ -667,7 +667,7 @@ export default function Onboarding({ initialData = {} }: OnboardingProps) {
 				phone: formData.phone,
 			};
 
-			// console.log("📦 [profilePayload]:", profilePayload);
+
 
 			const profileResponse = await fetch("/api/profile", {
 				method: "PUT",
@@ -678,9 +678,9 @@ export default function Onboarding({ initialData = {} }: OnboardingProps) {
 				body: JSON.stringify(profilePayload),
 			});
 
-			// Pobierz odpowiedź jako tekst najpierw
+
 			const profileText = await profileResponse.text();
-			// console.log("📡 [response] profil RAW:", profileText);
+
 
 			let profileResult;
 			try {
@@ -688,7 +688,7 @@ export default function Onboarding({ initialData = {} }: OnboardingProps) {
 			} catch (e) {
 				profileResult = { error: profileText };
 			}
-			// console.log("📡 [response] profil JSON:", profileResult);
+
 
 			if (!profileResponse.ok) {
 				console.warn(
@@ -696,17 +696,17 @@ export default function Onboarding({ initialData = {} }: OnboardingProps) {
 					profileResult,
 				);
 			} else {
-				// console.log("✅ [DEBUG] Profil zaktualizowany pomyślnie!");
+
 			}
 
-			// 3. Zapisz w localStorage i przekieruj
+
 			localStorage.setItem("onboardingCompleted", "true");
 			localStorage.setItem(
 				"onboardingData",
 				JSON.stringify(result.data || formData),
 			);
 
-			// Zaktualizuj też user w localStorage
+
 			const userData = localStorage.getItem("user");
 			if (userData) {
 				try {
@@ -716,7 +716,7 @@ export default function Onboarding({ initialData = {} }: OnboardingProps) {
 					user.last_name = formData.lastName;
 					user.province = formData.province;
 					localStorage.setItem("user", JSON.stringify(user));
-					// console.log("✅ [DEBUG] Zaktualizowano user w localStorage");
+
 				} catch (e) {
 					console.warn(
 						"⚠️ [DEBUG] Nie udało się zaktualizować user w localStorage",
@@ -961,7 +961,7 @@ export default function Onboarding({ initialData = {} }: OnboardingProps) {
 									<input
 										type="checkbox"
 										checked={formData.isTrial === true}
-										disabled={true} // ✅ ZABLOKOWANY
+										disabled={true} 
 										className={styles.form__checkboxDisabled}
 									/>
 									<span>Jestem na okresie próbnym {formData.isTrial}</span>

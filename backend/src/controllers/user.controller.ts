@@ -7,7 +7,7 @@ const prisma = new PrismaClient();
 export class UserController {
 	async getAllUsers(req: Request, res: Response) {
 		try {
-			// Użyj raw SQL zamiast Prisma
+
 			const users = await prisma.$queryRaw`
 				SELECT 
 					id, 
@@ -137,7 +137,7 @@ export class UserController {
 				return res.status(404).json({ error: "Użytkownik nie znaleziony" });
 			}
 
-			// 🔥 POPRAWIONE - is_active jako boolean
+
 			const updatedUser = await prisma.user.update({
 				where: { id },
 				data: {
@@ -175,7 +175,7 @@ export class UserController {
 				return res.status(400).json({ error: "Nieprawidłowe ID użytkownika" });
 			}
 
-			// 🔥 POPRAWIONE - is_active jako boolean false
+
 			await prisma.user.update({
 				where: { id },
 				data: { is_active: false },

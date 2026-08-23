@@ -1,4 +1,4 @@
-// src/jobs/syncMembers.ts
+
 
 import dotenv from "dotenv";
 dotenv.config();
@@ -28,9 +28,9 @@ const externalDb = mysql.createPool({
 	connectionLimit: 10,
 });
 
-// ============================================================
-// 🔥 POŁĄCZENIE Z SM_Frekwencja DLA FILARÓW
-// ============================================================
+
+
+
 const frekwencjaDb = mysql.createPool({
 	host: process.env.FREKWENCJA_DB_HOST || "57.128.253.89",
 	user: process.env.FREKWENCJA_DB_USER || "czarnecki",
@@ -180,9 +180,9 @@ export async function syncMembers() {
 			return;
 		}
 
-		// ============================================================
-		// 🔥 KROK 1: USUŃ UŻYTKOWNIKÓW Z REZYGNACJĄ
-		// ============================================================
+
+
+
 		const [resignedMembers] = (await externalDb.query(`
 			SELECT 
 				id,
@@ -242,9 +242,9 @@ export async function syncMembers() {
 			);
 		}
 
-		// ============================================================
-		// 🔥 KROK 2: POBIERANIE FILARÓW Z SM_Frekwencja
-		// ============================================================
+
+
+
 		logger.debug("📥 [SYNC] Pobieranie filarów z SM_Frekwencja...");
 
 		const [memberPillars] = (await frekwencjaDb.query(`
@@ -280,9 +280,9 @@ export async function syncMembers() {
 			`📊 [SYNC] Pobrano filary dla ${pillarMap.size} członków z SM_Frekwencja`,
 		);
 
-		// ============================================================
-		// 🔥 POBIERANIE ZESPOŁÓW (TEAMS) Z GŁÓWNEJ BAZY
-		// ============================================================
+
+
+
 		const teams = await prisma.team.findMany({
 			where: {
 				name: {
@@ -300,9 +300,9 @@ export async function syncMembers() {
 			teamMap.set(team.name, team.id);
 		}
 
-		// ============================================================
-		// STATYSTYKI STATUSÓW
-		// ============================================================
+
+
+
 		const statusStats: Record<string, number> = {};
 		for (const member of rows) {
 			const status = member.status || "unknown";
@@ -330,7 +330,7 @@ export async function syncMembers() {
 				pillars: true,
 				team: true,
 				functional_role: true,
-				role_id: true,  // <-- DODAJ TĘ LINIĘ
+				role_id: true,  
 			},
 		});
 
@@ -349,7 +349,7 @@ export async function syncMembers() {
 		let duplicateEmails = 0;
 		let teamMembersAdded = 0;
 		let teamMembersUpdated = 0;
-		let pillarsPreserved = 0; // 🔥 NOWE: licznik zachowanych filarów
+		let pillarsPreserved = 0; 
 
 		const usedEmails = new Set<string>();
 
@@ -378,9 +378,9 @@ export async function syncMembers() {
 
 				const existing = existingEmails.get(generatedEmail);
 
-				// ============================================================
-				// 🔥 POBIERZ FILARY DLA TEGO CZŁONKA Z SM_Frekwencja
-				// ============================================================
+
+
+
 				const memberId = emailToMemberId.get(generatedEmail);
 				let pillarNames: string[] = [];
 
@@ -391,9 +391,9 @@ export async function syncMembers() {
 				const pillarString =
 					pillarNames.length > 0 ? pillarNames.join(", ") : null;
 
-				// ============================================================
-				// 🔥 DANE UŻYTKOWNIKA
-				// ============================================================
+
+
+
 				const userData = {
 					username: generatedEmail.split("@")[0] || generatedEmail,
 					email: generatedEmail,
@@ -414,13 +414,13 @@ export async function syncMembers() {
 				let userId: number;
 
 				if (existing) {
-					// 🔥 SPRAWDŹ CZY UŻYTKOWNIK MA JUŻ USTAWIONY STATUS
+
 					const hasExistingStatus = existing.status && existing.status !== "";
 
-					// 🔥 SPRAWDŹ CZY UŻYTKOWNIK MA JUŻ USTAWIONE FILARY
-					// Jeśli ma filary (nie są puste) - NIE ZMIENIAJ ICH
+
+
 					const hasExistingPillars = existing.pillars && existing.pillars !== "" && existing.pillars !== null;
-					// 🔥 SPRAWDŹ CZY UŻYTKOWNIK MA JUŻ FUNKCJONALNĄ ROLĘ
+
 					const hasExistingFunctionalRole = existing.functional_role && existing.functional_role !== "";
 					const dataToUpdate: any = {
 						first_name: userData.first_name,
@@ -430,29 +430,29 @@ export async function syncMembers() {
 						team: userData.team,
 					};
 
-					// DODAJ TEN WARUNEK:
-					// Sprawdź czy użytkownik ma już rolę (zakładamy że domyślna to 4)
+
+
 					const hasExistingRole = existing.role_id && existing.role_id !== 4;
 
 					if (hasExistingRole) {
-						// Zachowaj istniejącą rolę
+
 						dataToUpdate.role_id = existing.role_id;
 					} else {
-						// Ustaw domyślną rolę (4)
+
 						dataToUpdate.role_id = userData.role_id;
 					}
 
-					// 🔥 ZACHOWAJ LUB USTAW FUNKCJONALNĄ ROLĘ
+
 					if (hasExistingFunctionalRole) {
 						dataToUpdate.functional_role = existing.functional_role;
 					} else {
 						dataToUpdate.functional_role = userData.functional_role;
 					}
 
-					// 🔥 WARUNEK: NIE ZMIENIAJ FILARÓW jeśli użytkownik ma już filary w głównej bazie
-					// 🔥 ZAWSZE ZACHOWUJ ISTNIEJĄCE FILARY - NIGDY NIE NADPISUJ!
+
+
 					if (existing.pillars !== undefined) {
-						// Zachowaj istniejące filary - nawet jeśli są puste!
+
 						dataToUpdate.pillars = existing.pillars;
 						if (existing.pillars && existing.pillars !== "") {
 							pillarsPreserved++;
@@ -465,11 +465,11 @@ export async function syncMembers() {
 							);
 						}
 					} else {
-						// Tylko jeśli pole pillars nie istnieje w bazie (nowy użytkownik)
+
 						dataToUpdate.pillars = userData.pillars;
 					}
 
-					// NIE ZMIENIAJ STATUSU jeśli użytkownik ma już status
+
 					if (!hasExistingStatus) {
 						dataToUpdate.status = userData.status;
 						dataToUpdate.is_trial = userData.is_trial;
@@ -478,7 +478,7 @@ export async function syncMembers() {
 						dataToUpdate.is_trial = existing.is_trial;
 					}
 
-					// Sprawdź czy są zmiany
+
 					const hasChanges =
 						existing.first_name !== dataToUpdate.first_name ||
 						existing.last_name !== dataToUpdate.last_name ||
@@ -526,9 +526,9 @@ export async function syncMembers() {
 					);
 				}
 
-				// ============================================================
-				// 🔥 SYNCHRONIZACJA TEAM_MEMBERS - DLA FILARÓW
-				// ============================================================
+
+
+
 				if (pillarNames.length > 0) {
 					const existingTeamMembers = await prisma.teamMember.findMany({
 						where: {
@@ -621,7 +621,7 @@ export async function syncMembers() {
 		logger.debug(`   ⏭️${skipped} bez zmian`);
 		logger.debug(`   ⏭️${skippedRezygnacja} pominiętych (rezygnacja)`);
 		logger.debug(`   ➕${teamMembersAdded} dodanych członkostw w filarach`);
-		logger.debug(`   🔒${pillarsPreserved} zachowanych filarów (nie nadpisano)`); // 🔥 NOWE
+		logger.debug(`   🔒${pillarsPreserved} zachowanych filarów (nie nadpisano)`); 
 		if (duplicateEmails > 0) {
 			logger.debug(`   ⚠️${duplicateEmails} pominiętych (duplikaty emaili)`);
 		}
@@ -645,7 +645,7 @@ export async function syncMembers() {
 						duplicateEmails,
 						teamMembersAdded,
 						teamMembersUpdated,
-						pillarsPreserved, // 🔥 DODANE
+						pillarsPreserved, 
 						duration,
 						timestamp: new Date().toISOString(),
 					},

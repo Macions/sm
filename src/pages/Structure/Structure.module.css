@@ -390,7 +390,7 @@ body {
 	) !important;
 	color: #fff !important;
 	border: none !important;
-	/* max-width: 520px; */
+
 	margin-bottom: 32px;
 }
 
@@ -474,7 +474,7 @@ body {
 .peopleList {
 	margin-top: 12px;
 	width: 70%;
-	/* max-width: 520px; */
+
 	display: flex;
 	flex-direction: column;
 	gap: 6px;
@@ -586,7 +586,7 @@ body {
 }
 
 .childrenContainer .nodeCard {
-	/* max-width: 480px; */
+
 	width: 80%; /* 👈 DODAJ */
 }
 
@@ -833,7 +833,7 @@ body {
 		width: 100% !important;
 	}
 
-	/* 👇 WYŁĄCZ ANIMACJE NA MOBILE DLA WYDAJNOŚCI */
+
 	.nodeCard {
 		transition: none !important;
 	}
@@ -1088,7 +1088,7 @@ a {
 	user-select: none !important;
 }
 
-/* 👇 DODATKOWO - WYŁĄCZ DOMYŚLNY STAN AKTYWNY PRZYCISKÓW */
+
 .nodeCard__toggle:focus,
 .nodeCard__toggle:active,
 .nodeCard__toggle:focus-visible {
@@ -1107,7 +1107,7 @@ a {
 	outline: none !important;
 }
 
-/* 👇 WYŁĄCZ ZAZNACZANIE TEKSTU PODCZAS KLIKANIA */
+
 .nodeCard *,
 .personCard *,
 .childrenContainer * {
@@ -1130,14 +1130,14 @@ a {
 	position: relative;
 }
 
-/* 👇 DZIECI - WCIĘCIE I LINIA */
+
 .childrenContainer .treeNode {
 	padding-left: 24px; /* 👈 WCIĘCIE DLA DZIECI */
 	border-left: 2px solid var(--border-soft, #d1c4f0);
 	position: relative;
 }
 
-/* 👇 LINIA ŁĄCZĄCA Z RODZICEM (OD GÓRY) */
+
 .childrenContainer .treeNode::before {
 	content: '';
 	position: absolute;
@@ -1148,7 +1148,7 @@ a {
 	background: var(--border-soft, #d1c4f0);
 }
 
-/* 👇 GŁĘBSZE POZIOMY - MNIEJSZE WCIĘCIE */
+
 .childrenContainer .childrenContainer .treeNode {
 	padding-left: 20px;
 	border-left-color: var(--purple-200, #d4c8f0);
@@ -1159,7 +1159,7 @@ a {
 	border-left-color: var(--purple-100, #e8dff5);
 }
 
-/* 👇 LINIE DLA GŁĘBSZYCH POZIOMÓW */
+
 .childrenContainer .childrenContainer .treeNode::before {
 	background: var(--purple-200, #d4c8f0);
 }
@@ -1181,17 +1181,17 @@ a {
 	position: relative;
 }
 
-/* 👇 DZIECI - WCIĘCIE TYLKO */
+
 .childrenContainer .treeNode {
 	padding-left: 0; /* 👈 BRAK WCIĘCIA NA DESKTOPIE */
 }
 
-/* 👇 LINIE - UKRYTE NA DESKTOPIE */
+
 .childrenContainer .treeNode::before {
 	display: none; /* 👈 UKRYJ LINIE */
 }
 
-/* 👇 TYLKO NA MOBILE - POKAŻ WCIĘCIA I LINIE */
+
 @media (max-width: 768px) {
 	.childrenContainer .treeNode {
 		padding-left: 16px;
@@ -1236,7 +1236,7 @@ a {
 	position: relative;
 }
 
-/* 👇 NA DESKTOPIE - BRAK WCIĘCIA I LINII */
+
 .childrenContainer .treeNode {
 	padding-left: 0;
 	border-left: none;
@@ -1250,7 +1250,7 @@ a {
 	display: none;
 }
 
-/* 👇 TYLKO NA MOBILE - POKAŻ WCIĘCIA I LINIE */
+
 @media (max-width: 768px) {
 	.childrenContainer .treeNode {
 		padding-left: 16px;
@@ -1301,7 +1301,7 @@ a {
    NODE CARD - RÓŻNE SZEROKOŚCI DLA POZIOMÓW
    ========================================================================== */
 
-/* 👇 POZIOM 0 (ROOT) - 90% */
+
 .nodeCard {
 	background: var(--card-bg, #fff);
 	border-radius: var(--radius-lg, 20px);
@@ -1318,25 +1318,25 @@ a {
 	margin-right: auto;
 }
 
-/* 👇 POZIOM 1 (DZIECI ROOT) - 85% */
+
 .childrenContainer .nodeCard {
 	width: 85%;
 	max-width: 480px;
 }
 
-/* 👇 POZIOM 2 (WNUKI) - 80% */
+
 .childrenContainer .childrenContainer .nodeCard {
 	width: 80%;
 	max-width: 440px;
 }
 
-/* 👇 POZIOM 3 (PRA-WNUKI) - 75% */
+
 .childrenContainer .childrenContainer .childrenContainer .nodeCard {
 	width: 75%;
 	max-width: 400px;
 }
 
-/* 👇 POZIOM 4 - 70% */
+
 .childrenContainer .childrenContainer .childrenContainer .childrenContainer .nodeCard {
 	width: 70%;
 	max-width: 360px;
@@ -1346,7 +1346,7 @@ a {
    PEOPLE LIST - DOPASOWANA SZEROKOŚĆ DO POZIOMU
    ========================================================================== */
 
-/* 👇 POZIOM 0 (ROOT) */
+
 .peopleList {
 	margin-top: 12px;
 	width: 90%;
@@ -1362,19 +1362,19 @@ a {
 	margin-right: auto;
 }
 
-/* 👇 POZIOM 1 (DZIECI ROOT) */
+
 .childrenContainer .peopleList {
 	width: 85%;
 	max-width: 480px;
 }
 
-/* 👇 POZIOM 2 (WNUKI) */
+
 .childrenContainer .childrenContainer .peopleList {
 	width: 80%;
 	max-width: 440px;
 }
 
-/* 👇 POZIOM 3 (PRA-WNUKI) */
+
 .childrenContainer .childrenContainer .childrenContainer .peopleList {
 	width: 75%;
 	max-width: 400px;

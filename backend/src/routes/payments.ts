@@ -1,15 +1,15 @@
-// src/server/routes/payments.ts
+
 import express from "express";
 import pool from "../config/db";
 
 const router = express.Router();
 
-// 📊 GET - status składek wszystkich członków
+
 router.get("/status", async (req, res) => {
 	try {
-		// console.log("🔄 [PAYMENTS] Pobieranie danych składek...");
 
-		// 🔥 DOSTOSUJ TO ZAPYTANIE DO SWOJEJ BAZY!
+
+
 		const [rows] = await pool.query(`
             SELECT 
                 m.id,
@@ -44,7 +44,7 @@ router.get("/status", async (req, res) => {
 
 		const members = rows as any[];
 
-		// 📊 Podsumowanie
+
 		const summary = {
 			totalMembers: members.length,
 			totalArrears: members.reduce(
@@ -60,7 +60,7 @@ router.get("/status", async (req, res) => {
 				members.length || 0,
 		};
 
-		// console.log(`✅ [PAYMENTS] Pobrano ${members.length} członków`);
+
 
 		res.json({
 			success: true,
@@ -77,7 +77,7 @@ router.get("/status", async (req, res) => {
 	}
 });
 
-// 📊 GET - składki konkretnego członka
+
 router.get("/member/:id", async (req, res) => {
 	try {
 		const { id } = req.params;

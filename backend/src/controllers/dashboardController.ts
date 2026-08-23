@@ -1,4 +1,4 @@
-// src/controllers/dashboardController.ts
+
 
 import { Request, Response } from "express";
 import { PrismaClient } from "@prisma/client";
@@ -6,7 +6,7 @@ import { logger } from "../utils/logger";
 
 const prisma = new PrismaClient();
 
-// Rozszerzenie Request o user (dla auth middleware)
+
 interface AuthRequest extends Request {
 	user?: {
 		id: number;
@@ -70,12 +70,12 @@ export class DashboardController {
 				},
 			});
 
-			// Tutaj możesz dodać statystyki składek
+
 			const currentDate = new Date();
 			const currentMonth = currentDate.getMonth() + 1;
 			const currentYear = currentDate.getFullYear();
 
-			// Statystyki składek dla zalogowanego użytkownika
+
 			let contributionStats = null;
 			if (userId) {
 				const userContributions = await prisma.contribution.findMany({
@@ -105,7 +105,7 @@ export class DashboardController {
 			res.json({
 				members: totalMembers,
 				projects: totalProjects,
-				attendance: "92%", // Przykład - pobieraj z bazy
+				attendance: "92%", 
 				announcements: announcements,
 				newGuides: newGuides,
 				contributions: contributionStats,
@@ -163,9 +163,9 @@ export class DashboardController {
 	 * Oznacza powiadomienie jako przeczytane
 	 */
 
-	// src/controllers/dashboardController.ts
 
-	// src/controllers/dashboardController.ts
+
+
 
 	async getContributionStats(req: AuthRequest, res: Response) {
 		try {
@@ -192,7 +192,7 @@ export class DashboardController {
 						amount: 0,
 						monthName: getMonthName(currentMonth),
 						year: currentYear,
-						monthsPaid: 0, // ← DODANE
+						monthsPaid: 0, 
 					},
 					summary: {
 						overdueMonths: 0,
@@ -209,7 +209,7 @@ export class DashboardController {
 
 			const isPaid = currentMonthContribution?.status === "PAID";
 			const amount = currentMonthContribution?.amount || 0;
-			const monthsPaid = currentMonthContribution?.monthsPaid || 1; // ← DODANE
+			const monthsPaid = currentMonthContribution?.monthsPaid || 1; 
 			const overdueMonths = contributions.filter(
 				(c) => c.status === "PENDING",
 			).length;
@@ -222,7 +222,7 @@ export class DashboardController {
 					monthName: getMonthName(currentMonth),
 					month: currentMonth,
 					year: currentYear,
-					monthsPaid: monthsPaid, // ← DODANE
+					monthsPaid: monthsPaid, 
 				},
 				summary: {
 					overdueMonths: overdueMonths,
@@ -237,7 +237,7 @@ export class DashboardController {
 					monthName: getMonthName(c.month),
 					status: c.status,
 					amount: c.amount,
-					monthsPaid: c.monthsPaid || 1, // ← DODANE
+					monthsPaid: c.monthsPaid || 1, 
 				})),
 			});
 		} catch (error) {
@@ -258,7 +258,7 @@ export class DashboardController {
 				return res.status(400).json({ error: "Nieprawidłowe ID użytkownika" });
 			}
 
-			// Sprawdź czy użytkownik istnieje
+
 			const user = await prisma.user.findUnique({
 				where: { id: id },
 				select: { id: true, email: true, first_name: true, last_name: true },
@@ -272,14 +272,14 @@ export class DashboardController {
 			const currentMonth = currentDate.getMonth() + 1;
 			const currentYear = currentDate.getFullYear();
 
-			// Pobierz składki dla konkretnego użytkownika
+
 			const contributions = await prisma.contribution.findMany({
 				where: { userId: id },
 				orderBy: [{ year: "desc" }, { month: "desc" }],
 				take: 12,
 			});
 
-			// Jeśli brak składek
+
 			if (contributions.length === 0) {
 				return res.json({
 					hasContributions: false,
@@ -299,7 +299,7 @@ export class DashboardController {
 				});
 			}
 
-			// Znajdź składkę za bieżący miesiąc
+
 			const currentMonthContribution = contributions.find(
 				(c) => c.month === currentMonth && c.year === currentYear,
 			);
@@ -308,12 +308,12 @@ export class DashboardController {
 			const amount = currentMonthContribution?.amount || 0;
 			const monthsPaid = currentMonthContribution?.monthsPaid || 1;
 
-			// Policz zaległości (status PENDING)
+
 			const overdueMonths = contributions.filter(
 				(c) => c.status === "PENDING",
 			).length;
 
-			// Oblicz sumę opłaconych składek
+
 			const totalPaid = contributions
 				.filter((c) => c.status === "PAID")
 				.reduce((sum, c) => sum + c.amount, 0);
@@ -357,7 +357,7 @@ export class DashboardController {
 		try {
 			const userId = req.user?.id;
 
-			// Pobierz id z params i upewnij się że to string
+
 			const idParam = req.params.id;
 			const id =
 				typeof idParam === "string" ? parseInt(idParam) : parseInt(idParam[0]);
@@ -453,7 +453,7 @@ export class DashboardController {
 		try {
 			const userId = req.user?.id;
 
-			// Pobierz id z params i upewnij się że to string
+
 			const idParam = req.params.id;
 			const id =
 				typeof idParam === "string" ? parseInt(idParam) : parseInt(idParam[0]);

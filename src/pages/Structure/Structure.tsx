@@ -111,10 +111,10 @@ function TreeNode({
 		}
 		return "osób";
 	};
-	// 👇 DODAJ TEN HANDLER (przed useEffect)
+
 	const handleCardClick = (e: React.MouseEvent) => {
 		const target = e.target as HTMLElement;
-		// Ignoruj kliknięcia w przyciski i linki
+
 		if (target.closest("button") || target.closest("a")) {
 			return;
 		}
@@ -133,7 +133,7 @@ function TreeNode({
 		);
 	}, [searchTerm, node]);
 
-	// Automatyczne rozwinięcie przy wyszukiwaniu - ZMIEŃ
+
 	useEffect(() => {
 		if (searchTerm && (isHighlighted || isPersonHighlighted)) {
 			setIsExpanded(true);
@@ -169,9 +169,9 @@ function TreeNode({
 			)}
 
 			<div
-				ref={cardRef} // 👈 DODAJ ref
+				ref={cardRef}
 				className={`${styles.nodeCard} ${isRoot ? styles.nodeRoot : ""} ${isHighlighted ? styles.nodeHighlighted : ""}`}
-				onClick={handleCardClick} // 👈 ZMIEŃ NA handleCardClick
+				onClick={handleCardClick}
 			>
 				<div className={styles.nodeCard__header}>
 					<div
@@ -215,7 +215,7 @@ function TreeNode({
 							className={styles.nodeCard__toggle}
 							onClick={(e) => {
 								e.stopPropagation();
-								toggleExpand(); // 👈 DODAJ TO
+								toggleExpand();
 							}}
 						>
 							{isExpanded ? (
@@ -379,7 +379,26 @@ export default function Structure() {
 
 	const totalFilars = useMemo(() => {
 		if (!structureData) return 0;
-		return structureData.children.length;
+
+
+		const findFilaryNode = (node: Node): Node | null => {
+			if (node.name === "Filary organizacji") {
+				return node;
+			}
+			for (const child of node.children) {
+				const found = findFilaryNode(child);
+				if (found) return found;
+			}
+			return null;
+		};
+
+		const filaryNode = findFilaryNode(structureData);
+		if (!filaryNode) return 0;
+
+
+		return filaryNode.children.filter(child =>
+			child.name.includes('Filar') && !child.name.includes('pozafilarowe')
+		).length;
 	}, [structureData]);
 
 	if (loading) {
@@ -405,6 +424,7 @@ export default function Structure() {
 			</div>
 		);
 	}
+	console.log('🔍 Struktura:', JSON.stringify(structureData, null, 2));
 
 	return (
 		<div className={styles.structure}>

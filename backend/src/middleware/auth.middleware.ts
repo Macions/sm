@@ -2,7 +2,7 @@ import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 import { logger } from "../utils/logger";
 
-// 🔥 UŻYJ TEGO SAMEGO JWT_SECRET CO W server.ts
+
 const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key-here-change-in-production";
 
 export interface AuthRequest extends Request {
@@ -49,19 +49,19 @@ export const authMiddleware = (
 	}
 
 	const authHeader = req.headers.authorization;
-	// console.log(`🔑 [authMiddleware] Authorization header: ${authHeader ? '✅ Jest' : '❌ Brak'}`);
+
 
 	if (!authHeader || !authHeader.startsWith('Bearer ')) {
-		// console.log(`❌ [authMiddleware] Brak tokena dla: ${req.method} ${req.path}`);
+
 		return res.status(401).json({ error: "Brak tokenu autoryzacyjnego" });
 	}
 
 	const token = authHeader.split(' ')[1];
-	// console.log(`🔑 [authMiddleware] Token: ${token.substring(0, 30)}...`);
+
 
 	try {
 		const decoded = jwt.verify(token, JWT_SECRET) as any;
-		// console.log(`✅ [authMiddleware] Token zweryfikowany dla: ${decoded.email}`);
+
 
 		req.user = {
 			id: decoded.id,
@@ -70,7 +70,7 @@ export const authMiddleware = (
 		};
 		next();
 	} catch (error: any) {
-		// console.log(`❌ [authMiddleware] Błąd weryfikacji: ${error.message}`);
+
 		return res.status(401).json({ error: "Nieprawidłowy token" });
 	}
 };

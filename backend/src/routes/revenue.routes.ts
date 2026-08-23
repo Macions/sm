@@ -1,10 +1,10 @@
-﻿// backend/src/routes/revenue.routes.ts
+﻿
 import { Router } from 'express';
 import { revenueService } from '../services/revenue.service';
 
 const router = Router();
 
-// GET /api/revenue?year=2026
+
 router.get('/revenue', async (req, res) => {
     try {
         const year = parseInt(req.query.year as string) || new Date().getFullYear();
@@ -19,7 +19,7 @@ router.get('/revenue', async (req, res) => {
     }
 });
 
-// GET /api/revenue/details?year=2026&month=1
+
 router.get('/revenue/details', async (req, res) => {
     try {
         const year = parseInt(req.query.year as string) || new Date().getFullYear();
@@ -32,7 +32,7 @@ router.get('/revenue/details', async (req, res) => {
             });
         }
 
-        // 👇 Ta metoda istnieje w RevenueService
+
         const details = await revenueService.getMonthlyDetails(year, month);
         res.json({ success: true, data: details });
     } catch (error) {

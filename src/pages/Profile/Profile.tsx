@@ -163,7 +163,7 @@ export default function Profile({
 	const [contributionStats, setContributionStats] = useState<any>(null);
 	const [contributionHistory, setContributionHistory] = useState<any[]>([]);
 
-	// Dodaj na początku komponentu, obok innych useState
+
 	const [isSkillModalOpen, setIsSkillModalOpen] = useState(false);
 	const [newSkillName, setNewSkillName] = useState("");
 	const [isAddingSkill, setIsAddingSkill] = useState(false);

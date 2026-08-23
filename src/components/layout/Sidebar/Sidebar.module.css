@@ -27,7 +27,7 @@
 	padding: 32px 16px;
 }
 
-/* 👇 LOGO */
+
 .logo {
 	display: flex;
 	align-items: center;
@@ -76,7 +76,7 @@
 	margin: 0;
 }
 
-/* 👇 NAWIGACJA */
+
 .nav {
 	display: flex;
 	flex-direction: column;
@@ -168,7 +168,7 @@
 	margin: 0;
 }
 
-/* 👇 STOPKA */
+
 .footer {
 	margin-top: auto;
 	padding-top: 28px;
@@ -197,7 +197,7 @@
 	margin: 0;
 }
 
-/* 👇 WYLOGOWANIE */
+
 .logout {
 	margin-top: auto;
 	padding-top: 16px;
@@ -216,7 +216,7 @@
    RESPONSYWNOŚĆ (w tym dla sidebaru)
    ============================================================ */
 
-/* Tablety i mniejsze laptopy */
+
 @media (width <=1200px) {
 	.sidebar {
 		width: 260px;
@@ -282,7 +282,7 @@
 	transform: translateX(0);
 }
 
-/* 👇 HEADER MOBILNEGO MENU */
+
 .mobileMenuHeader {
 	display: flex;
 	align-items: center;
@@ -319,7 +319,7 @@
 	color: #fff;
 }
 
-/* 👇 WRAPPER ZE SCROLL DLA NAWIGACJI */
+
 .mobileNavWrapper {
 	flex: 1;
 	overflow-y: auto;
@@ -343,7 +343,7 @@
 	background: transparent;
 }
 
-/* 👇 NAWIGACJA W MOBILNYM */
+
 .mobileNav {
 	display: flex;
 	flex-direction: column;
@@ -385,7 +385,7 @@
 	font-weight: 500;
 }
 
-/* 👇 WYLOGOWANIE W MOBILNYM */
+
 .mobileLogout {
 	border-top: 1px solid rgba(255, 255, 255, 0.1);
 	padding-top: 16px;
@@ -403,7 +403,7 @@
 	color: #ff6b6b;
 }
 
-/* 👇 PRZYCISK ZAMYKANIA (X) W MOBILNYM MENU */
+
 .mobileMenuClose {
 	display: flex;
 	align-items: center;
@@ -432,7 +432,7 @@
 	background: rgba(255, 255, 255, 0.15);
 }
 
-/* 👇 OVERLAY */
+
 .overlay {
 	position: fixed;
 	top: 0;
@@ -458,7 +458,7 @@
    RESPONSYWNOŚĆ – UKRYJ SIDEBAR NA MOBILNYCH
    ============================================================ */
 
-/* Mniejsze tablety i telefony – ukrywamy sidebar desktop */
+
 @media (max-width: 768px) {
 	.sidebar {
 		display: none !important;
@@ -469,7 +469,7 @@
 	}
 }
 
-/* Duże ekrany – pokazujemy sidebar, chowamy mobilne menu */
+
 @media (min-width: 769px) {
 	.sidebar {
 		display: flex !important;

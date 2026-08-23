@@ -71,7 +71,7 @@ type User = {
 
 const API_URL = import.meta.env.VITE_API_URL ||
 	(window.location.hostname === 'panel.silamlodych.pl'
-		? ''  // ✅ Puste - użyje tej samej domeny (https://panel.silamlodych.pl)
+		? ''  
 		: 'http://localhost:3000');
 
 export default function Calendar() {
@@ -94,9 +94,9 @@ export default function Calendar() {
 	const currentYear = currentDate.getFullYear();
 	const currentMonth = currentDate.getMonth();
 
-	// ============================================================
-	// 1. ŁADUJ ZADANIA
-	// ============================================================
+
+
+
 	useEffect(() => {
 		fetchTasks();
 		checkGoogleAuth();
@@ -114,7 +114,7 @@ export default function Calendar() {
 				await fetchGoogleEvents();
 			}
 		} catch (error) {
-			// console.log("ℹ️ Google Calendar nie dostępny");
+
 			setIsGoogleAuth(false);
 		}
 	};
@@ -132,7 +132,7 @@ export default function Calendar() {
 				setGoogleEvents(data);
 			}
 		} catch (error) {
-			// console.log("ℹ️ Nie udało się pobrać wydarzeń z Google");
+
 		} finally {
 			setIsGoogleLoading(false);
 		}
@@ -264,7 +264,7 @@ export default function Calendar() {
 		const events = getEventsForDay(day);
 
 		if (events.length === 1) {
-			// Jeśli tylko jedno wydarzenie - otwórz je bezpośrednio
+
 			const event = events[0];
 			if (event.source === "google" && event.htmlLink) {
 				window.open(event.htmlLink, "_blank");
@@ -274,12 +274,12 @@ export default function Calendar() {
 			setSelectedDate(dateStr);
 			setIsModalOpen(true);
 		} else if (events.length > 1) {
-			// Jeśli więcej - otwórz listę
+
 			setSelectedDate(dateStr);
 			setSelectedTask(null);
 			setIsModalOpen(true);
 		} else {
-			// Brak wydarzeń
+
 			toast("Brak wydarzeń na ten dzień");
 		}
 	};
@@ -444,7 +444,7 @@ export default function Calendar() {
 
 						<div className={styles.modalBody}>
 							{selectedTask ? (
-								// SZCZEGÓŁY POJEDYNCZEGO ZADANIA
+
 								<div className={styles.taskDetail}>
 									<p className={styles.taskDescription}>
 										{selectedTask.description}
@@ -522,7 +522,7 @@ export default function Calendar() {
 
 								</div>
 							) : (
-								// LISTA WSZYSTKICH WYDARZEŃ NA DZIEŃ
+
 								<div className={styles.dayTasksList}>
 									<p className={styles.dayTasksTitle}>
 										Zadania na {selectedDate ? formatDate(selectedDate) : ""}

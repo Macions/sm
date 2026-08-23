@@ -49,7 +49,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
 					const parsed = JSON.parse(cached);
 					setUser(parsed);
 				} catch (e) {
-					// ignore
+
 				}
 			}
 

@@ -46,7 +46,7 @@ class AuthService {
 			const response = await api.post("/api/auth/login", credentials);
 			const data = response.data;
 
-			// Zapisz dane
+
 			this.setTokens(data.accessToken, data.refreshToken);
 			this.setUser(data.user);
 
@@ -57,7 +57,7 @@ class AuthService {
 				error?.response?.data?.message || error.message || "Błąd logowania";
 			logger.error("❌ [AuthService] Błąd logowania:", errorMessage);
 
-			// Wyczyść dane przy błędzie
+
 			this.clearAuthData();
 			throw new Error(errorMessage);
 		}
@@ -83,17 +83,17 @@ class AuthService {
 		try {
 			logger.debug("🔐 [AuthService] Wylogowywanie...");
 
-			// Spróbuj powiadomić backend o wylogowaniu
+
 			const refreshToken = this.getRefreshToken();
 			if (refreshToken) {
 				await api.post("/api/auth/logout", { refreshToken }).catch(() => {
-					// Ignoruj błędy przy wylogowaniu
+
 				});
 			}
 		} catch (error) {
-			// Ignoruj błędy przy wylogowaniu
+
 		} finally {
-			// Zawsze czyść dane lokalnie
+
 			this.clearAuthData();
 			logger.debug("✅ [AuthService] Wylogowano pomyślnie");
 		}
@@ -128,13 +128,13 @@ class AuthService {
 				"Błąd odświeżania tokena";
 			logger.error("❌ [AuthService] Błąd odświeżania tokena:", errorMessage);
 
-			// Wyczyść dane przy błędzie
+
 			this.clearAuthData();
 			throw new Error(errorMessage);
 		}
 	}
 
-	// Metody pomocnicze
+
 	getCurrentUser(): AuthResponse["user"] | null {
 		try {
 			const userStr = localStorage.getItem(this.USER_KEY);
@@ -160,13 +160,13 @@ class AuthService {
 		const token = this.getAccessToken();
 		if (!token) return false;
 
-		// Sprawdź czy token nie wygasł (opcjonalnie)
+
 		try {
 			const payload = JSON.parse(atob(token.split(".")[1]));
 			const exp = payload.exp * 1000;
 			return Date.now() < exp;
 		} catch {
-			// Jeśli nie można zdekodować - token nieprawidłowy
+
 			return false;
 		}
 	}
@@ -190,13 +190,13 @@ class AuthService {
 
 		try {
 			const payload = JSON.parse(atob(token.split(".")[1]));
-			return payload.exp * 1000; // ms
+			return payload.exp * 1000; 
 		} catch {
 			return null;
 		}
 	}
 
-	// Metody prywatne
+
 	private setTokens(accessToken: string, refreshToken: string): void {
 		localStorage.setItem(this.TOKEN_KEY, accessToken);
 		localStorage.setItem(this.REFRESH_TOKEN_KEY, refreshToken);
@@ -212,7 +212,7 @@ class AuthService {
 		localStorage.removeItem(this.USER_KEY);
 	}
 
-	// Metoda do aktualizacji danych użytkownika
+
 	updateUser(userData: Partial<AuthResponse["user"]>): void {
 		const currentUser = this.getCurrentUser();
 		if (currentUser) {
@@ -222,7 +222,7 @@ class AuthService {
 		}
 	}
 
-	// Metoda do sprawdzania roli
+
 	hasRole(role: string | string[]): boolean {
 		const user = this.getCurrentUser();
 		if (!user) return false;
@@ -239,7 +239,7 @@ class AuthService {
 		return this.hasRole(["admin", "coordinator"]);
 	}
 
-	// Metoda do automatycznego odświeżania tokena przed wygaśnięciem
+
 	setupAutoRefresh(): () => void {
 		let timeoutId: NodeJS.Timeout | null = null;
 
@@ -247,7 +247,7 @@ class AuthService {
 			const expiryTime = this.getTokenExpiryTime();
 			if (!expiryTime) return;
 
-			// Oblicz czas do wygaśnięcia - 1 minuta przed
+
 			const timeToExpiry = expiryTime - Date.now() - 60000;
 
 			if (timeToExpiry > 0) {
@@ -266,7 +266,7 @@ class AuthService {
 
 		scheduleRefresh();
 
-		// Zwróć funkcję do czyszczenia
+
 		return () => {
 			if (timeoutId) {
 				clearTimeout(timeoutId);

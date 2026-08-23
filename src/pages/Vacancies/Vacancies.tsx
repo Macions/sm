@@ -535,10 +535,10 @@ function ApplyModal({ isOpen, vacancy, onClose, onSubmit }: ApplyModalProps) {
 		onSubmit(vacancy, answers, message);
 		onClose();
 	};
-	// 🔥 DODAJ TO - sprawdzenie czy rekrutacja jest zakończona
+
 	if (!isOpen || !vacancy) return null;
 
-	// Jeśli status to "recruiting" - nie pokazuj formularza
+
 
 	return (
 		<div className={styles.modalOverlay} onClick={onClose}>
@@ -1312,16 +1312,16 @@ function VacancyFormModal({
 		try {
 			const date = new Date(dateString);
 			if (isNaN(date.getTime())) return "";
-			// Format: YYYY-MM-DDTHH:mm
+
 			return date.toISOString().slice(0, 16);
 		} catch {
 			return "";
 		}
 	};
-	// ❌ USUŃ to stare useState:
-	// const [formData, setFormData] = useState<Partial<Vacancy>>(vacancy || {...});
 
-	// ✅ ZAMIEN NA TO:
+
+
+
 	const [formData, setFormData] = useState<Partial<Vacancy>>({
 		title: "",
 		icon: "Briefcase",
@@ -1345,20 +1345,20 @@ function VacancyFormModal({
 		},
 	});
 
-	// useEffect aktualizuje formData gdy vacancy się zmienia
+
 	useEffect(() => {
 		if (vacancy) {
-			// console.log("🔄 Vacancy:", vacancy);
-			// console.log("🔄 Contact person z vacancy:", vacancy.contactPerson);
 
-			// Pobierz nazwę z różnych źródeł
+
+
+
 			const contactName =
 				vacancy.contactPerson?.name ||
 				vacancy.recruitment?.messengerContact ||
 				currentUser.name ||
 				"Admin";
 
-			// 🔥 Wygeneruj email z nazwy
+
 			const autoEmail = generateEmail(contactName);
 
 			setFormData({
@@ -1372,7 +1372,7 @@ function VacancyFormModal({
 				niceToHave: Array.isArray(vacancy.niceToHave) ? vacancy.niceToHave : [],
 				contactPerson: {
 					name: contactName,
-					// Jeśli jest email w danych, użyj go, jeśli nie - wygeneruj
+
 					email: vacancy.contactPerson?.email || autoEmail || "",
 					phone: vacancy.contactPerson?.phone || "",
 				},
@@ -1417,15 +1417,15 @@ function VacancyFormModal({
 	const generateEmail = (name: string): string => {
 		if (!name.trim()) return "";
 
-		// Podziel na części (imiona + nazwisko)
-		const parts = name.trim().split(/\s+/);
-		if (parts.length < 2) return ""; // Musi być imię i nazwisko
 
-		// Weź wszystkie części oprócz ostatniej jako imiona
+		const parts = name.trim().split(/\s+/);
+		if (parts.length < 2) return ""; 
+
+
 		const firstNameParts = parts.slice(0, -1);
 		const lastName = parts[parts.length - 1];
 
-		// Połącz imiona kropkami
+
 		const firstName = firstNameParts.join(".");
 
 		const normalize = (str: string) => {
@@ -1445,7 +1445,7 @@ function VacancyFormModal({
 					};
 					return map[char] || char;
 				})
-				.replace(/[^a-z.]/g, ""); // Tylko litery i kropki
+				.replace(/[^a-z.]/g, ""); 
 		};
 
 		const normalizedFirstName = normalize(firstName);
@@ -1580,7 +1580,7 @@ function VacancyFormModal({
 			return;
 		}
 
-		// 🔥 FUNKCJA DO KONWERSJI DATY NA FORMAT DLA BACKENDU
+
 		const formatDateForBackend = (dateString: string) => {
 			if (!dateString) return "";
 			try {
@@ -1620,7 +1620,7 @@ function VacancyFormModal({
 				formUrl: formData.recruitment?.formUrl,
 				messengerContact: formData.recruitment?.messengerContact,
 				questions: formData.recruitment?.questions || [],
-				// 🔥 KONWERTUJ DATĘ PRZED WYSŁANIEM
+
 				deadline: formatDateForBackend(formData.recruitment?.deadline || ""),
 			},
 		};
@@ -2139,7 +2139,7 @@ function VacancyFormModal({
 												const value = e.target.value;
 												setContactSearch(value);
 
-												// 🔥 GENERUJ EMAIL AUTOMATYCZNIE z wpisanego imienia i nazwiska
+
 												const email = generateEmail(value);
 
 												setFormData({
@@ -2904,10 +2904,10 @@ export default function Vacancies({ title }: { title?: string }) {
 		currentUser.role === "board" ||
 		currentUser.role === "coordinator";
 
-	// Dodaj osobny state i fetch dla zespołów:
+
 	const [teams, setTeams] = useState<string[]>([]);
 
-	// W fetchData, po pobraniu usera:
+
 	useEffect(() => {
 		const fetchData = async () => {
 			try {
@@ -2920,7 +2920,7 @@ export default function Vacancies({ title }: { title?: string }) {
 					return;
 				}
 
-				// 1. Pobierz profil użytkownika
+
 				const userResponse = await fetch("/api/profile", {
 					headers: { Authorization: `Bearer ${token}` },
 				});
@@ -2936,7 +2936,7 @@ export default function Vacancies({ title }: { title?: string }) {
 					});
 				}
 
-				// 2. 🔥 POBIERZ ZESPOŁY - PRZENIESIONE DO ŚRODKA
+
 				const teamsResponse = await fetch("/api/teams", {
 					headers: { Authorization: `Bearer ${token}` },
 				});
@@ -2948,7 +2948,7 @@ export default function Vacancies({ title }: { title?: string }) {
 					setTeams(teamNames.sort());
 				}
 
-				// 3. Pobierz członków
+
 				const membersResponse = await fetch("/api/members", {
 					headers: { Authorization: `Bearer ${token}` },
 				});
@@ -2967,9 +2967,9 @@ export default function Vacancies({ title }: { title?: string }) {
 					setMembers(mappedMembers);
 				}
 
-				// 4. Pobierz wakaty
-				// 4. Pobierz wakaty
-				// 4. Pobierz wakaty
+
+
+
 				const vacanciesResponse = await fetch("/api/vacancies", {
 					headers: {
 						Authorization: `Bearer ${token}`,
@@ -2980,21 +2980,21 @@ export default function Vacancies({ title }: { title?: string }) {
 				if (vacanciesResponse.ok) {
 					const vacanciesData = await vacanciesResponse.json();
 
-					// 🔥 ULEPSZONA funkcja do parsowania JSON - radzi sobie z podwójnym kodowaniem
-					// 🔥 ZMIEŃ TĘ FUNKCJĘ
+
+
 					const parseJson = (data: any) => {
 						if (!data) return [];
 						if (Array.isArray(data)) return data;
 						if (typeof data === "string") {
 							try {
-								// Spróbuj sparsować
+
 								let parsed = JSON.parse(data);
-								// Jeśli to nadal string, sparsuj ponownie
+
 								if (typeof parsed === "string") {
 									try {
 										parsed = JSON.parse(parsed);
 									} catch {
-										// Jeśli nie można sparsować, zwróć pustą tablicę
+
 										return [];
 									}
 								}
@@ -3006,7 +3006,7 @@ export default function Vacancies({ title }: { title?: string }) {
 						return [];
 					};
 
-					// W fetchData, dla wakatów:
+
 
 					const mapped = (
 						Array.isArray(vacanciesData) ? vacanciesData : []
@@ -3021,15 +3021,15 @@ export default function Vacancies({ title }: { title?: string }) {
 						team: v.team || "",
 						teamId: v.team_id || "",
 						pillar: v.pillar || "",
-						// 🔥 TO JEST KLUCZOWE - contact_person z relacji
+
 						contactPerson: {
-							// Jeśli jest contact_person (obiekt z relacji) - użyj go
-							// Jeśli nie ma, użyj recruitment_messenger_contact
+
+
 							name:
 								v.contact_person?.first_name && v.contact_person?.last_name
 									? `${v.contact_person.first_name} ${v.contact_person.last_name}`.trim()
 									: v.contact_person?.name ||
-									v.recruitment_messenger_contact || // ← TO JEST WAŻNE!
+									v.recruitment_messenger_contact || 
 									currentUser.name ||
 									"Admin",
 							email: v.contact_person?.email || "",
@@ -3056,22 +3056,22 @@ export default function Vacancies({ title }: { title?: string }) {
 						},
 					}));
 
-					// console.log(
-					// 	"📦 Po mapowaniu (responsibilities powinny być tablicą):",
-					// 	mapped[0]?.responsibilities,
-					// );
-					// console.log(
-					// 	"📦 Po mapowaniu (requirements powinny być tablicą):",
-					// 	mapped[0]?.requirements,
-					// );
-					// console.log("📦 Po mapowaniu (recruitment):", mapped[0]?.recruitment);
+
+
+
+
+
+
+
+
+
 					setVacancies(mapped);
 				} else {
 					logger.warn("⚠️ Błąd pobierania wakatów:", vacanciesResponse.status);
 					setVacancies([]);
 				}
 
-				// ... reszta
+
 			} catch (error) {
 				logger.error("❌ Błąd pobierania danych:", error);
 				setVacancies([]);
@@ -3206,7 +3206,7 @@ export default function Vacancies({ title }: { title?: string }) {
 			});
 			setVacancies(updatedVacancies);
 
-			// 🔥 DODAJ TO - zaktualizuj status zgłoszenia od razu
+
 			setAppliedStatuses((prev) => ({
 				...prev,
 				[vacancy.id]: true,
@@ -3404,7 +3404,7 @@ export default function Vacancies({ title }: { title?: string }) {
 		Record<string, boolean>
 	>({});
 
-	// Funkcja do sprawdzania zgłoszeń dla wszystkich wakatów
+
 	const checkAllApplications = async () => {
 		const statuses: Record<string, boolean> = {};
 		for (const vacancy of vacancies) {
@@ -3430,14 +3430,14 @@ export default function Vacancies({ title }: { title?: string }) {
 		setAppliedStatuses(statuses);
 	};
 
-	// Wywołaj po załadowaniu wakatów
+
 	useEffect(() => {
 		if (vacancies.length > 0 && currentUser.id) {
 			checkAllApplications();
 		}
 	}, [vacancies, currentUser.id]);
 
-	// Funkcja hasApplied używa stanu
+
 	const hasApplied = (vacancyId: string) => {
 		return appliedStatuses[vacancyId] || false;
 	};

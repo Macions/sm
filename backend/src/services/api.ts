@@ -1,4 +1,4 @@
-// src/types/api.ts - CAŁY PLIK
+
 export interface ApiResponse<T = any> {
     data: T;
     message?: string;
@@ -20,7 +20,7 @@ export interface ApiError {
     errors?: Record<string, string[]>;
 }
 
-// 🔥 DODAJ TE TYPY (NA KOŃCU PLIKU):
+
 export interface MonthlyRevenue {
     month: string;
     year: number;

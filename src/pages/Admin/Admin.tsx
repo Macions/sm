@@ -37,13 +37,13 @@ import {
 import { ConfirmDialog } from "../../components/common/ConfirmDialog";
 import styles from "./Admin.module.css";
 
-// ---------------------------------------------------------------------------
-// TYPY
-// ---------------------------------------------------------------------------
 
-// ---------------------------------------------------------------------------
-// TYPY DLA LOGÓW
-// ---------------------------------------------------------------------------
+
+
+
+
+
+
 
 interface SystemLog {
 	id: string;
@@ -92,8 +92,8 @@ interface LogsResponse {
 
 type UserRole = "admin" | "board" | "coordinator" | "member" | "mentor";
 
-// ---- Komponent zarządzania logami ----
-// ---- Komponent zarządzania logami ----
+
+
 function LogsManagement() {
 	const [logs, setLogs] = useState<SystemLog[]>([]);
 	const [loading, setLoading] = useState(true);
@@ -539,9 +539,9 @@ interface AvailableUser {
 	team_ids: string[];
 }
 
-// ---------------------------------------------------------------------------
-// MAPOWANIA
-// ---------------------------------------------------------------------------
+
+
+
 
 const ROLE_LABELS: Record<UserRole, string> = {
 	admin: "Administrator główny",
@@ -560,11 +560,11 @@ const ICON_OPTIONS = [
 	{ value: "GraduationCap", label: "Czapka", icon: GraduationCap },
 ];
 
-// ---------------------------------------------------------------------------
-// KOMPONENTY
-// ---------------------------------------------------------------------------
 
-// ---- Komponent zarządzania rolami ----
+
+
+
+
 function RolesManagement({
 	roles,
 	canManage,
@@ -788,7 +788,7 @@ function RolesManagement({
 	);
 }
 
-// ---- Komponent zarządzania strukturą ----
+
 function StructureManagement({
 	teams,
 	canManage,
@@ -814,7 +814,7 @@ function StructureManagement({
 		role: "Zespół",
 		icon: "Users",
 		email: "",
-		parent_id: null as string | null, // <-- DODAJ
+		parent_id: null as string | null, 
 	});
 	const [confirmDialog, setConfirmDialog] = useState<{
 		isOpen: boolean;
@@ -834,7 +834,7 @@ function StructureManagement({
 	const [expandedTeams, setExpandedTeams] = useState<Record<string, boolean>>(
 		{},
 	);
-	// Dodaj te stany po istniejących state'ach
+
 	const [editingMemberRole, setEditingMemberRole] = useState<{
 		memberId: string;
 		teamId: string;
@@ -845,12 +845,12 @@ function StructureManagement({
 	const scrollToTeamHeader = (teamId: string) => {
 		const element = document.getElementById(`team-${teamId}`);
 		if (element) {
-			// Znajdź nagłówek zespołu (pierwszy element .teamCard__header)
+
 			const header = element.querySelector(".teamCard__header");
 			if (header) {
-				// Przewiń płynnie do nagłówka z marginesem 80px od góry
+
 				const headerRect = header.getBoundingClientRect();
-				const offset = 80; // margines od góry
+				const offset = 80; 
 				const scrollPosition = window.scrollY + headerRect.top - offset;
 
 				window.scrollTo({
@@ -858,7 +858,7 @@ function StructureManagement({
 					behavior: "smooth",
 				});
 			} else {
-				// Fallback - przewiń do całego elementu
+
 				element.scrollIntoView({
 					behavior: "smooth",
 					block: "start",
@@ -867,7 +867,7 @@ function StructureManagement({
 			}
 		}
 	};
-	// đź”Ą FUNKCJA DO AKTUALIZACJI ROLI CZŁONKA
+
 	const handleUpdateMemberRole = async (
 		memberId: string,
 		teamId: string,
@@ -888,12 +888,12 @@ function StructureManagement({
 		try {
 			const token = localStorage.getItem("accessToken");
 
-			// đź”Ą DODAJ LOG:
-			// console.log("đź“¤ Wysyłam request:", {
-			// 	memberId,
-			// 	teamId,
-			// 	role_in_team: trimmed,
-			// });
+
+
+
+
+
+
 
 			const response = await fetch(`/api/admin/team-members/${memberId}`, {
 				method: "PUT",
@@ -906,7 +906,7 @@ function StructureManagement({
 				}),
 			});
 
-			// console.log("đź“Ą Odpowiedź backendu:", data);
+
 
 			if (!response.ok) throw new Error("Błąd aktualizacji roli");
 
@@ -920,7 +920,7 @@ function StructureManagement({
 			toast.error("Nie udało się zaktualizować roli");
 		}
 	};
-	// đź”Ą DODAJ TEN STATE:
+
 	const [isSectionExpanded, setIsSectionExpanded] = useState(true);
 	const resetTeamForm = () => {
 		setTeamForm({
@@ -929,7 +929,7 @@ function StructureManagement({
 			role: "Zespół",
 			icon: "Users",
 			email: "",
-			parent_id: null, // <-- DODAJ
+			parent_id: null, 
 		});
 		setIsAddingTeam(false);
 		setEditingTeam(null);
@@ -938,9 +938,9 @@ function StructureManagement({
 		setSelectedRole("Członek");
 		setIsLeader(false);
 	};
-	// ============================================================
-	// đź”Ą NAZWY ZESPOŁÓW DO UKRYCIA
-	// ============================================================
+
+
+
 	const HIDDEN_TEAMS = [
 		"Filary organizacji",
 		"Organy kontrolne",
@@ -949,9 +949,9 @@ function StructureManagement({
 
 	];
 
-	// ============================================================
-	// đź”Ą KOLEJNOŚĆ ZESPOŁÓW
-	// ============================================================
+
+
+
 	const TEAM_ORDER = [
 		"Zarząd",
 		"Dyrekcja",
@@ -959,21 +959,21 @@ function StructureManagement({
 		"Sąd Koleżeński",
 	];
 
-	// ============================================================
-	// đź”Ą CZY TO FILAR?
-	// ============================================================
+
+
+
 	const isPillar = (teamName: string): boolean => {
 		return teamName.includes("Filar");
 	};
 
-	// ============================================================
-	// đź”Ą FILTRUJ I SORTUJ ZESPOŁY
-	// ============================================================
+
+
+
 	const getSortedTeams = (): Team[] => {
-		// 1. Odfiltruj ukryte zespoły
+
 		const filtered = teams.filter((team) => !HIDDEN_TEAMS.includes(team.name));
 
-		// 2. Podziel na filary i inne
+
 		const pillars: Team[] = [];
 		const others: Team[] = [];
 
@@ -985,7 +985,7 @@ function StructureManagement({
 			}
 		});
 
-		// 3. Posortuj inne według TEAM_ORDER
+
 		const sortedOthers = others.sort((a, b) => {
 			const indexA = TEAM_ORDER.indexOf(a.name);
 			const indexB = TEAM_ORDER.indexOf(b.name);
@@ -995,16 +995,16 @@ function StructureManagement({
 			return indexA - indexB;
 		});
 
-		// 4. Posortuj filary alfabetycznie
+
 		const sortedPillars = pillars.sort((a, b) => a.name.localeCompare(b.name));
 
-		// 5. Połącz: inne + filary
+
 		return [...sortedOthers, ...sortedPillars];
 	};
 
-	// ============================================================
-	// đź”Ą POBRANIE CZŁONKÓW DO WYŚWIETLENIA
-	// ============================================================
+
+
+
 	const getDisplayMembers = (
 		team: Team,
 	): { display: TeamMember[]; hidden: TeamMember[]; total: number } => {
@@ -1013,7 +1013,7 @@ function StructureManagement({
 
 		let members = [...team.members];
 
-		// Dla filarów: domyślnie tylko liderzy (koordynatorzy)
+
 		if (isTeamPillar) {
 			const leaders = members.filter((m) => m.is_leader === true);
 			const nonLeaders = members.filter((m) => m.is_leader !== true);
@@ -1046,10 +1046,10 @@ function StructureManagement({
 				const display = members.slice(0, 3);
 				const hidden = members.slice(3);
 
-				// đź”Ą DODAJ TEN LOG:
-				// console.log(
-				// 	`đź”Ť Team: ${team.name}, display: ${display.length}, hidden: ${hidden.length}, hasMore: ${hidden.length > 0}`,
-				// );
+
+
+
+
 
 				return { display, hidden, total: members.length };
 			}
@@ -1068,29 +1068,29 @@ function StructureManagement({
 		};
 	};
 
-	// ============================================================
-	// đź”Ą PRZEŁĄCZANIE "POKAŻ WSZYSTKICH"
-	// ============================================================
-	// ============================================================
-	// đź”Ą PRZEŁĄCZANIE "POKAŻ WSZYSTKICH" - Z PRZEWIJANIEM
-	// ============================================================
+
+
+
+
+
+
 	const toggleShowAll = (teamId: string) => {
 		const isCurrentlyExpanded = expandedTeams[teamId] || false;
 
-		// Jeśli był rozwinięty i teraz zwijamy - przewiń do nagłówka
+
 		if (isCurrentlyExpanded) {
-			// Najpierw zaktualizuj stan (zwinie listę)
+
 			setExpandedTeams((prev) => ({
 				...prev,
 				[teamId]: false,
 			}));
 
-			// Po zmianie stanu, przewiń do nagłówka
+
 			setTimeout(() => {
 				scrollToTeamHeader(teamId);
-			}, 100); // małe opóźnienie żeby DOM się zaktualizował
+			}, 100); 
 		} else {
-			// Rozwijamy - tylko zaktualizuj stan
+
 			setExpandedTeams((prev) => ({
 				...prev,
 				[teamId]: true,
@@ -1292,7 +1292,7 @@ function StructureManagement({
 			role: team.role || "Zespół",
 			icon: team.icon || "Users",
 			email: team.email || "",
-			parent_id: team.parent_id || null, // <-- DODAJ
+			parent_id: team.parent_id || null, 
 		});
 		setEditingTeam(team);
 	};
@@ -1448,7 +1448,7 @@ function StructureManagement({
 											>
 												<option value="">Brak</option>
 												{teams
-													.filter((t) => t.id !== editingTeam?.id) // Nie można wybrać siebie
+													.filter((t) => t.id !== editingTeam?.id) 
 													.map((team) => (
 														<option key={team.id} value={team.id}>
 															{team.name}
@@ -1606,7 +1606,7 @@ function StructureManagement({
 															<>
 																{/* đź”Ą EDYCJA ROLI - teraz przed koronką */}
 																{editingMemberRole?.memberId === member.id ? (
-																	// Tryb edycji
+
 																	<div
 																		className={
 																			styles.memberItem__roleEditInline
@@ -1666,7 +1666,7 @@ function StructureManagement({
 																		</button>
 																	</div>
 																) : (
-																	// Normalny tryb - przycisk edycji
+
 																	<button
 																		className={styles.memberItem__editRole}
 																		onClick={() => {
@@ -1746,9 +1746,9 @@ function StructureManagement({
 												<button
 													className={styles.showAllBtn}
 													onClick={() => {
-														// console.log(
-														// 	`đź”„ Kliknięto: ${team.id}, obecny stan: ${isExpanded}`,
-														// );
+
+
+
 														toggleShowAll(team.id);
 													}}
 												>
@@ -1843,12 +1843,12 @@ function StructureManagement({
 		</section>
 	);
 }
-// ---- Komponent zarządzania dostępami ----
-// ---- Komponent zarządzania dostępami ----
-// ---- Komponent zarządzania dostępami ----
-// ---- Komponent zarządzania dostępami ----
-// ---- Komponent zarządzania dostępami ----
-// ---- Komponent zarządzania dostępami ----
+
+
+
+
+
+
 function AccessManagement() {
 	const [showSuggestions, setShowSuggestions] = useState(false);
 	const [members, setMembers] = useState<any[]>([]);
@@ -1872,17 +1872,17 @@ function AccessManagement() {
 		Systemy: "#dc2626",
 		Marketing: "#ec4899",
 		Programowanie: "#2563eb",
-		Inne: "#6b7280", // szary dla innych
+		Inne: "#6b7280", 
 	};
 
-	// ===== NOWE STANY DLA PRZEDMIOTÓW =====
+
 	const [entryType, setEntryType] = useState<"access" | "item">("access");
 	const [itemName, setItemName] = useState("");
 	const [itemValue, setItemValue] = useState("");
 	const [itemNotes, setItemNotes] = useState("");
-	// Predefiniowane opcje dostępu
+
 	const ACCESS_OPTIONS = [
-		// ===== SOCIAL MEDIA =====
+
 		{ label: "Instagram", category: "Social Media" },
 		{ label: "Facebook", category: "Social Media" },
 		{ label: "Twitter / X", category: "Social Media" },
@@ -1898,7 +1898,7 @@ function AccessManagement() {
 		{ label: "Reddit", category: "Social Media" },
 		{ label: "Twitch", category: "Social Media" },
 
-		// ===== ZASOBY / SPRZĘT =====
+
 		{ label: "Mikrofon", category: "Sprzęt" },
 		{ label: "Mikrofon bezprzewodowy", category: "Sprzęt" },
 		{ label: "Kamera", category: "Sprzęt" },
@@ -1919,7 +1919,7 @@ function AccessManagement() {
 		{ label: "Drukarka", category: "Sprzęt" },
 		{ label: "Skaner", category: "Sprzęt" },
 
-		// ===== PLATFORMY I NARZĘDZIA =====
+
 		{ label: "Slack", category: "Platformy" },
 		{ label: "Teams", category: "Platformy" },
 		{ label: "Zoom", category: "Platformy" },
@@ -1933,7 +1933,7 @@ function AccessManagement() {
 		{ label: "Miro", category: "Narzędzia" },
 		{ label: "Figma", category: "Narzędzia" },
 
-		// ===== SYSTEMY =====
+
 		{ label: "Google Drive", category: "Systemy" },
 		{ label: "Dropbox", category: "Systemy" },
 		{ label: "OneDrive", category: "Systemy" },
@@ -1941,7 +1941,7 @@ function AccessManagement() {
 		{ label: "CRM", category: "Systemy" },
 		{ label: "ERP", category: "Systemy" },
 
-		// ===== MARKETING =====
+
 		{ label: "Mailchimp", category: "Marketing" },
 		{ label: "Canva", category: "Marketing" },
 		{ label: "Adobe Creative Cloud", category: "Marketing" },
@@ -1949,7 +1949,7 @@ function AccessManagement() {
 		{ label: "Hootsuite", category: "Marketing" },
 		{ label: "Sendinblue", category: "Marketing" },
 
-		// ===== PROGRAMOWANIE =====
+
 		{ label: "GitHub", category: "Programowanie" },
 		{ label: "GitLab", category: "Programowanie" },
 		{ label: "Bitbucket", category: "Programowanie" },
@@ -1957,14 +1957,14 @@ function AccessManagement() {
 		{ label: "IntelliJ", category: "Programowanie" },
 		{ label: "Postman", category: "Programowanie" },
 
-		// ===== INNE =====
+
 		{ label: "Klucze do biura", category: "Inne" },
 		{ label: "Karta dostępu", category: "Inne" },
 		{ label: "Parking", category: "Inne" },
 		{ label: "Magazyn", category: "Inne" },
 	];
 
-	// Pobierz członków z dostępami
+
 	const fetchMembers = async () => {
 		try {
 			setLoading(true);
@@ -1985,7 +1985,7 @@ function AccessManagement() {
 		}
 	};
 
-	// Pobierz wszystkich użytkowników do wyboru
+
 	const [allUsers, setAllUsers] = useState<any[]>([]);
 
 	const fetchAllUsers = async () => {
@@ -2003,7 +2003,7 @@ function AccessManagement() {
 		}
 	};
 
-	// đź”Ą POPRAWIONA - pokazuje wszystkie sugestie
+
 	const getSuggestions = (input: string) => {
 		if (!input.trim()) return [];
 
@@ -2060,7 +2060,7 @@ function AccessManagement() {
 		}
 
 		if (entryType === "access") {
-			// ===== DOSTĘP =====
+
 			if (!newAccessForUser.trim()) {
 				toast.error("Wpisz nazwę dostępu");
 				return;
@@ -2120,7 +2120,7 @@ function AccessManagement() {
 				toast.error("Nie udało się dodać dostępów");
 			}
 		} else {
-			// ===== PRZEDMIOT =====
+
 			if (!itemName.trim()) {
 				toast.error("Podaj nazwę przedmiotu");
 				return;
@@ -2270,7 +2270,7 @@ function AccessManagement() {
 									<div className={styles.accessItem__tags}>
 										{member.access && member.access.length > 0 ? (
 											member.access.map((item: any) => {
-												// Jeśli item to obiekt z access_name
+
 												const label = typeof item === 'object' ? item.access_name || item.name || JSON.stringify(item) : item;
 												const key = typeof item === 'object' ? item.id || label : label;
 												return (
@@ -2836,7 +2836,7 @@ function AccessManagement() {
 		</section>
 	);
 }
-// ---- Komponent statystyk ----
+
 function ActivityMonitoring({
 	teams,
 	roles,
@@ -2902,9 +2902,9 @@ function ActivityMonitoring({
 	);
 }
 
-// ---------------------------------------------------------------------------
-// GŁÓWNY KOMPONENT
-// ---------------------------------------------------------------------------
+
+
+
 
 export default function Admin({ title }: { title?: string }) {
 	const navigate = useNavigate();

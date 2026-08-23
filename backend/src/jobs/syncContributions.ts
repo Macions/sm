@@ -1,11 +1,11 @@
-// src/jobs/syncContributions.ts
+
 
 import { PrismaClient } from "@prisma/client";
 import mysql from "mysql2/promise";
 import { logger } from "../utils/logger";
 
-// Dodaj na samym początku, przed wszystkim
-// console.log("🚀 [START] Uruchamianie syncContributions...");
+
+
 logger.info("🚀 [START] Uruchamianie syncContributions...");
 
 const prisma = new PrismaClient();
@@ -19,30 +19,30 @@ const CONTRIBUTIONS_DB_CONFIG = {
 };
 
 export async function syncContributions() {
-	// console.log("🔄 [CONTRIBUTIONS] Rozpoczynam synchronizację składek...");
+
 	logger.info("🔄 [CONTRIBUTIONS] Rozpoczynam synchronizację składek...");
 	const startTime = Date.now();
 
 	let connection: mysql.Connection | null = null;
 
 	try {
-		// console.log("📡 [CONTRIBUTIONS] Próba połączenia z SM_Skladki...");
+
 		logger.info("📡 [CONTRIBUTIONS] Próba połączenia z SM_Skladki...");
 
-		// TYLKO JEDNO POŁĄCZENIE - usunąłem duplikat
+
 		connection = await mysql.createConnection(CONTRIBUTIONS_DB_CONFIG);
-		// console.log("✅ [CONTRIBUTIONS] Połączono z SM_Skladki");
+
 		logger.info("✅ [CONTRIBUTIONS] Połączono z SM_Skladki");
 
 		const currentDate = new Date();
 		const currentMonth = currentDate.getMonth() + 1;
 		const currentYear = currentDate.getFullYear();
 
-		// console.log(
-		// 	`📅 [CONTRIBUTIONS] Sprawdzam składki za: ${currentMonth}/${currentYear}`,
-		// );
 
-		// Pobierz wszystkich członków z statusem płatności
+
+
+
+
 		const [members] = await connection.execute(`
             SELECT 
                 m.Legitymacja,
@@ -123,9 +123,9 @@ export async function syncContributions() {
 			last_payment_date: Date | null;
 		}>;
 
-		// console.log(
-		// 	`👥 [CONTRIBUTIONS] Znaleziono ${membersData.length} aktywnych członków`,
-		// );
+
+
+
 		logger.info(
 			`👥 [CONTRIBUTIONS] Znaleziono ${membersData.length} aktywnych członków`,
 		);
@@ -135,10 +135,10 @@ export async function syncContributions() {
 		let skippedCount = 0;
 		let errorCount = 0;
 
-		// Synchronizuj każdego członka
+
 		for (const member of membersData) {
 			try {
-				// Znajdź użytkownika w głównej bazie po emailu
+
 				const user = await prisma.user.findUnique({
 					where: { email: member.email },
 					select: {
@@ -159,7 +159,7 @@ export async function syncContributions() {
 
 				const isPaid = member.payment_status === "paid";
 
-				// Sprawdź czy istnieje rekord składki w głównej bazie
+
 				const existingContribution = await prisma.contribution.findFirst({
 					where: {
 						userId: user.id,
@@ -169,7 +169,7 @@ export async function syncContributions() {
 				});
 
 				if (isPaid && member.amount) {
-					// ✅ OPŁACONE - KONWERSJA NA FLOAT
+
 					const amountFloat = parseFloat(member.amount.toString());
 
 					if (existingContribution) {
@@ -187,7 +187,7 @@ export async function syncContributions() {
 						await prisma.contribution.create({
 							data: {
 								userId: user.id,
-								amount: amountFloat, // <-- TU BYŁ BŁĄD! POPRAWIONE
+								amount: amountFloat, 
 								month: currentMonth,
 								year: currentYear,
 								paidAt: member.payment_date || new Date(),
@@ -207,14 +207,14 @@ export async function syncContributions() {
 					});
 
 					paidCount++;
-					// console.log(
-					// 	`✅ [CONTRIBUTIONS] ${member.full_name}: opłacono ${amountFloat} zł`,
-					// );
+
+
+
 					logger.debug(
 						`✅ [CONTRIBUTIONS] ${member.full_name}: opłacono ${amountFloat} zł`,
 					);
 				} else {
-					// ❌ NIEOPŁACONE
+
 					if (existingContribution) {
 						await prisma.contribution.update({
 							where: { id: existingContribution.id },
@@ -244,7 +244,7 @@ export async function syncContributions() {
 						},
 					});
 
-					// Wyślij powiadomienie (tylko jeśli nie ma zawieszenia)
+
 					if (
 						!member.suspended_until ||
 						new Date(member.suspended_until) < new Date()
@@ -258,7 +258,7 @@ export async function syncContributions() {
 					}
 
 					pendingCount++;
-					// logger.debug(`⚠️ [CONTRIBUTIONS] ${member.full_name}: nieopłacone`);
+
 				}
 			} catch (error) {
 				console.error(
@@ -271,14 +271,14 @@ export async function syncContributions() {
 		}
 
 		const duration = Date.now() - startTime;
-		// console.log(`✅ [CONTRIBUTIONS] Zakończono w ${duration}ms`);
-		// console.log(`📊 [CONTRIBUTIONS] Podsumowanie:`);
-		// console.log(`   ✅ Opłacone: ${paidCount} użytkowników`);
-		// console.log(`   ❌ Nieopłacone: ${pendingCount} użytkowników`);
-		// console.log(
-		// 	`   ⏭️ Pominięto: ${skippedCount} (nie znaleziono w głównej bazie)`,
-		// );
-		// console.log(`   ❌ Błędów: ${errorCount}`);
+
+
+
+
+
+
+
+
 
 		logger.info(`✅ [CONTRIBUTIONS] Zakończono w ${duration}ms`);
 		logger.info(`📊 [CONTRIBUTIONS] Podsumowanie:`);
@@ -295,7 +295,7 @@ export async function syncContributions() {
 	} finally {
 		if (connection) {
 			await connection.end();
-			// console.log("🔌 [CONTRIBUTIONS] Zamknięto połączenie z SM_Skladki");
+
 			logger.info("🔌 [CONTRIBUTIONS] Zamknięto połączenie z SM_Skladki");
 		}
 		await prisma.$disconnect();
@@ -333,7 +333,7 @@ async function checkAndSendNotification(
 					target: "user",
 				},
 			});
-			// console.log(`📨 [CONTRIBUTIONS] Wysłano powiadomienie dla ${fullName}`);
+
 			logger.debug(`📨 [CONTRIBUTIONS] Wysłano powiadomienie dla ${fullName}`);
 		}
 	} catch (error) {
@@ -379,17 +379,17 @@ function getMonthName(
 
 	return months[form][month - 1] || month.toString();
 }
-// ============================================================
-// URUCHOMIENIE BEZPOŚREDNIE - DODAJ NA KONIEC PLIKU!
-// ============================================================
+
+
+
 
 if (require.main === module) {
-	// console.log("🚀 [DIRECT] Wywołanie syncContributions()...");
+
 
 	syncContributions()
 		.then(() => {
-			// console.log("✅ [DIRECT] Synchronizacja zakończona pomyślnie");
-			// TYLKO TUTAJ UŻYJ process.exit() - gdy uruchamiasz bezpośrednio
+
+
 			process.exit(0);
 		})
 		.catch((error) => {

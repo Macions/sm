@@ -1903,7 +1903,7 @@
 	box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3) !important;
 }
 
-/* Loading - jak w Structure */
+
 .loading {
 	display: flex;
 	flex-direction: column;
@@ -1989,7 +1989,7 @@
 	transform: translateY(0);
 }
 
-/* Przycisk Zaakceptuj - zielony */
+
 .ideaCard__actionBtnSuccess {
 	background: #10b981;
 	color: white;
@@ -2000,7 +2000,7 @@
 	box-shadow: 0 2px 12px rgba(16, 185, 129, 0.3);
 }
 
-/* Przycisk Odrzuć - czerwony */
+
 .ideaCard__actionBtnDanger {
 	background: #ef4444;
 	color: white;
@@ -2011,7 +2011,7 @@
 	box-shadow: 0 2px 12px rgba(239, 68, 68, 0.3);
 }
 
-/* Przycisk W realizacji - niebieski (opcjonalnie) */
+
 .ideaCard__actionBtnInfo {
 	background: #3b82f6;
 	color: white;
@@ -2022,7 +2022,7 @@
 	box-shadow: 0 2px 12px rgba(59, 130, 246, 0.3);
 }
 
-/* Przycisk Anuluj - szary (opcjonalnie) */
+
 .ideaCard__actionBtnSecondary {
 	background: #6b7280;
 	color: white;
@@ -2222,7 +2222,7 @@
 	transform: translateY(0);
 }
 
-/* 🟢 Zaakceptuj - zielony */
+
 .ideaCard__actionBtnSuccess {
 	background: #10b981;
 	color: white;
@@ -2233,7 +2233,7 @@
 	box-shadow: 0 2px 12px rgba(16, 185, 129, 0.3);
 }
 
-/* 🔴 Odrzuć - czerwony */
+
 .ideaCard__actionBtnDanger {
 	background: #ef4444;
 	color: white;
@@ -2248,7 +2248,7 @@
    🔘 PRZYCISKI AKCJI - WYŚWIETLANIE (NAJWAŻNIEJSZE!)
    ============================================================ */
 
-/* Wymuś wyświetlanie kontenera */
+
 .ideaCard__actions {
 	display: flex !important;
 	flex-wrap: wrap !important;
@@ -2262,7 +2262,7 @@
 	overflow: visible !important;
 }
 
-/* Wymuś wyświetlanie przycisków */
+
 .ideaCard__actionBtn {
 	display: inline-flex !important;
 	align-items: center !important;
@@ -2281,7 +2281,7 @@
 	opacity: 1 !important;
 }
 
-/* Przycisk Zaakceptuj - zielony */
+
 .ideaCard__actionBtnSuccess {
 	background: #10b981 !important;
 	color: #ffffff !important;
@@ -2298,7 +2298,7 @@
 	transform: translateY(0) !important;
 }
 
-/* Przycisk Odrzuć - czerwony */
+
 .ideaCard__actionBtnDanger {
 	background: #ef4444 !important;
 	color: #ffffff !important;
@@ -2315,7 +2315,7 @@
 	transform: translateY(0) !important;
 }
 
-/* Ikony w przyciskach */
+
 .ideaCard__actionBtn svg {
 	flex-shrink: 0 !important;
 	width: 16px !important;
@@ -2326,7 +2326,7 @@
    🔘 PRZYCISKI AKCJI - OSTATECZNE ROZWIĄZANIE
    ============================================================ */
 
-/* Wymuś wyświetlanie kontenera */
+
 .projects .ideaCard__actions,
 .ideaCard .ideaCard__actions,
 div.ideaCard__actions {
@@ -2342,7 +2342,7 @@ div.ideaCard__actions {
 	overflow: visible !important;
 }
 
-/* Wymuś wyświetlanie przycisków - z bardzo wysoką specyficznością */
+
 .projects .ideaCard__actionBtn,
 .ideaCard .ideaCard__actionBtn,
 div.ideaCard__actionBtn,
@@ -2369,7 +2369,7 @@ button.ideaCard__actionBtn {
 	appearance: none !important;
 }
 
-/* Przycisk Zaakceptuj - zielony - z wysoką specyficznością */
+
 .projects .ideaCard__actionBtnSuccess,
 .ideaCard .ideaCard__actionBtnSuccess,
 button.ideaCard__actionBtnSuccess,
@@ -2388,7 +2388,7 @@ button.ideaCard__actionBtnSuccess:hover {
 	box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4) !important;
 }
 
-/* Przycisk Odrzuć - czerwony - z wysoką specyficznością */
+
 .projects .ideaCard__actionBtnDanger,
 .ideaCard .ideaCard__actionBtnDanger,
 button.ideaCard__actionBtnDanger,
@@ -2407,7 +2407,7 @@ button.ideaCard__actionBtnDanger:hover {
 	box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4) !important;
 }
 
-/* Ikony w przyciskach */
+
 .projects .ideaCard__actionBtn svg,
 .ideaCard .ideaCard__actionBtn svg,
 .ideaCard__actionBtn svg {
@@ -2517,7 +2517,7 @@ button.ideaCard__actionBtnDanger:hover {
 	flex-shrink: 0;
 }
 
-/* Statusy zadań - kolory */
+
 .statusTodo {
 	color: #94a3b8;
 }

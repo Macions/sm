@@ -2824,7 +2824,7 @@
 	box-shadow: 0 0 0 3px rgb(74 111 232 / 10%);
 }
 
-/* Przycisk "Pokaż wszystkich" */
+
 .showAllBtn {
 	display: block;
 	width: 100%;
@@ -2846,7 +2846,7 @@
 	color: #1f2937;
 }
 
-/* Przycisk "Pokaż wszystkich" */
+
 .showAllBtn {
 	display: block;
 	width: 100%;
@@ -2872,7 +2872,7 @@
    🔥 STYLE DLA ZWIJANIA SEKCJI "Zespoły i członkowie"
    ============================================================ */
 
-/* Przycisk zwijania sekcji */
+
 .sectionToggleBtn {
 	display: inline-flex;
 	align-items: center;
@@ -2897,7 +2897,7 @@
 	transform: scale(0.95);
 }
 
-/* Przycisk "Pokaż wszystkich" dla listy członków */
+
 .showAllBtn {
 	display: block;
 	width: 100%;
@@ -2931,9 +2931,9 @@
 	border-radius: 4px;
 	transition: all 0.2s;
 	color: #1f2937;
-	/* ✅ Ciemniejszy kolor */
+
 	font-weight: 500;
-	/* ✅ Pogrubienie */
+
 }
 
 .memberItem__roleText:hover {
@@ -2943,7 +2943,7 @@
 
 .memberItem__roleEditIcon {
 	opacity: 0.3;
-	/* ✅ Mniej widoczna domyślnie */
+
 	transition: opacity 0.2s;
 }
 
@@ -2951,7 +2951,7 @@
 	opacity: 1;
 }
 
-/* 🔥 NOWE STYLE - edycja roli obok ikonek */
+
 
 .memberItem {
 	display: flex;
@@ -3002,17 +3002,17 @@
 	color: #6b7280;
 }
 
-/* 🔥 AKCJE - wszystkie przyciski w jednym miejscu */
+
 .memberItem__actions {
 	display: flex;
 	align-items: center;
 	gap: 4px;
 	flex-shrink: 0;
 	margin-left: auto;
-	/* Wyrównuje do prawej */
+
 }
 
-/* Przycisk edycji roli */
+
 .memberItem__editRole {
 	display: inline-flex;
 	align-items: center;
@@ -3033,7 +3033,7 @@
 	color: #2563eb;
 }
 
-/* Tryb edycji - małe pole obok ikonek */
+
 .memberItem__roleEditInline {
 	display: flex;
 	align-items: center;
@@ -3100,7 +3100,7 @@
 	color: #dc2626;
 }
 
-/* Przyciski lidera i usuwania */
+
 .memberItem__makeLeader,
 .memberItem__removeLeader,
 .memberItem__remove {
@@ -3133,7 +3133,7 @@
 	color: #dc2626;
 }
 
-/* 🔥 ANIMACJA DLA CZŁONKÓW */
+
 .teamCard__members {
 	display: flex;
 	flex-direction: column;
@@ -3142,7 +3142,7 @@
 	overflow: hidden;
 }
 
-/* 🔥 PRZYCISK POKAŻ WSZYSTKICH */
+
 .showAllBtn {
 	display: inline-flex;
 	align-items: center;
@@ -3171,7 +3171,7 @@
 	transform: scale(0.98);
 }
 
-/* 🔥 PRZYCISK POKAŻ WSZYSTKICH / POKAŻ MNIEJ */
+
 .showAllBtn {
 	display: inline-flex;
 	align-items: center;
@@ -3435,7 +3435,7 @@
 	cursor: not-allowed;
 }
 
-/* Sugestie */
+
 .accessSuggestions {
 	position: absolute;
 	top: calc(100% + 4px);

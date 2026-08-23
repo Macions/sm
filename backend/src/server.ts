@@ -23,43 +23,43 @@ import multer from "multer";
 import { logger } from "./utils/logger";
 import { syncMembers } from "./jobs/syncMembers";
 import dotenv from "dotenv";
-dotenv.config(); // âš ď¸Ź TO MUSI BYĆ NA POCZĄTKU!
+dotenv.config(); 
 
-// console.log("đź”‘ GOOGLE_CLIENT_ID:", process.env.GOOGLE_CLIENT_ID);
-// console.log(
-// 	"đź”‘ GOOGLE_CLIENT_SECRET:",
-// 	process.env.GOOGLE_CLIENT_SECRET ? "âś… ZNALEZIONO" : "âťŚ BRAK",
-// );
-// console.log("đź”‘ GOOGLE_REDIRECT_URI:", process.env.GOOGLE_REDIRECT_URI);
+
+
+
+
+
+
 
 updateLeaveStatus();
 
 cron.schedule("0 7,14,21 * * *", async () => {
-	// 	logger.debug("đź”„ [CRON] Uruchamiam synchronizację frekwencji...");
+
 	try {
 		await syncAttendance();
-		// 		logger.debug("âś… [CRON] Synchronizacja frekwencji zakończona");
+
 	} catch (error) {
-		// 		logger.error("âťŚ [CRON] Błąd synchronizacji frekwencji:", error);
+
 	}
 });
 
 cron.schedule("1 0 * * *", async () => {
-	// 	logger.debug("âŹ° [CRON] Uruchamiam codzienny job aktualizacji statusów...");
+
 	await updateLeaveStatus();
 });
 const googleClient = new OAuth2Client(process.env.VITE_GOOGLE_CLIENT_ID);
 cron.schedule("0 3 */2 * *", async () => {
-	// 	logger.debug(
-	// 	"đź”„ [CRON] Uruchamiam synchronizację członków z SM_Ewidencja...",
-	// );
+
+
+
 	await syncMembers();
-	// 	logger.debug("âś… [CRON] Synchronizacja członków zakończona");
+
 });
 const PUBLIC_ENDPOINTS = [
 	"/api/auth/login",
 	"/api/auth/google",
-	"/api/auth/google-token", // â† DODAJ TÄ LINIÄ!
+	"/api/auth/google-token", 
 	"/api/auth/register",
 	"/api/auth/refresh-token",
 	"/api/auth/forgot-password",
@@ -88,7 +88,7 @@ const tasksStorage = multer.diskStorage({
 const tasksUpload = multer({
 	storage: tasksStorage,
 	limits: {
-		fileSize: 10 * 1024 * 1024, // 10MB
+		fileSize: 10 * 1024 * 1024, 
 	},
 });
 type LogActionType =
@@ -123,7 +123,7 @@ const JWT_SECRET =
 
 const prisma = new PrismaClient();
 
-// Dodaj na początku pliku, przed innymi routami
+
 app.get("/api/health", (req, res) => {
 	res.status(200).json({
 		status: "ok",
@@ -131,8 +131,8 @@ app.get("/api/health", (req, res) => {
 		uptime: process.uptime(),
 	});
 });
-// backend/src/server.ts
-// backend/src/server.ts
+
+
 app.use(
 	cors({
 		origin: '*',
@@ -156,11 +156,11 @@ app.use(express.urlencoded({ extended: true }));
 
 app.post("/api/auth/google", async (req, res) => {
 	try {
-		// 		logger.debug("=== GOOGLE AUTH START ===");
+
 		const { credential } = req.body;
 
 		if (!credential) {
-			// 			logger.debug("âťŚ Brak credential");
+
 			return res.status(401).json({
 				error: "Brak tokenu autoryzacyjnego",
 			});
@@ -179,14 +179,14 @@ app.post("/api/auth/google", async (req, res) => {
 			});
 		}
 
-		// 		logger.debug("đź“§ Email z Google:", payload.email);
+
 
 		const user = await prisma.user.findUnique({
 			where: { email: payload.email },
 		});
 
 		if (!user) {
-			// đź”Ą LOGUJ NIEUDANE LOGOWANIE PRZEZ GOOGLE
+
 			try {
 				await prisma.systemLog.create({
 					data: {
@@ -207,14 +207,14 @@ app.post("/api/auth/google", async (req, res) => {
 				logger.error("âťŚ Błąd zapisu logu:", logError);
 			}
 
-			// 			logger.debug(`âťŚ Użytkownik ${payload.email} nie istnieje w systemie`);
+
 			return res.status(403).json({
 				error:
 					"To konto Google nie jest zarejestrowane w systemie Siły Młodych. Użyj innego.",
 			});
 		}
 
-		// âś… LOGOWANIE UDANE PRZEZ GOOGLE
+
 		try {
 			await prisma.systemLog.create({
 				data: {
@@ -238,9 +238,9 @@ app.post("/api/auth/google", async (req, res) => {
 			logger.error("âťŚ Błąd zapisu logu:", logError);
 		}
 
-		// 		logger.debug(
-		// 	`âś… Znaleziono użytkownika: ${user.first_name} ${user.last_name}`,
-		// );
+
+
+
 
 		const token = jwt.sign(
 			{
@@ -273,7 +273,7 @@ app.post("/api/auth/google", async (req, res) => {
 			onboardingCompleted: true,
 		});
 	} catch (error) {
-		// 		logger.error("âťŚ Google OAuth error:", error);
+
 		res.status(500).json({
 			error: "Błąd logowania Google",
 		});
@@ -336,7 +336,7 @@ function getCategoryFromUrl(url: string): LogCategory {
 	return "STRUCTURE";
 }
 
-// ZMIEĹ FUNKCJÄ logAction (linie ~70-120) NA TO:
+
 
 async function logAction(
 	req: any,
@@ -349,7 +349,7 @@ async function logAction(
 	errorMessage: string | null = null,
 ) {
 	try {
-		// Pobierz dane użytkownika
+
 		const userId = req.user?.id || 0;
 		const userName =
 			req.user?.email ||
@@ -358,15 +358,15 @@ async function logAction(
 				: "System");
 		const userRole = req.user?.role || "unknown";
 
-		// Pobierz IP i User-Agent
+
 		const ipAddress =
 			req.headers["x-forwarded-for"] || req.socket?.remoteAddress || null;
 		const userAgent = req.headers["user-agent"] || null;
 
-		// đź”Ą TWÓRZ BARDZIEJ SZCZEGÓŁOWY OPIS
+
 		let detailedEntityName = entityName || "unknown";
 
-		// Jeśli to urlop, dodaj więcej szczegółów
+
 		if (category === "LEAVE" && changes) {
 			if (changes.startDate && changes.endDate) {
 				detailedEntityName = `Urlop: ${changes.startDate} - ${changes.endDate}`;
@@ -376,21 +376,21 @@ async function logAction(
 			}
 		}
 
-		// Jeśli to zadanie, dodaj tytuł
+
 		if (category === "PROJECT" && changes?.title) {
 			detailedEntityName = `Zadanie: ${changes.title}`;
 		}
 
 		const data = {
 			user_id: userId,
-			user_name: userName, // â† TO JEST WAŻNE!
+			user_name: userName, 
 			user_role: userRole,
 			action_type: actionType,
 			category: category,
 			endpoint: req.originalUrl || req.url || "/",
 			method: req.method || "UNKNOWN",
 			entity_id: entityId,
-			entity_name: detailedEntityName, // â† WIÄCEJ SZCZEGÓŁÓW
+			entity_name: detailedEntityName, 
 			changes: changes,
 			ip_address: typeof ipAddress === "string" ? ipAddress : null,
 			user_agent: userAgent,
@@ -454,12 +454,12 @@ app.use(
 	"/uploads/tasks",
 	express.static(path.join(__dirname, "uploads/tasks")),
 );
-// đź”Ą NOWY ENDPOINT - logowanie przez Google z access_token
+
 app.post("/api/auth/google-token", async (req: any, res: any) => {
 	try {
 		const { accessToken } = req.body;
 
-		// Pobierz dane użytkownika z Google
+
 		const userInfoRes = await fetch(
 			"https://www.googleapis.com/oauth2/v3/userinfo",
 			{
@@ -479,7 +479,7 @@ app.post("/api/auth/google-token", async (req: any, res: any) => {
 			return res.status(400).json({ error: "Brak email w profilu Google" });
 		}
 
-		// Znajdź użytkownika w systemie
+
 		const user = await prisma.user.findUnique({
 			where: { email: userInfo.email },
 		});
@@ -490,7 +490,7 @@ app.post("/api/auth/google-token", async (req: any, res: any) => {
 				.json({ error: "Użytkownik nie istnieje w systemie" });
 		}
 
-		// Wygeneruj własny JWT
+
 		const token = jwt.sign(
 			{
 				id: user.id,
@@ -548,14 +548,14 @@ app.use(async (req: any, res: any, next: any) => {
 	let responseSent = false;
 
 	res.status = function (code: number) {
-		// logger.debug(`đź”Ť [MIDDLEWARE] res.status: ${code}`);
+
 		statusCode = code;
 		return originalStatus.call(this, code);
 	};
 
 	res.json = function (body: any) {
-		// logger.debug(`đź”Ť [MIDDLEWARE] res.json wywołane`);
-		// logger.debug(`đź”Ť [MIDDLEWARE] body:`, body);
+
+
 		responseBody = body;
 		responseSent = true;
 
@@ -564,13 +564,13 @@ app.use(async (req: any, res: any, next: any) => {
 			method,
 		);
 
-		// logger.debug(
-		// 	`đź”Ť [MIDDLEWARE] method: ${method}, isWriteOperation: ${isWriteOperation}, hasLogged: ${hasLogged}`,
-		// );
+
+
+
 
 		if (isWriteOperation && !hasLogged) {
 			hasLogged = true;
-			// logger.debug(`đź”Ť [MIDDLEWARE] LOGUJÄ!`);
+
 
 			let actionType: LogActionType = "CREATE";
 			if (method === "PUT" || method === "PATCH") actionType = "UPDATE";
@@ -580,9 +580,9 @@ app.use(async (req: any, res: any, next: any) => {
 			const entityId = getEntityId(responseBody);
 			const entityName = getEntityName(responseBody);
 
-			// logger.debug(
-			// 	`đź”Ť [MIDDLEWARE] actionType: ${actionType}, category: ${category}, entityId: ${entityId}, entityName: ${entityName}`,
-			// );
+
+
+
 
 			let changes = null;
 			if (method === "POST" || method === "PUT" || method === "PATCH") {
@@ -595,7 +595,7 @@ app.use(async (req: any, res: any, next: any) => {
 			const logStatus = statusCode < 400 ? "success" : "error";
 			const errorMessage = statusCode >= 400 ? `Status ${statusCode}` : null;
 
-			// logger.debug(`đź”Ť [MIDDLEWARE] Wywołuję logAction...`);
+
 			logAction(
 				req,
 				actionType,
@@ -612,7 +612,7 @@ app.use(async (req: any, res: any, next: any) => {
 	};
 
 	res.send = function (body: any) {
-		// logger.debug(`đź”Ť [MIDDLEWARE] res.send wywołane`);
+
 		if (!responseSent) {
 			responseBody = body;
 			responseSent = true;
@@ -677,7 +677,7 @@ app.post("/api/auth/login", async (req, res) => {
 		});
 
 		if (!user) {
-			// đź”Ą LOGUJ NIEUDANE LOGOWANIE
+
 			try {
 				await prisma.systemLog.create({
 					data: {
@@ -703,7 +703,7 @@ app.post("/api/auth/login", async (req, res) => {
 
 		const isPasswordValid = await bcrypt.compare(password, user.password_hash);
 		if (!isPasswordValid) {
-			// đź”Ą LOGUJ NIEUDANE LOGOWANIE (złe hasło)
+
 			try {
 				await prisma.systemLog.create({
 					data: {
@@ -727,7 +727,7 @@ app.post("/api/auth/login", async (req, res) => {
 			return res.status(401).json({ error: "Nieprawidłowy email lub hasło" });
 		}
 
-		// âś… LOGOWANIE UDANE
+
 		try {
 			await prisma.systemLog.create({
 				data: {
@@ -833,7 +833,7 @@ app.post("/api/auth/register", async (req, res) => {
 			},
 		});
 	} catch (error) {
-		// 		logger.error("âťŚ Błąd rejestracji:", error);
+
 		res.status(500).json({ error: "Wystąpił błąd podczas rejestracji" });
 	}
 });
@@ -848,11 +848,11 @@ app.get(
 				return res.status(401).json({ error: "Brak autoryzacji" });
 			}
 
-			// logger.debug(`đź”Ť Sprawdzam onboarding dla użytkownika ${userId}`);
-			// logger.debug(`đź‘¤ Rola użytkownika: ${req.user?.role}`);
+
+
 
 			if (req.user?.role === "admin") {
-				// 				logger.debug(`đź‘‘ Admin ${userId} - pomijam onboarding, zwracam true`);
+
 				return res.json({ completed: true });
 			}
 
@@ -862,19 +862,19 @@ app.get(
 			});
 
 			if (!onboarding) {
-				// 				logger.debug(`đź“‹ Użytkownik ${userId} NIE ma onboardingu`);
+
 				return res.json({ completed: false });
 			}
 
 			const isCompleted = !!onboarding.completed;
 
-			// 			logger.debug(`đź“‹ Użytkownik ${userId} - completed: ${isCompleted}`);
-			// 			logger.debug(`   - wartość w bazie: ${onboarding.completed}`);
-			// 			logger.debug(`   - typ: ${typeof onboarding.completed}`);
+
+
+
 
 			res.json({ completed: isCompleted });
 		} catch (error) {
-			// 			logger.error("âťŚ Błąd sprawdzania onboardingu:", error);
+
 			res.json({ completed: false });
 		}
 	},
@@ -923,7 +923,7 @@ app.get("/api/ideas", authMiddleware, async (req: any, res) => {
 
 		res.json(mappedIdeas);
 	} catch (error) {
-		// 		logger.error("âťŚ Błąd pobierania pomysłów:", error);
+
 		res.status(500).json({ error: "Nie udało się pobrać pomysłów" });
 	}
 });
@@ -933,13 +933,13 @@ app.post("/api/ideas", authMiddleware, async (req: any, res) => {
 		const { title, description, pillar, authorId, authorName } = req.body;
 		const userId = req.user?.id;
 
-		// 		logger.debug("đź“Ą Otrzymano pomysł:", {
-		// 	title,
-		// 	description,
-		// 	pillar,
-		// 	authorId,
-		// 	authorName,
-		// });
+
+
+
+
+
+
+
 
 		if (!title || !description || !pillar) {
 			return res.status(400).json({ error: "Wszystkie pola są wymagane" });
@@ -960,7 +960,7 @@ app.post("/api/ideas", authMiddleware, async (req: any, res) => {
 			},
 		});
 
-		// 		logger.debug("âś… Utworzono pomysł w bazie:", idea);
+
 
 		try {
 			await prisma.ideaVote.create({
@@ -970,9 +970,9 @@ app.post("/api/ideas", authMiddleware, async (req: any, res) => {
 					vote_type: "up",
 				},
 			});
-			// 			logger.debug(`â¬†ď¸Ź Automatyczny głos UP od autora (user ${userId})`);
+
 		} catch (voteError) {
-			// 			logger.warn("âš ď¸Ź Nie udało się dodać automatycznego głosu:", voteError);
+
 		}
 
 		const voteCounts = await getVoteCounts(idea.id);
@@ -993,26 +993,26 @@ app.post("/api/ideas", authMiddleware, async (req: any, res) => {
 			user_vote: "up",
 		});
 	} catch (error) {
-		// 		logger.error("âťŚ Błąd dodawania pomysłu:", error);
+
 		res.status(500).json({
 			error: "Nie udało się dodać pomysłu",
 			details: error instanceof Error ? error.message : "Nieznany błąd",
 		});
 	}
 });
-// server.ts - dodaj endpoint do pobierania plików z zadań
-// server.ts - dodaj gdzieś przed app.use('/api', revenueRoutes);
+
+
 
 app.get("/uploads/tasks/:filename", authMiddleware, async (req: any, res) => {
 	try {
-		// đź”Ą DEKODUJ NAZWÄ PLIKU
+
 		const filename = decodeURIComponent(req.params.filename);
 		const filePath = path.join(__dirname, "uploads/tasks", filename);
 
-		// console.log("đź“ [DOWNLOAD] Szukam pliku:", filePath);
+
 
 		if (!fs.existsSync(filePath)) {
-			// đź”Ą SPRÓBUJ Z NAPRAWIONĄ NAZWĄ (usuń znaki specjalne)
+
 			const cleanFilename = filename
 				.normalize("NFD")
 				.replace(/[\u0300-\u036f]/g, "");
@@ -1022,13 +1022,13 @@ app.get("/uploads/tasks/:filename", authMiddleware, async (req: any, res) => {
 				return res.sendFile(cleanPath);
 			}
 
-			// console.log("âťŚ [DOWNLOAD] Plik nie istnieje:", filePath);
+
 			return res.status(404).json({ error: "Nie znaleziono pliku" });
 		}
 
 		const mimeType = getMimeType(filename);
 
-		// đź”Ą USTAW POPRAWNE NAGŁÓWKI
+
 		res.setHeader("Content-Type", mimeType);
 		res.setHeader(
 			"Content-Disposition",
@@ -1041,7 +1041,7 @@ app.get("/uploads/tasks/:filename", authMiddleware, async (req: any, res) => {
 		res.status(500).json({ error: "Nie udało się pobrać pliku" });
 	}
 });
-// âś… DODAJ TEN ENDPOINT OBOK ISTNIEJĄCEGO
+
 app.get(
 	"/api/uploads/tasks/:filename",
 	authMiddleware,
@@ -1050,7 +1050,7 @@ app.get(
 			const filename = decodeURIComponent(req.params.filename);
 			const filePath = path.join(__dirname, "uploads/tasks", filename);
 
-			// console.log("đź“ [DOWNLOAD] Szukam pliku (api):", filePath);
+
 
 			if (!fs.existsSync(filePath)) {
 				const cleanFilename = filename
@@ -1062,7 +1062,7 @@ app.get(
 					return res.sendFile(cleanPath);
 				}
 
-				// console.log("âťŚ [DOWNLOAD] Plik nie istnieje:", filePath);
+
 				return res.status(404).json({ error: "Nie znaleziono pliku" });
 			}
 
@@ -1147,7 +1147,7 @@ app.post("/api/ideas/:id/vote", authMiddleware, async (req: any, res) => {
 			votes: voteCounts,
 		});
 	} catch (error) {
-		// 		logger.error("âťŚ Błąd głosowania:", error);
+
 		res.status(500).json({
 			error: "Nie udało się zagłosować",
 			details: error instanceof Error ? error.message : "Nieznany błąd",
@@ -1187,7 +1187,7 @@ app.put("/api/ideas/:id/status", authMiddleware, async (req: any, res) => {
 
 		res.json(idea);
 	} catch (error) {
-		// 		logger.error("âťŚ Błąd zmiany statusu:", error);
+
 		res.status(500).json({ error: "Nie udało się zmienić statusu" });
 	}
 });
@@ -1226,7 +1226,7 @@ app.get("/api/ideas/:id", authMiddleware, async (req: any, res) => {
 			created_at: idea.created_at,
 		});
 	} catch (error) {
-		// 		logger.error("âťŚ Błąd pobierania pomysłu:", error);
+
 		res.status(500).json({ error: "Nie udało się pobrać pomysłu" });
 	}
 });
@@ -1257,23 +1257,23 @@ app.get('/api/members', authMiddleware, async (req: any, res) => {
 		});
 
 		const members = users.map((user: any) => {
-			// Sprawdź czy jest mentorem
+
 			const isMentor = user.team_members?.some((tm: any) =>
 				tm.team?.name === 'Mentorzy'
 			);
 			const status = isMentor ? 'mentor' : user.status;
 
-			// ============================================================
-			// 🔥 ZBIERZ WSZYSTKIE ZESPOŁY Z team_members
-			// ============================================================
+
+
+
 			const teamNames = user.team_members
 				?.map((tm: any) => tm.team?.name)
 				.filter(Boolean) || [];
 
-			// Dodaj istniejący team z tabeli users (jeśli nie ma go w team_members)
+
 			if (user.team && user.team !== "Brak zespołu") {
 				const existingTeams = teamNames || [];
-				// Sprawdź czy team z users nie jest już w liście
+
 				const teamList = user.team.split(", ");
 				teamList.forEach((t: string) => {
 					if (!existingTeams.includes(t) && t !== "Brak zespołu") {
@@ -1282,16 +1282,16 @@ app.get('/api/members', authMiddleware, async (req: any, res) => {
 				});
 			}
 
-			// ============================================================
-			// 🔥 USUŃ "Mentorzy" z listy zespołów (bo mają osobny badge)
-			// ============================================================
+
+
+
 			const filteredTeams = teamNames
 				.filter((t: string) => t !== "Mentorzy")
 				.filter((t: string) => t !== "Brak zespołu");
 
-			// ============================================================
-			// 🔥 POŁĄCZ ZESPÓŁ W JEDEN STRING
-			// ============================================================
+
+
+
 			const teamString = filteredTeams.length > 0
 				? filteredTeams.join(", ")
 				: "Brak zespołu";
@@ -1303,7 +1303,7 @@ app.get('/api/members', authMiddleware, async (req: any, res) => {
 				email: user.email,
 				phone: user.phone,
 				functional_role: user.functional_role,
-				team: teamString, // <-- NADPISUJEMY TEAM
+				team: teamString, 
 				province: user.province,
 				status: status,
 				join_date: user.join_date,
@@ -1395,7 +1395,7 @@ app.get("/api/teams", authMiddleware, async (req: any, res) => {
 
 		res.json(teams);
 	} catch (error) {
-		// 		logger.error("âťŚ Błąd pobierania zespołów:", error);
+
 		res.status(500).json({ error: "Nie udało się pobrać zespołów" });
 	}
 });
@@ -1409,15 +1409,15 @@ app.post("/api/teams", authMiddleware, async (req: any, res) => {
 			return res.status(400).json({ error: "Nazwa zespołu jest wymagana" });
 		}
 
-		// 		logger.debug("đź“Ą Tworzenie zespołu - dane:", {
-		// 	name,
-		// 	role,
-		// 	description,
-		// 	icon,
-		// 	status,
-		// 	parent_id,
-		// 	email,
-		// });
+
+
+
+
+
+
+
+
+
 
 		const team = await prisma.team.create({
 			data: {
@@ -1431,11 +1431,11 @@ app.post("/api/teams", authMiddleware, async (req: any, res) => {
 			},
 		});
 
-		// 		logger.debug("âś… Utworzono zespół:", team);
+
 
 		res.status(201).json(team);
 	} catch (error) {
-		// 		logger.error("âťŚ Błąd tworzenia zespołu:", error);
+
 		res.status(500).json({ error: "Nie udało się utworzyć zespołu" });
 	}
 });
@@ -1511,7 +1511,7 @@ app.get("/api/dashboard/stats", authMiddleware, async (req: any, res) => {
 					}
 				}
 			} catch (dbError) {
-				// 				logger.error("âťŚ Błąd pobierania frekwencji z SM_Frekwencja:", dbError);
+
 
 				try {
 					const user = await prisma.user.findUnique({
@@ -1525,7 +1525,7 @@ app.get("/api/dashboard/stats", authMiddleware, async (req: any, res) => {
 						attendance = `${Number(user.attendance_percentage).toFixed(1)}%`;
 					}
 				} catch (fallbackError) {
-					// 					logger.error("âťŚ Błąd fallback frekwencji:", fallbackError);
+
 				}
 			}
 		}
@@ -1538,7 +1538,7 @@ app.get("/api/dashboard/stats", authMiddleware, async (req: any, res) => {
 			newGuides: newGuides,
 		});
 	} catch (error) {
-		// 		logger.error("âťŚ Błąd statystyk:", error);
+
 		res.status(500).json({ error: "Nie udało się pobrać statystyk" });
 	}
 });
@@ -1561,7 +1561,7 @@ app.get(
 
 			res.json({ count });
 		} catch (error) {
-			// 			logger.error("âťŚ Błąd liczenia nieprzeczytanych:", error);
+
 			res.status(500).json({ error: "Nie udało się pobrać liczby" });
 		}
 	},
@@ -1585,9 +1585,9 @@ app.get(
 				take: limit,
 			});
 
-			// 			logger.debug(
-			// 	`đź“¨ Znaleziono ${notifications.length} powiadomień dla użytkownika ${userId}`,
-			// );
+
+
+
 
 			const mappedNotifications = notifications.map((n: any) => ({
 				id: n.id.toString(),
@@ -1602,7 +1602,7 @@ app.get(
 
 			res.json(mappedNotifications);
 		} catch (error) {
-			// 			logger.error("âťŚ Błąd pobierania powiadomień:", error);
+
 			res.status(500).json({
 				error: "Nie udało się pobrać powiadomień",
 				details: error instanceof Error ? error.message : "Unknown error",
@@ -1623,9 +1623,9 @@ app.put(
 				return res.status(401).json({ error: "Brak autoryzacji" });
 			}
 
-			// 			logger.debug(
-			// 	`đź“¨ Oznaczanie powiadomienia ${id} jako przeczytane dla użytkownika ${userId}`,
-			// );
+
+
+
 
 			const notification = await prisma.notification.findFirst({
 				where: {
@@ -1635,9 +1635,9 @@ app.put(
 			});
 
 			if (!notification) {
-				// // 				logger.debug(
-				// 					`âťŚ Powiadomienie ${id} nie istnieje lub nie należy do użytkownika ${userId}`,
-				// 				);
+
+
+
 				return res.status(404).json({
 					error: "Nie znaleziono powiadomienia",
 					details: `Powiadomienie ${id} nie istnieje lub nie należy do Ciebie`,
@@ -1652,7 +1652,7 @@ app.put(
 				},
 			});
 
-			// 			logger.debug(`âś… Powiadomienie ${id} oznaczone jako przeczytane`);
+
 
 			res.status(200).json({
 				success: true,
@@ -1663,7 +1663,7 @@ app.put(
 				},
 			});
 		} catch (error) {
-			// 			logger.error("âťŚ Błąd oznaczania:", error);
+
 			res.status(500).json({
 				error: "Nie udało się oznaczyć",
 				details: error instanceof Error ? error.message : "Unknown error",
@@ -1682,9 +1682,9 @@ app.put(
 				return res.status(401).json({ error: "Brak autoryzacji" });
 			}
 
-			// 			logger.debug(
-			// 	`đź“¨ Oznaczanie wszystkich powiadomień jako przeczytane dla użytkownika ${userId}`,
-			// );
+
+
+
 
 			const result = await prisma.notification.updateMany({
 				where: {
@@ -1694,7 +1694,7 @@ app.put(
 				data: { read: true },
 			});
 
-			// 			logger.debug(`âś… Oznaczono ${result.count} powiadomień jako przeczytane`);
+
 
 			res.status(200).json({
 				success: true,
@@ -1702,7 +1702,7 @@ app.put(
 				count: result.count,
 			});
 		} catch (error) {
-			// 			logger.error("âťŚ Błąd oznaczania wszystkich:", error);
+
 			res.status(500).json({
 				error: "Nie udało się oznaczyć wszystkich",
 				details: error instanceof Error ? error.message : "Unknown error",
@@ -1751,8 +1751,8 @@ app.get("/api/tutorials", authMiddleware, async (req: any, res) => {
 				description: t.description,
 				category: t.category || "new_member",
 				access: t.access || "all",
-				// âś… ZWRÓĆ AUTORA Z BAZY
-				author: t.author || "Nieznany", // â† POPRAWIONE!
+
+				author: t.author || "Nieznany", 
 				createdAt: t.created_at.toISOString().split("T")[0],
 				updatedAt: t.updated_at.toISOString().split("T")[0],
 				content: t.content || "",
@@ -1770,9 +1770,9 @@ app.get("/api/tutorials", authMiddleware, async (req: any, res) => {
 	}
 });
 
-// ============================================================
-// đź“‹ GET /api/tasks - Pobierz wszystkie zadania z ocenami
-// ============================================================
+
+
+
 app.get("/api/tasks", authMiddleware, async (req: any, res) => {
 	try {
 		const userId = req.user?.id;
@@ -1781,15 +1781,15 @@ app.get("/api/tasks", authMiddleware, async (req: any, res) => {
 
 		let whereCondition: any = {};
 
-		// ============================================================
-		// 1. ADMIN i ZARZĄD - widzą WSZYSTKIE zadania
-		// ============================================================
+
+
+
 		if (userRole === "admin" || userRole === "board") {
 			whereCondition = {};
 		}
-		// ============================================================
-		// 2. KOORDYNATOR/LIDER - widzi zadania z filaru + swoje
-		// ============================================================
+
+
+
 		else if (userRole === "coordinator" || isLeader === true) {
 			const leaderTeams = await prisma.teamMember.findMany({
 				where: {
@@ -1822,17 +1822,17 @@ app.get("/api/tasks", authMiddleware, async (req: any, res) => {
 				whereCondition = { assigned_to: parseInt(userId) };
 			}
 		}
-		// ============================================================
-		// 3. ZWYKŁY CZŁONEK - widzi tylko swoje zadania
-		// ============================================================
+
+
+
 		else {
 			whereCondition = { assigned_to: parseInt(userId) };
 		}
 
-		// ============================================================
-		// đź”Ą OBSŁUGA PARAMETRÓW - TYLKO DLA KOORDYNATORA I CZŁONKA
-		// ============================================================
-		// âś… DLA ADMINA I ZARZĄDU - NIE NADPISUJ whereCondition!
+
+
+
+
 		if (userRole !== "admin" && userRole !== "board") {
 			if (req.query.leaderId) {
 				const leaderId = parseInt(req.query.leaderId as string);
@@ -1873,9 +1873,9 @@ app.get("/api/tasks", authMiddleware, async (req: any, res) => {
 			}
 		}
 
-		// ============================================================
-		// đź”Ą POBRANIE ZADAĹ Z DANYMI UŻYTKOWNIKA KTÓRY OCENIŁ
-		// ============================================================
+
+
+
 		const tasks = await prisma.task.findMany({
 			where: whereCondition,
 			include: {
@@ -1913,7 +1913,7 @@ app.get("/api/tasks", authMiddleware, async (req: any, res) => {
 						},
 					},
 				},
-				// âś… DODANE - pobierz dane użytkownika który ocenił
+
 				ratedBy: {
 					select: {
 						id: true,
@@ -1927,9 +1927,9 @@ app.get("/api/tasks", authMiddleware, async (req: any, res) => {
 			},
 		});
 
-		// ============================================================
-		// MAPOWANIE ZADAĹ Z OCENAMI
-		// ============================================================
+
+
+
 		const mappedTasks = tasks.map((task: any) => ({
 			id: task.id.toString(),
 			title: task.title,
@@ -1974,12 +1974,12 @@ app.get("/api/tasks", authMiddleware, async (req: any, res) => {
 					content: c.content,
 					createdAt: c.created_at.toISOString(),
 				})) || [],
-			// âś… POLA OCENY
+
 			rating: task.rating ?? null,
 			rating_comment: task.rating_comment ?? null,
 			rated_at: task.rated_at?.toISOString() ?? null,
 			rated_by: task.rated_by?.toString() ?? null,
-			// âś… NAZWA UŻYTKOWNIKA KTÓRY OCENIŁ
+
 			rated_by_name: task.ratedBy
 				? `${task.ratedBy.first_name || ""} ${task.ratedBy.last_name || ""}`.trim()
 				: null,
@@ -1992,19 +1992,19 @@ app.get("/api/tasks", authMiddleware, async (req: any, res) => {
 	}
 });
 
-// ============================================================
-// đź†• ENDPOINT: Ocena zadania (ZAPIS)
-// ============================================================
+
+
+
 app.post("/api/tasks/:id/rate", authMiddleware, async (req: any, res) => {
 	try {
 		const { id } = req.params;
 		const userId = req.user?.id;
 		const { rating, comment } = req.body;
 
-		// console.log("đź“Ą [RATING] Zadanie ID:", id);
-		// console.log("đź“Ą [RATING] Użytkownik:", userId);
-		// console.log("đź“Ą [RATING] Ocena:", rating);
-		// console.log("đź“Ą [RATING] Komentarz:", comment);
+
+
+
+
 
 		const taskId = parseInt(id);
 		if (isNaN(taskId)) {
@@ -2019,28 +2019,28 @@ app.post("/api/tasks/:id/rate", authMiddleware, async (req: any, res) => {
 			return res.status(404).json({ error: "Nie znaleziono zadania" });
 		}
 
-		// Sprawdź czy użytkownik jest przypisany do zadania
+
 		if (task.assigned_to !== parseInt(userId)) {
 			return res.status(403).json({
 				error: "Tylko osoba przypisana może ocenić zadanie",
 			});
 		}
 
-		// Sprawdź czy zadanie jest zakończone
+
 		if (task.status !== "done") {
 			return res.status(400).json({
 				error: "Zadanie musi być zakończone przed oceną",
 			});
 		}
 
-		// Sprawdź czy ocena już została dodana
+
 		if (task.rated_at !== null) {
 			return res.status(400).json({
 				error: "To zadanie zostało już ocenione",
 			});
 		}
 
-		// âś… Zapisz ocenę
+
 		const updatedTask = await prisma.task.update({
 			where: { id: taskId },
 			data: {
@@ -2051,7 +2051,7 @@ app.post("/api/tasks/:id/rate", authMiddleware, async (req: any, res) => {
 			},
 		});
 
-		// console.log("âś… [RATING] Zapisano ocenę dla zadania:", taskId);
+
 
 		res.json({
 			success: true,
@@ -2081,7 +2081,7 @@ app.post(
 				tutorialData = req.body;
 			}
 
-			// âś… POBIERZ author z formularza
+
 			const {
 				title,
 				description,
@@ -2116,7 +2116,7 @@ app.post(
 					description: description || null,
 					category: category || "new_member",
 					access: access || "all",
-					// âś… UŻYJ AUTORA Z FORMULARZA
+
 					author: author || "Nieznany",
 					author_id: req.user?.id ? parseInt(req.user.id) : null,
 					content: content || null,
@@ -2135,7 +2135,7 @@ app.post(
 				description: tutorial.description,
 				category: tutorial.category || "new_member",
 				access: tutorial.access || "all",
-				// âś… ZWRÓĆ AUTORA Z BAZY
+
 				author: tutorial.author || "Nieznany",
 				createdAt: tutorial.created_at.toISOString().split("T")[0],
 				updatedAt: tutorial.updated_at.toISOString().split("T")[0],
@@ -2175,12 +2175,12 @@ app.get("/api/applications", authMiddleware, async (req: any, res) => {
 			whereCondition = { user_id: userId };
 		}
 
-		// 		logger.debug(
-		// 	"đź“Ą Pobieranie zgłoszeń dla użytkownika:",
-		// 	userId,
-		// 	"rola:",
-		// 	userRole,
-		// );
+
+
+
+
+
+
 
 		const applications = await prisma.vacancyApplication.findMany({
 			where: whereCondition,
@@ -2217,7 +2217,7 @@ app.get("/api/applications", authMiddleware, async (req: any, res) => {
 			},
 		});
 
-		// 		logger.debug(`âś… Znaleziono ${applications.length} zgłoszeń`);
+
 
 		const mappedApplications = applications.map((app: any) => {
 			const answers: Record<string, string> = {};
@@ -2253,7 +2253,7 @@ app.get("/api/applications", authMiddleware, async (req: any, res) => {
 
 		res.json(mappedApplications);
 	} catch (error) {
-		// 		logger.error("âťŚ Błąd pobierania zgłoszeń:", error);
+
 		res.status(500).json({
 			error: "Nie udało się pobrać zgłoszeń",
 			details: error instanceof Error ? error.message : "Nieznany błąd",
@@ -2285,20 +2285,20 @@ app.post("/api/vacancies/:id/notify", authMiddleware, async (req: any, res) => {
 
 		const contactEmail = vacancy.contact_person?.email;
 		if (!contactEmail) {
-			// 			logger.warn("âš ď¸Ź Brak emaila kontaktowego dla wakatu:", vacancy.id);
+
 			return res.json({ message: "Brak emaila kontaktowego" });
 		}
 
-		// 		logger.debug(`
-		//   đź“§ Powiadomienie email:
-		//   Do: ${contactEmail}
-		//   Temat: Nowe zgłoszenie na stanowisko "${vacancy.title}"
-		//   Wiadomość: ${applicantName} (${applicantEmail}) zgłosił/a się na stanowisko.
-		// `);
+
+
+
+
+
+
 
 		res.json({ message: "Powiadomienie wysłane" });
 	} catch (error) {
-		// 		logger.error("âťŚ Błąd wysyłki powiadomienia:", error);
+
 		res.status(500).json({ error: "Nie udało się wysłać powiadomienia" });
 	}
 });
@@ -2372,7 +2372,7 @@ app.get(
 
 			res.json(mappedApplications);
 		} catch (error) {
-			// 			logger.error("âťŚ Błąd pobierania zgłoszeń dla wakatu:", error);
+
 			res.status(500).json({ error: "Nie udało się pobrać zgłoszeń" });
 		}
 	},
@@ -2407,7 +2407,7 @@ app.put(
 				status: application.status,
 			});
 		} catch (error) {
-			// 			logger.error("âťŚ Błąd aktualizacji statusu zgłoszenia:", error);
+
 			res.status(500).json({ error: "Nie udało się zaktualizować statusu" });
 		}
 	},
@@ -2436,7 +2436,7 @@ app.put(
 				content,
 				attachments: existingAttachments,
 				functionalRoles,
-				author, // âś… POBIERZ AUTORA
+				author, 
 			} = tutorialData;
 
 			const newAttachments: any[] = [];
@@ -2465,8 +2465,8 @@ app.put(
 					description: description || null,
 					category: category || "new_member",
 					access: access || "all",
-					// âś… ZAKTUALIZUJ AUTORA
-					author: author || undefined, // jeśli nie ma, zachowaj stary
+
+					author: author || undefined, 
 					content: content || null,
 					attachments:
 						allAttachments.length > 0 ? JSON.stringify(allAttachments) : null,
@@ -2483,7 +2483,7 @@ app.put(
 				description: tutorial.description,
 				category: tutorial.category || "new_member",
 				access: tutorial.access || "all",
-				// âś… ZWRÓĆ AUTORA Z BAZY
+
 				author: tutorial.author || "Nieznany",
 				createdAt: tutorial.created_at.toISOString().split("T")[0],
 				updatedAt: tutorial.updated_at.toISOString().split("T")[0],
@@ -2536,7 +2536,7 @@ app.delete("/api/tutorials/:id", authMiddleware, async (req: any, res) => {
 
 		res.status(204).send();
 	} catch (error) {
-		// 		logger.error("âťŚ Błąd usuwania poradnika:", error);
+
 		res.status(500).json({ error: "Nie udało się usunąć poradnika" });
 	}
 });
@@ -2549,7 +2549,7 @@ app.delete(
 			const { id } = req.params;
 			const tutorialId = parseInt(req.query.tutorialId as string);
 
-			// 			logger.debug(`đź—‘ď¸Ź Usuwanie załącznika: ${id} z poradnika: ${tutorialId}`);
+
 
 			const tutorial = await prisma.guide.findUnique({
 				where: { id: tutorialId },
@@ -2583,7 +2583,7 @@ app.delete(
 
 			res.json({ success: true });
 		} catch (error) {
-			// 			logger.error("âťŚ Błąd usuwania załącznika:", error);
+
 			res.status(500).json({ error: "Nie udało się usunąć załącznika" });
 		}
 	},
@@ -2607,7 +2607,7 @@ app.get("/api/uploads/tutorials/:filename", async (req: any, res) => {
 		);
 		res.sendFile(filePath);
 	} catch (error) {
-		// 		logger.error("âťŚ Błąd pobierania pliku:", error);
+
 		res.status(500).json({ error: "Nie udało się pobrać pliku" });
 	}
 });
@@ -2677,7 +2677,7 @@ app.get("/api/vacancies", authMiddleware, async (req: any, res) => {
 
 		res.json(vacancies);
 	} catch (error) {
-		// 		logger.error("âťŚ Błąd pobierania wakatów:", error);
+
 		res.status(500).json({ error: "Nie udało się pobrać wakatów" });
 	}
 });
@@ -2747,7 +2747,7 @@ app.post("/api/vacancies", authMiddleware, async (req: any, res) => {
 
 		res.status(201).json(vacancy);
 	} catch (error) {
-		// 		logger.error("âťŚ Błąd tworzenia wakatu:", error);
+
 		res.status(500).json({ error: "Nie udało się utworzyć wakatu" });
 	}
 });
@@ -2816,7 +2816,7 @@ app.put("/api/vacancies/:id", authMiddleware, async (req: any, res) => {
 
 		res.json(vacancy);
 	} catch (error) {
-		// 		logger.error("âťŚ Błąd aktualizacji wakatu:", error);
+
 		res.status(500).json({ error: "Nie udało się zaktualizować wakatu" });
 	}
 });
@@ -2832,7 +2832,7 @@ app.delete("/api/vacancies/:id", authMiddleware, async (req: any, res) => {
 
 		res.status(204).send();
 	} catch (error) {
-		// 		logger.error("âťŚ Błąd usuwania wakatu:", error);
+
 		res.status(500).json({ error: "Nie udało się usunąć wakatu" });
 	}
 });
@@ -2916,7 +2916,7 @@ app.post("/api/vacancies/:id/apply", authMiddleware, async (req: any, res) => {
 			appliedAt: new Date().toISOString().split("T")[0],
 		});
 	} catch (error) {
-		// 		logger.error("âťŚ Błąd zgłaszania na wakat:", error);
+
 		res.status(500).json({
 			error: "Nie udało się zgłosić na wakat",
 			details: error instanceof Error ? error.message : "Nieznany błąd",
@@ -2948,7 +2948,7 @@ app.get(
 				applicationId: application?.id?.toString() || null,
 			});
 		} catch (error) {
-			// 			logger.error("âťŚ Błąd sprawdzania zgłoszenia:", error);
+
 			res.status(500).json({ error: "Nie udało się sprawdzić zgłoszenia" });
 		}
 	},
@@ -2976,7 +2976,7 @@ app.delete(
 
 			res.status(200).json({ message: "Usunięto powiadomienie" });
 		} catch (error) {
-			// 			logger.error("âťŚ Błąd usuwania:", error);
+
 			res.status(500).json({ error: "Nie udało się usunąć" });
 		}
 	},
@@ -2984,7 +2984,7 @@ app.delete(
 
 app.get("/api/structure", authMiddleware, async (req: any, res) => {
 	try {
-		// 		logger.debug("đź“Ą [STRUCTURE] Pobieranie struktury...");
+
 
 		const teams = await prisma.team.findMany({
 			select: {
@@ -3124,22 +3124,22 @@ app.get("/api/structure", authMiddleware, async (req: any, res) => {
 
 		res.json(structure);
 	} catch (error) {
-		// 		logger.error("âťŚ [STRUCTURE] Błąd:", error);
+
 		res.status(500).json({ error: "Nie udało się pobrać struktury" });
 	}
 });
 app.use("/api", memberRoutes);
 app.use("/api/contributions", contributionRoutes);
 app.use("/api/dashboard", dashboardRoutes);
-// src/server.ts - /api/profile (około linii 1450-1480)
+
 
 app.get("/api/profile", authMiddleware, async (req: any, res) => {
 	try {
 		const userId = req.user?.id;
-		// 		logger.debug(`đź“Ą Pobieranie profilu dla użytkownika: ${userId}`);
+
 
 		if (!userId) {
-			// 			logger.debug("âťŚ Brak userId w req.user");
+
 			return res.status(401).json({ error: "Brak autoryzacji" });
 		}
 
@@ -3155,47 +3155,47 @@ app.get("/api/profile", authMiddleware, async (req: any, res) => {
 		});
 
 		if (!user) {
-			// 			logger.debug(`âťŚ Użytkownik ${userId} nie znaleziony`);
+
 			return res.status(404).json({ error: "Użytkownik nie znaleziony" });
 		}
 
-		// ============================================================
-		// đź”Ą SPRAWDŹ CZY UŻYTKOWNIK JEST LIDEREM (is_leader = 1)
-		// ============================================================
+
+
+
 		const isLeader = user.team_members.some((tm: any) => tm.is_leader === true);
 
-		// ============================================================
-		// đź”Ą ZNAJDŹ ZESPÓŁ W KTÓRYM UŻYTKOWNIK JEST LIDEREM
-		// ============================================================
+
+
+
 		const leaderTeam = user.team_members.find(
 			(tm: any) => tm.is_leader === true,
 		);
 		const teamName = leaderTeam?.team?.name || null;
 		const teamId = leaderTeam?.team_id?.toString() || null;
 
-		// ============================================================
-		// đź”Ą SPRAWDŹ CZY NAZWA ZESPOŁU ZAWIERA "Filar" - wtedy to filar
-		// ============================================================
+
+
+
 		let pillarName = null;
 		let pillarId = null;
 
-		// Jeśli nazwa zespołu zawiera "Filar", to jest to filar
+
 		if (leaderTeam?.team?.name?.includes("Filar")) {
 			pillarName = leaderTeam.team.name.replace("Filar ", "").trim();
 			pillarId = leaderTeam.team_id?.toString() || null;
 		}
 
-		// ============================================================
-		// đź”Ą FILARY Z POLA `pillars` (Z SM_Frekwencja)
-		// ============================================================
+
+
+
 		const pillarList = user.pillars
 			? user.pillars.split(", ").filter(Boolean)
 			: [];
 		const pillar = pillarList.length > 0 ? pillarList[0] : null;
 
-		// ============================================================
-		// đź”Ą FILARY, W KTÓRYCH UŻYTKOWNIK JEST KOORDYNATOREM
-		// ============================================================
+
+
+
 		const coordinatorPillars = user.team_members
 			.filter(
 				(tm: any) => tm.is_leader === true && tm.team?.name?.includes("Filar"),
@@ -3203,9 +3203,9 @@ app.get("/api/profile", authMiddleware, async (req: any, res) => {
 			.map((tm: any) => tm.team?.name?.replace("Filar ", ""))
 			.filter(Boolean);
 
-		// ============================================================
-		// đź”Ą WSZYSTKIE ZESPOŁY UŻYTKOWNIKA
-		// ============================================================
+
+
+
 		const teams = user.team_members
 			.map((tm: any) => tm.team?.name)
 			.filter(Boolean);
@@ -3214,9 +3214,9 @@ app.get("/api/profile", authMiddleware, async (req: any, res) => {
 
 		const onboarding = user.onboarding_data?.[0] || {};
 
-		// ============================================================
-		// đź”Ą OSTATECZNY OBIEKT PROFILU Z WSZYSTKIMI POLAMI
-		// ============================================================
+
+
+
 		const profile = {
 			id: user.id.toString(),
 			firstName: user.first_name,
@@ -3260,9 +3260,9 @@ app.get("/api/profile", authMiddleware, async (req: any, res) => {
 			contributionInfo: { arrears: 0, status: "paid" },
 			leave: { isOnLeave: false, history: [] },
 
-			// ============================================================
-			// đź”Ą NOWE POLA - KRYTYCZNE DLA SYSTEMU!
-			// ============================================================
+
+
+
 			isLeader: isLeader,
 			isTeamCoordinator: isLeader,
 			isPillarCoordinator: isLeader,
@@ -3274,7 +3274,7 @@ app.get("/api/profile", authMiddleware, async (req: any, res) => {
 
 		res.json(profile);
 	} catch (error) {
-		// 		logger.error("âťŚ Błąd profilu:", error);
+
 		res.status(500).json({ error: "Nie udało się pobrać profilu" });
 	}
 });
@@ -3380,7 +3380,7 @@ app.get("/api/leaves", authMiddleware, async (req: any, res) => {
 
 		res.json(mappedLeaves);
 	} catch (error) {
-		// 		logger.error("âťŚ Błąd pobierania urlopów:", error);
+
 		res.status(500).json({ error: "Nie udało się pobrać urlopów" });
 	}
 });
@@ -3390,7 +3390,7 @@ app.post("/api/leaves", authMiddleware, async (req: any, res) => {
 		const userId = req.user?.id;
 		if (!userId) return res.status(401).json({ error: "Brak autoryzacji" });
 
-		// 		logger.debug("đź“Ą OTRZYMANE DANE:", req.body);
+
 
 		const {
 			type,
@@ -3482,8 +3482,8 @@ app.post("/api/leaves", authMiddleware, async (req: any, res) => {
 			}
 		}
 
-		// 		logger.debug("âś… UTOWORZONO URLOP:", leave);
-		// 		logger.debug(`đź“¨ Wysłano powiadomienia do Admina i Zarządu`);
+
+
 
 		res.status(201).json({
 			id: leave.id.toString(),
@@ -3507,7 +3507,7 @@ app.post("/api/leaves", authMiddleware, async (req: any, res) => {
 			comments: [],
 		});
 	} catch (error) {
-		// 		logger.error("âťŚ Błąd tworzenia wniosku:", error);
+
 		res.status(500).json({ error: "Nie udało się utworzyć wniosku" });
 	}
 });
@@ -3559,7 +3559,7 @@ app.put("/api/leaves/:id", authMiddleware, async (req: any, res) => {
 			status,
 		} = req.body;
 
-		// âś… POPRAWKA: DODAJ "cancelled"
+
 		if (
 			status &&
 			(status === "approved" || status === "rejected" || status === "cancelled")
@@ -3599,10 +3599,10 @@ app.put("/api/leaves/:id", authMiddleware, async (req: any, res) => {
 					}
 					: {}),
 			},
-			include: { user: true }, // â† đź”Ą DODAJ TÄ LINIÄ!
+			include: { user: true }, 
 		});
 
-		// âś… DODAJ POWIADOMIENIE DLA ANULOWANIA
+
 		if (status === "cancelled") {
 			const userName =
 				`${currentUser?.first_name || ""} ${currentUser?.last_name || ""}`.trim() ||
@@ -3645,14 +3645,14 @@ app.put("/api/leaves/:id", authMiddleware, async (req: any, res) => {
 
 		const userEmail = req.user?.email || "Nieznany";
 
-		// Zamiast automatycznego logowania przez middleware,
-		// dodaj ręczne logowanie z większą ilością szczegółów
+
+
 
 		try {
 			await prisma.systemLog.create({
 				data: {
 					user_id: req.user?.id || 0,
-					user_name: userEmail, // â† EMAIL ZAMIAST "System"!
+					user_name: userEmail, 
 					user_role: req.user?.role || "unknown",
 					action_type: "UPDATE",
 					category: "LEAVE",
@@ -3687,26 +3687,26 @@ app.put("/api/leaves/:id", authMiddleware, async (req: any, res) => {
 });
 
 app.delete("/api/leaves/:id", authMiddleware, async (req: any, res) => {
-	// 	logger.debug(`đź”Ť [DELETE LEAVE] START - ID: ${req.params.id}`);
+
 	try {
 		const userId = req.user?.id;
 		const userRole = req.user?.role;
 		const leaveId = parseInt(req.params.id);
 		const userEmail = req.user?.email || "Nieznany";
 
-		// 		logger.debug(
-		// 	`đź”Ť [DELETE LEAVE] userId: ${userId}, userRole: ${userRole}, leaveId: ${leaveId}`,
-		// );
+
+
+
 
 		const existingLeave = await prisma.leave.findUnique({
 			where: { id: leaveId },
 			include: { user: true },
 		});
 
-		// 		logger.debug(`đź”Ť [DELETE LEAVE] existingLeave:`, existingLeave);
+
 
 		if (!existingLeave) {
-			// 			logger.debug(`đź”Ť [DELETE LEAVE] Nie znaleziono wniosku`);
+
 			return res.status(404).json({ error: "Nie znaleziono wniosku" });
 		}
 
@@ -3723,7 +3723,7 @@ app.delete("/api/leaves/:id", authMiddleware, async (req: any, res) => {
 			where: { id: leaveId },
 		});
 
-		// 		logger.debug(`đź”Ť [DELETE LEAVE] Usunięto z bazy`);
+
 
 		res.status(200).json({
 			success: true,
@@ -3740,7 +3740,7 @@ app.delete("/api/leaves/:id", authMiddleware, async (req: any, res) => {
 				await prisma.systemLog.create({
 					data: {
 						user_id: req.user?.id || 0,
-						user_name: userEmail, // â† EMAIL!
+						user_name: userEmail, 
 						user_role: req.user?.role || "unknown",
 						action_type: "DELETE",
 						category: "LEAVE",
@@ -3771,7 +3771,7 @@ app.delete("/api/leaves/:id", authMiddleware, async (req: any, res) => {
 
 		res.status(200).json({ success: true, message: "Usunięto" });
 	} catch (error) {
-		// 		logger.error(`đź”Ť [DELETE LEAVE] BŁĄD:`, error);
+
 
 		res.status(500).json({
 			error: "Nie udało się usunąć wniosku",
@@ -3802,7 +3802,7 @@ app.get("/api/leaves/status", authMiddleware, async (req: any, res) => {
 			endDate: activeLeave?.end_date?.toISOString().split("T")[0],
 		});
 	} catch (error) {
-		// 		logger.error("âťŚ Błąd sprawdzania statusu urlopu:", error);
+
 		res.status(500).json({ error: "Nie udało się sprawdzić statusu urlopu" });
 	}
 });
@@ -3834,7 +3834,7 @@ app.get("/api/leaves/status/:userId", authMiddleware, async (req: any, res) => {
 			endDate: activeLeave?.end_date?.toISOString().split("T")[0],
 		});
 	} catch (error) {
-		// 		logger.error("âťŚ Błąd sprawdzania statusu urlopu:", error);
+
 		res.status(500).json({ error: "Nie udało się sprawdzić statusu urlopu" });
 	}
 });
@@ -3879,7 +3879,7 @@ app.put("/api/profile", authMiddleware, async (req: any, res) => {
 
 		res.json({ success: true, message: "Profil zaktualizowany" });
 	} catch (error) {
-		// 		logger.error("âťŚ Błąd aktualizacji:", error);
+
 		res.status(500).json({ error: "Nie udało się zaktualizować profilu" });
 	}
 });
@@ -3903,7 +3903,7 @@ app.post("/api/profile/skills", authMiddleware, async (req: any, res) => {
 
 		res.json({ success: true, skills });
 	} catch (error) {
-		// 		logger.error("âťŚ Błąd:", error);
+
 		res.status(500).json({ error: "Nie udało się dodać umiejętności" });
 	}
 });
@@ -3930,15 +3930,15 @@ app.delete(
 
 			res.json({ success: true, skills: updatedSkills });
 		} catch (error) {
-			// 			logger.error("âťŚ Błąd:", error);
+
 			res.status(500).json({ error: "Nie udało się usunąć umiejętności" });
 		}
 	},
 );
 app.use("/api/calendar", calendarRoutes);
-// ============================================================
-// 🔥 HANDLER BŁĘDÓW - POPRAWIONY
-// ============================================================
+
+
+
 app.use(
 	(
 		err: any,
@@ -3948,13 +3948,13 @@ app.use(
 	) => {
 		console.error("❌ Błąd:", err);
 
-		// Sprawdź czy odpowiedź już została wysłana
+
 		if (res.headersSent) {
 			console.warn("⚠️ Odpowiedź już została wysłana - pomijam handler błędów");
 			return next(err);
 		}
 
-		// Sprawdź czy to błąd multer
+
 		if (err instanceof multer.MulterError) {
 			if (err.message.includes("File too large")) {
 				return res
@@ -3976,7 +3976,7 @@ app.use(
 			return res.status(400).json({ error: err.message });
 		}
 
-		// Bezpieczne wysłanie odpowiedzi
+
 		try {
 			if (!res.headersSent) {
 				const statusCode = err.statusCode || 500;
@@ -3985,7 +3985,7 @@ app.use(
 			}
 		} catch (e) {
 			console.error("💥 Krytyczny błąd w handlerze błędów:", e);
-			// Ostateczna deska ratunku
+
 			if (!res.headersSent) {
 				res.statusCode = 500;
 				res.setHeader("Content-Type", "application/json");
@@ -4031,7 +4031,7 @@ app.get("/api/social/members", authMiddleware, async (req: any, res) => {
 
 		res.json(formattedMembers);
 	} catch (error) {
-		// 		logger.error("âťŚ Błąd pobierania członków social media:", error);
+
 		res.status(500).json({ error: "Nie udało się pobrać członków" });
 	}
 });
@@ -4071,7 +4071,7 @@ app.get("/api/social/creators", authMiddleware, async (req: any, res) => {
 
 		res.json(formattedCreators);
 	} catch (error) {
-		// 		logger.error("âťŚ Błąd pobierania twórców:", error);
+
 		res.status(500).json({
 			error: "Nie udało się pobrać twórców",
 			details: error instanceof Error ? error.message : "Unknown error",
@@ -4139,7 +4139,7 @@ app.post("/api/social/creators", authMiddleware, async (req: any, res) => {
 
 		res.status(201).json(formattedCreator);
 	} catch (error) {
-		// 		logger.error("âťŚ Błąd dodawania twórcy:", error);
+
 		res.status(500).json({ error: "Nie udało się dodać twórcy" });
 	}
 });
@@ -4177,7 +4177,7 @@ app.get("/api/social/publications", authMiddleware, async (req: any, res) => {
 
 		res.json(formattedPublications);
 	} catch (error) {
-		// 		logger.error("âťŚ Błąd pobierania publikacji:", error);
+
 		res.status(500).json({ error: "Nie udało się pobrać publikacji" });
 	}
 });
@@ -4214,7 +4214,7 @@ app.get("/api/social/materials", authMiddleware, async (req: any, res) => {
 
 		res.json(formattedMaterials);
 	} catch (error) {
-		// 		logger.error("âťŚ Błąd pobierania materiałów:", error);
+
 		res.status(500).json({ error: "Nie udało się pobrać materiałów" });
 	}
 });
@@ -4250,7 +4250,7 @@ app.get("/api/social/tasks", authMiddleware, async (req: any, res) => {
 
 		res.json(formattedTasks);
 	} catch (error) {
-		// 		logger.error("âťŚ Błąd pobierania zadań:", error);
+
 		res.status(500).json({ error: "Nie udało się pobrać zadań" });
 	}
 });
@@ -4287,7 +4287,7 @@ app.get("/api/social/contacts", authMiddleware, async (req: any, res) => {
 
 		res.json(formattedContacts);
 	} catch (error) {
-		// 		logger.error("âťŚ Błąd pobierania kontaktów:", error);
+
 		res.status(500).json({ error: "Nie udało się pobrać kontaktów" });
 	}
 });
@@ -4355,7 +4355,7 @@ app.post("/api/social/members", authMiddleware, async (req: any, res) => {
 
 		res.status(201).json(formattedMember);
 	} catch (error) {
-		// 		logger.error("âťŚ Błąd dodawania członka:", error);
+
 		res.status(500).json({ error: "Nie udało się dodać członka" });
 	}
 });
@@ -4415,7 +4415,7 @@ app.post("/api/social/publications", authMiddleware, async (req: any, res) => {
 
 		res.status(201).json(formattedPublication);
 	} catch (error) {
-		// 		logger.error("âťŚ Błąd dodawania publikacji:", error);
+
 		res.status(500).json({ error: "Nie udało się dodać publikacji" });
 	}
 });
@@ -4474,7 +4474,7 @@ app.put(
 
 			res.json(formattedPublication);
 		} catch (error) {
-			// 			logger.error("âťŚ Błąd aktualizacji publikacji:", error);
+
 			res.status(500).json({ error: "Nie udało się zaktualizować publikacji" });
 		}
 	},
@@ -4491,7 +4491,7 @@ app.delete(
 			});
 			res.status(204).send();
 		} catch (error) {
-			// 			logger.error("âťŚ Błąd usuwania publikacji:", error);
+
 			res.status(500).json({ error: "Nie udało się usunąć publikacji" });
 		}
 	},
@@ -4504,10 +4504,10 @@ app.post("/api/onboarding/save", authMiddleware, async (req: any, res) => {
 			return res.status(401).json({ error: "Brak autoryzacji" });
 		}
 
-		// 		logger.debug(
-		// 	`đź“ť [ONBOARDING] Zapisywanie danych dla użytkownika ${userId}`,
-		// );
-		// 		logger.debug("đź“ť [ONBOARDING] Dane:", req.body);
+
+
+
+
 
 		const {
 			firstName,
@@ -4534,7 +4534,7 @@ app.post("/api/onboarding/save", authMiddleware, async (req: any, res) => {
 			orderBy: { created_at: "desc" },
 		});
 
-		// đź”Ą ZADEKLARUJ onboarding TUTAJ (przed if/else)
+
 		let onboarding: any = null;
 
 		const data = {
@@ -4563,9 +4563,9 @@ app.post("/api/onboarding/save", authMiddleware, async (req: any, res) => {
 					updated_at: new Date(),
 				},
 			});
-			// 			logger.debug(
-			// 	`âś… [ONBOARDING] Zaktualizowano onboarding dla użytkownika ${userId}`,
-			// );
+
+
+
 		} else {
 			onboarding = await prisma.onboarding_data.create({
 				data: {
@@ -4574,12 +4574,12 @@ app.post("/api/onboarding/save", authMiddleware, async (req: any, res) => {
 					created_at: new Date(),
 				},
 			});
-			// 			logger.debug(
-			// 	`âś… [ONBOARDING] Utworzono onboarding dla użytkownika ${userId}`,
-			// );
+
+
+
 		}
 
-		// Aktualizacja danych użytkownika
+
 		await prisma.user.update({
 			where: { id: userId },
 			data: {
@@ -4593,18 +4593,18 @@ app.post("/api/onboarding/save", authMiddleware, async (req: any, res) => {
 			},
 		});
 
-		// 		logger.debug(`âś… [ONBOARDING] Zaktualizowano dane użytkownika ${userId}`);
 
-		// ============================================================
-		// đź”Ą AKTUALIZACJA FILARÓW
-		// ============================================================
+
+
+
+
 		if (pillarIds && Array.isArray(pillarIds) && pillarIds.length > 0) {
-			// 			logger.debug(
-			// 	`đź“‹ [ONBOARDING] Dodawanie użytkownika ${userId} do filarów:`,
-			// 	pillarIds,
-			// );
 
-			// 1. Pobierz nazwy filarów
+
+
+
+
+
 			const teams = await prisma.team.findMany({
 				where: {
 					id: { in: pillarIds },
@@ -4616,9 +4616,9 @@ app.post("/api/onboarding/save", authMiddleware, async (req: any, res) => {
 				.map((t: any) => t.name.replace("Filar ", ""))
 				.join(", ");
 
-			// 			logger.debug(`đź“‹ [ONBOARDING] Nazwy filarów: ${pillarNames}`);
 
-			// 2. ZAKTUALIZUJ pole pillars w tabeli users
+
+
 			await prisma.user.update({
 				where: { id: userId },
 				data: {
@@ -4626,11 +4626,11 @@ app.post("/api/onboarding/save", authMiddleware, async (req: any, res) => {
 				},
 			});
 
-			// 			logger.debug(
-			// 	`âś… [ONBOARDING] Zaktualizowano pole pillars dla użytkownika ${userId}: ${pillarNames}`,
-			// );
 
-			// 3. Pobierz obecne członkostwa użytkownika w filarach
+
+
+
+
 			const currentMemberships = await prisma.teamMember.findMany({
 				where: {
 					user_id: userId,
@@ -4644,7 +4644,7 @@ app.post("/api/onboarding/save", authMiddleware, async (req: any, res) => {
 			const currentTeamIds = currentMemberships.map((m: any) => m.team_id);
 			const newTeamIds = pillarIds;
 
-			// 4. Usuń te, których nie ma w nowej liście
+
 			const toRemove = currentTeamIds.filter(
 				(id: number) => !newTeamIds.includes(id),
 			);
@@ -4656,12 +4656,12 @@ app.post("/api/onboarding/save", authMiddleware, async (req: any, res) => {
 						team_id: { in: toRemove },
 					},
 				});
-				// 				logger.debug(
-				// 	`đź—‘ď¸Ź [ONBOARDING] Usunięto z filarów: ${toRemove.join(", ")}`,
-				// );
+
+
+
 			}
 
-			// 5. Dodaj nowe członkostwa
+
 			const existingMemberships = await prisma.teamMember.findMany({
 				where: {
 					user_id: userId,
@@ -4686,23 +4686,23 @@ app.post("/api/onboarding/save", authMiddleware, async (req: any, res) => {
 						is_leader: false,
 					})),
 				});
-				// 				logger.debug(
-				// 	`âś… [ONBOARDING] Dodano ${toAdd.length} rekordów do team_members`,
-				// );
+
+
+
 			}
 		} else {
-			// Jeśli użytkownik odznaczył wszystkie filary - wyczyść pole pillars
+
 			await prisma.user.update({
 				where: { id: userId },
 				data: {
 					pillars: null,
 				},
 			});
-			// 			logger.debug(
-			// 	`âś… [ONBOARDING] Wyczyszczono pole pillars dla użytkownika ${userId}`,
-			// );
 
-			// Usuń wszystkie członkostwa w filarach
+
+
+
+
 			await prisma.teamMember.deleteMany({
 				where: {
 					user_id: userId,
@@ -4711,12 +4711,12 @@ app.post("/api/onboarding/save", authMiddleware, async (req: any, res) => {
 					},
 				},
 			});
-			// 			logger.debug(
-			// 	`đź—‘ď¸Ź [ONBOARDING] Usunięto wszystkie członkostwa w filarach dla użytkownika ${userId}`,
-			// );
+
+
+
 		}
 
-		// Powiadomienie
+
 		try {
 			const fullName = `${firstName || ""} ${lastName || ""}`.trim();
 
@@ -4743,15 +4743,15 @@ app.post("/api/onboarding/save", authMiddleware, async (req: any, res) => {
 						created_at: new Date(),
 					},
 				});
-				// 				logger.debug(
-				// 	`âś… [ONBOARDING] Utworzono powiadomienie dla użytkownika ${userId}`,
-				// );
+
+
+
 			}
 		} catch (notificationError) {
-			// 			logger.error(
-			// 	"âš ď¸Ź [ONBOARDING] Błąd tworzenia powiadomienia:",
-			// 	notificationError,
-			// );
+
+
+
+
 		}
 
 		res.status(200).json({
@@ -4760,11 +4760,11 @@ app.post("/api/onboarding/save", authMiddleware, async (req: any, res) => {
 			onboardingId: onboarding?.id || null,
 		});
 	} catch (error) {
-		// 		logger.error("âťŚ [ONBOARDING] Błąd zapisu:", error);
-		// 		logger.error(
-		// 	"âťŚ [ONBOARDING] Szczegóły:",
-		// 	error instanceof Error ? error.stack : "",
-		// );
+
+
+
+
+
 		res.status(500).json({
 			error: "Nie udało się zapisać danych onboardingu",
 			details: error instanceof Error ? error.message : "Unknown error",
@@ -4785,7 +4785,7 @@ app.get("/api/social/members/check", authMiddleware, async (req: any, res) => {
 
 		res.json({ isMember: !!member });
 	} catch (error) {
-		// 		logger.error("âťŚ Błąd sprawdzania członkostwa social media:", error);
+
 		res.status(500).json({ error: "Błąd serwera" });
 	}
 });
@@ -4836,7 +4836,7 @@ app.post("/api/social/materials", authMiddleware, async (req: any, res) => {
 
 		res.status(201).json(formattedMaterial);
 	} catch (error) {
-		// 		logger.error("âťŚ Błąd dodawania materiału:", error);
+
 		res.status(500).json({ error: "Nie udało się dodać materiału" });
 	}
 });
@@ -4889,7 +4889,7 @@ app.put("/api/social/materials/:id", authMiddleware, async (req: any, res) => {
 
 		res.json(formattedMaterial);
 	} catch (error) {
-		// 		logger.error("âťŚ Błąd aktualizacji materiału:", error);
+
 		res.status(500).json({ error: "Nie udało się zaktualizować materiału" });
 	}
 });
@@ -4905,7 +4905,7 @@ app.delete(
 			});
 			res.status(204).send();
 		} catch (error) {
-			// 			logger.error("âťŚ Błąd usuwania materiału:", error);
+
 			res.status(500).json({ error: "Nie udało się usunąć materiału" });
 		}
 	},
@@ -4954,7 +4954,7 @@ app.post("/api/social/tasks", authMiddleware, async (req: any, res) => {
 
 		res.status(201).json(formattedTask);
 	} catch (error) {
-		// 		logger.error("âťŚ Błąd dodawania zadania:", error);
+
 		res.status(500).json({ error: "Nie udało się dodać zadania" });
 	}
 });
@@ -4998,7 +4998,7 @@ app.put("/api/social/tasks/:id", authMiddleware, async (req: any, res) => {
 
 		res.json(formattedTask);
 	} catch (error) {
-		// 		logger.error("âťŚ Błąd aktualizacji zadania:", error);
+
 		res.status(500).json({ error: "Nie udało się zaktualizować zadania" });
 	}
 });
@@ -5011,7 +5011,7 @@ app.delete("/api/social/tasks/:id", authMiddleware, async (req: any, res) => {
 		});
 		res.status(204).send();
 	} catch (error) {
-		// 		logger.error("âťŚ Błąd usuwania zadania:", error);
+
 		res.status(500).json({ error: "Nie udało się usunąć zadania" });
 	}
 });
@@ -5061,7 +5061,7 @@ app.post("/api/social/contacts", authMiddleware, async (req: any, res) => {
 
 		res.status(201).json(formattedContact);
 	} catch (error) {
-		// 		logger.error("âťŚ Błąd dodawania kontaktu:", error);
+
 		res.status(500).json({ error: "Nie udało się dodać kontaktu" });
 	}
 });
@@ -5107,7 +5107,7 @@ app.put("/api/social/contacts/:id", authMiddleware, async (req: any, res) => {
 
 		res.json(formattedContact);
 	} catch (error) {
-		// 		logger.error("âťŚ Błąd aktualizacji kontaktu:", error);
+
 		res.status(500).json({ error: "Nie udało się zaktualizować kontaktu" });
 	}
 });
@@ -5123,7 +5123,7 @@ app.delete(
 			});
 			res.status(204).send();
 		} catch (error) {
-			// 			logger.error("âťŚ Błąd usuwania kontaktu:", error);
+
 			res.status(500).json({ error: "Nie udało się usunąć kontaktu" });
 		}
 	},
@@ -5215,7 +5215,7 @@ app.get(
 		try {
 			const userRole = req.user?.role;
 
-			// âś… DODAJ TO:
+
 			if (
 				userRole !== "admin" &&
 				userRole !== "board" &&
@@ -5262,7 +5262,7 @@ app.get(
 				fromDefault: false,
 			});
 		} catch (error) {
-			// 			logger.error("âťŚ Błąd pobierania uprawnień:", error);
+
 
 			const defaultPermissions = getDefaultPermissions(req.params.role);
 			res.json({
@@ -5314,7 +5314,7 @@ app.get("/api/admin/roles", authMiddleware, async (req: any, res) => {
 
 		res.json(formattedRoles);
 	} catch (error) {
-		// 		logger.error("âťŚ Błąd pobierania ról:", error);
+
 		res.status(500).json({ error: "Nie udało się pobrać ról" });
 	}
 });
@@ -5379,7 +5379,7 @@ app.put(
 				},
 			});
 		} catch (error) {
-			// 			logger.error("âťŚ Błąd aktualizacji uprawnień:", error);
+
 			res.status(500).json({ error: "Nie udało się zaktualizować uprawnień" });
 		}
 	},
@@ -5442,7 +5442,7 @@ app.post("/api/admin/roles", authMiddleware, async (req: any, res) => {
 			},
 		});
 	} catch (error) {
-		// 		logger.error("âťŚ Błąd tworzenia roli:", error);
+
 		res.status(500).json({ error: "Nie udało się utworzyć roli" });
 	}
 });
@@ -5477,7 +5477,7 @@ app.delete("/api/admin/roles/:id", authMiddleware, async (req: any, res) => {
 			message: "Rola usunięta",
 		});
 	} catch (error) {
-		// 		logger.error("âťŚ Błąd usuwania roli:", error);
+
 		res.status(500).json({ error: "Nie udało się usunąć roli" });
 	}
 });
@@ -5541,7 +5541,7 @@ app.get("/api/admin/teams", authMiddleware, async (req: any, res) => {
 
 		res.json(formattedTeams);
 	} catch (error) {
-		// 		logger.error("âťŚ Błąd pobierania zespołów:", error);
+
 		res.status(500).json({ error: "Nie udało się pobrać zespołów" });
 	}
 });
@@ -5558,14 +5558,14 @@ app.put("/api/admin/teams/:id", authMiddleware, async (req: any, res) => {
 		const { name, description, role, icon, email, parent_id, status } =
 			req.body;
 
-		// đź”Ą Pobierz aktualny team, żeby sprawdzić czy parent_id został przesłany
+
 		const currentTeam = await prisma.team.findUnique({
 			where: { id: teamId },
 			select: { parent_id: true },
 		});
 
-		// đź”Ą TYLKO jeśli parent_id jest w req.body (nawet jako null) - aktualizuj
-		// Jeśli nie ma klucza parent_id w req.body - zachowaj starą wartość
+
+
 		let parentIdValue = undefined;
 		if ("parent_id" in req.body) {
 			parentIdValue = parent_id ? parseInt(parent_id) : null;
@@ -5639,7 +5639,7 @@ app.post("/api/admin/teams", authMiddleware, async (req: any, res) => {
 			members: [],
 		});
 	} catch (error) {
-		// 		logger.error("âťŚ Błąd tworzenia zespołu:", error);
+
 		res.status(500).json({ error: "Nie udało się utworzyć zespołu" });
 	}
 });
@@ -5668,7 +5668,7 @@ app.delete("/api/admin/teams/:id", authMiddleware, async (req: any, res) => {
 
 		res.json({ success: true, message: "Zespół usunięty" });
 	} catch (error) {
-		// 		logger.error("âťŚ Błąd usuwania zespołu:", error);
+
 		res.status(500).json({ error: "Nie udało się usunąć zespołu" });
 	}
 });
@@ -5750,7 +5750,7 @@ app.post("/api/admin/team-members", authMiddleware, async (req: any, res) => {
 			is_leader: teamMember.is_leader || false,
 		});
 	} catch (error) {
-		// 		logger.error("âťŚ Błąd dodawania członka do zespołu:", error);
+
 		res.status(500).json({ error: "Nie udało się dodać członka do zespołu" });
 	}
 });
@@ -5787,7 +5787,7 @@ app.delete(
 
 			res.json({ success: true, message: "Usunięto członka z zespołu" });
 		} catch (error) {
-			// 			logger.error("âťŚ Błąd usuwania członka z zespołu:", error);
+
 			res.status(500).json({ error: "Nie udało się usunąć członka z zespołu" });
 		}
 	},
@@ -5809,18 +5809,18 @@ app.put(
 				return res.status(403).json({ error: "Brak uprawnień" });
 			}
 
-			// đź”Ą POPRAWA: Dodaj `role_in_team` do destruktyzacji
+
 			const { role, is_leader, role_in_team } = req.body;
 
-			// đź”Ą LOGUJ CO PRZYCHODZI
-			// console.log("đź“Ą [BACKEND] Aktualizacja członka:", {
-			// 	memberId,
-			// 	role,
-			// 	is_leader,
-			// 	role_in_team,
-			// });
 
-			// đź”Ą BUDUJ OBIEKT DO AKTUALIZACJI
+
+
+
+
+
+
+
+
 			const updateData: any = {};
 
 			if (role !== undefined) {
@@ -5829,12 +5829,12 @@ app.put(
 			if (is_leader !== undefined) {
 				updateData.is_leader = is_leader;
 			}
-			// đź”Ą DODAJ OBSŁUGÄ role_in_team
+
 			if (role_in_team !== undefined) {
-				updateData.role = role_in_team; // Zapisujemy do kolumny `role`
+				updateData.role = role_in_team; 
 			}
 
-			// console.log("đź“Ą [BACKEND] Aktualizuję pola:", updateData);
+
 
 			const teamMember = await prisma.teamMember.update({
 				where: { id: memberId },
@@ -5853,7 +5853,7 @@ app.put(
 				},
 			});
 
-			// console.log("âś… [BACKEND] Zaktualizowano:", teamMember);
+
 
 			res.json({
 				id: teamMember.id.toString(),
@@ -5931,9 +5931,9 @@ app.get("/api/tasks/:id", authMiddleware, async (req: any, res) => {
 		res.status(500).json({ error: "Nie udało się pobrać zadania" });
 	}
 });
-// ============================================================
-// 🔐 GET /api/auth/me - Pobierz dane zalogowanego użytkownika
-// ============================================================
+
+
+
 app.get("/api/auth/me", async (req, res) => {
 	try {
 		const authHeader = req.headers.authorization;
@@ -5981,7 +5981,7 @@ app.get("/api/auth/me", async (req, res) => {
 		res.status(500).json({ error: "Błąd serwera" });
 	}
 });
-// POST /api/tasks - utwórz nowe zadanie
+
 app.post("/api/tasks", authMiddleware, async (req: any, res) => {
 	try {
 		const userId = req.user?.id;
@@ -5991,7 +5991,7 @@ app.post("/api/tasks", authMiddleware, async (req: any, res) => {
 			status,
 			priority,
 			assignedTo,
-			assignedUsers, // đź”Ą DODAJ - ODBIERZ Z REQUESTU
+			assignedUsers, 
 			projectId,
 			dueDate,
 			tags,
@@ -6012,7 +6012,7 @@ app.post("/api/tasks", authMiddleware, async (req: any, res) => {
 				status: status || "todo",
 				priority: priority || "medium",
 				assigned_to: parseInt(assignedTo),
-				assigned_users: assignedUsers ? JSON.stringify(assignedUsers) : null, // đź”Ą DODAJ
+				assigned_users: assignedUsers ? JSON.stringify(assignedUsers) : null, 
 				created_by: parseInt(userId),
 				project_id: projectId ? parseInt(projectId) : null,
 				due_date: new Date(dueDate),
@@ -6055,7 +6055,7 @@ app.put("/api/tasks/:id", authMiddleware, async (req: any, res) => {
 			status,
 			priority,
 			assignedTo,
-			assignedUsers, // đź”Ą DODAJ
+			assignedUsers, 
 			projectId,
 			dueDate,
 			tags,
@@ -6063,8 +6063,8 @@ app.put("/api/tasks/:id", authMiddleware, async (req: any, res) => {
 			feedbackType,
 		} = req.body;
 
-		// console.log("đź“Ą [BACKEND] PUT /api/tasks/", id);
-		// console.log("đź“Ą [BACKEND] Nowy status:", status);
+
+
 
 		const taskId = parseInt(id);
 		if (isNaN(taskId)) {
@@ -6079,7 +6079,7 @@ app.put("/api/tasks/:id", authMiddleware, async (req: any, res) => {
 			return res.status(404).json({ error: "Nie znaleziono zadania" });
 		}
 
-		// console.log("đź“Ą [BACKEND] Obecny status:", existingTask.status);
+
 
 		const canEdit =
 			userRole === "admin" ||
@@ -6093,7 +6093,7 @@ app.put("/api/tasks/:id", authMiddleware, async (req: any, res) => {
 				.json({ error: "Brak uprawnień do edycji tego zadania" });
 		}
 
-		// đź”Ą PEŁNA LOGIKA AKTUALIZACJI
+
 		const task = await prisma.task.update({
 			where: { id: taskId },
 			data: {
@@ -6125,12 +6125,12 @@ app.put("/api/tasks/:id", authMiddleware, async (req: any, res) => {
 			},
 		});
 
-		// console.log(
-		// 	"âś… [BACKEND] Zaktualizowano zadanie:",
-		// 	task.id,
-		// 	"â†’",
-		// 	task.status,
-		// );
+
+
+
+
+
+
 
 		res.json({
 			id: task.id.toString(),
@@ -6153,11 +6153,11 @@ app.put("/api/tasks/:id", authMiddleware, async (req: any, res) => {
 		res.status(500).json({ error: "Nie udało się zaktualizować zadania" });
 	}
 });
-// POST /api/tasks/:id/feedback - dodaj odpowiedź zwrotną (z plikiem)
+
 app.post(
 	"/api/tasks/:id/feedback",
 	authMiddleware,
-	tasksUpload.single("file"), // đź”Ą OBSŁUGA PLIKU
+	tasksUpload.single("file"), 
 	async (req: any, res) => {
 		try {
 			const { id } = req.params;
@@ -6165,8 +6165,8 @@ app.post(
 			const { feedbackText } = req.body;
 			const file = req.file;
 
-			// console.log("đź“Ą [FEEDBACK] Zadanie ID:", id);
-			// console.log("đź“Ą [FEEDBACK] Typ:", file ? "plik" : "tekst");
+
+
 
 			const task = await prisma.task.findUnique({
 				where: { id: parseInt(id) },
@@ -6176,21 +6176,21 @@ app.post(
 				return res.status(404).json({ error: "Nie znaleziono zadania" });
 			}
 
-			// Sprawdź czy użytkownik jest przypisany do zadania
+
 			if (task.assigned_to !== parseInt(userId)) {
 				return res.status(403).json({
 					error: "Tylko osoba przypisana może dodać odpowiedź",
 				});
 			}
 
-			// Sprawdź czy zadanie wymaga odpowiedzi
+
 			if (!task.requires_feedback) {
 				return res.status(400).json({
 					error: "To zadanie nie wymaga odpowiedzi zwrotnej",
 				});
 			}
 
-			// Sprawdź czy odpowiedź już została dodana
+
 			if (task.feedback_submitted_at) {
 				return res.status(400).json({
 					error: "Odpowiedź zwrotna została już dodana",
@@ -6201,7 +6201,7 @@ app.post(
 				feedback_submitted_at: new Date(),
 			};
 
-			// Obsługa odpowiedzi tekstowej
+
 			if (task.feedback_type === "text") {
 				if (!feedbackText || !feedbackText.trim()) {
 					return res.status(400).json({
@@ -6210,7 +6210,7 @@ app.post(
 				}
 				updateData.feedback_text = feedbackText.trim();
 			}
-			// Obsługa odpowiedzi w formie pliku
+
 			else if (task.feedback_type === "file") {
 				if (!file) {
 					return res.status(400).json({
@@ -6231,7 +6231,7 @@ app.post(
 				data: updateData,
 			});
 
-			// console.log("âś… [FEEDBACK] Odpowiedź dodana dla zadania:", id);
+
 
 			res.json({
 				success: true,
@@ -6244,7 +6244,7 @@ app.post(
 		} catch (error) {
 			console.error("âťŚ [FEEDBACK] Błąd:", error);
 
-			// Jeśli był upload i jest błąd, usuń plik
+
 			if (req.file) {
 				const filePath = path.join(tasksUploadDir, req.file.filename);
 				if (fs.existsSync(filePath)) {
@@ -6259,16 +6259,16 @@ app.post(
 		}
 	},
 );
-// W backend/src/server.ts
-// W backend/src/server.ts - zastąp istniejący endpoint DELETE
+
+
 app.delete("/api/tasks/:id", authMiddleware, async (req: any, res: any) => {
 	try {
 		const taskId = parseInt(req.params.id);
 		const userId = req.user?.id;
 
-		// console.log(`đź—‘ď¸Ź DELETE /api/tasks/${taskId} - user: ${userId}`);
 
-		// Pobierz zadanie
+
+
 		const task = await prisma.task.findUnique({
 			where: { id: taskId },
 			include: {
@@ -6280,7 +6280,7 @@ app.delete("/api/tasks/:id", authMiddleware, async (req: any, res: any) => {
 			return res.status(404).json({ error: "Zadanie nie istnieje" });
 		}
 
-		// Pobierz użytkownika
+
 		const user = await prisma.user.findUnique({
 			where: { id: userId },
 		});
@@ -6289,19 +6289,19 @@ app.delete("/api/tasks/:id", authMiddleware, async (req: any, res: any) => {
 			return res.status(404).json({ error: "Użytkownik nie znaleziony" });
 		}
 
-		// Pobierz role użytkownika
+
 		const userRole = await prisma.roles.findUnique({
 			where: { id: user.role_id || 4 },
 		});
 
 		const roleName = userRole?.name || "member";
 
-		// ============================================================
-		// đź”Ą SPRAWDZANIE UPRAWNIEĹ
-		// ============================================================
+
+
+
 		let canDelete = false;
 
-		// 1. Admin, Zarząd, Prezes, Wiceprezes - zawsze mogą
+
 		if (
 			roleName === "admin" ||
 			roleName === "board" ||
@@ -6309,10 +6309,10 @@ app.delete("/api/tasks/:id", authMiddleware, async (req: any, res: any) => {
 			roleName === "Wiceprezes"
 		) {
 			canDelete = true;
-			// console.log("âś… Admin/Zarząd/Prezes - może usuwać");
+
 		}
 
-		// 2. Sprawdź czy użytkownik jest liderem (koordynatorem)
+
 		const isLeader = await prisma.teamMember.findFirst({
 			where: {
 				user_id: userId,
@@ -6321,38 +6321,38 @@ app.delete("/api/tasks/:id", authMiddleware, async (req: any, res: any) => {
 		});
 
 		if (isLeader) {
-			// 2a. Sprawdź czy zadanie ma filar i czy pasuje do filaru użytkownika
+
 			if (task.pillar && user.pillars && user.pillars.includes(task.pillar)) {
 				canDelete = true;
-				// console.log(
-				// 	`âś… Koordynator - może usuwać (filar pasuje: ${task.pillar})`,
-				// );
+
+
+
 			}
-			// 2b. Sprawdź czy zadanie jest w zespole użytkownika
+
 			else if (task.assigned_group && user.team === task.assigned_group) {
 				canDelete = true;
-				// console.log(
-				// 	`âś… Koordynator - może usuwać (zespół pasuje: ${task.assigned_group})`,
-				// );
+
+
+
 			}
-			// 2c. Koordynator może usuwać zadania przypisane do niego
+
 			else if (task.assigned_to === userId) {
 				canDelete = true;
-				// console.log(
-				// 	"âś… Koordynator - może usuwać (zadanie przypisane do niego)",
-				// );
+
+
+
 			}
 		}
 
-		// 3. Twórca zadania może usuwać
+
 		if (task.created_by === userId) {
 			canDelete = true;
-			// console.log("âś… Twórca zadania - może usuwać");
+
 		}
 
-		// console.log(`đź“Š canDelete: ${canDelete}`);
-		// console.log(`đź“Ś task.pillar: ${task.pillar}`);
-		// console.log(`đź“Ś user.pillars: ${user.pillars}`);
+
+
+
 
 		if (!canDelete) {
 			return res.status(403).json({
@@ -6368,12 +6368,12 @@ app.delete("/api/tasks/:id", authMiddleware, async (req: any, res: any) => {
 			});
 		}
 
-		// Usuń zadanie
+
 		await prisma.task.delete({
 			where: { id: taskId },
 		});
 
-		// console.log(`âś… Usunięto zadanie ${taskId} - "${task.title}"`);
+
 		res.json({ success: true });
 	} catch (error) {
 		console.error("âťŚ Błąd usuwania:", error);
@@ -6425,7 +6425,7 @@ app.get("/api/admin/available-users", authMiddleware, async (req: any, res) => {
 
 		res.json(formattedUsers);
 	} catch (error) {
-		// 		logger.error("âťŚ Błąd pobierania użytkowników:", error);
+
 		res.status(500).json({ error: "Nie udało się pobrać użytkowników" });
 	}
 });
@@ -6487,68 +6487,68 @@ app.get("/api/admin/logs", authMiddleware, async (req: any, res) => {
 			limit,
 		});
 	} catch (error) {
-		// 		logger.error("âťŚ Błąd pobierania logów:", error);
+
 		res.status(500).json({ error: "Nie udało się pobrać logów" });
 	}
 });
 cron.schedule("0 1,17 * * *", async () => {
-	// 	logger.debug("đź”„ [CRON] Uruchamiam synchronizację składek...");
+
 	try {
 		await syncContributions();
-		// 		logger.debug("âś… [CRON] Synchronizacja składek zakończona");
+
 	} catch (error) {
-		// 		logger.error("âťŚ [CRON] Błąd synchronizacji składek:", error);
+
 	}
 });
 
-// Opcjonalnie: uruchom przy starcie
+
 setTimeout(async () => {
-	// 	logger.debug(
-	// 	"đź”„ [STARTUP] Uruchamiam synchronizację składek przy starcie...",
-	// );
+
+
+
 	try {
 		await syncContributions();
-		// 		logger.debug("âś… [STARTUP] Synchronizacja składek zakończona");
+
 	} catch (error) {
-		// 		logger.error("âťŚ [STARTUP] Błąd synchronizacji składek:", error);
+
 	}
 }, 15000);
 setTimeout(async () => {
-	// 	logger.debug(
-	// 	"đź”„ [STARTUP] Uruchamiam synchronizację frekwencji przy starcie...",
-	// );
+
+
+
 	try {
 		await syncAttendance();
-		// 		logger.debug("âś… [STARTUP] Synchronizacja frekwencji zakończona");
+
 	} catch (error) {
-		// 		logger.error("âťŚ [STARTUP] Błąd synchronizacji frekwencji:", error);
+
 	}
 }, 10000);
 setTimeout(async () => {
-	// 	logger.debug(
-	// 	"đź”„ [STARTUP] Uruchamiam synchronizację członków przy starcie serwera...",
-	// );
+
+
+
 	try {
 		await syncMembers();
-		// 		logger.debug("âś… [STARTUP] Synchronizacja członków zakończona");
+
 	} catch (error) {
-		// 		logger.error("âťŚ [STARTUP] Błąd synchronizacji:", error);
+
 	}
 }, 5000);
-// server.ts - dodaj przed app.use('/api', revenueRoutes);
-// ============================================================
-// 📋 GET /api/admin/onboarding-contacts - Pobierz kontakty z onboardingu
-// ============================================================
+
+
+
+
 app.get("/api/admin/onboarding-contacts", authMiddleware, async (req: any, res: any) => {
 	try {
 		const userRole = req.user?.role;
 
-		// Sprawdź uprawnienia - tylko admin/board/Zarząd
+
 		if (userRole !== "admin" && userRole !== "board" && userRole !== "Zarząd") {
 			return res.status(403).json({ error: "Brak uprawnień" });
 		}
 
-		// Pobierz wszystkich użytkowników z danymi onboardingu
+
 		const users = await prisma.user.findMany({
 			where: {
 				is_active: true,
@@ -6571,7 +6571,7 @@ app.get("/api/admin/onboarding-contacts", authMiddleware, async (req: any, res: 
 			.map((user: any) => {
 				const onboarding = user.onboarding_data?.[0] || {};
 
-				// Sprawdź czy są jakieś kontakty
+
 				const hasContacts =
 					(onboarding.sala_contacts && onboarding.sala_contacts !== "[]" && onboarding.sala_contacts !== '[""]') ||
 					(onboarding.mp_contacts && onboarding.mp_contacts !== "[]" && onboarding.mp_contacts !== '[""]') ||
@@ -6619,7 +6619,7 @@ app.get("/api/admin/onboarding-contacts", authMiddleware, async (req: any, res: 
 		});
 	}
 });
-// Na backendzie:
+
 app.post(
 	"/api/notifications/task-created",
 	authMiddleware,
@@ -6627,7 +6627,7 @@ app.post(
 		try {
 			const { userId, taskId, taskTitle, createdBy } = req.body;
 
-			// đź”Ą OBSŁUGA TABLICY
+
 			const userIds = Array.isArray(userId) ? userId : [userId];
 
 			for (const uid of userIds) {
@@ -6653,7 +6653,7 @@ app.post(
 	},
 );
 
-// server.ts - dodaj przed app.use('/api', revenueRoutes);
+
 
 app.post("/api/tasks/recurring", authMiddleware, async (req: any, res) => {
 	try {
@@ -6676,7 +6676,7 @@ app.post("/api/tasks/recurring", authMiddleware, async (req: any, res) => {
 			assignedGroup,
 		} = req.body;
 
-		// Stwórz zadanie główne
+
 		const parentTask = await prisma.task.create({
 			data: {
 				title,
@@ -6698,7 +6698,7 @@ app.post("/api/tasks/recurring", authMiddleware, async (req: any, res) => {
 			},
 		});
 
-		// Generuj zadania potomne
+
 		const childTasks = [];
 		const startDate = new Date(dueDate);
 		const endDate = new Date(recurrenceEndDate);
@@ -6706,9 +6706,9 @@ app.post("/api/tasks/recurring", authMiddleware, async (req: any, res) => {
 		let count = 0;
 
 		while (currentDate <= endDate && count < 100) {
-			// max 100 zadań
+
 			count++;
-			// Przesuń datę o odpowiedni interwał
+
 			if (recurrencePattern === "daily") {
 				currentDate.setDate(currentDate.getDate() + 1);
 			} else if (recurrencePattern === "weekly") {
@@ -6754,9 +6754,9 @@ app.post("/api/tasks/recurring", authMiddleware, async (req: any, res) => {
 	}
 });
 
-// server.ts - dodaj przed app.use('/api', revenueRoutes);
 
-// GET /api/tasks/:taskId/comments
+
+
 app.get(
 	"/api/tasks/:taskId/comments",
 	authMiddleware,
@@ -6798,7 +6798,7 @@ app.get(
 	},
 );
 
-// POST /api/tasks/:taskId/comments
+
 app.post(
 	"/api/tasks/:taskId/comments",
 	authMiddleware,
@@ -6847,7 +6847,7 @@ app.post(
 	},
 );
 
-// DELETE /api/comments/:id
+
 app.delete("/api/comments/:id", authMiddleware, async (req: any, res) => {
 	try {
 		const { id } = req.params;
@@ -6883,10 +6883,10 @@ app.delete("/api/comments/:id", authMiddleware, async (req: any, res) => {
 		res.status(500).json({ error: "Nie udało się usunąć komentarza" });
 	}
 });
-// ============================================================
-// đź“‹ GET /api/tasks/completed/:userId - Pobierz ukończone zadania użytkownika
-// ============================================================
-// GET /api/tasks/completed/:userId - Pobierz ukończone zadania z szczegółami
+
+
+
+
 app.get(
 	"/api/tasks/completed/:userId",
 	authMiddleware,
@@ -6947,12 +6947,12 @@ app.get(
 				const dueDate = task.due_date ? new Date(task.due_date) : null;
 				const completedAt = new Date(task.updated_at);
 
-				// Oblicz czas realizacji w dniach
+
 				const daysToComplete = Math.ceil(
 					(completedAt.getTime() - createdAt.getTime()) / (1000 * 60 * 60 * 24),
 				);
 
-				// Sprawdź czy przed/po terminie
+
 				let timelineStatus = "on_time";
 				let daysDiff = 0;
 
@@ -6983,14 +6983,14 @@ app.get(
 					assignedToName: task.assignedTo
 						? `${task.assignedTo.first_name || ""} ${task.assignedTo.last_name || ""}`.trim()
 						: "Nieznany",
-					// Szczegóły czasowe
+
 					createdAt: task.created_at.toISOString(),
 					dueDate: task.due_date?.toISOString() || null,
 					completedAt: task.updated_at.toISOString(),
 					daysToComplete: daysToComplete,
 					timelineStatus: timelineStatus,
 					daysDiff: daysDiff,
-					// Czy było przed/po terminie
+
 					isLate: timelineStatus === "late",
 					isEarly: timelineStatus === "early",
 					isOnTime: timelineStatus === "on_time",
@@ -7007,12 +7007,12 @@ app.get(
 		}
 	},
 );
-// ============================================================
-// 🗑️ USUŃ CZŁONKA ZESPOŁU SOCIAL MEDIA
-// ============================================================
-// ============================================================
-// 🔥 PUT /api/social/members/:id - Aktualizuj członka zespołu
-// ============================================================
+
+
+
+
+
+
 app.put(
 	"/api/social/members/:id",
 	authMiddleware,
@@ -7022,9 +7022,9 @@ app.put(
 			const { role } = req.body;
 			const userRole = req.user?.role;
 
-			// console.log(`🔄 [MEMBERS] Aktualizacja członka ${memberId}`);
 
-			// Sprawdź uprawnienia
+
+
 			if (
 				userRole !== "admin" &&
 				userRole !== "board" &&
@@ -7037,7 +7037,7 @@ app.put(
 				return res.status(400).json({ error: "Rola jest wymagana" });
 			}
 
-			// Sprawdź czy członek istnieje
+
 			const existingMember = await prisma.socialMediaMember.findUnique({
 				where: { id: memberId },
 				include: {
@@ -7059,7 +7059,7 @@ app.put(
 				return res.status(404).json({ error: "Nie znaleziono członka" });
 			}
 
-			// Aktualizuj
+
 			const updatedMember = await prisma.socialMediaMember.update({
 				where: { id: memberId },
 				data: {
@@ -7081,7 +7081,7 @@ app.put(
 				},
 			});
 
-			// Formatuj odpowiedź
+
 			const formattedMember = {
 				id: updatedMember.id.toString(),
 				user_id: updatedMember.user_id.toString(),
@@ -7112,9 +7112,9 @@ app.put(
 		}
 	},
 );
-// ============================================================
-// 🔥 DELETE /api/social/members/:id - Usuń członka zespołu
-// ============================================================
+
+
+
 app.delete(
 	"/api/social/members/:id",
 	authMiddleware,
@@ -7123,7 +7123,7 @@ app.delete(
 			const memberId = parseInt(req.params.id);
 			const userRole = req.user?.role;
 
-			// console.log(`🗑️ [MEMBERS] Usuwanie członka ${memberId}`);
+
 
 			if (
 				userRole !== "admin" &&
@@ -7165,12 +7165,12 @@ app.delete(
 	},
 );
 
-// ============================================================
-// 🗑️ USUŃ TWÓRCĘ ROLEK
-// ============================================================
-// ============================================================
-// 🔥 PUT /api/social/creators/:id - Aktualizuj twórcę
-// ============================================================
+
+
+
+
+
+
 app.put(
 	"/api/social/creators/:id",
 	authMiddleware,
@@ -7180,9 +7180,9 @@ app.put(
 			const { availability, experience } = req.body;
 			const userRole = req.user?.role;
 
-			// console.log(`🔄 [CREATORS] Aktualizacja twórcy ${creatorId}`);
 
-			// Sprawdź uprawnienia
+
+
 			if (
 				userRole !== "admin" &&
 				userRole !== "board" &&
@@ -7191,12 +7191,12 @@ app.put(
 				return res.status(403).json({ error: "Brak uprawnień" });
 			}
 
-			// Walidacja
+
 			if (!availability) {
 				return res.status(400).json({ error: "Dostępność jest wymagana" });
 			}
 
-			// Sprawdź czy twórca istnieje
+
 			const existingCreator = await prisma.socialMediaCreator.findUnique({
 				where: { id: creatorId },
 				include: {
@@ -7218,7 +7218,7 @@ app.put(
 				return res.status(404).json({ error: "Nie znaleziono twórcy" });
 			}
 
-			// Aktualizuj
+
 			const updatedCreator = await prisma.socialMediaCreator.update({
 				where: { id: creatorId },
 				data: {
@@ -7241,7 +7241,7 @@ app.put(
 				},
 			});
 
-			// Formatuj odpowiedź
+
 			const formattedCreator = {
 				id: updatedCreator.id.toString(),
 				user_id: updatedCreator.user_id.toString(),
@@ -7257,12 +7257,12 @@ app.put(
 				active: updatedCreator.is_active,
 			};
 
-			// ✅ WYŚLIJ ODPOWIEDŹ TYLKO RAZ
+
 			return res.json(formattedCreator);
 		} catch (error) {
 			console.error("❌ [CREATORS] Błąd aktualizacji:", error);
 
-			// ✅ SPRAWDŹ CZY ODPOWIEDŹ JUŻ ZOSTAŁA WYSŁANA
+
 			if (res.headersSent) {
 				console.warn("⚠️ Odpowiedź już wysłana, pomijam");
 				return;
@@ -7275,9 +7275,9 @@ app.put(
 		}
 	},
 );
-// ============================================================
-// 🔥 DELETE /api/social/creators/:id - Usuń twórcę
-// ============================================================
+
+
+
 app.delete(
 	"/api/social/creators/:id",
 	authMiddleware,
@@ -7286,9 +7286,9 @@ app.delete(
 			const creatorId = parseInt(req.params.id);
 			const userRole = req.user?.role;
 
-			// console.log(`🗑️ [CREATORS] Usuwanie twórcy ${creatorId}`);
 
-			// Sprawdź uprawnienia
+
+
 			if (
 				userRole !== "admin" &&
 				userRole !== "board" &&
@@ -7297,7 +7297,7 @@ app.delete(
 				return res.status(403).json({ error: "Brak uprawnień" });
 			}
 
-			// Sprawdź czy twórca istnieje
+
 			const existingCreator = await prisma.socialMediaCreator.findUnique({
 				where: { id: creatorId },
 			});
@@ -7306,12 +7306,12 @@ app.delete(
 				return res.status(404).json({ error: "Nie znaleziono twórcy" });
 			}
 
-			// Usuń
+
 			await prisma.socialMediaCreator.delete({
 				where: { id: creatorId },
 			});
 
-			// ✅ WYŚLIJ ODPOWIEDŹ TYLKO RAZ
+
 			return res.json({
 				success: true,
 				message: "Twórca usunięty",
@@ -7319,7 +7319,7 @@ app.delete(
 		} catch (error) {
 			console.error("❌ [CREATORS] Błąd usuwania:", error);
 
-			// ✅ SPRAWDŹ CZY ODPOWIEDŹ JUŻ ZOSTAŁA WYSŁANA
+
 			if (res.headersSent) {
 				console.warn("⚠️ Odpowiedź już wysłana, pomijam");
 				return;
@@ -7332,22 +7332,22 @@ app.delete(
 		}
 	},
 );
-// GET /api/admin/member-access - Pobierz wszystkich członków z dostępami
-// GET /api/admin/member-access - Pobierz wszystkich członków z dostępami i przedmiotami
-// GET /api/admin/member-access - Pobierz wszystkich członków z dostępami i przedmiotami
+
+
+
 app.get("/api/admin/member-access", authMiddleware, async (req: any, res) => {
 	try {
 		const userRole = req.user?.role;
-		// console.log("🔍 [member-access] Sprawdzanie uprawnień:", userRole);
+
 
 		if (userRole !== "admin" && userRole !== "board" && userRole !== "Zarząd") {
-			// console.log("❌ [member-access] Brak uprawnień:", userRole);
+
 			return res.status(403).json({ error: "Brak uprawnień" });
 		}
 
-		// console.log("🔍 [member-access] Pobieranie członków...");
 
-		// ✅ POPRAWIONE - usunięto pole 'items'
+
+
 		const members = await prisma.user.findMany({
 			where: {
 				is_active: true
@@ -7366,28 +7366,28 @@ app.get("/api/admin/member-access", authMiddleware, async (req: any, res) => {
 						access_name: true
 					}
 				},
-				// items - USUNIĘTE (pole nie istnieje w modelu User)
+
 			},
 			orderBy: {
 				first_name: "asc"
 			}
 		});
 
-		// console.log(`🔍 [member-access] Znaleziono ${members.length} członków`);
+
 
 		if (members.length > 0) {
-			// console.log("🔍 [member-access] Przykładowy członek:", {
-			// 	id: members[0].id,
-			// 	first_name: members[0].first_name,
-			// 	last_name: members[0].last_name,
-			// });
+
+
+
+
+
 		}
 
-		// ✅ POPRAWIONE - usunięto obliczanie totalItems
-		// const totalItems = members.reduce((sum, m) => sum + m.items.length, 0);
-		// console.log(`🔍 [member-access] Łącznie przedmiotów: ${totalItems}`);
 
-		// Formatuj odpowiedź - ✅ usunięto 'items'
+
+
+
+
 		const formattedMembers = members.map((member) => ({
 			id: member.id,
 			first_name: member.first_name,
@@ -7397,24 +7397,24 @@ app.get("/api/admin/member-access", authMiddleware, async (req: any, res) => {
 			functional_role: member.functional_role,
 			team: member.team,
 			access: member.access,
-			// items - USUNIĘTE
+
 		}));
 
-		// console.log("✅ [member-access] Odpowiedź wysłana");
+
 		res.json(formattedMembers);
 	} catch (error) {
 		console.error("❌ [member-access] Błąd:", error);
 		res.status(500).json({ error: "Nie udało się pobrać dostępów" });
 	}
 });
-// GET /api/members/:id/access - Pobierz dostępy członka
+
 app.get("/api/members/:id/access", authMiddleware, async (req: any, res) => {
 	try {
 		const userId = parseInt(req.params.id);
 		const currentUserId = req.user?.id;
 		const userRole = req.user?.role;
 
-		// Sprawdź uprawnienia - admin/board/Zarząd mogą wszystko, członek tylko swój
+
 		if (
 			userRole !== "admin" &&
 			userRole !== "board" &&
@@ -7441,12 +7441,12 @@ app.get("/api/members/:id/access", authMiddleware, async (req: any, res) => {
 		res.status(500).json({ error: "Nie udało się pobrać dostępów" });
 	}
 });
-// ============================================================
-// 🔥 PUT /api/members/:id/status - Zmień status członka
-// ============================================================
-// ============================================================
-// 🔥 PUT /api/members/:id/status - Zmień status członka
-// ============================================================
+
+
+
+
+
+
 app.put('/api/members/:id/status', authMiddleware, async (req: any, res) => {
 	try {
 		const userId = parseInt(req.params.id);
@@ -7470,9 +7470,9 @@ app.put('/api/members/:id/status', authMiddleware, async (req: any, res) => {
 			data: { status: status }
 		});
 
-		// ============================================================
-		// SYNCHRONIZACJA Z TEAM_MEMBERS - POPRAWIONA
-		// ============================================================
+
+
+
 		let mentorTeam = await prisma.team.findFirst({
 			where: { name: 'Mentorzy' }
 		});
@@ -7488,9 +7488,9 @@ app.put('/api/members/:id/status', authMiddleware, async (req: any, res) => {
 			});
 		}
 
-		// Jeśli nowy status to 'mentor' - dodaj do team_members
+
 		if (status === 'mentor' && oldUser.status !== 'mentor') {
-			// Sprawdź czy już istnieje
+
 			const existingMember = await prisma.teamMember.findFirst({
 				where: {
 					user_id: userId,
@@ -7516,10 +7516,10 @@ app.put('/api/members/:id/status', authMiddleware, async (req: any, res) => {
 					}
 				});
 			}
-			// console.log(`✅ [MENTOR] Użytkownik ${userId} dodany do zespołu Mentorzy`);
+
 		}
 
-		// Jeśli stary status był 'mentor' a nowy nie jest - usuń z team_members
+
 		if (oldUser.status === 'mentor' && status !== 'mentor') {
 			await prisma.teamMember.deleteMany({
 				where: {
@@ -7527,7 +7527,7 @@ app.put('/api/members/:id/status', authMiddleware, async (req: any, res) => {
 					team_id: mentorTeam.id
 				}
 			});
-			// console.log(`❌ [MENTOR] Użytkownik ${userId} usunięty z zespołu Mentorzy`);
+
 		}
 
 		res.json({
@@ -7541,11 +7541,11 @@ app.put('/api/members/:id/status', authMiddleware, async (req: any, res) => {
 		res.status(500).json({ error: 'Błąd zmiany statusu' });
 	}
 });
-// PUT /api/members/:id/access - Zapisz dostępy członka
+
 app.put("/api/members/:id/access", authMiddleware, async (req: any, res) => {
 	try {
 		const userId = parseInt(req.params.id);
-		const { access } = req.body; // Array stringów
+		const { access } = req.body; 
 		const userRole = req.user?.role;
 
 		if (userRole !== "admin" && userRole !== "board" && userRole !== "Zarząd") {
@@ -7556,7 +7556,7 @@ app.put("/api/members/:id/access", authMiddleware, async (req: any, res) => {
 			return res.status(400).json({ error: "Dane są nieprawidłowe" });
 		}
 
-		// Walidacja - max 50 znaków na nazwę dostępu
+
 		const validAccess = access.filter(
 			(name) =>
 				typeof name === "string" &&
@@ -7564,12 +7564,12 @@ app.put("/api/members/:id/access", authMiddleware, async (req: any, res) => {
 				name.trim().length <= 50,
 		);
 
-		// Usuń stare dostępy
+
 		await prisma.memberAccess.deleteMany({
 			where: { user_id: userId },
 		});
 
-		// Dodaj nowe
+
 		if (validAccess.length > 0) {
 			await prisma.memberAccess.createMany({
 				data: validAccess.map((name) => ({
@@ -7579,7 +7579,7 @@ app.put("/api/members/:id/access", authMiddleware, async (req: any, res) => {
 			});
 		}
 
-		// Log akcji
+
 		const user = await prisma.user.findUnique({
 			where: { id: userId },
 			select: { first_name: true, last_name: true, email: true },
@@ -7606,7 +7606,7 @@ app.put("/api/members/:id/access", authMiddleware, async (req: any, res) => {
 		res.status(500).json({ error: "Nie udało się zapisać dostępów" });
 	}
 });
-// GET /api/members/:id/items - Pobierz przedmioty członka
+
 app.get("/api/members/:id/items", authMiddleware, async (req: any, res) => {
 	try {
 		const userId = parseInt(req.params.id);
@@ -7640,7 +7640,7 @@ app.get("/api/members/:id/items", authMiddleware, async (req: any, res) => {
 		res.status(500).json({ error: "Nie udało się pobrać przedmiotów" });
 	}
 });
-// POST /api/members/:id/items - Dodaj przedmiot
+
 app.post("/api/members/:id/items", authMiddleware, async (req: any, res) => {
 	try {
 		const userId = parseInt(req.params.id);
@@ -7687,7 +7687,7 @@ app.post("/api/members/:id/items", authMiddleware, async (req: any, res) => {
 		res.status(500).json({ error: "Nie udało się dodać przedmiotu" });
 	}
 });
-// PUT /api/items/:id - Edytuj przedmiot
+
 app.put("/api/items/:id", authMiddleware, async (req: any, res) => {
 	try {
 		const itemId = parseInt(req.params.id);
@@ -7742,7 +7742,7 @@ app.put("/api/items/:id", authMiddleware, async (req: any, res) => {
 		res.status(500).json({ error: "Nie udało się edytować przedmiotu" });
 	}
 });
-// DELETE /api/items/:id - Usuń przedmiot
+
 app.delete("/api/items/:id", authMiddleware, async (req: any, res) => {
 	try {
 		const itemId = parseInt(req.params.id);
@@ -7781,7 +7781,7 @@ app.delete("/api/items/:id", authMiddleware, async (req: any, res) => {
 		res.status(500).json({ error: "Nie udało się usunąć przedmiotu" });
 	}
 });
-// GET /api/admin/member-items - Pobierz wszystkich członków z przedmiotami
+
 app.get("/api/admin/member-items", authMiddleware, async (req: any, res) => {
 	try {
 		const userRole = req.user?.role;
@@ -7816,7 +7816,7 @@ app.get("/api/admin/member-items", authMiddleware, async (req: any, res) => {
 		res.status(500).json({ error: "Nie udało się pobrać przedmiotów" });
 	}
 });
-// POST /api/members/:id/access - Dodaj pojedynczy dostęp
+
 app.post("/api/members/:id/access", authMiddleware, async (req: any, res) => {
 	try {
 		const userId = parseInt(req.params.id);
@@ -7841,7 +7841,7 @@ app.post("/api/members/:id/access", authMiddleware, async (req: any, res) => {
 				.json({ error: "Nazwa dostępu nie może przekraczać 50 znaków" });
 		}
 
-		// Sprawdź czy już istnieje
+
 		const existing = await prisma.memberAccess.findUnique({
 			where: {
 				user_id_access_name: {
@@ -7871,7 +7871,7 @@ app.post("/api/members/:id/access", authMiddleware, async (req: any, res) => {
 		res.status(500).json({ error: "Nie udało się dodać dostępu" });
 	}
 });
-// DELETE /api/members/:id/access/:accessId - Usuń pojedynczy dostęp
+
 app.delete(
 	"/api/members/:id/access/:accessId",
 	authMiddleware,
@@ -7908,9 +7908,9 @@ app.delete(
 		}
 	},
 );
-// ============================================================
-// đź“Š GET /api/tasks/stats/:userId - Statystyki zadań użytkownika
-// ============================================================
+
+
+
 app.get("/api/tasks/stats/:userId", authMiddleware, async (req: any, res) => {
 	try {
 		const userId = req.params.userId;
@@ -7973,9 +7973,9 @@ app.get("/api/tasks/stats/:userId", authMiddleware, async (req: any, res) => {
 		res.status(500).json({ error: "Nie udało się pobrać statystyk" });
 	}
 });
-// ============================================================
-// 🔍 SEARCH - ZAAWANSOWANE WYSZUKIWANIE
-// ============================================================
+
+
+
 app.get("/api/search", authMiddleware, async (req: any, res) => {
 	try {
 		const query = req.query.q as string;
@@ -7988,9 +7988,9 @@ app.get("/api/search", authMiddleware, async (req: any, res) => {
 		const searchLower = query.toLowerCase();
 		const results: any[] = [];
 
-		// ============================================================
-		// 1. SZUKAJ W CZŁONKACH (users)
-		// ============================================================
+
+
+
 		const members = await prisma.user.findMany({
 			where: {
 				is_active: true,
@@ -8030,9 +8030,9 @@ app.get("/api/search", authMiddleware, async (req: any, res) => {
 			});
 		});
 
-		// ============================================================
-		// 2. SZUKAJ W PROJEKTACH
-		// ============================================================
+
+
+
 		const projects = await prisma.project.findMany({
 			where: {
 				is_active: 1,
@@ -8065,9 +8065,9 @@ app.get("/api/search", authMiddleware, async (req: any, res) => {
 			});
 		});
 
-		// ============================================================
-		// 3. SZUKAJ W PORADNIKACH (guides)
-		// ============================================================
+
+
+
 		const guides = await prisma.guide.findMany({
 			where: {
 				is_published: 1,
@@ -8101,9 +8101,9 @@ app.get("/api/search", authMiddleware, async (req: any, res) => {
 			});
 		});
 
-		// ============================================================
-		// 4. SZUKAJ W ZADANIACH (tasks)
-		// ============================================================
+
+
+
 		const userId = req.user?.id;
 		const userRole = req.user?.role;
 
@@ -8114,7 +8114,7 @@ app.get("/api/search", authMiddleware, async (req: any, res) => {
 			],
 		};
 
-		// Ogranicz widoczność zadań dla zwykłych członków
+
 		if (userRole !== "admin" && userRole !== "board") {
 			taskWhere = {
 				...taskWhere,
@@ -8164,9 +8164,9 @@ app.get("/api/search", authMiddleware, async (req: any, res) => {
 			});
 		});
 
-		// ============================================================
-		// 5. SZUKAJ W WAKATACH (vacancies)
-		// ============================================================
+
+
+
 		const vacancies = await prisma.vacancy.findMany({
 			where: {
 				is_active: true,
@@ -8201,9 +8201,9 @@ app.get("/api/search", authMiddleware, async (req: any, res) => {
 			});
 		});
 
-		// ============================================================
-		// 6. SZUKAJ W STRUKTURZE (teams)
-		// ============================================================
+
+
+
 		const teams = await prisma.team.findMany({
 			where: {
 				status: "active",
@@ -8236,9 +8236,9 @@ app.get("/api/search", authMiddleware, async (req: any, res) => {
 			});
 		});
 
-		// ============================================================
-		// 7. SZUKAJ W SOCIAL MEDIA (publications)
-		// ============================================================
+
+
+
 		const publications = await prisma.publication.findMany({
 			where: {
 				OR: [
@@ -8271,9 +8271,9 @@ app.get("/api/search", authMiddleware, async (req: any, res) => {
 			});
 		});
 
-		// ============================================================
-		// POSORTOWANIE WYNIKÓW - najlepsze dopasowanie na górze
-		// ============================================================
+
+
+
 		const sortedResults = results
 			.map((result: any) => {
 				let score = 0;
@@ -8281,24 +8281,24 @@ app.get("/api/search", authMiddleware, async (req: any, res) => {
 				const subtitleLower = result.subtitle?.toLowerCase() || "";
 				const descLower = result.description?.toLowerCase() || "";
 
-				// Dokładne dopasowanie w tytule - najwyższa waga
+
 				if (titleLower === searchLower) score += 100;
 				else if (titleLower.includes(searchLower)) score += 50;
 
-				// Dopasowanie w podtytule
+
 				if (subtitleLower.includes(searchLower)) score += 30;
 
-				// Dopasowanie w opisie
+
 				if (descLower.includes(searchLower)) score += 15;
 
-				// Wyższy priorytet dla członków i projektów
+
 				if (result.type === "member") score += 10;
 				if (result.type === "project") score += 5;
 
 				return { ...result, score };
 			})
 			.sort((a: any, b: any) => b.score - a.score)
-			.slice(0, limit * 2); // Zwróć max 2x limit
+			.slice(0, limit * 2); 
 
 		res.json({
 			query,
@@ -8313,15 +8313,15 @@ app.get("/api/search", authMiddleware, async (req: any, res) => {
 		});
 	}
 });
-// ============================================================
-// 📊 GET /api/search/data - Pobierz wszystkie dane do wyszukiwania (dla frontendu)
-// ============================================================
+
+
+
 app.get("/api/search/data", authMiddleware, async (req: any, res) => {
 	try {
 		const userId = req.user?.id;
 		const userRole = req.user?.role;
 
-		// Pobierz wszystkich członków (podstawowe dane)
+
 		const members = await prisma.user.findMany({
 			where: { is_active: true },
 			select: {
@@ -8336,7 +8336,7 @@ app.get("/api/search/data", authMiddleware, async (req: any, res) => {
 			take: 500,
 		});
 
-		// Pobierz projekty
+
 		const projects = await prisma.project.findMany({
 			where: { is_active: 1 },
 			select: {
@@ -8348,7 +8348,7 @@ app.get("/api/search/data", authMiddleware, async (req: any, res) => {
 			take: 200,
 		});
 
-		// Pobierz poradniki
+
 		const guides = await prisma.guide.findMany({
 			where: { is_published: 1 },
 			select: {
@@ -8389,9 +8389,9 @@ app.get("/api/search/data", authMiddleware, async (req: any, res) => {
 		res.status(500).json({ error: "Nie udało się pobrać danych" });
 	}
 });
-// ============================================================
-// đź†• ENDPOINT: Sprawdza czy użytkownik jest liderem (koordynatorem)
-// ============================================================
+
+
+
 app.get(
 	"/api/user/is-coordinator",
 	authMiddleware,
@@ -8403,9 +8403,9 @@ app.get(
 				return res.status(401).json({ error: "Brak autoryzacji" });
 			}
 
-			// 			logger.debug(`đź”Ť Sprawdzanie czy użytkownik ${userId} jest liderem...`);
 
-			// Sprawdź czy użytkownik jest liderem w jakimkolwiek zespole
+
+
 			const teamMember = await prisma.teamMember.findFirst({
 				where: {
 					user_id: parseInt(userId),
@@ -8422,11 +8422,11 @@ app.get(
 			});
 
 			if (teamMember) {
-				// 				logger.debug(
-				// 	`âś… Użytkownik ${userId} jest liderem w zespole: ${teamMember.team?.name}`,
-				// );
 
-				// Pobierz wszystkie zespoły gdzie jest liderem
+
+
+
+
 				const allLeaderTeams = await prisma.teamMember.findMany({
 					where: {
 						user_id: parseInt(userId),
@@ -8442,7 +8442,7 @@ app.get(
 					},
 				});
 
-				// đź”Ą POPRAWA: Dodajemy typ dla parametru 'tm'
+
 				const leaderTeams = allLeaderTeams
 					.filter((tm: any) => tm.team?.name?.includes("Filar"))
 					.map((tm: any) => ({
@@ -8462,15 +8462,15 @@ app.get(
 				});
 			}
 
-			// Sprawdź czy użytkownik ma rolę admin - admin też ma uprawnienia
+
 			const user = await prisma.user.findUnique({
 				where: { id: parseInt(userId) },
 				select: { role_id: true },
 			});
 
 			if (user?.role_id === 1) {
-				// admin
-				// 				logger.debug(`đź‘‘ Użytkownik ${userId} jest administratorem`);
+
+
 				return res.json({
 					isCoordinator: true,
 					isLeader: true,
@@ -8480,7 +8480,7 @@ app.get(
 				});
 			}
 
-			// 			logger.debug(`âťŚ Użytkownik ${userId} NIE jest liderem`);
+
 			res.json({
 				isCoordinator: false,
 				isLeader: false,
@@ -8488,7 +8488,7 @@ app.get(
 				allLeaderTeams: [],
 			});
 		} catch (error) {
-			// 			logger.error("âťŚ Błąd sprawdzania lidera:", error);
+
 			res.status(500).json({
 				error: "Nie udało się sprawdzić uprawnień",
 				details: error instanceof Error ? error.message : "Unknown error",
@@ -8499,5 +8499,5 @@ app.get(
 
 app.use("/api", revenueRoutes);
 app.listen(port, () => {
-	// console.log(`🚀 Serwer działa na porcie ${port}`);
+
 });

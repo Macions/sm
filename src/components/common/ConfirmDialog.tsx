@@ -43,14 +43,14 @@ export function ConfirmDialog({
 					<button
 						className={styles.cancelBtn}
 						onClick={onCancel}
-						disabled={isLoading} // 🔥 WYŁĄCZ PRZYCISK PODCZAS ŁADOWANIA
+						disabled={isLoading} 
 					>
 						{cancelText}
 					</button>
 					<button
 						className={`${styles.confirmBtn} ${isLoading ? styles.loading : ""}`}
 						onClick={onConfirm}
-						disabled={isLoading} // 🔥 WYŁĄCZ PRZYCISK PODCZAS ŁADOWANIA
+						disabled={isLoading} 
 					>
 						{isLoading ? (
 							<>

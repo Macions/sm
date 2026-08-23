@@ -42,11 +42,11 @@ export function useAuth() {
 		try {
 			logger.debug("🔐 [useAuth] Weryfikacja tokena...");
 
-			// Próbuj pobrać dane użytkownika z backendu
+
 			const response = await api.get("/auth/me");
 			const userData = response.data;
 
-			// Mapuj dane z backendu na interfejs User
+
 			const user: User = {
 				id: userData.id,
 				name:
@@ -75,7 +75,7 @@ export function useAuth() {
 				error?.response?.status,
 			);
 
-			// Wyczyść nieprawidłowy token
+
 			localStorage.removeItem("accessToken");
 			localStorage.removeItem("refreshToken");
 
@@ -88,7 +88,7 @@ export function useAuth() {
 		}
 	}, []);
 
-	// Ładowanie użytkownika przy starcie
+
 	useEffect(() => {
 		const loadUser = async () => {
 			await verifyToken();
@@ -97,7 +97,7 @@ export function useAuth() {
 		loadUser();
 	}, [verifyToken]);
 
-	// Nasłuchuj zmian tokena w innych kartach
+
 	useEffect(() => {
 		const handleStorageChange = async (e: StorageEvent) => {
 			if (e.key === "accessToken") {
@@ -130,7 +130,7 @@ export function useAuth() {
 			const response = await api.post("/auth/login", { email, password });
 			const { accessToken, refreshToken, user: userData } = response.data;
 
-			// Zapisz tokeny
+
 			if (accessToken) {
 				localStorage.setItem("accessToken", accessToken);
 			}
@@ -138,7 +138,7 @@ export function useAuth() {
 				localStorage.setItem("refreshToken", refreshToken);
 			}
 
-			// Mapuj dane użytkownika
+
 			const user: User = {
 				id: userData.id,
 				name:
@@ -179,14 +179,14 @@ export function useAuth() {
 	const logout = useCallback(() => {
 		logger.debug("🔐 [useAuth] Wylogowywanie...");
 
-		// Wywołaj logout na backendzie (opcjonalnie)
+
 		try {
 			api.post("/auth/logout").catch(() => {});
 		} catch (error) {
-			// Ignoruj błędy przy wylogowywaniu
+
 		}
 
-		// Wyczyść dane
+
 		localStorage.removeItem("accessToken");
 		localStorage.removeItem("refreshToken");
 		localStorage.removeItem("user");
@@ -250,19 +250,19 @@ export function useAuth() {
 	}, [state.user]);
 
 	return {
-		// Stan
+
 		user: state.user,
 		loading: state.loading,
 		isAuthenticated: state.isAuthenticated,
 
-		// Metody
+
 		login,
 		logout,
 		refreshToken,
 		updateUser,
 		verifyToken,
 
-		// Helpers
+
 		hasRole,
 		isAdmin,
 		isCoordinator,

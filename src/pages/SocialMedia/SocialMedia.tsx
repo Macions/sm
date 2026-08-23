@@ -99,8 +99,8 @@ interface CreatorsSectionProps {
 	creators: ContentCreator[];
 	canManage: boolean;
 	onAddCreator?: () => void;
-	onEditCreator?: (creator: ContentCreator) => void; // ✅ DODAJ
-	onDeleteCreator?: (id: string) => void; // ✅ DODAJ
+	onEditCreator?: (creator: ContentCreator) => void; 
+	onDeleteCreator?: (id: string) => void; 
 }
 interface TeamMember {
 	id: string;
@@ -451,7 +451,7 @@ interface MaterialsBoardProps {
 	onEditMaterial?: (material: Material) => void;
 	onDeleteMaterial?: (id: string) => void;
 }
-// Dodaj nowy komponent dla kontaktów z onboardingu
+
 function OnboardingContactsSection({
 	contacts,
 }: {
@@ -460,9 +460,9 @@ function OnboardingContactsSection({
 }) {
 	const [searchTerm, setSearchTerm] = useState("");
 
-	// 🔥 FILTRUJ TYLKO KONTAKTY KTÓRE MAJĄ JAKIEŚ DANE
+
 	const filteredContacts = useMemo(() => {
-		// Najpierw sprawdź czy w ogóle są jakieś kontakty
+
 		const contactsWithData = contacts.filter((c) => {
 			const hasAnyContact =
 				c.salaContacts.length > 0 ||
@@ -472,12 +472,12 @@ function OnboardingContactsSection({
 			return hasAnyContact;
 		});
 
-		// Jeśli nie ma wyszukiwania, zwróć wszystkie z danymi
+
 		if (!searchTerm.trim()) {
 			return contactsWithData;
 		}
 
-		// Wyszukiwanie
+
 		const search = searchTerm.toLowerCase();
 		return contactsWithData.filter((c) => {
 			return (
@@ -495,7 +495,7 @@ function OnboardingContactsSection({
 		});
 	}, [contacts, searchTerm]);
 
-	// 🔥 ZAWSZE POKAZUJ SEKCJĘ - nawet jak nie ma kontaktów
+
 	return (
 		<section className={styles.section}>
 			<div className={styles.section__header}>
@@ -1244,8 +1244,8 @@ interface TeamSectionProps {
 	members: TeamMember[];
 	canManage: boolean;
 	onAddMember?: () => void;
-	onEditMember?: (member: TeamMember) => void; // ✅ DODAJ
-	onDeleteMember?: (id: string) => void; // ✅ DODAJ
+	onEditMember?: (member: TeamMember) => void; 
+	onDeleteMember?: (id: string) => void; 
 }
 
 interface PublicationsSectionProps {
@@ -2214,8 +2214,8 @@ function TeamSection({
 	members,
 	canManage,
 	onAddMember,
-	onEditMember, // ✅ DODAJ
-	onDeleteMember, // ✅ DODAJ
+	onEditMember, 
+	onDeleteMember, 
 }: TeamSectionProps) {
 	const [searchTerm, setSearchTerm] = useState("");
 	const [selectedRole, setSelectedRole] = useState<SocialRole | "all">("all");
@@ -2366,8 +2366,8 @@ function CreatorsSection({
 	creators,
 	canManage,
 	onAddCreator,
-	onEditCreator, // ✅ DODAJ
-	onDeleteCreator, // ✅ DODAJ
+	onEditCreator, 
+	onDeleteCreator, 
 }: CreatorsSectionProps) {
 	const [searchTerm, setSearchTerm] = useState("");
 
@@ -3028,9 +3028,9 @@ function EditMemberModal({
 	);
 }
 
-// ============================================================
-// 📝 MODAL EDYCJI TWÓRCY ROLEK
-// ============================================================
+
+
+
 interface EditCreatorModalProps {
 	isOpen: boolean;
 	creator: ContentCreator | null;
@@ -3128,7 +3128,7 @@ export default function SocialMedia({ title }: { title?: string }) {
 		OnboardingContact[]
 	>([]);
 	const [tasks, setTasks] = useState<Task[]>([]);
-	// W głównym komponencie SocialMedia, obok innych useState:
+
 	const [editingMember, setEditingMember] = useState<TeamMember | null>(null);
 	const [isEditMemberModalOpen, setIsEditMemberModalOpen] = useState(false);
 	const [editingCreator, setEditingCreator] = useState<ContentCreator | null>(
@@ -3204,18 +3204,18 @@ export default function SocialMedia({ title }: { title?: string }) {
 	};
 	const fetchOnboardingContacts = async () => {
 		try {
-			// console.log("📋 [onboarding] Pobieranie kontaktów...");
+
 			const token = localStorage.getItem("accessToken");
 			const response = await fetch("/api/admin/onboarding-contacts", {
 				headers: { Authorization: `Bearer ${token}` },
 			});
 
-			// console.log("📋 [onboarding] Status odpowiedzi:", response.status);
+
 
 			if (response.ok) {
 				const data = await response.json();
-				// console.log("📋 [onboarding] Otrzymane dane:", data);
-				// console.log("📋 [onboarding] Liczba kontaktów:", data.length);
+
+
 				setOnboardingContacts(data);
 			} else {
 				const error = await response.json();
@@ -3396,10 +3396,10 @@ export default function SocialMedia({ title }: { title?: string }) {
 				const isCoordinator = role === "coordinator";
 				const isBoard = role === "board" || role === "zarząd";
 
-				const canManageAll = isAdmin || isCoordinator || isBoard; // ✅ WSZYSCY MOGĄ WSZYSTKO
+				const canManageAll = isAdmin || isCoordinator || isBoard; 
 
-				setCanManage(canManageAll); // ✅ DODAWANIE, EDYTOWANIE, USUWANIE
-				setCanView(canManageAll); // ✅ WIDZENIE
+				setCanManage(canManageAll); 
+				setCanView(canManageAll); 
 				const [
 					membersRes,
 					creatorsRes,
@@ -3748,16 +3748,16 @@ export default function SocialMedia({ title }: { title?: string }) {
 				members={members}
 				canManage={canManage}
 				onAddMember={() => setIsMemberModalOpen(true)}
-				onEditMember={handleEditMember} // ✅ DODAJ
-				onDeleteMember={handleDeleteMember} // ✅ DODAJ
+				onEditMember={handleEditMember} 
+				onDeleteMember={handleDeleteMember} 
 			/>
 
 			<CreatorsSection
 				creators={creators}
 				canManage={canManage}
 				onAddCreator={() => setIsCreatorModalOpen(true)}
-				onEditCreator={handleEditCreator} // ✅ DODAJ
-				onDeleteCreator={handleDeleteCreator} // ✅ DODAJ
+				onEditCreator={handleEditCreator} 
+				onDeleteCreator={handleDeleteCreator} 
 			/>
 
 			<MaterialsBoard

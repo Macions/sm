@@ -166,20 +166,20 @@ const transformPillars = (pillarsString: string): string => {
 export default function Dashboard() {
 	const navigate = useNavigate();
 	const { user, loading: userLoading } = useUser();
-	// console.log('🔍 [Dashboard] Dane użytkownika:', user);
-	// console.log('🔍 [Dashboard] user.pillars:', user?.pillars);
-	// console.log('🔍 [Dashboard] user.role:', user?.role);
+
+
+
 	const displayName = user?.firstName || "Użytkowniku";
 
 	const [checkingOnboarding, setCheckingOnboarding] = useState(true);
 	const [error, setError] = useState<string | null>(null);
 
-	// Osobne stany dla każdej sekcji
+
 	const [stats, setStats] = useState<DashboardStats | null>(null);
 	const [notifications, setNotifications] = useState<Notification[]>([]);
 	const [contributionStats, setContributionStats] =
 		useState<ContributionStats | null>(null);
-	// Osobne stany ładowania
+
 	const [loadingStats, setLoadingStats] = useState(true);
 	const [loadingNotifs, setLoadingNotifs] = useState(true);
 	const [loadingContributions, setLoadingContributions] = useState(true);
@@ -227,7 +227,7 @@ export default function Dashboard() {
 
 					if (!completed) {
 						logger.debug("🔄 [Dashboard] Przekierowanie do onboardingu");
-						// 🔥 UŻYJ `window.location.href` ZAMIAST `navigate`
+
 						window.location.href = "/onboarding";
 						return;
 					}
@@ -242,14 +242,14 @@ export default function Dashboard() {
 		};
 
 		checkOnboarding();
-	}, []); // 🔥 PUSTA TABLICA - TYLKO RAZ
+	}, []); 
 	useEffect(() => {
-		// console.log("🚀 [Dashboard] useEffect START");
+
 		const controller = new AbortController();
 
 		const fetchStats = async () => {
 			try {
-				// console.log("📊 [Dashboard] Pobieram statystyki...");
+
 				setLoadingStats(true);
 				const token = localStorage.getItem("accessToken");
 
@@ -261,11 +261,11 @@ export default function Dashboard() {
 					},
 				});
 
-				// console.log("📊 [Dashboard] Status statystyk:", res.status);
+
 
 				if (!res.ok) throw new Error("Nie udało się pobrać statystyk");
 				const data = await res.json();
-				// console.log("📊 [Dashboard] Dane statystyk:", data);
+
 				setStats(data);
 			} catch (err) {
 				if (err instanceof Error && err.name === "AbortError") return;
@@ -276,24 +276,24 @@ export default function Dashboard() {
 			}
 		};
 
-		// ⬇️⬇️⬇️ PRZENIESIONE DO ŚRODKA useEffect ⬇️⬇️⬇️
+
 		const fetchContributions = async () => {
 			try {
-				// console.log("💰 [Dashboard] Pobieram statystyki składek...");
+
 				setLoadingContributions(true);
 				const token = localStorage.getItem("accessToken");
 
 				const res = await fetch("/api/dashboard/contributions", {
 					signal: controller.signal,
 					headers: {
-						Authorization: `Bearer ${token}`, // ✅ TO MUSI BYĆ!
+						Authorization: `Bearer ${token}`, 
 						"Content-Type": "application/json",
 					},
 				});
 
 				if (!res.ok) throw new Error("Nie udało się pobrać statystyk składek");
 				const data = await res.json();
-				// console.log("💰 [Dashboard] Dane składek:", data);
+
 				setContributionStats(data);
 			} catch (err) {
 				if (err instanceof Error && err.name === "AbortError") return;
@@ -305,7 +305,7 @@ export default function Dashboard() {
 
 		const fetchNotifs = async () => {
 			try {
-				// console.log("🔔 [Dashboard] Pobieram powiadomienia...");
+
 				setLoadingNotifs(true);
 				const token = localStorage.getItem("accessToken");
 
@@ -317,11 +317,11 @@ export default function Dashboard() {
 					},
 				});
 
-				// console.log("🔔 [Dashboard] Status powiadomień:", res.status);
+
 
 				if (!res.ok) throw new Error("Nie udało się pobrać powiadomień");
 				const data = await res.json();
-				// console.log("🔔 [Dashboard] Dane powiadomień:", data);
+
 				setNotifications(data);
 			} catch (err) {
 				if (err instanceof Error && err.name === "AbortError") return;
@@ -332,14 +332,14 @@ export default function Dashboard() {
 			}
 		};
 
-		// ⬇️⬇️⬇️ DODAJ fetchContributions do Promise.all ⬇️⬇️⬇️
-		// console.log(
-		// 	"🚀 [Dashboard] Wywołuję fetchStats, fetchContributions i fetchNotifs",
-		// );
-		Promise.all([fetchStats(), fetchContributions(), fetchNotifs()]); // ✅ DODANE
+
+
+
+
+		Promise.all([fetchStats(), fetchContributions(), fetchNotifs()]); 
 
 		return () => {
-			// console.log("🧹 [Dashboard] Cleanup");
+
 			controller.abort();
 		};
 	}, []);
@@ -432,7 +432,7 @@ export default function Dashboard() {
 				color: "#4A6FE8",
 				bgColor: "#EFEBFD",
 			},
-			// DODAJ STATYSTYKĘ SKŁADEK TUTAJ (po members)
+
 			...(contributionStats
 				? [
 					{
@@ -465,7 +465,7 @@ export default function Dashboard() {
 										: "Nieopłacona",
 						icon:
 							contributionStats.hasContributions === false ? (
-								<AlertCircle size={24} /> // ← Nowa ikona
+								<AlertCircle size={24} /> 
 							) : contributionStats.currentMonth.status === "paid" ? (
 								<CreditCard size={24} />
 							) : (
@@ -473,13 +473,13 @@ export default function Dashboard() {
 							),
 						color:
 							contributionStats.hasContributions === false
-								? "#6B7280" // ← Szary kolor
+								? "#6B7280" 
 								: contributionStats.currentMonth.status === "paid"
 									? "#2ECC71"
 									: "#F5A623",
 						bgColor:
 							contributionStats.hasContributions === false
-								? "#F3F4F6" // ← Jasnoszary
+								? "#F3F4F6" 
 								: contributionStats.currentMonth.status === "paid"
 									? "#ECFDF5"
 									: "#FEF9E7",
@@ -562,8 +562,8 @@ export default function Dashboard() {
 			</div>
 		);
 	}
-	// Jeśli error - pokaż błąd
-	// Jeśli error - pokaż błąd
+
+
 	if (error) {
 		return (
 			<div className={styles.dashboard}>
@@ -579,8 +579,8 @@ export default function Dashboard() {
 		);
 	}
 
-	// ✅ USUŃ globalny loading - zamiast tego pokazuj skeleton dla każdej sekcji
-	// if (loading) { return <DashboardSkeleton /> }  ← USUŃ TO!
+
+
 
 	return (
 		<>
@@ -608,19 +608,19 @@ export default function Dashboard() {
 										&nbsp;
 									</span>
 								) : (
-									// ✅ NOWA LOGIKA
+
 									(() => {
-										// 1. Admin/Prezes - pokazuje wszystkie zespoły z team
+
 										if (user?.role?.toLowerCase() === 'admin' || user?.role === 'Prezes') {
 											return user?.team || "—";
 										}
 
-										// 2. Zwykły członek - pokazuje filary z pillars
+
 										if (user?.pillars) {
 											return transformPillars(user.pillars);
 										}
 
-										// 3. Fallback
+
 										return user?.team || "—";
 									})()
 								)}
@@ -644,7 +644,7 @@ export default function Dashboard() {
 			{/* Statystyki - skeleton gdy się ładują */}
 			<div className={styles.stats}>
 				{loadingStats || loadingContributions ? (
-					// Skeleton dla statystyk
+
 					<>
 						{[1, 2, 3, 4, 5].map((i) => (
 							<div key={i} className={styles.statCard}>
@@ -699,7 +699,7 @@ export default function Dashboard() {
 					</h2>
 					<div className={styles.notifications__list}>
 						{loadingNotifs ? (
-							// Skeleton dla powiadomień
+
 							<>
 								{[1, 2, 3].map((i) => (
 									<div key={i} className={styles.notification}>

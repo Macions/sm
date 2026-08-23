@@ -1,12 +1,12 @@
-// backend/src/config/db.ts
+
 import mysql from "mysql2/promise";
 import dotenv from "dotenv";
 
 dotenv.config();
 
-// ============================================================
-// GŁÓWNA BAZA (serwer400062_silamlodych)
-// ============================================================
+
+
+
 const pool = mysql.createPool({
 	host: process.env.DB_HOST || "localhost",
 	user: process.env.DB_USER || "root",
@@ -17,9 +17,9 @@ const pool = mysql.createPool({
 	queueLimit: 0,
 });
 
-// ============================================================
-// BAZA SM
-// ============================================================
+
+
+
 export const smPool = mysql.createPool({
 	host: process.env.SM_DB_HOST || "57.128.253.89",
 	user: process.env.SM_DB_USER || "czarnecki",
@@ -30,9 +30,9 @@ export const smPool = mysql.createPool({
 	queueLimit: 0,
 });
 
-// ============================================================
-// BAZA SM_EWIDENCJA (dla faktur)
-// ============================================================
+
+
+
 export const ewidencjaPool = mysql.createPool({
 	host: process.env.EWIDENCJA_DB_HOST || "57.128.253.89",
 	user: process.env.EWIDENCJA_DB_USER || "czarnecki",
@@ -43,9 +43,9 @@ export const ewidencjaPool = mysql.createPool({
 	queueLimit: 0,
 });
 
-// ============================================================
-// BAZA FREKWENCJI (SM_Frekwencja)
-// ============================================================
+
+
+
 export const frekwencjaPool = mysql.createPool({
 	host: process.env.FREKWENCJA_DB_HOST || "57.128.253.89",
 	user: process.env.FREKWENCJA_DB_USER || "czarnecki",
