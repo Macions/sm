@@ -600,13 +600,15 @@ export default function Profile({
 					<TrendingUp size={16} />
 					Aktywność
 				</button>
-				<button
-					className={`${styles.tab} ${selectedTab === "contributions" ? styles.tabActive : ""}`}
-					onClick={() => setSelectedTab("contributions")}
-				>
-					<CreditCard size={16} />
-					Składki
-				</button>
+				{!user?.isTrial && (
+					<button
+						className={`${styles.tab} ${selectedTab === "contributions" ? styles.tabActive : ""}`}
+						onClick={() => setSelectedTab("contributions")}
+					>
+						<CreditCard size={16} />
+						Składki
+					</button>
+				)}
 				<button
 					className={`${styles.tab} ${selectedTab === "private" ? styles.tabActive : ""}`}
 					onClick={() => setSelectedTab("private")}
@@ -1126,9 +1128,8 @@ export default function Profile({
 							</div>
 						</>
 					)}
-
-					{/* ZAKŁADKA: SKŁADKI */}
-					{selectedTab === "contributions" && (
+					{/* ZAKŁADKA: SKŁADKI - TYLKO DLA PEŁNOPRAWNYCH */}
+					{selectedTab === "contributions" && !user?.isTrial && (
 						<>
 							<div className={styles.section}>
 								<h3 className={styles.section__title}>
@@ -1231,6 +1232,19 @@ export default function Profile({
 						</>
 					)}
 
+					{/* KOMUNIKAT DLA OKRESU PRÓBNEGO */}
+					{selectedTab === "contributions" && user?.isTrial && (
+						<div className={styles.section}>
+							<div className={styles.trialInfo}>
+								<AlertCircle size={32} color="#F5A623" />
+								<h3>Jesteś na okresie próbnym</h3>
+								<p>
+									Informacje o składkach są dostępne dopiero po zakończeniu okresu próbnego.
+									Skontaktuj się z Zarządem w razie pytań.
+								</p>
+							</div>
+						</div>
+					)}
 					{/* ZAKŁADKA: PRYWATNE */}
 					{selectedTab === "private" && (
 						<>

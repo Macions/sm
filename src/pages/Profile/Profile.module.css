@@ -810,12 +810,18 @@
     padding: 4px;
     background: #f1f5f9;
     border-radius: 12px;
-    overflow-x: auto;           /* ← DODAJ - pozwala na scroll w poziomie */
-    overflow-y: hidden;          /* ← DODAJ - ukrywa scroll w pionie */
-    flex-shrink: 0;             /* ← DODAJ - nie pozwala się kurczyć */
-    scrollbar-width: thin;      /* ← DODAJ - cienki pasek scrolla */
-    -webkit-overflow-scrolling: touch; /* ← DODAJ - płynny scroll na iOS */
+    overflow-x: auto;
+    /* ← DODAJ - pozwala na scroll w poziomie */
+    overflow-y: hidden;
+    /* ← DODAJ - ukrywa scroll w pionie */
+    flex-shrink: 0;
+    /* ← DODAJ - nie pozwala się kurczyć */
+    scrollbar-width: thin;
+    /* ← DODAJ - cienki pasek scrolla */
+    -webkit-overflow-scrolling: touch;
+    /* ← DODAJ - płynny scroll na iOS */
 }
+
 .tabs::-webkit-scrollbar {
     height: 3px;
 }
@@ -1333,4 +1339,28 @@
 .modalBtnSave:disabled {
     opacity: 0.5;
     cursor: not-allowed;
+}
+
+.trialInfo {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 20px;
+    text-align: center;
+    gap: 16px;
+}
+
+.trialInfo h3 {
+    font-size: 22px;
+    color: #1f2937;
+    margin: 0;
+}
+
+.trialInfo p {
+    color: #6b7280;
+    max-width: 400px;
+    margin: 0;
+    line-height: 1.6;
+    font-size: 16px;
 }
