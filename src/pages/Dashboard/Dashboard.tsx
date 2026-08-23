@@ -584,7 +584,7 @@ export default function Dashboard() {
 
 	return (
 		<>
-			{/* Karta powitalna - ZAWSZE widoczna, z skeleton dla brakujących danych */}
+			
 			<div className={styles.welcomeCard}>
 				<div className={styles.welcomeCard__content}>
 					<img
@@ -641,7 +641,7 @@ export default function Dashboard() {
 				</div>
 			</div>
 
-			{/* Statystyki - skeleton gdy się ładują */}
+			
 			<div className={styles.stats}>
 				{loadingStats || loadingContributions ? (
 
@@ -691,7 +691,7 @@ export default function Dashboard() {
 			</div>
 
 			<div className={styles.bottomSection}>
-				{/* Powiadomienia - skeleton gdy się ładują */}
+				
 				<div className={styles.notifications}>
 					<h2 className={styles.sectionTitle}>
 						<Bell size={20} />
@@ -744,7 +744,7 @@ export default function Dashboard() {
 					</div>
 				</div>
 
-				{/* Szybkie akcje - ZAWSZE widoczne (nie wymagają danych) */}
+				
 				<div className={styles.quickActions}>
 					<h2 className={styles.sectionTitle}>Szybkie akcje</h2>
 					<div className={styles.quickActions__grid}>

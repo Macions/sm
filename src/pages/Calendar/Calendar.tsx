@@ -69,10 +69,11 @@ type User = {
 	role: string;
 };
 
-const API_URL = import.meta.env.VITE_API_URL ||
-	(window.location.hostname === 'panel.silamlodych.pl'
-		? ''  
-		: 'http://localhost:3000');
+const API_URL =
+	import.meta.env.VITE_API_URL ||
+	(window.location.hostname === "panel.silamlodych.pl"
+		? ""
+		: "http://localhost:3000");
 
 export default function Calendar() {
 	const [currentDate, setCurrentDate] = useState(new Date());
@@ -94,14 +95,6 @@ export default function Calendar() {
 	const currentYear = currentDate.getFullYear();
 	const currentMonth = currentDate.getMonth();
 
-
-
-
-	useEffect(() => {
-		fetchTasks();
-		checkGoogleAuth();
-	}, []);
-
 	const checkGoogleAuth = async () => {
 		try {
 			const token = localStorage.getItem("accessToken");
@@ -114,7 +107,6 @@ export default function Calendar() {
 				await fetchGoogleEvents();
 			}
 		} catch (error) {
-
 			setIsGoogleAuth(false);
 		}
 	};
@@ -132,7 +124,6 @@ export default function Calendar() {
 				setGoogleEvents(data);
 			}
 		} catch (error) {
-
 		} finally {
 			setIsGoogleLoading(false);
 		}
@@ -156,7 +147,10 @@ export default function Calendar() {
 			setLoading(false);
 		}
 	};
-
+	useEffect(() => {
+		fetchTasks();
+		checkGoogleAuth();
+	}, []);
 
 	const goToPreviousMonth = () => {
 		setCurrentDate(new Date(currentYear, currentMonth - 1, 1));
@@ -200,7 +194,9 @@ export default function Calendar() {
 		if (isGoogleAuth && googleEvents.length > 0) {
 			googleEventsForDay = googleEvents
 				.filter((event) => {
-					const eventDate = new Date(event.start?.dateTime || event.start?.date);
+					const eventDate = new Date(
+						event.start?.dateTime || event.start?.date,
+					);
 					return eventDate.toISOString().split("T")[0] === dateStr;
 				})
 				.map((event) => ({
@@ -217,8 +213,13 @@ export default function Calendar() {
 					pillar: undefined,
 					tags: [],
 					htmlLink: event.htmlLink || "",
-					hangoutLink: event.hangoutLink || event.conferenceData?.entryPoints?.[0]?.uri || null,
-					hasMeeting: !!(event.hangoutLink || event.conferenceData?.entryPoints?.length > 0),
+					hangoutLink:
+						event.hangoutLink ||
+						event.conferenceData?.entryPoints?.[0]?.uri ||
+						null,
+					hasMeeting: !!(
+						event.hangoutLink || event.conferenceData?.entryPoints?.length > 0
+					),
 				}));
 		}
 
@@ -264,7 +265,6 @@ export default function Calendar() {
 		const events = getEventsForDay(day);
 
 		if (events.length === 1) {
-
 			const event = events[0];
 			if (event.source === "google" && event.htmlLink) {
 				window.open(event.htmlLink, "_blank");
@@ -274,12 +274,10 @@ export default function Calendar() {
 			setSelectedDate(dateStr);
 			setIsModalOpen(true);
 		} else if (events.length > 1) {
-
 			setSelectedDate(dateStr);
 			setSelectedTask(null);
 			setIsModalOpen(true);
 		} else {
-
 			toast("Brak wydarzeń na ten dzień");
 		}
 	};
@@ -299,8 +297,18 @@ export default function Calendar() {
 	};
 
 	const monthNames = [
-		"Styczeń", "Luty", "Marzec", "Kwiecień", "Maj", "Czerwiec",
-		"Lipiec", "Sierpień", "Wrzesień", "Październik", "Listopad", "Grudzień",
+		"Styczeń",
+		"Luty",
+		"Marzec",
+		"Kwiecień",
+		"Maj",
+		"Czerwiec",
+		"Lipiec",
+		"Sierpień",
+		"Wrzesień",
+		"Październik",
+		"Listopad",
+		"Grudzień",
 	];
 
 	const dayNames = ["Pon", "Wt", "Śr", "Czw", "Pt", "Sob", "Niedz"];
@@ -321,7 +329,9 @@ export default function Calendar() {
 			<div className={styles.header}>
 				<div className={styles.headerLeft}>
 					<h1 className={styles.title}>Kalendarz</h1>
-					<p className={styles.subtitle}>Przeglądaj swoje zadania w kalendarzu</p>
+					<p className={styles.subtitle}>
+						Przeglądaj swoje zadania w kalendarzu
+					</p>
 				</div>
 				<div className={styles.headerRight}>
 					<button className={styles.todayBtn} onClick={goToToday}>
@@ -348,7 +358,9 @@ export default function Calendar() {
 			<div className={styles.calendarGrid}>
 				<div className={styles.weekDays}>
 					{dayNames.map((day) => (
-						<div key={day} className={styles.weekDay}>{day}</div>
+						<div key={day} className={styles.weekDay}>
+							{day}
+						</div>
 					))}
 				</div>
 
@@ -377,7 +389,7 @@ export default function Calendar() {
 										<span className={styles.taskCount}>{dayEvents.length}</span>
 									)}
 								</div>
-								{/* ZMIENIONE: WYŚWIETLANIE NAZW ZADAŃ ZAMIAST KROPEK */}
+
 								<div className={styles.dayTasks}>
 									{dayEvents.slice(0, 3).map((event) => (
 										<div
@@ -401,7 +413,9 @@ export default function Calendar() {
 												style={{
 													backgroundColor:
 														event.source === "google"
-															? (event.hasMeeting ? "#0b57d0" : "#4285f4")
+															? event.hasMeeting
+																? "#0b57d0"
+																: "#4285f4"
 															: PRIORITY_COLORS[event.priority as TaskPriority],
 												}}
 											/>
@@ -435,7 +449,11 @@ export default function Calendar() {
 					<div className={styles.modal} onClick={(e) => e.stopPropagation()}>
 						<div className={styles.modalHeader}>
 							<h2 className={styles.modalTitle}>
-								{selectedTask ? selectedTask.title : selectedDate ? formatDate(selectedDate) : "Wydarzenia"}
+								{selectedTask
+									? selectedTask.title
+									: selectedDate
+										? formatDate(selectedDate)
+										: "Wydarzenia"}
 							</h2>
 							<button className={styles.modalClose} onClick={closeModal}>
 								<X size={20} />
@@ -444,7 +462,6 @@ export default function Calendar() {
 
 						<div className={styles.modalBody}>
 							{selectedTask ? (
-
 								<div className={styles.taskDetail}>
 									<p className={styles.taskDescription}>
 										{selectedTask.description}
@@ -466,7 +483,9 @@ export default function Calendar() {
 										<div className={styles.metaItem}>
 											<span
 												className={styles.statusBadge}
-												style={{ backgroundColor: STATUS_COLORS[selectedTask.status] }}
+												style={{
+													backgroundColor: STATUS_COLORS[selectedTask.status],
+												}}
 											>
 												{STATUS_LABELS[selectedTask.status]}
 											</span>
@@ -474,7 +493,10 @@ export default function Calendar() {
 										<div className={styles.metaItem}>
 											<span
 												className={styles.priorityBadge}
-												style={{ backgroundColor: PRIORITY_COLORS[selectedTask.priority] }}
+												style={{
+													backgroundColor:
+														PRIORITY_COLORS[selectedTask.priority],
+												}}
 											>
 												{PRIORITY_LABELS[selectedTask.priority]}
 											</span>
@@ -485,14 +507,21 @@ export default function Calendar() {
 												<span>{selectedTask.pillar}</span>
 											</div>
 										)}
-										{selectedTask.source === "google" && selectedTask.hasMeeting && (
-											<div className={styles.metaItem} style={{ gridColumn: "1 / -1", background: "#e8f0fe" }}>
-												<Video size={16} color="#1a73e8" />
-												<span style={{ fontWeight: 600, color: "#1a73e8" }}>
-													Spotkanie Google Meet
-												</span>
-											</div>
-										)}
+										{selectedTask.source === "google" &&
+											selectedTask.hasMeeting && (
+												<div
+													className={styles.metaItem}
+													style={{
+														gridColumn: "1 / -1",
+														background: "#e8f0fe",
+													}}
+												>
+													<Video size={16} color="#1a73e8" />
+													<span style={{ fontWeight: 600, color: "#1a73e8" }}>
+														Spotkanie Google Meet
+													</span>
+												</div>
+											)}
 									</div>
 
 									{selectedTask.tags.length > 0 && (
@@ -506,35 +535,38 @@ export default function Calendar() {
 										</div>
 									)}
 
-									{selectedTask.source === "google" && selectedTask.hangoutLink && (
-										<a
-											href={selectedTask.hangoutLink}
-											target="_blank"
-											rel="noopener noreferrer"
-											className={styles.meetButton}
-										>
-											<Video size={18} />
-											Dołącz do spotkania Google Meet
-											<Link2 size={14} />
-										</a>
-									)}
-
-
+									{selectedTask.source === "google" &&
+										selectedTask.hangoutLink && (
+											<a
+												href={selectedTask.hangoutLink}
+												target="_blank"
+												rel="noopener noreferrer"
+												className={styles.meetButton}
+											>
+												<Video size={18} />
+												Dołącz do spotkania Google Meet
+												<Link2 size={14} />
+											</a>
+										)}
 								</div>
 							) : (
-
 								<div className={styles.dayTasksList}>
 									<p className={styles.dayTasksTitle}>
 										Zadania na {selectedDate ? formatDate(selectedDate) : ""}
 									</p>
 									{selectedDate && (
 										<div className={styles.tasksList}>
-											{getEventsForDay(parseInt(selectedDate.split("-")[2])).map((event: any) => (
+											{getEventsForDay(
+												parseInt(selectedDate.split("-")[2]),
+											).map((event: any) => (
 												<div
 													key={event.id}
 													className={`${styles.taskItem} ${event.source === "google" ? styles.googleTaskItem : ""}`}
 													onClick={() => {
-														if (event.source === "google" && event.hangoutLink) {
+														if (
+															event.source === "google" &&
+															event.hangoutLink
+														) {
 															window.open(event.hangoutLink, "_blank");
 															return;
 														}
@@ -550,7 +582,9 @@ export default function Calendar() {
 														style={{
 															backgroundColor:
 																event.source === "google"
-																	? (event.hasMeeting ? "#0b57d0" : "#4285f4")
+																	? event.hasMeeting
+																		? "#0b57d0"
+																		: "#4285f4"
 																	: STATUS_COLORS[event.status as TaskStatus],
 														}}
 													/>
@@ -559,7 +593,9 @@ export default function Calendar() {
 															{event.title}
 															{event.source === "google" && (
 																<>
-																	<span className={styles.googleBadge}>Google</span>
+																	<span className={styles.googleBadge}>
+																		Google
+																	</span>
 																	{event.hasMeeting && (
 																		<span className={styles.meetBadge}>
 																			<Video size={12} /> Meet
@@ -575,15 +611,23 @@ export default function Calendar() {
 													{event.source !== "google" && (
 														<span
 															className={styles.taskPriority}
-															style={{ color: PRIORITY_COLORS[event.priority as TaskPriority] }}
+															style={{
+																color:
+																	PRIORITY_COLORS[
+																		event.priority as TaskPriority
+																	],
+															}}
 														>
 															{PRIORITY_LABELS[event.priority as TaskPriority]}
 														</span>
 													)}
 												</div>
 											))}
-											{getEventsForDay(parseInt(selectedDate.split("-")[2])).length === 0 && (
-												<p className={styles.noTasks}>Brak wydarzeń na ten dzień</p>
+											{getEventsForDay(parseInt(selectedDate.split("-")[2]))
+												.length === 0 && (
+												<p className={styles.noTasks}>
+													Brak wydarzeń na ten dzień
+												</p>
 											)}
 										</div>
 									)}

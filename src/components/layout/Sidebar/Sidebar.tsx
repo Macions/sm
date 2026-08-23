@@ -50,7 +50,7 @@ export default function Sidebar({
 
 	return (
 		<>
-			{/* 👇 WYSYWANE MENU MOBILNE */}
+			
 			<div
 				className={`${styles.mobileMenu} ${isMobileMenuOpen ? styles.mobileMenuOpen : ""
 					}`}
@@ -72,7 +72,7 @@ export default function Sidebar({
 					</button>
 				</div>
 
-				{/* 👇 DODAJ KONTENER ZE SCROLL */}
+				
 				<div className={styles.mobileNavWrapper}>
 					<nav className={styles.mobileNav}>
 						{filteredNavItems.map(({ key, label, icon: Icon }) => (
@@ -97,7 +97,7 @@ export default function Sidebar({
 				</div>
 			</div>
 
-			{/* 👇 OVERLAY */}
+			
 			{isMobileMenuOpen && (
 				<div
 					className={styles.overlay}
@@ -114,7 +114,7 @@ export default function Sidebar({
 				/>
 			)}
 
-			{/* 👇 SIDEBAR (DESKTOP) */}
+			
 			<aside
 				className={`${styles.sidebar} ${collapsed ? styles.sidebarCollapsed : ""
 					}`}

@@ -39,7 +39,7 @@ function App() {
                     },
                 }}
             />
-            <AppRoutes />  {/* ← ZMIEŃ Router NA AppRoutes */}
+            <AppRoutes />  
         </>
     );
 }

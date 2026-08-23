@@ -687,7 +687,7 @@ export default function Profile({
 				</div>
 
 				<div className={styles.sections}>
-					{/* ZAKŁADKA: PROFIL */}
+					
 					{selectedTab === "profile" && (
 						<>
 							<div className={styles.section}>
@@ -857,7 +857,7 @@ export default function Profile({
 										)}
 									</div>
 								</div>
-								{/* MODAL DODAWANIA UMIEJĘTNOŚCI */}
+								
 								{isSkillModalOpen && (
 									<div className={styles.modalOverlay} onClick={handleCloseSkillModal}>
 										<div className={styles.modal} onClick={(e) => e.stopPropagation()}>
@@ -980,7 +980,7 @@ export default function Profile({
 						</>
 					)}
 
-					{/* ZAKŁADKA: AKTYWNOŚĆ */}
+					
 					{selectedTab === "activity" && (
 						<>
 							<div className={styles.section}>
@@ -1128,7 +1128,7 @@ export default function Profile({
 							</div>
 						</>
 					)}
-					{/* ZAKŁADKA: SKŁADKI - TYLKO DLA PEŁNOPRAWNYCH */}
+					
 					{selectedTab === "contributions" && !user?.isTrial && (
 						<>
 							<div className={styles.section}>
@@ -1232,7 +1232,7 @@ export default function Profile({
 						</>
 					)}
 
-					{/* KOMUNIKAT DLA OKRESU PRÓBNEGO */}
+					
 					{selectedTab === "contributions" && user?.isTrial && (
 						<div className={styles.section}>
 							<div className={styles.trialInfo}>
@@ -1245,7 +1245,7 @@ export default function Profile({
 							</div>
 						</div>
 					)}
-					{/* ZAKŁADKA: PRYWATNE */}
+					
 					{selectedTab === "private" && (
 						<>
 							{canViewPrivate && displayUser.contacts && (

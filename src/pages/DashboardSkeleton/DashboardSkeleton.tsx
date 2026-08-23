@@ -3,7 +3,7 @@ import styles from "../Dashboard/Dashboard.module.css";
 export function DashboardSkeleton() {
 	return (
 		<>
-			{/* Welcome Card Skeleton */}
+			
 			<div className={styles.welcomeCard}>
 				<div className={styles.welcomeCard__content}>
 					<div
@@ -23,7 +23,7 @@ export function DashboardSkeleton() {
 				</div>
 			</div>
 
-			{/* Stats Skeleton */}
+			
 			<div className={styles.stats}>
 				{[1, 2, 3, 4].map((i) => (
 					<div key={i} className={styles.statCard}>
@@ -45,7 +45,7 @@ export function DashboardSkeleton() {
 				))}
 			</div>
 
-			{/* Bottom Section Skeleton */}
+			
 			<div className={styles.bottomSection}>
 				<div className={styles.notifications}>
 					<div

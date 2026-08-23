@@ -33,7 +33,7 @@ createRoot(document.getElementById("root")!).render(
 		onScriptLoadError={() => console.error('❌ Google script error')}
 	>
 		<UserProvider>
-			<BrowserRouter>  {/* ← ZMIEŃ HashRouter NA BrowserRouter */}
+			<BrowserRouter>  
 				<App />
 			</BrowserRouter>
 		</UserProvider>

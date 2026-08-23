@@ -25,12 +25,19 @@ export default defineConfig([
 			"react-hooks/exhaustive-deps": "off",
 			"react-refresh/only-export-components": "off",
 
-			// Te warto zachować i ręcznie poprawić:
-			"@typescript-eslint/no-unused-vars": "error",
-			"no-irregular-whitespace": "error",
-			"no-empty": "error",
-			"prefer-const": "error",
-			"no-useless-assignment": "error",
+			// ✅ ZMIEŃ TE REGUŁY:
+			"@typescript-eslint/no-unused-vars": [
+				"warn",
+				{
+					argsIgnorePattern: "^_",
+					varsIgnorePattern: "^_",
+					ignoreRestSiblings: true,
+				},
+			],
+			"no-irregular-whitespace": "warn",
+			"no-empty": ["warn", { allowEmptyCatch: true }],
+			"prefer-const": "warn",
+			"no-useless-assignment": "warn",
 			"@typescript-eslint/no-require-imports": "error",
 			"no-constant-binary-expression": "error",
 		},

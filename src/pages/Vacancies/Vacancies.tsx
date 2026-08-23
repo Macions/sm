@@ -538,8 +538,6 @@ function ApplyModal({ isOpen, vacancy, onClose, onSubmit }: ApplyModalProps) {
 
 	if (!isOpen || !vacancy) return null;
 
-
-
 	return (
 		<div className={styles.modalOverlay} onClick={onClose}>
 			<div
@@ -1319,9 +1317,6 @@ function VacancyFormModal({
 		}
 	};
 
-
-
-
 	const [formData, setFormData] = useState<Partial<Vacancy>>({
 		title: "",
 		icon: "Briefcase",
@@ -1344,20 +1339,51 @@ function VacancyFormModal({
 			questions: [],
 		},
 	});
+	const generateEmail = (name: string): string => {
+		if (!name.trim()) return "";
 
+		const parts = name.trim().split(/\s+/);
+		if (parts.length < 2) return "";
 
+		const firstNameParts = parts.slice(0, -1);
+		const lastName = parts[parts.length - 1];
+
+		const firstName = firstNameParts.join(".");
+
+		const normalize = (str: string) => {
+			return str
+				.toLowerCase()
+				.replace(/[ąćęłńóśźż]/g, (char) => {
+					const map: Record<string, string> = {
+						ą: "a",
+						ć: "c",
+						ę: "e",
+						ł: "l",
+						ń: "n",
+						ó: "o",
+						ś: "s",
+						ź: "z",
+						ż: "z",
+					};
+					return map[char] || char;
+				})
+				.replace(/[^a-z.]/g, "");
+		};
+
+		const normalizedFirstName = normalize(firstName);
+		const normalizedLastName = normalize(lastName);
+
+		if (!normalizedFirstName || !normalizedLastName) return "";
+
+		return `${normalizedFirstName}.${normalizedLastName}@silamlodych.pl`;
+	};
 	useEffect(() => {
 		if (vacancy) {
-
-
-
-
 			const contactName =
 				vacancy.contactPerson?.name ||
 				vacancy.recruitment?.messengerContact ||
 				currentUser.name ||
 				"Admin";
-
 
 			const autoEmail = generateEmail(contactName);
 
@@ -1413,48 +1439,6 @@ function VacancyFormModal({
 	const isEdit = !!vacancy;
 	const canManage =
 		currentUser.role === "admin" || currentUser.role === "coordinator";
-
-	const generateEmail = (name: string): string => {
-		if (!name.trim()) return "";
-
-
-		const parts = name.trim().split(/\s+/);
-		if (parts.length < 2) return ""; 
-
-
-		const firstNameParts = parts.slice(0, -1);
-		const lastName = parts[parts.length - 1];
-
-
-		const firstName = firstNameParts.join(".");
-
-		const normalize = (str: string) => {
-			return str
-				.toLowerCase()
-				.replace(/[ąćęłńóśźż]/g, (char) => {
-					const map: Record<string, string> = {
-						ą: "a",
-						ć: "c",
-						ę: "e",
-						ł: "l",
-						ń: "n",
-						ó: "o",
-						ś: "s",
-						ź: "z",
-						ż: "z",
-					};
-					return map[char] || char;
-				})
-				.replace(/[^a-z.]/g, ""); 
-		};
-
-		const normalizedFirstName = normalize(firstName);
-		const normalizedLastName = normalize(lastName);
-
-		if (!normalizedFirstName || !normalizedLastName) return "";
-
-		return `${normalizedFirstName}.${normalizedLastName}@silamlodych.pl`;
-	};
 
 	const formatFileSize = (bytes: number): string => {
 		if (bytes < 1024) return bytes + " B";
@@ -1579,7 +1563,6 @@ function VacancyFormModal({
 			}
 			return;
 		}
-
 
 		const formatDateForBackend = (dateString: string) => {
 			if (!dateString) return "";
@@ -2139,7 +2122,6 @@ function VacancyFormModal({
 												const value = e.target.value;
 												setContactSearch(value);
 
-
 												const email = generateEmail(value);
 
 												setFormData({
@@ -2517,12 +2499,12 @@ function VacancyFormModal({
 										>
 											{
 												STATUS_ICONS[
-												(formData.status as VacancyStatus) || "active"
+													(formData.status as VacancyStatus) || "active"
 												]
 											}
 											{
 												STATUS_LABELS[
-												(formData.status as VacancyStatus) || "active"
+													(formData.status as VacancyStatus) || "active"
 												]
 											}
 										</span>
@@ -2904,9 +2886,7 @@ export default function Vacancies({ title }: { title?: string }) {
 		currentUser.role === "board" ||
 		currentUser.role === "coordinator";
 
-
 	const [teams, setTeams] = useState<string[]>([]);
-
 
 	useEffect(() => {
 		const fetchData = async () => {
@@ -2919,7 +2899,6 @@ export default function Vacancies({ title }: { title?: string }) {
 					setLoading(false);
 					return;
 				}
-
 
 				const userResponse = await fetch("/api/profile", {
 					headers: { Authorization: `Bearer ${token}` },
@@ -2936,7 +2915,6 @@ export default function Vacancies({ title }: { title?: string }) {
 					});
 				}
 
-
 				const teamsResponse = await fetch("/api/teams", {
 					headers: { Authorization: `Bearer ${token}` },
 				});
@@ -2947,7 +2925,6 @@ export default function Vacancies({ title }: { title?: string }) {
 					);
 					setTeams(teamNames.sort());
 				}
-
 
 				const membersResponse = await fetch("/api/members", {
 					headers: { Authorization: `Bearer ${token}` },
@@ -2967,9 +2944,6 @@ export default function Vacancies({ title }: { title?: string }) {
 					setMembers(mappedMembers);
 				}
 
-
-
-
 				const vacanciesResponse = await fetch("/api/vacancies", {
 					headers: {
 						Authorization: `Bearer ${token}`,
@@ -2980,21 +2954,17 @@ export default function Vacancies({ title }: { title?: string }) {
 				if (vacanciesResponse.ok) {
 					const vacanciesData = await vacanciesResponse.json();
 
-
-
 					const parseJson = (data: any) => {
 						if (!data) return [];
 						if (Array.isArray(data)) return data;
 						if (typeof data === "string") {
 							try {
-
 								let parsed = JSON.parse(data);
 
 								if (typeof parsed === "string") {
 									try {
 										parsed = JSON.parse(parsed);
 									} catch {
-
 										return [];
 									}
 								}
@@ -3005,8 +2975,6 @@ export default function Vacancies({ title }: { title?: string }) {
 						}
 						return [];
 					};
-
-
 
 					const mapped = (
 						Array.isArray(vacanciesData) ? vacanciesData : []
@@ -3023,15 +2991,13 @@ export default function Vacancies({ title }: { title?: string }) {
 						pillar: v.pillar || "",
 
 						contactPerson: {
-
-
 							name:
 								v.contact_person?.first_name && v.contact_person?.last_name
 									? `${v.contact_person.first_name} ${v.contact_person.last_name}`.trim()
 									: v.contact_person?.name ||
-									v.recruitment_messenger_contact || 
-									currentUser.name ||
-									"Admin",
+										v.recruitment_messenger_contact ||
+										currentUser.name ||
+										"Admin",
 							email: v.contact_person?.email || "",
 							phone: v.contact_person?.phone || "",
 						},
@@ -3056,22 +3022,11 @@ export default function Vacancies({ title }: { title?: string }) {
 						},
 					}));
 
-
-
-
-
-
-
-
-
-
 					setVacancies(mapped);
 				} else {
 					logger.warn("⚠️ Błąd pobierania wakatów:", vacanciesResponse.status);
 					setVacancies([]);
 				}
-
-
 			} catch (error) {
 				logger.error("❌ Błąd pobierania danych:", error);
 				setVacancies([]);
@@ -3182,7 +3137,7 @@ export default function Vacancies({ title }: { title?: string }) {
 				message && message.trim() !== "" ? message : undefined;
 
 			const newApplication: Application = {
-				id: `app-${Date.now()}`,
+				id: `app-${crypto.randomUUID()}`,
 				vacancyId: vacancy.id,
 				userId: currentUser.id,
 				userName: currentUser.name,
@@ -3205,7 +3160,6 @@ export default function Vacancies({ title }: { title?: string }) {
 				return v;
 			});
 			setVacancies(updatedVacancies);
-
 
 			setAppliedStatuses((prev) => ({
 				...prev,
@@ -3371,7 +3325,7 @@ export default function Vacancies({ title }: { title?: string }) {
 			)
 		) {
 			const newApplication: Application = {
-				id: `app-${Date.now()}`,
+				id: `app-${crypto.randomUUID()}`,
 				vacancyId: vacancy.id,
 				userId: currentUser.id,
 				userName: currentUser.name,
@@ -3404,7 +3358,6 @@ export default function Vacancies({ title }: { title?: string }) {
 		Record<string, boolean>
 	>({});
 
-
 	const checkAllApplications = async () => {
 		const statuses: Record<string, boolean> = {};
 		for (const vacancy of vacancies) {
@@ -3430,13 +3383,11 @@ export default function Vacancies({ title }: { title?: string }) {
 		setAppliedStatuses(statuses);
 	};
 
-
 	useEffect(() => {
 		if (vacancies.length > 0 && currentUser.id) {
 			checkAllApplications();
 		}
 	}, [vacancies, currentUser.id]);
-
 
 	const hasApplied = (vacancyId: string) => {
 		return appliedStatuses[vacancyId] || false;
@@ -3566,10 +3517,10 @@ export default function Vacancies({ title }: { title?: string }) {
 					{(selectedTeam !== "all" ||
 						selectedStatus !== "all" ||
 						searchTerm) && (
-							<button className={styles.filters__reset} onClick={clearFilters}>
-								Wyczyść filtry
-							</button>
-						)}
+						<button className={styles.filters__reset} onClick={clearFilters}>
+							Wyczyść filtry
+						</button>
+					)}
 				</div>
 			</div>
 

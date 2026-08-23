@@ -182,7 +182,7 @@ function LeaveCard({
 					</div>
 				</div>
 				<div className={styles.leaveCard__badges}>
-					{/* W LeaveCard, w sekcji badge'ów */}
+					
 					<span
 						className={`${styles.leaveCard__status} ${isLeaveActive(leave) ? styles.statusActive : STATUS_COLORS[leave.status]}`}
 					>
@@ -1589,7 +1589,7 @@ export default function Leave({ title }: { title?: string }) {
 					<span>Archiwum</span>
 				</button>
 
-				{/* Reszta statusów (pending, approved, rejected, cancelled) */}
+				
 				{Object.entries(STATUS_LABELS).map(([key, label]) => {
 					const count = leaves.filter((l) => l.status === key as LeaveStatus).length;
 					if (count === 0) return null;

@@ -330,8 +330,8 @@ function MemberCard({
 					<div className={styles.memberCard__nameRow}>
 						<h3 className={styles.memberCard__name}>
 							{member.firstName || ""} {member.lastName || ""}
-							{/* 🔥 IKONKA STATUSU SKŁADKI - DODAJ TUTAJ */}
-							{/* 🔥 IKONKA STATUSU SKŁADKI - MONETA */}
+							
+							
 							{contributionBadge && contributionBadge !== "none" && (
 								<span
 									className={`${styles.contributionDot} ${contributionBadge === "paid"
@@ -357,7 +357,7 @@ function MemberCard({
 						</span>
 					</div>
 					<div className={styles.memberCard__details}>
-						{/* Filary */}
+						
 						{member.pillars && (
 							<span className={styles.memberCard__detail}>
 								<Users size={14} />
@@ -365,7 +365,7 @@ function MemberCard({
 							</span>
 						)}
 
-						{/* Zespoły (pomijając filary) */}
+						
 						{member.team && member.team !== "Brak zespołu" && (
 							<span className={styles.memberCard__detail}>
 								<Users size={14} />
@@ -386,7 +386,7 @@ function MemberCard({
 									.join(", ")}
 							</span>
 						)}
-						{/* Województwo */}
+						
 						{member.province &&
 							member.province !== "" &&
 							member.province !== "Brak" &&
@@ -435,7 +435,7 @@ function MemberCard({
 			</div>
 			<h3 className={styles.memberCard__name}>
 				{member.firstName || ""} {member.lastName || ""}
-				{/* 🔥 IKONKA STATUSU SKŁADKI - MONETA */}
+				
 				{contributionBadge && contributionBadge !== "none" && (
 					<span
 						className={`${styles.contributionDot} ${contributionBadge === "paid"
@@ -453,10 +453,10 @@ function MemberCard({
 				)}
 			</h3>
 			<p className={styles.memberCard__function}>{member.function}</p>
-			{/* TYLKO FILARY - BEZ DUPLIKOWANIA */}
-			{/* FILARY I ZESPOŁY */}
-			{/* FILARY */}
-			{/* FILARY - wyświetlane z ikoną Users */}
+			
+			
+			
+			
 			{member.pillars && (
 				<p className={styles.memberCard__team}>
 					<Users size={14} />
@@ -1043,7 +1043,7 @@ function ProfileModal({
 							</div>
 						</div>
 
-						{/* 🔥 BADGE W OSOBNYM WIERSZU */}
+						
 						{canViewContributions && (
 							<div className={styles.modal__row}>
 								<div className={styles.modal__field}>
@@ -1074,7 +1074,7 @@ function ProfileModal({
 											</span>
 										) : (
 											<span className={styles.contributionBadgeNone}>
-												<Coins size={16} /> {/* 🔥 ZAMIENIONE */}
+												<Coins size={16} /> 
 												Brak danych
 											</span>
 										)}

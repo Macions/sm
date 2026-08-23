@@ -88,13 +88,13 @@ function AppRoutes() {
 			<Routes>
 				<Route path="/login" element={<Navigate to="/dashboard" replace />} />
 
-				{/* ✅ TRASA ONBOARDINGU - POZA DASHBOARDLAYOUT */}
+				
 				<Route
 					path="/onboarding"
 					element={<Onboarding onComplete={() => {}} />}
 				/>
 
-				{/* ✅ RESZTA TRAS - Z DASHBOARDLAYOUT */}
+				
 				<Route element={<DashboardLayout />}>
 					<Route path="/" element={<Dashboard />} />
 					<Route path="/dashboard" element={<Dashboard />} />

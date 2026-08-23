@@ -511,7 +511,7 @@ function OnboardingContactsSection({
 				</span>
 			</div>
 
-			{/* 🔥 SEARCH ZAWSZE WIDOCZNY */}
+			
 			<div className={styles.section__filters}>
 				<div className={styles.section__search}>
 					<Search size={18} className={styles.section__searchIcon} />
@@ -534,7 +534,7 @@ function OnboardingContactsSection({
 				</div>
 			</div>
 
-			{/* LISTA KONTAKTÓW */}
+			
 			{filteredContacts.length === 0 ? (
 				<div className={styles.emptyState}>
 					<User size={48} className={styles.emptyState__icon} />
@@ -581,7 +581,7 @@ function OnboardingContactsSection({
 								</div>
 							</div>
 
-							{/* KONTAKTY */}
+							
 							<div className={styles.onboardingContactCard__contacts}>
 								{contact.salaContacts.length > 0 && (
 									<div className={styles.onboardingContactCard__contactGroup}>
@@ -3901,7 +3901,7 @@ export default function SocialMedia({ title }: { title?: string }) {
 				/>
 			)}
 
-			{/* Modal edycji twórcy */}
+			
 			{isEditCreatorModalOpen && editingCreator && (
 				<EditCreatorModal
 					isOpen={isEditCreatorModalOpen}

@@ -1781,8 +1781,17 @@ app.get("/api/tasks", authMiddleware, async (req: any, res) => {
 
 
 		else {
-			whereCondition = { assigned_to: parseInt(userId) };
-		}
+    whereCondition = {
+        OR: [
+            { assigned_to: parseInt(userId) },
+            {
+                assigned_users: {
+                    contains: `"${userId}"`
+                }
+            }
+        ]
+    };
+}
 
 
 

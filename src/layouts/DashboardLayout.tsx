@@ -181,7 +181,7 @@ export default function DashboardLayout() {
 					onMobileMenuToggle={toggleMobileMenu}
 				/>
 
-				{/* 👇 KONTENER DLA HEADER + MAIN */}
+				
 				<div className={styles.mainWrapper}>
 					<Header
 						title={getPageTitle()}

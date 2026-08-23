@@ -284,7 +284,7 @@ export function RevenueChart({ year = 2026, title = "Przychody i wydatki" }: Rev
 			border: '1px solid #e5e7eb',
 			boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
 		}}>
-			{/* Nagłówek */}
+			
 			<div style={{
 				display: 'flex',
 				justifyContent: 'space-between',
@@ -353,7 +353,7 @@ export function RevenueChart({ year = 2026, title = "Przychody i wydatki" }: Rev
 				</div>
 			</div>
 
-			{/* Podsumowanie */}
+			
 			<div style={{
 				display: 'grid',
 				gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))',
@@ -401,7 +401,7 @@ export function RevenueChart({ year = 2026, title = "Przychody i wydatki" }: Rev
 				</div>
 			</div>
 
-			{/* Wykres */}
+			
 			<div style={{ width: '100%', height: '400px' }}>
 				<ResponsiveContainer>
 					<ComposedChart
@@ -527,7 +527,7 @@ export function RevenueChart({ year = 2026, title = "Przychody i wydatki" }: Rev
 										/>
 									))}
 								</Bar>
-								{/* DODAJ NOWY BAR DLA WYDATKÓW BIUROWYCH - BEZ stackId */}
+								
 								<Bar
 									dataKey="wydatkiBiurowe"
 									fill={COLORS.wydatkiBiurowe}    
@@ -598,7 +598,7 @@ export function RevenueChart({ year = 2026, title = "Przychody i wydatki" }: Rev
 							</>
 						)}
 
-						{/* Linia zysku */}
+						
 						<Line
 							type="monotone"
 							dataKey="profit"
@@ -617,7 +617,7 @@ export function RevenueChart({ year = 2026, title = "Przychody i wydatki" }: Rev
 				</ResponsiveContainer>
 			</div>
 
-			{/* Szczegóły po kliknięciu */}
+			
 			{showDetails && selectedMonth && (
 				<div style={{
 					marginTop: '16px',

@@ -73,7 +73,7 @@ export function TaskRatingModal({
 				</div>
 
 				<div className={styles.body}>
-					{/* Ocena ogólna */}
+					
 					<div className={styles.section}>
 						<label className={styles.label}>
 							Poziom trudności <span className={styles.required}>*</span>
@@ -104,7 +104,7 @@ export function TaskRatingModal({
 						)}
 					</div>
 
-					{/* Komentarz */}
+					
 					<div className={styles.section}>
 						<label className={styles.label}>
 							Komentarz <span className={styles.optional}>(opcjonalnie)</span>

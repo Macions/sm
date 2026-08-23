@@ -138,10 +138,10 @@ const downloadFile = async (url: string, fileName: string) => {
 			window.URL.revokeObjectURL(downloadUrl);
 		}, 1000);
 
-		toast.success("Plik pobrany pomyślnie!"); 
+		toast.success("Plik pobrany pomyślnie!");
 	} catch (error) {
 		logger.error("Błąd pobierania:", error);
-		toast.error("Nie udało się pobrać pliku"); 
+		toast.error("Nie udało się pobrać pliku");
 	}
 };
 
@@ -452,10 +452,9 @@ function TutorialModal({
 					? "Poradnik został zaktualizowany!"
 					: "Poradnik został dodany!",
 			);
-
 		} catch (error) {
 			logger.error("Błąd zapisu:", error);
-			toast.error(`Nie udało się zapisać: ${(error as Error).message}`); 
+			toast.error(`Nie udało się zapisać: ${(error as Error).message}`);
 		} finally {
 			setIsUploading(false);
 			setLoading(false);
@@ -463,9 +462,8 @@ function TutorialModal({
 	};
 
 	const handleFileUpload = (file: File) => {
-
 		if (file.size > 10 * 1024 * 1024) {
-			toast.error("Plik jest za duży. Maksymalny rozmiar: 10MB"); 
+			toast.error("Plik jest za duży. Maksymalny rozmiar: 10MB");
 			return;
 		}
 
@@ -514,10 +512,8 @@ function TutorialModal({
 				return;
 			}
 		} else if (attachment) {
-
 			toast.success(`️ Usunięto plik: ${attachment.name}`);
 		}
-
 
 		if (attachment) {
 			setFormData({
@@ -975,20 +971,16 @@ export default function Tutorials() {
 		};
 	}, [contextUser]);
 
-
 	const canManageTutorials = useMemo(() => {
 		if (!currentUser) return false;
-
 
 		if (currentUser.role === "admin" || currentUser.role === "board") {
 			return true;
 		}
 
-
 		if (currentUser.isLeader === true) {
 			return true;
 		}
-
 
 		return hasPermission(currentUser.role, "canManageGuides");
 	}, [currentUser]);
@@ -1022,14 +1014,12 @@ export default function Tutorials() {
 		fetchUserAndTutorials();
 	}, []);
 	const canViewTutorial = (tutorial: Tutorial): boolean => {
-
 		if (
 			(currentUser?.role as any) === "admin" ||
 			(currentUser?.role as any) === "board"
 		) {
 			return true;
 		}
-
 
 		const isCoordinator = currentUser?.isLeader === true;
 
@@ -1116,7 +1106,6 @@ export default function Tutorials() {
 			if (!response.ok) {
 				throw new Error("Błąd usuwania");
 			}
-
 
 			const fetchResponse = await fetch("/api/tutorials", {
 				headers: {
@@ -1321,7 +1310,6 @@ export default function Tutorials() {
 					filteredTutorials.map((tutorial) => (
 						<React.Fragment key={tutorial.id}>
 							{" "}
-							{/* ✅ LUB <> */}
 							<TutorialCard
 								key={tutorial.id}
 								tutorial={tutorial}

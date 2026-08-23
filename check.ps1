@@ -1,6 +1,6 @@
-﻿# ============================================
-# SKRYPT SPRAWDZAJÄ„CY WSZYSTKIE PLIKI
-# ============================================
+﻿
+
+
 
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host "  SPRAWDZANIE WSZYSTKICH PLIKOW" -ForegroundColor Cyan
@@ -10,9 +10,9 @@ Write-Host ""
 $allGood = $true
 $missing = @()
 
-# ============================================
-# SPRAWDZENIE KATALOGOW
-# ============================================
+
+
+
 Write-Host "[1] SPRAWDZANIE KATALOGOW..." -ForegroundColor Yellow
 Write-Host ""
 
@@ -47,9 +47,9 @@ foreach ($dir in $dirs) {
 }
 Write-Host ""
 
-# ============================================
-# SPRAWDZENIE PLIKOW FRONTEND
-# ============================================
+
+
+
 Write-Host "[2] SPRAWDZANIE PLIKOW FRONTEND..." -ForegroundColor Yellow
 Write-Host ""
 
@@ -89,9 +89,9 @@ foreach ($file in $files) {
 }
 Write-Host ""
 
-# ============================================
-# SPRAWDZENIE PLIKOW BACKEND
-# ============================================
+
+
+
 Write-Host "[3] SPRAWDZANIE PLIKOW BACKEND..." -ForegroundColor Yellow
 Write-Host ""
 
@@ -114,9 +114,9 @@ foreach ($file in $backendFiles) {
 }
 Write-Host ""
 
-# ============================================
-# SPRAWDZENIE ZALEZNOSCI
-# ============================================
+
+
+
 Write-Host "[4] SPRAWDZANIE ZALEZNOSCI..." -ForegroundColor Yellow
 Write-Host ""
 
@@ -129,9 +129,9 @@ if (Test-Path "node_modules/recharts") {
 }
 Write-Host ""
 
-# ============================================
-# SPRAWDZENIE NODE_MODULES
-# ============================================
+
+
+
 Write-Host "[5] SPRAWDZANIE NODE_MODULES..." -ForegroundColor Yellow
 Write-Host ""
 
@@ -144,9 +144,9 @@ if (Test-Path "node_modules") {
 }
 Write-Host ""
 
-# ============================================
-# PODSUMOWANIE
-# ============================================
+
+
+
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host "  PODSUMOWANIE" -ForegroundColor Cyan
 Write-Host "========================================" -ForegroundColor Cyan

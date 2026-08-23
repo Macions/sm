@@ -348,7 +348,7 @@ export async function syncMembers() {
 		let skippedRezygnacja = 0;
 		let duplicateEmails = 0;
 		let teamMembersAdded = 0;
-		let teamMembersUpdated = 0;
+		const teamMembersUpdated = 0;
 		let pillarsPreserved = 0; 
 
 		const usedEmails = new Set<string>();

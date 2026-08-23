@@ -302,7 +302,7 @@ export default function Header({
 
 	return (
 		<div className={styles.topbar}>
-			{/* 👇 LEWA STRONA – PRZYCISKI */}
+			
 			<div className={styles.topbar__left}>
 				<button
 					className={styles.topbar__menu}
@@ -329,7 +329,7 @@ export default function Header({
 
 			<h1 className={styles.topbar__title}>{title}</h1>
 
-			{/* 👇 WYSZUKIWANIE */}
+			
 			<div className={styles.topbar__search}>
 				<Search size={16} />
 				<input
@@ -358,7 +358,7 @@ export default function Header({
 					</button>
 				)}
 
-				{/* 👇 WYNIKI WYSZUKIWANIA */}
+				
 				{isSearchFocused && localSearchQuery.length >= 2 && (
 					<div className={styles.searchResultsDropdown}>
 						{searchResults && searchResults.length > 0 ? (
@@ -428,7 +428,7 @@ export default function Header({
 				)}
 			</div>
 
-			{/* 👇 POWIADOMIENIA */}
+			
 			<div className={styles.topbar__actions}>
 				{!hideNotifications && (
 					<div className={styles.notificationsWrapper} ref={dropdownRef}>

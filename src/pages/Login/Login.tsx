@@ -1,5 +1,3 @@
-
-
 import React, { useState } from "react";
 import { useUser } from "@/context/UserContext";
 import { useGoogleLogin } from "@react-oauth/google";
@@ -23,13 +21,8 @@ const Login: React.FC = () => {
 	};
 
 	const checkOnboardingStatus = async () => {
-
-
 		window.location.href = "/dashboard";
 	};
-
-
-
 
 	const loginWithCalendar = useGoogleLogin({
 		onSuccess: async (tokenResponse) => {
@@ -37,11 +30,8 @@ const Login: React.FC = () => {
 			setLoading(true);
 			setError(null);
 
-
 			try {
-
 				const response = await fetch("/api/auth/google-token", {
-
 					method: "POST",
 					headers: {
 						"Content-Type": "application/json",
@@ -167,7 +157,7 @@ const Login: React.FC = () => {
 
 						{error && <div className={styles.errorMessage}>{error}</div>}
 
-						<form onSubmit={handleSubmit} >
+						<form onSubmit={handleSubmit} hidden>
 							<div className={styles.inputGroup}>
 								<input
 									type="email"
@@ -209,7 +199,6 @@ const Login: React.FC = () => {
 							<span hidden>lub</span>
 						</div> */}
 
-						{/* ✅ PRZYCISK LOGOWANIA PRZEZ GOOGLE Z DOSTĘPEM DO KALENDARZA */}
 						<div className={styles.calendarScopeWrapper}>
 							<button
 								onClick={() => loginWithCalendar()}

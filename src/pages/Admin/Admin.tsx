@@ -1011,7 +1011,7 @@ function StructureManagement({
 		const isTeamPillar = isPillar(team.name);
 		const isExpanded = expandedTeams[team.id] || false;
 
-		let members = [...team.members];
+		const members = [...team.members];
 
 
 		if (isTeamPillar) {
@@ -1434,7 +1434,7 @@ function StructureManagement({
 												rows={3}
 											/>
 										</div>
-										{/* Dodaj pole wyboru rodzica */}
+										
 										<div className={styles.modal__field}>
 											<label>Zespół nadrzędny</label>
 											<select
@@ -1600,11 +1600,11 @@ function StructureManagement({
 														</span>
 													</div>
 
-													{/* đź”Ą AKCJE - TERAZ NA KOĹCU */}
+													
 													<div className={styles.memberItem__actions}>
 														{canManage && (
 															<>
-																{/* đź”Ą EDYCJA ROLI - teraz przed koronką */}
+																
 																{editingMemberRole?.memberId === member.id ? (
 
 																	<div
@@ -1684,7 +1684,7 @@ function StructureManagement({
 																	</button>
 																)}
 
-																{/* Przyciski lidera */}
+																
 																{!member.is_leader && (
 																	<button
 																		className={styles.memberItem__makeLeader}
@@ -1716,7 +1716,7 @@ function StructureManagement({
 																	</button>
 																)}
 
-																{/* Przycisk usuwania */}
+																
 																<button
 																	className={styles.memberItem__remove}
 																	onClick={() =>
@@ -2242,7 +2242,7 @@ function AccessManagement() {
 				</button>
 			</div>
 
-			{/* Lista osób z dostępami */}
+			
 			{membersWithAccess.length === 0 ? (
 				<div className={styles.accessEmpty}>
 					<Shield size={48} />
@@ -2297,8 +2297,8 @@ function AccessManagement() {
 				</div>
 			)}
 
-			{/* Panel edycji dostępu dla członka */}
-			{/* Panel edycji dostępu dla członka */}
+			
+			
 			{editingMemberId && selectedMember && (
 				<div className={styles.modalOverlay} onClick={handleCloseEdit}>
 					<div
@@ -2316,7 +2316,7 @@ function AccessManagement() {
 							</button>
 						</div>
 
-						{/* PRZEŁĄCZNIK TYPU */}
+						
 						<div
 							className={styles.modal__field}
 							style={{ padding: "0 24px", marginTop: "8px" }}
@@ -2366,7 +2366,7 @@ function AccessManagement() {
 						</div>
 
 						<div className={styles.modal__body}>
-							{/* FILTR KATEGORII */}
+							
 							<div className={styles.modal__field}>
 								<label>Filtruj kategorię</label>
 								<select
@@ -2391,7 +2391,7 @@ function AccessManagement() {
 								</select>
 							</div>
 
-							{/* DODAWANIE NOWEGO DOSTĘPU */}
+							
 							<div className={styles.modal__field}>
 								<label>Dodaj nowy dostęp</label>
 								<div
@@ -2425,7 +2425,7 @@ function AccessManagement() {
 								</div>
 							</div>
 
-							{/* LISTA OBECNYCH DOSTĘPÓW */}
+							
 							<div className={styles.modal__field}>
 								<label>Obecne dostępy ({accessItems.length})</label>
 								<div
@@ -2460,7 +2460,7 @@ function AccessManagement() {
 								</div>
 							</div>
 
-							{/* SUGESTIE DOSTĘPÓW */}
+							
 							{newAccess.trim() && (
 								<div
 									className={styles.accessSuggestions}
@@ -2549,7 +2549,7 @@ function AccessManagement() {
 				</div>
 			)}
 
-			{/* Modal do dodawania dostępu */}
+			
 			{showAddModal && (
 				<div
 					className={styles.modalOverlay}
@@ -2568,7 +2568,7 @@ function AccessManagement() {
 						</div>
 
 						<div className={styles.modal__body}>
-							{/* 1. PRZEŁĄCZNIK TYPU */}
+							
 							<div className={styles.modal__field}>
 								<label>Typ wpisu</label>
 								<div style={{ display: "flex", gap: "16px", marginTop: "4px" }}>
@@ -2614,7 +2614,7 @@ function AccessManagement() {
 								</div>
 							</div>
 
-							{/* 2. FILTR KATEGORII */}
+							
 							<div className={styles.modal__field}>
 								<label>Filtruj kategorię</label>
 								<select
@@ -2639,7 +2639,7 @@ function AccessManagement() {
 								</select>
 							</div>
 
-							{/* 3. WYBÓR CZŁONKA */}
+							
 							<div className={styles.modal__field}>
 								<label>Wybierz członka *</label>
 								<div style={{ position: "relative" }}>
@@ -2681,8 +2681,8 @@ function AccessManagement() {
 								</div>
 							</div>
 
-							{/* 4. POLA DLA PRZEDMIOTU (warunkowo) */}
-							{/* 4. POLA DLA PRZEDMIOTU (warunkowo) */}
+							
+							
 							{entryType === "item" && (
 								<div
 									className={styles.modal__itemFields}
@@ -2704,7 +2704,7 @@ function AccessManagement() {
 										Dane przedmiotu
 									</h4>
 
-									{/* Nazwa przedmiotu */}
+									
 									<div className={styles.modal__field}>
 										<label>Nazwa przedmiotu *</label>
 										<input
@@ -2716,7 +2716,7 @@ function AccessManagement() {
 										/>
 									</div>
 
-									{/* Wartość */}
+									
 									<div className={styles.modal__field}>
 										<label>Wartość (PLN)</label>
 										<input
@@ -2729,7 +2729,7 @@ function AccessManagement() {
 										/>
 									</div>
 
-									{/* Notatki */}
+									
 									<div className={styles.modal__field}>
 										<label>Notatki</label>
 										<textarea
@@ -2742,7 +2742,7 @@ function AccessManagement() {
 									</div>
 								</div>
 							)}
-							{/* 5. NAZWA DOSTĘPU (warunkowo) */}
+							
 							{entryType === "access" && (
 								<div className={styles.modal__field}>
 									<label>Nazwa dostępu *</label>
