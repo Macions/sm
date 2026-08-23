@@ -13,11 +13,9 @@ body {
 .loginContainer {
 	height: 100vh;
 	width: 100vw;
-	background: linear-gradient(
-		to bottom right,
-		rgb(69 22 156 / 40.6%) 0%,
-		rgb(87 29 119 / 40.6%) 100%
-	);
+	background: linear-gradient(to bottom right,
+			rgb(69 22 156 / 40.6%) 0%,
+			rgb(87 29 119 / 40.6%) 100%);
 	display: flex;
 	align-items: center;
 	justify-content: center;
@@ -255,7 +253,7 @@ body {
 	background: #106ebe;
 }
 
-@media (width <= 1024px) {
+@media (width <=1024px) {
 	.loginCard {
 		width: 92vw;
 		height: 560px;
@@ -279,7 +277,8 @@ body {
 	}
 }
 
-@media (width <= 768px) {
+@media (width <=768px) {
+
 	html,
 	body {
 		overflow: auto;
@@ -379,7 +378,7 @@ body {
 	}
 }
 
-@media (width <= 420px) {
+@media (width <=420px) {
 	.loginContainer {
 		padding: 12px;
 	}
@@ -420,7 +419,7 @@ body {
 	}
 }
 
-@media (height <= 650px) and (width <= 768px) {
+@media (height <=650px) and (width <=768px) {
 	.loginContainer {
 		padding: 10px;
 	}
@@ -477,7 +476,7 @@ body {
 	width: 100% !important;
 }
 
-.googleButtonWrapper > div {
+.googleButtonWrapper>div {
 	width: 100% !important;
 }
 
@@ -548,7 +547,7 @@ body {
 	color: #3c4043;
 	cursor: pointer;
 	transition: all 0.2s ease;
-	height: 56px; 
+	height: 56px;
 }
 
 .googleBtn:hover {
@@ -569,4 +568,50 @@ body {
 	width: 20px;
 	height: 20px;
 	flex-shrink: 0;
+}
+
+/* ============================================
+   HINT DLA DEVELOPERA
+   ============================================ */
+
+.devHint {
+	margin-top: 12px;
+	padding: 8px 12px;
+	background: rgba(108, 59, 108, 0.08);
+	border-radius: 6px;
+	border: 1px dashed rgba(108, 59, 108, 0.2);
+	text-align: center;
+}
+
+.devHintText {
+	font-size: 12px;
+	color: var(--text-secondary, #888);
+	opacity: 0.5;
+	transition: opacity 0.3s;
+}
+
+.devHintText:hover {
+	opacity: 1;
+}
+
+/* ============================================
+   PRZYCISK ZAPOMNIAŁEŚ HASŁA
+   ============================================ */
+
+.formOptions {
+	display: flex;
+	justify-content: flex-end;
+	margin: 8px 0 16px;
+}
+
+.forgot {
+	color: var(--text-secondary, #888);
+	font-size: 14px;
+	text-decoration: none;
+	transition: color 0.2s;
+}
+
+.forgot:hover {
+	color: var(--primary, #6C3B6C);
+	text-decoration: underline;
 }

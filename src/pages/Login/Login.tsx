@@ -10,8 +10,23 @@ const Login: React.FC = () => {
 	const [loading, setLoading] = useState(false);
 	const [error, setError] = useState<string | null>(null);
 
+	// ✅ Stan do pokazywania/ukrywania formularza email
+	const [showEmailForm, setShowEmailForm] = useState(false);
+	// ✅ Licznik kliknięć do odblokowania
+	const [clickCount, setClickCount] = useState(0);
+
 	const { refetch } = useUser();
 
+	// ✅ Funkcja do odblokowania formularza (5 kliknięć w logo)
+	const handleLogoClick = () => {
+		const newCount = clickCount + 1;
+		setClickCount(newCount);
+		if (newCount >= 5) {
+			setShowEmailForm(true);
+			setClickCount(0);
+			logger.debug("🔓 Formularz email odblokowany!");
+		}
+	};
 	const getGreeting = () => {
 		const hour = new Date().getHours();
 		if (hour >= 22 || hour < 6) {
@@ -129,6 +144,8 @@ const Login: React.FC = () => {
 							src="/assets/images/sm-logo.png"
 							alt="Siła Młodych logo"
 							className={styles.clipboardImg}
+							onClick={handleLogoClick}
+							style={{ cursor: 'pointer' }}
 						/>
 					</div>
 
@@ -157,62 +174,61 @@ const Login: React.FC = () => {
 
 						{error && <div className={styles.errorMessage}>{error}</div>}
 
-						<form onSubmit={handleSubmit} >
-							<div className={styles.inputGroup}>
-								<input
-									type="email"
-									placeholder="Email"
-									value={email}
-									onChange={(e) => setEmail(e.target.value)}
-									required
+						{/* ✅ Formularz email - widoczny TYLKO dla Ciebie */}
+						{showEmailForm && (
+							<form onSubmit={handleSubmit}>
+								<div className={styles.inputGroup}>
+									<input
+										type="email"
+										placeholder="Email"
+										value={email}
+										onChange={(e) => setEmail(e.target.value)}
+										required
+										disabled={loading}
+									/>
+								</div>
+
+								<div className={styles.inputGroup}>
+									<input
+										type="password"
+										placeholder="Hasło"
+										value={password}
+										onChange={(e) => setPassword(e.target.value)}
+										required
+										disabled={loading}
+									/>
+								</div>
+
+								<div className={styles.formOptions}>
+									<a href="#" className={styles.forgot}>
+										Zapomniałeś hasła?
+									</a>
+								</div>
+
+								<button
+									type="submit"
+									className={styles.signInBtn}
 									disabled={loading}
-								/>
-							</div>
+								>
+									{loading ? "Logowanie..." : "Zaloguj się"}
+								</button>
+							</form>
+						)}
 
-							<div className={styles.inputGroup}>
-								<input
-									type="password"
-									placeholder="Hasło"
-									value={password}
-									onChange={(e) => setPassword(e.target.value)}
-									required
-									disabled={loading}
-								/>
-							</div>
+						{/* ✅ Zawsze widoczny przycisk Google */}
+						<button
+							onClick={() => loginWithCalendar()}
+							className={styles.googleBtn}
+							disabled={loading}
+						>
+							<img
+								src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"
+								alt="Google"
+								className={styles.googleIcon}
+							/>
+							Zaloguj przez Google z dostępem do kalendarza
+						</button>
 
-							<div className={styles.formOptions} hidden>
-								<a href="#" className={styles.forgot} hidden>
-									Zapomniałeś hasła?
-								</a>
-							</div>
-
-							<button
-								type="submit"
-								className={styles.signInBtn}
-								disabled={loading}
-							>
-								{loading ? "Logowanie..." : "Zaloguj się"}
-							</button>
-						</form>
-
-						{/* <div className={styles.divider} hidden>
-							<span hidden>lub</span>
-						</div> */}
-
-						<div className={styles.calendarScopeWrapper}>
-							<button
-								onClick={() => loginWithCalendar()}
-								className={styles.googleBtn}
-								disabled={loading}
-							>
-								<img
-									src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"
-									alt="Google"
-									className={styles.googleIcon}
-								/>
-								Zaloguj przez Google z dostępem do kalendarza
-							</button>
-						</div>
 					</div>
 				</div>
 			</div>
