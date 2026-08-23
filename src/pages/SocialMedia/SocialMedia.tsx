@@ -454,7 +454,6 @@ interface MaterialsBoardProps {
 // Dodaj nowy komponent dla kontaktów z onboardingu
 function OnboardingContactsSection({
 	contacts,
-	canManage,
 }: {
 	contacts: OnboardingContact[];
 	canManage: boolean;
@@ -1488,11 +1487,10 @@ function AddCreatorModal({
 											return (
 												<div
 													key={user.id}
-													className={`${styles.searchableSelect__item} ${
-														formData.user_id === user.id
+													className={`${styles.searchableSelect__item} ${formData.user_id === user.id
 															? styles.searchableSelect__itemSelected
 															: ""
-													}`}
+														}`}
 													onClick={() => handleSelectUser(user.id)}
 												>
 													<span className={styles.searchableSelect__itemName}>
@@ -1698,11 +1696,10 @@ function AddMemberModal({
 											return (
 												<div
 													key={user.id}
-													className={`${styles.searchableSelect__item} ${
-														formData.user_id === user.id
+													className={`${styles.searchableSelect__item} ${formData.user_id === user.id
 															? styles.searchableSelect__itemSelected
 															: ""
-													}`}
+														}`}
 													onClick={() => handleSelectUser(user.id)}
 												>
 													<span className={styles.searchableSelect__itemName}>
@@ -2819,13 +2816,12 @@ function TasksSection({
 							<h3 className={styles.taskCard__title}>{task.name}</h3>
 							<div className={styles.taskCard__actions}>
 								<span
-									className={`${styles.taskCard__status} ${
-										task.status === "done"
+									className={`${styles.taskCard__status} ${task.status === "done"
 											? styles.taskStatusDone
 											: task.status === "in_progress"
 												? styles.taskStatusInProgress
 												: styles.taskStatusPending
-									}`}
+										}`}
 								>
 									{TASK_STATUS_LABELS[task.status]}
 								</span>
@@ -3131,8 +3127,6 @@ export default function SocialMedia({ title }: { title?: string }) {
 	const [onboardingContacts, setOnboardingContacts] = useState<
 		OnboardingContact[]
 	>([]);
-	const [isOnboardingContactsOpen, setIsOnboardingContactsOpen] =
-		useState(false);
 	const [tasks, setTasks] = useState<Task[]>([]);
 	// W głównym komponencie SocialMedia, obok innych useState:
 	const [editingMember, setEditingMember] = useState<TeamMember | null>(null);
@@ -3148,7 +3142,7 @@ export default function SocialMedia({ title }: { title?: string }) {
 	const [isPublicationModalOpen, setIsPublicationModalOpen] = useState(false);
 	const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
 	const [isCreatorModalOpen, setIsCreatorModalOpen] = useState(false);
-	const [canView, setCanView] = useState(false);
+	const [_canView, setCanView] = useState(false);
 	const [isContactModalOpen, setIsContactModalOpen] = useState(false);
 	const [availableUsers, setAvailableUsers] = useState<any[]>([]);
 	const [editingPublication, setEditingPublication] =
@@ -3210,18 +3204,18 @@ export default function SocialMedia({ title }: { title?: string }) {
 	};
 	const fetchOnboardingContacts = async () => {
 		try {
-			console.log("📋 [onboarding] Pobieranie kontaktów...");
+			// console.log("📋 [onboarding] Pobieranie kontaktów...");
 			const token = localStorage.getItem("accessToken");
 			const response = await fetch("/api/admin/onboarding-contacts", {
 				headers: { Authorization: `Bearer ${token}` },
 			});
 
-			console.log("📋 [onboarding] Status odpowiedzi:", response.status);
+			// console.log("📋 [onboarding] Status odpowiedzi:", response.status);
 
 			if (response.ok) {
 				const data = await response.json();
-				console.log("📋 [onboarding] Otrzymane dane:", data);
-				console.log("📋 [onboarding] Liczba kontaktów:", data.length);
+				// console.log("📋 [onboarding] Otrzymane dane:", data);
+				// console.log("📋 [onboarding] Liczba kontaktów:", data.length);
 				setOnboardingContacts(data);
 			} else {
 				const error = await response.json();
@@ -3384,8 +3378,8 @@ export default function SocialMedia({ title }: { title?: string }) {
 		title: "",
 		message: "",
 		confirmText: "Potwierdź",
-		onConfirm: () => {},
-		onCancel: () => {},
+		onConfirm: () => { },
+		onCancel: () => { },
 	});
 	useEffect(() => {
 		const fetchAllData = async () => {

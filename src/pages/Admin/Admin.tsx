@@ -51,25 +51,25 @@ interface SystemLog {
 	user_name: string;
 	user_role: string;
 	action_type:
-		| "CREATE"
-		| "UPDATE"
-		| "DELETE"
-		| "LOGIN"
-		| "LOGOUT"
-		| "APPROVE"
-		| "REJECT";
+	| "CREATE"
+	| "UPDATE"
+	| "DELETE"
+	| "LOGIN"
+	| "LOGOUT"
+	| "APPROVE"
+	| "REJECT";
 	category:
-		| "USER"
-		| "TEAM"
-		| "LEAVE"
-		| "PROJECT"
-		| "VACANCY"
-		| "TUTORIAL"
-		| "SOCIAL_MEDIA"
-		| "PERMISSION"
-		| "STRUCTURE"
-		| "NOTIFICATION"
-		| "AUTH";
+	| "USER"
+	| "TEAM"
+	| "LEAVE"
+	| "PROJECT"
+	| "VACANCY"
+	| "TUTORIAL"
+	| "SOCIAL_MEDIA"
+	| "PERMISSION"
+	| "STRUCTURE"
+	| "NOTIFICATION"
+	| "AUTH";
 	endpoint: string;
 	method: string;
 	entity_id: string | null;
@@ -828,8 +828,8 @@ function StructureManagement({
 		title: "",
 		message: "",
 		confirmText: "Potwierdź",
-		onConfirm: () => {},
-		onCancel: () => {},
+		onConfirm: () => { },
+		onCancel: () => { },
 	});
 	const [expandedTeams, setExpandedTeams] = useState<Record<string, boolean>>(
 		{},
@@ -889,11 +889,11 @@ function StructureManagement({
 			const token = localStorage.getItem("accessToken");
 
 			// đź”Ą DODAJ LOG:
-			console.log("đź“¤ Wysyłam request:", {
-				memberId,
-				teamId,
-				role_in_team: trimmed,
-			});
+			// console.log("đź“¤ Wysyłam request:", {
+			// 	memberId,
+			// 	teamId,
+			// 	role_in_team: trimmed,
+			// });
 
 			const response = await fetch(`/api/admin/team-members/${memberId}`, {
 				method: "PUT",
@@ -906,9 +906,7 @@ function StructureManagement({
 				}),
 			});
 
-			// đź”Ą DODAJ LOG odpowiedzi:
-			const data = await response.json();
-			console.log("đź“Ą Odpowiedź backendu:", data);
+			// console.log("đź“Ą Odpowiedź backendu:", data);
 
 			if (!response.ok) throw new Error("Błąd aktualizacji roli");
 
@@ -948,7 +946,7 @@ function StructureManagement({
 		"Organy kontrolne",
 		"Siła młodych",
 		"Siła Młodych",
-		
+
 	];
 
 	// ============================================================
@@ -1049,9 +1047,9 @@ function StructureManagement({
 				const hidden = members.slice(3);
 
 				// đź”Ą DODAJ TEN LOG:
-				console.log(
-					`đź”Ť Team: ${team.name}, display: ${display.length}, hidden: ${hidden.length}, hasMore: ${hidden.length > 0}`,
-				);
+				// console.log(
+				// 	`đź”Ť Team: ${team.name}, display: ${display.length}, hidden: ${hidden.length}, hasMore: ${hidden.length > 0}`,
+				// );
 
 				return { display, hidden, total: members.length };
 			}
@@ -1748,9 +1746,9 @@ function StructureManagement({
 												<button
 													className={styles.showAllBtn}
 													onClick={() => {
-														console.log(
-															`đź”„ Kliknięto: ${team.id}, obecny stan: ${isExpanded}`,
-														);
+														// console.log(
+														// 	`đź”„ Kliknięto: ${team.id}, obecny stan: ${isExpanded}`,
+														// );
 														toggleShowAll(team.id);
 													}}
 												>
@@ -2270,21 +2268,21 @@ function AccessManagement() {
 										{member.email}
 									</span>
 									<div className={styles.accessItem__tags}>
-    {member.access && member.access.length > 0 ? (
-        member.access.map((item: any) => {
-            // Jeśli item to obiekt z access_name
-            const label = typeof item === 'object' ? item.access_name || item.name || JSON.stringify(item) : item;
-            const key = typeof item === 'object' ? item.id || label : label;
-            return (
-                <span key={key} className={styles.accessTag}>
-                    {label}
-                </span>
-            );
-        })
-    ) : (
-        <span className={styles.accessEmptyTag}>Brak dostępów</span>
-    )}
-</div>
+										{member.access && member.access.length > 0 ? (
+											member.access.map((item: any) => {
+												// Jeśli item to obiekt z access_name
+												const label = typeof item === 'object' ? item.access_name || item.name || JSON.stringify(item) : item;
+												const key = typeof item === 'object' ? item.id || label : label;
+												return (
+													<span key={key} className={styles.accessTag}>
+														{label}
+													</span>
+												);
+											})
+										) : (
+											<span className={styles.accessEmptyTag}>Brak dostępów</span>
+										)}
+									</div>
 								</div>
 								<button
 									className={styles.accessItem__editBtn}

@@ -502,8 +502,8 @@ function TaskDetailModal({
 				fullUrl = `/api${fileUrl}`;
 			}
 
-			console.log("📁 Pobieram plik z:", fullUrl);
-			console.log("📁 Nazwa pliku:", decodedFileName);
+			// console.log("📁 Pobieram plik z:", fullUrl);
+			// console.log("📁 Nazwa pliku:", decodedFileName);
 
 			const response = await fetch(fullUrl, {
 				headers: {
@@ -906,9 +906,9 @@ function TaskCard({
 						<button
 							className={`${styles.taskCard__actionBtn} ${styles.taskCard__actionBtnDanger}`}
 							onClick={() => {
-								console.log("🗑️ KLIKNIĘTO USUŃ - TaskCard");
-								console.log("📌 task:", task);
-								console.log("📌 onDelete:", onDelete);
+								// console.log("🗑️ KLIKNIĘTO USUŃ - TaskCard");
+								// console.log("📌 task:", task);
+								// console.log("📌 onDelete:", onDelete);
 								if (onDelete) {
 									onDelete(task);
 								} else {
@@ -2105,7 +2105,7 @@ export default function Tasks() {
 		setTaskToDelete(null);
 	};
 	const handleSaveTask = async (task: Task) => {
-		console.log("[SAVE TASK] START", task.id, task.status);
+		// console.log("[SAVE TASK] START", task.id, task.status);
 
 		try {
 			const token = localStorage.getItem("accessToken");
@@ -2161,7 +2161,7 @@ export default function Tasks() {
 				isEdit && isNumericId ? `/api/tasks/${task.id}` : "/api/tasks";
 			const method = isEdit && isNumericId ? "PUT" : "POST";
 
-			console.log("URL:", url, "Method:", method);
+			// console.log("URL:", url, "Method:", method);
 
 			const payload = {
 				title: task.title,
@@ -2183,7 +2183,7 @@ export default function Tasks() {
 				pillar: task.pillar || null,
 			};
 
-			console.log("Wysyłam zapytanie...");
+			// console.log("Wysyłam zapytanie...");
 
 			const response = await fetch(url, {
 				method,
@@ -2194,7 +2194,7 @@ export default function Tasks() {
 				body: JSON.stringify(payload),
 			});
 
-			console.log("Response status:", response.status);
+			// console.log("Response status:", response.status);
 
 			if (response.ok) {
 				const data = await response.json();

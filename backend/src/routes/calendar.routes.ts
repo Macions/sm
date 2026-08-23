@@ -10,12 +10,12 @@ const oauth2Client = new google.auth.OAuth2(
 	process.env.GOOGLE_CLIENT_ID,
 	process.env.GOOGLE_CLIENT_SECRET,
 	process.env.GOOGLE_REDIRECT_URI ||
-		(process.env.NODE_ENV === "production"
-			? "https://panel.silamlodych.pl/api/calendar/callback" // ✅ PRZEZ NGINX, BEZ PORTU
-			: "http://localhost:3000/api/calendar/callback"),
+	(process.env.NODE_ENV === "production"
+		? "https://panel.silamlodych.pl/api/calendar/callback" // ✅ PRZEZ NGINX, BEZ PORTU
+		: "http://localhost:3000/api/calendar/callback"),
 );
 router.use((req, res, next) => {
-	console.log("🔍 [CALENDAR] Ścieżka:", req.path);
+	// console.log("🔍 [CALENDAR] Ścieżka:", req.path);
 	// Pomijamy autoryzację dla callback i auth
 	if (
 		req.path === "/callback" ||
@@ -25,7 +25,7 @@ router.use((req, res, next) => {
 		req.path.includes("callback") ||
 		req.path.includes("auth")
 	) {
-		console.log(`🔓 [CALENDAR] Pomijam autoryzację dla: ${req.path}`);
+		// console.log(`🔓 [CALENDAR] Pomijam autoryzację dla: ${req.path}`);
 		return next();
 	}
 	next();
@@ -59,7 +59,7 @@ router.get("/status", authMiddleware, async (req: any, res) => {
 router.get("/events", authMiddleware, async (req: any, res) => {
 	try {
 		const userId = req.user?.id;
-		console.log("📅 [EVENTS] Pobieranie dla użytkownika:", userId);
+		// console.log("📅 [EVENTS] Pobieranie dla użytkownika:", userId);
 
 		if (!userId) {
 			return res.status(401).json({ error: "Brak autoryzacji" });
@@ -71,7 +71,7 @@ router.get("/events", authMiddleware, async (req: any, res) => {
 			select: { google_calendar_token: true },
 		});
 
-		console.log("📅 [EVENTS] Token w bazie:", !!user?.google_calendar_token);
+		// console.log("📅 [EVENTS] Token w bazie:", !!user?.google_calendar_token);
 
 		if (!user?.google_calendar_token) {
 			return res.status(401).json({
@@ -81,7 +81,7 @@ router.get("/events", authMiddleware, async (req: any, res) => {
 		}
 
 		const tokenData = JSON.parse(user.google_calendar_token);
-		console.log("📅 [EVENTS] Token parsed:", !!tokenData);
+		// console.log("📅 [EVENTS] Token parsed:", !!tokenData);
 
 		oauth2Client.setCredentials({
 			access_token: tokenData.access_token,
@@ -97,12 +97,12 @@ router.get("/events", authMiddleware, async (req: any, res) => {
 		const endDate = new Date(now);
 		endDate.setDate(endDate.getDate() + 30);
 
-		console.log(
-			"📅 [EVENTS] Zakres dat:",
-			startDate.toISOString(),
-			"do",
-			endDate.toISOString(),
-		);
+		// console.log(
+		// 	"📅 [EVENTS] Zakres dat:",
+		// 	startDate.toISOString(),
+		// 	"do",
+		// 	endDate.toISOString(),
+		// );
 
 		const response = await calendar.events.list({
 			calendarId: "primary",
@@ -113,10 +113,10 @@ router.get("/events", authMiddleware, async (req: any, res) => {
 			orderBy: "startTime",
 		});
 
-		console.log(
-			"📅 [EVENTS] Znaleziono eventów:",
-			response.data.items?.length || 0,
-		);
+		// console.log(
+		// 	"📅 [EVENTS] Znaleziono eventów:",
+		// 	response.data.items?.length || 0,
+		// );
 		res.json(response.data.items || []);
 	} catch (error) {
 		console.error("❌ [EVENTS] Błąd:", error);
@@ -229,11 +229,11 @@ router.get("/auth", async (req: any, res) => {
 		}
 
 		if (!userId) {
-			console.log("⚠️ [AUTH] Brak userId - używam 1");
+			// console.log("⚠️ [AUTH] Brak userId - używam 1");
 			userId = "1";
 		}
 
-		console.log("🔐 [AUTH] Użytkownik ID:", userId);
+		// console.log("🔐 [AUTH] Użytkownik ID:", userId);
 
 		const stateData = JSON.stringify({ userId: userId });
 		const authUrl = oauth2Client.generateAuthUrl({
@@ -264,14 +264,14 @@ router.get("/callback", async (req: any, res) => {
 	try {
 		const { code, state } = req.query;
 
-		console.log("=========================================");
-		console.log("📥 [CALLBACK] Otrzymano code:", code ? "✅" : "❌");
-		console.log("📥 [CALLBACK] Code:", code?.substring(0, 20) + "...");
-		console.log("📥 [CALLBACK] State:", state);
-		console.log("=========================================");
+		// console.log("=========================================");
+		// console.log("📥 [CALLBACK] Otrzymano code:", code ? "✅" : "❌");
+		// console.log("📥 [CALLBACK] Code:", code?.substring(0, 20) + "...");
+		// console.log("📥 [CALLBACK] State:", state);
+		// console.log("=========================================");
 
 		if (!code) {
-			console.log("❌ [CALLBACK] Brak code");
+			// console.log("❌ [CALLBACK] Brak code");
 			return res.redirect(`${process.env.FRONTEND_URL}/calendar?auth=error`);
 		}
 
@@ -281,7 +281,7 @@ router.get("/callback", async (req: any, res) => {
 			try {
 				const stateObj = JSON.parse(state as string);
 				userId = stateObj.userId || stateObj.user_id;
-				console.log("✅ [CALLBACK] userId z state:", userId);
+				// console.log("✅ [CALLBACK] userId z state:", userId);
 			} catch (e) {
 				console.error("❌ [CALLBACK] Błąd parsowania state:", e);
 			}
@@ -289,17 +289,17 @@ router.get("/callback", async (req: any, res) => {
 
 		// Jeśli brak userId - użyj domyślnego
 		if (!userId) {
-			console.log("⚠️ [CALLBACK] Brak userId - używam domyślnego (1)");
+			// console.log("⚠️ [CALLBACK] Brak userId - używam domyślnego (1)");
 			userId = "1";
 		}
 
 		// Wymień code na token
-		console.log("🔐 [CALLBACK] Wymiana kodu na token...");
+		// console.log("🔐 [CALLBACK] Wymiana kodu na token...");
 		const { tokens } = await oauth2Client.getToken(code as string);
-		console.log("✅ [CALLBACK] Otrzymano token:", {
-			hasAccessToken: !!tokens.access_token,
-			hasRefreshToken: !!tokens.refresh_token,
-		});
+		// console.log("✅ [CALLBACK] Otrzymano token:", {
+		// 	hasAccessToken: !!tokens.access_token,
+		// 	hasRefreshToken: !!tokens.refresh_token,
+		// });
 
 		// Znajdź użytkownika
 		const user = await prisma.user.findUnique({
@@ -311,9 +311,9 @@ router.get("/callback", async (req: any, res) => {
 			// Spróbuj znaleźć po emailu
 			const firstUser = await prisma.user.findFirst();
 			if (firstUser) {
-				console.log(
-					`👉 [CALLBACK] Używam pierwszego użytkownika: ${firstUser.id}`,
-				);
+				// console.log(
+				// 	`👉 [CALLBACK] Używam pierwszego użytkownika: ${firstUser.id}`,
+				// );
 				await prisma.user.update({
 					where: { id: firstUser.id },
 					data: {
@@ -328,14 +328,14 @@ router.get("/callback", async (req: any, res) => {
 		}
 
 		// Zapisz token
-		console.log(`💾 [CALLBACK] Zapisuję token dla: ${user.email}`);
+		// console.log(`💾 [CALLBACK] Zapisuję token dla: ${user.email}`);
 		await prisma.user.update({
 			where: { id: parseInt(userId) },
 			data: {
 				google_calendar_token: JSON.stringify(tokens),
 			},
 		});
-		console.log(`✅ [CALLBACK] Token zapisany!`);
+		// console.log(`✅ [CALLBACK] Token zapisany!`);
 
 		res.redirect(`${process.env.FRONTEND_URL}/calendar?auth=success`);
 	} catch (error) {

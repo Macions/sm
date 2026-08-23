@@ -102,7 +102,7 @@ function processFile(filePath) {
         
         // Zapisz jako UTF-8
         fs.writeFileSync(filePath, fixedContent, 'utf8');
-        console.log(`✅ Naprawiono: ${path.basename(filePath)}`);
+        // console.log(`✅ Naprawiono: ${path.basename(filePath)}`);
     } catch (error) {
         console.error(`❌ Błąd przetwarzania ${filePath}:`, error.message);
     }
@@ -132,12 +132,12 @@ function walkDirectory(dir) {
 // ============================================================
 // START
 // ============================================================
-console.log('🔧 Naprawianie kodowania znaków...');
-console.log('📂 Skanowanie: ' + process.cwd());
-console.log('');
+// console.log('🔧 Naprawianie kodowania znaków...');
+// console.log('📂 Skanowanie: ' + process.cwd());
+// console.log('');
 
 walkDirectory(process.cwd());
 
-console.log('');
-console.log('✅ Zakończono!');
-console.log('📌 Sprawdź pliki i skomentuj ten skrypt w .gitignore');
+// console.log('');
+// console.log('✅ Zakończono!');
+// console.log('📌 Sprawdź pliki i skomentuj ten skrypt w .gitignore');

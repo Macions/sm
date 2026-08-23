@@ -1,7 +1,6 @@
 ﻿// frontend/src/components/RevenueChart.tsx
 import { useState, useEffect } from "react";
 import {
-	BarChart,
 	Bar,
 	XAxis,
 	YAxis,
@@ -48,7 +47,7 @@ const COLORS = {
 };
 
 // Niestandardowy tooltip z pełnymi danymi
-const CustomTooltip = ({ active, payload, label }: any) => {
+const CustomTooltip = ({ active, payload }: any) => {
 	if (active && payload && payload.length) {
 		const data = payload[0].payload;
 		return (
@@ -133,7 +132,7 @@ export function RevenueChart({ year = 2026, title = "Przychody i wydatki" }: Rev
 			setLoading(true);
 			const token = localStorage.getItem("accessToken");
 
-			console.log(`[RevenueChart] Pobieram dane dla roku ${selectedYear}...`);
+			// console.log(`[RevenueChart] Pobieram dane dla roku ${selectedYear}...`);
 
 			// ============================================
 			// 1. Pobierz dane główne (przychody/wydatki)
@@ -150,7 +149,7 @@ export function RevenueChart({ year = 2026, title = "Przychody i wydatki" }: Rev
 			}
 
 			const result = await response.json();
-			console.log('[RevenueChart] Revenue data:', result);
+			// console.log('[RevenueChart] Revenue data:', result);
 
 			// ============================================
 			// 2. Pobierz dane kategorii
@@ -166,7 +165,7 @@ export function RevenueChart({ year = 2026, title = "Przychody i wydatki" }: Rev
 
 				if (categoriesResponse.ok) {
 					const categoriesResult = await categoriesResponse.json();
-					console.log('[RevenueChart] Categories data:', categoriesResult);
+					// console.log('[RevenueChart] Categories data:', categoriesResult);
 					categoriesData = categoriesResult.data;
 				} else {
 					console.warn('[RevenueChart] Nie udało się pobrać kategorii:', categoriesResponse.status);
@@ -199,7 +198,7 @@ export function RevenueChart({ year = 2026, title = "Przychody i wydatki" }: Rev
 					};
 				});
 
-				console.log('[RevenueChart] Mapped data:', mappedData);
+				// console.log('[RevenueChart] Mapped data:', mappedData);
 				setData(mappedData);
 			}
 		} catch (error) {
@@ -268,8 +267,6 @@ export function RevenueChart({ year = 2026, title = "Przychody i wydatki" }: Rev
 	const totalSkladki = data.reduce((sum, d) => sum + d.skladki, 0);
 	const totalGranty = data.reduce((sum, d) => sum + d.granty, 0);
 	const totalDarowizny = data.reduce((sum, d) => sum + d.darowizny, 0);
-	const totalFaktury = data.reduce((sum, d) => sum + d.faktury, 0);
-	const totalInne = data.reduce((sum, d) => sum + d.inne, 0);
 
 	const handleBarClick = (data: any) => {
 		if (data && data.activePayload) {
@@ -455,7 +452,11 @@ export function RevenueChart({ year = 2026, title = "Przychody i wydatki" }: Rev
 									name="skladki"
 									radius={[4, 4, 0, 0]}
 									barSize={30}
-									onMouseEnter={(data) => setHoveredBar(data.monthName)}
+									onMouseEnter={(data: any) => {
+										if (data && data.payload) {
+											setHoveredBar(data.payload.monthName);
+										}
+									}}
 									onMouseLeave={() => setHoveredBar(null)}
 								>
 									{data.map((entry, index) => (

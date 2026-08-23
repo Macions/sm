@@ -13,11 +13,11 @@ import "@fontsource/ubuntu/300.css";
 import "@fontsource/ubuntu/500.css";
 import "@fontsource/ubuntu/700.css";
 
-console.log('🔍 === SPRAWDZAM ENV ===');
-console.log('🔍 VITE_GOOGLE_CLIENT_ID:', import.meta.env.VITE_GOOGLE_CLIENT_ID);
-console.log('🔍 GOOGLE_CLIENT_ID:', import.meta.env.GOOGLE_CLIENT_ID);
-console.log('🔍 Czy jest undefined?', import.meta.env.VITE_GOOGLE_CLIENT_ID === undefined);
-console.log('🔍 Całe import.meta.env:', import.meta.env);
+// console.log('🔍 === SPRAWDZAM ENV ===');
+// console.log('🔍 VITE_GOOGLE_CLIENT_ID:', import.meta.env.VITE_GOOGLE_CLIENT_ID);
+// console.log('🔍 GOOGLE_CLIENT_ID:', import.meta.env.GOOGLE_CLIENT_ID);
+// console.log('🔍 Czy jest undefined?', import.meta.env.VITE_GOOGLE_CLIENT_ID === undefined);
+// console.log('🔍 Całe import.meta.env:', import.meta.env);
 
 const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 
@@ -25,7 +25,7 @@ if (!clientId) {
 	console.error('❌ BRAKUJE VITE_GOOGLE_CLIENT_ID w env!');
 }
 
-console.log('🔍 Używam clientId:', clientId);
+// console.log('🔍 Używam clientId:', clientId);
 
 createRoot(document.getElementById("root")!).render(
 	<GoogleOAuthProvider

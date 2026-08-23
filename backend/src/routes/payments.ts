@@ -1,13 +1,13 @@
 // src/server/routes/payments.ts
 import express from "express";
-import pool from "../config/database";
+import pool from "../config/db";
 
 const router = express.Router();
 
 // 📊 GET - status składek wszystkich członków
 router.get("/status", async (req, res) => {
 	try {
-		console.log("🔄 [PAYMENTS] Pobieranie danych składek...");
+		// console.log("🔄 [PAYMENTS] Pobieranie danych składek...");
 
 		// 🔥 DOSTOSUJ TO ZAPYTANIE DO SWOJEJ BAZY!
 		const [rows] = await pool.query(`
@@ -57,10 +57,10 @@ router.get("/status", async (req, res) => {
 			),
 			averageArrears:
 				members.reduce((sum, m) => sum + Math.max(0, m.monthsArrears || 0), 0) /
-					members.length || 0,
+				members.length || 0,
 		};
 
-		console.log(`✅ [PAYMENTS] Pobrano ${members.length} członków`);
+		// console.log(`✅ [PAYMENTS] Pobrano ${members.length} członków`);
 
 		res.json({
 			success: true,

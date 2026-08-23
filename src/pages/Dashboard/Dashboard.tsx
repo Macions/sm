@@ -166,9 +166,9 @@ const transformPillars = (pillarsString: string): string => {
 export default function Dashboard() {
 	const navigate = useNavigate();
 	const { user, loading: userLoading } = useUser();
-	console.log('🔍 [Dashboard] Dane użytkownika:', user);
-	console.log('🔍 [Dashboard] user.pillars:', user?.pillars);
-	console.log('🔍 [Dashboard] user.role:', user?.role);
+	// console.log('🔍 [Dashboard] Dane użytkownika:', user);
+	// console.log('🔍 [Dashboard] user.pillars:', user?.pillars);
+	// console.log('🔍 [Dashboard] user.role:', user?.role);
 	const displayName = user?.firstName || "Użytkowniku";
 
 	const [checkingOnboarding, setCheckingOnboarding] = useState(true);
@@ -244,12 +244,12 @@ export default function Dashboard() {
 		checkOnboarding();
 	}, []); // 🔥 PUSTA TABLICA - TYLKO RAZ
 	useEffect(() => {
-		console.log("🚀 [Dashboard] useEffect START");
+		// console.log("🚀 [Dashboard] useEffect START");
 		const controller = new AbortController();
 
 		const fetchStats = async () => {
 			try {
-				console.log("📊 [Dashboard] Pobieram statystyki...");
+				// console.log("📊 [Dashboard] Pobieram statystyki...");
 				setLoadingStats(true);
 				const token = localStorage.getItem("accessToken");
 
@@ -261,11 +261,11 @@ export default function Dashboard() {
 					},
 				});
 
-				console.log("📊 [Dashboard] Status statystyk:", res.status);
+				// console.log("📊 [Dashboard] Status statystyk:", res.status);
 
 				if (!res.ok) throw new Error("Nie udało się pobrać statystyk");
 				const data = await res.json();
-				console.log("📊 [Dashboard] Dane statystyk:", data);
+				// console.log("📊 [Dashboard] Dane statystyk:", data);
 				setStats(data);
 			} catch (err) {
 				if (err instanceof Error && err.name === "AbortError") return;
@@ -279,7 +279,7 @@ export default function Dashboard() {
 		// ⬇️⬇️⬇️ PRZENIESIONE DO ŚRODKA useEffect ⬇️⬇️⬇️
 		const fetchContributions = async () => {
 			try {
-				console.log("💰 [Dashboard] Pobieram statystyki składek...");
+				// console.log("💰 [Dashboard] Pobieram statystyki składek...");
 				setLoadingContributions(true);
 				const token = localStorage.getItem("accessToken");
 
@@ -293,7 +293,7 @@ export default function Dashboard() {
 
 				if (!res.ok) throw new Error("Nie udało się pobrać statystyk składek");
 				const data = await res.json();
-				console.log("💰 [Dashboard] Dane składek:", data);
+				// console.log("💰 [Dashboard] Dane składek:", data);
 				setContributionStats(data);
 			} catch (err) {
 				if (err instanceof Error && err.name === "AbortError") return;
@@ -305,7 +305,7 @@ export default function Dashboard() {
 
 		const fetchNotifs = async () => {
 			try {
-				console.log("🔔 [Dashboard] Pobieram powiadomienia...");
+				// console.log("🔔 [Dashboard] Pobieram powiadomienia...");
 				setLoadingNotifs(true);
 				const token = localStorage.getItem("accessToken");
 
@@ -317,11 +317,11 @@ export default function Dashboard() {
 					},
 				});
 
-				console.log("🔔 [Dashboard] Status powiadomień:", res.status);
+				// console.log("🔔 [Dashboard] Status powiadomień:", res.status);
 
 				if (!res.ok) throw new Error("Nie udało się pobrać powiadomień");
 				const data = await res.json();
-				console.log("🔔 [Dashboard] Dane powiadomień:", data);
+				// console.log("🔔 [Dashboard] Dane powiadomień:", data);
 				setNotifications(data);
 			} catch (err) {
 				if (err instanceof Error && err.name === "AbortError") return;
@@ -333,13 +333,13 @@ export default function Dashboard() {
 		};
 
 		// ⬇️⬇️⬇️ DODAJ fetchContributions do Promise.all ⬇️⬇️⬇️
-		console.log(
-			"🚀 [Dashboard] Wywołuję fetchStats, fetchContributions i fetchNotifs",
-		);
+		// console.log(
+		// 	"🚀 [Dashboard] Wywołuję fetchStats, fetchContributions i fetchNotifs",
+		// );
 		Promise.all([fetchStats(), fetchContributions(), fetchNotifs()]); // ✅ DODANE
 
 		return () => {
-			console.log("🧹 [Dashboard] Cleanup");
+			// console.log("🧹 [Dashboard] Cleanup");
 			controller.abort();
 		};
 	}, []);

@@ -24,7 +24,7 @@ const Login: React.FC = () => {
 
 	const checkOnboardingStatus = async () => {
 		// 🔥 NAJPROSTSZE ROZWIĄZANIE - ZAWSZE IDŹ DO DASHBOARD
-		console.log("✅ Logowanie udane! Przekierowuję na dashboard...");
+		// console.log("✅ Logowanie udane! Przekierowuję na dashboard...");
 		window.location.href = "/dashboard"; // ← BEZPOŚREDNIE PRZEKIEROWANIE
 	};
 
@@ -36,7 +36,7 @@ const Login: React.FC = () => {
 			logger.debug("✅ Logowanie z zakresami kalendarza - sukces!");
 			setLoading(true);
 			setError(null);
-			console.log("Access Token:", tokenResponse.access_token);
+			// console.log("Access Token:", tokenResponse.access_token);
 
 			try {
 				// ✅ ZMIEŃ NA /api/auth/google-token

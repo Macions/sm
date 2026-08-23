@@ -5,7 +5,7 @@ import mysql from "mysql2/promise";
 import { logger } from "../utils/logger";
 
 // Dodaj na samym początku, przed wszystkim
-console.log("🚀 [START] Uruchamianie syncContributions...");
+// console.log("🚀 [START] Uruchamianie syncContributions...");
 logger.info("🚀 [START] Uruchamianie syncContributions...");
 
 const prisma = new PrismaClient();
@@ -19,28 +19,28 @@ const CONTRIBUTIONS_DB_CONFIG = {
 };
 
 export async function syncContributions() {
-	console.log("🔄 [CONTRIBUTIONS] Rozpoczynam synchronizację składek...");
+	// console.log("🔄 [CONTRIBUTIONS] Rozpoczynam synchronizację składek...");
 	logger.info("🔄 [CONTRIBUTIONS] Rozpoczynam synchronizację składek...");
 	const startTime = Date.now();
 
 	let connection: mysql.Connection | null = null;
 
 	try {
-		console.log("📡 [CONTRIBUTIONS] Próba połączenia z SM_Skladki...");
+		// console.log("📡 [CONTRIBUTIONS] Próba połączenia z SM_Skladki...");
 		logger.info("📡 [CONTRIBUTIONS] Próba połączenia z SM_Skladki...");
 
 		// TYLKO JEDNO POŁĄCZENIE - usunąłem duplikat
 		connection = await mysql.createConnection(CONTRIBUTIONS_DB_CONFIG);
-		console.log("✅ [CONTRIBUTIONS] Połączono z SM_Skladki");
+		// console.log("✅ [CONTRIBUTIONS] Połączono z SM_Skladki");
 		logger.info("✅ [CONTRIBUTIONS] Połączono z SM_Skladki");
 
 		const currentDate = new Date();
 		const currentMonth = currentDate.getMonth() + 1;
 		const currentYear = currentDate.getFullYear();
 
-		console.log(
-			`📅 [CONTRIBUTIONS] Sprawdzam składki za: ${currentMonth}/${currentYear}`,
-		);
+		// console.log(
+		// 	`📅 [CONTRIBUTIONS] Sprawdzam składki za: ${currentMonth}/${currentYear}`,
+		// );
 
 		// Pobierz wszystkich członków z statusem płatności
 		const [members] = await connection.execute(`
@@ -123,9 +123,9 @@ export async function syncContributions() {
 			last_payment_date: Date | null;
 		}>;
 
-		console.log(
-			`👥 [CONTRIBUTIONS] Znaleziono ${membersData.length} aktywnych członków`,
-		);
+		// console.log(
+		// 	`👥 [CONTRIBUTIONS] Znaleziono ${membersData.length} aktywnych członków`,
+		// );
 		logger.info(
 			`👥 [CONTRIBUTIONS] Znaleziono ${membersData.length} aktywnych członków`,
 		);
@@ -207,9 +207,9 @@ export async function syncContributions() {
 					});
 
 					paidCount++;
-					console.log(
-						`✅ [CONTRIBUTIONS] ${member.full_name}: opłacono ${amountFloat} zł`,
-					);
+					// console.log(
+					// 	`✅ [CONTRIBUTIONS] ${member.full_name}: opłacono ${amountFloat} zł`,
+					// );
 					logger.debug(
 						`✅ [CONTRIBUTIONS] ${member.full_name}: opłacono ${amountFloat} zł`,
 					);
@@ -271,14 +271,14 @@ export async function syncContributions() {
 		}
 
 		const duration = Date.now() - startTime;
-		console.log(`✅ [CONTRIBUTIONS] Zakończono w ${duration}ms`);
-		console.log(`📊 [CONTRIBUTIONS] Podsumowanie:`);
-		console.log(`   ✅ Opłacone: ${paidCount} użytkowników`);
-		console.log(`   ❌ Nieopłacone: ${pendingCount} użytkowników`);
-		console.log(
-			`   ⏭️ Pominięto: ${skippedCount} (nie znaleziono w głównej bazie)`,
-		);
-		console.log(`   ❌ Błędów: ${errorCount}`);
+		// console.log(`✅ [CONTRIBUTIONS] Zakończono w ${duration}ms`);
+		// console.log(`📊 [CONTRIBUTIONS] Podsumowanie:`);
+		// console.log(`   ✅ Opłacone: ${paidCount} użytkowników`);
+		// console.log(`   ❌ Nieopłacone: ${pendingCount} użytkowników`);
+		// console.log(
+		// 	`   ⏭️ Pominięto: ${skippedCount} (nie znaleziono w głównej bazie)`,
+		// );
+		// console.log(`   ❌ Błędów: ${errorCount}`);
 
 		logger.info(`✅ [CONTRIBUTIONS] Zakończono w ${duration}ms`);
 		logger.info(`📊 [CONTRIBUTIONS] Podsumowanie:`);
@@ -295,7 +295,7 @@ export async function syncContributions() {
 	} finally {
 		if (connection) {
 			await connection.end();
-			console.log("🔌 [CONTRIBUTIONS] Zamknięto połączenie z SM_Skladki");
+			// console.log("🔌 [CONTRIBUTIONS] Zamknięto połączenie z SM_Skladki");
 			logger.info("🔌 [CONTRIBUTIONS] Zamknięto połączenie z SM_Skladki");
 		}
 		await prisma.$disconnect();
@@ -333,7 +333,7 @@ async function checkAndSendNotification(
 					target: "user",
 				},
 			});
-			console.log(`📨 [CONTRIBUTIONS] Wysłano powiadomienie dla ${fullName}`);
+			// console.log(`📨 [CONTRIBUTIONS] Wysłano powiadomienie dla ${fullName}`);
 			logger.debug(`📨 [CONTRIBUTIONS] Wysłano powiadomienie dla ${fullName}`);
 		}
 	} catch (error) {
@@ -384,11 +384,11 @@ function getMonthName(
 // ============================================================
 
 if (require.main === module) {
-	console.log("🚀 [DIRECT] Wywołanie syncContributions()...");
+	// console.log("🚀 [DIRECT] Wywołanie syncContributions()...");
 
 	syncContributions()
 		.then(() => {
-			console.log("✅ [DIRECT] Synchronizacja zakończona pomyślnie");
+			// console.log("✅ [DIRECT] Synchronizacja zakończona pomyślnie");
 			// TYLKO TUTAJ UŻYJ process.exit() - gdy uruchamiasz bezpośrednio
 			process.exit(0);
 		})

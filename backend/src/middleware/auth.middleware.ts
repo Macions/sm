@@ -14,20 +14,20 @@ export interface AuthRequest extends Request {
 }
 
 const PUBLIC_ENDPOINTS = [
-    "/api/auth/login",
-    "/api/auth/google",
-    "/api/auth/register",
-    "/api/auth/refresh-token",
-    "/api/auth/forgot-password",
-    "/api/auth/reset-password",
-    "/api/health",
-    "/api/status",
-    "/api/calendar/auth",
-    "/api/calendar/callback",
-    "/calendar/auth",
-    "/calendar/callback",
-    "/auth",
-    "/callback",
+	"/api/auth/login",
+	"/api/auth/google",
+	"/api/auth/register",
+	"/api/auth/refresh-token",
+	"/api/auth/forgot-password",
+	"/api/auth/reset-password",
+	"/api/health",
+	"/api/status",
+	"/api/calendar/auth",
+	"/api/calendar/callback",
+	"/calendar/auth",
+	"/calendar/callback",
+	"/auth",
+	"/callback",
 ];
 
 const isPublicPath = (path: string): boolean => {
@@ -49,20 +49,20 @@ export const authMiddleware = (
 	}
 
 	const authHeader = req.headers.authorization;
-	console.log(`🔑 [authMiddleware] Authorization header: ${authHeader ? '✅ Jest' : '❌ Brak'}`);
+	// console.log(`🔑 [authMiddleware] Authorization header: ${authHeader ? '✅ Jest' : '❌ Brak'}`);
 
 	if (!authHeader || !authHeader.startsWith('Bearer ')) {
-		console.log(`❌ [authMiddleware] Brak tokena dla: ${req.method} ${req.path}`);
+		// console.log(`❌ [authMiddleware] Brak tokena dla: ${req.method} ${req.path}`);
 		return res.status(401).json({ error: "Brak tokenu autoryzacyjnego" });
 	}
 
 	const token = authHeader.split(' ')[1];
-	console.log(`🔑 [authMiddleware] Token: ${token.substring(0, 30)}...`);
+	// console.log(`🔑 [authMiddleware] Token: ${token.substring(0, 30)}...`);
 
 	try {
 		const decoded = jwt.verify(token, JWT_SECRET) as any;
-		console.log(`✅ [authMiddleware] Token zweryfikowany dla: ${decoded.email}`);
-		
+		// console.log(`✅ [authMiddleware] Token zweryfikowany dla: ${decoded.email}`);
+
 		req.user = {
 			id: decoded.id,
 			email: decoded.email,
@@ -70,7 +70,7 @@ export const authMiddleware = (
 		};
 		next();
 	} catch (error: any) {
-		console.log(`❌ [authMiddleware] Błąd weryfikacji: ${error.message}`);
+		// console.log(`❌ [authMiddleware] Błąd weryfikacji: ${error.message}`);
 		return res.status(401).json({ error: "Nieprawidłowy token" });
 	}
 };

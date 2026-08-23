@@ -41,13 +41,13 @@ export default defineConfig(({ mode }) => {
 		: 'http://localhost:3000' // lokalnie
 	);
 
-	console.log('🚀 ===== KONFIGURACJA VITE =====');
-	console.log('📌 Mode:', mode);
-	console.log('📌 isDocker:', isDocker);
-	console.log('📌 isDevelopment:', isDevelopment);
-	console.log('📌 VITE_API_URL z env:', env.VITE_API_URL);
-	console.log('📌 apiUrl:', apiUrl);
-	console.log('📌 ================================');
+	// console.log('🚀 ===== KONFIGURACJA VITE =====');
+	// console.log('📌 Mode:', mode);
+	// console.log('📌 isDocker:', isDocker);
+	// console.log('📌 isDevelopment:', isDevelopment);
+	// console.log('📌 VITE_API_URL z env:', env.VITE_API_URL);
+	// console.log('📌 apiUrl:', apiUrl);
+	// console.log('📌 ================================');
 
 	// Host i port
 	const host = env.VITE_HOST || (isDocker ? '0.0.0.0' : 'localhost');

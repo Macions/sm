@@ -33,7 +33,7 @@ export class RevenueService {
 		year: number = new Date().getFullYear(),
 	): Promise<RevenueData> {
 		try {
-			console.log(`📊 Pobieram dane przychodów i wydatków dla roku ${year}...`);
+			// console.log(`📊 Pobieram dane przychodów i wydatków dla roku ${year}...`);
 
 			// ============================================================
 			// 1. Pobierz dane z tabeli payments (przychody + wydatki)
@@ -146,7 +146,7 @@ export class RevenueService {
 	// ============================================================
 	async getRevenueByCategory(year: number): Promise<CategoryData[]> {
 		try {
-			console.log(`🔍 [KATEGORIE] Pobieram kategorie dla roku ${year}...`);
+			// console.log(`🔍 [KATEGORIE] Pobieram kategorie dla roku ${year}...`);
 
 			// ============================================================
 			// Pobierz dane z payments z pełną kategoryzacją
@@ -208,13 +208,13 @@ export class RevenueService {
 			// ============================================================
 			// LOGI - zobacz co zostało skategoryzowane
 			// ============================================================
-			console.log(`📊 [KATEGORIE] Znaleziono ${rows.length} kategorii`);
+			// console.log(`📊 [KATEGORIE] Znaleziono ${rows.length} kategorii`);
 			if (Array.isArray(rows) && rows.length > 0) {
 				rows.forEach((row: any) => {
-					console.log(`  - Miesiąc: ${row.month}, Kategoria: ${row.category}, Kwota: ${row.total}`);
+					// console.log(`  - Miesiąc: ${row.month}, Kategoria: ${row.category}, Kwota: ${row.total}`);
 				});
 			} else {
-				console.log(`⚠️ [KATEGORIE] Brak danych dla roku ${year}`);
+				// console.log(`⚠️ [KATEGORIE] Brak danych dla roku ${year}`);
 			}
 
 			// ============================================================
@@ -242,7 +242,7 @@ export class RevenueService {
 				[year],
 			);
 
-			console.log(`📄 [KATEGORIE] Znaleziono ${invoiceRows.length} miesięcy z fakturami`);
+			// console.log(`📄 [KATEGORIE] Znaleziono ${invoiceRows.length} miesięcy z fakturami`);
 
 			const monthNames = [
 				"Styczeń",
@@ -319,12 +319,12 @@ export class RevenueService {
 			// ============================================================
 			// PODSUMOWANIE - zobacz końcowy wynik
 			// ============================================================
-			console.log(`✅ [KATEGORIE] Dodano stały wydatek biurowy: ${MONTHLY_OFFICE_COST} zł/miesiąc`);
-			console.log(`✅ [KATEGORIE] Zakończono kategoryzację dla roku ${year}`);
+			// console.log(`✅ [KATEGORIE] Dodano stały wydatek biurowy: ${MONTHLY_OFFICE_COST} zł/miesiąc`);
+			// console.log(`✅ [KATEGORIE] Zakończono kategoryzację dla roku ${year}`);
 			const resultValues = Object.values(result);
-			console.log(`📊 [KATEGORIE] Zwracam ${resultValues.length} miesięcy danych`);
+			// console.log(`📊 [KATEGORIE] Zwracam ${resultValues.length} miesięcy danych`);
 
-			return resultValues;
+			return resultValues as CategoryData[];
 		} catch (error) {
 			console.error("❌ [KATEGORIE] Błąd pobierania kategorii:", error);
 			return [];
@@ -333,7 +333,7 @@ export class RevenueService {
 
 	async getMonthlyDetails(year: number, month: number): Promise<any> {
 		try {
-			console.log(`📊 Pobieram szczegóły dla ${year}-${month}...`);
+			// console.log(`📊 Pobieram szczegóły dla ${year}-${month}...`);
 
 			const [revenueRows]: any[] = await smPool.query(
 				`SELECT 

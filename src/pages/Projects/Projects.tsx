@@ -521,8 +521,8 @@ function ProjectModal({
 	userPillars = [],
 	isAdminOrBoard = false,
 }: ProjectModalProps) {
-	console.log("🔍 [ProjectModal] userPillars:", userPillars);
-	console.log("🔍 [ProjectModal] isAdminOrBoard:", isAdminOrBoard);
+	// console.log("🔍 [ProjectModal] userPillars:", userPillars);
+	// console.log("🔍 [ProjectModal] isAdminOrBoard:", isAdminOrBoard);
 
 	const [formData, setFormData] = useState<Partial<Project>>(
 		project || {
@@ -1422,7 +1422,7 @@ export default function Projects() {
 		fetchTasks();
 	}, []);
 	const refreshAllData = useCallback(async () => {
-		console.log("🔄 [REFRESH] Odświeżanie danych...");
+		// console.log("🔄 [REFRESH] Odświeżanie danych...");
 
 		const token = localStorage.getItem("accessToken");
 		if (!token) {
@@ -1439,7 +1439,7 @@ export default function Projects() {
 			let profileData = null;
 			if (profileRes.ok) {
 				profileData = await profileRes.json();
-				console.log("👤 Profil pobrany:", profileData);
+				// console.log("👤 Profil pobrany:", profileData);
 
 				// 🔥 DODAJ - zapisz do localStorage z coordinatorPillars
 				const userForStorage = {
@@ -1454,10 +1454,10 @@ export default function Projects() {
 					coordinatorPillars: profileData.coordinatorPillars || [],
 				};
 				localStorage.setItem("user", JSON.stringify(userForStorage));
-				console.log(
-					"✅ Zapisano user do localStorage z coordinatorPillars:",
-					userForStorage.coordinatorPillars,
-				);
+				// console.log(
+				// 	"✅ Zapisano user do localStorage z coordinatorPillars:",
+				// 	userForStorage.coordinatorPillars,
+				// );
 
 				setCurrentUser({
 					id: String(profileData.id),
@@ -1472,7 +1472,7 @@ export default function Projects() {
 
 			// 🔥 2. Pobierz uprawnienia - NAJPIERW SPRAWDŹ CZY KOORDYNATOR
 			if (profileData?.role) {
-				console.log("🔓 Pobieranie uprawnień...");
+				// console.log("🔓 Pobieranie uprawnień...");
 
 				const coordRes = await fetch("/api/user/is-coordinator", {
 					headers: { Authorization: `Bearer ${token}` },
@@ -1480,7 +1480,7 @@ export default function Projects() {
 
 				if (coordRes.ok) {
 					const coordData = await coordRes.json();
-					console.log("👑 Status koordynatora:", coordData);
+					// console.log("👑 Status koordynatora:", coordData);
 
 					if (coordData.isCoordinator) {
 						const perms: Permission[] = [
@@ -1491,7 +1491,7 @@ export default function Projects() {
 							perms.push("canManageAllProjects");
 						}
 						setPermissions(perms);
-						console.log("✅ Uprawnienia koordynatora ustawione:", perms);
+						// console.log("✅ Uprawnienia koordynatora ustawione:", perms);
 					} else {
 						const perms = await getCachedPermissions(profileData.role);
 						setPermissions(perms);
@@ -1548,7 +1548,7 @@ export default function Projects() {
 				setProjects(mappedProjects);
 			}
 
-			console.log("✅ [REFRESH] Dane odświeżone!");
+			// console.log("✅ [REFRESH] Dane odświeżone!");
 		} catch (error) {
 			console.error("❌ [REFRESH] Błąd odświeżania:", error);
 		}
@@ -1559,7 +1559,7 @@ export default function Projects() {
 		// Obsługa HMR - odśwież dane gdy moduł jest aktualizowany
 		if (import.meta.hot) {
 			import.meta.hot.on("vite:afterUpdate", () => {
-				console.log("🔄 [HMR] Wykryto zmianę kodu - odświeżam dane...");
+				// console.log("🔄 [HMR] Wykryto zmianę kodu - odświeżam dane...");
 				setTimeout(() => {
 					refreshAllData();
 				}, 100);
@@ -1587,7 +1587,7 @@ export default function Projects() {
 
 				if (response.ok) {
 					const data = await response.json();
-					console.log("👑 Status koordynatora z endpointu:", data);
+					// console.log("👑 Status koordynatora z endpointu:", data);
 
 					if (data.isCoordinator) {
 						const perms: Permission[] = [
@@ -1611,19 +1611,19 @@ export default function Projects() {
 							isCoordinator: true,
 						};
 						localStorage.setItem("user", JSON.stringify(updatedUser));
-						console.log(
-							"✅ Zaktualizowano localStorage z coordinatorPillars:",
-							updatedUser.coordinatorPillars,
-						);
+						// console.log(
+						// 	"✅ Zaktualizowano localStorage z coordinatorPillars:",
+						// 	updatedUser.coordinatorPillars,
+						// );
 
 						setCurrentUser((prev) =>
 							prev
 								? {
-										...prev,
-										coordinatorPillars: data.leaderTeams.map(
-											(t: any) => t.name,
-										),
-									}
+									...prev,
+									coordinatorPillars: data.leaderTeams.map(
+										(t: any) => t.name,
+									),
+								}
 								: prev,
 						);
 
@@ -2085,11 +2085,11 @@ export default function Projects() {
 				logger.debug("📋 Używam MOCK_PROJECTS jako fallback");
 				setProjects(MOCK_PROJECTS);
 			} finally {
-				console.log("🔄 [Projects] BEFORE setTimeout - loading:", loading);
+				// console.log("🔄 [Projects] BEFORE setTimeout - loading:", loading);
 				setTimeout(() => {
-					console.log(
-						"🔄 [Projects] INSIDE setTimeout - ustawiam loading na false",
-					);
+					// console.log(
+					// 	"🔄 [Projects] INSIDE setTimeout - ustawiam loading na false",
+					// );
 					setLoading(false);
 				}, 300);
 			}
@@ -2111,8 +2111,8 @@ export default function Projects() {
 
 				if (response.ok) {
 					const data = await response.json();
-					console.log("📦 [fetchUsers] Otrzymano danych:", data.length);
-					console.log("📦 [fetchUsers] Pierwszy użytkownik:", data[0]);
+					// console.log("📦 [fetchUsers] Otrzymano danych:", data.length);
+					// console.log("📦 [fetchUsers] Pierwszy użytkownik:", data[0]);
 
 					const mappedUsers = data
 						.filter((user: any) => user.id !== 63 && user.id !== "63")
@@ -2129,10 +2129,10 @@ export default function Projects() {
 							pillars: user.pillars || [], // ← TO JEST WAŻNE!
 						}));
 
-					console.log(
-						"📦 [fetchUsers] Po mapowaniu - pierwszy:",
-						mappedUsers[0],
-					);
+					// console.log(
+					// 	"📦 [fetchUsers] Po mapowaniu - pierwszy:",
+					// 	mappedUsers[0],
+					// );
 					setUsers(mappedUsers);
 				}
 			} catch (error) {
@@ -2502,10 +2502,10 @@ export default function Projects() {
 					{(selectedPillar !== "all" ||
 						selectedStatus !== "all" ||
 						searchTerm) && (
-						<button className={styles.filters__reset} onClick={clearFilters}>
-							Wyczyść filtry
-						</button>
-					)}
+							<button className={styles.filters__reset} onClick={clearFilters}>
+								Wyczyść filtry
+							</button>
+						)}
 				</div>
 			</div>
 
@@ -2521,8 +2521,8 @@ export default function Projects() {
 							<h3 className={styles.emptyState__title}>Brak projektów</h3>
 							<p className={styles.emptyState__description}>
 								{searchTerm ||
-								selectedPillar !== "all" ||
-								selectedStatus !== "all"
+									selectedPillar !== "all" ||
+									selectedStatus !== "all"
 									? "Nie znaleziono projektów spełniających kryteria wyszukiwania."
 									: canManageProjects
 										? 'Nie ma jeszcze żadnych projektów. Kliknij "Dodaj projekt", aby utworzyć pierwszy.'

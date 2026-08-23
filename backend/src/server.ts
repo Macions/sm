@@ -25,12 +25,12 @@ import { syncMembers } from "./jobs/syncMembers";
 import dotenv from "dotenv";
 dotenv.config(); // âš ď¸Ź TO MUSI BYĆ NA POCZĄTKU!
 
-console.log("đź”‘ GOOGLE_CLIENT_ID:", process.env.GOOGLE_CLIENT_ID);
-console.log(
-	"đź”‘ GOOGLE_CLIENT_SECRET:",
-	process.env.GOOGLE_CLIENT_SECRET ? "âś… ZNALEZIONO" : "âťŚ BRAK",
-);
-console.log("đź”‘ GOOGLE_REDIRECT_URI:", process.env.GOOGLE_REDIRECT_URI);
+// console.log("đź”‘ GOOGLE_CLIENT_ID:", process.env.GOOGLE_CLIENT_ID);
+// console.log(
+// 	"đź”‘ GOOGLE_CLIENT_SECRET:",
+// 	process.env.GOOGLE_CLIENT_SECRET ? "âś… ZNALEZIONO" : "âťŚ BRAK",
+// );
+// console.log("đź”‘ GOOGLE_REDIRECT_URI:", process.env.GOOGLE_REDIRECT_URI);
 
 updateLeaveStatus();
 
@@ -1009,7 +1009,7 @@ app.get("/uploads/tasks/:filename", authMiddleware, async (req: any, res) => {
 		const filename = decodeURIComponent(req.params.filename);
 		const filePath = path.join(__dirname, "uploads/tasks", filename);
 
-		console.log("đź“ [DOWNLOAD] Szukam pliku:", filePath);
+		// console.log("đź“ [DOWNLOAD] Szukam pliku:", filePath);
 
 		if (!fs.existsSync(filePath)) {
 			// đź”Ą SPRÓBUJ Z NAPRAWIONĄ NAZWĄ (usuń znaki specjalne)
@@ -1022,7 +1022,7 @@ app.get("/uploads/tasks/:filename", authMiddleware, async (req: any, res) => {
 				return res.sendFile(cleanPath);
 			}
 
-			console.log("âťŚ [DOWNLOAD] Plik nie istnieje:", filePath);
+			// console.log("âťŚ [DOWNLOAD] Plik nie istnieje:", filePath);
 			return res.status(404).json({ error: "Nie znaleziono pliku" });
 		}
 
@@ -1050,7 +1050,7 @@ app.get(
 			const filename = decodeURIComponent(req.params.filename);
 			const filePath = path.join(__dirname, "uploads/tasks", filename);
 
-			console.log("đź“ [DOWNLOAD] Szukam pliku (api):", filePath);
+			// console.log("đź“ [DOWNLOAD] Szukam pliku (api):", filePath);
 
 			if (!fs.existsSync(filePath)) {
 				const cleanFilename = filename
@@ -1062,7 +1062,7 @@ app.get(
 					return res.sendFile(cleanPath);
 				}
 
-				console.log("âťŚ [DOWNLOAD] Plik nie istnieje:", filePath);
+				// console.log("âťŚ [DOWNLOAD] Plik nie istnieje:", filePath);
 				return res.status(404).json({ error: "Nie znaleziono pliku" });
 			}
 
@@ -2001,10 +2001,10 @@ app.post("/api/tasks/:id/rate", authMiddleware, async (req: any, res) => {
 		const userId = req.user?.id;
 		const { rating, comment } = req.body;
 
-		console.log("đź“Ą [RATING] Zadanie ID:", id);
-		console.log("đź“Ą [RATING] Użytkownik:", userId);
-		console.log("đź“Ą [RATING] Ocena:", rating);
-		console.log("đź“Ą [RATING] Komentarz:", comment);
+		// console.log("đź“Ą [RATING] Zadanie ID:", id);
+		// console.log("đź“Ą [RATING] Użytkownik:", userId);
+		// console.log("đź“Ą [RATING] Ocena:", rating);
+		// console.log("đź“Ą [RATING] Komentarz:", comment);
 
 		const taskId = parseInt(id);
 		if (isNaN(taskId)) {
@@ -2051,7 +2051,7 @@ app.post("/api/tasks/:id/rate", authMiddleware, async (req: any, res) => {
 			},
 		});
 
-		console.log("âś… [RATING] Zapisano ocenę dla zadania:", taskId);
+		// console.log("âś… [RATING] Zapisano ocenę dla zadania:", taskId);
 
 		res.json({
 			success: true,
@@ -5813,12 +5813,12 @@ app.put(
 			const { role, is_leader, role_in_team } = req.body;
 
 			// đź”Ą LOGUJ CO PRZYCHODZI
-			console.log("đź“Ą [BACKEND] Aktualizacja członka:", {
-				memberId,
-				role,
-				is_leader,
-				role_in_team,
-			});
+			// console.log("đź“Ą [BACKEND] Aktualizacja członka:", {
+			// 	memberId,
+			// 	role,
+			// 	is_leader,
+			// 	role_in_team,
+			// });
 
 			// đź”Ą BUDUJ OBIEKT DO AKTUALIZACJI
 			const updateData: any = {};
@@ -5834,7 +5834,7 @@ app.put(
 				updateData.role = role_in_team; // Zapisujemy do kolumny `role`
 			}
 
-			console.log("đź“Ą [BACKEND] Aktualizuję pola:", updateData);
+			// console.log("đź“Ą [BACKEND] Aktualizuję pola:", updateData);
 
 			const teamMember = await prisma.teamMember.update({
 				where: { id: memberId },
@@ -5853,7 +5853,7 @@ app.put(
 				},
 			});
 
-			console.log("âś… [BACKEND] Zaktualizowano:", teamMember);
+			// console.log("âś… [BACKEND] Zaktualizowano:", teamMember);
 
 			res.json({
 				id: teamMember.id.toString(),
@@ -6063,8 +6063,8 @@ app.put("/api/tasks/:id", authMiddleware, async (req: any, res) => {
 			feedbackType,
 		} = req.body;
 
-		console.log("đź“Ą [BACKEND] PUT /api/tasks/", id);
-		console.log("đź“Ą [BACKEND] Nowy status:", status);
+		// console.log("đź“Ą [BACKEND] PUT /api/tasks/", id);
+		// console.log("đź“Ą [BACKEND] Nowy status:", status);
 
 		const taskId = parseInt(id);
 		if (isNaN(taskId)) {
@@ -6079,7 +6079,7 @@ app.put("/api/tasks/:id", authMiddleware, async (req: any, res) => {
 			return res.status(404).json({ error: "Nie znaleziono zadania" });
 		}
 
-		console.log("đź“Ą [BACKEND] Obecny status:", existingTask.status);
+		// console.log("đź“Ą [BACKEND] Obecny status:", existingTask.status);
 
 		const canEdit =
 			userRole === "admin" ||
@@ -6125,12 +6125,12 @@ app.put("/api/tasks/:id", authMiddleware, async (req: any, res) => {
 			},
 		});
 
-		console.log(
-			"âś… [BACKEND] Zaktualizowano zadanie:",
-			task.id,
-			"â†’",
-			task.status,
-		);
+		// console.log(
+		// 	"âś… [BACKEND] Zaktualizowano zadanie:",
+		// 	task.id,
+		// 	"â†’",
+		// 	task.status,
+		// );
 
 		res.json({
 			id: task.id.toString(),
@@ -6165,8 +6165,8 @@ app.post(
 			const { feedbackText } = req.body;
 			const file = req.file;
 
-			console.log("đź“Ą [FEEDBACK] Zadanie ID:", id);
-			console.log("đź“Ą [FEEDBACK] Typ:", file ? "plik" : "tekst");
+			// console.log("đź“Ą [FEEDBACK] Zadanie ID:", id);
+			// console.log("đź“Ą [FEEDBACK] Typ:", file ? "plik" : "tekst");
 
 			const task = await prisma.task.findUnique({
 				where: { id: parseInt(id) },
@@ -6231,7 +6231,7 @@ app.post(
 				data: updateData,
 			});
 
-			console.log("âś… [FEEDBACK] Odpowiedź dodana dla zadania:", id);
+			// console.log("âś… [FEEDBACK] Odpowiedź dodana dla zadania:", id);
 
 			res.json({
 				success: true,
@@ -6266,7 +6266,7 @@ app.delete("/api/tasks/:id", authMiddleware, async (req: any, res: any) => {
 		const taskId = parseInt(req.params.id);
 		const userId = req.user?.id;
 
-		console.log(`đź—‘ď¸Ź DELETE /api/tasks/${taskId} - user: ${userId}`);
+		// console.log(`đź—‘ď¸Ź DELETE /api/tasks/${taskId} - user: ${userId}`);
 
 		// Pobierz zadanie
 		const task = await prisma.task.findUnique({
@@ -6309,7 +6309,7 @@ app.delete("/api/tasks/:id", authMiddleware, async (req: any, res: any) => {
 			roleName === "Wiceprezes"
 		) {
 			canDelete = true;
-			console.log("âś… Admin/Zarząd/Prezes - może usuwać");
+			// console.log("âś… Admin/Zarząd/Prezes - może usuwać");
 		}
 
 		// 2. Sprawdź czy użytkownik jest liderem (koordynatorem)
@@ -6324,35 +6324,35 @@ app.delete("/api/tasks/:id", authMiddleware, async (req: any, res: any) => {
 			// 2a. Sprawdź czy zadanie ma filar i czy pasuje do filaru użytkownika
 			if (task.pillar && user.pillars && user.pillars.includes(task.pillar)) {
 				canDelete = true;
-				console.log(
-					`âś… Koordynator - może usuwać (filar pasuje: ${task.pillar})`,
-				);
+				// console.log(
+				// 	`âś… Koordynator - może usuwać (filar pasuje: ${task.pillar})`,
+				// );
 			}
 			// 2b. Sprawdź czy zadanie jest w zespole użytkownika
 			else if (task.assigned_group && user.team === task.assigned_group) {
 				canDelete = true;
-				console.log(
-					`âś… Koordynator - może usuwać (zespół pasuje: ${task.assigned_group})`,
-				);
+				// console.log(
+				// 	`âś… Koordynator - może usuwać (zespół pasuje: ${task.assigned_group})`,
+				// );
 			}
 			// 2c. Koordynator może usuwać zadania przypisane do niego
 			else if (task.assigned_to === userId) {
 				canDelete = true;
-				console.log(
-					"âś… Koordynator - może usuwać (zadanie przypisane do niego)",
-				);
+				// console.log(
+				// 	"âś… Koordynator - może usuwać (zadanie przypisane do niego)",
+				// );
 			}
 		}
 
 		// 3. Twórca zadania może usuwać
 		if (task.created_by === userId) {
 			canDelete = true;
-			console.log("âś… Twórca zadania - może usuwać");
+			// console.log("âś… Twórca zadania - może usuwać");
 		}
 
-		console.log(`đź“Š canDelete: ${canDelete}`);
-		console.log(`đź“Ś task.pillar: ${task.pillar}`);
-		console.log(`đź“Ś user.pillars: ${user.pillars}`);
+		// console.log(`đź“Š canDelete: ${canDelete}`);
+		// console.log(`đź“Ś task.pillar: ${task.pillar}`);
+		// console.log(`đź“Ś user.pillars: ${user.pillars}`);
 
 		if (!canDelete) {
 			return res.status(403).json({
@@ -6373,7 +6373,7 @@ app.delete("/api/tasks/:id", authMiddleware, async (req: any, res: any) => {
 			where: { id: taskId },
 		});
 
-		console.log(`âś… Usunięto zadanie ${taskId} - "${task.title}"`);
+		// console.log(`âś… Usunięto zadanie ${taskId} - "${task.title}"`);
 		res.json({ success: true });
 	} catch (error) {
 		console.error("âťŚ Błąd usuwania:", error);
@@ -7022,7 +7022,7 @@ app.put(
 			const { role } = req.body;
 			const userRole = req.user?.role;
 
-			console.log(`🔄 [MEMBERS] Aktualizacja członka ${memberId}`);
+			// console.log(`🔄 [MEMBERS] Aktualizacja członka ${memberId}`);
 
 			// Sprawdź uprawnienia
 			if (
@@ -7123,7 +7123,7 @@ app.delete(
 			const memberId = parseInt(req.params.id);
 			const userRole = req.user?.role;
 
-			console.log(`🗑️ [MEMBERS] Usuwanie członka ${memberId}`);
+			// console.log(`🗑️ [MEMBERS] Usuwanie członka ${memberId}`);
 
 			if (
 				userRole !== "admin" &&
@@ -7180,7 +7180,7 @@ app.put(
 			const { availability, experience } = req.body;
 			const userRole = req.user?.role;
 
-			console.log(`🔄 [CREATORS] Aktualizacja twórcy ${creatorId}`);
+			// console.log(`🔄 [CREATORS] Aktualizacja twórcy ${creatorId}`);
 
 			// Sprawdź uprawnienia
 			if (
@@ -7286,7 +7286,7 @@ app.delete(
 			const creatorId = parseInt(req.params.id);
 			const userRole = req.user?.role;
 
-			console.log(`🗑️ [CREATORS] Usuwanie twórcy ${creatorId}`);
+			// console.log(`🗑️ [CREATORS] Usuwanie twórcy ${creatorId}`);
 
 			// Sprawdź uprawnienia
 			if (
@@ -7338,14 +7338,14 @@ app.delete(
 app.get("/api/admin/member-access", authMiddleware, async (req: any, res) => {
 	try {
 		const userRole = req.user?.role;
-		console.log("🔍 [member-access] Sprawdzanie uprawnień:", userRole);
+		// console.log("🔍 [member-access] Sprawdzanie uprawnień:", userRole);
 
 		if (userRole !== "admin" && userRole !== "board" && userRole !== "Zarząd") {
-			console.log("❌ [member-access] Brak uprawnień:", userRole);
+			// console.log("❌ [member-access] Brak uprawnień:", userRole);
 			return res.status(403).json({ error: "Brak uprawnień" });
 		}
 
-		console.log("🔍 [member-access] Pobieranie członków...");
+		// console.log("🔍 [member-access] Pobieranie członków...");
 
 		// ✅ POPRAWIONE - usunięto pole 'items'
 		const members = await prisma.user.findMany({
@@ -7373,14 +7373,14 @@ app.get("/api/admin/member-access", authMiddleware, async (req: any, res) => {
 			}
 		});
 
-		console.log(`🔍 [member-access] Znaleziono ${members.length} członków`);
+		// console.log(`🔍 [member-access] Znaleziono ${members.length} członków`);
 
 		if (members.length > 0) {
-			console.log("🔍 [member-access] Przykładowy członek:", {
-				id: members[0].id,
-				first_name: members[0].first_name,
-				last_name: members[0].last_name,
-			});
+			// console.log("🔍 [member-access] Przykładowy członek:", {
+			// 	id: members[0].id,
+			// 	first_name: members[0].first_name,
+			// 	last_name: members[0].last_name,
+			// });
 		}
 
 		// ✅ POPRAWIONE - usunięto obliczanie totalItems
@@ -7400,7 +7400,7 @@ app.get("/api/admin/member-access", authMiddleware, async (req: any, res) => {
 			// items - USUNIĘTE
 		}));
 
-		console.log("✅ [member-access] Odpowiedź wysłana");
+		// console.log("✅ [member-access] Odpowiedź wysłana");
 		res.json(formattedMembers);
 	} catch (error) {
 		console.error("❌ [member-access] Błąd:", error);
@@ -7516,7 +7516,7 @@ app.put('/api/members/:id/status', authMiddleware, async (req: any, res) => {
 					}
 				});
 			}
-			console.log(`✅ [MENTOR] Użytkownik ${userId} dodany do zespołu Mentorzy`);
+			// console.log(`✅ [MENTOR] Użytkownik ${userId} dodany do zespołu Mentorzy`);
 		}
 
 		// Jeśli stary status był 'mentor' a nowy nie jest - usuń z team_members
@@ -7527,7 +7527,7 @@ app.put('/api/members/:id/status', authMiddleware, async (req: any, res) => {
 					team_id: mentorTeam.id
 				}
 			});
-			console.log(`❌ [MENTOR] Użytkownik ${userId} usunięty z zespołu Mentorzy`);
+			// console.log(`❌ [MENTOR] Użytkownik ${userId} usunięty z zespołu Mentorzy`);
 		}
 
 		res.json({
@@ -8499,5 +8499,5 @@ app.get(
 
 app.use("/api", revenueRoutes);
 app.listen(port, () => {
-	console.log(`🚀 Serwer działa na porcie ${port}`);
+	// console.log(`🚀 Serwer działa na porcie ${port}`);
 });

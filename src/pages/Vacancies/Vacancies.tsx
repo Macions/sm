@@ -1348,8 +1348,8 @@ function VacancyFormModal({
 	// useEffect aktualizuje formData gdy vacancy się zmienia
 	useEffect(() => {
 		if (vacancy) {
-			console.log("🔄 Vacancy:", vacancy);
-			console.log("🔄 Contact person z vacancy:", vacancy.contactPerson);
+			// console.log("🔄 Vacancy:", vacancy);
+			// console.log("🔄 Contact person z vacancy:", vacancy.contactPerson);
 
 			// Pobierz nazwę z różnych źródeł
 			const contactName =
@@ -2517,12 +2517,12 @@ function VacancyFormModal({
 										>
 											{
 												STATUS_ICONS[
-													(formData.status as VacancyStatus) || "active"
+												(formData.status as VacancyStatus) || "active"
 												]
 											}
 											{
 												STATUS_LABELS[
-													(formData.status as VacancyStatus) || "active"
+												(formData.status as VacancyStatus) || "active"
 												]
 											}
 										</span>
@@ -3029,9 +3029,9 @@ export default function Vacancies({ title }: { title?: string }) {
 								v.contact_person?.first_name && v.contact_person?.last_name
 									? `${v.contact_person.first_name} ${v.contact_person.last_name}`.trim()
 									: v.contact_person?.name ||
-										v.recruitment_messenger_contact || // ← TO JEST WAŻNE!
-										currentUser.name ||
-										"Admin",
+									v.recruitment_messenger_contact || // ← TO JEST WAŻNE!
+									currentUser.name ||
+									"Admin",
 							email: v.contact_person?.email || "",
 							phone: v.contact_person?.phone || "",
 						},
@@ -3056,15 +3056,15 @@ export default function Vacancies({ title }: { title?: string }) {
 						},
 					}));
 
-					console.log(
-						"📦 Po mapowaniu (responsibilities powinny być tablicą):",
-						mapped[0]?.responsibilities,
-					);
-					console.log(
-						"📦 Po mapowaniu (requirements powinny być tablicą):",
-						mapped[0]?.requirements,
-					);
-					console.log("📦 Po mapowaniu (recruitment):", mapped[0]?.recruitment);
+					// console.log(
+					// 	"📦 Po mapowaniu (responsibilities powinny być tablicą):",
+					// 	mapped[0]?.responsibilities,
+					// );
+					// console.log(
+					// 	"📦 Po mapowaniu (requirements powinny być tablicą):",
+					// 	mapped[0]?.requirements,
+					// );
+					// console.log("📦 Po mapowaniu (recruitment):", mapped[0]?.recruitment);
 					setVacancies(mapped);
 				} else {
 					logger.warn("⚠️ Błąd pobierania wakatów:", vacanciesResponse.status);
@@ -3566,10 +3566,10 @@ export default function Vacancies({ title }: { title?: string }) {
 					{(selectedTeam !== "all" ||
 						selectedStatus !== "all" ||
 						searchTerm) && (
-						<button className={styles.filters__reset} onClick={clearFilters}>
-							Wyczyść filtry
-						</button>
-					)}
+							<button className={styles.filters__reset} onClick={clearFilters}>
+								Wyczyść filtry
+							</button>
+						)}
 				</div>
 			</div>
 

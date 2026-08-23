@@ -1,6 +1,5 @@
 ﻿import { Routes, Route, Navigate } from "react-router-dom";
 import { lazy, Suspense, useEffect, useState } from "react";
-import api from "@/api/axios";
 import Onboarding from "@/pages/Onboarding/Onboarding";
 const DashboardLayout = lazy(() => import("@/layouts/DashboardLayout"));
 const Login = lazy(() => import("@/pages/Login/Login"));
@@ -58,9 +57,7 @@ function AppRoutes() {
 				return;
 			}
 			try {
-				const response = await api.get("/api/auth/me");
-
-				console.log("✅ Token ważny:", response.data);
+				// console.log("✅ Token ważny:", response.data);
 				setIsAuthenticated(true);
 			} catch (error) {
 				console.error("❌ Błąd weryfikacji:", error);

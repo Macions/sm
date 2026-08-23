@@ -114,7 +114,7 @@ export default function Calendar() {
 				await fetchGoogleEvents();
 			}
 		} catch (error) {
-			console.log("ℹ️ Google Calendar nie dostępny");
+			// console.log("ℹ️ Google Calendar nie dostępny");
 			setIsGoogleAuth(false);
 		}
 	};
@@ -132,7 +132,7 @@ export default function Calendar() {
 				setGoogleEvents(data);
 			}
 		} catch (error) {
-			console.log("ℹ️ Nie udało się pobrać wydarzeń z Google");
+			// console.log("ℹ️ Nie udało się pobrać wydarzeń z Google");
 		} finally {
 			setIsGoogleLoading(false);
 		}
