@@ -1231,86 +1231,141 @@ app.get("/api/ideas/:id", authMiddleware, async (req: any, res) => {
 	}
 });
 
-app.get("/api/members", authMiddleware, async (req: any, res) => {
+app.get('/api/members', authMiddleware, async (req: any, res) => {
 	try {
 		const users = await prisma.user.findMany({
-			where: {
-				is_active: true,
-			},
-			include: {
+			where: { is_active: true },
+			select: {
+				id: true,
+				first_name: true,
+				last_name: true,
+				email: true,
+				phone: true,
+				functional_role: true,
+				team: true,
+				province: true,
+				status: true,
+				join_date: true,
+				created_at: true,
+				pillars: true,
 				team_members: {
 					include: {
-						team: true,
-					},
-				},
-				onboarding_data: { orderBy: { created_at: "desc" }, take: 1 },
-				leaves: {
-					where: {
-						status: "approved",
-					},
-					select: {
-						start_date: true,
-						end_date: true,
-						scope: true,
-						affected_teams: true,
-					},
-				},
-			},
+						team: true
+					}
+				}
+			}
 		});
 
-		const mappedUsers = users.map((user: any) => {
-			const onboarding = user.onboarding_data?.[0] || {};
-			const teams = user.team_members
-				.map((tm: any) => tm.team?.name)
-				.filter(Boolean);
-			const teamString = teams.length > 0 ? teams.join(", ") : "Brak zespołu";
+		const members = users.map((user: any) => {
+			// Sprawdź czy jest mentorem
+			const isMentor = user.team_members?.some((tm: any) =>
+				tm.team?.name === 'Mentorzy'
+			);
+			const status = isMentor ? 'mentor' : user.status;
 
-			const today = new Date();
-			today.setHours(0, 0, 0, 0);
+			// ============================================================
+			// 🔥 ZBIERZ WSZYSTKIE ZESPOŁY Z team_members
+			// ============================================================
+			const teamNames = user.team_members
+				?.map((tm: any) => tm.team?.name)
+				.filter(Boolean) || [];
 
-			const activeLeave = user.leaves?.find((leave: any) => {
-				const start = new Date(leave.start_date);
-				const end = new Date(leave.end_date);
-				start.setHours(0, 0, 0, 0);
-				end.setHours(0, 0, 0, 0);
-				return start <= today && end >= today;
-			});
+			// Dodaj istniejący team z tabeli users (jeśli nie ma go w team_members)
+			if (user.team && user.team !== "Brak zespołu") {
+				const existingTeams = teamNames || [];
+				// Sprawdź czy team z users nie jest już w liście
+				const teamList = user.team.split(", ");
+				teamList.forEach((t: string) => {
+					if (!existingTeams.includes(t) && t !== "Brak zespołu") {
+						existingTeams.push(t);
+					}
+				});
+			}
+
+			// ============================================================
+			// 🔥 USUŃ "Mentorzy" z listy zespołów (bo mają osobny badge)
+			// ============================================================
+			const filteredTeams = teamNames
+				.filter((t: string) => t !== "Mentorzy")
+				.filter((t: string) => t !== "Brak zespołu");
+
+			// ============================================================
+			// 🔥 POŁĄCZ ZESPÓŁ W JEDEN STRING
+			// ============================================================
+			const teamString = filteredTeams.length > 0
+				? filteredTeams.join(", ")
+				: "Brak zespołu";
 
 			return {
-				id: user.id.toString(),
+				id: user.id,
 				first_name: user.first_name,
 				last_name: user.last_name,
 				email: user.email,
 				phone: user.phone,
+				functional_role: user.functional_role,
+				team: teamString, // <-- NADPISUJEMY TEAM
 				province: user.province,
-				// 🔥 PO PROSTU STATUS Z TABELI users
-				status: user.status || "active",
-				team: teamString,
-				team_id: teams.length > 0 ? teams.join("-") : "",
-				pillars: user.pillars || null,
-				functional_role: user.functional_role || "Członek",
-				join_date:
-					user.join_date?.toISOString().split("T")[0] ||
-					user.created_at.toISOString().split("T")[0],
-				vacation: activeLeave
-					? {
-							startDate: activeLeave.start_date.toISOString().split("T")[0],
-							endDate: activeLeave.end_date.toISOString().split("T")[0],
-							type: activeLeave.scope === "team" ? "team" : "organization",
-							teamId: activeLeave.affected_teams || undefined,
-						}
-					: null,
-				onboarding_data: onboarding,
+				status: status,
+				join_date: user.join_date,
+				created_at: user.created_at,
+				pillars: user.pillars
 			};
 		});
 
-		res.json(mappedUsers);
+		res.json(members);
 	} catch (error) {
-		logger.error("❌ Błąd pobierania członków:", error);
-		res.status(500).json({ error: "Nie udało się pobrać członków" });
+		console.error('❌ Błąd:', error);
+		res.status(500).json({
+			error: 'Błąd pobierania członków',
+			details: error instanceof Error ? error.message : 'Unknown error'
+		});
 	}
 });
+app.get('/api/mentors', authMiddleware, async (req: any, res) => {
+	try {
+		const mentorTeam = await prisma.team.findFirst({
+			where: { name: 'Mentorzy' },
+			include: {
+				members: {
+					include: {
+						user: {
+							select: {
+								id: true,
+								email: true,
+								first_name: true,
+								last_name: true,
+								status: true,
+								functional_role: true,
+								province: true
+							}
+						}
+					}
+				}
+			}
+		});
 
+		if (!mentorTeam) {
+			return res.json([]);
+		}
+
+		const mentors = mentorTeam.members.map((m: any) => ({
+			id: m.user.id,
+			email: m.user.email,
+			first_name: m.user.first_name,
+			last_name: m.user.last_name,
+			status: m.user.status,
+			functional_role: m.user.functional_role,
+			province: m.user.province,
+			role_in_team: m.role_in_team,
+			is_leader: m.is_leader
+		}));
+
+		res.json(mentors);
+	} catch (error) {
+		console.error('❌ Błąd:', error);
+		res.status(500).json({ error: 'Błąd pobierania mentorów' });
+	}
+});
 app.get("/api/projects", authMiddleware, projectController.getAllProjects);
 app.get("/api/projects/:id", authMiddleware, projectController.getProjectById);
 app.post("/api/projects", authMiddleware, projectController.createProject);
@@ -2182,7 +2237,7 @@ app.get("/api/applications", authMiddleware, async (req: any, res) => {
 				userId: app.user_id.toString(),
 				userName: app.user
 					? `${app.user.first_name || ""} ${app.user.last_name || ""}`.trim() ||
-						"Nieznany"
+					"Nieznany"
 					: "Nieznany",
 				userEmail: app.user?.email || "",
 				message: app.message || "",
@@ -2303,7 +2358,7 @@ app.get(
 					userId: app.user_id.toString(),
 					userName: app.user
 						? `${app.user.first_name || ""} ${app.user.last_name || ""}`.trim() ||
-							"Nieznany"
+						"Nieznany"
 						: "Nieznany",
 					userEmail: app.user?.email || "",
 					message: app.message || "",
@@ -3534,14 +3589,14 @@ app.put("/api/leaves/:id", authMiddleware, async (req: any, res) => {
 					: existingLeave.attachments,
 				status: status || existingLeave.status,
 				...(status === "approved" ||
-				status === "rejected" ||
-				status === "cancelled"
+					status === "rejected" ||
+					status === "cancelled"
 					? {
-							approved_by:
-								`${currentUser?.first_name || ""} ${currentUser?.last_name || ""}`.trim() ||
-								"Nieznany",
-							approved_at: new Date(),
-						}
+						approved_by:
+							`${currentUser?.first_name || ""} ${currentUser?.last_name || ""}`.trim() ||
+							"Nieznany",
+						approved_at: new Date(),
+					}
 					: {}),
 			},
 			include: { user: true }, // â† đź”Ą DODAJ TÄ LINIÄ!
@@ -6517,7 +6572,7 @@ app.get("/api/admin/onboarding-contacts", authMiddleware, async (req: any, res: 
 				const onboarding = user.onboarding_data?.[0] || {};
 
 				// Sprawdź czy są jakieś kontakty
-				const hasContacts = 
+				const hasContacts =
 					(onboarding.sala_contacts && onboarding.sala_contacts !== "[]" && onboarding.sala_contacts !== '[""]') ||
 					(onboarding.mp_contacts && onboarding.mp_contacts !== "[]" && onboarding.mp_contacts !== '[""]') ||
 					(onboarding.institution_contacts && onboarding.institution_contacts !== "[]" && onboarding.institution_contacts !== '[""]') ||
@@ -6558,7 +6613,7 @@ app.get("/api/admin/onboarding-contacts", authMiddleware, async (req: any, res: 
 		res.json(formattedContacts);
 	} catch (error) {
 		console.error("❌ Błąd pobierania kontaktów onboardingu:", error);
-		res.status(500).json({ 
+		res.status(500).json({
 			error: "Nie udało się pobrać kontaktów",
 			details: error instanceof Error ? error.message : "Unknown error"
 		});
@@ -7283,7 +7338,6 @@ app.delete(
 app.get("/api/admin/member-access", authMiddleware, async (req: any, res) => {
 	try {
 		const userRole = req.user?.role;
-
 		console.log("🔍 [member-access] Sprawdzanie uprawnień:", userRole);
 
 		if (userRole !== "admin" && userRole !== "board" && userRole !== "Zarząd") {
@@ -7293,9 +7347,10 @@ app.get("/api/admin/member-access", authMiddleware, async (req: any, res) => {
 
 		console.log("🔍 [member-access] Pobieranie członków...");
 
+		// ✅ POPRAWIONE - usunięto pole 'items'
 		const members = await prisma.user.findMany({
 			where: {
-				is_active: true,
+				is_active: true
 			},
 			select: {
 				id: true,
@@ -7308,57 +7363,41 @@ app.get("/api/admin/member-access", authMiddleware, async (req: any, res) => {
 				access: {
 					select: {
 						id: true,
-						access_name: true,
-					},
+						access_name: true
+					}
 				},
-				items: {
-					select: {
-						id: true,
-						name: true,
-						value: true,
-						notes: true,
-						created_at: true,
-					},
-				},
+				// items - USUNIĘTE (pole nie istnieje w modelu User)
 			},
 			orderBy: {
-				first_name: "asc",
-			},
+				first_name: "asc"
+			}
 		});
 
 		console.log(`🔍 [member-access] Znaleziono ${members.length} członków`);
 
-		// Loguj pierwszego członka dla sprawdzenia
 		if (members.length > 0) {
 			console.log("🔍 [member-access] Przykładowy członek:", {
 				id: members[0].id,
-				name: `${members[0].first_name} ${members[0].last_name}`,
-				access: members[0].access.length,
-				items: members[0].items.length,
-				itemsData: members[0].items,
+				first_name: members[0].first_name,
+				last_name: members[0].last_name,
 			});
 		}
 
-		// Sprawdź czy są jakieś przedmioty w ogóle
-		const totalItems = members.reduce((sum, m) => sum + m.items.length, 0);
-		console.log(`🔍 [member-access] Łącznie przedmiotów: ${totalItems}`);
+		// ✅ POPRAWIONE - usunięto obliczanie totalItems
+		// const totalItems = members.reduce((sum, m) => sum + m.items.length, 0);
+		// console.log(`🔍 [member-access] Łącznie przedmiotów: ${totalItems}`);
 
-		const formattedMembers = members.map((member: any) => ({
-			id: member.id.toString(),
+		// Formatuj odpowiedź - ✅ usunięto 'items'
+		const formattedMembers = members.map((member) => ({
+			id: member.id,
 			first_name: member.first_name,
 			last_name: member.last_name,
 			email: member.email,
 			pillars: member.pillars,
 			functional_role: member.functional_role,
 			team: member.team,
-			access: member.access.map((a: any) => a.access_name),
-			items: member.items.map((item: any) => ({
-				id: item.id.toString(),
-				name: item.name,
-				value: item.value,
-				notes: item.notes,
-				created_at: item.created_at,
-			})),
+			access: member.access,
+			// items - USUNIĘTE
 		}));
 
 		console.log("✅ [member-access] Odpowiedź wysłana");
@@ -7408,74 +7447,100 @@ app.get("/api/members/:id/access", authMiddleware, async (req: any, res) => {
 // ============================================================
 // 🔥 PUT /api/members/:id/status - Zmień status członka
 // ============================================================
-app.put(
-	"/api/members/:id/status",
-	authMiddleware,
-	async (req: any, res: any) => {
-		try {
-			const userId = parseInt(req.params.id);
-			const { status } = req.body;
-			const userRole = req.user?.role;
+app.put('/api/members/:id/status', authMiddleware, async (req: any, res) => {
+	try {
+		const userId = parseInt(req.params.id);
+		const { status } = req.body;
 
-			console.log(`🔄 [STATUS] Zmiana statusu dla user ${userId} na ${status}`);
+		const userRole = req.user?.role;
+		if (userRole !== 'admin' && userRole !== 'board') {
+			return res.status(403).json({ error: 'Brak uprawnień' });
+		}
 
-			// Sprawdź uprawnienia
-			if (
-				userRole !== "admin" &&
-				userRole !== "board" &&
-				userRole !== "Zarząd"
-			) {
-				return res.status(403).json({ error: "Brak uprawnień" });
-			}
+		const oldUser = await prisma.user.findUnique({
+			where: { id: userId }
+		});
 
-			// Walidacja statusu
-			const validStatuses = ["active", "trial", "mentor", "vacation"];
-			if (!validStatuses.includes(status)) {
-				return res.status(400).json({
-					error:
-						"Nieprawidłowy status. Dozwolone: active, trial, mentor, vacation",
-				});
-			}
+		if (!oldUser) {
+			return res.status(404).json({ error: 'Użytkownik nie istnieje' });
+		}
 
-			// Sprawdź czy użytkownik istnieje
-			const user = await prisma.user.findUnique({
-				where: { id: userId },
-			});
+		const updatedUser = await prisma.user.update({
+			where: { id: userId },
+			data: { status: status }
+		});
 
-			if (!user) {
-				return res.status(404).json({ error: "Użytkownik nie istnieje" });
-			}
+		// ============================================================
+		// SYNCHRONIZACJA Z TEAM_MEMBERS - POPRAWIONA
+		// ============================================================
+		let mentorTeam = await prisma.team.findFirst({
+			where: { name: 'Mentorzy' }
+		});
 
-			// 🔥 AKTUALIZUJ TYLKO status - BEZ updated_at!
-			const updatedUser = await prisma.user.update({
-				where: { id: userId },
+		if (!mentorTeam) {
+			mentorTeam = await prisma.team.create({
 				data: {
-					status: status,
-					// ❌ USUŃ: updated_at: new Date()
-				},
-			});
-
-			console.log(
-				`✅ [STATUS] Status zmieniony z ${user.status} na ${updatedUser.status}`,
-			);
-
-			res.json({
-				success: true,
-				message: "Status został zaktualizowany",
-				user: {
-					id: updatedUser.id.toString(),
-					status: updatedUser.status,
-				},
-			});
-		} catch (error) {
-			console.error("❌ [STATUS] Błąd:", error);
-			res.status(500).json({
-				error: "Nie udało się zmienić statusu",
-				details: error instanceof Error ? error.message : "Unknown error",
+					name: 'Mentorzy',
+					description: 'Zespół mentorów',
+					role: 'Zespół',
+					created_at: new Date()
+				}
 			});
 		}
-	},
-);
+
+		// Jeśli nowy status to 'mentor' - dodaj do team_members
+		if (status === 'mentor' && oldUser.status !== 'mentor') {
+			// Sprawdź czy już istnieje
+			const existingMember = await prisma.teamMember.findFirst({
+				where: {
+					user_id: userId,
+					team_id: mentorTeam.id
+				}
+			});
+
+			if (existingMember) {
+				await prisma.teamMember.update({
+					where: { id: existingMember.id },
+					data: {
+						role: 'mentor',
+						is_leader: false
+					}
+				});
+			} else {
+				await prisma.teamMember.create({
+					data: {
+						user_id: userId,
+						team_id: mentorTeam.id,
+						role: 'mentor',
+						is_leader: false
+					}
+				});
+			}
+			console.log(`✅ [MENTOR] Użytkownik ${userId} dodany do zespołu Mentorzy`);
+		}
+
+		// Jeśli stary status był 'mentor' a nowy nie jest - usuń z team_members
+		if (oldUser.status === 'mentor' && status !== 'mentor') {
+			await prisma.teamMember.deleteMany({
+				where: {
+					user_id: userId,
+					team_id: mentorTeam.id
+				}
+			});
+			console.log(`❌ [MENTOR] Użytkownik ${userId} usunięty z zespołu Mentorzy`);
+		}
+
+		res.json({
+			success: true,
+			message: `Status zmieniony na ${status}`,
+			user: updatedUser
+		});
+
+	} catch (error) {
+		console.error('❌ Błąd:', error);
+		res.status(500).json({ error: 'Błąd zmiany statusu' });
+	}
+});
 // PUT /api/members/:id/access - Zapisz dostępy członka
 app.put("/api/members/:id/access", authMiddleware, async (req: any, res) => {
 	try {

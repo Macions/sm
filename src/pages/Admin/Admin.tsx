@@ -948,6 +948,7 @@ function StructureManagement({
 		"Organy kontrolne",
 		"Siła młodych",
 		"Siła Młodych",
+		
 	];
 
 	// ============================================================
@@ -2269,12 +2270,21 @@ function AccessManagement() {
 										{member.email}
 									</span>
 									<div className={styles.accessItem__tags}>
-										{member.access.map((item: string) => (
-											<span key={item} className={styles.accessTag}>
-												{item}
-											</span>
-										))}
-									</div>
+    {member.access && member.access.length > 0 ? (
+        member.access.map((item: any) => {
+            // Jeśli item to obiekt z access_name
+            const label = typeof item === 'object' ? item.access_name || item.name || JSON.stringify(item) : item;
+            const key = typeof item === 'object' ? item.id || label : label;
+            return (
+                <span key={key} className={styles.accessTag}>
+                    {label}
+                </span>
+            );
+        })
+    ) : (
+        <span className={styles.accessEmptyTag}>Brak dostępów</span>
+    )}
+</div>
 								</div>
 								<button
 									className={styles.accessItem__editBtn}

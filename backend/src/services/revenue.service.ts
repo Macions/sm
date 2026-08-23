@@ -7,7 +7,9 @@ interface MonthlyRevenue {
 	revenue: number;
 	expenses?: number;
 	profit?: number;
-	expensesFromInvoices?: number; // 👈 DODAJ
+	expensesFromInvoices?: number;
+	invoicesCount?: number;
+	unpaidInvoices?: number;
 }
 
 interface RevenueData {
@@ -16,7 +18,7 @@ interface RevenueData {
 	totalRevenue: number;
 	averageRevenue: number;
 	totalExpenses?: number;
-	totalExpensesFromInvoices?: number; // 👈 DODAJ
+	totalExpensesFromInvoices?: number;
 	netProfit?: number;
 }
 
@@ -38,15 +40,15 @@ export class RevenueService {
 			// ============================================================
 			const [paymentRows]: any[] = await smPool.query(
 				`SELECT 
-                    MONTH(payment_date) as month,
-                    SUM(CASE WHEN amount > 0 THEN amount ELSE 0 END) as total_revenue,
-                    SUM(CASE WHEN amount < 0 THEN amount ELSE 0 END) as total_expenses
-                FROM payments
-                WHERE 
-                    YEAR(payment_date) = ?
-                    AND blacklisted = 0
-                GROUP BY MONTH(payment_date)
-                ORDER BY month ASC`,
+					MONTH(payment_date) as month,
+					SUM(CASE WHEN amount > 0 THEN amount ELSE 0 END) as total_revenue,
+					SUM(CASE WHEN amount < 0 THEN amount ELSE 0 END) as total_expenses
+				FROM payments
+				WHERE 
+					YEAR(payment_date) = ?
+					AND blacklisted = 0
+				GROUP BY MONTH(payment_date)
+				ORDER BY month ASC`,
 				[year],
 			);
 
@@ -55,36 +57,21 @@ export class RevenueService {
 			// ============================================================
 			const [invoiceRows]: any[] = await ewidencjaPool.query(
 				`SELECT 
-                    MONTH(invoice_date) as month,
-                    SUM(amount) as total_invoices
-                FROM invoices
-                WHERE 
-                    YEAR(invoice_date) = ?
-                    AND paid = 0  -- tylko niezapłacone faktury (lub wszystkie jeśli chcesz)
-                GROUP BY MONTH(invoice_date)
-                ORDER BY month ASC`,
+					MONTH(invoice_date) as month,
+					SUM(amount) as total_invoices
+				FROM invoices
+				WHERE 
+					YEAR(invoice_date) = ?
+				GROUP BY MONTH(invoice_date)
+				ORDER BY month ASC`,
 				[year],
 			);
 
-			// ============================================================
-			// 3. Połącz dane
-			// ============================================================
 			const monthNames = [
-				"Styczeń",
-				"Luty",
-				"Marzec",
-				"Kwiecień",
-				"Maj",
-				"Czerwiec",
-				"Lipiec",
-				"Sierpień",
-				"Wrzesień",
-				"Październik",
-				"Listopad",
-				"Grudzień",
+				"Styczeń", "Luty", "Marzec", "Kwiecień", "Maj", "Czerwiec",
+				"Lipiec", "Sierpień", "Wrzesień", "Październik", "Listopad", "Grudzień"
 			];
 
-			// Mapy dla danych z payments
 			const revenueMap = new Map<number, number>();
 			const expensesMap = new Map<number, number>();
 
@@ -95,7 +82,6 @@ export class RevenueService {
 				});
 			}
 
-			// Mapa dla faktur
 			const invoiceMap = new Map<number, number>();
 			if (Array.isArray(invoiceRows)) {
 				invoiceRows.forEach((row: any) => {
@@ -104,14 +90,18 @@ export class RevenueService {
 			}
 
 			// ============================================================
-			// 4. Stwórz dane dla wszystkich miesięcy
+			// STAŁY MIESIĘCZNY WYDATEK NA BIURO - 100 zł miesięcznie
 			// ============================================================
+			const MONTHLY_OFFICE_COST = 60.27;
+
 			const months: MonthlyRevenue[] = monthNames.map((monthName, index) => {
 				const monthNumber = index + 1;
 				const revenue = revenueMap.get(monthNumber) || 0;
 				const expensesFromPayments = expensesMap.get(monthNumber) || 0;
 				const expensesFromInvoices = invoiceMap.get(monthNumber) || 0;
-				const totalExpenses = expensesFromPayments + expensesFromInvoices;
+
+				// DODAJ STAŁY WYDATEK NA BIURO DO KAŻDEGO MIESIĄCA
+				const totalExpenses = expensesFromPayments + expensesFromInvoices + MONTHLY_OFFICE_COST;
 
 				return {
 					month: monthName,
@@ -123,9 +113,6 @@ export class RevenueService {
 				};
 			});
 
-			// ============================================================
-			// 5. Oblicz sumy
-			// ============================================================
 			const totalRevenue = months.reduce((sum, m) => sum + m.revenue, 0);
 			const totalExpenses = months.reduce(
 				(sum, m) => sum + (m.expenses || 0),
@@ -155,46 +142,107 @@ export class RevenueService {
 	}
 
 	// ============================================================
-	// 6. Kategorie przychodów z payments
+	// Kategorie przychodów z payments - PEŁNA KATEGORYZACJA
 	// ============================================================
 	async getRevenueByCategory(year: number): Promise<CategoryData[]> {
 		try {
+			console.log(`🔍 [KATEGORIE] Pobieram kategorie dla roku ${year}...`);
+
+			// ============================================================
+			// Pobierz dane z payments z pełną kategoryzacją
+			// ============================================================
 			const [rows]: any[] = await smPool.query(
 				`SELECT 
-                    MONTH(payment_date) as month,
-                    CASE 
-                        WHEN title LIKE '%składka%' OR title LIKE '%Składka%' THEN 'Składki'
-                        WHEN title LIKE '%grant%' OR title LIKE '%Grant%' THEN 'Granty'
-                        WHEN title LIKE '%darowizna%' OR title LIKE '%Darowizna%' THEN 'Darowizny'
-                        WHEN title LIKE '%Faktura%' OR title LIKE '%faktura%' THEN 'Faktury'
-                        WHEN amount < 0 THEN 'Wydatki (payments)'
-                        ELSE 'Inne przychody'
-                    END as category,
-                    SUM(amount) as total
-                FROM payments
-                WHERE 
-                    YEAR(payment_date) = ?
-                    AND blacklisted = 0
-                    AND amount != 0
-                GROUP BY month, category
-                ORDER BY month ASC, category`,
+					MONTH(payment_date) as month,
+					CASE 
+						-- SKŁADKI - rozszerzone o różne warianty
+						WHEN LOWER(title) LIKE '%składka%' 
+						  OR LOWER(title) LIKE '%skladka%'
+						  OR LOWER(title) LIKE '%członkowskie%'
+						  OR LOWER(title) LIKE '%członkowski%'
+						  OR LOWER(title) LIKE '%składki%'
+						  OR LOWER(title) LIKE '%skladki%'
+						  OR LOWER(title) LIKE '%wpłata składki%'
+						  OR LOWER(title) LIKE '%wplata skladki%'
+						  OR LOWER(title) LIKE '%składka członkowska%'
+						  OR LOWER(title) LIKE '%skladka czlonkowska%' THEN 'Składki'
+						
+						-- GRANTY
+						WHEN LOWER(title) LIKE '%grant%' 
+						  OR LOWER(title) LIKE '%granty%'
+						  OR LOWER(title) LIKE '%dofinansowanie%'
+						  OR LOWER(title) LIKE '%projekt%'
+						  OR LOWER(title) LIKE '%program%'
+						  OR LOWER(title) LIKE '%dotacja%' THEN 'Granty'
+						
+						-- DAROWIZNY
+						WHEN LOWER(title) LIKE '%darowizna%'
+						  OR LOWER(title) LIKE '%darowizny%'
+						  OR LOWER(title) LIKE '%wpłata%'
+						  OR LOWER(title) LIKE '%wplata%'
+						  OR LOWER(title) LIKE '%datek%' THEN 'Darowizny'
+						
+						-- FAKTURY
+						WHEN LOWER(title) LIKE '%faktura%'
+						  OR LOWER(title) LIKE '%faktury%'
+						  OR LOWER(title) LIKE '%invoice%' 
+						  OR LOWER(title) LIKE '%faktura vat%' THEN 'Faktury'
+						
+						-- WYDATKI (ujemne kwoty) - to łapie wszystkie wydatki, w tym z "Biuro"
+						WHEN amount < 0 THEN 'Wydatki (payments)'
+						
+						-- INNE (dodatnie kwoty)
+						ELSE 'Inne przychody'
+					END as category,
+					SUM(amount) as total
+				FROM payments
+				WHERE 
+					YEAR(payment_date) = ?
+					AND blacklisted = 0
+					AND amount != 0
+				GROUP BY month, category
+				ORDER BY month ASC, category`,
 				[year],
 			);
 
 			// ============================================================
-			// 7. Dodaj wydatki z faktur do kategorii
+			// LOGI - zobacz co zostało skategoryzowane
+			// ============================================================
+			console.log(`📊 [KATEGORIE] Znaleziono ${rows.length} kategorii`);
+			if (Array.isArray(rows) && rows.length > 0) {
+				rows.forEach((row: any) => {
+					console.log(`  - Miesiąc: ${row.month}, Kategoria: ${row.category}, Kwota: ${row.total}`);
+				});
+			} else {
+				console.log(`⚠️ [KATEGORIE] Brak danych dla roku ${year}`);
+			}
+
+			// ============================================================
+			// Dodaj wydatki z faktur do kategorii
 			// ============================================================
 			const [invoiceRows]: any[] = await ewidencjaPool.query(
 				`SELECT 
-                    MONTH(invoice_date) as month,
-                    SUM(amount) as total_invoices
-                FROM invoices
-                WHERE 
-                    YEAR(invoice_date) = ?
-                    AND paid = 0
-                GROUP BY MONTH(invoice_date)`,
+					MONTH(invoice_date) as month,
+					CASE 
+						WHEN LOWER(contractor) LIKE '%biedronka%' 
+						  OR LOWER(contractor) LIKE '%lidl%'
+						  OR LOWER(contractor) LIKE '%kaufland%' THEN 'Wydatki (faktury - zakupy)'
+						WHEN LOWER(contractor) LIKE '%orange%' 
+						  OR LOWER(contractor) LIKE '%t-mobile%'
+						  OR LOWER(contractor) LIKE '%play%' THEN 'Wydatki (faktury - telekomunikacja)'
+						WHEN LOWER(contractor) LIKE '%media expert%' 
+						  OR LOWER(contractor) LIKE '%x-kom%' THEN 'Wydatki (faktury - sprzęt)'
+						ELSE 'Wydatki (faktury - inne)'
+					END as category,
+					SUM(amount) as total_invoices
+				FROM invoices
+				WHERE 
+					YEAR(invoice_date) = ?
+				GROUP BY month, category`,
 				[year],
 			);
+
+			console.log(`📄 [KATEGORIE] Znaleziono ${invoiceRows.length} miesięcy z fakturami`);
 
 			const monthNames = [
 				"Styczeń",
@@ -219,7 +267,9 @@ export class RevenueService {
 				"Inne przychody",
 				"Wydatki (payments)",
 				"Wydatki (faktury)",
+				"Wydatki biurowe",
 			];
+
 			const result: any = {};
 
 			// Inicjalizuj dane dla każdego miesiąca
@@ -255,77 +305,95 @@ export class RevenueService {
 				});
 			}
 
-			return Object.values(result);
+			// ============================================================
+			// DODAJ STAŁY WYDATEK BIUROWY DO KAŻDEGO MIESIĄCA
+			// ============================================================
+			const MONTHLY_OFFICE_COST = 60.27; // 100 zł miesięcznie
+
+			monthNames.forEach((month) => {
+				if (result[month]) {
+					result[month]['Wydatki biurowe'] = MONTHLY_OFFICE_COST;
+				}
+			});
+
+			// ============================================================
+			// PODSUMOWANIE - zobacz końcowy wynik
+			// ============================================================
+			console.log(`✅ [KATEGORIE] Dodano stały wydatek biurowy: ${MONTHLY_OFFICE_COST} zł/miesiąc`);
+			console.log(`✅ [KATEGORIE] Zakończono kategoryzację dla roku ${year}`);
+			const resultValues = Object.values(result);
+			console.log(`📊 [KATEGORIE] Zwracam ${resultValues.length} miesięcy danych`);
+
+			return resultValues;
 		} catch (error) {
-			console.error("❌ Błąd pobierania kategorii:", error);
+			console.error("❌ [KATEGORIE] Błąd pobierania kategorii:", error);
 			return [];
 		}
 	}
+
 	async getMonthlyDetails(year: number, month: number): Promise<any> {
 		try {
 			console.log(`📊 Pobieram szczegóły dla ${year}-${month}...`);
 
-			// 1. Pobierz przychody z payments
 			const [revenueRows]: any[] = await smPool.query(
 				`SELECT 
-                    id,
-                    title as description,
-                    amount,
-                    payment_date as date,
-                    'revenue' as type
-                FROM payments
-                WHERE 
-                    YEAR(payment_date) = ?
-                    AND MONTH(payment_date) = ?
-                    AND amount > 0
-                    AND blacklisted = 0
-                ORDER BY payment_date DESC`,
+					id,
+					title as description,
+					amount,
+					payment_date as date,
+					'revenue' as type
+				FROM payments
+				WHERE 
+					YEAR(payment_date) = ?
+					AND MONTH(payment_date) = ?
+					AND amount > 0
+					AND blacklisted = 0
+				ORDER BY payment_date DESC`,
 				[year, month],
 			);
 
-			// 2. Pobierz wydatki z payments (ujemne kwoty)
 			const [expenseRows]: any[] = await smPool.query(
 				`SELECT 
-                    id,
-                    title as description,
-                    ABS(amount) as amount,
-                    payment_date as date,
-                    'expense' as type
-                FROM payments
-                WHERE 
-                    YEAR(payment_date) = ?
-                    AND MONTH(payment_date) = ?
-                    AND amount < 0
-                    AND blacklisted = 0
-                ORDER BY payment_date DESC`,
+					id,
+					title as description,
+					ABS(amount) as amount,
+					payment_date as date,
+					'expense' as type
+				FROM payments
+				WHERE 
+					YEAR(payment_date) = ?
+					AND MONTH(payment_date) = ?
+					AND amount < 0
+					AND blacklisted = 0
+				ORDER BY payment_date DESC`,
 				[year, month],
 			);
 
-			// 3. Pobierz wydatki z faktur
 			const [invoiceRows]: any[] = await ewidencjaPool.query(
 				`SELECT 
-                    id,
-                    invoice_number as description,
-                    amount,
-                    invoice_date as date,
-                    'invoice' as type
-                FROM invoices
-                WHERE 
-                    YEAR(invoice_date) = ?
-                    AND MONTH(invoice_date) = ?
-                    AND paid = 0
-                ORDER BY invoice_date DESC`,
+					id,
+					invoice_number as description,
+					amount,
+					invoice_date as date,
+					'invoice' as type,
+					contractor,
+					paid,
+					paid_date,
+					description as notes
+				FROM invoices
+				WHERE 
+					YEAR(invoice_date) = ?
+					AND MONTH(invoice_date) = ?
+				ORDER BY invoice_date DESC`,
 				[year, month],
 			);
 
-			// 4. Połącz wszystkie dane
 			const allTransactions = [
 				...(Array.isArray(revenueRows) ? revenueRows : []),
 				...(Array.isArray(expenseRows) ? expenseRows : []),
 				...(Array.isArray(invoiceRows) ? invoiceRows : []),
 			];
 
-			// 5. Oblicz sumy
 			const totalRevenue = allTransactions
 				.filter((t: any) => t.type === "revenue")
 				.reduce((sum: number, t: any) => sum + Number(t.amount), 0);
@@ -387,6 +455,7 @@ export class RevenueService {
 			};
 		}
 	}
+
 	private getEmptyRevenueData(year: number): RevenueData {
 		const monthNames = [
 			"Styczeń",

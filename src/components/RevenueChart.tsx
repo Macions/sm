@@ -32,6 +32,7 @@ interface RevenueData {
 	faktury: number;
 	inne: number;
 	expensesFromInvoices: number;
+	wydatkiBiurowe: number;
 }
 
 const COLORS = {
@@ -43,6 +44,7 @@ const COLORS = {
 	expenses: "#EF4444",
 	revenue: "#22C55E",
 	profit: "#10B981",
+	wydatkiBiurowe: "#F97316",
 };
 
 // Niestandardowy tooltip z pełnymi danymi
@@ -62,38 +64,41 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 				<p style={{ margin: '0 0 8px 0', fontWeight: 'bold', fontSize: '16px', color: '#1f2937' }}>
 					{data.monthName}
 				</p>
-				
+
 				<div style={{ borderTop: '1px solid #f3f4f6', paddingTop: '8px' }}>
 					<p style={{ margin: '4px 0', fontSize: '14px', color: '#4A6FE8' }}>
-						💰 Przychód: <strong>{data.revenue.toFixed(2)} zł</strong>
+						Przychód: <strong>{data.revenue.toFixed(2)} zł</strong>
 					</p>
 					<p style={{ margin: '4px 0', fontSize: '14px', color: '#EF4444' }}>
-						📉 Wydatki: <strong>{data.expenses.toFixed(2)} zł</strong>
+						Wydatki: <strong>{data.expenses.toFixed(2)} zł</strong>
 					</p>
 					<p style={{ margin: '4px 0', fontSize: '14px', color: '#10B981' }}>
-						📈 Zysk: <strong>{data.profit.toFixed(2)} zł</strong>
+						Zysk: <strong>{data.profit.toFixed(2)} zł</strong>
 					</p>
 				</div>
-				
+
 				<div style={{ borderTop: '1px solid #f3f4f6', marginTop: '8px', paddingTop: '8px' }}>
 					<p style={{ margin: '2px 0', fontSize: '12px', color: '#6b7280' }}>
-						📊 Składki: <strong>{data.skladki.toFixed(2)} zł</strong>
+						Składki: <strong>{data.skladki.toFixed(2)} zł</strong>
 					</p>
 					<p style={{ margin: '2px 0', fontSize: '12px', color: '#6b7280' }}>
-						🎯 Granty: <strong>{data.granty.toFixed(2)} zł</strong>
+						Granty: <strong>{data.granty.toFixed(2)} zł</strong>
 					</p>
 					<p style={{ margin: '2px 0', fontSize: '12px', color: '#6b7280' }}>
-						❤️ Darowizny: <strong>{data.darowizny.toFixed(2)} zł</strong>
+						Darowizny: <strong>{data.darowizny.toFixed(2)} zł</strong>
 					</p>
 					<p style={{ margin: '2px 0', fontSize: '12px', color: '#6b7280' }}>
-						🧾 Faktury: <strong>{data.faktury.toFixed(2)} zł</strong>
+						Faktury: <strong>{data.faktury.toFixed(2)} zł</strong>
 					</p>
 					<p style={{ margin: '2px 0', fontSize: '12px', color: '#6b7280' }}>
-						📦 Inne: <strong>{data.inne.toFixed(2)} zł</strong>
+						Inne: <strong>{data.inne.toFixed(2)} zł</strong>
+					</p>
+					<p style={{ margin: '2px 0', fontSize: '12px', color: '#F97316' }}>
+						Wydatki biurowe: <strong>{data.wydatkiBiurowe.toFixed(2)} zł</strong>
 					</p>
 					{data.expensesFromInvoices > 0 && (
 						<p style={{ margin: '2px 0', fontSize: '12px', color: '#6b7280' }}>
-							📄 Wydatki (faktury): <strong>{data.expensesFromInvoices.toFixed(2)} zł</strong>
+							Wydatki (faktury): <strong>{data.expensesFromInvoices.toFixed(2)} zł</strong>
 						</p>
 					)}
 				</div>
@@ -127,7 +132,12 @@ export function RevenueChart({ year = 2026, title = "Przychody i wydatki" }: Rev
 		try {
 			setLoading(true);
 			const token = localStorage.getItem("accessToken");
-			
+
+			console.log(`[RevenueChart] Pobieram dane dla roku ${selectedYear}...`);
+
+			// ============================================
+			// 1. Pobierz dane główne (przychody/wydatki)
+			// ============================================
 			const response = await fetch(`http://localhost:3000/api/revenue?year=${selectedYear}`, {
 				headers: {
 					'Authorization': `Bearer ${token}`,
@@ -140,26 +150,60 @@ export function RevenueChart({ year = 2026, title = "Przychody i wydatki" }: Rev
 			}
 
 			const result = await response.json();
-			console.log('📊 Revenue data:', result);
+			console.log('[RevenueChart] Revenue data:', result);
 
+			// ============================================
+			// 2. Pobierz dane kategorii
+			// ============================================
+			let categoriesData = null;
+			try {
+				const categoriesResponse = await fetch(`http://localhost:3000/api/revenue/categories?year=${selectedYear}`, {
+					headers: {
+						'Authorization': `Bearer ${token}`,
+						'Content-Type': 'application/json'
+					}
+				});
+
+				if (categoriesResponse.ok) {
+					const categoriesResult = await categoriesResponse.json();
+					console.log('[RevenueChart] Categories data:', categoriesResult);
+					categoriesData = categoriesResult.data;
+				} else {
+					console.warn('[RevenueChart] Nie udało się pobrać kategorii:', categoriesResponse.status);
+				}
+			} catch (err) {
+				console.warn('[RevenueChart] Błąd pobierania kategorii:', err);
+			}
+
+			// ============================================
+			// 3. Połącz dane
+			// ============================================
 			if (result.success && result.data && result.data.months) {
-				const mappedData = result.data.months.map((item: any) => ({
-					month: item.month,
-					monthName: item.monthName || item.month,
-					revenue: item.revenue || 0,
-					expenses: item.expenses || 0,
-					profit: (item.revenue || 0) - (item.expenses || 0),
-					skladki: item.Składki || 0,
-					granty: item.Granty || 0,
-					darowizny: item.Darowizny || 0,
-					faktury: item.Faktury || 0,
-					inne: item['Inne przychody'] || 0,
-					expensesFromInvoices: item['Wydatki (faktury)'] || 0,
-				}));
+				const mappedData = result.data.months.map((item: any) => {
+					// Znajdź dane kategorii dla tego miesiąca
+					const categoryData = categoriesData?.find((c: any) => c.month === item.month);
+
+					return {
+						month: item.month,
+						monthName: item.monthName || item.month,
+						revenue: item.revenue || 0,
+						expenses: item.expenses || 0,
+						profit: (item.revenue || 0) - (item.expenses || 0),
+						skladki: categoryData?.Składki || 0,
+						granty: categoryData?.Granty || 0,
+						darowizny: categoryData?.Darowizny || 0,
+						faktury: categoryData?.Faktury || 0,
+						inne: categoryData?.['Inne przychody'] || 0,
+						expensesFromInvoices: categoryData?.['Wydatki (faktury)'] || 0,
+						wydatkiBiurowe: categoryData?.['Wydatki biurowe'] || 0,
+					};
+				});
+
+				console.log('[RevenueChart] Mapped data:', mappedData);
 				setData(mappedData);
 			}
 		} catch (error) {
-			console.error('❌ Błąd:', error);
+			console.error('[RevenueChart] Błąd:', error);
 			setError(error instanceof Error ? error.message : 'Błąd pobierania danych');
 			toast.error('Nie udało się pobrać danych');
 		} finally {
@@ -174,9 +218,9 @@ export function RevenueChart({ year = 2026, title = "Przychody i wydatki" }: Rev
 	if (loading) {
 		return (
 			<div style={{ padding: '40px', textAlign: 'center' }}>
-				<div style={{ 
-					width: '32px', 
-					height: '32px', 
+				<div style={{
+					width: '32px',
+					height: '32px',
 					border: '3px solid #e5e7eb',
 					borderTopColor: '#4A6FE8',
 					borderRadius: '50%',
@@ -191,8 +235,8 @@ export function RevenueChart({ year = 2026, title = "Przychody i wydatki" }: Rev
 	if (error) {
 		return (
 			<div style={{ padding: '20px', textAlign: 'center', color: '#dc2626' }}>
-				<p>❌ {error}</p>
-				<button 
+				<p>{error}</p>
+				<button
 					onClick={fetchData}
 					style={{
 						marginTop: '8px',
@@ -213,7 +257,7 @@ export function RevenueChart({ year = 2026, title = "Przychody i wydatki" }: Rev
 	if (!data || data.length === 0) {
 		return (
 			<div style={{ padding: '20px', textAlign: 'center', color: '#6b7280' }}>
-				<p>📊 Brak danych dla roku {selectedYear}</p>
+				<p>Brak danych dla roku {selectedYear}</p>
 			</div>
 		);
 	}
@@ -236,9 +280,9 @@ export function RevenueChart({ year = 2026, title = "Przychody i wydatki" }: Rev
 	};
 
 	return (
-		<div style={{ 
-			background: 'white', 
-			borderRadius: '12px', 
+		<div style={{
+			background: 'white',
+			borderRadius: '12px',
 			padding: '24px',
 			border: '1px solid #e5e7eb',
 			boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
@@ -260,7 +304,7 @@ export function RevenueChart({ year = 2026, title = "Przychody i wydatki" }: Rev
 						Rok {selectedYear}
 					</p>
 				</div>
-				
+
 				<div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
 					<select
 						value={selectedYear}
@@ -278,7 +322,7 @@ export function RevenueChart({ year = 2026, title = "Przychody i wydatki" }: Rev
 							<option key={y} value={y}>{y}</option>
 						))}
 					</select>
-					
+
 					<button
 						onClick={() => setChartType(chartType === 'bar' ? 'stack' : 'bar')}
 						style={{
@@ -293,9 +337,9 @@ export function RevenueChart({ year = 2026, title = "Przychody i wydatki" }: Rev
 							gap: '4px',
 						}}
 					>
-						{chartType === 'bar' ? '📊 Grupowany' : '📊 Skumulowany'}
+						{chartType === 'bar' ? 'Grupowany' : 'Skumulowany'}
 					</button>
-					
+
 					<button
 						onClick={fetchData}
 						style={{
@@ -307,7 +351,7 @@ export function RevenueChart({ year = 2026, title = "Przychody i wydatki" }: Rev
 							cursor: 'pointer',
 						}}
 					>
-						🔄 Odśwież
+						Odśwież
 					</button>
 				</div>
 			</div>
@@ -323,37 +367,37 @@ export function RevenueChart({ year = 2026, title = "Przychody i wydatki" }: Rev
 				borderRadius: '8px',
 			}}>
 				<div style={{ textAlign: 'center' }}>
-					<p style={{ margin: 0, fontSize: '12px', color: '#6b7280' }}>💰 Przychody</p>
+					<p style={{ margin: 0, fontSize: '12px', color: '#6b7280' }}>Przychody</p>
 					<p style={{ margin: 0, fontSize: '18px', fontWeight: 'bold', color: '#22C55E' }}>
 						{formatCurrency(totalRevenue)}
 					</p>
 				</div>
 				<div style={{ textAlign: 'center' }}>
-					<p style={{ margin: 0, fontSize: '12px', color: '#6b7280' }}>📉 Wydatki</p>
+					<p style={{ margin: 0, fontSize: '12px', color: '#6b7280' }}>Wydatki</p>
 					<p style={{ margin: 0, fontSize: '18px', fontWeight: 'bold', color: '#EF4444' }}>
 						{formatCurrency(totalExpenses)}
 					</p>
 				</div>
 				<div style={{ textAlign: 'center' }}>
-					<p style={{ margin: 0, fontSize: '12px', color: '#6b7280' }}>📈 Zysk</p>
+					<p style={{ margin: 0, fontSize: '12px', color: '#6b7280' }}>Zysk</p>
 					<p style={{ margin: 0, fontSize: '18px', fontWeight: 'bold', color: '#10B981' }}>
 						{formatCurrency(totalProfit)}
 					</p>
 				</div>
 				<div style={{ textAlign: 'center' }}>
-					<p style={{ margin: 0, fontSize: '12px', color: '#6b7280' }}>📊 Składki</p>
+					<p style={{ margin: 0, fontSize: '12px', color: '#6b7280' }}>Składki</p>
 					<p style={{ margin: 0, fontSize: '16px', fontWeight: 'bold', color: '#4A6FE8' }}>
 						{formatCurrency(totalSkladki)}
 					</p>
 				</div>
 				<div style={{ textAlign: 'center' }}>
-					<p style={{ margin: 0, fontSize: '12px', color: '#6b7280' }}>🎯 Granty</p>
+					<p style={{ margin: 0, fontSize: '12px', color: '#6b7280' }}>Granty</p>
 					<p style={{ margin: 0, fontSize: '16px', fontWeight: 'bold', color: '#8B5CF6' }}>
 						{formatCurrency(totalGranty)}
 					</p>
 				</div>
 				<div style={{ textAlign: 'center' }}>
-					<p style={{ margin: 0, fontSize: '12px', color: '#6b7280' }}>❤️ Darowizny</p>
+					<p style={{ margin: 0, fontSize: '12px', color: '#6b7280' }}>Darowizny</p>
 					<p style={{ margin: 0, fontSize: '16px', fontWeight: 'bold', color: '#F59E0B' }}>
 						{formatCurrency(totalDarowizny)}
 					</p>
@@ -363,31 +407,31 @@ export function RevenueChart({ year = 2026, title = "Przychody i wydatki" }: Rev
 			{/* Wykres */}
 			<div style={{ width: '100%', height: '400px' }}>
 				<ResponsiveContainer>
-					<ComposedChart 
-						data={data} 
+					<ComposedChart
+						data={data}
 						margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
 						onClick={handleBarClick}
 					>
 						<CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" vertical={false} />
-						
-						<XAxis 
-							dataKey="monthName" 
+
+						<XAxis
+							dataKey="monthName"
 							tick={{ fill: '#6b7280', fontSize: 12 }}
 							axisLine={{ stroke: '#e5e7eb' }}
 							tickLine={false}
 						/>
-						
-						<YAxis 
+
+						<YAxis
 							tickFormatter={(value) => `${value} zł`}
 							tick={{ fill: '#6b7280', fontSize: 12 }}
 							axisLine={{ stroke: '#e5e7eb' }}
 							tickLine={false}
 						/>
-						
+
 						<Tooltip content={<CustomTooltip />} />
-						
-						<Legend 
-							verticalAlign="top" 
+
+						<Legend
+							verticalAlign="top"
 							height={36}
 							formatter={(value) => {
 								const labels: Record<string, string> = {
@@ -396,18 +440,18 @@ export function RevenueChart({ year = 2026, title = "Przychody i wydatki" }: Rev
 									darowizny: 'Darowizny',
 									faktury: 'Faktury',
 									inne: 'Inne',
+									wydatkiBiurowe: 'Wydatki biurowe',
 								};
 								return labels[value] || value;
 							}}
 						/>
 
 						{chartType === 'bar' ? (
-							// Wykres grupowny
+							// Wykres GRUPOWANY - BEZ stackId
 							<>
-								<Bar 
-									dataKey="skladki" 
-									stackId="a" 
-									fill={COLORS.skladki}
+								<Bar
+									dataKey="skladki"
+									fill={COLORS.skladki}           // <-- USUŃ stackId="a"
 									name="skladki"
 									radius={[4, 4, 0, 0]}
 									barSize={30}
@@ -415,118 +459,138 @@ export function RevenueChart({ year = 2026, title = "Przychody i wydatki" }: Rev
 									onMouseLeave={() => setHoveredBar(null)}
 								>
 									{data.map((entry, index) => (
-										<Cell 
+										<Cell
 											key={`cell-${index}`}
 											fill={entry.monthName === selectedMonth ? '#2563EB' : COLORS.skladki}
 											opacity={hoveredBar && hoveredBar !== entry.monthName ? 0.6 : 1}
 										/>
 									))}
 								</Bar>
-								<Bar 
-									dataKey="granty" 
-									stackId="a" 
-									fill={COLORS.granty}
+								<Bar
+									dataKey="granty"
+									fill={COLORS.granty}            // <-- USUŃ stackId="a"
 									name="granty"
 									radius={[4, 4, 0, 0]}
 									barSize={30}
 								>
 									{data.map((entry, index) => (
-										<Cell 
+										<Cell
 											key={`cell-${index}`}
 											fill={entry.monthName === selectedMonth ? '#7C3AED' : COLORS.granty}
 											opacity={hoveredBar && hoveredBar !== entry.monthName ? 0.6 : 1}
 										/>
 									))}
 								</Bar>
-								<Bar 
-									dataKey="darowizny" 
-									stackId="a" 
-									fill={COLORS.darowizny}
+								<Bar
+									dataKey="darowizny"
+									fill={COLORS.darowizny}         // <-- USUŃ stackId="a"
 									name="darowizny"
 									radius={[4, 4, 0, 0]}
 									barSize={30}
 								>
 									{data.map((entry, index) => (
-										<Cell 
+										<Cell
 											key={`cell-${index}`}
 											fill={entry.monthName === selectedMonth ? '#D97706' : COLORS.darowizny}
 											opacity={hoveredBar && hoveredBar !== entry.monthName ? 0.6 : 1}
 										/>
 									))}
 								</Bar>
-								<Bar 
-									dataKey="faktury" 
-									stackId="a" 
-									fill={COLORS.faktury}
+								<Bar
+									dataKey="faktury"
+									fill={COLORS.faktury}           // <-- USUŃ stackId="a"
 									name="faktury"
 									radius={[4, 4, 0, 0]}
 									barSize={30}
 								>
 									{data.map((entry, index) => (
-										<Cell 
+										<Cell
 											key={`cell-${index}`}
 											fill={entry.monthName === selectedMonth ? '#DB2777' : COLORS.faktury}
 											opacity={hoveredBar && hoveredBar !== entry.monthName ? 0.6 : 1}
 										/>
 									))}
 								</Bar>
-								<Bar 
-									dataKey="inne" 
-									stackId="a" 
-									fill={COLORS.inne}
+								<Bar
+									dataKey="inne"
+									fill={COLORS.inne}              // <-- USUŃ stackId="a"
 									name="inne"
 									radius={[4, 4, 0, 0]}
 									barSize={30}
 								>
 									{data.map((entry, index) => (
-										<Cell 
+										<Cell
 											key={`cell-${index}`}
 											fill={entry.monthName === selectedMonth ? '#4B5563' : COLORS.inne}
 											opacity={hoveredBar && hoveredBar !== entry.monthName ? 0.6 : 1}
 										/>
 									))}
 								</Bar>
+								{/* DODAJ NOWY BAR DLA WYDATKÓW BIUROWYCH - BEZ stackId */}
+								<Bar
+									dataKey="wydatkiBiurowe"
+									fill={COLORS.wydatkiBiurowe}    // <-- USUŃ stackId="a"
+									name="Wydatki biurowe"
+									radius={[4, 4, 0, 0]}
+									barSize={30}
+								>
+									{data.map((entry, index) => (
+										<Cell
+											key={`cell-${index}`}
+											fill={entry.monthName === selectedMonth ? '#EA580C' : COLORS.wydatkiBiurowe}
+											opacity={hoveredBar && hoveredBar !== entry.monthName ? 0.6 : 1}
+										/>
+									))}
+								</Bar>
 							</>
 						) : (
-							// Wykres skumulowany (stacked)
+							// Wykres SKUMULOWANY (stacked) - Z stackId="a"
 							<>
-								<Bar 
-									dataKey="skladki" 
-									stackId="a" 
+								<Bar
+									dataKey="skladki"
+									stackId="a"                    // <-- stackId TYLKO tutaj!
 									fill={COLORS.skladki}
 									name="skladki"
 									radius={[4, 4, 0, 0]}
 									barSize={30}
 								/>
-								<Bar 
-									dataKey="granty" 
-									stackId="a" 
+								<Bar
+									dataKey="granty"
+									stackId="a"                    // <-- stackId TYLKO tutaj!
 									fill={COLORS.granty}
 									name="granty"
 									radius={[4, 4, 0, 0]}
 									barSize={30}
 								/>
-								<Bar 
-									dataKey="darowizny" 
-									stackId="a" 
+								<Bar
+									dataKey="darowizny"
+									stackId="a"                    // <-- stackId TYLKO tutaj!
 									fill={COLORS.darowizny}
 									name="darowizny"
 									radius={[4, 4, 0, 0]}
 									barSize={30}
 								/>
-								<Bar 
-									dataKey="faktury" 
-									stackId="a" 
+								<Bar
+									dataKey="faktury"
+									stackId="a"                    // <-- stackId TYLKO tutaj!
 									fill={COLORS.faktury}
 									name="faktury"
 									radius={[4, 4, 0, 0]}
 									barSize={30}
 								/>
-								<Bar 
-									dataKey="inne" 
-									stackId="a" 
+								<Bar
+									dataKey="inne"
+									stackId="a"                    // <-- stackId TYLKO tutaj!
 									fill={COLORS.inne}
 									name="inne"
+									radius={[4, 4, 0, 0]}
+									barSize={30}
+								/>
+								<Bar
+									dataKey="wydatkiBiurowe"
+									stackId="a"                    // <-- stackId TYLKO tutaj!
+									fill={COLORS.wydatkiBiurowe}
+									name="Wydatki biurowe"
 									radius={[4, 4, 0, 0]}
 									barSize={30}
 								/>
@@ -540,8 +604,8 @@ export function RevenueChart({ year = 2026, title = "Przychody i wydatki" }: Rev
 							stroke={COLORS.profit}
 							strokeWidth={2}
 							name="Zysk"
-							dot={{ 
-								fill: COLORS.profit, 
+							dot={{
+								fill: COLORS.profit,
 								r: 4,
 								onMouseEnter: (data: any) => setHoveredBar(data.monthName),
 								onMouseLeave: () => setHoveredBar(null),
@@ -563,7 +627,7 @@ export function RevenueChart({ year = 2026, title = "Przychody i wydatki" }: Rev
 				}}>
 					<div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
 						<h4 style={{ margin: 0, color: '#1f2937' }}>
-							📊 Szczegóły dla: {selectedMonth}
+							Szczegóły dla: {selectedMonth}
 						</h4>
 						<button
 							onClick={() => { setShowDetails(false); setSelectedMonth(null); }}
@@ -587,25 +651,25 @@ export function RevenueChart({ year = 2026, title = "Przychody i wydatki" }: Rev
 						{data.filter(d => d.monthName === selectedMonth).map((d, i) => (
 							<div key={i}>
 								<p style={{ margin: '4px 0', fontSize: '14px' }}>
-									💰 Przychód: <strong>{formatCurrency(d.revenue)}</strong>
+									Przychód: <strong>{formatCurrency(d.revenue)}</strong>
 								</p>
 								<p style={{ margin: '4px 0', fontSize: '14px' }}>
-									📉 Wydatki: <strong>{formatCurrency(d.expenses)}</strong>
+									Wydatki: <strong>{formatCurrency(d.expenses)}</strong>
 								</p>
 								<p style={{ margin: '4px 0', fontSize: '14px', color: '#10B981' }}>
-									📈 Zysk: <strong>{formatCurrency(d.profit)}</strong>
+									Zysk: <strong>{formatCurrency(d.profit)}</strong>
 								</p>
 								<p style={{ margin: '4px 0', fontSize: '13px', color: '#6b7280' }}>
-									📊 Składki: {formatCurrency(d.skladki)}
+									Składki: {formatCurrency(d.skladki)}
 								</p>
 								<p style={{ margin: '4px 0', fontSize: '13px', color: '#6b7280' }}>
-									🎯 Granty: {formatCurrency(d.granty)}
+									Granty: {formatCurrency(d.granty)}
 								</p>
 								<p style={{ margin: '4px 0', fontSize: '13px', color: '#6b7280' }}>
-									❤️ Darowizny: {formatCurrency(d.darowizny)}
+									Darowizny: {formatCurrency(d.darowizny)}
 								</p>
 								<p style={{ margin: '4px 0', fontSize: '13px', color: '#6b7280' }}>
-									🧾 Faktury: {formatCurrency(d.faktury)}
+									Faktury: {formatCurrency(d.faktury)}
 								</p>
 							</div>
 						))}
