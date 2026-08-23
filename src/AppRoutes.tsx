@@ -15,7 +15,8 @@ const SocialMedia = lazy(() => import("@/pages/SocialMedia/SocialMedia"));
 const Profile = lazy(() => import("@/pages/Profile/Profile"));
 const Calendar = lazy(() => import("@/pages/Calendar/Calendar"));
 const Tasks = lazy(() => import("@/pages/Tasks/Tasks"));
-
+import NotFound from "@/pages/404";
+ 
 const LoadingSpinner = () => (
 	<div
 		style={{
@@ -94,7 +95,8 @@ function AppRoutes() {
 					element={<Onboarding onComplete={() => {}} />}
 				/>
 
-				
+				        <Route path="/404" element={<NotFound />} />
+            <Route path="*" element={<NotFound />} />
 				<Route element={<DashboardLayout />}>
 					<Route path="/" element={<Dashboard />} />
 					<Route path="/dashboard" element={<Dashboard />} />
