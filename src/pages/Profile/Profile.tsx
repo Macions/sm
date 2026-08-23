@@ -147,18 +147,6 @@ const DEVELOPMENT_AREA_ICONS: Record<DevelopmentArea, React.ReactNode> = {
 	event_organization: <Calendar size={14} />,
 };
 
-const CONTRIBUTION_STATUS_LABELS: Record<ContributionStatus, string> = {
-	paid: "Opłacone",
-	partial: "Częściowo opłacone",
-	unpaid: "Nieopłacone",
-};
-
-const CONTRIBUTION_STATUS_COLORS: Record<ContributionStatus, string> = {
-	paid: styles.contributionPaid,
-	partial: styles.contributionPartial,
-	unpaid: styles.contributionUnpaid,
-};
-
 export default function Profile({
 	title,
 	userId,

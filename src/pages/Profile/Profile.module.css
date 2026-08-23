@@ -810,6 +810,23 @@
     padding: 4px;
     background: #f1f5f9;
     border-radius: 12px;
+    overflow-x: auto;           /* ← DODAJ - pozwala na scroll w poziomie */
+    overflow-y: hidden;          /* ← DODAJ - ukrywa scroll w pionie */
+    flex-shrink: 0;             /* ← DODAJ - nie pozwala się kurczyć */
+    scrollbar-width: thin;      /* ← DODAJ - cienki pasek scrolla */
+    -webkit-overflow-scrolling: touch; /* ← DODAJ - płynny scroll na iOS */
+}
+.tabs::-webkit-scrollbar {
+    height: 3px;
+}
+
+.tabs::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 4px;
+}
+
+.tabs::-webkit-scrollbar-track {
+    background: transparent;
 }
 
 .tab {
