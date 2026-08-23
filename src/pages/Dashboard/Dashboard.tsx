@@ -610,26 +610,18 @@ export default function Dashboard() {
 								) : (
 									// ✅ NOWA LOGIKA
 									(() => {
-										// 1. Spróbuj wyciągnąć filar z team (dla admina/prezesa)
-										if (user?.team) {
-											const teamParts = user.team.split(',').map((p: string) => p.trim());
-											const pillarPart = teamParts.find((p: string) => p.startsWith('Filar'));
-											if (pillarPart) {
-												return PILLAR_MAP[pillarPart] || pillarPart;
-											}
+										// 1. Admin/Prezes - pokazuje wszystkie zespoły z team
+										if (user?.role?.toLowerCase() === 'admin' || user?.role === 'Prezes') {
+											return user?.team || "—";
 										}
 
-										// 2. Spróbuj z pillars (dla zwykłych członków)
+										// 2. Zwykły członek - pokazuje filary z pillars
 										if (user?.pillars) {
 											return transformPillars(user.pillars);
 										}
 
-										// 3. Fallback dla admina bez filara
-										if (user?.role?.toLowerCase() === 'admin' || user?.role === 'Prezes') {
-											return "Zarząd / Administracja";
-										}
-
-										return "—";
+										// 3. Fallback
+										return user?.team || "—";
 									})()
 								)}
 							</span>
