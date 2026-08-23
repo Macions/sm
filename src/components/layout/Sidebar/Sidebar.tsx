@@ -52,9 +52,8 @@ export default function Sidebar({
 		<>
 			{/* 👇 WYSYWANE MENU MOBILNE */}
 			<div
-				className={`${styles.mobileMenu} ${
-					isMobileMenuOpen ? styles.mobileMenuOpen : ""
-				}`}
+				className={`${styles.mobileMenu} ${isMobileMenuOpen ? styles.mobileMenuOpen : ""
+					}`}
 				style={{
 					display: isMobileMenuOpen ? 'flex' : 'none',
 				}}
@@ -64,7 +63,6 @@ export default function Sidebar({
 						<div className={styles.logo__mark}>SM</div>
 						<span className={styles.logo__text}>Siła Młodych</span>
 					</div>
-					{/* 👇 PRZYCISK ZAMYKANIA */}
 					<button
 						className={styles.mobileMenuClose}
 						onClick={onMobileMenuToggle}
@@ -74,20 +72,22 @@ export default function Sidebar({
 					</button>
 				</div>
 
-				<nav className={styles.mobileNav}>
-					{filteredNavItems.map(({ key, label, icon: Icon }) => (
-						<button
-							key={key}
-							className={`${styles.mobileNav__item} ${
-								activeKey === key ? styles.active : ""
-							}`}
-							onClick={() => handleMobileNav(key)}
-						>
-							<Icon size={20} />
-							<span className={styles.mobileNav__label}>{label}</span>
-						</button>
-					))}
-				</nav>
+				{/* 👇 DODAJ KONTENER ZE SCROLL */}
+				<div className={styles.mobileNavWrapper}>
+					<nav className={styles.mobileNav}>
+						{filteredNavItems.map(({ key, label, icon: Icon }) => (
+							<button
+								key={key}
+								className={`${styles.mobileNav__item} ${activeKey === key ? styles.active : ""
+									}`}
+								onClick={() => handleMobileNav(key)}
+							>
+								<Icon size={20} />
+								<span className={styles.mobileNav__label}>{label}</span>
+							</button>
+						))}
+					</nav>
+				</div>
 
 				<div className={styles.mobileLogout}>
 					<button className={styles.mobileNav__item} onClick={handleLogout}>
@@ -116,20 +116,17 @@ export default function Sidebar({
 
 			{/* 👇 SIDEBAR (DESKTOP) */}
 			<aside
-				className={`${styles.sidebar} ${
-					collapsed ? styles.sidebarCollapsed : ""
-				}`}
+				className={`${styles.sidebar} ${collapsed ? styles.sidebarCollapsed : ""
+					}`}
 			>
 				<div
-					className={`${styles.logo} ${
-						collapsed ? styles.logoCollapsed : ""
-					}`}
+					className={`${styles.logo} ${collapsed ? styles.logoCollapsed : ""
+						}`}
 				>
 					<div className={styles.logo__mark}>SM</div>
 					<span
-						className={`${styles.logo__text} ${
-							collapsed ? styles.logo__textHidden : ""
-						}`}
+						className={`${styles.logo__text} ${collapsed ? styles.logo__textHidden : ""
+							}`}
 					>
 						Siła Młodych
 					</span>
@@ -139,17 +136,15 @@ export default function Sidebar({
 					{filteredNavItems.map(({ key, label, icon: Icon }) => (
 						<button
 							key={key}
-							className={`${styles.nav__item} ${
-								activeKey === key ? styles.active : ""
-							} ${collapsed ? styles.nav__itemCollapsed : ""}`}
+							className={`${styles.nav__item} ${activeKey === key ? styles.active : ""
+								} ${collapsed ? styles.nav__itemCollapsed : ""}`}
 							onClick={() => onSelect(key)}
 							title={collapsed ? label : ""}
 						>
 							<Icon size={18} />
 							<span
-								className={`${styles.nav__label} ${
-									collapsed ? styles.nav__labelHidden : ""
-								}`}
+								className={`${styles.nav__label} ${collapsed ? styles.nav__labelHidden : ""
+									}`}
 							>
 								{label}
 							</span>
@@ -159,17 +154,15 @@ export default function Sidebar({
 
 				<div className={styles.logout}>
 					<button
-						className={`${styles.nav__item} ${
-							collapsed ? styles.nav__itemCollapsed : ""
-						}`}
+						className={`${styles.nav__item} ${collapsed ? styles.nav__itemCollapsed : ""
+							}`}
 						onClick={handleLogout}
 						title={collapsed ? "Wyloguj" : ""}
 					>
 						<LogOut size={18} />
 						<span
-							className={`${styles.nav__label} ${
-								collapsed ? styles.nav__labelHidden : ""
-							}`}
+							className={`${styles.nav__label} ${collapsed ? styles.nav__labelHidden : ""
+								}`}
 						>
 							Wyloguj
 						</span>
@@ -177,9 +170,8 @@ export default function Sidebar({
 				</div>
 
 				<div
-					className={`${styles.footer} ${
-						collapsed ? styles.footerCollapsed : ""
-					}`}
+					className={`${styles.footer} ${collapsed ? styles.footerCollapsed : ""
+						}`}
 				>
 					{collapsed ? (
 						<>

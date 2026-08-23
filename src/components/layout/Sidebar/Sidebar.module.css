@@ -11,7 +11,7 @@
 			var(--purple-900, #2e1a6b) 100%);
 	color: #fff;
 	padding: 32px 24px;
-	display: flex !important; /* 👈 DODAJ TĘ LINIĘ */
+	display: flex !important;
 	flex-direction: column;
 	border-radius: 0 28px 28px 0;
 	height: 100vh;
@@ -217,7 +217,7 @@
    ============================================================ */
 
 /* Tablety i mniejsze laptopy */
-@media (width <= 1200px) {
+@media (width <=1200px) {
 	.sidebar {
 		width: 260px;
 		padding: 28px 20px;
@@ -257,6 +257,7 @@
 /* ============================================================
    MOBILNE MENU (WYSYWANE) - widoczne tylko na <= 768px
    ============================================================ */
+
 .mobileMenu {
 	position: fixed;
 	top: 0;
@@ -274,12 +275,14 @@
 	display: flex;
 	flex-direction: column;
 	box-shadow: 2px 0 20px rgba(0, 0, 0, 0.3);
+	overflow: hidden;
 }
 
 .mobileMenuOpen {
 	transform: translateX(0);
 }
 
+/* 👇 HEADER MOBILNEGO MENU */
 .mobileMenuHeader {
 	display: flex;
 	align-items: center;
@@ -287,6 +290,13 @@
 	padding-bottom: 24px;
 	border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 	margin-bottom: 20px;
+	flex-shrink: 0;
+}
+
+.mobileMenuHeaderLeft {
+	display: flex;
+	align-items: center;
+	gap: 12px;
 }
 
 .mobileMenuHeader .logo__mark {
@@ -309,8 +319,32 @@
 	color: #fff;
 }
 
-.mobileNav {
+/* 👇 WRAPPER ZE SCROLL DLA NAWIGACJI */
+.mobileNavWrapper {
 	flex: 1;
+	overflow-y: auto;
+	overflow-x: hidden;
+	margin: 0 -8px;
+	padding: 0 8px;
+	scrollbar-width: thin;
+	scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+}
+
+.mobileNavWrapper::-webkit-scrollbar {
+	width: 4px;
+}
+
+.mobileNavWrapper::-webkit-scrollbar-thumb {
+	background: rgba(255, 255, 255, 0.2);
+	border-radius: 4px;
+}
+
+.mobileNavWrapper::-webkit-scrollbar-track {
+	background: transparent;
+}
+
+/* 👇 NAWIGACJA W MOBILNYM */
+.mobileNav {
 	display: flex;
 	flex-direction: column;
 	gap: 4px;
@@ -351,10 +385,13 @@
 	font-weight: 500;
 }
 
+/* 👇 WYLOGOWANIE W MOBILNYM */
 .mobileLogout {
 	border-top: 1px solid rgba(255, 255, 255, 0.1);
 	padding-top: 16px;
+	padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px));
 	margin-top: auto;
+	flex-shrink: 0;
 }
 
 .mobileLogout .mobileNav__item {
@@ -364,6 +401,35 @@
 .mobileLogout .mobileNav__item:hover {
 	background: rgba(255, 100, 100, 0.1);
 	color: #ff6b6b;
+}
+
+/* 👇 PRZYCISK ZAMYKANIA (X) W MOBILNYM MENU */
+.mobileMenuClose {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 40px;
+	height: 40px;
+	border: none;
+	background: rgba(255, 255, 255, 0.1);
+	color: rgba(255, 255, 255, 0.8);
+	cursor: pointer;
+	border-radius: 10px;
+	transition: all 0.2s ease;
+	padding: 0;
+	flex-shrink: 0;
+	margin-left: auto;
+}
+
+.mobileMenuClose:hover {
+	background: rgba(255, 255, 255, 0.2);
+	color: #fff;
+	transform: scale(1.05);
+}
+
+.mobileMenuClose:active {
+	transform: scale(0.92);
+	background: rgba(255, 255, 255, 0.15);
 }
 
 /* 👇 OVERLAY */
@@ -382,6 +448,7 @@
 	from {
 		opacity: 0;
 	}
+
 	to {
 		opacity: 1;
 	}
@@ -397,7 +464,6 @@
 		display: none !important;
 	}
 
-	/* Na mobile pokazujemy mobilne menu */
 	.mobileMenu {
 		display: flex !important;
 	}
@@ -406,7 +472,7 @@
 /* Duże ekrany – pokazujemy sidebar, chowamy mobilne menu */
 @media (min-width: 769px) {
 	.sidebar {
-		display: flex !important; /* 👈 KLUCZOWE – wymusza wyświetlanie */
+		display: flex !important;
 	}
 
 	.mobileMenu {
@@ -420,32 +486,4 @@
 	.mobileBottomNav {
 		display: none !important;
 	}
-}
-/* 👇 PRZYCISK ZAMYKANIA (X) W MOBILNYM MENU */
-.mobileMenuClose {
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	width: 40px;
-	height: 40px;
-	border: none;
-	background: rgba(255, 255, 255, 0.1);
-	color: rgba(255, 255, 255, 0.8);
-	cursor: pointer;
-	border-radius: 10px;
-	transition: all 0.2s ease;
-	padding: 0;
-	flex-shrink: 0;
-	margin-left: auto; /* 👈 WYŚRODKOWANIE DO PRAWEJ */
-}
-
-.mobileMenuClose:hover {
-	background: rgba(255, 255, 255, 0.2);
-	color: #fff;
-	transform: scale(1.05);
-}
-
-.mobileMenuClose:active {
-	transform: scale(0.92);
-	background: rgba(255, 255, 255, 0.15);
 }
