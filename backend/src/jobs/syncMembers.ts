@@ -1,5 +1,3 @@
-
-
 import dotenv from "dotenv";
 dotenv.config();
 import { logger } from "../utils/logger";
@@ -27,9 +25,6 @@ const externalDb = mysql.createPool({
 	waitForConnections: true,
 	connectionLimit: 10,
 });
-
-
-
 
 const frekwencjaDb = mysql.createPool({
 	host: process.env.FREKWENCJA_DB_HOST || "57.128.253.89",
@@ -181,8 +176,6 @@ export async function syncMembers() {
 		}
 
 
-
-
 		const [resignedMembers] = (await externalDb.query(`
 			SELECT 
 				id,
@@ -196,54 +189,40 @@ export async function syncMembers() {
 
 		if (resignedMembers.length > 0) {
 			logger.debug(
-				`👥 [SYNC] Znaleziono ${resignedMembers.length} użytkowników z rezygnacją do usunięcia`,
+				`👥 [SYNC] Znaleziono ${resignedMembers.length} użytkowników z rezygnacją do dezaktywacji`,
 			);
 
-			let deletedCount = 0;
+			let deactivatedCount = 0;
 			for (const resigned of resignedMembers) {
 				const email = generateEmail(resigned.firstname, resigned.lastname);
 
 				const existingUser = await prisma.user.findUnique({
 					where: { email: email },
-					select: { id: true, email: true, first_name: true, last_name: true },
 				});
 
 				if (existingUser) {
 					try {
-						await prisma.$transaction([
-							prisma.onboarding_data.deleteMany({
-								where: { user_id: existingUser.id },
-							}),
-							prisma.teamMember.deleteMany({
-								where: { user_id: existingUser.id },
-							}),
-							prisma.contribution.deleteMany({
-								where: { userId: existingUser.id },
-							}),
-							prisma.notification.deleteMany({
-								where: { user_id: existingUser.id },
-							}),
-							prisma.user.delete({
-								where: { id: existingUser.id },
-							}),
-						]);
-
-						deletedCount++;
+						await prisma.user.update({
+							where: { id: existingUser.id },
+							data: {
+								is_active: false,
+								status: "inactive",
+								pillars: null,
+							},
+						});
+						deactivatedCount++;
 						logger.debug(
-							`🗑️ [SYNC] Usunięto użytkownika z rezygnacją: ${email}`,
+							`🔒 [SYNC] Dezaktywowano użytkownika z rezygnacją: ${email}`,
 						);
 					} catch (deleteError) {
-						logger.error(`❌ [SYNC] Błąd usuwania ${email}:`, deleteError);
+						logger.error(`❌ [SYNC] Błąd dezaktywacji ${email}:`, deleteError);
 					}
 				}
 			}
 			logger.debug(
-				`🗑️ [SYNC] Usunięto ${deletedCount} użytkowników z rezygnacją`,
+				`🔒 [SYNC] Dezaktywowano ${deactivatedCount} użytkowników z rezygnacją`,
 			);
 		}
-
-
-
 
 		logger.debug("📥 [SYNC] Pobieranie filarów z SM_Frekwencja...");
 
@@ -280,9 +259,6 @@ export async function syncMembers() {
 			`📊 [SYNC] Pobrano filary dla ${pillarMap.size} członków z SM_Frekwencja`,
 		);
 
-
-
-
 		const teams = await prisma.team.findMany({
 			where: {
 				name: {
@@ -299,9 +275,6 @@ export async function syncMembers() {
 		for (const team of teams) {
 			teamMap.set(team.name, team.id);
 		}
-
-
-
 
 		const statusStats: Record<string, number> = {};
 		for (const member of rows) {
@@ -330,7 +303,7 @@ export async function syncMembers() {
 				pillars: true,
 				team: true,
 				functional_role: true,
-				role_id: true,  
+				role_id: true,
 			},
 		});
 
@@ -349,13 +322,15 @@ export async function syncMembers() {
 		let duplicateEmails = 0;
 		let teamMembersAdded = 0;
 		const teamMembersUpdated = 0;
-		let pillarsPreserved = 0; 
+		let pillarsPreserved = 0;
 
 		const usedEmails = new Set<string>();
+
 
 		for (const member of rows) {
 			try {
 				const generatedEmail = generateEmail(member.firstname, member.lastname);
+
 
 				if (usedEmails.has(generatedEmail)) {
 					duplicateEmails++;
@@ -366,19 +341,34 @@ export async function syncMembers() {
 				}
 				usedEmails.add(generatedEmail);
 
+
 				const mapped = mapStatus(member.status || "");
 
+
 				if (mapped.shouldSkip) {
+					const existing = await prisma.user.findUnique({
+						where: { email: generatedEmail }
+					});
+
+					if (existing) {
+						await prisma.user.update({
+							where: { id: existing.id },
+							data: {
+								is_active: false,
+								status: "inactive"
+							}
+						});
+						updated++;
+						logger.debug(`🔒 [SYNC] Dezaktywowano w pętli: ${generatedEmail}`);
+					}
 					skippedRezygnacja++;
-					logger.debug(
-						`⏭️ [SYNC] Pominięto (rezygnacja): ${generatedEmail} (${member.status})`,
-					);
 					continue;
 				}
 
-				const existing = existingEmails.get(generatedEmail);
 
-
+				const existing = await prisma.user.findUnique({
+					where: { email: generatedEmail }
+				});
 
 
 				const memberId = emailToMemberId.get(generatedEmail);
@@ -390,9 +380,6 @@ export async function syncMembers() {
 
 				const pillarString =
 					pillarNames.length > 0 ? pillarNames.join(", ") : null;
-
-
-
 
 				const userData = {
 					username: generatedEmail.split("@")[0] || generatedEmail,
@@ -413,15 +400,12 @@ export async function syncMembers() {
 
 				let userId: number;
 
+
 				if (existing) {
-
 					const hasExistingStatus = existing.status && existing.status !== "";
-
-
-
 					const hasExistingPillars = existing.pillars && existing.pillars !== "" && existing.pillars !== null;
-
 					const hasExistingFunctionalRole = existing.functional_role && existing.functional_role !== "";
+
 					const dataToUpdate: any = {
 						first_name: userData.first_name,
 						last_name: userData.last_name,
@@ -430,18 +414,13 @@ export async function syncMembers() {
 						team: userData.team,
 					};
 
-
-
 					const hasExistingRole = existing.role_id && existing.role_id !== 4;
 
 					if (hasExistingRole) {
-
 						dataToUpdate.role_id = existing.role_id;
 					} else {
-
 						dataToUpdate.role_id = userData.role_id;
 					}
-
 
 					if (hasExistingFunctionalRole) {
 						dataToUpdate.functional_role = existing.functional_role;
@@ -450,9 +429,7 @@ export async function syncMembers() {
 					}
 
 
-
 					if (existing.pillars !== undefined) {
-
 						dataToUpdate.pillars = existing.pillars;
 						if (existing.pillars && existing.pillars !== "") {
 							pillarsPreserved++;
@@ -465,7 +442,6 @@ export async function syncMembers() {
 							);
 						}
 					} else {
-
 						dataToUpdate.pillars = userData.pillars;
 					}
 
@@ -477,7 +453,6 @@ export async function syncMembers() {
 						dataToUpdate.status = existing.status;
 						dataToUpdate.is_trial = existing.is_trial;
 					}
-
 
 					const hasChanges =
 						existing.first_name !== dataToUpdate.first_name ||
@@ -525,8 +500,6 @@ export async function syncMembers() {
 						`✅ [SYNC] Dodano: ${generatedEmail} (${userData.first_name} ${userData.last_name}) | status: ${userData.status} | filary: ${userData.pillars || "brak"}`,
 					);
 				}
-
-
 
 
 				if (pillarNames.length > 0) {
@@ -621,10 +594,11 @@ export async function syncMembers() {
 		logger.debug(`   ⏭️${skipped} bez zmian`);
 		logger.debug(`   ⏭️${skippedRezygnacja} pominiętych (rezygnacja)`);
 		logger.debug(`   ➕${teamMembersAdded} dodanych członkostw w filarach`);
-		logger.debug(`   🔒${pillarsPreserved} zachowanych filarów (nie nadpisano)`); 
+		logger.debug(`   🔒${pillarsPreserved} zachowanych filarów (nie nadpisano)`);
 		if (duplicateEmails > 0) {
 			logger.debug(`   ⚠️${duplicateEmails} pominiętych (duplikaty emaili)`);
 		}
+
 
 		try {
 			await prisma.systemLog.create({
@@ -637,7 +611,7 @@ export async function syncMembers() {
 					endpoint: "/api/admin/sync-members",
 					method: "SYNC",
 					entity_name: `Synchronizacja członków: +${added} dodanych, ${updated} zaktualizowanych, ${skipped} bez zmian, ${skippedRezygnacja} pominiętych, ${pillarsPreserved} zachowanych filarów`,
-					changes: {
+					changes: JSON.stringify({
 						added,
 						updated,
 						skipped,
@@ -645,10 +619,10 @@ export async function syncMembers() {
 						duplicateEmails,
 						teamMembersAdded,
 						teamMembersUpdated,
-						pillarsPreserved, 
+						pillarsPreserved,
 						duration,
 						timestamp: new Date().toISOString(),
-					},
+					}),
 					status: "success",
 				},
 			});

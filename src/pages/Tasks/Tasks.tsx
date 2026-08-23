@@ -1,3 +1,9 @@
+declare global {
+	interface Window {
+		__tasks?: any;
+		__currentUser?: any;
+	}
+}
 import { useState, useEffect, useCallback } from "react";
 import { toast } from "react-hot-toast";
 import { ConfirmDialog } from "../../components/common/ConfirmDialog";
@@ -10,6 +16,7 @@ import {
 	Trash2,
 	Eye,
 	User,
+	Users,        // ✅ DODAJ
 	Calendar,
 	Tag,
 	X,
@@ -17,7 +24,9 @@ import {
 	Send,
 	File as FileIcon,
 	MessageCircle,
-} from "lucide-react";
+	ChevronDown,  // ✅ DODAJ
+	ChevronUp,    // ✅ DODAJ
+} from "lucide-react"
 import { FiInfo } from "react-icons/fi";
 import styles from "./Tasks.module.css";
 import { logger } from "@/utils/logger";
@@ -79,6 +88,14 @@ type Task = {
 	rated_at?: string;
 	rated_by?: string;
 	rated_by_name?: string;
+	assignees?: {
+		id: string;
+		userId: string;
+		userName: string;
+		status: TaskStatus;
+		startedAt: string | null;
+		completedAt: string | null;
+	}[];
 };
 
 type User = {
@@ -132,6 +149,11 @@ const canManageTask = (user: User, task: Task): boolean => {
 		return true;
 	}
 
+
+	if (user.id === task.createdBy) {
+		return true;
+	}
+
 	if (user.isLeader === true) {
 		if (user.pillarName && task.pillar && task.pillar === user.pillarName) {
 			return true;
@@ -159,7 +181,7 @@ interface TaskCardProps {
 	onView: (task: Task) => void;
 	onEdit?: (task: Task) => void;
 	onDelete?: (task: Task) => void;
-	onStatusChange: (task: Task, status: TaskStatus) => void;
+	onStatusChange: (task: Task, status: TaskStatus, userId?: string) => void;
 	onFeedback?: (task: Task) => void;
 }
 
@@ -468,6 +490,7 @@ function TaskDetailModal({
 	onEdit,
 }: TaskDetailModalProps) {
 	if (!isOpen || !task) return null;
+	const [showAllAssigneesDetail, setShowAllAssigneesDetail] = useState(false);
 
 	const formatDate = (date: string) => {
 		return new Date(date).toLocaleDateString("pl-PL", {
@@ -582,7 +605,15 @@ function TaskDetailModal({
 							<span className={styles.detailLabel}>Przypisany do</span>
 							<span className={styles.detailValue}>
 								<User size={16} />
-								{task.assignedToName}
+								{task.assignedUsers && task.assignedUsers.length > 0 ? (
+									task.assignees && task.assignees.length > 0 ? (
+										task.assignees[0].userName
+									) : (
+										task.assignedToName
+									)
+								) : (
+									task.assignedToName
+								)}
 							</span>
 						</div>
 						{task.projectId && task.projectName && (
@@ -606,6 +637,79 @@ function TaskDetailModal({
 							<span className={styles.detailValue}>
 								{formatDate(task.createdAt)}
 							</span>
+						</div>
+						<div className={styles.detailItem}>
+							<span className={styles.detailLabel}>Przypisani</span>
+							<div className={styles.detailValue}>
+								{task.assignedUsers && task.assignedUsers.length > 0 ? (
+									(currentUser.role === "admin" ||
+										currentUser.role === "board" ||
+										currentUser.role === "Prezes" ||
+										currentUser.role === "Wiceprezes" ||
+										currentUser.id === task.createdBy) ? (
+
+										<div className={styles.detailAssigneesWrapper}>
+											<div className={styles.detailAssigneesSummary}>
+												<Users size={16} />
+												<span className={styles.assigneesCount}>
+													{task.assignedUsers.length} {task.assignedUsers.length === 1 ? 'osoba' :
+														task.assignedUsers.length < 5 ? 'osoby' : 'osób'}
+												</span>
+												{task.assignees && task.assignees.length > 2 && (
+													<button
+														className={styles.toggleAssigneesBtn}
+														onClick={() => setShowAllAssigneesDetail(!showAllAssigneesDetail)}
+													>
+														{showAllAssigneesDetail ? (
+															<ChevronUp size={16} />
+														) : (
+															<ChevronDown size={16} />
+														)}
+													</button>
+												)}
+											</div>
+
+											{showAllAssigneesDetail && task.assignees && (
+												<div className={styles.detailAssigneesList}>
+													{task.assignees.map((a) => (
+														<div key={a.id} className={styles.detailAssignee}>
+															<span className={styles.detailAssigneeName}>
+																{a.userName}
+																{a.userId === currentUser.id && ' (Ty)'}
+															</span>
+															<span className={`${styles.detailAssigneeStatus} ${styles[`status_${a.status}`]}`}>
+																{STATUS_LABELS[a.status]}
+															</span>
+														</div>
+													))}
+												</div>
+											)}
+
+											{ }
+											{task.assignees && task.assignees.length <= 2 && task.assignees.length > 0 && (
+												<div className={styles.detailAssigneesList}>
+													{task.assignees.map((a) => (
+														<div key={a.id} className={styles.detailAssignee}>
+															<span className={styles.detailAssigneeName}>
+																{a.userName}
+																{a.userId === currentUser.id && ' (Ty)'}
+															</span>
+															<span className={`${styles.detailAssigneeStatus} ${styles[`status_${a.status}`]}`}>
+																{STATUS_LABELS[a.status]}
+															</span>
+														</div>
+													))}
+												</div>
+											)}
+										</div>
+									) : (
+
+										<span>Ty {task.assignedUsers.length > 1 ? `(+${task.assignedUsers.length - 1} innych)` : ''}</span>
+									)
+								) : (
+									<span>{task.assignedToName}</span>
+								)}
+							</div>
 						</div>
 					</div>
 
@@ -740,6 +844,7 @@ function TaskCard({
 		task.assignedTo === currentUser.id ||
 		(task.assignedUsers && task.assignedUsers.includes(currentUser.id));
 	const isAssigned = String(task.assignedTo) === String(currentUser.id);
+	const [showAllAssignees, setShowAllAssignees] = useState(false);
 
 	const formatDate = (date: string) => {
 		const d = new Date(date);
@@ -756,7 +861,44 @@ function TaskCard({
 		task.dueDate &&
 		new Date(task.dueDate) < new Date() &&
 		task.status !== "done";
+	const isMultiUser = task.assignedUsers && task.assignedUsers.length > 1;
 
+	const currentUserStatus = isMultiUser
+		? task.assignees?.find(a => a.userId === currentUser.id)?.status || task.status
+		: task.status;
+
+
+	const canChangeStatus = isMultiUser
+		? task.assignedUsers?.includes(currentUser.id) || false
+		: task.assignedTo === currentUser.id ||
+		(task.assignedUsers && task.assignedUsers.includes(currentUser.id));
+	const getAssignedNames = () => {
+
+		if (isMultiUser && task.assignees && task.assignees.length > 0) {
+
+			const canSeeAll =
+				currentUser.role === "admin" ||
+				currentUser.role === "board" ||
+				currentUser.role === "Prezes" ||
+				currentUser.role === "Wiceprezes" ||
+				currentUser.id === task.createdBy;
+
+			if (canSeeAll) {
+
+				return `${task.assignees.length} przypisanych`;
+			} else {
+
+				const currentUserAssignee = task.assignees.find(a => a.userId === currentUser.id);
+				if (currentUserAssignee) {
+					return `Ty ${task.assignees.length > 1 ? `+ ${task.assignees.length - 1} ${task.assignees.length - 1 === 1 ? 'inny' : 'innych'}` : ''}`;
+				}
+				return 'Przypisany do Ciebie';
+			}
+		}
+
+
+		return task.assignedToName;
+	};
 	return (
 		<div
 			className={`${styles.taskCard} ${isOverdue ? styles.taskCardOverdue : ""} ${isAssignedToMe ? styles.taskCardMyTask : ""}`}
@@ -782,7 +924,7 @@ function TaskCard({
 			<div className={styles.taskCard__meta}>
 				<div className={styles.taskCard__metaItem}>
 					<User size={14} />
-					<span>{task.assignedToName}</span>
+					<span>{getAssignedNames()}</span>
 				</div>
 				{task.projectId && task.projectName && (
 					<div className={styles.taskCard__metaItem}>
@@ -822,36 +964,91 @@ function TaskCard({
 					</div>
 				)}
 			</div>
+			{ }
+			{ }
+			{ }
+			{isMultiUser && task.assignees && task.assignees.length > 0 && (
+				(currentUser.role === "admin" ||
+					currentUser.role === "board" ||
+					currentUser.role === "Prezes" ||
+					currentUser.role === "Wiceprezes" ||
+					currentUser.id === task.createdBy) && (
+					<div className={styles.taskCard__assignees}>
+						<span className={styles.taskCard__assigneesLabel}>
+							Postęp przypisanych ({task.assignees.length}):
+						</span>
+						<div className={styles.taskCard__assigneesList}>
+							{ }
+							{(showAllAssignees ? task.assignees : task.assignees.slice(0, 2)).map((assignee) => {
+								const isCurrentUser = assignee.userId === currentUser.id;
+								return (
+									<div
+										key={assignee.id}
+										className={`${styles.assigneeStatus} ${styles[`status_${assignee.status}`]} ${isCurrentUser ? styles.assigneeCurrent : ''}`}
+										title={`${assignee.userName}: ${STATUS_LABELS[assignee.status]}`}
+									>
+										<span className={styles.assigneeDot} />
+										<span className={styles.assigneeName}>
+											{assignee.userName}
+											{isCurrentUser && ' (Ty)'}
+										</span>
+										<span className={styles.assigneeStatusLabel}>
+											{STATUS_LABELS[assignee.status]}
+										</span>
+									</div>
+								);
+							})}
+						</div>
 
+						{ }
+						{task.assignees.length > 2 && (
+							<button
+								className={styles.showMoreBtn}
+								onClick={() => setShowAllAssignees(!showAllAssignees)}
+							>
+								{showAllAssignees ? (
+									<>
+										<ChevronUp size={14} />
+										Pokaż mniej
+									</>
+								) : (
+									<>
+										<ChevronDown size={14} />
+										Pokaż wszystkich ({task.assignees.length - 2} więcej)
+									</>
+								)}
+							</button>
+						)}
+					</div>
+				)
+			)}
 			<div className={styles.taskCard__actions}>
-				{(task.assignedTo === currentUser.id ||
-					(task.assignedUsers &&
-						task.assignedUsers.includes(currentUser.id))) && (
+				{canChangeStatus && (
 					<div className={styles.taskCard__statusActions}>
-						{task.status !== "done" && (
+						{currentUserStatus !== "done" && (
 							<button
 								className={styles.taskCard__statusBtn}
-								onClick={() => onStatusChange(task, "done")}
+								onClick={() => onStatusChange(task, "done", currentUser.id)}
 								title="Zakończ zadanie"
 							>
 								<Check size={16} />
 								Zakończ
 							</button>
 						)}
-						{task.status === "todo" && (
+						{currentUserStatus === "todo" && (
 							<button
 								className={styles.taskCard__statusBtn}
-								onClick={() => onStatusChange(task, "in_progress")}
+								onClick={() => onStatusChange(task, "in_progress", currentUser.id)}
 								title="Rozpocznij"
 							>
 								<Clock size={16} />
 								Rozpocznij
 							</button>
 						)}
-						{task.status === "in_progress" && (
+						{currentUserStatus === "in_progress" && (
 							<button
 								className={styles.taskCard__statusBtn}
-								onClick={() => onStatusChange(task, "review")}
+								onClick={() => onStatusChange(task, "review", currentUser.id)}
 								title="Prześlij do weryfikacji"
 							>
 								<Eye size={16} />
@@ -873,14 +1070,14 @@ function TaskCard({
 						isAssigned ||
 						(task.assignedUsers &&
 							task.assignedUsers.includes(currentUser.id))) && (
-						<button
-							className={styles.taskCard__actionBtn}
-							onClick={() => onEdit?.(task)}
-							title="Edytuj"
-						>
-							<Edit size={16} />
-						</button>
-					)}
+							<button
+								className={styles.taskCard__actionBtn}
+								onClick={() => onEdit?.(task)}
+								title="Edytuj"
+							>
+								<Edit size={16} />
+							</button>
+						)}
 					{canManage && (
 						<button
 							className={`${styles.taskCard__actionBtn} ${styles.taskCard__actionBtnDanger}`}
@@ -1687,6 +1884,11 @@ export default function Tasks() {
 			return true;
 		}
 
+
+		if (user.id === task.createdBy) {
+			return true;
+		}
+
 		if (user.isLeader === true) {
 			if (task.pillar === user.pillarName) {
 				return true;
@@ -1791,6 +1993,18 @@ export default function Tasks() {
 						String(id),
 					);
 
+
+					const assignees = task.assignees?.map((a: any) => ({
+						id: a.id?.toString() || "",
+						userId: a.userId?.toString() || a.user_id?.toString() || "",
+						userName: a.userName || a.user?.first_name + " " + a.user?.last_name || "Nieznany",
+						status: a.status || "todo",
+						startedAt: a.startedAt || a.started_at || null,
+						completedAt: a.completedAt || a.completed_at || null,
+					})) || [];
+
+					console.log(`📦 Zadanie ${task.id} ma ${assignees.length} assignees:`, assignees);
+
 					return {
 						...task,
 						id: String(task.id),
@@ -1802,6 +2016,8 @@ export default function Tasks() {
 						createdBy: String(task.created_by || task.createdBy || ""),
 						createdByName:
 							task.created_by_name || task.createdByName || "Nieznany",
+
+						assignees: assignees,
 					};
 				});
 
@@ -1818,15 +2034,20 @@ export default function Tasks() {
 					} as User),
 				);
 				setTasks(visibleTasks);
-
+				window.__tasks = visibleTasks;
+				window.__currentUser = currentUser;
 				console.log("🔍 ===== DEBUG ZADANIA =====");
 				console.log("📦 visibleTasks:", visibleTasks);
 				console.log("📦 Pierwsze zadanie:", visibleTasks[0]);
 				console.log("📦 assignedUsers:", visibleTasks[0]?.assignedUsers);
+				console.log("📦 assignees:", visibleTasks[0]?.assignees);
 				console.log("📦 currentUser.id:", userData.id);
 				console.log(
 					"📦 Czy user jest w assignedUsers?",
 					visibleTasks[0]?.assignedUsers?.includes(String(userData.id)),
+				);
+				console.log("📦 Czy user jest w assignees?",
+					visibleTasks[0]?.assignees?.some((a: any) => a.userId === String(userData.id))
 				);
 				console.log("🔍 ===== KONIEC DEBUG =====");
 			}
@@ -1961,13 +2182,13 @@ export default function Tasks() {
 					tasks.map((t) =>
 						t.id === task.id
 							? {
-									...t,
-									feedbackText: data.feedbackText || feedbackText,
-									feedbackFile: data.feedbackFile,
-									feedbackFileName: data.feedbackFileName,
-									feedbackSubmittedAt:
-										data.feedbackSubmittedAt || new Date().toISOString(),
-								}
+								...t,
+								feedbackText: data.feedbackText || feedbackText,
+								feedbackFile: data.feedbackFile,
+								feedbackFileName: data.feedbackFileName,
+								feedbackSubmittedAt:
+									data.feedbackSubmittedAt || new Date().toISOString(),
+							}
 							: t,
 					),
 				);
@@ -2245,8 +2466,63 @@ export default function Tasks() {
 			console.error("Błąd wysyłki powiadomienia:", error);
 		}
 	};
+
 	const handleStatusChange = useCallback(
-		async (task: Task, newStatus: TaskStatus) => {
+		async (task: Task, newStatus: TaskStatus, userId?: string) => {
+			const targetUserId = userId || currentUser.id;
+
+
+			const isMultiUser = task.assignedUsers && task.assignedUsers.length > 1;
+
+			if (isMultiUser) {
+
+				try {
+					const token = localStorage.getItem("accessToken");
+					const response = await fetch(`/api/tasks/${task.id}/assignees/${targetUserId}/status`, {
+						method: "PUT",
+						headers: {
+							Authorization: `Bearer ${token}`,
+							"Content-Type": "application/json",
+						},
+						body: JSON.stringify({ status: newStatus }),
+					});
+
+					if (response.ok) {
+
+						await fetchData();
+
+						if (newStatus === "done") {
+
+							const allAssigneesRes = await fetch(`/api/tasks/${task.id}/assignees`, {
+								headers: { Authorization: `Bearer ${token}` }
+							});
+							const allAssignees = await allAssigneesRes.json();
+							const assignedUsers = task.assignedUsers || [];
+							const allDone = assignedUsers.every((uid: string) => {
+								const a = allAssignees.find((ass: any) => ass.userId === uid);
+								return a && a.status === 'done';
+							});
+
+							if (allDone) {
+								toast.success("✅ Wszyscy ukończyli zadanie!");
+							} else {
+								toast.success(`✅ Zakończyłeś swoje zadanie! Czekaj na innych.`);
+							}
+						} else {
+							toast.success(`✅ Status zmieniony na ${STATUS_LABELS[newStatus]}`);
+						}
+					} else {
+						const error = await response.json();
+						toast.error(error.error || "Nie udało się zmienić statusu");
+					}
+				} catch (error) {
+					console.error("Błąd zmiany statusu:", error);
+					toast.error("Nie udało się zmienić statusu");
+				}
+				return;
+			}
+
+
 			if (isUpdating || task.status === newStatus) return;
 
 			setIsUpdating(true);
@@ -2290,7 +2566,7 @@ export default function Tasks() {
 				setIsUpdating(false);
 			}
 		},
-		[isUpdating, currentUser],
+		[isUpdating, currentUser, fetchData],
 	);
 
 	const filteredTasks = tasks

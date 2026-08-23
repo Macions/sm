@@ -7,74 +7,62 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-enum ContributionStatus {
-  PAID
-  PENDING
-  SUSPENDED
-  OVERDUE
-}
-
 model User {
-  id                        Int                  @id @default(autoincrement())
-  username                  String               @unique(map: "username") @db.VarChar(50)
-  email                     String?              @unique(map: "email") @db.VarChar(100)
-  password_hash             String               @db.VarChar(255)
-  first_name                String               @db.VarChar(50)
-  last_name                 String               @db.VarChar(50)
-  is_active                 Boolean?             @default(true)
-  created_at                DateTime             @default(now()) @db.Timestamp(0)
-  team                      String?              @db.VarChar(100)
-  status                    String?              @default("active") @db.VarChar(50)
-  previous_status           String?              @default("active") @db.VarChar(50)
-  province                  String?              @db.VarChar(100)
-  phone                     String?              @db.VarChar(20)
-  avatar                    String?              @db.VarChar(255)
-  functional_role           String?              @db.VarChar(100)
+  id                        Int                 @id @default(autoincrement())
+  username                  String              @unique(map: "username") @db.VarChar(50)
+  email                     String?             @unique(map: "email") @db.VarChar(100)
+  password_hash             String              @db.VarChar(255)
+  first_name                String              @db.VarChar(50)
+  last_name                 String              @db.VarChar(50)
+  is_active                 Boolean?            @default(true)
+  created_at                DateTime            @default(now()) @db.Timestamp(0)
+  team                      String?             @db.VarChar(100)
+  status                    String?             @default("active") @db.VarChar(50)
+  previous_status           String?             @default("active") @db.VarChar(50)
+  province                  String?             @db.VarChar(100)
+  phone                     String?             @db.VarChar(20)
+  avatar                    String?             @db.VarChar(255)
+  functional_role           String?             @db.VarChar(100)
   role_id                   Int?
-  google_calendar_token     String?              @db.Text
-  join_date                 DateTime?            @db.Date
-  is_trial                  Boolean?             @default(false)
-  attendance_percentage     Decimal?             @default(92.00) @db.Decimal(5, 2)
-  form_data                 String?              @db.LongText
-  guides                    guide[]
-  ideaVotes                 IdeaVote[]
-  leaveComments             LeaveComment[]
-  leaves                    Leave[]
-  notifications             Notification[]
-  onboarding_data           onboarding_data[]
-  projects                  Project[]
-  refresh_tokens            refresh_tokens[]
-  team_members              TeamMember[]
-  user_notifications        user_notifications[]
-  roles                     roles?               @relation(fields: [role_id], references: [id], onUpdate: Restrict, map: "users_ibfk_1")
-  vacancies                 Vacancy[]
-  vacancyApplications       VacancyApplication[]
+  join_date                 DateTime?           @db.Date
+  is_trial                  Boolean?            @default(false)
+  attendance_percentage     Decimal?            @default(92.00) @db.Decimal(5, 2)
+  form_data                 String?             @db.LongText
   lastContributionPaidAt    DateTime?
-  items                     MemberItem[]
-  contributionStatus        ContributionStatus?  @default(PENDING)
-  contributionOverdueMonths Int                  @default(0)
-  pillars                   String?              @db.Text
-  socialMediaMember         SocialMediaMember?
-  socialMediaCreator        SocialMediaCreator?
-  contentCreator            ContentCreator?
-  publications              Publication[]
-  materials                 Material[]
-  socialTasks               SocialTask[]
-  mediaContacts             MediaContact[]
-  contributions             Contribution[]
-  taskComments              TaskComment[]
-
-  // ============================================================
-  // 🔥 RELACJE DO TASK
-  // ============================================================
-  assignedTasks Task[] @relation("assignedTasks") // zadania przypisane do użytkownika
-  createdTasks  Task[] @relation("createdTasks") // zadania utworzone przez użytkownika
-  // ❌ USUŃ `tasks` - to jest niepotrzebne
-  // tasks                     Task[]               ← USUŃ TĘ LINIĘ!
-
-  // ✅ DODAJ - zadania ocenione przez użytkownika
-  ratedTasks Task[]         @relation("TaskRatedBy")
-  access     MemberAccess[]
+  contributionStatus        ContributionStatus? @default(PENDING)
+  contributionOverdueMonths Int                 @default(0)
+  pillars                   String?             @db.VarChar(255)
+  google_calendar_token String?              @db.Text
+  ratedTasks                Task[]              @relation("TaskRatedBy")
+  contributions         Contribution[]
+  contentCreator        ContentCreator?
+  guides                guide[]
+  ideaVotes             IdeaVote[]
+  leaveComments         LeaveComment[]
+  leaves                Leave[]
+  materials             Material[]
+  mediaContacts         MediaContact[]
+  access                MemberAccess[]
+  items                 MemberItem[]
+  notifications         Notification[]
+  onboarding_data       onboarding_data[]
+  projects              Project[]
+  publications          Publication[]
+  refresh_tokens        refresh_tokens[]
+  socialMediaCreator    SocialMediaCreator?
+  socialMediaMember     SocialMediaMember?
+  socialTasks           SocialTask[]
+  task                  task[]
+  taskAssignees         TaskAssignee[]
+  task_attachments      task_attachments[]
+  taskComments          TaskComment[]
+  assignedTasks         Task[]               @relation("assignedTasks")
+  createdTasks          Task[]               @relation("createdTasks")
+  team_members          TeamMember[]
+  user_notifications    user_notifications[]
+  roles                 roles?               @relation(fields: [role_id], references: [id], onUpdate: Restrict, map: "users_ibfk_1")
+  vacancies             Vacancy[]
+  vacancyApplications   VacancyApplication[]
 
   @@index([role_id], map: "idx_users_role_id")
   @@index([status], map: "idx_users_status")
@@ -84,14 +72,15 @@ model User {
 model SocialMediaCreator {
   id           Int      @id @default(autoincrement())
   user_id      Int      @unique
-  user         User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
   availability String   @db.Text
   experience   String   @default("none") @db.VarChar(50)
   topics       String?  @db.LongText
   is_active    Boolean  @default(true)
   created_at   DateTime @default(now())
   updated_at   DateTime @updatedAt
+  user         User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
 
+  @@index([user_id], map: "idx_social_media_creators_user_id")
   @@map("social_media_creators")
 }
 
@@ -108,7 +97,7 @@ model Project {
   updated_at     DateTime  @default(now()) @updatedAt @db.Timestamp(0)
   is_active      Int?      @default(1) @db.TinyInt
   users          User?     @relation(fields: [coordinator_id], references: [id], onUpdate: Restrict, map: "projects_ibfk_1")
-  tasks          Task[] // 🔥 DODANE - relacja do zadań
+  tasks          Task[]
 
   @@index([coordinator_id], map: "coordinator_id")
   @@index([status], map: "idx_projects_status")
@@ -136,70 +125,65 @@ model Notification {
 }
 
 model Task {
-  id          Int    @id @default(autoincrement())
-  title       String @db.VarChar(255)
-  description String @db.Text
-  status      String @default("todo") @db.VarChar(50)
-  priority    String @default("medium") @db.VarChar(50)
-
+  id                    Int                @id @default(autoincrement())
+  title                 String             @db.VarChar(255)
+  description           String             @db.Text
+  status                String?            @default("todo") @db.VarChar(50)
+  priority              tasks_priority     @default(medium)
   assigned_to           Int
-  assigned_users        String?
+  assigned_users        String?            @db.Text
   created_by            Int
   project_id            Int?
-  pillar                String?   @db.VarChar(255)
-  // 🔥 NOWE POLA
-  assigned_type         String    @default("user") @db.VarChar(50) // "user" | "team" | "pillar" | "role"
-  assigned_group        String?   @db.VarChar(255) // nazwa grupy/zespołu/filaru/roli
-  is_recurring          Boolean?  @default(false)
-  recurrence_pattern    String?   @db.VarChar(50) // "daily" | "weekly" | "monthly"
-  recurrence_end_date   DateTime?
-  parent_task_id        Int? // dla zadań cyklicznych - ID zadania nadrzędnego
-  rating                Int? // Ocena w gwiazdkach 1-5
-  difficulty            Int? // Poziom trudności 1-5
-  rating_comment        String?   @db.Text // Komentarz do oceny
-  rated_by_name         String?   @db.VarChar(255)
-  rated_at              DateTime? // Data oceny
-  rated_by              Int? // ID użytkownika który ocenił
-  due_date              DateTime
-  tags                  String?   @db.Text
-  requires_feedback     Boolean?  @default(false)
-  feedback_type         String?   @default("text") @db.VarChar(50)
-  feedback_text         String?   @db.Text
-  feedback_file         String?   @db.VarChar(500)
-  feedback_file_name    String?   @db.VarChar(255)
+  due_date              DateTime           @db.DateTime(0)
+  tags                  String?            @db.Text
+  attachments           String?            @db.Text
+  created_at            DateTime           @default(now()) @db.DateTime(0)
+  updated_at            DateTime           @default(now()) @updatedAt @db.DateTime(0)
+  requires_feedback     Boolean?           @default(false)
+  feedback_type         String?            @default("text") @db.VarChar(50)
+  feedback_text         String?            @db.Text
+  feedback_file         String?            @db.VarChar(500)
+  feedback_file_name    String?            @db.VarChar(255)
   feedback_file_size    Int?
-  feedback_file_type    String?   @db.VarChar(100)
-  feedback_submitted_at DateTime?
-  attachments           String?   @db.Text
-  created_at            DateTime  @default(now()) @db.Timestamp(0)
-  updated_at            DateTime  @updatedAt @db.Timestamp(0)
+  feedback_file_type    String?            @db.VarChar(100)
+  feedback_submitted_at DateTime?          @db.DateTime(0)
+  assigned_type         String?            @default("user") @db.VarChar(50)
+  assigned_group        String?            @db.VarChar(255)
+  is_recurring          Boolean?           @default(false)
+  recurrence_pattern    String?            @db.VarChar(50)
+  recurrence_end_date   DateTime?          @db.DateTime(0)
+  parent_task_id        Int?
+  rating                Int?
+  difficulty            Int?
+  rating_comment        String?            @db.Text
+  rated_at              DateTime?          @db.DateTime(0)
+  rated_by              Int?
+  pillar                String?            @db.VarChar(255)
+  rated_by_name         String?            @db.VarChar(255)
+  assignees             TaskAssignee[]
+  task_attachments      task_attachments[]
+  comments              TaskComment[]
+  assignedTo            User               @relation("assignedTasks", fields: [assigned_to], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "tasks_ibfk_1")
+  createdBy             User               @relation("createdTasks", fields: [created_by], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "tasks_ibfk_2")
+  project               Project?           @relation(fields: [project_id], references: [id], onUpdate: Restrict, map: "tasks_ibfk_3")
+  parentTask            Task?              @relation("TaskParent", fields: [parent_task_id], references: [id], onUpdate: Restrict, map: "tasks_ibfk_4")
+  childTasks            Task[]             @relation("TaskParent")
+  ratedBy               User?              @relation("TaskRatedBy", fields: [rated_by], references: [id])
 
-  // ============================================================
-  // 🔥 RELACJE
-  // ============================================================
-  assignedTo User          @relation("assignedTasks", fields: [assigned_to], references: [id], onDelete: Cascade)
-  createdBy  User          @relation("createdTasks", fields: [created_by], references: [id], onDelete: Cascade)
-  project    Project?      @relation(fields: [project_id], references: [id], onDelete: SetNull)
-  parentTask Task?         @relation("TaskParent", fields: [parent_task_id], references: [id])
-  childTasks Task[]        @relation("TaskParent")
-  comments   TaskComment[]
-
-  // ✅ DODAJ TĘ RELACJĘ!
-  ratedBy User? @relation("TaskRatedBy", fields: [rated_by], references: [id])
-
-  // ============================================================
-  // 🔥 INDEKSY
-  // ============================================================
-  @@index([rated_by])
-  @@index([assigned_to])
-  @@index([created_by])
-  @@index([project_id])
-  @@index([status])
-  @@index([priority])
-  @@index([due_date])
-  @@index([assigned_type])
-  @@index([assigned_group])
-  @@index([pillar])
+  @@index([created_by], map: "created_by")
+  @@index([assigned_to], map: "idx_assigned_to")
+  @@index([created_at], map: "idx_created_at")
+  @@index([due_date], map: "idx_due_date")
+  @@index([priority], map: "idx_priority")
+  @@index([status], map: "idx_status")
+  @@index([assigned_group], map: "idx_tasks_assigned_group")
+  @@index([assigned_type], map: "idx_tasks_assigned_type")
+  @@index([difficulty], map: "idx_tasks_difficulty")
+  @@index([parent_task_id], map: "idx_tasks_parent_task_id")
+  @@index([project_id], map: "idx_tasks_project_id")
+  @@index([rated_at], map: "idx_tasks_rated_at")
+  @@index([rating], map: "idx_tasks_rating")
+  @@index([requires_feedback], map: "idx_tasks_requires_feedback")
   @@map("tasks")
 }
 
@@ -208,13 +192,13 @@ model TaskComment {
   task_id    Int
   user_id    Int
   content    String   @db.Text
-  created_at DateTime @default(now()) @db.Timestamp(0)
+  created_at DateTime @default(now()) @db.DateTime(0)
+  task       Task     @relation(fields: [task_id], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "task_comments_ibfk_1")
+  user       User     @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "task_comments_ibfk_2")
 
-  task Task @relation(fields: [task_id], references: [id], onDelete: Cascade)
-  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
-
-  @@index([task_id])
-  @@index([user_id])
+  @@index([created_at], map: "idx_created_at")
+  @@index([task_id], map: "idx_task_id")
+  @@index([user_id], map: "idx_user_id")
   @@map("task_comments")
 }
 
@@ -253,21 +237,22 @@ model TeamMember {
 
 model guide {
   id               Int      @id @default(autoincrement())
-  title            String
-  description      String?
-  category         String?
-  access           String?  @default("all")
-  author_id        Int? // ← TO JUŻ JEST
-  author           String? // ← DODAJ TO! Pole tekstowe dla autora
-  content          String?
-  created_at       DateTime @default(now())
-  updated_at       DateTime @updatedAt
-  is_published     Int?     @default(1)
-  attachments      String? // JSON
-  functional_roles String? // JSON
+  title            String   @db.VarChar(255)
+  description      String?  @db.Text
+  category         String?  @db.VarChar(50)
+  access           String?  @default("all") @db.VarChar(50)
+  author_id        Int?
+  content          String?  @db.LongText
+  created_at       DateTime @default(now()) @db.Timestamp(0)
+  updated_at       DateTime @default(now()) @updatedAt @db.Timestamp(0)
+  is_published     Int?     @default(1) @db.TinyInt
+  attachments      String?  @db.LongText
+  functional_roles String?  @db.LongText
+  author           String?  @db.VarChar(255)
+  author_user      User?    @relation(fields: [author_id], references: [id], onUpdate: Restrict, map: "guides_ibfk_1")
 
-  author_user User? @relation(fields: [author_id], references: [id])
-
+  @@index([author_id], map: "author_id")
+  @@index([created_at], map: "idx_guides_created_at")
   @@map("guides")
 }
 
@@ -496,17 +481,6 @@ model IdeaVote {
   @@map("idea_votes")
 }
 
-enum idea_votes_vote_type {
-  up
-  down
-}
-
-// schema.prisma
-
-// ============================================================
-// SOCIAL MEDIA MODELS
-// ============================================================
-
 model SocialMediaMember {
   id         Int      @id @default(autoincrement())
   user_id    Int      @unique
@@ -514,9 +488,9 @@ model SocialMediaMember {
   is_active  Boolean  @default(true)
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
+  user       User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
 
-  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
-
+  @@index([user_id], map: "idx_social_members_user_id")
   @@map("social_media_members")
 }
 
@@ -529,9 +503,9 @@ model ContentCreator {
   is_active    Boolean  @default(true)
   created_at   DateTime @default(now())
   updated_at   DateTime @updatedAt
+  user         User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
 
-  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
-
+  @@index([user_id], map: "idx_content_creators_user_id")
   @@map("content_creators")
 }
 
@@ -546,13 +520,12 @@ model Publication {
   description    String?
   created_at     DateTime @default(now())
   updated_at     DateTime @updatedAt
+  responsible    User     @relation(fields: [responsible_id], references: [id])
 
-  responsible User @relation(fields: [responsible_id], references: [id])
-
+  @@index([responsible_id], map: "idx_publications_responsible")
   @@map("publications")
 }
 
-// ✅ ZOSTAW TEN - POJEDYNCZY MODEL DLA MATERIAŁÓW
 model Material {
   id             Int      @id @default(autoincrement())
   name           String   @db.VarChar(255)
@@ -561,12 +534,12 @@ model Material {
   deadline       DateTime @db.Date
   priority       String   @default("medium") @db.VarChar(20)
   stage          String   @default("ideas") @db.VarChar(50)
-  is_active      Boolean  @default(true)
   created_at     DateTime @default(now())
   updated_at     DateTime @updatedAt
+  is_active      Boolean  @default(true)
+  responsible    User     @relation(fields: [responsible_id], references: [id], onDelete: Cascade)
 
-  responsible User @relation(fields: [responsible_id], references: [id], onDelete: Cascade)
-
+  @@index([responsible_id], map: "idx_materials_responsible")
   @@map("materials")
 }
 
@@ -579,9 +552,9 @@ model SocialTask {
   status         String
   created_at     DateTime @default(now())
   updated_at     DateTime @updatedAt
+  responsible    User     @relation(fields: [responsible_id], references: [id])
 
-  responsible User @relation(fields: [responsible_id], references: [id])
-
+  @@index([responsible_id], map: "idx_social_tasks_responsible")
   @@map("social_tasks")
 }
 
@@ -595,9 +568,9 @@ model MediaContact {
   notes          String?
   created_at     DateTime @default(now())
   updated_at     DateTime @updatedAt
+  responsible    User     @relation(fields: [responsible_id], references: [id])
 
-  responsible User @relation(fields: [responsible_id], references: [id])
-
+  @@index([responsible_id], map: "idx_media_contacts_responsible")
   @@map("media_contacts")
 }
 
@@ -612,7 +585,7 @@ model SystemLog {
   method        String   @db.VarChar(10)
   entity_id     String?  @db.VarChar(50)
   entity_name   String?  @db.VarChar(255)
-  changes       Json?
+  changes       String?  @db.LongText
   ip_address    String?  @db.VarChar(45)
   user_agent    String?  @db.LongText
   status        String?  @default("success") @db.VarChar(20)
@@ -628,8 +601,7 @@ model SystemLog {
 
 model Contribution {
   id         String             @id @default(cuid())
-  userId     Int // ID użytkownika z tabeli users (INT bo users.id to int)
-  user       User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId     Int
   amount     Float              @default(0)
   month      Int
   year       Int
@@ -640,6 +612,7 @@ model Contribution {
   externalId String?
   createdAt  DateTime           @default(now())
   updatedAt  DateTime           @updatedAt
+  user       User               @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, month, year])
   @@index([userId])
@@ -652,25 +625,100 @@ model MemberAccess {
   id          Int      @id @default(autoincrement())
   user_id     Int
   access_name String   @db.VarChar(100)
-  created_at  DateTime @default(now())
-  updated_at  DateTime @updatedAt
+  created_at  DateTime @default(now()) @db.DateTime(0)
+  updated_at  DateTime @default(now()) @updatedAt @db.DateTime(0)
+  user        User     @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "fk_member_access_user")
 
-  user User @relation(fields: [user_id], references: [id], onDelete: Restrict)
-
-  @@unique([user_id, access_name])
+  @@unique([user_id, access_name], map: "unique_user_access")
+  @@index([access_name], map: "idx_member_access_access_name")
+  @@index([user_id], map: "idx_member_access_user_id")
   @@map("member_access")
 }
 
 model MemberItem {
-  id         Int      @id @default(autoincrement())
+  id         Int       @id @default(autoincrement())
   user_id    Int
-  name       String
-  value      Float?
-  notes      String?
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
+  name       String    @db.VarChar(100)
+  value      Decimal?  @db.Decimal(10, 2)
+  notes      String?   @db.Text
+  created_at DateTime? @default(now()) @db.Timestamp(0)
+  updated_at DateTime? @default(now()) @updatedAt @db.Timestamp(0)
+  user       User      @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "fk_member_items_user_id")
 
-  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
-
+  @@index([name], map: "idx_member_items_name")
+  @@index([user_id], map: "idx_member_items_user_id")
   @@map("member_items")
+}
+
+model TaskAssignee {
+  id           Int                    @id @default(autoincrement())
+  task_id      Int
+  user_id      Int
+  status       task_assignees_status? @default(todo)
+  started_at   DateTime?              @db.DateTime(0)
+  completed_at DateTime?              @db.DateTime(0)
+  updated_at   DateTime?              @default(now()) @updatedAt @db.DateTime(0)
+  created_at   DateTime?              @default(now()) @db.DateTime(0)
+  task         Task                   @relation(fields: [task_id], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "task_assignees_ibfk_1")
+  user         User                   @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "task_assignees_ibfk_2")
+
+  @@unique([task_id, user_id], map: "unique_task_user")
+  @@index([user_id], map: "user_id")
+  @@map("task_assignees")
+}
+
+model task {
+  id             Int      @id @default(autoincrement())
+  title          String   @db.VarChar(255)
+  description    String?  @db.Text
+  assigned_to    Int?
+  assigned_users String?  @db.Text
+  status         String   @default("pending") @db.VarChar(50)
+  created_at     DateTime @default(now()) @db.Timestamp(0)
+  updated_at     DateTime @default(now()) @db.Timestamp(0)
+  users          User?    @relation(fields: [assigned_to], references: [id], map: "Task_assigned_to_fkey")
+
+  @@index([assigned_to], map: "Task_assigned_to_fkey")
+}
+
+model task_attachments {
+  id          Int      @id @default(autoincrement())
+  task_id     Int
+  file_name   String   @db.VarChar(255)
+  file_path   String   @db.VarChar(500)
+  file_size   Int
+  mime_type   String   @db.VarChar(100)
+  uploaded_by Int
+  created_at  DateTime @default(now()) @db.DateTime(0)
+  tasks       Task     @relation(fields: [task_id], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "task_attachments_ibfk_1")
+  users       User     @relation(fields: [uploaded_by], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "task_attachments_ibfk_2")
+
+  @@index([task_id], map: "idx_task_id")
+  @@index([uploaded_by], map: "idx_uploaded_by")
+}
+
+enum ContributionStatus {
+  PAID
+  PENDING
+  SUSPENDED
+  OVERDUE
+}
+
+enum idea_votes_vote_type {
+  up
+  down
+}
+
+enum task_assignees_status {
+  todo
+  in_progress
+  review
+  done
+}
+
+enum tasks_priority {
+  low
+  medium
+  high
+  urgent
 }

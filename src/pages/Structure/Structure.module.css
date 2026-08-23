@@ -161,7 +161,7 @@ body {
 .treeContainer {
 	display: flex;
 	flex-direction: column;
-	align-items: center; /* 👈 ZMIEŃ Z flex-start NA center */
+	align-items: center; 
 	padding: 16px 0 30px;
 	width: 100%;
 }
@@ -175,7 +175,7 @@ body {
 	flex-direction: column;
 	align-items: center;
 	width: 100%;
-	max-width: 100%; /* 👈 ZMIEŃ Z 520px NA 100% */
+	max-width: 100%; 
 	position: relative;
 }
 
@@ -191,7 +191,7 @@ body {
 	border: 1.5px solid var(--border-soft, #e6dfff);
 	cursor: pointer;
 	transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-	width: 90%; /* 👈 ZMIEŃ NA 90% */
+	width: 90%; 
 	max-width: 100%;
 	position: relative;
 	user-select: none;
@@ -480,8 +480,8 @@ body {
 	gap: 6px;
 	animation: slideDown 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 	position: relative;
-	padding-left: 0; /* 👈 ZMIEŃ Z 20px NA 0 */
-	border-left: none; /* 👈 ZMIEŃ LUB USUŃ */
+	padding-left: 0; 
+	border-left: none; 
 }
 
 @keyframes slideDown {
@@ -576,10 +576,10 @@ body {
 .childrenContainer {
 	display: flex;
 	flex-direction: column;
-	align-items: center; /* 👈 ZMIEŃ Z flex-start NA center */
+	align-items: center; 
 	gap: 16px;
 	margin-top: 16px;
-	padding-left: 0; /* 👈 ZMIEŃ Z 20px NA 0 */
+	padding-left: 0; 
 	width: 100%;
 	position: relative;
 	animation: slideDown 0.4s cubic-bezier(0.4, 0, 0.2, 1);
@@ -587,17 +587,17 @@ body {
 
 .childrenContainer .nodeCard {
 
-	width: 80%; /* 👈 DODAJ */
+	width: 80%; 
 }
 
 .childrenContainer .childrenContainer .nodeCard {
 	max-width: 440px;
-	width: 100%; /* 👈 DODAJ */
+	width: 100%; 
 }
 
 .childrenContainer .childrenContainer .childrenContainer .nodeCard {
 	max-width: 400px;
-	width: 100%; /* 👈 DODAJ */
+	width: 100%; 
 }
 
 /* ==========================================================================
@@ -803,13 +803,13 @@ body {
 
 	.nodeCard {
 		max-width: 100%;
-		width: 100%; /* 👈 DODAJ - PEŁNA SZEROKOŚĆ */
+		width: 100%; 
 		padding: 14px 16px;
 	}
 
 	.nodeRoot {
 		max-width: 100%;
-		width: 100%; /* 👈 DODAJ */
+		width: 100%; 
 	}
 
 	.peopleList {
@@ -818,9 +818,9 @@ body {
 	}
 
 	.childrenContainer {
-		padding-left: 0; /* 👈 ZMIEŃ Z 12px NA 0 */
+		padding-left: 0; 
 		width: 100%;
-		align-items: center; /* 👈 DODAJ - WYŚRODKUJ DZIECI */
+		align-items: center; 
 	}
 
 	.childrenContainer .treeNode {
@@ -986,7 +986,7 @@ body {
 	}
 
 	.childrenContainer {
-		padding-left: 0; /* 👈 ZMIEŃ Z 8px NA 0 */
+		padding-left: 0; 
 		align-items: center;
 		gap: 12px;
 	}
@@ -1132,7 +1132,7 @@ a {
 
 
 .childrenContainer .treeNode {
-	padding-left: 24px; /* 👈 WCIĘCIE DLA DZIECI */
+	padding-left: 24px; 
 	border-left: 2px solid var(--border-soft, #d1c4f0);
 	position: relative;
 }
@@ -1141,7 +1141,7 @@ a {
 .childrenContainer .treeNode::before {
 	content: '';
 	position: absolute;
-	top: -16px; /* 👈 DOSTOSUJ DO SWOJEGO GAPA */
+	top: -16px; 
 	left: -2px;
 	width: 2px;
 	height: 24px;
@@ -1183,12 +1183,12 @@ a {
 
 
 .childrenContainer .treeNode {
-	padding-left: 0; /* 👈 BRAK WCIĘCIA NA DESKTOPIE */
+	padding-left: 0; 
 }
 
 
 .childrenContainer .treeNode::before {
-	display: none; /* 👈 UKRYJ LINIE */
+	display: none; 
 }
 
 
@@ -1199,7 +1199,7 @@ a {
 	}
 
 	.childrenContainer .treeNode::before {
-		display: block; /* 👈 POKAŻ LINIE */
+		display: block; 
 		content: '';
 		position: absolute;
 		top: -16px;

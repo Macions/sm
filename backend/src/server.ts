@@ -30,7 +30,7 @@ updateLeaveStatus();
 cron.schedule("0 7,14,21 * * *", async () => {
 	try {
 		await syncAttendance();
-	} catch (error) {}
+	} catch (error) { }
 });
 
 cron.schedule("1 0 * * *", async () => {
@@ -175,7 +175,7 @@ app.post("/api/auth/google", async (req, res) => {
 						endpoint: "/api/auth/google",
 						method: "POST",
 						entity_name: `Nieudane logowanie przez Google: ${payload.email}`,
-						changes: { email: payload.email, success: false },
+						changes: JSON.stringify({ email: payload.email, success: false }),
 						status: "error",
 						error_message: "Użytkownik nie istnieje w systemie",
 					},
@@ -201,11 +201,11 @@ app.post("/api/auth/google", async (req, res) => {
 					endpoint: "/api/auth/google",
 					method: "POST",
 					entity_name: `Logowanie przez Google: ${user.email}`,
-					changes: {
+					changes: JSON.stringify({
 						email: user.email,
 						success: true,
 						role: mapRoleId(user.role_id),
-					},
+					}),
 					status: "success",
 				},
 			});
@@ -634,7 +634,7 @@ app.post("/api/auth/login", async (req, res) => {
 						endpoint: "/api/auth/login",
 						method: "POST",
 						entity_name: `Nieudane logowanie: ${email}`,
-						changes: { email, success: false },
+						changes: JSON.stringify({ email, success: false }),
 						status: "error",
 						error_message: "Nieprawidłowy email lub hasło",
 					},
@@ -659,7 +659,7 @@ app.post("/api/auth/login", async (req, res) => {
 						endpoint: "/api/auth/login",
 						method: "POST",
 						entity_name: `Nieudane logowanie: ${user.email}`,
-						changes: { email: user.email, success: false },
+						changes: JSON.stringify({ email, success: false }),
 						status: "error",
 						error_message: "Nieprawidłowe hasło",
 					},
@@ -682,11 +682,11 @@ app.post("/api/auth/login", async (req, res) => {
 					endpoint: "/api/auth/login",
 					method: "POST",
 					entity_name: `Logowanie: ${user.email}`,
-					changes: {
+					changes: JSON.stringify({
 						email: user.email,
 						success: true,
 						role: mapRoleId(user.role_id),
-					},
+					}),
 					status: "success",
 				},
 			});
@@ -891,7 +891,7 @@ app.post("/api/ideas", authMiddleware, async (req: any, res) => {
 					vote_type: "up",
 				},
 			});
-		} catch (voteError) {}
+		} catch (voteError) { }
 
 		const voteCounts = await getVoteCounts(idea.id);
 
@@ -1399,7 +1399,7 @@ app.get("/api/dashboard/stats", authMiddleware, async (req: any, res) => {
 					) {
 						attendance = `${Number(user.attendance_percentage).toFixed(1)}%`;
 					}
-				} catch (fallbackError) {}
+				} catch (fallbackError) { }
 			}
 		}
 
@@ -1661,7 +1661,6 @@ app.get("/api/tasks", authMiddleware, async (req: any, res) => {
 				whereCondition = {
 					OR: [
 						{ assigned_to: parseInt(userId) },
-
 						{
 							assigned_users: {
 								contains: `"${userId}"`,
@@ -1674,15 +1673,21 @@ app.get("/api/tasks", authMiddleware, async (req: any, res) => {
 			whereCondition = {
 				OR: [
 					{ assigned_to: parseInt(userId) },
-
 					{
 						assigned_users: {
 							contains: `"${userId}"`,
 						},
 					},
+
+					{
+						assigned_users: {
+							contains: `${userId}`,
+						},
+					},
 				],
 			};
 		}
+
 
 		if (userRole !== "admin" && userRole !== "board") {
 			if (req.query.leaderId) {
@@ -1761,12 +1766,24 @@ app.get("/api/tasks", authMiddleware, async (req: any, res) => {
 						},
 					},
 				},
-
 				ratedBy: {
 					select: {
 						id: true,
 						first_name: true,
 						last_name: true,
+					},
+				},
+
+				assignees: {
+					include: {
+						user: {
+							select: {
+								id: true,
+								first_name: true,
+								last_name: true,
+								email: true,
+							},
+						},
 					},
 				},
 			},
@@ -1819,21 +1836,408 @@ app.get("/api/tasks", authMiddleware, async (req: any, res) => {
 					content: c.content,
 					createdAt: c.created_at.toISOString(),
 				})) || [],
-
 			rating: task.rating ?? null,
 			rating_comment: task.rating_comment ?? null,
 			rated_at: task.rated_at?.toISOString() ?? null,
 			rated_by: task.rated_by?.toString() ?? null,
-
 			rated_by_name: task.ratedBy
 				? `${task.ratedBy.first_name || ""} ${task.ratedBy.last_name || ""}`.trim()
 				: null,
+
+			assignees: task.assignees?.map((a: any) => ({
+				id: a.id.toString(),
+				userId: a.user_id.toString(),
+				userName: a.user
+					? `${a.user.first_name || ""} ${a.user.last_name || ""}`.trim()
+					: "Nieznany",
+				status: a.status,
+				startedAt: a.started_at?.toISOString() || null,
+				completedAt: a.completed_at?.toISOString() || null,
+			})) || [],
 		}));
 
 		res.json(mappedTasks);
 	} catch (error) {
-		logger.error("âťŚ Błąd pobierania zadań:", error);
+		logger.error("❌ Błąd pobierania zadań:", error);
 		res.status(500).json({ error: "Nie udało się pobrać zadań" });
+	}
+});
+
+
+app.get("/api/tasks/:taskId/assignees", authMiddleware, async (req: any, res) => {
+	try {
+		const taskId = parseInt(req.params.taskId);
+
+		const assignees = await prisma.taskAssignee.findMany({
+			where: { task_id: taskId },
+			include: {
+				user: {
+					select: {
+						id: true,
+						first_name: true,
+						last_name: true,
+						email: true,
+					}
+				}
+			},
+			orderBy: { user_id: "asc" }
+		});
+
+		res.json(assignees.map((a: any) => ({
+			id: a.id.toString(),
+			taskId: a.task_id.toString(),
+			userId: a.user_id.toString(),
+			userName: a.user
+				? `${a.user.first_name || ""} ${a.user.last_name || ""}`.trim()
+				: "Nieznany",
+			userEmail: a.user?.email || "",
+			status: a.status,
+			startedAt: a.started_at?.toISOString() || null,
+			completedAt: a.completed_at?.toISOString() || null,
+			createdAt: a.created_at.toISOString(),
+			updatedAt: a.updated_at.toISOString(),
+		})));
+	} catch (error) {
+		console.error("❌ Błąd pobierania przypisanych:", error);
+		res.status(500).json({ error: "Nie udało się pobrać przypisanych" });
+	}
+});
+
+app.put("/api/tasks/:taskId/assignees/:userId/status", authMiddleware, async (req: any, res) => {
+	try {
+		const taskId = parseInt(req.params.taskId);
+		const userId = parseInt(req.params.userId);
+		const { status } = req.body;
+		const currentUserId = req.user?.id;
+		const userRole = req.user?.role;
+
+
+		if (userId !== currentUserId) {
+			if (userRole !== "admin" && userRole !== "board" && userRole !== "coordinator") {
+				return res.status(403).json({ error: "Brak uprawnień" });
+			}
+		}
+
+
+		const task = await prisma.task.findUnique({
+			where: { id: taskId }
+		});
+
+		if (!task) {
+			return res.status(404).json({ error: "Zadanie nie istnieje" });
+		}
+
+
+		let assignee = await prisma.taskAssignee.findUnique({
+			where: {
+				task_id_user_id: {
+					task_id: taskId,
+					user_id: userId
+				}
+			}
+		});
+
+
+		if (!assignee) {
+			const assignedUsers = task.assigned_users ? JSON.parse(task.assigned_users) : [];
+			if (!assignedUsers.includes(userId)) {
+				return res.status(404).json({ error: "Użytkownik nie jest przypisany do tego zadania" });
+			}
+
+			assignee = await prisma.taskAssignee.create({
+				data: {
+					task_id: taskId,
+					user_id: userId,
+					status: status,
+					started_at: status === 'in_progress' ? new Date() : null,
+					completed_at: status === 'done' ? new Date() : null,
+				}
+			});
+		}
+
+
+		const updatedAssignee = await prisma.taskAssignee.update({
+			where: {
+				task_id_user_id: {
+					task_id: taskId,
+					user_id: userId
+				}
+			},
+			data: {
+				status: status,
+				started_at: status === 'in_progress' && !assignee.started_at ? new Date() : assignee.started_at,
+				completed_at: status === 'done' ? new Date() : null,
+				updated_at: new Date()
+			},
+			include: {
+				user: {
+					select: {
+						id: true,
+						first_name: true,
+						last_name: true,
+						email: true,
+					}
+				}
+			}
+		});
+
+
+		if (status === 'done') {
+			const allAssignees = await prisma.taskAssignee.findMany({
+				where: { task_id: taskId }
+			});
+
+			const assignedUsers = task.assigned_users ? JSON.parse(task.assigned_users) : [];
+			const allDone = assignedUsers.every((uid: number) => {
+				const a = allAssignees.find(ass => ass.user_id === uid);
+				return a && a.status === 'done';
+			});
+
+			if (allDone && assignedUsers.length > 0) {
+				await prisma.task.update({
+					where: { id: taskId },
+					data: {
+						status: 'done',
+						updated_at: new Date()
+					}
+				});
+
+
+				await prisma.notification.create({
+					data: {
+						user_id: task.created_by,
+						title: "✅ Wszyscy ukończyli zadanie",
+						message: `Wszyscy przypisani ukończyli zadanie: "${task.title}"`,
+						type: "success",
+						read: false,
+						link: `/tasks/${taskId}`,
+						target: "all",
+						created_at: new Date(),
+					}
+				});
+			}
+		}
+
+		res.json({
+			id: updatedAssignee.id.toString(),
+			taskId: updatedAssignee.task_id.toString(),
+			userId: updatedAssignee.user_id.toString(),
+			userName: updatedAssignee.user
+				? `${updatedAssignee.user.first_name || ""} ${updatedAssignee.user.last_name || ""}`.trim()
+				: "Nieznany",
+			status: updatedAssignee.status,
+			startedAt: updatedAssignee.started_at?.toISOString() || null,
+			completedAt: updatedAssignee.completed_at?.toISOString() || null,
+		});
+	} catch (error) {
+		console.error("❌ Błąd aktualizacji statusu:", error);
+		res.status(500).json({ error: "Nie udało się zaktualizować statusu" });
+	}
+});
+
+
+app.post("/api/tasks/:taskId/assignees", authMiddleware, async (req: any, res) => {
+	try {
+		const taskId = parseInt(req.params.taskId);
+		const { userId } = req.body;
+		const userRole = req.user?.role;
+
+		if (userRole !== "admin" && userRole !== "board" && userRole !== "coordinator") {
+			return res.status(403).json({ error: "Brak uprawnień" });
+		}
+
+
+		const task = await prisma.task.findUnique({
+			where: { id: taskId }
+		});
+
+		if (!task) {
+			return res.status(404).json({ error: "Zadanie nie istnieje" });
+		}
+
+
+		const existing = await prisma.taskAssignee.findUnique({
+			where: {
+				task_id_user_id: {
+					task_id: taskId,
+					user_id: parseInt(userId)
+				}
+			}
+		});
+
+		if (existing) {
+			return res.status(400).json({ error: "Użytkownik już jest przypisany" });
+		}
+
+
+		const assignedUsers = task.assigned_users ? JSON.parse(task.assigned_users) : [];
+		if (!assignedUsers.includes(parseInt(userId))) {
+			assignedUsers.push(parseInt(userId));
+			await prisma.task.update({
+				where: { id: taskId },
+				data: {
+					assigned_users: JSON.stringify(assignedUsers)
+				}
+			});
+		}
+
+
+		const assignee = await prisma.taskAssignee.create({
+			data: {
+				task_id: taskId,
+				user_id: parseInt(userId),
+				status: 'todo'
+			},
+			include: {
+				user: {
+					select: {
+						id: true,
+						first_name: true,
+						last_name: true,
+						email: true,
+					}
+				}
+			}
+		});
+
+		res.status(201).json({
+			id: assignee.id.toString(),
+			taskId: assignee.task_id.toString(),
+			userId: assignee.user_id.toString(),
+			userName: assignee.user
+				? `${assignee.user.first_name || ""} ${assignee.user.last_name || ""}`.trim()
+				: "Nieznany",
+			status: assignee.status,
+			startedAt: assignee.started_at?.toISOString() || null,
+			completedAt: assignee.completed_at?.toISOString() || null,
+		});
+	} catch (error) {
+		console.error("❌ Błąd dodawania assignee:", error);
+		res.status(500).json({ error: "Nie udało się dodać użytkownika" });
+	}
+});
+
+
+app.delete("/api/tasks/:taskId/assignees/:userId", authMiddleware, async (req: any, res) => {
+	try {
+		const taskId = parseInt(req.params.taskId);
+		const userId = parseInt(req.params.userId);
+		const userRole = req.user?.role;
+
+		if (userRole !== "admin" && userRole !== "board" && userRole !== "coordinator") {
+			return res.status(403).json({ error: "Brak uprawnień" });
+		}
+
+
+		const task = await prisma.task.findUnique({
+			where: { id: taskId }
+		});
+
+		if (!task) {
+			return res.status(404).json({ error: "Zadanie nie istnieje" });
+		}
+
+
+		await prisma.taskAssignee.delete({
+			where: {
+				task_id_user_id: {
+					task_id: taskId,
+					user_id: userId
+				}
+			}
+		});
+
+
+		const assignedUsers = task.assigned_users ? JSON.parse(task.assigned_users) : [];
+		const updatedUsers = assignedUsers.filter((id: number) => id !== userId);
+		await prisma.task.update({
+			where: { id: taskId },
+			data: {
+				assigned_users: JSON.stringify(updatedUsers)
+			}
+		});
+
+		res.json({ success: true, message: "Użytkownik usunięty z zadania" });
+	} catch (error) {
+		console.error("❌ Błąd usuwania assignee:", error);
+		res.status(500).json({ error: "Nie udało się usunąć użytkownika" });
+	}
+});
+
+
+app.post("/api/tasks/migrate-assignees", authMiddleware, async (req: any, res) => {
+	try {
+		const userRole = req.user?.role;
+
+		if (userRole !== "admin" && userRole !== "board") {
+			return res.status(403).json({ error: "Brak uprawnień" });
+		}
+
+
+		const tasks = await prisma.task.findMany({
+			where: {
+				assigned_users: { not: null }
+			},
+			select: {
+				id: true,
+				assigned_users: true,
+				status: true,
+				created_at: true,
+				updated_at: true,
+			}
+		});
+
+		let created = 0;
+		let skipped = 0;
+
+		for (const task of tasks) {
+			const userIds = task.assigned_users ? JSON.parse(task.assigned_users) : [];
+
+
+			if (userIds.length <= 1) {
+				skipped++;
+				continue;
+			}
+
+			for (const userId of userIds) {
+
+				const userIdInt = parseInt(userId);
+				if (isNaN(userIdInt)) continue;
+
+				const existing = await prisma.taskAssignee.findUnique({
+					where: {
+						task_id_user_id: {
+							task_id: task.id,
+							user_id: userIdInt // ✅ UŻYJ INT
+						}
+					}
+				});
+
+				if (!existing) {
+					await prisma.taskAssignee.create({
+						data: {
+							task_id: task.id,
+							user_id: userIdInt, // ✅ UŻYJ INT
+							status: 'todo',
+							started_at: task.status === 'in_progress' ? task.updated_at : null,
+							completed_at: task.status === 'done' ? task.updated_at : null,
+						}
+					});
+					created++;
+				}
+			}
+		}
+
+		res.json({
+			success: true,
+			message: `Utworzono ${created} rekordów, pominięto ${skipped} zadań`,
+			created,
+			skipped,
+			total: tasks.length
+		});
+	} catch (error) {
+		console.error("❌ Błąd migracji:", error);
+		res.status(500).json({ error: "Nie udało się przeprowadzić migracji" });
 	}
 });
 
@@ -2058,7 +2462,7 @@ app.get("/api/applications", authMiddleware, async (req: any, res) => {
 				userId: app.user_id.toString(),
 				userName: app.user
 					? `${app.user.first_name || ""} ${app.user.last_name || ""}`.trim() ||
-						"Nieznany"
+					"Nieznany"
 					: "Nieznany",
 				userEmail: app.user?.email || "",
 				message: app.message || "",
@@ -2169,7 +2573,7 @@ app.get(
 					userId: app.user_id.toString(),
 					userName: app.user
 						? `${app.user.first_name || ""} ${app.user.last_name || ""}`.trim() ||
-							"Nieznany"
+						"Nieznany"
 						: "Nieznany",
 					userEmail: app.user?.email || "",
 					message: app.message || "",
@@ -3345,14 +3749,14 @@ app.put("/api/leaves/:id", authMiddleware, async (req: any, res) => {
 					: existingLeave.attachments,
 				status: status || existingLeave.status,
 				...(status === "approved" ||
-				status === "rejected" ||
-				status === "cancelled"
+					status === "rejected" ||
+					status === "cancelled"
 					? {
-							approved_by:
-								`${currentUser?.first_name || ""} ${currentUser?.last_name || ""}`.trim() ||
-								"Nieznany",
-							approved_at: new Date(),
-						}
+						approved_by:
+							`${currentUser?.first_name || ""} ${currentUser?.last_name || ""}`.trim() ||
+							"Nieznany",
+						approved_at: new Date(),
+					}
 					: {}),
 			},
 			include: { user: true },
@@ -3413,14 +3817,12 @@ app.put("/api/leaves/:id", authMiddleware, async (req: any, res) => {
 					entity_id: req.params.id,
 					entity_name:
 						`Urlop ${leave.user?.first_name || ""} ${leave.user?.last_name || ""}`.trim(),
-					changes: {
+					changes: JSON.stringify({
 						status: status || existingLeave.status,
 						startDate: leave.start_date?.toISOString().split("T")[0],
 						endDate: leave.end_date?.toISOString().split("T")[0],
-						affectedTeams: leave.affected_teams
-							? JSON.parse(leave.affected_teams)
-							: [],
-					},
+						affectedTeams: leave.affected_teams ? JSON.parse(leave.affected_teams) : [],
+					}),
 					ip_address:
 						req.headers["x-forwarded-for"] || req.socket?.remoteAddress || null,
 					user_agent: req.headers["user-agent"] || null,
@@ -3491,11 +3893,11 @@ app.delete("/api/leaves/:id", authMiddleware, async (req: any, res) => {
 						entity_id: req.params.id,
 						entity_name:
 							`Urlop ${leaveToDelete.user?.first_name || ""} ${leaveToDelete.user?.last_name || ""}`.trim(),
-						changes: {
+						changes: JSON.stringify({
 							startDate: leaveToDelete.start_date?.toISOString().split("T")[0],
 							endDate: leaveToDelete.end_date?.toISOString().split("T")[0],
 							status: leaveToDelete.status,
-						},
+						}),
 						ip_address:
 							req.headers["x-forwarded-for"] ||
 							req.socket?.remoteAddress ||
@@ -4414,7 +4816,7 @@ app.post("/api/onboarding/save", authMiddleware, async (req: any, res) => {
 					},
 				});
 			}
-		} catch (notificationError) {}
+		} catch (notificationError) { }
 
 		res.status(200).json({
 			success: true,
@@ -5621,6 +6023,7 @@ app.post("/api/tasks", authMiddleware, async (req: any, res) => {
 				.json({ error: "Wszystkie wymagane pola muszą być wypełnione" });
 		}
 
+
 		const task = await prisma.task.create({
 			data: {
 				title,
@@ -5638,6 +6041,21 @@ app.post("/api/tasks", authMiddleware, async (req: any, res) => {
 			},
 		});
 
+
+		const allUserIds = assignedUsers && assignedUsers.length > 0
+			? assignedUsers
+			: [assignedTo];
+
+		if (allUserIds.length > 1) {
+			await prisma.taskAssignee.createMany({
+				data: allUserIds.map((uid: string) => ({
+					task_id: task.id,
+					user_id: parseInt(uid),
+					status: 'todo'
+				}))
+			});
+		}
+
 		res.status(201).json({
 			id: task.id.toString(),
 			title: task.title,
@@ -5645,6 +6063,7 @@ app.post("/api/tasks", authMiddleware, async (req: any, res) => {
 			status: task.status,
 			priority: task.priority,
 			assignedTo: task.assigned_to.toString(),
+			assignedUsers: task.assigned_users ? JSON.parse(task.assigned_users) : [],
 			createdBy: task.created_by.toString(),
 			projectId: task.project_id?.toString() || null,
 			dueDate: task.due_date.toISOString(),
@@ -5655,7 +6074,7 @@ app.post("/api/tasks", authMiddleware, async (req: any, res) => {
 			feedbackType: task.feedback_type || "text",
 		});
 	} catch (error) {
-		logger.error("âťŚ Błąd tworzenia zadania:", error);
+		logger.error("❌ Błąd tworzenia zadania:", error);
 		res.status(500).json({ error: "Nie udało się utworzyć zadania" });
 	}
 });
@@ -5692,18 +6111,17 @@ app.put("/api/tasks/:id", authMiddleware, async (req: any, res) => {
 			return res.status(404).json({ error: "Nie znaleziono zadania" });
 		}
 
-		// ✅ SPRAWDŹ CZY UŻYTKOWNIK JEST W assigned_users
+
 		const isInAssignedUsers = existingTask.assigned_users
 			? JSON.parse(existingTask.assigned_users).includes(parseInt(userId))
 			: false;
 
-		// ✅ ZMIENIONA LOGIKA - dodane isInAssignedUsers
 		const canEdit =
 			userRole === "admin" ||
 			userRole === "board" ||
 			userRole === "coordinator" ||
 			existingTask.assigned_to === parseInt(userId) ||
-			isInAssignedUsers; // <-- TO JEST KLUCZOWE
+			isInAssignedUsers;
 
 		if (!canEdit) {
 			return res
@@ -5711,7 +6129,7 @@ app.put("/api/tasks/:id", authMiddleware, async (req: any, res) => {
 				.json({ error: "Brak uprawnień do edycji tego zadania" });
 		}
 
-		// ... reszta kodu (update) zostaje bez zmian
+
 		const task = await prisma.task.update({
 			where: { id: taskId },
 			data: {
@@ -5743,6 +6161,29 @@ app.put("/api/tasks/:id", authMiddleware, async (req: any, res) => {
 			},
 		});
 
+
+		const newUsers = assignedUsers || [];
+		const oldUsers = existingTask.assigned_users ? JSON.parse(existingTask.assigned_users) : [];
+
+		if (newUsers.length > 1) {
+
+			await prisma.taskAssignee.deleteMany({
+				where: { task_id: taskId }
+			});
+			await prisma.taskAssignee.createMany({
+				data: newUsers.map((uid: string) => ({
+					task_id: taskId,
+					user_id: parseInt(uid),
+					status: 'todo'
+				}))
+			});
+		} else if (newUsers.length === 1 && oldUsers.length > 1) {
+
+			await prisma.taskAssignee.deleteMany({
+				where: { task_id: taskId }
+			});
+		}
+
 		res.json({
 			id: task.id.toString(),
 			title: task.title,
@@ -5750,6 +6191,7 @@ app.put("/api/tasks/:id", authMiddleware, async (req: any, res) => {
 			status: task.status,
 			priority: task.priority,
 			assignedTo: task.assigned_to.toString(),
+			assignedUsers: task.assigned_users ? JSON.parse(task.assigned_users) : [],
 			createdBy: task.created_by.toString(),
 			projectId: task.project_id?.toString() || null,
 			dueDate: task.due_date.toISOString(),
@@ -6057,23 +6499,23 @@ app.get("/api/admin/logs", authMiddleware, async (req: any, res) => {
 cron.schedule("0 1,17 * * *", async () => {
 	try {
 		await syncContributions();
-	} catch (error) {}
+	} catch (error) { }
 });
 
 setTimeout(async () => {
 	try {
 		await syncContributions();
-	} catch (error) {}
+	} catch (error) { }
 }, 15000);
 setTimeout(async () => {
 	try {
 		await syncAttendance();
-	} catch (error) {}
+	} catch (error) { }
 }, 10000);
 setTimeout(async () => {
 	try {
 		await syncMembers();
-	} catch (error) {}
+	} catch (error) { }
 }, 5000);
 
 app.get(
@@ -7899,4 +8341,4 @@ app.get(
 );
 
 app.use("/api", revenueRoutes);
-app.listen(port, () => {});
+app.listen(port, () => { });

@@ -4,9 +4,9 @@
 
 .layout {
 	display: flex;
-	flex-direction: row; /* 👈 ZMIENIONE: RZĄD, a nie kolumna */
+	flex-direction: row; 
 	min-height: 100vh;
-	height: 100vh; /* 👈 DODANE: pełna wysokość */
+	height: 100vh; 
 	background: var(--bg-app, #f1f1f7);
 	font-family:
 		Inter,
@@ -19,7 +19,7 @@
 	padding: 0;
 	margin: 0;
 	box-sizing: border-box;
-	overflow: hidden; /* 👈 ZMIENIONE: ukryj overflow na poziomie layout */
+	overflow: hidden; 
 }
 
 
@@ -47,7 +47,7 @@
 	display: flex;
 	flex-direction: column;
 	transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-	overflow-y: auto; /* 👈 DODANE: przewijanie tylko main */
+	overflow-y: auto; 
 	overflow-x: hidden;
 	background: var(--bg-app, #f1f1f7);
 }
@@ -88,7 +88,7 @@
 
 @media (width <= 768px) {
 	.layout {
-		flex-direction: column; /* 👈 ZMIENIONE: na mobilkach z powrotem kolumna */
+		flex-direction: column; 
 		height: 100vh;
 	}
 
