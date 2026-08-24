@@ -44,25 +44,25 @@ interface SystemLog {
 	user_name: string;
 	user_role: string;
 	action_type:
-	| "CREATE"
-	| "UPDATE"
-	| "DELETE"
-	| "LOGIN"
-	| "LOGOUT"
-	| "APPROVE"
-	| "REJECT";
+		| "CREATE"
+		| "UPDATE"
+		| "DELETE"
+		| "LOGIN"
+		| "LOGOUT"
+		| "APPROVE"
+		| "REJECT";
 	category:
-	| "USER"
-	| "TEAM"
-	| "LEAVE"
-	| "PROJECT"
-	| "VACANCY"
-	| "TUTORIAL"
-	| "SOCIAL_MEDIA"
-	| "PERMISSION"
-	| "STRUCTURE"
-	| "NOTIFICATION"
-	| "AUTH";
+		| "USER"
+		| "TEAM"
+		| "LEAVE"
+		| "PROJECT"
+		| "VACANCY"
+		| "TUTORIAL"
+		| "SOCIAL_MEDIA"
+		| "PERMISSION"
+		| "STRUCTURE"
+		| "NOTIFICATION"
+		| "AUTH";
 	endpoint: string;
 	method: string;
 	entity_id: string | null;
@@ -829,8 +829,8 @@ function StructureManagement({
 		title: "",
 		message: "",
 		confirmText: "Potwierdź",
-		onConfirm: () => { },
-		onCancel: () => { },
+		onConfirm: () => {},
+		onCancel: () => {},
 	});
 	const [expandedTeams, setExpandedTeams] = useState<Record<string, boolean>>(
 		{},
@@ -846,10 +846,8 @@ function StructureManagement({
 	const scrollToTeamHeader = (teamId: string) => {
 		const element = document.getElementById(`team-${teamId}`);
 		if (element) {
-
 			const header = element.querySelector(".teamCard__header");
 			if (header) {
-
 				const headerRect = header.getBoundingClientRect();
 				const offset = 80;
 				const scrollPosition = window.scrollY + headerRect.top - offset;
@@ -859,7 +857,6 @@ function StructureManagement({
 					behavior: "smooth",
 				});
 			} else {
-
 				element.scrollIntoView({
 					behavior: "smooth",
 					block: "start",
@@ -936,7 +933,6 @@ function StructureManagement({
 		"Organy kontrolne",
 		"Siła młodych",
 		"Siła Młodych",
-
 	];
 
 	const TEAM_ORDER = [
@@ -951,7 +947,6 @@ function StructureManagement({
 	};
 
 	const getSortedTeams = (): Team[] => {
-
 		const filtered = teams.filter((team) => !HIDDEN_TEAMS.includes(team.name));
 
 		const pillars: Team[] = [];
@@ -1040,7 +1035,6 @@ function StructureManagement({
 		const isCurrentlyExpanded = expandedTeams[teamId] || false;
 
 		if (isCurrentlyExpanded) {
-
 			setExpandedTeams((prev) => ({
 				...prev,
 				[teamId]: false,
@@ -1050,7 +1044,6 @@ function StructureManagement({
 				scrollToTeamHeader(teamId);
 			}, 100);
 		} else {
-
 			setExpandedTeams((prev) => ({
 				...prev,
 				[teamId]: true,
@@ -1563,9 +1556,7 @@ function StructureManagement({
 													<div className={styles.memberItem__actions}>
 														{canManage && (
 															<>
-
 																{editingMemberRole?.memberId === member.id ? (
-
 																	<div
 																		className={
 																			styles.memberItem__roleEditInline
@@ -1625,7 +1616,6 @@ function StructureManagement({
 																		</button>
 																	</div>
 																) : (
-
 																	<button
 																		className={styles.memberItem__editRole}
 																		onClick={() => {
@@ -1703,7 +1693,6 @@ function StructureManagement({
 												<button
 													className={styles.showAllBtn}
 													onClick={() => {
-
 														toggleShowAll(team.id);
 													}}
 												>
@@ -1831,7 +1820,6 @@ function AccessManagement() {
 	const [itemNotes, setItemNotes] = useState("");
 
 	const ACCESS_OPTIONS = [
-
 		{ label: "Instagram", category: "Social Media" },
 		{ label: "Facebook", category: "Social Media" },
 		{ label: "Twitter / X", category: "Social Media" },
@@ -2000,7 +1988,6 @@ function AccessManagement() {
 		}
 
 		if (entryType === "access") {
-
 			if (!newAccessForUser.trim()) {
 				toast.error("Wpisz nazwę dostępu");
 				return;
@@ -2060,7 +2047,6 @@ function AccessManagement() {
 				toast.error("Nie udało się dodać dostępów");
 			}
 		} else {
-
 			if (!itemName.trim()) {
 				toast.error("Podaj nazwę przedmiotu");
 				return;
@@ -2102,7 +2088,16 @@ function AccessManagement() {
 
 	const handleEditAccess = (member: any) => {
 		setSelectedMember(member);
-		setAccessItems(member.access || []);
+		// ✅ Upewnij się że accessItems to tablica stringów lub obiektów z access_name
+		const items = member.access || [];
+		setAccessItems(
+			items.map((item: any) => {
+				if (typeof item === "object" && item !== null) {
+					return item.access_name || item.name || String(item);
+				}
+				return String(item);
+			}),
+		);
 		setEditingMemberId(member.id);
 	};
 
@@ -2118,13 +2113,14 @@ function AccessManagement() {
 
 		try {
 			const token = localStorage.getItem("accessToken");
+			// ✅ Wyślij tablicę stringów (nazw dostępów)
 			const response = await fetch(`/api/members/${selectedMember.id}/access`, {
 				method: "PUT",
 				headers: {
 					Authorization: `Bearer ${token}`,
 					"Content-Type": "application/json",
 				},
-				body: JSON.stringify({ access: accessItems }),
+				body: JSON.stringify({ access: accessItems }), // accessItems to już stringi
 			});
 
 			if (!response.ok) {
@@ -2134,9 +2130,9 @@ function AccessManagement() {
 
 			toast.success("Dostęp zaktualizowany!");
 			handleCloseEdit();
-			await fetchMembers();
+			await fetchMembers(); // Odśwież listę
 		} catch (error) {
-			logger.error("âťŚ Błąd:", error);
+			logger.error("Błąd:", error);
 			toast.error(
 				error instanceof Error ? error.message : "Nie udało się zapisać",
 			);
@@ -2208,10 +2204,22 @@ function AccessManagement() {
 									</span>
 									<div className={styles.accessItem__tags}>
 										{member.access && member.access.length > 0 ? (
-											member.access.map((item: any) => {
+											member.access.map((item: any, index: number) => {
+												// ✅ Obsługa zarówno stringów jak i obiektów
+												let label = "";
+												let key = `access-${index}`;
 
-												const label = typeof item === 'object' ? item.access_name || item.name || JSON.stringify(item) : item;
-												const key = typeof item === 'object' ? item.id || label : label;
+												if (typeof item === "object" && item !== null) {
+													label =
+														item.access_name ||
+														item.name ||
+														`Dostęp ${index + 1}`;
+													key = item.id || `access-${index}`;
+												} else {
+													label = String(item);
+													key = `access-${index}`;
+												}
+
 												return (
 													<span key={key} className={styles.accessTag}>
 														{label}
@@ -2219,7 +2227,9 @@ function AccessManagement() {
 												);
 											})
 										) : (
-											<span className={styles.accessEmptyTag}>Brak dostępów</span>
+											<span className={styles.accessEmptyTag}>
+												Brak dostępów
+											</span>
 										)}
 									</div>
 								</div>
@@ -2302,7 +2312,6 @@ function AccessManagement() {
 						</div>
 
 						<div className={styles.modal__body}>
-
 							<div className={styles.modal__field}>
 								<label>Filtruj kategorię</label>
 								<select
@@ -2350,6 +2359,7 @@ function AccessManagement() {
 												toast.error("Ten dostęp już istnieje");
 												return;
 											}
+											// ✅ Dodaj jako string
 											setAccessItems([...accessItems, newAccess.trim()]);
 											setNewAccess("");
 										}}
@@ -2375,21 +2385,24 @@ function AccessManagement() {
 											Brak przypisanych dostępów
 										</span>
 									) : (
-										accessItems.map((item) => (
-											<span key={item} className={styles.accessTag}>
-												{item}
-												<button
-													className={styles.accessTag__remove}
-													onClick={() =>
-														setAccessItems(
-															accessItems.filter((i) => i !== item),
-														)
-													}
-												>
-													<X size={12} />
-												</button>
-											</span>
-										))
+										accessItems.map((item: any, index: number) => {
+											// ✅ item to już string (z handleEditAccess)
+											return (
+												<span key={index} className={styles.accessTag}>
+													{String(item)}
+													<button
+														className={styles.accessTag__remove}
+														onClick={() =>
+															setAccessItems(
+																accessItems.filter((_, i) => i !== index),
+															)
+														}
+													>
+														<X size={12} />
+													</button>
+												</span>
+											);
+										})
 									)}
 								</div>
 							</div>
@@ -2500,7 +2513,6 @@ function AccessManagement() {
 						</div>
 
 						<div className={styles.modal__body}>
-
 							<div className={styles.modal__field}>
 								<label>Typ wpisu</label>
 								<div style={{ display: "flex", gap: "16px", marginTop: "4px" }}>
@@ -2831,7 +2843,9 @@ function AttendanceRanking() {
 	const [data, setData] = useState<AttendanceRankingData | null>(null);
 	const [showAllModal, setShowAllModal] = useState(false);
 	const [searchTerm, setSearchTerm] = useState("");
-	const [allUsersFiltered, setAllUsersFiltered] = useState<AttendanceUser[]>([]);
+	const [allUsersFiltered, setAllUsersFiltered] = useState<AttendanceUser[]>(
+		[],
+	);
 
 	const fetchRanking = async () => {
 		try {
@@ -2866,7 +2880,7 @@ function AttendanceRanking() {
 				(user) =>
 					user.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
 					user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-					user.team.toLowerCase().includes(searchTerm.toLowerCase())
+					user.team.toLowerCase().includes(searchTerm.toLowerCase()),
 			);
 			setAllUsersFiltered(filtered);
 		}
@@ -2895,7 +2909,9 @@ function AttendanceRanking() {
 				<span className={styles.attendanceUserItem__name}>
 					{user.fullName}
 					{user.is_no_data && (
-						<span className={styles.attendanceUserItem__badge}>Brak danych</span>
+						<span className={styles.attendanceUserItem__badge}>
+							Brak danych
+						</span>
 					)}
 				</span>
 				<span className={styles.attendanceUserItem__details}>
@@ -2920,7 +2936,11 @@ function AttendanceRanking() {
 		</div>
 	);
 
-	const renderSection = (title: string, users: AttendanceUser[], icon?: React.ReactNode) => {
+	const renderSection = (
+		title: string,
+		users: AttendanceUser[],
+		icon?: React.ReactNode,
+	) => {
 		if (!users || users.length === 0) return null;
 		return (
 			<div className={styles.attendanceSection}>
@@ -2952,7 +2972,10 @@ function AttendanceRanking() {
 			<div className={styles.section__header}>
 				<div className={styles.section__headerLeft}>
 					<h2 className={styles.section__title}>
-						<Users size={20} style={{ display: "inline", marginRight: "8px" }} />
+						<Users
+							size={20}
+							style={{ display: "inline", marginRight: "8px" }}
+						/>
 						Ranking frekwencji
 					</h2>
 					<p className={styles.section__subtitle}>
@@ -2977,7 +3000,8 @@ function AttendanceRanking() {
 			{data.noDataUsers && data.noDataUsers.length > 0 && (
 				<div className={styles.attendanceSection} style={{ marginTop: "16px" }}>
 					<h3 className={styles.attendanceSection__title}>
-						<User size={18} /> Brak danych o frekwencji ({data.noDataUsers.length} osób)
+						<User size={18} /> Brak danych o frekwencji (
+						{data.noDataUsers.length} osób)
 					</h3>
 					<div className={styles.attendanceSection__list}>
 						{data.noDataUsers.slice(0, 10).map((user) => renderUserItem(user))}
@@ -3001,13 +3025,18 @@ function AttendanceRanking() {
 
 			{/* Modal ze wszystkimi użytkownikami */}
 			{showAllModal && (
-				<div className={styles.modalOverlay} onClick={() => setShowAllModal(false)}>
+				<div
+					className={styles.modalOverlay}
+					onClick={() => setShowAllModal(false)}
+				>
 					<div
 						className={`${styles.modal} ${styles.modalLarge}`}
 						onClick={(e) => e.stopPropagation()}
 					>
 						<div className={styles.modal__header}>
-							<h2 className={styles.modal__title}>Wszyscy członkowie - frekwencja</h2>
+							<h2 className={styles.modal__title}>
+								Wszyscy członkowie - frekwencja
+							</h2>
 							<button
 								className={styles.modal__close}
 								onClick={() => setShowAllModal(false)}
@@ -3047,7 +3076,8 @@ function AttendanceRanking() {
 
 							<div className={styles.attendanceModalFooter}>
 								<span>
-									Wyświetlono {allUsersFiltered.length} z {data.total} użytkowników
+									Wyświetlono {allUsersFiltered.length} z {data.total}{" "}
+									użytkowników
 								</span>
 							</div>
 						</div>
@@ -3078,7 +3108,7 @@ export default function Admin({ title }: { title?: string }) {
 
 	const scrollToSection = (
 		sectionRef: React.RefObject<HTMLDivElement | null>,
-		tabId: string
+		tabId: string,
 	) => {
 		setActiveTab(tabId);
 
@@ -3087,16 +3117,16 @@ export default function Admin({ title }: { title?: string }) {
 			// Najpierw dodajemy tymczasowy styl
 			const element = sectionRef.current;
 			const originalMarginTop = element.style.scrollMarginTop;
-			element.style.scrollMarginTop = '100px'; // <- tyle px nad sekcją
+			element.style.scrollMarginTop = "100px"; // <- tyle px nad sekcją
 
 			element.scrollIntoView({
-				behavior: 'smooth',
-				block: 'start',
+				behavior: "smooth",
+				block: "start",
 			});
 
 			// Przywracamy oryginalny styl po chwili
 			setTimeout(() => {
-				element.style.scrollMarginTop = originalMarginTop || '';
+				element.style.scrollMarginTop = originalMarginTop || "";
 			}, 500);
 		}
 	};
@@ -3208,11 +3238,13 @@ export default function Admin({ title }: { title?: string }) {
 
 	// DODAJ - funkcja powrotu na górę
 	const scrollToTop = () => {
-		const mainElement = document.querySelector('main._main_xe2ra_67') as HTMLElement;
+		const mainElement = document.querySelector(
+			"main._main_xe2ra_67",
+		) as HTMLElement;
 		if (mainElement) {
 			mainElement.scrollTo({
 				top: 0,
-				behavior: 'smooth',
+				behavior: "smooth",
 			});
 		}
 	};
@@ -3220,7 +3252,9 @@ export default function Admin({ title }: { title?: string }) {
 	// ZOSTAW ten useEffect (już masz dobry):
 	useEffect(() => {
 		// Znajdź element MAIN
-		const mainElement = document.querySelector('main._main_xe2ra_67') as HTMLElement;
+		const mainElement = document.querySelector(
+			"main._main_xe2ra_67",
+		) as HTMLElement;
 		if (!mainElement) {
 			console.log("❌ Nie znaleziono elementu MAIN");
 			return;
@@ -3230,15 +3264,14 @@ export default function Admin({ title }: { title?: string }) {
 
 		const handleScroll = () => {
 			const scrollTop = mainElement.scrollTop;
-			console.log('📜 scrollTop MAIN:', scrollTop);
 			setShowScrollTop(scrollTop > 20);
 		};
 
-		mainElement.addEventListener('scroll', handleScroll);
+		mainElement.addEventListener("scroll", handleScroll);
 		handleScroll();
 
 		return () => {
-			mainElement.removeEventListener('scroll', handleScroll);
+			mainElement.removeEventListener("scroll", handleScroll);
 		};
 	}, []);
 
@@ -3261,7 +3294,6 @@ export default function Admin({ title }: { title?: string }) {
 	useEffect(() => {
 		fetchData();
 	}, []);
-
 
 	if (loading) {
 		return (
@@ -3381,7 +3413,7 @@ export default function Admin({ title }: { title?: string }) {
 				</div>
 
 				<button
-					className={`${styles.scrollTopBtn} ${showScrollTop ? styles.visible : ''}`}
+					className={`${styles.scrollTopBtn} ${showScrollTop ? styles.visible : ""}`}
 					onClick={scrollToTop}
 					aria-label="Powrót na górę"
 				>
