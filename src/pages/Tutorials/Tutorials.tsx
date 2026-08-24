@@ -108,9 +108,25 @@ const ACCESS_COLORS: Record<TutorialAccess, string> = {
 
 const downloadFile = async (url: string, fileName: string) => {
 	try {
-		const fullUrl = url.startsWith("/uploads") ? `/api${url}` : url;
+		// ✅ Popraw ścieżkę - usuń /api z przodu jeśli URL zaczyna się od /uploads
+		let fullUrl = url;
 
-		logger.debug("Pobieranie:", fullUrl);
+		// Jeśli URL zaczyna się od /uploads, dodaj /api na początku
+		if (url.startsWith("/uploads")) {
+			fullUrl = `/api${url}`;
+		}
+		// Jeśli URL zaczyna się od http, użyj go bez zmian
+		else if (url.startsWith("http")) {
+			fullUrl = url;
+		}
+		// W przeciwnym razie dodaj /api
+		else {
+			fullUrl = `/api${url}`;
+		}
+
+		console.log("🔍 Pobieranie pliku:");
+		console.log("🔍 Original URL:", url);
+		console.log("🔍 Full URL:", fullUrl);
 
 		const token = localStorage.getItem("accessToken");
 		const response = await fetch(fullUrl, {
@@ -120,11 +136,12 @@ const downloadFile = async (url: string, fileName: string) => {
 		});
 
 		if (!response.ok) {
+			console.error("❌ Błąd pobierania:", response.status, response.statusText);
 			throw new Error(`Błąd pobierania: ${response.status}`);
 		}
 
 		const blob = await response.blob();
-		logger.debug("Rozmiar pliku:", blob.size, "Typ:", blob.type);
+		console.log("🔍 Rozmiar pliku:", blob.size, "Typ:", blob.type);
 
 		const downloadUrl = window.URL.createObjectURL(blob);
 		const link = document.createElement("a");
@@ -140,7 +157,7 @@ const downloadFile = async (url: string, fileName: string) => {
 
 		toast.success("Plik pobrany pomyślnie!");
 	} catch (error) {
-		logger.error("Błąd pobierania:", error);
+		console.error("❌ Błąd pobierania:", error);
 		toast.error("Nie udało się pobrać pliku");
 	}
 };
@@ -951,23 +968,44 @@ export default function Tutorials() {
 		useState<string>("");
 	const currentUser = useMemo(() => {
 		if (!contextUser) return null;
+
+		// ✅ Sprawdź czy użytkownik jest koordynatorem po teamie lub pillars
+		const userTeam = (contextUser as any).team || "";
+		const userPillars = (contextUser as any).pillars || "";
+
+		// Koordynator = należy do filaru (ma team "Filar X" lub pillars "X")
+		const isCoordinatorByTeam = userTeam.includes("Filar") ||
+			userPillars.includes("Projektowy") ||
+			userPillars.includes("Filar") ||
+			userTeam.toLowerCase().includes("koordynator");
+
+		const functionalRole = (contextUser as any).function ||
+			(contextUser as any).functional_role ||
+			(contextUser as any).functionalRole || "";
+
+		const role = (contextUser.role || "member") as
+			"admin" | "board" | "coordinator" | "functional" | "member";
+
+		// ✅ LOGOWANIE
+		console.log("🔍 userTeam:", userTeam);
+		console.log("🔍 userPillars:", userPillars);
+		console.log("🔍 isCoordinatorByTeam:", isCoordinatorByTeam);
+
 		return {
 			id: String(contextUser.id),
 			name: `${contextUser.firstName} ${contextUser.lastName}`,
-
-			role: contextUser.role as
-				| "admin"
-				| "board"
-				| "coordinator"
-				| "functional"
-				| "member",
-			functionalRole:
-				(contextUser as any).function ||
-				(contextUser as any).functional_role ||
-				"",
-			isLeader: (contextUser as any).isLeader === true,
+			role: role,
+			functionalRole: functionalRole,
+			// ✅ Ustaw isLeader na true jeśli jest koordynatorem
+			isLeader: isCoordinatorByTeam,
 			isTeamCoordinator: (contextUser as any).isTeamCoordinator === true,
 			isPillarCoordinator: (contextUser as any).isPillarCoordinator === true,
+			// ✅ Ustaw isCoordinator na true jeśli jest koordynatorem
+			isCoordinator: isCoordinatorByTeam ||
+				(contextUser as any).isTeamCoordinator === true ||
+				(contextUser as any).isPillarCoordinator === true ||
+				contextUser.role === "coordinator" ||
+				functionalRole.toLowerCase().includes("koordynator"),
 		};
 	}, [contextUser]);
 
@@ -978,7 +1016,8 @@ export default function Tutorials() {
 			return true;
 		}
 
-		if (currentUser.isLeader === true) {
+		// ✅ Koordynatorzy mogą zarządzać (sprawdzamy isCoordinator)
+		if (currentUser.isCoordinator === true) {
 			return true;
 		}
 
@@ -1014,42 +1053,51 @@ export default function Tutorials() {
 		fetchUserAndTutorials();
 	}, []);
 	const canViewTutorial = (tutorial: Tutorial): boolean => {
-		if (
-			(currentUser?.role as any) === "admin" ||
-			(currentUser?.role as any) === "board"
-		) {
+		// ✅ LOGOWANIE
+		console.log("🔍 ===== SPRAWDZAM PORADNIK =====");
+		console.log("🔍 Tutorial:", tutorial.title, "access:", tutorial.access);
+		console.log("🔍 currentUser:", currentUser);
+		console.log("🔍 isCoordinator:", currentUser?.isCoordinator);
+		console.log("🔍 isLeader:", currentUser?.isLeader);
+		console.log("🔍 role:", currentUser?.role);
+		console.log("🔍 =================================");
+
+		// Admin i Zarząd widzą wszystko
+		const adminRoles = ["admin", "board"];
+		if (currentUser?.role && adminRoles.includes(currentUser.role)) {
 			return true;
 		}
 
-		const isCoordinator = currentUser?.isLeader === true;
-
+		// Dla wszystkich - zawsze widoczne
 		if (tutorial.access === "all") return true;
 
+		// Sprawdzenie czy użytkownik jest koordynatorem
+		const isCoordinator =
+			currentUser?.isLeader === true ||
+			currentUser?.isTeamCoordinator === true ||
+			currentUser?.isPillarCoordinator === true ||
+			currentUser?.role === "coordinator" ||
+			(currentUser?.functionalRole && currentUser.functionalRole.toLowerCase().includes("koordynator"));
+
+		// Dla koordynatorów
 		if (tutorial.access === "coordinator") {
-			return (
-				isCoordinator ||
-				currentUser?.role === "admin" ||
-				currentUser?.role === "board"
-			);
+			console.log("🔍 Poradnik dla koordynatorów, czy koordynator?", isCoordinator);
+			return isCoordinator;
 		}
 
+		// ✅ Dla osób funkcyjnych
 		if (tutorial.access === "functional") {
-			if (
-				isCoordinator ||
-				currentUser?.role === "admin" ||
-				currentUser?.role === "board"
-			) {
+			if (isCoordinator || (currentUser?.role && adminRoles.includes(currentUser.role))) {
 				return true;
 			}
-			if (tutorial.functionalRoles) {
+			if (tutorial.functionalRoles && tutorial.functionalRoles.length > 0) {
 				if (!currentUser) return false;
-				return tutorial.functionalRoles.includes(
-					currentUser.functionalRole || "",
-				);
+				return tutorial.functionalRoles.includes(currentUser.functionalRole || "");
 			}
 			return true;
 		}
 
+		// ✅ Dla zarządu
 		if (tutorial.access === "board") {
 			return currentUser?.role === "admin" || currentUser?.role === "board";
 		}
@@ -1269,10 +1317,10 @@ export default function Tutorials() {
 					{(selectedCategory !== "all" ||
 						selectedAccess !== "all" ||
 						searchTerm) && (
-						<button className={styles.filters__reset} onClick={clearFilters}>
-							Wyczyść filtry
-						</button>
-					)}
+							<button className={styles.filters__reset} onClick={clearFilters}>
+								Wyczyść filtry
+							</button>
+						)}
 				</div>
 			</div>
 
@@ -1288,8 +1336,8 @@ export default function Tutorials() {
 						<h3 className={styles.emptyState__title}>Brak poradników</h3>
 						<p className={styles.emptyState__description}>
 							{searchTerm ||
-							selectedCategory !== "all" ||
-							selectedAccess !== "all"
+								selectedCategory !== "all" ||
+								selectedAccess !== "all"
 								? "Nie znaleziono poradników spełniających kryteria wyszukiwania."
 								: "Nie ma jeszcze żadnych poradników."}
 						</p>
