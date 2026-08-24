@@ -1,9 +1,10 @@
-﻿import React, { useState, useEffect } from "react";
+﻿import React, { useState, useEffect, useRef } from "react";
 import { safeNavigate } from "@/utils/safeNavigation";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import { logger } from "@/utils/logger";
 import { RevenueChart } from "@/components/RevenueChart";
+import styles from "./Admin.module.css";
 
 import {
 	Users,
@@ -12,6 +13,7 @@ import {
 	Trash2,
 	CheckCircle,
 	ChevronDown,
+	ChevronUp,
 	ChevronRight,
 	FolderTree,
 	RefreshCw,
@@ -35,15 +37,6 @@ import {
 	updateRolePermissions,
 } from "../../utils/permissions";
 import { ConfirmDialog } from "../../components/common/ConfirmDialog";
-import styles from "./Admin.module.css";
-
-
-
-
-
-
-
-
 
 interface SystemLog {
 	id: string;
@@ -91,8 +84,6 @@ interface LogsResponse {
 }
 
 type UserRole = "admin" | "board" | "coordinator" | "member" | "mentor";
-
-
 
 function LogsManagement() {
 	const [logs, setLogs] = useState<SystemLog[]>([]);
@@ -538,11 +529,27 @@ interface AvailableUser {
 	province: string;
 	team_ids: string[];
 }
+interface AttendanceUser {
+	id: number;
+	first_name: string;
+	last_name: string;
+	fullName: string;
+	email: string;
+	attendance_percentage: number | null;
+	functional_role: string;
+	team: string;
+	is_default: boolean;
+	is_no_data?: boolean;
+}
 
-
-
-
-
+interface AttendanceRankingData {
+	topFive: AttendanceUser[];
+	bottomFive: AttendanceUser[];
+	noDataUsers: AttendanceUser[];
+	allUsers: AttendanceUser[];
+	total: number;
+	hasMore: boolean;
+}
 const ROLE_LABELS: Record<UserRole, string> = {
 	admin: "Administrator główny",
 	board: "Zarząd",
@@ -559,11 +566,6 @@ const ICON_OPTIONS = [
 	{ value: "Megaphone", label: "Megafon", icon: Megaphone },
 	{ value: "GraduationCap", label: "Czapka", icon: GraduationCap },
 ];
-
-
-
-
-
 
 function RolesManagement({
 	roles,
@@ -788,7 +790,6 @@ function RolesManagement({
 	);
 }
 
-
 function StructureManagement({
 	teams,
 	canManage,
@@ -814,7 +815,7 @@ function StructureManagement({
 		role: "Zespół",
 		icon: "Users",
 		email: "",
-		parent_id: null as string | null, 
+		parent_id: null as string | null,
 	});
 	const [confirmDialog, setConfirmDialog] = useState<{
 		isOpen: boolean;
@@ -850,7 +851,7 @@ function StructureManagement({
 			if (header) {
 
 				const headerRect = header.getBoundingClientRect();
-				const offset = 80; 
+				const offset = 80;
 				const scrollPosition = window.scrollY + headerRect.top - offset;
 
 				window.scrollTo({
@@ -888,13 +889,6 @@ function StructureManagement({
 		try {
 			const token = localStorage.getItem("accessToken");
 
-
-
-
-
-
-
-
 			const response = await fetch(`/api/admin/team-members/${memberId}`, {
 				method: "PUT",
 				headers: {
@@ -905,8 +899,6 @@ function StructureManagement({
 					role_in_team: trimmed,
 				}),
 			});
-
-
 
 			if (!response.ok) throw new Error("Błąd aktualizacji roli");
 
@@ -929,7 +921,7 @@ function StructureManagement({
 			role: "Zespół",
 			icon: "Users",
 			email: "",
-			parent_id: null, 
+			parent_id: null,
 		});
 		setIsAddingTeam(false);
 		setEditingTeam(null);
@@ -939,8 +931,6 @@ function StructureManagement({
 		setIsLeader(false);
 	};
 
-
-
 	const HIDDEN_TEAMS = [
 		"Filary organizacji",
 		"Organy kontrolne",
@@ -949,9 +939,6 @@ function StructureManagement({
 
 	];
 
-
-
-
 	const TEAM_ORDER = [
 		"Zarząd",
 		"Dyrekcja",
@@ -959,20 +946,13 @@ function StructureManagement({
 		"Sąd Koleżeński",
 	];
 
-
-
-
 	const isPillar = (teamName: string): boolean => {
 		return teamName.includes("Filar");
 	};
 
-
-
-
 	const getSortedTeams = (): Team[] => {
 
 		const filtered = teams.filter((team) => !HIDDEN_TEAMS.includes(team.name));
-
 
 		const pillars: Team[] = [];
 		const others: Team[] = [];
@@ -985,7 +965,6 @@ function StructureManagement({
 			}
 		});
 
-
 		const sortedOthers = others.sort((a, b) => {
 			const indexA = TEAM_ORDER.indexOf(a.name);
 			const indexB = TEAM_ORDER.indexOf(b.name);
@@ -995,15 +974,10 @@ function StructureManagement({
 			return indexA - indexB;
 		});
 
-
 		const sortedPillars = pillars.sort((a, b) => a.name.localeCompare(b.name));
-
 
 		return [...sortedOthers, ...sortedPillars];
 	};
-
-
-
 
 	const getDisplayMembers = (
 		team: Team,
@@ -1012,7 +986,6 @@ function StructureManagement({
 		const isExpanded = expandedTeams[team.id] || false;
 
 		const members = [...team.members];
-
 
 		if (isTeamPillar) {
 			const leaders = members.filter((m) => m.is_leader === true);
@@ -1046,11 +1019,6 @@ function StructureManagement({
 				const display = members.slice(0, 3);
 				const hidden = members.slice(3);
 
-
-
-
-
-
 				return { display, hidden, total: members.length };
 			}
 
@@ -1068,15 +1036,8 @@ function StructureManagement({
 		};
 	};
 
-
-
-
-
-
-
 	const toggleShowAll = (teamId: string) => {
 		const isCurrentlyExpanded = expandedTeams[teamId] || false;
-
 
 		if (isCurrentlyExpanded) {
 
@@ -1085,10 +1046,9 @@ function StructureManagement({
 				[teamId]: false,
 			}));
 
-
 			setTimeout(() => {
 				scrollToTeamHeader(teamId);
-			}, 100); 
+			}, 100);
 		} else {
 
 			setExpandedTeams((prev) => ({
@@ -1292,7 +1252,7 @@ function StructureManagement({
 			role: team.role || "Zespół",
 			icon: team.icon || "Users",
 			email: team.email || "",
-			parent_id: team.parent_id || null, 
+			parent_id: team.parent_id || null,
 		});
 		setEditingTeam(team);
 	};
@@ -1434,7 +1394,7 @@ function StructureManagement({
 												rows={3}
 											/>
 										</div>
-										
+
 										<div className={styles.modal__field}>
 											<label>Zespół nadrzędny</label>
 											<select
@@ -1448,7 +1408,7 @@ function StructureManagement({
 											>
 												<option value="">Brak</option>
 												{teams
-													.filter((t) => t.id !== editingTeam?.id) 
+													.filter((t) => t.id !== editingTeam?.id)
 													.map((team) => (
 														<option key={team.id} value={team.id}>
 															{team.name}
@@ -1600,11 +1560,10 @@ function StructureManagement({
 														</span>
 													</div>
 
-													
 													<div className={styles.memberItem__actions}>
 														{canManage && (
 															<>
-																
+
 																{editingMemberRole?.memberId === member.id ? (
 
 																	<div
@@ -1684,7 +1643,6 @@ function StructureManagement({
 																	</button>
 																)}
 
-																
 																{!member.is_leader && (
 																	<button
 																		className={styles.memberItem__makeLeader}
@@ -1716,7 +1674,6 @@ function StructureManagement({
 																	</button>
 																)}
 
-																
 																<button
 																	className={styles.memberItem__remove}
 																	onClick={() =>
@@ -1746,8 +1703,6 @@ function StructureManagement({
 												<button
 													className={styles.showAllBtn}
 													onClick={() => {
-
-
 
 														toggleShowAll(team.id);
 													}}
@@ -1844,11 +1799,6 @@ function StructureManagement({
 	);
 }
 
-
-
-
-
-
 function AccessManagement() {
 	const [showSuggestions, setShowSuggestions] = useState(false);
 	const [members, setMembers] = useState<any[]>([]);
@@ -1872,9 +1822,8 @@ function AccessManagement() {
 		Systemy: "#dc2626",
 		Marketing: "#ec4899",
 		Programowanie: "#2563eb",
-		Inne: "#6b7280", 
+		Inne: "#6b7280",
 	};
-
 
 	const [entryType, setEntryType] = useState<"access" | "item">("access");
 	const [itemName, setItemName] = useState("");
@@ -1898,7 +1847,6 @@ function AccessManagement() {
 		{ label: "Reddit", category: "Social Media" },
 		{ label: "Twitch", category: "Social Media" },
 
-
 		{ label: "Mikrofon", category: "Sprzęt" },
 		{ label: "Mikrofon bezprzewodowy", category: "Sprzęt" },
 		{ label: "Kamera", category: "Sprzęt" },
@@ -1919,7 +1867,6 @@ function AccessManagement() {
 		{ label: "Drukarka", category: "Sprzęt" },
 		{ label: "Skaner", category: "Sprzęt" },
 
-
 		{ label: "Slack", category: "Platformy" },
 		{ label: "Teams", category: "Platformy" },
 		{ label: "Zoom", category: "Platformy" },
@@ -1933,14 +1880,12 @@ function AccessManagement() {
 		{ label: "Miro", category: "Narzędzia" },
 		{ label: "Figma", category: "Narzędzia" },
 
-
 		{ label: "Google Drive", category: "Systemy" },
 		{ label: "Dropbox", category: "Systemy" },
 		{ label: "OneDrive", category: "Systemy" },
 		{ label: "SharePoint", category: "Systemy" },
 		{ label: "CRM", category: "Systemy" },
 		{ label: "ERP", category: "Systemy" },
-
 
 		{ label: "Mailchimp", category: "Marketing" },
 		{ label: "Canva", category: "Marketing" },
@@ -1949,7 +1894,6 @@ function AccessManagement() {
 		{ label: "Hootsuite", category: "Marketing" },
 		{ label: "Sendinblue", category: "Marketing" },
 
-
 		{ label: "GitHub", category: "Programowanie" },
 		{ label: "GitLab", category: "Programowanie" },
 		{ label: "Bitbucket", category: "Programowanie" },
@@ -1957,13 +1901,11 @@ function AccessManagement() {
 		{ label: "IntelliJ", category: "Programowanie" },
 		{ label: "Postman", category: "Programowanie" },
 
-
 		{ label: "Klucze do biura", category: "Inne" },
 		{ label: "Karta dostępu", category: "Inne" },
 		{ label: "Parking", category: "Inne" },
 		{ label: "Magazyn", category: "Inne" },
 	];
-
 
 	const fetchMembers = async () => {
 		try {
@@ -1985,7 +1927,6 @@ function AccessManagement() {
 		}
 	};
 
-
 	const [allUsers, setAllUsers] = useState<any[]>([]);
 
 	const fetchAllUsers = async () => {
@@ -2002,7 +1943,6 @@ function AccessManagement() {
 			logger.error("âťŚ Błąd:", error);
 		}
 	};
-
 
 	const getSuggestions = (input: string) => {
 		if (!input.trim()) return [];
@@ -2242,7 +2182,6 @@ function AccessManagement() {
 				</button>
 			</div>
 
-			
 			{membersWithAccess.length === 0 ? (
 				<div className={styles.accessEmpty}>
 					<Shield size={48} />
@@ -2297,8 +2236,6 @@ function AccessManagement() {
 				</div>
 			)}
 
-			
-			
 			{editingMemberId && selectedMember && (
 				<div className={styles.modalOverlay} onClick={handleCloseEdit}>
 					<div
@@ -2316,7 +2253,6 @@ function AccessManagement() {
 							</button>
 						</div>
 
-						
 						<div
 							className={styles.modal__field}
 							style={{ padding: "0 24px", marginTop: "8px" }}
@@ -2366,7 +2302,7 @@ function AccessManagement() {
 						</div>
 
 						<div className={styles.modal__body}>
-							
+
 							<div className={styles.modal__field}>
 								<label>Filtruj kategorię</label>
 								<select
@@ -2391,7 +2327,6 @@ function AccessManagement() {
 								</select>
 							</div>
 
-							
 							<div className={styles.modal__field}>
 								<label>Dodaj nowy dostęp</label>
 								<div
@@ -2425,7 +2360,6 @@ function AccessManagement() {
 								</div>
 							</div>
 
-							
 							<div className={styles.modal__field}>
 								<label>Obecne dostępy ({accessItems.length})</label>
 								<div
@@ -2460,7 +2394,6 @@ function AccessManagement() {
 								</div>
 							</div>
 
-							
 							{newAccess.trim() && (
 								<div
 									className={styles.accessSuggestions}
@@ -2549,7 +2482,6 @@ function AccessManagement() {
 				</div>
 			)}
 
-			
 			{showAddModal && (
 				<div
 					className={styles.modalOverlay}
@@ -2568,7 +2500,7 @@ function AccessManagement() {
 						</div>
 
 						<div className={styles.modal__body}>
-							
+
 							<div className={styles.modal__field}>
 								<label>Typ wpisu</label>
 								<div style={{ display: "flex", gap: "16px", marginTop: "4px" }}>
@@ -2614,7 +2546,6 @@ function AccessManagement() {
 								</div>
 							</div>
 
-							
 							<div className={styles.modal__field}>
 								<label>Filtruj kategorię</label>
 								<select
@@ -2639,7 +2570,6 @@ function AccessManagement() {
 								</select>
 							</div>
 
-							
 							<div className={styles.modal__field}>
 								<label>Wybierz członka *</label>
 								<div style={{ position: "relative" }}>
@@ -2681,8 +2611,6 @@ function AccessManagement() {
 								</div>
 							</div>
 
-							
-							
 							{entryType === "item" && (
 								<div
 									className={styles.modal__itemFields}
@@ -2704,7 +2632,6 @@ function AccessManagement() {
 										Dane przedmiotu
 									</h4>
 
-									
 									<div className={styles.modal__field}>
 										<label>Nazwa przedmiotu *</label>
 										<input
@@ -2716,7 +2643,6 @@ function AccessManagement() {
 										/>
 									</div>
 
-									
 									<div className={styles.modal__field}>
 										<label>Wartość (PLN)</label>
 										<input
@@ -2729,7 +2655,6 @@ function AccessManagement() {
 										/>
 									</div>
 
-									
 									<div className={styles.modal__field}>
 										<label>Notatki</label>
 										<textarea
@@ -2742,7 +2667,7 @@ function AccessManagement() {
 									</div>
 								</div>
 							)}
-							
+
 							{entryType === "access" && (
 								<div className={styles.modal__field}>
 									<label>Nazwa dostępu *</label>
@@ -2901,11 +2826,237 @@ function ActivityMonitoring({
 		</section>
 	);
 }
+function AttendanceRanking() {
+	const [loading, setLoading] = useState(true);
+	const [data, setData] = useState<AttendanceRankingData | null>(null);
+	const [showAllModal, setShowAllModal] = useState(false);
+	const [searchTerm, setSearchTerm] = useState("");
+	const [allUsersFiltered, setAllUsersFiltered] = useState<AttendanceUser[]>([]);
 
+	const fetchRanking = async () => {
+		try {
+			setLoading(true);
+			const token = localStorage.getItem("accessToken");
+			const response = await fetch("/api/admin/attendance-ranking?limit=200", {
+				headers: {
+					Authorization: `Bearer ${token}`,
+					"Content-Type": "application/json",
+				},
+			});
 
+			if (!response.ok) throw new Error("Błąd pobierania rankingu");
+			const result = await response.json();
+			setData(result);
+			setAllUsersFiltered(result.allUsers || []);
+		} catch (error) {
+			logger.error("Błąd pobierania rankingu:", error);
+			toast.error("Nie udało się pobrać rankingu frekwencji");
+		} finally {
+			setLoading(false);
+		}
+	};
 
+	useEffect(() => {
+		fetchRanking();
+	}, []);
 
+	useEffect(() => {
+		if (data?.allUsers) {
+			const filtered = data.allUsers.filter(
+				(user) =>
+					user.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+					user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+					user.team.toLowerCase().includes(searchTerm.toLowerCase())
+			);
+			setAllUsersFiltered(filtered);
+		}
+	}, [searchTerm, data]);
 
+	const getAttendanceColor = (percentage: number | null) => {
+		if (percentage === null || percentage === 0) return "#9ca3af";
+		if (percentage >= 90) return "#059669";
+		if (percentage >= 75) return "#d97706";
+		if (percentage >= 50) return "#dc2626";
+		return "#b91c1c";
+	};
+
+	const getAttendanceLabel = (percentage: number | null) => {
+		if (percentage === null || percentage === 0) return "Brak danych";
+		return `${percentage.toFixed(1)}%`;
+	};
+
+	const renderUserItem = (user: AttendanceUser, showRank = false, rank = 0) => (
+		<div key={user.id} className={styles.attendanceUserItem}>
+			<div className={styles.attendanceUserItem__avatar}>
+				{user.first_name?.[0]}
+				{user.last_name?.[0]}
+			</div>
+			<div className={styles.attendanceUserItem__info}>
+				<span className={styles.attendanceUserItem__name}>
+					{user.fullName}
+					{user.is_no_data && (
+						<span className={styles.attendanceUserItem__badge}>Brak danych</span>
+					)}
+				</span>
+				<span className={styles.attendanceUserItem__details}>
+					{user.functional_role} • {user.team}
+				</span>
+			</div>
+			<div className={styles.attendanceUserItem__percentage}>
+				<span
+					className={styles.attendanceUserItem__value}
+					style={{ color: getAttendanceColor(user.attendance_percentage) }}
+				>
+					{getAttendanceLabel(user.attendance_percentage)}
+				</span>
+				{showRank && rank <= 3 && (
+					<span className={styles.attendanceUserItem__rank}>
+						{rank === 1 && ""}
+						{rank === 2 && ""}
+						{rank === 3 && ""}
+					</span>
+				)}
+			</div>
+		</div>
+	);
+
+	const renderSection = (title: string, users: AttendanceUser[], icon?: React.ReactNode) => {
+		if (!users || users.length === 0) return null;
+		return (
+			<div className={styles.attendanceSection}>
+				<h3 className={styles.attendanceSection__title}>
+					{icon} {title}
+				</h3>
+				<div className={styles.attendanceSection__list}>
+					{users.map((user, index) => renderUserItem(user, true, index + 1))}
+				</div>
+			</div>
+		);
+	};
+
+	if (loading) {
+		return (
+			<section className={styles.section}>
+				<div className={styles.loading}>
+					<div className={styles.loading__spinner} />
+					<span>Ładowanie rankingu frekwencji...</span>
+				</div>
+			</section>
+		);
+	}
+
+	if (!data) return null;
+
+	return (
+		<section className={styles.section}>
+			<div className={styles.section__header}>
+				<div className={styles.section__headerLeft}>
+					<h2 className={styles.section__title}>
+						<Users size={20} style={{ display: "inline", marginRight: "8px" }} />
+						Ranking frekwencji
+					</h2>
+					<p className={styles.section__subtitle}>
+						Najlepsi i najsłabiej frekwentujący członkowie organizacji.
+					</p>
+				</div>
+				<button
+					className={styles.section__refreshBtn}
+					onClick={fetchRanking}
+					title="Odśwież"
+				>
+					<RefreshCw size={16} />
+				</button>
+			</div>
+
+			<div className={styles.attendanceRankingGrid}>
+				{renderSection("Najwyższa frekwencja", data.topFive)}
+				{renderSection("Najniższa frekwencja", data.bottomFive)}
+			</div>
+
+			{/* Brak danych */}
+			{data.noDataUsers && data.noDataUsers.length > 0 && (
+				<div className={styles.attendanceSection} style={{ marginTop: "16px" }}>
+					<h3 className={styles.attendanceSection__title}>
+						<User size={18} /> Brak danych o frekwencji ({data.noDataUsers.length} osób)
+					</h3>
+					<div className={styles.attendanceSection__list}>
+						{data.noDataUsers.slice(0, 10).map((user) => renderUserItem(user))}
+						{data.noDataUsers.length > 10 && (
+							<div className={styles.attendanceSection__more}>
+								+ {data.noDataUsers.length - 10} więcej
+							</div>
+						)}
+					</div>
+				</div>
+			)}
+
+			<div className={styles.attendanceActions}>
+				<button
+					className={styles.attendanceShowAllBtn}
+					onClick={() => setShowAllModal(true)}
+				>
+					Pokaż wszystkich ({data.total})
+				</button>
+			</div>
+
+			{/* Modal ze wszystkimi użytkownikami */}
+			{showAllModal && (
+				<div className={styles.modalOverlay} onClick={() => setShowAllModal(false)}>
+					<div
+						className={`${styles.modal} ${styles.modalLarge}`}
+						onClick={(e) => e.stopPropagation()}
+					>
+						<div className={styles.modal__header}>
+							<h2 className={styles.modal__title}>Wszyscy członkowie - frekwencja</h2>
+							<button
+								className={styles.modal__close}
+								onClick={() => setShowAllModal(false)}
+							>
+								<X size={20} />
+							</button>
+						</div>
+
+						<div className={styles.modal__body}>
+							<div className={styles.attendanceSearch}>
+								<input
+									type="text"
+									placeholder="Szukaj po imieniu, nazwisku, emailu lub zespole..."
+									value={searchTerm}
+									onChange={(e) => setSearchTerm(e.target.value)}
+									className={styles.attendanceSearch__input}
+								/>
+								{searchTerm && (
+									<button
+										className={styles.attendanceSearch__clear}
+										onClick={() => setSearchTerm("")}
+									>
+										<X size={14} />
+									</button>
+								)}
+							</div>
+
+							<div className={styles.attendanceModalList}>
+								{allUsersFiltered.length === 0 ? (
+									<div className={styles.attendanceEmpty}>
+										<p>Nie znaleziono użytkowników spełniających kryteria</p>
+									</div>
+								) : (
+									allUsersFiltered.map((user) => renderUserItem(user))
+								)}
+							</div>
+
+							<div className={styles.attendanceModalFooter}>
+								<span>
+									Wyświetlono {allUsersFiltered.length} z {data.total} użytkowników
+								</span>
+							</div>
+						</div>
+					</div>
+				</div>
+			)}
+		</section>
+	);
+}
 export default function Admin({ title }: { title?: string }) {
 	const navigate = useNavigate();
 	const [loading, setLoading] = useState(true);
@@ -2915,6 +3066,40 @@ export default function Admin({ title }: { title?: string }) {
 	const [availableUsers, setAvailableUsers] = useState<AvailableUser[]>([]);
 	const [currentUser, setCurrentUser] = useState<any>(null);
 	const [scrollToTeamId, setScrollToTeamId] = useState<string | null>(null);
+	const [activeTab, setActiveTab] = useState<string>("roles");
+	const [showScrollTop, setShowScrollTop] = useState(false);
+
+	const rolesRef = useRef<HTMLDivElement>(null);
+	const teamsRef = useRef<HTMLDivElement>(null);
+	const accessRef = useRef<HTMLDivElement>(null);
+	const statsRef = useRef<HTMLDivElement>(null);
+	const logsRef = useRef<HTMLDivElement>(null);
+	const mainContainerRef = useRef<HTMLDivElement>(null);
+
+	const scrollToSection = (
+		sectionRef: React.RefObject<HTMLDivElement | null>,
+		tabId: string
+	) => {
+		setActiveTab(tabId);
+
+		if (sectionRef.current) {
+			// scrollIntoView z offsetem za pomocą scroll-margin-top
+			// Najpierw dodajemy tymczasowy styl
+			const element = sectionRef.current;
+			const originalMarginTop = element.style.scrollMarginTop;
+			element.style.scrollMarginTop = '100px'; // <- tyle px nad sekcją
+
+			element.scrollIntoView({
+				behavior: 'smooth',
+				block: 'start',
+			});
+
+			// Przywracamy oryginalny styl po chwili
+			setTimeout(() => {
+				element.style.scrollMarginTop = originalMarginTop || '';
+			}, 500);
+		}
+	};
 
 	const fetchData = async () => {
 		try {
@@ -3021,6 +3206,42 @@ export default function Admin({ title }: { title?: string }) {
 		setScrollToTeamId(teamId);
 	};
 
+	// DODAJ - funkcja powrotu na górę
+	const scrollToTop = () => {
+		const mainElement = document.querySelector('main._main_xe2ra_67') as HTMLElement;
+		if (mainElement) {
+			mainElement.scrollTo({
+				top: 0,
+				behavior: 'smooth',
+			});
+		}
+	};
+	// DODAJ - wykrywanie która sekcja jest widoczna
+	// ZOSTAW ten useEffect (już masz dobry):
+	useEffect(() => {
+		// Znajdź element MAIN
+		const mainElement = document.querySelector('main._main_xe2ra_67') as HTMLElement;
+		if (!mainElement) {
+			console.log("❌ Nie znaleziono elementu MAIN");
+			return;
+		}
+
+		console.log("✅ Nasłuchuję na MAIN");
+
+		const handleScroll = () => {
+			const scrollTop = mainElement.scrollTop;
+			console.log('📜 scrollTop MAIN:', scrollTop);
+			setShowScrollTop(scrollTop > 20);
+		};
+
+		mainElement.addEventListener('scroll', handleScroll);
+		handleScroll();
+
+		return () => {
+			mainElement.removeEventListener('scroll', handleScroll);
+		};
+	}, []);
+
 	useEffect(() => {
 		if (scrollToTeamId) {
 			const element = document.getElementById(`team-${scrollToTeamId}`);
@@ -3041,6 +3262,7 @@ export default function Admin({ title }: { title?: string }) {
 		fetchData();
 	}, []);
 
+
 	if (loading) {
 		return (
 			<div className={styles.loading}>
@@ -3057,46 +3279,115 @@ export default function Admin({ title }: { title?: string }) {
 	) {
 		return null;
 	}
+
 	const canManage =
 		currentUser?.role === "admin" ||
 		currentUser?.role === "board" ||
 		currentUser?.role === "zarząd";
 
 	return (
-		<div className={styles.admin}>
-			<div className={styles.header}>
-				<div className={styles.header__left}>
-					<h1 className={styles.header__title}>
-						{title ?? "Administracja systemu"}
-					</h1>
-					<p className={styles.header__subtitle}>
-						Panel zarządzania rolami, uprawnieniami, zespołami i członkami.
-					</p>
+		<>
+			{/* ✅ Panel nawigacyjny - POZA kontenerem .admin */}
+			<div className={styles.tabsNav}>
+				<div className={styles.tabsNav__list}>
+					<button
+						className={`${styles.tabsNav__tab} ${activeTab === "roles" ? styles.tabsNav__tabActive : ""}`}
+						onClick={() => scrollToSection(rolesRef, "roles")}
+					>
+						<Shield size={16} />
+						Role i uprawnienia
+					</button>
+					<button
+						className={`${styles.tabsNav__tab} ${activeTab === "teams" ? styles.tabsNav__tabActive : ""}`}
+						onClick={() => scrollToSection(teamsRef, "teams")}
+					>
+						<Users size={16} />
+						Zespoły i członkowie
+					</button>
+					<button
+						className={`${styles.tabsNav__tab} ${activeTab === "access" ? styles.tabsNav__tabActive : ""}`}
+						onClick={() => scrollToSection(accessRef, "access")}
+					>
+						<UserCog size={16} />
+						Dostępy i zasoby
+					</button>
+					<button
+						className={`${styles.tabsNav__tab} ${activeTab === "stats" ? styles.tabsNav__tabActive : ""}`}
+						onClick={() => scrollToSection(statsRef, "stats")}
+					>
+						<FolderTree size={16} />
+						Statystyki
+					</button>
+					<button
+						className={`${styles.tabsNav__tab} ${activeTab === "logs" ? styles.tabsNav__tabActive : ""}`}
+						onClick={() => scrollToSection(logsRef, "logs")}
+					>
+						<RefreshCw size={16} />
+						Historia działań
+					</button>
 				</div>
 			</div>
 
-			<div style={{ marginBottom: "32px" }}>
-				<RevenueChart year={2026} title="Przychody i wydatki" />
+			{/* ✅ Główna treść */}
+			<div className={styles.admin}>
+				<div className={styles.header}>
+					<div className={styles.header__left}>
+						<h1 className={styles.header__title}>
+							{title ?? "Administracja systemu"}
+						</h1>
+						<p className={styles.header__subtitle}>
+							Panel zarządzania rolami, uprawnieniami, zespołami i członkami.
+						</p>
+					</div>
+				</div>
+
+				<div style={{ marginBottom: "32px" }}>
+					<RevenueChart year={2026} title="Przychody i wydatki" />
+				</div>
+
+				{/* Sekcje z przypisanymi refami */}
+				<div ref={rolesRef}>
+					<RolesManagement
+						roles={roles}
+						canManage={canManage}
+						onUpdatePermissions={handleUpdatePermissions}
+						onRefresh={handleRefresh}
+						refreshing={refreshing}
+					/>
+				</div>
+
+				<div ref={teamsRef}>
+					<StructureManagement
+						teams={teams}
+						canManage={canManage}
+						availableUsers={availableUsers}
+						onRefresh={handleRefresh}
+						onTeamUpdated={handleTeamUpdated}
+					/>
+				</div>
+
+				<div ref={accessRef}>
+					<AccessManagement />
+				</div>
+
+				<div ref={statsRef}>
+					<ActivityMonitoring teams={teams} roles={roles} />
+				</div>
+
+				<AttendanceRanking />
+
+				<div ref={logsRef}>
+					<LogsManagement />
+				</div>
+
+				<button
+					className={`${styles.scrollTopBtn} ${showScrollTop ? styles.visible : ''}`}
+					onClick={scrollToTop}
+					aria-label="Powrót na górę"
+				>
+					<ChevronUp size={24} />
+				</button>
 			</div>
-
-			<RolesManagement
-				roles={roles}
-				canManage={canManage}
-				onUpdatePermissions={handleUpdatePermissions}
-				onRefresh={handleRefresh}
-				refreshing={refreshing}
-			/>
-
-			<StructureManagement
-				teams={teams}
-				canManage={canManage}
-				availableUsers={availableUsers}
-				onRefresh={handleRefresh}
-				onTeamUpdated={handleTeamUpdated}
-			/>
-			<AccessManagement />
-			<ActivityMonitoring teams={teams} roles={roles} />
-			<LogsManagement />
-		</div>
+		</>
 	);
 }

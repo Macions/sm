@@ -222,7 +222,9 @@ export default function Onboarding({ initialData = {} }: OnboardingProps) {
 							"✅ Użytkownik już przeszedł onboarding - przekierowanie na dashboard",
 						);
 						setHasCompletedOnboarding(true);
-						safeNavigate("/dashboard", navigate);
+						setTimeout(() => {
+							window.location.href = "/dashboard";
+						}, 500);
 						return;
 					}
 				} else {
@@ -961,7 +963,7 @@ export default function Onboarding({ initialData = {} }: OnboardingProps) {
 									<input
 										type="checkbox"
 										checked={formData.isTrial === true}
-										disabled={true} 
+										disabled={true}
 										className={styles.form__checkboxDisabled}
 									/>
 									<span>Jestem na okresie próbnym {formData.isTrial}</span>

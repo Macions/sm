@@ -354,7 +354,7 @@ async function logAction(
 			method: req.method || "UNKNOWN",
 			entity_id: entityId,
 			entity_name: detailedEntityName,
-			changes: changes,
+			changes: changes ? JSON.stringify(changes) : null,  // ✅ ZAMIENIAMY OBIEKT NA STRING
 			ip_address: typeof ipAddress === "string" ? ipAddress : null,
 			user_agent: userAgent,
 			status: status,
@@ -6206,7 +6206,193 @@ app.put("/api/tasks/:id", authMiddleware, async (req: any, res) => {
 		res.status(500).json({ error: "Nie udało się zaktualizować zadania" });
 	}
 });
+// Endpoint do pobierania frekwencji wszystkich użytkowników z rankingiem
+app.get("/api/admin/attendance-ranking", authMiddleware, async (req: any, res) => {
+	try {
+		const userRole = req.user?.role;
 
+		if (userRole !== "admin" && userRole !== "board" && userRole !== "Zarząd") {
+			return res.status(403).json({ error: "Brak uprawnień" });
+		}
+
+		const { limit = 50, search = "" } = req.query;
+		const limitNum = parseInt(limit as string) || 50;
+
+		// Pobierz wszystkich aktywnych użytkowników
+		const users = await prisma.user.findMany({
+			where: {
+				is_active: true,
+				...(search ? {
+					OR: [
+						{ first_name: { contains: search as string } },
+						{ last_name: { contains: search as string } },
+						{ email: { contains: search as string } },
+					]
+				} : {}),
+			},
+			select: {
+				id: true,
+				first_name: true,
+				last_name: true,
+				email: true,
+				attendance_percentage: true,
+				functional_role: true,
+				team: true,
+				team_members: {
+					include: {
+						team: true
+					}
+				}
+			},
+		});
+
+		// Dla każdego użytkownika pobierz frekwencję
+		const usersWithAttendance = await Promise.all(users.map(async (user) => {
+			let attendance: number | null = null;
+
+			// Konwersja Decimal na number
+			if (user.attendance_percentage !== null && user.attendance_percentage !== undefined) {
+				if (typeof user.attendance_percentage === 'object' && 'toNumber' in user.attendance_percentage) {
+					attendance = user.attendance_percentage.toNumber();
+				} else {
+					attendance = Number(user.attendance_percentage);
+				}
+			}
+
+			// Jeśli nie ma danych, spróbuj pobrać z bazy frekwencji
+			if (attendance === null || attendance === 92) {
+				try {
+					const connection = await mysql.createConnection({
+						host: process.env.FREKWENCJA_DB_HOST || "57.128.253.89",
+						user: process.env.FREKWENCJA_DB_USER || "czarnecki",
+						password: process.env.FREKWENCJA_DB_PASSWORD || "",
+						database: process.env.FREKWENCJA_DB_NAME || "SM_Frekwencja",
+						port: 3306,
+					});
+
+					const [rows] = await connection.execute(
+						`
+            SELECT 
+              ROUND(
+                SUM(CASE WHEN a.status = 'present' THEN 1 ELSE 0 END)
+                /
+                COUNT(a.id)
+                * 100,
+                2
+              ) AS attendance_percentage
+            FROM att_members m
+            LEFT JOIN att_attendance a ON a.member_id = m.id
+            WHERE m.email = ?
+            GROUP BY m.id, m.email
+            `,
+						[user.email],
+					);
+
+					await connection.end();
+
+					const result = rows as Array<{ attendance_percentage: number }>;
+					if (result.length > 0 && result[0].attendance_percentage !== null) {
+						attendance = Number(result[0].attendance_percentage);
+					}
+				} catch (dbError) {
+					// Ignoruj błąd
+				}
+			}
+
+			const teams = user.team_members.map(tm => tm.team?.name).filter(Boolean);
+			const teamString = teams.length > 0 ? teams.join(", ") : user.team || "Brak zespołu";
+
+			return {
+				id: user.id,
+				first_name: user.first_name,
+				last_name: user.last_name,
+				fullName: `${user.first_name || ""} ${user.last_name || ""}`.trim(),
+				email: user.email,
+				attendance_percentage: attendance,
+				functional_role: user.functional_role || "Członek",
+				team: teamString,
+				is_default: attendance === 92 || attendance === null,
+			};
+		}));
+
+		// ====== POPRAWA: Prawidłowe sortowanie ======
+
+		// 1. TOP 5 - najwyższa frekwencja (pomijając null i 92%)
+		const topFive = usersWithAttendance
+			.filter(u => u.attendance_percentage !== null && u.attendance_percentage !== 92)
+			.sort((a, b) => (b.attendance_percentage ?? 0) - (a.attendance_percentage ?? 0))
+			.slice(0, 5)
+			.map(u => ({
+				...u,
+				attendance_percentage: Number(u.attendance_percentage?.toFixed(1)) || 0,
+			}));
+
+		// 2. BOTTOM 5 - najniższa frekwencja (pomijając null, 92% i 0%)
+		const bottomFive = usersWithAttendance
+			.filter(u =>
+				u.attendance_percentage !== null &&
+				u.attendance_percentage !== 92 &&
+				u.attendance_percentage > 0
+			)
+			.sort((a, b) => (a.attendance_percentage ?? 0) - (b.attendance_percentage ?? 0))
+			.slice(0, 5)
+			.map(u => ({
+				...u,
+				attendance_percentage: Number(u.attendance_percentage?.toFixed(1)) || 0,
+			}));
+
+		// 3. Osoby z brakiem danych (null lub 92%)
+		const noDataUsers = usersWithAttendance
+			.filter(u => u.attendance_percentage === null || u.attendance_percentage === 92)
+			.map(u => ({
+				...u,
+				attendance_percentage: 0,
+				is_no_data: true,
+			}));
+
+		// 4. Wszyscy użytkownicy posortowani malejąco (dla modala)
+		const allUsers = usersWithAttendance
+			.sort((a, b) => {
+				// Najpierw osoby z danymi (malejąco)
+				const aVal = a.attendance_percentage ?? -1;
+				const bVal = b.attendance_percentage ?? -1;
+				if (aVal === -1 && bVal === -1) return 0;
+				if (aVal === -1) return 1;
+				if (bVal === -1) return -1;
+				return bVal - aVal;
+			})
+			.slice(0, limitNum)
+			.map(u => ({
+				...u,
+				attendance_percentage: Number(u.attendance_percentage?.toFixed(1)) || 0,
+			}));
+		// Tuż przed res.json() w /api/admin/attendance-ranking
+		logger.debug("🔍 TOP 5 przed wysłaniem:", JSON.stringify(topFive.map(u => ({
+			name: u.fullName,
+			attendance: u.attendance_percentage
+		})), null, 2));
+
+		logger.debug("🔍 BOTTOM 5 przed wysłaniem:", JSON.stringify(bottomFive.map(u => ({
+			name: u.fullName,
+			attendance: u.attendance_percentage
+		})), null, 2));
+		res.json({
+			topFive,
+			bottomFive,
+			noDataUsers,
+			allUsers,
+			total: usersWithAttendance.length,
+			hasMore: usersWithAttendance.length > limitNum,
+		});
+
+	} catch (error) {
+		logger.error("❌ Błąd pobierania rankingu frekwencji:", error);
+		res.status(500).json({
+			error: "Nie udało się pobrać rankingu frekwencji",
+			details: error instanceof Error ? error.message : "Unknown error",
+		});
+	}
+});
 app.post(
 	"/api/tasks/:id/feedback",
 	authMiddleware,

@@ -23,13 +23,13 @@ import styles from "./Header.module.css";
 export interface SearchResult {
 	id: string;
 	type:
-		| "member"
-		| "project"
-		| "guide"
-		| "task"
-		| "vacancy"
-		| "structure"
-		| "social";
+	| "member"
+	| "project"
+	| "guide"
+	| "task"
+	| "vacancy"
+	| "structure"
+	| "social";
 	title: string;
 	subtitle?: string;
 	description?: string;
@@ -302,7 +302,7 @@ export default function Header({
 
 	return (
 		<div className={styles.topbar}>
-			
+
 			<div className={styles.topbar__left}>
 				<button
 					className={styles.topbar__menu}
@@ -317,9 +317,8 @@ export default function Header({
 				</button>
 
 				<button
-					className={`${styles.topbar__burger} ${
-						isMobileMenuOpen ? styles.topbar__burgerHidden : ""
-					}`}
+					className={`${styles.topbar__burger} ${isMobileMenuOpen ? styles.topbar__burgerHidden : ""
+						}`}
 					onClick={onMobileMenuToggle}
 					aria-label="Menu mobilne"
 				>
@@ -329,7 +328,7 @@ export default function Header({
 
 			<h1 className={styles.topbar__title}>{title}</h1>
 
-			
+
 			<div className={styles.topbar__search}>
 				<Search size={16} />
 				<input
@@ -358,7 +357,7 @@ export default function Header({
 					</button>
 				)}
 
-				
+
 				{isSearchFocused && localSearchQuery.length >= 2 && (
 					<div className={styles.searchResultsDropdown}>
 						{searchResults && searchResults.length > 0 ? (
@@ -367,55 +366,84 @@ export default function Header({
 									<span>Znaleziono {searchResults.length} wyników</span>
 								</div>
 								<div className={styles.searchResultsList}>
-									{searchResults.map((result: any) => (
-										<a
-											key={result.id}
-											href={result.link}
-											className={styles.searchResultItem}
-											onClick={(e) => {
-												e.preventDefault();
-												setIsSearchFocused(false);
-												handleSearchClear();
-												if (result.link) {
-													window.location.href = result.link;
-												}
-											}}
-										>
-											<div className={styles.searchResultIcon}>
-												{result.type === "member" && <Users size={16} />}
-												{result.type === "project" && <Briefcase size={16} />}
-												{result.type === "guide" && <GraduationCap size={16} />}
-												{result.type === "task" && <CheckCircle size={16} />}
-												{result.type === "vacancy" && <Briefcase size={16} />}
-												{result.type === "structure" && <Building2 size={16} />}
-												{result.type === "social" && <Megaphone size={16} />}
-											</div>
-											<div className={styles.searchResultContent}>
-												<div className={styles.searchResultTitle}>
-													{result.title}
+									{searchResults.map((result: any) => {
+										// ✅ MAPOWANIE TYPÓW NA ŚCIEŻKI
+										let correctLink = result.link;
+
+										switch (result.type) {
+											case "member":
+												correctLink = "/members";
+												break;
+											case "project":
+												correctLink = "/projects";
+												break;
+											case "guide":
+												correctLink = "/guides";
+												break;
+											case "task":
+												correctLink = "/tasks";
+												break;
+											case "vacancy":
+												correctLink = "/vacancies";
+												break;
+											case "structure":
+												correctLink = "/structure";
+												break;
+											case "social":
+												correctLink = "/social";
+												break;
+											default:
+												correctLink = result.link || "#";
+										}
+
+										return (
+											<a
+												key={result.id}
+												href={correctLink}
+												className={styles.searchResultItem}
+												onClick={(e) => {
+													e.preventDefault();
+													setIsSearchFocused(false);
+													handleSearchClear();
+													window.location.href = correctLink;
+												}}
+											>
+												<div className={styles.searchResultIcon}>
+													{result.type === "member" && <Users size={16} />}
+													{result.type === "project" && <Briefcase size={16} />}
+													{result.type === "guide" && <GraduationCap size={16} />}
+													{result.type === "task" && <CheckCircle size={16} />}
+													{result.type === "vacancy" && <Briefcase size={16} />}
+													{result.type === "structure" && <Building2 size={16} />}
+													{result.type === "social" && <Megaphone size={16} />}
 												</div>
-												<div className={styles.searchResultSubtitle}>
-													{result.subtitle}
-												</div>
-												{result.description && (
-													<div className={styles.searchResultDescription}>
-														{result.description}
+												<div className={styles.searchResultContent}>
+													<div className={styles.searchResultTitle}>
+														{result.title}
 													</div>
-												)}
-											</div>
-											<div className={styles.searchResultType}>
-												<span className={styles.searchResultBadge}>
-													{result.type === "member" && "Członek"}
-													{result.type === "project" && "Projekt"}
-													{result.type === "guide" && "Poradnik"}
-													{result.type === "task" && "Zadanie"}
-													{result.type === "vacancy" && "Wakat"}
-													{result.type === "structure" && "Struktura"}
-													{result.type === "social" && "Social"}
-												</span>
-											</div>
-										</a>
-									))}
+													<div className={styles.searchResultSubtitle}>
+														{result.subtitle}
+													</div>
+													{result.description && (
+														<div className={styles.searchResultDescription}>
+															{result.description}
+														</div>
+													)}
+												</div>
+												<div className={styles.searchResultType}>
+													<span className={styles.searchResultBadge}>
+														{result.type === "member" && "Członek"}
+														{result.type === "project" && "Projekt"}
+														{result.type === "guide" && "Poradnik"}
+														{result.type === "task" && "Zadanie"}
+														{result.type === "vacancy" && "Wakat"}
+														{result.type === "structure" && "Struktura"}
+														{result.type === "social" && "Social Media"}
+													</span>
+												</div>
+											</a>
+										);
+									})}
 								</div>
 							</>
 						) : (
@@ -428,7 +456,7 @@ export default function Header({
 				)}
 			</div>
 
-			
+
 			<div className={styles.topbar__actions}>
 				{!hideNotifications && (
 					<div className={styles.notificationsWrapper} ref={dropdownRef}>

@@ -141,24 +141,34 @@ const PRIORITY_COLORS: Record<TaskPriority, string> = {
 };
 
 const canManageTask = (user: User, task: Task): boolean => {
+	// ✅ Admin i Zarząd mają pełne uprawnienia
 	if (user.role === "admin" || user.role === "board") {
 		return true;
 	}
 
+	// ✅ Prezes i Wiceprezes mają pełne uprawnienia
 	if (user.role === "Prezes" || user.role === "Wiceprezes") {
 		return true;
 	}
 
-
+	// ✅ Twórca zadania może nim zarządzać
 	if (user.id === task.createdBy) {
 		return true;
 	}
 
+	// ❌ USUŃ TEN WARUNEK - nie dajemy uprawnień do edycji tylko za bycie przypisanym
+	// if (task.assignedUsers && task.assignedUsers.includes(user.id)) {
+	// 	return true;
+	// }
+
+	// ✅ Liderzy mogą zarządzać tylko zadaniami w swoim filarze/zespole
 	if (user.isLeader === true) {
+		// Jeśli zadanie ma przypisany filar i użytkownik jest liderem tego filaru
 		if (user.pillarName && task.pillar && task.pillar === user.pillarName) {
 			return true;
 		}
 
+		// Jeśli zadanie jest przypisane do zespołu i użytkownik jest liderem tego zespołu
 		if (
 			user.teamName &&
 			task.assignedGroup &&
@@ -167,11 +177,11 @@ const canManageTask = (user: User, task: Task): boolean => {
 			return true;
 		}
 
-		if (task.assignedUsers && task.assignedUsers.includes(user.id)) {
-			return true;
-		}
+		// ✅ TYLKO jeśli użytkownik jest liderem i zadanie jest przypisane do jego zespołu/filaru
+		// Nie dajemy uprawnień tylko za bycie przypisanym do zadania
 	}
 
+	// ❌ Zwykli członkowie NIE mogą edytować zadań
 	return false;
 };
 
@@ -1066,18 +1076,18 @@ function TaskCard({
 					>
 						<Eye size={16} />
 					</button>
-					{(canManage ||
-						isAssigned ||
-						(task.assignedUsers &&
-							task.assignedUsers.includes(currentUser.id))) && (
-							<button
-								className={styles.taskCard__actionBtn}
-								onClick={() => onEdit?.(task)}
-								title="Edytuj"
-							>
-								<Edit size={16} />
-							</button>
-						)}
+
+					{/* ✅ TYLKO canManage - bez dodatkowych warunków! */}
+					{canManage && (
+						<button
+							className={styles.taskCard__actionBtn}
+							onClick={() => onEdit?.(task)}
+							title="Edytuj"
+						>
+							<Edit size={16} />
+						</button>
+					)}
+
 					{canManage && (
 						<button
 							className={`${styles.taskCard__actionBtn} ${styles.taskCard__actionBtnDanger}`}
@@ -1493,7 +1503,7 @@ function TaskModal({
 						)}
 						<div className={styles.modal__field}>
 							<label className={styles.modal__label}>
-								Filar <span className={styles.modal__required}>*</span>
+								Filar
 							</label>
 							<select
 								className={styles.modal__select}
@@ -1910,7 +1920,7 @@ export default function Tasks() {
 				task.assignedUsers.includes(user.id))
 		);
 	};
-	const fetchData = async () => {
+	const fetchData = useCallback(async () => {
 		try {
 			setLoading(true);
 			const token = localStorage.getItem("accessToken");
@@ -1993,7 +2003,6 @@ export default function Tasks() {
 						String(id),
 					);
 
-
 					const assignees = task.assignees?.map((a: any) => ({
 						id: a.id?.toString() || "",
 						userId: a.userId?.toString() || a.user_id?.toString() || "",
@@ -2002,8 +2011,6 @@ export default function Tasks() {
 						startedAt: a.startedAt || a.started_at || null,
 						completedAt: a.completedAt || a.completed_at || null,
 					})) || [];
-
-					console.log(`📦 Zadanie ${task.id} ma ${assignees.length} assignees:`, assignees);
 
 					return {
 						...task,
@@ -2016,7 +2023,6 @@ export default function Tasks() {
 						createdBy: String(task.created_by || task.createdBy || ""),
 						createdByName:
 							task.created_by_name || task.createdByName || "Nieznany",
-
 						assignees: assignees,
 					};
 				});
@@ -2036,20 +2042,6 @@ export default function Tasks() {
 				setTasks(visibleTasks);
 				window.__tasks = visibleTasks;
 				window.__currentUser = currentUser;
-				console.log("🔍 ===== DEBUG ZADANIA =====");
-				console.log("📦 visibleTasks:", visibleTasks);
-				console.log("📦 Pierwsze zadanie:", visibleTasks[0]);
-				console.log("📦 assignedUsers:", visibleTasks[0]?.assignedUsers);
-				console.log("📦 assignees:", visibleTasks[0]?.assignees);
-				console.log("📦 currentUser.id:", userData.id);
-				console.log(
-					"📦 Czy user jest w assignedUsers?",
-					visibleTasks[0]?.assignedUsers?.includes(String(userData.id)),
-				);
-				console.log("📦 Czy user jest w assignees?",
-					visibleTasks[0]?.assignees?.some((a: any) => a.userId === String(userData.id))
-				);
-				console.log("🔍 ===== KONIEC DEBUG =====");
 			}
 		} catch (error) {
 			logger.error("Błąd pobierania danych:", error);
@@ -2057,7 +2049,7 @@ export default function Tasks() {
 		} finally {
 			setLoading(false);
 		}
-	};
+	}, []); // ✅ PUSTA TABLICA - NIE MA ZALEŻNOŚCI
 	const handleOpenRating = (task: Task) => {
 		if (task.rated_at) {
 			toast("To zadanie zostało już ocenione!", {
@@ -2328,29 +2320,15 @@ export default function Tasks() {
 				if (response.ok) {
 					const data = await response.json();
 					toast.success(`Utworzono ${data.count} zadań cyklicznych`);
-					const savedTaskId = data.tasks?.[0]?.id || data.id || task.id;
-					fetchData();
 					setIsModalOpen(false);
 					setEditingTask(null);
-					setTasks((prevTasks) => {
-						let newTasks;
-						if (prevTasks.some((t) => t.id === task.id)) {
-							newTasks = prevTasks.map((t) =>
-								t.id === task.id
-									? { ...task, ...data, id: data.id || task.id }
-									: t,
-							);
-						} else {
-							newTasks = [{ ...task, id: savedTaskId }, ...prevTasks];
-						}
-						return newTasks.filter((t) => canViewTask(t, currentUser));
-					});
+					// ✅ ZMIANA: ODŚWIEŻ DANE
+					await fetchData();
 					return;
 				}
 			}
 
-			const url =
-				isEdit && isNumericId ? `/api/tasks/${task.id}` : "/api/tasks";
+			const url = isEdit && isNumericId ? `/api/tasks/${task.id}` : "/api/tasks";
 			const method = isEdit && isNumericId ? "PUT" : "POST";
 
 			const payload = {
@@ -2383,47 +2361,13 @@ export default function Tasks() {
 			});
 
 			if (response.ok) {
-				const data = await response.json();
-				const savedTaskId = data.id || task.id;
 
-				let wasNew = false;
-				let oldAssignedTo = "";
+				// ✅ ZMIANA: ODŚWIEŻ DANE - TO JEST NAJWAŻNIEJSZE
+				await fetchData();
 
-				setTasks((prevTasks) => {
-					const isNew = !prevTasks.some((t) => t.id === task.id);
-					const oldTask = prevTasks.find((t) => t.id === task.id);
-					wasNew = isNew;
-					oldAssignedTo = oldTask?.assignedTo || "";
-
-					let newTasks;
-					if (prevTasks.some((t) => t.id === task.id)) {
-						newTasks = prevTasks.map((t) =>
-							t.id === task.id
-								? { ...task, ...data, id: data.id || task.id }
-								: t,
-						);
-					} else {
-						const newTask = { ...task, id: savedTaskId };
-						newTasks = [newTask, ...prevTasks];
-					}
-					return newTasks.filter((t) => canViewTask(t, currentUser));
-				});
-
-				if (wasNew || task.assignedTo !== oldAssignedTo) {
-					const userIds = task.assignedUsers?.length
-						? task.assignedUsers
-						: [task.assignedTo];
-					for (const userId of userIds) {
-						await sendTaskNotification(
-							userId,
-							savedTaskId,
-							task.title,
-							currentUser.name,
-						);
-					}
-				}
-
-				toast.success(`Zadanie "${task.title}" zostało zaktualizowane`);
+				toast.success(`Zadanie "${task.title}" zostało ${isEdit ? 'zaktualizowane' : 'dodane'}`);
+				setIsModalOpen(false);
+				setEditingTask(null);
 			} else {
 				const errorText = await response.text();
 				console.error("Błąd response:", response.status, errorText);
@@ -2431,41 +2375,10 @@ export default function Tasks() {
 			}
 		} catch (error) {
 			console.error("Błąd zapisywania zadania:", error);
-			setTasks((prevTasks) => {
-				if (prevTasks.some((t) => t.id === task.id)) {
-					return prevTasks.map((t) => (t.id === task.id ? task : t));
-				} else {
-					return [{ ...task, id: `task-${Date.now()}` }, ...prevTasks];
-				}
-			});
-			toast.success(`Zadanie "${task.title}" zostało zapisane lokalnie`);
+			toast.error("Nie udało się zapisać zadania");
 		}
 	};
-	const sendTaskNotification = async (
-		userId: string,
-		taskId: string,
-		taskTitle: string,
-		createdByName: string,
-	) => {
-		try {
-			const token = localStorage.getItem("accessToken");
-			await fetch("/api/notifications/task-created", {
-				method: "POST",
-				headers: {
-					Authorization: `Bearer ${token}`,
-					"Content-Type": "application/json",
-				},
-				body: JSON.stringify({
-					userId,
-					taskId,
-					taskTitle,
-					createdBy: createdByName,
-				}),
-			});
-		} catch (error) {
-			console.error("Błąd wysyłki powiadomienia:", error);
-		}
-	};
+
 
 	const handleStatusChange = useCallback(
 		async (task: Task, newStatus: TaskStatus, userId?: string) => {
