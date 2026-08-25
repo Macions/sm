@@ -64,6 +64,7 @@
 }
 
 @keyframes pulse {
+
 	0%,
 	100% {
 		opacity: 1;
@@ -255,11 +256,9 @@
 	inset: 0;
 	opacity: 0;
 	transition: opacity 0.25s ease;
-	background: linear-gradient(
-		135deg,
-		var(--purple-50, #f6f4fe) 0%,
-		transparent 100%
-	);
+	background: linear-gradient(135deg,
+			var(--purple-50, #f6f4fe) 0%,
+			transparent 100%);
 }
 
 .quickAction:hover::before {
@@ -302,13 +301,13 @@
 	z-index: 1;
 }
 
-@media (width <= 1200px) {
+@media (width <=1200px) {
 	.stats {
 		grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
 	}
 }
 
-@media (width <= 1024px) {
+@media (width <=1024px) {
 	.bottomSection {
 		grid-template-columns: 1fr;
 		gap: 24px;
@@ -319,7 +318,7 @@
 	}
 }
 
-@media (width <= 768px) {
+@media (width <=768px) {
 	.stats {
 		grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
 		gap: 16px;
@@ -393,7 +392,7 @@
 	}
 }
 
-@media (width <= 480px) {
+@media (width <=480px) {
 	.stats {
 		grid-template-columns: 1fr 1fr;
 		gap: 12px;
@@ -502,7 +501,7 @@
 	}
 }
 
-@media (width <= 380px) {
+@media (width <=380px) {
 	.stats {
 		grid-template-columns: 1fr;
 		gap: 10px;
@@ -603,6 +602,7 @@
 }
 
 @keyframes pulse {
+
 	0%,
 	100% {
 		opacity: 1;
@@ -613,7 +613,7 @@
 	}
 }
 
-@media (width <= 768px) {
+@media (width <=768px) {
 	.welcomeCard {
 		padding: 20px 24px;
 		margin-bottom: 24px;
@@ -651,7 +651,7 @@
 	}
 }
 
-@media (width <= 480px) {
+@media (width <=480px) {
 	.welcomeCard {
 		padding: 16px 18px;
 		margin-bottom: 20px;
@@ -762,6 +762,7 @@
 	color: #94a3b8;
 	font-size: 14px;
 }
+
 .skeleton {
 	background: linear-gradient(90deg, #e0e0e0 25%, #f0f0f0 50%, #e0e0e0 75%);
 	background-size: 200% 100%;
@@ -773,6 +774,7 @@
 	0% {
 		background-position: -200% 0;
 	}
+
 	100% {
 		background-position: 200% 0;
 	}
@@ -799,4 +801,226 @@
 	font-size: 12px;
 	font-weight: 500;
 	border: 1px solid #4a6fe830;
+}
+
+/* ==========================================================================
+   Mobile fixes dla kafelków statystyk
+   ========================================================================== */
+
+/* Poprawa dla bardzo małych ekranów - kafelki w jednej kolumnie */
+@media (width <=480px) {
+	.stats {
+		grid-template-columns: 1fr 1fr;
+		gap: 10px;
+	}
+
+	.statCard {
+		padding: 14px 12px;
+		gap: 10px;
+		border-radius: var(--radius-sm, 12px);
+		min-width: 0;
+		/* Zapobiega przepełnianiu */
+	}
+
+	.statCard__icon {
+		width: 36px;
+		height: 36px;
+		font-size: 16px;
+		border-radius: var(--radius-sm, 12px);
+		flex-shrink: 0;
+	}
+
+	.statCard__content {
+		min-width: 0;
+		flex: 1;
+		overflow: hidden;
+	}
+
+	.statCard__valueWrapper {
+		flex-wrap: wrap;
+		gap: 4px;
+	}
+
+	.statCard__value {
+		font-size: 18px;
+		font-weight: 800;
+		word-break: break-word;
+	}
+
+	.statCard__label {
+		font-size: 11px;
+		margin-bottom: 4px;
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
+	}
+
+	.statCard__subtext {
+		font-size: 10px;
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		max-width: 100%;
+	}
+}
+
+/* Ekstremalnie małe ekrany - kafelki w jednej kolumnie */
+@media (width <=400px) {
+	.stats {
+		grid-template-columns: 1fr;
+		gap: 10px;
+	}
+
+	.statCard {
+		padding: 16px 14px;
+		gap: 14px;
+	}
+
+	.statCard__icon {
+		width: 44px;
+		height: 44px;
+		font-size: 20px;
+	}
+
+	.statCard__value {
+		font-size: 22px;
+	}
+
+	.statCard__label {
+		font-size: 13px;
+		white-space: normal;
+	}
+
+	.statCard__subtext {
+		font-size: 11px;
+		white-space: normal;
+	}
+}
+
+/* Poprawka dla kafelków z długimi wartościami (np. "2 lata, 3 miesiące") */
+.statCard__valueWrapper {
+	display: flex;
+	align-items: baseline;
+	gap: 6px;
+	flex-wrap: wrap;
+}
+
+.statCard__value {
+	font-size: 30px;
+	font-weight: 800;
+	color: var(--text-dark, #201a3b);
+	letter-spacing: -0.5px;
+	line-height: 1.2;
+	word-break: break-word;
+}
+
+/* Dodatkowe zabezpieczenie przed przepełnieniem */
+.statCard {
+	overflow: hidden;
+	min-width: 0;
+}
+
+.statCard__content {
+	min-width: 0;
+	flex: 1;
+	overflow: hidden;
+}
+
+.statCard__label {
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.statCard__subtext {
+	font-size: 13px;
+	color: var(--text-faint, #b7b4c6);
+	font-weight: 500;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+/* Specjalne style dla kafelka "Jesteś z nami" z długim tekstem */
+.statCard__value {
+	font-size: clamp(18px, 3vw, 30px);
+}
+
+/* Poprawa dla tabletów */
+@media (width <=768px) and (width > 480px) {
+	.stats {
+		grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+		gap: 14px;
+	}
+
+	.statCard {
+		padding: 18px 16px;
+		gap: 12px;
+	}
+
+	.statCard__icon {
+		width: 44px;
+		height: 44px;
+		font-size: 20px;
+	}
+
+	.statCard__value {
+		font-size: 24px;
+	}
+
+	.statCard__label {
+		font-size: 13px;
+	}
+
+	.statCard__subtext {
+		font-size: 12px;
+	}
+}
+
+/* Poprawka dla szerokości między 400-480px */
+@media (width > 400px) and (width <=480px) {
+	.stats {
+		grid-template-columns: 1fr 1fr;
+		gap: 10px;
+	}
+
+	.statCard {
+		padding: 14px 12px;
+	}
+
+	.statCard__icon {
+		width: 38px;
+		height: 38px;
+		font-size: 17px;
+	}
+
+	.statCard__value {
+		font-size: 20px;
+	}
+}
+
+/* Zapobieganie przepełnianiu w trybie landscape na małych ekranach */
+@media (max-height: 600px) and (orientation: landscape) {
+	.stats {
+		grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+		gap: 10px;
+	}
+
+	.statCard {
+		padding: 12px 10px;
+		gap: 8px;
+	}
+
+	.statCard__icon {
+		width: 32px;
+		height: 32px;
+		font-size: 14px;
+	}
+
+	.statCard__value {
+		font-size: 18px;
+	}
+
+	.statCard__label {
+		font-size: 11px;
+	}
 }

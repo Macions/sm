@@ -123,6 +123,26 @@ const STATUS_ICONS: Record<MemberStatus, React.ReactNode> = {
 	active: <CheckCircle size={16} />,
 	mentor: <Star size={16} />,
 };
+
+const POLISH_PROVINCES = [
+	"Dolnośląskie",
+	"Kujawsko-pomorskie",
+	"Lubelskie",
+	"Lubuskie",
+	"Łódzkie",
+	"Małopolskie",
+	"Mazowieckie",
+	"Opolskie",
+	"Podkarpackie",
+	"Podlaskie",
+	"Pomorskie",
+	"Śląskie",
+	"Świętokrzyskie",
+	"Warmińsko-mazurskie",
+	"Wielkopolskie",
+	"Zachodniopomorskie"
+];
+
 const DEVELOPMENT_AREA_LABELS: Record<DevelopmentArea, string> = {
 	projects: "Projekty",
 	conferences: "Konferencje i debaty",
@@ -600,7 +620,7 @@ export default function Profile({
 					<TrendingUp size={16} />
 					Aktywność
 				</button>
-				{!user?.isTrial && (
+				{user?.status !== "trial" && (
 					<button
 						className={`${styles.tab} ${selectedTab === "contributions" ? styles.tabActive : ""}`}
 						onClick={() => setSelectedTab("contributions")}
@@ -687,7 +707,7 @@ export default function Profile({
 				</div>
 
 				<div className={styles.sections}>
-					
+
 					{selectedTab === "profile" && (
 						<>
 							<div className={styles.section}>
@@ -749,17 +769,21 @@ export default function Profile({
 									<div className={styles.section__item}>
 										<span className={styles.section__label}>Województwo</span>
 										{isEditing ? (
-											<input
-												type="text"
-												className={styles.section__input}
-												value={editData.province || user.province}
-												onChange={(e) =>
-													handleInputChange("province", e.target.value)
-												}
-											/>
+											<select
+												className={styles.section__select}
+												value={editData.province || user.province || ""}
+												onChange={(e) => handleInputChange("province", e.target.value)}
+											>
+												<option value="">Wybierz województwo</option>
+												{POLISH_PROVINCES.map((province) => (
+													<option key={province} value={province}>
+														{province}
+													</option>
+												))}
+											</select>
 										) : (
 											<span className={styles.section__value}>
-												{displayUser.province}
+												{displayUser.province || "Brak danych"}
 											</span>
 										)}
 									</div>
@@ -857,7 +881,7 @@ export default function Profile({
 										)}
 									</div>
 								</div>
-								
+
 								{isSkillModalOpen && (
 									<div className={styles.modalOverlay} onClick={handleCloseSkillModal}>
 										<div className={styles.modal} onClick={(e) => e.stopPropagation()}>
@@ -980,7 +1004,7 @@ export default function Profile({
 						</>
 					)}
 
-					
+
 					{selectedTab === "activity" && (
 						<>
 							<div className={styles.section}>
@@ -1128,8 +1152,8 @@ export default function Profile({
 							</div>
 						</>
 					)}
-					
-					{selectedTab === "contributions" && !user?.isTrial && (
+
+					{selectedTab === "contributions" && user?.status !== "trial" && (
 						<>
 							<div className={styles.section}>
 								<h3 className={styles.section__title}>
@@ -1232,8 +1256,8 @@ export default function Profile({
 						</>
 					)}
 
-					
-					{selectedTab === "contributions" && user?.isTrial && (
+
+					{selectedTab === "contributions" && user?.status === "trial" && (
 						<div className={styles.section}>
 							<div className={styles.trialInfo}>
 								<AlertCircle size={32} color="#F5A623" />
@@ -1245,7 +1269,7 @@ export default function Profile({
 							</div>
 						</div>
 					)}
-					
+
 					{selectedTab === "private" && (
 						<>
 							{canViewPrivate && displayUser.contacts && (

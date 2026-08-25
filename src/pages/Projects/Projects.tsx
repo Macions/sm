@@ -333,10 +333,9 @@ function ProjectCard({
 		return member;
 	};
 
-	const teamMembers = project.team.filter(
-		(member) => /^\d+$/.test(member) && member !== "63",
-	);
-	const displayTeamCount = teamMembers.length;
+	const displayTeamCount = project.team.filter(
+		(member) => member && member.trim() !== "" && member !== "63"
+	).length;
 	const formatDate = (dateString: string) => {
 		if (!dateString) return "Brak daty";
 
@@ -1579,11 +1578,11 @@ export default function Projects() {
 						setCurrentUser((prev) =>
 							prev
 								? {
-										...prev,
-										coordinatorPillars: data.leaderTeams.map(
-											(t: any) => t.name,
-										),
-									}
+									...prev,
+									coordinatorPillars: data.leaderTeams.map(
+										(t: any) => t.name,
+									),
+								}
 								: prev,
 						);
 
@@ -2451,10 +2450,10 @@ export default function Projects() {
 					{(selectedPillar !== "all" ||
 						selectedStatus !== "all" ||
 						searchTerm) && (
-						<button className={styles.filters__reset} onClick={clearFilters}>
-							Wyczyść filtry
-						</button>
-					)}
+							<button className={styles.filters__reset} onClick={clearFilters}>
+								Wyczyść filtry
+							</button>
+						)}
 				</div>
 			</div>
 
@@ -2470,8 +2469,8 @@ export default function Projects() {
 							<h3 className={styles.emptyState__title}>Brak projektów</h3>
 							<p className={styles.emptyState__description}>
 								{searchTerm ||
-								selectedPillar !== "all" ||
-								selectedStatus !== "all"
+									selectedPillar !== "all" ||
+									selectedStatus !== "all"
 									? "Nie znaleziono projektów spełniających kryteria wyszukiwania."
 									: canManageProjects
 										? 'Nie ma jeszcze żadnych projektów. Kliknij "Dodaj projekt", aby utworzyć pierwszy.'

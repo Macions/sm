@@ -242,7 +242,7 @@ export default function Dashboard() {
 		};
 
 		checkOnboarding();
-	}, []); 
+	}, []);
 	useEffect(() => {
 
 		const controller = new AbortController();
@@ -286,7 +286,7 @@ export default function Dashboard() {
 				const res = await fetch("/api/dashboard/contributions", {
 					signal: controller.signal,
 					headers: {
-						Authorization: `Bearer ${token}`, 
+						Authorization: `Bearer ${token}`,
 						"Content-Type": "application/json",
 					},
 				});
@@ -336,7 +336,7 @@ export default function Dashboard() {
 
 
 
-		Promise.all([fetchStats(), fetchContributions(), fetchNotifs()]); 
+		Promise.all([fetchStats(), fetchContributions(), fetchNotifs()]);
 
 		return () => {
 
@@ -368,23 +368,44 @@ export default function Dashboard() {
 				(now.getTime() - start.getTime()) / (1000 * 60 * 60 * 24),
 			);
 
+			// Funkcja pomocnicza do odmiany lat
+			const getYearsText = (count: number): string => {
+				if (count === 1) return "rok";
+				if (count >= 2 && count <= 4) return "lata";
+				return "lat";
+			};
+
+			// Funkcja pomocnicza do odmiany miesięcy
+			const getMonthsText = (count: number): string => {
+				if (count === 1) return "miesiąc";
+				if (count >= 2 && count <= 4) return "miesiące";
+				return "miesięcy";
+			};
+
+			// Funkcja pomocnicza do odmiany dni
+			const getDaysText = (count: number): string => {
+				if (count === 1) return "dzień";
+				if (count >= 2 && count <= 4) return "dni";
+				return "dni";
+			};
+
 			if (years > 0) {
-				const yearText = years === 1 ? "rok" : years < 5 ? "lata" : "lat";
+				const yearText = getYearsText(years);
 				if (months > 0) {
-					const monthText = months === 1 ? "miesiąc" : "miesięcy";
+					const monthText = getMonthsText(months);
 					return `${years} ${yearText}, ${months} ${monthText}`;
 				}
 				return `${years} ${yearText}`;
 			}
 			if (months > 0) {
-				const monthText = months === 1 ? "miesiąc" : "miesięcy";
+				const monthText = getMonthsText(months);
 				return `${months} ${monthText}`;
 			}
 			if (days > 0) {
-				const dayText = days === 1 ? "dzień" : "dni";
+				const dayText = getDaysText(days);
 				return `${days} ${dayText}`;
 			}
-			return "od dzisiaj! 🎉";
+			return "od dzisiaj!";
 		},
 		[],
 	);
@@ -465,7 +486,7 @@ export default function Dashboard() {
 										: "Nieopłacona",
 						icon:
 							contributionStats.hasContributions === false ? (
-								<AlertCircle size={24} /> 
+								<AlertCircle size={24} />
 							) : contributionStats.currentMonth.status === "paid" ? (
 								<CreditCard size={24} />
 							) : (
@@ -473,13 +494,13 @@ export default function Dashboard() {
 							),
 						color:
 							contributionStats.hasContributions === false
-								? "#6B7280" 
+								? "#6B7280"
 								: contributionStats.currentMonth.status === "paid"
 									? "#2ECC71"
 									: "#F5A623",
 						bgColor:
 							contributionStats.hasContributions === false
-								? "#F3F4F6" 
+								? "#F3F4F6"
 								: contributionStats.currentMonth.status === "paid"
 									? "#ECFDF5"
 									: "#FEF9E7",
@@ -503,7 +524,11 @@ export default function Dashboard() {
 				color: "#10B981",
 				bgColor: "#ECFDF5",
 			},
-			{
+		];
+
+		// Dodaj kafelek poradników tylko jeśli są nowe (newGuides > 0)
+		if (stats.newGuides > 0) {
+			baseStats.push({
 				id: "guides",
 				label: "Nowe poradniki",
 				value: stats.newGuides.toString(),
@@ -511,8 +536,8 @@ export default function Dashboard() {
 				icon: <BookOpen size={24} />,
 				color: "#17C3B2",
 				bgColor: "#F0FDFA",
-			},
-		];
+			});
+		}
 
 		if (membershipDuration) {
 			baseStats.splice(3, 0, {
@@ -527,7 +552,6 @@ export default function Dashboard() {
 
 		return baseStats;
 	}, [stats, membershipDuration, contributionStats]);
-
 	const handleQuickAction = useCallback(
 		(action: QuickAction) => {
 			if (action.link) {
@@ -584,7 +608,7 @@ export default function Dashboard() {
 
 	return (
 		<>
-			
+
 			<div className={styles.welcomeCard}>
 				<div className={styles.welcomeCard__content}>
 					<img
@@ -641,7 +665,7 @@ export default function Dashboard() {
 				</div>
 			</div>
 
-			
+
 			<div className={styles.stats}>
 				{loadingStats || loadingContributions ? (
 
@@ -691,7 +715,7 @@ export default function Dashboard() {
 			</div>
 
 			<div className={styles.bottomSection}>
-				
+
 				<div className={styles.notifications}>
 					<h2 className={styles.sectionTitle}>
 						<Bell size={20} />
@@ -744,7 +768,7 @@ export default function Dashboard() {
 					</div>
 				</div>
 
-				
+
 				<div className={styles.quickActions}>
 					<h2 className={styles.sectionTitle}>Szybkie akcje</h2>
 					<div className={styles.quickActions__grid}>

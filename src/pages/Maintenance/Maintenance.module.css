@@ -1,0 +1,167 @@
+.maintenance {
+    min-height: 100vh;
+    background: linear-gradient(135deg, #f6f4fe 0%, #e8e5f5 50%, #ddd6fe 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+.maintenance__overlay {
+    width: 100%;
+    max-width: 520px;
+}
+
+.maintenance__content {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    padding: 50px 40px;
+    border-radius: 28px;
+    box-shadow: 0 25px 60px rgba(46, 26, 107, 0.15);
+    text-align: center;
+    border: 1px solid rgba(255, 255, 255, 0.5);
+}
+
+.maintenance__iconWrapper {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 24px;
+}
+
+.maintenance__icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 88px;
+    height: 88px;
+    background: linear-gradient(135deg, #4A6FE8, #7c3aed);
+    border-radius: 50%;
+    color: white;
+    animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(1.05);
+    }
+}
+
+.maintenance__title {
+    font-size: 30px;
+    font-weight: 800;
+    color: #201a3b;
+    margin: 0 0 12px;
+    letter-spacing: -0.5px;
+}
+
+.maintenance__badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: #fef3c7;
+    color: #d97706;
+    padding: 6px 16px;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 20px;
+}
+
+.maintenance__description {
+    color: #6b7280;
+    font-size: 16px;
+    line-height: 1.7;
+    margin: 0 0 28px;
+}
+
+.maintenance__info {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 28px;
+}
+
+.maintenance__infoItem {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    color: #4b5563;
+    font-size: 14px;
+    background: #f9fafb;
+    padding: 10px 16px;
+    border-radius: 12px;
+}
+
+.maintenance__infoItem svg {
+    color: #4A6FE8;
+    flex-shrink: 0;
+}
+
+.maintenance__progress {
+    margin-top: 8px;
+}
+
+.maintenance__progressBar {
+    height: 4px;
+    background: #e5e7eb;
+    border-radius: 99px;
+    overflow: hidden;
+    margin-bottom: 8px;
+}
+
+.maintenance__progressFill {
+    height: 100%;
+    width: 65%;
+    background: linear-gradient(90deg, #4A6FE8, #7c3aed);
+    border-radius: 99px;
+    animation: progress 2s ease-in-out infinite;
+}
+
+@keyframes progress {
+    0% {
+        width: 30%;
+    }
+
+    50% {
+        width: 70%;
+    }
+
+    100% {
+        width: 30%;
+    }
+}
+
+.maintenance__progressText {
+    font-size: 13px;
+    color: #9ca3af;
+    font-weight: 500;
+}
+
+@media (max-width: 480px) {
+    .maintenance__content {
+        padding: 35px 24px;
+    }
+
+    .maintenance__title {
+        font-size: 24px;
+    }
+
+    .maintenance__icon {
+        width: 72px;
+        height: 72px;
+    }
+
+    .maintenance__icon svg {
+        width: 32px;
+        height: 32px;
+    }
+
+    .maintenance__description {
+        font-size: 14px;
+    }
+}
