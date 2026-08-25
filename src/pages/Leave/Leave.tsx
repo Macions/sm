@@ -131,7 +131,7 @@ function LeaveCard({
 	onView,
 	onDelete,
 	onStatusChange,
-	onCancel,  
+	onCancel,
 	canManage,
 	canViewReason,
 }: LeaveCardProps) {
@@ -182,7 +182,7 @@ function LeaveCard({
 					</div>
 				</div>
 				<div className={styles.leaveCard__badges}>
-					
+
 					<span
 						className={`${styles.leaveCard__status} ${isLeaveActive(leave) ? styles.statusActive : STATUS_COLORS[leave.status]}`}
 					>
@@ -914,16 +914,49 @@ function LeaveModal({
 
 					<div className={styles.modal__field}>
 						<label className={styles.modal__label}>Powód</label>
-						<textarea
-							className={`${styles.modal__input} ${styles.modal__textarea}`}
-							value={formData.reason || ""}
-							onChange={(e) =>
-								setFormData({ ...formData, reason: e.target.value })
-							}
-							placeholder="Podaj powód wniosku (opcjonalnie)..."
-							rows={3}
-							disabled={!canEdit || isViewOnly}
-						/>
+						{isViewOnly && formData.reason ? (
+							(() => {
+								// TYLKO admin i właściciel zawsze widzą
+								const isAdmin = currentUser.role === "admin";
+								const isOwner = currentUser.id === formData.userId;
+
+								// Board i Zarząd - widzą tylko jeśli nie jest prywatny
+								const isBoardOrZarzad = currentUser.role === "board" || currentUser.role === "zarząd";
+								const isNotPrivate = formData.reasonVisibility !== "private";
+
+								// Koordynator - widzi tylko jeśli dla koordynatorów
+								const isCoordinator = currentUser.role === "coordinator";
+								const isForCoordinators = formData.reasonVisibility === "coordinators";
+
+								const canViewReason =
+									isAdmin ||           // Admin zawsze widzi
+									isOwner ||           // Właściciel zawsze widzi
+									(isBoardOrZarzad && isNotPrivate) ||  // Board/Zarząd nie widzą prywatnych
+									(isCoordinator && isForCoordinators); // Koordynator tylko dla koordynatorów
+
+								return canViewReason ? (
+									<div className={styles.modal__reasonView}>
+										{formData.reason}
+									</div>
+								) : (
+									<div className={styles.modal__reasonHidden}>
+										<EyeOff size={16} />
+										<span>Powód ukryty</span>
+									</div>
+								);
+							})()
+						) : (
+							<textarea
+								className={`${styles.modal__input} ${styles.modal__textarea}`}
+								value={formData.reason || ""}
+								onChange={(e) =>
+									setFormData({ ...formData, reason: e.target.value })
+								}
+								placeholder="Podaj powód wniosku (opcjonalnie)..."
+								rows={3}
+								disabled={!canEdit || isViewOnly}
+							/>
+						)}
 					</div>
 
 					{!isViewOnly && (
@@ -1589,7 +1622,7 @@ export default function Leave({ title }: { title?: string }) {
 					<span>Archiwum</span>
 				</button>
 
-				
+
 				{Object.entries(STATUS_LABELS).map(([key, label]) => {
 					const count = leaves.filter((l) => l.status === key as LeaveStatus).length;
 					if (count === 0) return null;
@@ -1680,12 +1713,22 @@ export default function Leave({ title }: { title?: string }) {
 						filteredLeaves.map((leave) => {
 							const canViewReason = (() => {
 								if (!currentUser) return false;
-								return (
-									currentUser.role === "admin" ||
-									currentUser.role === "coordinator" ||
-									currentUser.id === leave.userId ||
-									leave.reasonVisibility === "coordinators"
-								);
+
+								// Admin i właściciel zawsze widzą
+								if (currentUser.role === "admin") return true;
+								if (currentUser.id === leave.userId) return true;
+
+								// Board i Zarząd - nie widzą prywatnych
+								if (currentUser.role === "board" || currentUser.role === "zarząd") {
+									return leave.reasonVisibility !== "private";
+								}
+
+								// Koordynator - tylko jeśli dla koordynatorów
+								if (currentUser.role === "coordinator") {
+									return leave.reasonVisibility === "coordinators";
+								}
+
+								return false;
 							})();
 							return (
 								<LeaveCard

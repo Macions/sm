@@ -1655,3 +1655,21 @@
 	background: #fecaca;
 	color: #b91c1c;
 }
+
+.modal__reasonView {
+	padding: 12px;
+	background: var(--bg-secondary, #f5f5f5);
+	border-radius: 6px;
+	white-space: pre-wrap;
+	word-break: break-word;
+}
+
+.modal__reasonHidden {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	padding: 12px;
+	background: var(--bg-secondary, #f5f5f5);
+	border-radius: 6px;
+	color: var(--text-muted, #888);
+}
