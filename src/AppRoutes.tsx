@@ -58,7 +58,7 @@ function AppRoutes() {
 	useEffect(() => {
 		const checkMaintenance = () => {
 			// 🔥 USTAW NA SZTYWNO - DZIAŁA ZAWSZE!
-			const maintenance = true; // 👈 TRUE = WŁĄCZONY, FALSE = WYŁĄCZONY
+			const maintenance = false; // 👈 TRUE = WŁĄCZONY, FALSE = WYŁĄCZONY
 
 			setIsMaintenance(maintenance);
 

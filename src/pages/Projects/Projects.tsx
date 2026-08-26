@@ -45,38 +45,6 @@ const ROLE_LABELS: Record<string, string> = {
 	member: "Członek",
 };
 
-const MOCK_IDEAS: Idea[] = [
-	{
-		id: "1",
-		title: "Aplikacja mobilna dla członków",
-		description:
-			"Aplikacja umożliwiająca łatwy dostęp do informacji o projektach i wydarzeniach.",
-		pillar: "Filar Projektowy",
-		authorId: "1",
-		authorName: "Jan Kowalski",
-		status: "pending",
-		votes: 5,
-		upvotes: 7,
-		downvotes: 2,
-		createdAt: new Date().toISOString(),
-		currentUserVote: null,
-	},
-	{
-		id: "2",
-		title: "Warsztaty z wystąpień publicznych",
-		description:
-			"Cykl warsztatów dla członków organizacji uczących skutecznej komunikacji.",
-		pillar: "Filar Konferencyjny",
-		authorId: "2",
-		authorName: "Anna Nowak",
-		status: "approved",
-		votes: 12,
-		upvotes: 14,
-		downvotes: 2,
-		createdAt: new Date(Date.now() - 86400000).toISOString(),
-		currentUserVote: null,
-	},
-];
 const PILLAR_LABELS_FALLBACK: Record<string, string> = {
 	project: "Filar Projektowy",
 	conference: "Filar Konferencyjny",
@@ -132,74 +100,6 @@ type User = {
 	pillars?: string[];
 	coordinatorPillars?: string[];
 };
-
-const MOCK_PROJECTS: Project[] = [
-	{
-		id: "1",
-		name: "Aplikacja mobilna Siły Młodych",
-		description:
-			"Tworzenie aplikacji mobilnej dla członków organizacji umożliwiającej łatwy dostęp do informacji i wydarzeń.",
-		pillar: "project",
-		status: "in_progress",
-		estimated_end: "2026-12-31",
-		team: ["Zosia Wartacz", "Zuzanna Wojtusiak", "Maksym Marczak"],
-		coordinator_id: "1",
-		created_at: "2026-01-15",
-		updated_at: "2026-07-10",
-	},
-	{
-		id: "2",
-		name: "Konferencja Młodych Liderów 2026",
-		description:
-			"Organizacja dorocznej konferencji dla młodych liderów z całej Polski.",
-		pillar: "conference",
-		status: "planning",
-		estimated_end: "2026-11-15",
-		team: ["Adrian Wróblewski", "Wojciech Podolski", "Maja Melerska"],
-		coordinator_id: "2",
-		created_at: "2026-03-01",
-		updated_at: "2026-07-01",
-	},
-	{
-		id: "3",
-		name: "Kampania społeczna #MłodziGłosują",
-		description:
-			"Ogólnopolska kampania zachęcająca młodych ludzi do udziału w wyborach i aktywności obywatelskiej.",
-		pillar: "advocacy",
-		status: "promotion",
-		estimated_end: "2026-10-30",
-		team: ["Jan Augustynak", "Nikola Socha", "Oliwier Szulejko"],
-		coordinator_id: "3",
-		created_at: "2026-02-10",
-		updated_at: "2026-07-15",
-	},
-	{
-		id: "4",
-		name: "Symulacja Sejmu RP",
-		description:
-			"Organizacja symulacji obrad Sejmu dla studentów i młodych polityków.",
-		pillar: "simulation",
-		status: "planning",
-		estimated_end: "2027-01-20",
-		team: ["Igor Piskórz", "Maksym Marczak"],
-		coordinator_id: "4",
-		created_at: "2026-05-01",
-		updated_at: "2026-06-20",
-	},
-	{
-		id: "5",
-		name: "Debaty Oksfordzkie",
-		description:
-			"Cykl debat oksfordzkich w szkołach średnich promujących umiejętność argumentacji i krytycznego myślenia.",
-		pillar: "conference",
-		status: "in_progress",
-		estimated_end: "2026-12-15",
-		team: ["Adrian Wróblewski", "Wojciech Podolski", "Emilia Dobias"],
-		coordinator_id: "5",
-		created_at: "2026-04-10",
-		updated_at: "2026-07-05",
-	},
-];
 
 const IDEA_STATUS_LABELS: Record<IdeaStatus, string> = {
 	pending: "Oczekuje",
@@ -1909,8 +1809,8 @@ export default function Projects() {
 				logger.debug("🔍 Pobieranie pomysłów z API...");
 
 				if (!token) {
-					logger.warn("⚠️ Brak tokenu, używam danych przykładowych");
-					setIdeas(MOCK_IDEAS);
+					logger.warn("⚠️ Brak tokenu");
+					setIdeas([]);
 					return;
 				}
 
@@ -1924,10 +1824,8 @@ export default function Projects() {
 				logger.debug("📥 Status odpowiedzi /api/ideas:", response.status);
 
 				if (!response.ok) {
-					logger.warn(
-						`⚠️ Błąd API (${response.status}), używam danych przykładowych`,
-					);
-					setIdeas(MOCK_IDEAS);
+					logger.warn(`⚠️ Błąd API (${response.status})`);
+					setIdeas([]);
 					return;
 				}
 
@@ -1960,7 +1858,7 @@ export default function Projects() {
 				setIdeas(mappedIdeas);
 			} catch (error) {
 				logger.error("❌ Błąd pobierania pomysłów:", error);
-				setIdeas(MOCK_IDEAS);
+				setIdeas([]);
 			} finally {
 				setLoading(false);
 			}
@@ -2040,8 +1938,7 @@ export default function Projects() {
 				setProjects(mappedProjects);
 			} catch (error) {
 				logger.error("❌ Błąd ładowania projektów:", error);
-				logger.debug("📋 Używam MOCK_PROJECTS jako fallback");
-				setProjects(MOCK_PROJECTS);
+				setProjects([]); // Pusta tablica zamiast mocków
 			} finally {
 				setTimeout(() => {
 					setLoading(false);
