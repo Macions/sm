@@ -1316,7 +1316,42 @@ app.post("/api/teams", authMiddleware, async (req: any, res) => {
 		res.status(500).json({ error: "Nie udało się utworzyć zespołu" });
 	}
 });
+// GET /api/dashboard/birthdays
+app.get("/api/dashboard/birthdays", authMiddleware, async (req: any, res) => {
+    try {
+        const today = new Date();
+        const day = today.getDate();
+        const month = today.getMonth() + 1;
 
+        const users = await prisma.user.findMany({
+            where: {
+                birthday: {
+                    not: null,
+                },
+                is_active: true,
+            },
+            select: {
+                id: true,
+                first_name: true,
+                last_name: true,
+                email: true,
+                birthday: true,
+            },
+        });
+
+        // Filtruj po dniu i miesiącu (ignorując rok)
+        const todayBirthdays = users.filter(user => {
+            if (!user.birthday) return false;
+            const birthDate = new Date(user.birthday);
+            return birthDate.getDate() === day && birthDate.getMonth() + 1 === month;
+        });
+
+        res.json(todayBirthdays);
+    } catch (error) {
+        logger.error("❌ Błąd pobierania urodzin:", error);
+        res.status(500).json({ error: "Nie udało się pobrać urodzin" });
+    }
+});
 app.get("/api/dashboard/stats", authMiddleware, async (req: any, res) => {
 	try {
 		const userId = req.user?.id;
@@ -4830,7 +4865,42 @@ app.post("/api/onboarding/save", authMiddleware, async (req: any, res) => {
 		});
 	}
 });
+// GET /api/dashboard/birthdays
+const getTodayBirthdays = async (req: any, res: any) => {
+	try {
+		const today = new Date();
+		const day = today.getDate();
+		const month = today.getMonth() + 1;
 
+		const users = await prisma.user.findMany({
+			where: {
+				birthday: {
+					not: null,
+				},
+				is_active: true,
+			},
+			select: {
+				id: true,
+				first_name: true,
+				last_name: true,
+				email: true,
+				birthday: true,
+			},
+		});
+
+		// Filtruj po dniu i miesiącu
+		const todayBirthdays = users.filter(user => {
+			if (!user.birthday) return false;
+			const birthDate = new Date(user.birthday);
+			return birthDate.getDate() === day && birthDate.getMonth() + 1 === month;
+		});
+
+		res.json(todayBirthdays);
+	} catch (error) {
+		logger.error("❌ Błąd pobierania urodzin:", error);
+		res.status(500).json({ error: "Nie udało się pobrać urodzin" });
+	}
+};
 app.get("/api/social/members/check", authMiddleware, async (req: any, res) => {
 	try {
 		const userId = req.user?.id;

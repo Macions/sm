@@ -147,7 +147,8 @@ function mapStatus(statusText: string): {
 export async function syncMembers() {
 	logger.debug("🔄 [SYNC] Rozpoczynam synchronizację członków...");
 	const startTime = Date.now();
-
+	let birthdaysUpdated = 0;
+	let birthdaysSkipped = 0;
 	try {
 		const [rows] = (await externalDb.query(`
             SELECT 
@@ -157,6 +158,7 @@ export async function syncMembers() {
                 email,
                 phone,
                 status,
+                birthdate,
                 created_at,
                 updated_at
             FROM members
@@ -174,7 +176,6 @@ export async function syncMembers() {
 			logger.debug("⚠️ [SYNC] Brak danych do synchronizacji");
 			return;
 		}
-
 
 		const [resignedMembers] = (await externalDb.query(`
 			SELECT 
@@ -304,6 +305,7 @@ export async function syncMembers() {
 				team: true,
 				functional_role: true,
 				role_id: true,
+				birthday: true,
 			},
 		});
 
@@ -326,11 +328,9 @@ export async function syncMembers() {
 
 		const usedEmails = new Set<string>();
 
-
 		for (const member of rows) {
 			try {
 				const generatedEmail = generateEmail(member.firstname, member.lastname);
-
 
 				if (usedEmails.has(generatedEmail)) {
 					duplicateEmails++;
@@ -341,9 +341,7 @@ export async function syncMembers() {
 				}
 				usedEmails.add(generatedEmail);
 
-
 				const mapped = mapStatus(member.status || "");
-
 
 				if (mapped.shouldSkip) {
 					const existing = await prisma.user.findUnique({
@@ -365,11 +363,9 @@ export async function syncMembers() {
 					continue;
 				}
 
-
 				const existing = await prisma.user.findUnique({
 					where: { email: generatedEmail }
 				});
-
 
 				const memberId = emailToMemberId.get(generatedEmail);
 				let pillarNames: string[] = [];
@@ -380,7 +376,26 @@ export async function syncMembers() {
 
 				const pillarString =
 					pillarNames.length > 0 ? pillarNames.join(", ") : null;
+				let birthdayDate = null;
+				if (member.birthdate) {  // ← ZMIENIONE z birthday na birthdate
+					try {
+						if (typeof member.birthdate === 'string') {  // ← ZMIENIONE
+							birthdayDate = new Date(member.birthdate);  // ← ZMIENIONE
+						} else if (member.birthdate instanceof Date) {  // ← ZMIENIONE
+							birthdayDate = member.birthdate;  // ← ZMIENIONE
+						} else if (typeof member.birthdate === 'object' && member.birthdate !== null) {  // ← ZMIENIONE
+							birthdayDate = new Date(member.birthdate);  // ← ZMIENIONE
+						}
 
+						if (birthdayDate && isNaN(birthdayDate.getTime())) {
+							birthdayDate = null;
+							logger.debug(`⚠️ [SYNC] Niepoprawny format daty urodzenia dla ${generatedEmail}: ${member.birthdate}`);  // ← ZMIENIONE
+						}
+					} catch (error) {
+						birthdayDate = null;
+						logger.debug(`⚠️ [SYNC] Błąd konwersji daty urodzenia dla ${generatedEmail}: ${member.birthdate}`);  // ← ZMIENIONE
+					}
+				}
 				const userData = {
 					username: generatedEmail.split("@")[0] || generatedEmail,
 					email: generatedEmail,
@@ -396,15 +411,16 @@ export async function syncMembers() {
 					functional_role: "Członek",
 					pillars: pillarString,
 					team: null,
+					birthday: birthdayDate,
 				};
 
 				let userId: number;
-
 
 				if (existing) {
 					const hasExistingStatus = existing.status && existing.status !== "";
 					const hasExistingPillars = existing.pillars && existing.pillars !== "" && existing.pillars !== null;
 					const hasExistingFunctionalRole = existing.functional_role && existing.functional_role !== "";
+					const hasExistingBirthday = existing.birthday !== null && existing.birthday !== undefined;
 
 					const dataToUpdate: any = {
 						first_name: userData.first_name,
@@ -428,7 +444,6 @@ export async function syncMembers() {
 						dataToUpdate.functional_role = userData.functional_role;
 					}
 
-
 					if (existing.pillars !== undefined) {
 						dataToUpdate.pillars = existing.pillars;
 						if (existing.pillars && existing.pillars !== "") {
@@ -445,13 +460,37 @@ export async function syncMembers() {
 						dataToUpdate.pillars = userData.pillars;
 					}
 
-
 					if (!hasExistingStatus) {
 						dataToUpdate.status = userData.status;
 						dataToUpdate.is_trial = userData.is_trial;
 					} else {
 						dataToUpdate.status = existing.status;
 						dataToUpdate.is_trial = existing.is_trial;
+					}
+
+					// Aktualizacja daty urodzenia
+					if (userData.birthday) {
+						const existingBirthday = existing.birthday;
+						const newBirthday = userData.birthday;
+
+						const isSameBirthday = existingBirthday &&
+							newBirthday &&
+							existingBirthday.getFullYear() === newBirthday.getFullYear() &&
+							existingBirthday.getMonth() === newBirthday.getMonth() &&
+							existingBirthday.getDate() === newBirthday.getDate();
+
+						if (!isSameBirthday) {
+							dataToUpdate.birthday = newBirthday;
+							birthdaysUpdated++;
+							logger.debug(`🎂 [SYNC] Aktualizacja daty urodzenia dla ${generatedEmail}: ${newBirthday.toISOString().split('T')[0]}`);
+						} else {
+							birthdaysSkipped++;
+							logger.debug(`⏭️ [SYNC] Data urodzenia bez zmian dla ${generatedEmail}: ${newBirthday.toISOString().split('T')[0]}`);
+						}
+					} else {
+						if (!hasExistingBirthday) {
+							dataToUpdate.birthday = null;
+						}
 					}
 
 					const hasChanges =
@@ -461,7 +500,8 @@ export async function syncMembers() {
 						(hasExistingFunctionalRole ? existing.functional_role !== dataToUpdate.functional_role : false) ||
 						(!hasExistingPillars && existing.pillars !== dataToUpdate.pillars) ||
 						(!hasExistingStatus && existing.status !== dataToUpdate.status) ||
-						(!hasExistingStatus && existing.is_trial !== dataToUpdate.is_trial);
+						(!hasExistingStatus && existing.is_trial !== dataToUpdate.is_trial) ||
+						existing.birthday !== dataToUpdate.birthday;
 
 					if (hasChanges) {
 						const updatedUser = await prisma.user.update({
@@ -483,25 +523,60 @@ export async function syncMembers() {
 							? `🔒 funkcjonalna rola zachowana: ${existing.functional_role}`
 							: `funkcjonalna rola: ${userData.functional_role}`;
 
+						const birthdayMsg = dataToUpdate.birthday
+							? `🎂 data urodzenia: ${dataToUpdate.birthday.toISOString().split('T')[0]}`
+							: `data urodzenia: brak`;
+
 						logger.debug(
-							`🔄 [SYNC] Zaktualizowano: ${generatedEmail} | ${statusMsg} | ${pillarsMsg} | ${functionalRoleMsg}`,
+							`🔄 [SYNC] Zaktualizowano: ${generatedEmail} | ${statusMsg} | ${pillarsMsg} | ${functionalRoleMsg} | ${birthdayMsg}`,
 						);
 					} else {
 						userId = existing.id;
 						skipped++;
 					}
 				} else {
+					// NOWY UŻYTKOWNIK - z obsługą duplikatów username
+					let baseUsername = generatedEmail.split("@")[0] || generatedEmail;
+					let username = baseUsername;
+					let counter = 1;
+
+					// Sprawdź czy username już istnieje
+					let existingUserByUsername = await prisma.user.findUnique({
+						where: { username: username }
+					});
+
+					// Jeśli username istnieje, dodaj numer
+					while (existingUserByUsername) {
+						username = `${baseUsername}${counter}`;
+						existingUserByUsername = await prisma.user.findUnique({
+							where: { username: username }
+						});
+						counter++;
+					}
+
+					if (username !== baseUsername) {
+						logger.debug(`⚠️ [SYNC] Username ${baseUsername} już istnieje, używam: ${username}`);
+					}
+
 					const newUser = await prisma.user.create({
-						data: userData,
+						data: {
+							...userData,
+							username: username, // nadpisujemy username
+						},
 					});
 					userId = newUser.id;
 					added++;
+
+					const birthdayMsg = userData.birthday
+						? `🎂 data urodzenia: ${userData.birthday.toISOString().split('T')[0]}`
+						: `data urodzenia: brak`;
+
 					logger.debug(
-						`✅ [SYNC] Dodano: ${generatedEmail} (${userData.first_name} ${userData.last_name}) | status: ${userData.status} | filary: ${userData.pillars || "brak"}`,
+						`✅ [SYNC] Dodano: ${generatedEmail} (${userData.first_name} ${userData.last_name}) | status: ${userData.status} | filary: ${userData.pillars || "brak"} | ${birthdayMsg}`,
 					);
 				}
 
-
+				// Obsługa członkostwa w filarach
 				if (pillarNames.length > 0) {
 					const existingTeamMembers = await prisma.teamMember.findMany({
 						where: {
@@ -584,7 +659,7 @@ export async function syncMembers() {
 					error,
 				);
 			}
-		}
+		} // ← TO JEST WAŻNE! Zamyka pętlę for
 
 		const duration = Date.now() - startTime;
 		logger.debug(`✅ [SYNC] Zakończono w ${duration}ms`);
@@ -595,10 +670,11 @@ export async function syncMembers() {
 		logger.debug(`   ⏭️${skippedRezygnacja} pominiętych (rezygnacja)`);
 		logger.debug(`   ➕${teamMembersAdded} dodanych członkostw w filarach`);
 		logger.debug(`   🔒${pillarsPreserved} zachowanych filarów (nie nadpisano)`);
+		logger.debug(`   🎂${birthdaysUpdated} zaktualizowanych dat urodzenia`);
+		logger.debug(`   ⏭️${birthdaysSkipped} dat urodzenia bez zmian`);
 		if (duplicateEmails > 0) {
 			logger.debug(`   ⚠️${duplicateEmails} pominiętych (duplikaty emaili)`);
 		}
-
 
 		try {
 			await prisma.systemLog.create({
@@ -620,6 +696,8 @@ export async function syncMembers() {
 						teamMembersAdded,
 						teamMembersUpdated,
 						pillarsPreserved,
+						birthdaysUpdated,
+						birthdaysSkipped,
 						duration,
 						timestamp: new Date().toISOString(),
 					}),
@@ -633,7 +711,6 @@ export async function syncMembers() {
 		logger.error("❌ [SYNC] Błąd synchronizacji:", error);
 	}
 }
-
 export async function runSync() {
 	try {
 		await syncMembers();

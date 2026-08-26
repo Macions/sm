@@ -713,21 +713,20 @@ function TeamSelector({
 	useEffect(() => {
 		setForceUpdate((prev) => prev + 1);
 	}, [filter, pillar]);
-// 🔥 DODAJ TEN useEffect - sprawdza czy wybrani użytkownicy to wszyscy
-useEffect(() => {
-	// Jeśli są wybrani użytkownicy
-	if (selectedTeam.length > 0) {
-		// Sprawdź czy wybrani to WSZYSCY użytkownicy
-		const allUserIds = users.map(u => u.id);
-		const isAllSelected = selectedTeam.length === users.length && 
-			selectedTeam.every(id => allUserIds.includes(id));
-		
-		// Jeśli nie wszyscy, ustaw filtr na "custom"
-		if (!isAllSelected && filter === "all") {
-			setFilter("custom");
+	// 🔥 DODAJ TEN useEffect - sprawdza czy wybrani użytkownicy to wszyscy
+	useEffect(() => {
+		// Jeśli są wybrani użytkownicy
+		if (selectedTeam.length > 0) {
+			// Sprawdź czy wybrani to WSZYSCY użytkownicy
+			const allUserIds = users.map(u => u.id);
+			const isAllSelected = selectedTeam.length === users.length &&
+				selectedTeam.every(id => allUserIds.includes(id));
+
+			if (!isAllSelected && filter === "all") {
+				setFilter("custom");
+			}
 		}
-	}
-}, [selectedTeam, users, filter]);
+	}, [selectedTeam, users, filter]);
 	const filteredUsers = useMemo(() => {
 		if (filter === "pillar" && pillar) {
 			const pillarName =
@@ -2001,19 +2000,19 @@ export default function Projects() {
 
 		fetchUsers();
 	}, []);
-const canManageProject = (project: Project) => {
-	// 🔥 DODAJEMY SPRAWDZENIE ROLI "board"
-	if (currentUser?.role === "board") return true;
-	if (permissions.includes("canManageAllProjects")) return true;
-	if (permissions.includes("canManagePillarProjects")) {
-		const pillarName =
-			PILLAR_LABELS_FALLBACK[project.pillar as ProjectPillar] ||
-			project.pillar;
-		const userPillars = getPillarsArray(currentUser?.coordinatorPillars);
-		return userPillars.some((up) => isPillarMatching(up, pillarName));
-	}
-	return false;
-};
+	const canManageProject = (project: Project) => {
+		// 🔥 DODAJEMY SPRAWDZENIE ROLI "board"
+		if (currentUser?.role === "board") return true;
+		if (permissions.includes("canManageAllProjects")) return true;
+		if (permissions.includes("canManagePillarProjects")) {
+			const pillarName =
+				PILLAR_LABELS_FALLBACK[project.pillar as ProjectPillar] ||
+				project.pillar;
+			const userPillars = getPillarsArray(currentUser?.coordinatorPillars);
+			return userPillars.some((up) => isPillarMatching(up, pillarName));
+		}
+		return false;
+	};
 
 	const canManageProjects =
 		permissions.includes("canManageAllProjects") ||

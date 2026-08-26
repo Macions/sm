@@ -17,6 +17,7 @@ import {
 	AlertCircle,
 	Wallet,
 	CreditCard,
+	Gift,
 } from "lucide-react";
 import styles from "./Dashboard.module.css";
 function getMonthName(month: number): string {
@@ -36,6 +37,13 @@ function getMonthName(month: number): string {
 	];
 	return months[month - 1] || month.toString();
 }
+type Birthday = {
+	id: number;
+	first_name: string;
+	last_name: string;
+	email: string;
+	birthday: string | null;
+};
 type Notification = {
 	id: string;
 	message: string;
@@ -183,7 +191,8 @@ export default function Dashboard() {
 	const [loadingStats, setLoadingStats] = useState(true);
 	const [loadingNotifs, setLoadingNotifs] = useState(true);
 	const [loadingContributions, setLoadingContributions] = useState(true);
-
+	const [birthdays, setBirthdays] = useState<Birthday[]>([]);
+	const [loadingBirthdays, setLoadingBirthdays] = useState(true);
 	useEffect(() => {
 		const checkOnboarding = async () => {
 			try {
@@ -246,7 +255,29 @@ export default function Dashboard() {
 	useEffect(() => {
 
 		const controller = new AbortController();
+		const fetchBirthdays = async () => {
+			try {
+				setLoadingBirthdays(true);
+				const token = localStorage.getItem("accessToken");
 
+				const res = await fetch("/api/dashboard/birthdays", {
+					signal: controller.signal,
+					headers: {
+						Authorization: `Bearer ${token}`,
+						"Content-Type": "application/json",
+					},
+				});
+
+				if (!res.ok) throw new Error("Nie udało się pobrać urodzin");
+				const data = await res.json();
+				setBirthdays(data);
+			} catch (err) {
+				if (err instanceof Error && err.name === "AbortError") return;
+				console.error("❌ [Dashboard] Błąd pobierania urodzin:", err);
+			} finally {
+				setLoadingBirthdays(false);
+			}
+		};
 		const fetchStats = async () => {
 			try {
 
@@ -336,7 +367,7 @@ export default function Dashboard() {
 
 
 
-		Promise.all([fetchStats(), fetchContributions(), fetchNotifs()]);
+		Promise.all([fetchStats(), fetchContributions(), fetchNotifs(), fetchBirthdays()]);
 
 		return () => {
 
@@ -549,9 +580,20 @@ export default function Dashboard() {
 				bgColor: "#EFEBFD",
 			});
 		}
-
+		// Dodaj kafelek urodzin
+		if (birthdays.length > 0) {
+			baseStats.push({
+				id: "birthdays",
+				label: `🎂 Urodziny dzisiaj`,
+				value: birthdays.length.toString(),
+				subtext: birthdays.slice(0, 3).map(b => `${b.first_name} ${b.last_name}`).join(", ") + (birthdays.length > 3 ? ` +${birthdays.length - 3} więcej` : ""),
+				icon: <Gift size={24} />,
+				color: "#E84AA9",
+				bgColor: "#FDF2F8",
+			});
+		}
 		return baseStats;
-	}, [stats, membershipDuration, contributionStats]);
+	}, [stats, membershipDuration, contributionStats, birthdays]);
 	const handleQuickAction = useCallback(
 		(action: QuickAction) => {
 			if (action.link) {
@@ -667,7 +709,7 @@ export default function Dashboard() {
 
 
 			<div className={styles.stats}>
-				{loadingStats || loadingContributions ? (
+				{loadingStats || loadingContributions || loadingBirthdays ? (
 
 					<>
 						{[1, 2, 3, 4, 5].map((i) => (

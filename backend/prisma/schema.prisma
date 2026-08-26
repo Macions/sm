@@ -24,6 +24,7 @@ model User {
   avatar                    String?             @db.VarChar(255)
   functional_role           String?             @db.VarChar(100)
   role_id                   Int?
+   birthday DateTime? @db.Date
   join_date                 DateTime?           @db.Date
   is_trial                  Boolean?            @default(false)
   attendance_percentage     Decimal?            @default(92.00) @db.Decimal(5, 2)
