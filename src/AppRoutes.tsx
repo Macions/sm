@@ -1,6 +1,9 @@
 ﻿import { Routes, Route, Navigate } from "react-router-dom";
 import { lazy, Suspense, useEffect, useState } from "react";
 import Onboarding from "@/pages/Onboarding/Onboarding";
+import { logger } from "@/utils/logger";
+import api from "@/api/axios";
+
 const DashboardLayout = lazy(() => import("@/layouts/DashboardLayout"));
 const Login = lazy(() => import("@/pages/Login/Login"));
 const Dashboard = lazy(() => import("@/pages/Dashboard/Dashboard"));
@@ -15,8 +18,9 @@ const SocialMedia = lazy(() => import("@/pages/SocialMedia/SocialMedia"));
 const Profile = lazy(() => import("@/pages/Profile/Profile"));
 const Calendar = lazy(() => import("@/pages/Calendar/Calendar"));
 const Tasks = lazy(() => import("@/pages/Tasks/Tasks"));
+const Maintenance = lazy(() => import("@/pages/Maintenance/Maintenance"));
 import NotFound from "@/pages/404";
- 
+
 const LoadingSpinner = () => (
 	<div
 		style={{
@@ -48,21 +52,54 @@ const LoadingSpinner = () => (
 function AppRoutes() {
 	const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
 	const [isLoading, setIsLoading] = useState(true);
+	const [isMaintenance, setIsMaintenance] = useState(false);
+
+	// 🔥 SPRAWDZANIE TRYBU SERWISOWEGO
+	useEffect(() => {
+		const checkMaintenance = () => {
+			// 🔥 SPRAWDZA NAJCZERWIEJ LOCALSTORAGE, POTEM ZMIENNĄ ŚRODOWISKOWĄ
+			const maintenanceFromStorage = localStorage.getItem('maintenance') === 'true';
+			const maintenanceFromEnv = import.meta.env.VITE_MAINTENANCE_MODE === 'true';
+
+			// Jeśli localStorage ma wartość, użyj jej, inaczej użyj env
+			const maintenance = maintenanceFromStorage || maintenanceFromEnv;
+			setIsMaintenance(maintenance);
+
+			console.log("🔧 [Maintenance] localStorage:", maintenanceFromStorage);
+			console.log("🔧 [Maintenance] env:", maintenanceFromEnv);
+			console.log("🔧 [Maintenance] wynik:", maintenance);
+		};
+
+		checkMaintenance();
+
+		const handleStorageChange = (e: StorageEvent) => {
+			if (e.key === 'maintenance') {
+				checkMaintenance();
+			}
+		};
+		window.addEventListener('storage', handleStorageChange);
+		return () => window.removeEventListener('storage', handleStorageChange);
+	}, []);
 
 	useEffect(() => {
 		const verifyToken = async () => {
 			const token = localStorage.getItem("accessToken");
 			if (!token) {
+				logger.debug("🔐 [Auth] Brak tokena");
 				setIsAuthenticated(false);
 				setIsLoading(false);
 				return;
 			}
-			try {
 
+			try {
+				logger.debug("🔐 [Auth] Weryfikacja tokena...");
+				await api.get("/auth/me");
+				logger.debug("✅ [Auth] Token ważny");
 				setIsAuthenticated(true);
-			} catch (error) {
-				console.error("❌ Błąd weryfikacji:", error);
+			} catch (error: any) {
+				logger.warn("❌ [Auth] Token wygasł lub jest nieprawidłowy", error?.response?.status);
 				localStorage.removeItem("accessToken");
+				localStorage.removeItem("refreshToken");
 				setIsAuthenticated(false);
 			} finally {
 				setIsLoading(false);
@@ -71,7 +108,47 @@ function AppRoutes() {
 		verifyToken();
 	}, []);
 
+	// Nasłuchuj zmian tokena w innych kartach
+	useEffect(() => {
+		const handleStorageChange = (e: StorageEvent) => {
+			if (e.key === "accessToken") {
+				if (!e.newValue) {
+					setIsAuthenticated(false);
+				} else {
+					setIsLoading(true);
+					const verifyNewToken = async () => {
+						try {
+							await api.get("/auth/me");
+							setIsAuthenticated(true);
+						} catch {
+							localStorage.removeItem("accessToken");
+							setIsAuthenticated(false);
+						} finally {
+							setIsLoading(false);
+						}
+					};
+					verifyNewToken();
+				}
+			}
+		};
+
+		window.addEventListener("storage", handleStorageChange);
+		return () => window.removeEventListener("storage", handleStorageChange);
+	}, []);
+
 	if (isLoading) return <LoadingSpinner />;
+
+	// 🔥 JEŚLI TRYB SERWISOWY - POKAŻ STRONĘ MAINTENANCE
+	if (isMaintenance) {
+		console.log("🔧 [Router] Tryb serwisowy - wyświetlam stronę Maintenance");
+		return (
+			<Suspense fallback={<LoadingSpinner />}>
+				<Routes>
+					<Route path="*" element={<Maintenance />} />
+				</Routes>
+			</Suspense>
+		);
+	}
 
 	if (!isAuthenticated) {
 		return (
@@ -88,15 +165,12 @@ function AppRoutes() {
 		<Suspense fallback={<LoadingSpinner />}>
 			<Routes>
 				<Route path="/login" element={<Navigate to="/dashboard" replace />} />
-
-				
 				<Route
 					path="/onboarding"
-					element={<Onboarding onComplete={() => {}} />}
+					element={<Onboarding onComplete={() => { }} />}
 				/>
-
-				        <Route path="/404" element={<NotFound />} />
-            <Route path="*" element={<NotFound />} />
+				<Route path="/404" element={<NotFound />} />
+				<Route path="*" element={<NotFound />} />
 				<Route element={<DashboardLayout />}>
 					<Route path="/" element={<Dashboard />} />
 					<Route path="/dashboard" element={<Dashboard />} />

@@ -18,7 +18,6 @@ const Admin = lazy(() => import("../pages/Admin/Admin"));
 const Onboarding = lazy(() => import("../pages/Onboarding/Onboarding"));
 const Profile = lazy(() => import("../pages/Profile/Profile"));
 const Calendar = lazy(() => import("../pages/Calendar/Calendar"));
-const Maintenance = lazy(() => import("../pages/Maintenance/Maintenance"));
 
 const Loading = () => (
 	<div
@@ -56,22 +55,6 @@ const Loading = () => (
 function AppRoutes() {
 	const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
 	const [isLoading, setIsLoading] = useState(true);
-	const [isMaintenance, setIsMaintenance] = useState(false);
-
-	// Sprawdź tryb serwisowy
-	useEffect(() => {
-		const checkMaintenance = () => {
-			// Sprawdź czy tryb serwisowy jest włączony przez zmienną środowiskową
-			const maintenanceMode = import.meta.env.VITE_MAINTENANCE_MODE === 'true';
-			setIsMaintenance(maintenanceMode);
-
-			if (maintenanceMode) {
-				logger.debug("🔧 [Maintenance] Tryb serwisowy włączony");
-			}
-		};
-
-		checkMaintenance();
-	}, []);
 
 	useEffect(() => {
 		const verifyToken = async () => {
@@ -87,7 +70,7 @@ function AppRoutes() {
 			try {
 				logger.debug("🔐 [Auth] Weryfikacja tokena...");
 
-				await api.get("/auth/me");
+				await api.get("/auth/me"); 
 				logger.debug("✅ [Auth] Token ważny");
 				setIsAuthenticated(true);
 			} catch (error: any) {
@@ -96,7 +79,7 @@ function AppRoutes() {
 					error?.response?.status,
 				);
 				localStorage.removeItem("accessToken");
-				localStorage.removeItem("refreshToken");
+				localStorage.removeItem("refreshToken"); 
 				setIsAuthenticated(false);
 			} finally {
 				setIsLoading(false);
@@ -106,6 +89,7 @@ function AppRoutes() {
 		verifyToken();
 	}, []);
 
+
 	useEffect(() => {
 		const handleStorageChange = (e: StorageEvent) => {
 			if (e.key === "accessToken") {
@@ -113,6 +97,7 @@ function AppRoutes() {
 					logger.debug("🔐 [Auth] Token usunięty w innej karcie");
 					setIsAuthenticated(false);
 				} else {
+
 					setIsLoading(true);
 					const verifyNewToken = async () => {
 						try {
@@ -134,20 +119,9 @@ function AppRoutes() {
 		return () => window.removeEventListener("storage", handleStorageChange);
 	}, []);
 
+
 	if (isLoading) {
 		return <Loading />;
-	}
-
-	// 🔥 JEŚLI TRYB SERWISOWY - POKAŻ STRONĘ MAINTENANCE
-	if (isMaintenance) {
-		logger.debug("🔧 [Router] Tryb serwisowy - wyświetlam stronę Maintenance");
-		return (
-			<Suspense fallback={<Loading />}>
-				<Routes>
-					<Route path="*" element={<Maintenance />} />
-				</Routes>
-			</Suspense>
-		);
 	}
 
 	logger.debug("═══════════════════════════════════════════════════════════");
@@ -184,7 +158,7 @@ function AppRoutes() {
 				/>
 				<Route
 					path="/onboarding"
-					element={<Onboarding onComplete={() => { }} />}
+					element={<Onboarding onComplete={() => {}} />}
 				/>
 				<Route element={<DashboardLayout />}>
 					<Route path="/" element={<Dashboard />} />
