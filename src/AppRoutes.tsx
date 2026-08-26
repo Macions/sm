@@ -57,16 +57,22 @@ function AppRoutes() {
 	// 🔥 SPRAWDZANIE TRYBU SERWISOWEGO
 	useEffect(() => {
 		const checkMaintenance = () => {
-			// 🔥 SPRAWDZA NAJCZERWIEJ LOCALSTORAGE, POTEM ZMIENNĄ ŚRODOWISKOWĄ
+			// 🔥 NA PRODUKCJI UŻYWAJ TYLKO LOCALSTORAGE
 			const maintenanceFromStorage = localStorage.getItem('maintenance') === 'true';
+
+			// Dla lokalnego dev - sprawdź też env
 			const maintenanceFromEnv = import.meta.env.VITE_MAINTENANCE_MODE === 'true';
 
-			// Jeśli localStorage ma wartość, użyj jej, inaczej użyj env
-			const maintenance = maintenanceFromStorage || maintenanceFromEnv;
+			// Na produkcji używaj localStorage, na dev używaj env jako fallback
+			const isProduction = import.meta.env.PROD === true;
+			const maintenance = isProduction
+				? maintenanceFromStorage  // Na produkcji TYLKO localStorage
+				: maintenanceFromStorage || maintenanceFromEnv; // Na dev oba
+
 			setIsMaintenance(maintenance);
 
+			console.log("🔧 [Maintenance] isProduction:", isProduction);
 			console.log("🔧 [Maintenance] localStorage:", maintenanceFromStorage);
-			console.log("🔧 [Maintenance] env:", maintenanceFromEnv);
 			console.log("🔧 [Maintenance] wynik:", maintenance);
 		};
 
