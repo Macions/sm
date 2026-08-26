@@ -60,6 +60,16 @@ type QuickAction = {
 	roles?: string[];
 };
 
+type Stat = {
+	id: string;
+	label: string;
+	value: string | React.ReactNode; // 👈 Pozwala na ReactNode
+	subtext?: string;
+	icon: React.ReactNode;
+	color: string;
+	bgColor: string;
+};
+
 type DashboardStats = {
 	members: number;
 	projects: number;
@@ -175,13 +185,10 @@ export default function Dashboard() {
 	const navigate = useNavigate();
 	const { user, loading: userLoading } = useUser();
 
-
-
 	const displayName = user?.firstName || "Użytkowniku";
 
 	const [checkingOnboarding, setCheckingOnboarding] = useState(true);
 	const [error, setError] = useState<string | null>(null);
-
 
 	const [stats, setStats] = useState<DashboardStats | null>(null);
 	const [notifications, setNotifications] = useState<Notification[]>([]);
@@ -241,7 +248,9 @@ export default function Dashboard() {
 						return;
 					}
 				} else {
-					logger.warn("⚠️ [Dashboard] Nie udało się sprawdzić statusu onboardingu");
+					logger.warn(
+						"⚠️ [Dashboard] Nie udało się sprawdzić statusu onboardingu",
+					);
 				}
 			} catch (error) {
 				logger.error("❌ [Dashboard] Błąd sprawdzania onboardingu:", error);
@@ -253,7 +262,6 @@ export default function Dashboard() {
 		checkOnboarding();
 	}, []);
 	useEffect(() => {
-
 		const controller = new AbortController();
 		const fetchBirthdays = async () => {
 			try {
@@ -270,6 +278,7 @@ export default function Dashboard() {
 
 				if (!res.ok) throw new Error("Nie udało się pobrać urodzin");
 				const data = await res.json();
+				console.log("📅 [Dashboard] Otrzymane urodziny:", data); // <-- DODAJ TĘ LINIĘ
 				setBirthdays(data);
 			} catch (err) {
 				if (err instanceof Error && err.name === "AbortError") return;
@@ -280,7 +289,6 @@ export default function Dashboard() {
 		};
 		const fetchStats = async () => {
 			try {
-
 				setLoadingStats(true);
 				const token = localStorage.getItem("accessToken");
 
@@ -291,8 +299,6 @@ export default function Dashboard() {
 						"Content-Type": "application/json",
 					},
 				});
-
-
 
 				if (!res.ok) throw new Error("Nie udało się pobrać statystyk");
 				const data = await res.json();
@@ -307,10 +313,8 @@ export default function Dashboard() {
 			}
 		};
 
-
 		const fetchContributions = async () => {
 			try {
-
 				setLoadingContributions(true);
 				const token = localStorage.getItem("accessToken");
 
@@ -336,7 +340,6 @@ export default function Dashboard() {
 
 		const fetchNotifs = async () => {
 			try {
-
 				setLoadingNotifs(true);
 				const token = localStorage.getItem("accessToken");
 
@@ -347,8 +350,6 @@ export default function Dashboard() {
 						"Content-Type": "application/json",
 					},
 				});
-
-
 
 				if (!res.ok) throw new Error("Nie udało się pobrać powiadomień");
 				const data = await res.json();
@@ -363,14 +364,14 @@ export default function Dashboard() {
 			}
 		};
 
-
-
-
-
-		Promise.all([fetchStats(), fetchContributions(), fetchNotifs(), fetchBirthdays()]);
+		Promise.all([
+			fetchStats(),
+			fetchContributions(),
+			fetchNotifs(),
+			fetchBirthdays(),
+		]);
 
 		return () => {
-
 			controller.abort();
 		};
 	}, []);
@@ -475,7 +476,7 @@ export default function Dashboard() {
 	const statsData = useMemo(() => {
 		if (!stats) return [];
 
-		const baseStats = [
+		const baseStats: Stat[] = [
 			{
 				id: "members",
 				label: "Członkowie SM",
@@ -487,56 +488,56 @@ export default function Dashboard() {
 
 			...(contributionStats
 				? [
-					{
-						id: "contribution",
-						label: (() => {
-							const { month, monthName, year, monthsPaid } =
-								contributionStats.currentMonth;
-							if (monthsPaid > 1) {
-								const months = [];
-								for (let i = 0; i < monthsPaid; i++) {
-									const m = ((month - i + 11) % 12) + 1;
-									months.push(m);
+						{
+							id: "contribution",
+							label: (() => {
+								const { month, monthName, year, monthsPaid } =
+									contributionStats.currentMonth;
+								if (monthsPaid > 1) {
+									const months = [];
+									for (let i = 0; i < monthsPaid; i++) {
+										const m = ((month - i + 11) % 12) + 1;
+										months.push(m);
+									}
+									const monthNames = months.map((m) => getMonthName(m));
+									return `Składka ${monthNames.reverse().join("-")} ${year}`;
 								}
-								const monthNames = months.map((m) => getMonthName(m));
-								return `Składka ${monthNames.reverse().join("-")} ${year}`;
-							}
-							return `Składka ${monthName} ${year}`;
-						})(),
-						value:
-							contributionStats.hasContributions === false
-								? ""
-								: `${contributionStats.currentMonth.amount.toFixed(2)} zł`,
-						subtext:
-							contributionStats.hasContributions === false
-								? "Nie dotyczy"
-								: contributionStats.currentMonth.status === "paid"
-									? `Opłacona (${contributionStats.currentMonth.monthsPaid} mies.)`
-									: contributionStats.summary.overdueMonths > 0
-										? `${contributionStats.summary.overdueMonths} mies. zaległości`
-										: "Nieopłacona",
-						icon:
-							contributionStats.hasContributions === false ? (
-								<AlertCircle size={24} />
-							) : contributionStats.currentMonth.status === "paid" ? (
-								<CreditCard size={24} />
-							) : (
-								<Wallet size={24} />
-							),
-						color:
-							contributionStats.hasContributions === false
-								? "#6B7280"
-								: contributionStats.currentMonth.status === "paid"
-									? "#2ECC71"
-									: "#F5A623",
-						bgColor:
-							contributionStats.hasContributions === false
-								? "#F3F4F6"
-								: contributionStats.currentMonth.status === "paid"
-									? "#ECFDF5"
-									: "#FEF9E7",
-					},
-				]
+								return `Składka ${monthName} ${year}`;
+							})(),
+							value:
+								contributionStats.hasContributions === false
+									? ""
+									: `${contributionStats.currentMonth.amount.toFixed(2)} zł`,
+							subtext:
+								contributionStats.hasContributions === false
+									? "Nie dotyczy"
+									: contributionStats.currentMonth.status === "paid"
+										? `Opłacona (${contributionStats.currentMonth.monthsPaid} mies.)`
+										: contributionStats.summary.overdueMonths > 0
+											? `${contributionStats.summary.overdueMonths} mies. zaległości`
+											: "Nieopłacona",
+							icon:
+								contributionStats.hasContributions === false ? (
+									<AlertCircle size={24} />
+								) : contributionStats.currentMonth.status === "paid" ? (
+									<CreditCard size={24} />
+								) : (
+									<Wallet size={24} />
+								),
+							color:
+								contributionStats.hasContributions === false
+									? "#6B7280"
+									: contributionStats.currentMonth.status === "paid"
+										? "#2ECC71"
+										: "#F5A623",
+							bgColor:
+								contributionStats.hasContributions === false
+									? "#F3F4F6"
+									: contributionStats.currentMonth.status === "paid"
+										? "#ECFDF5"
+										: "#FEF9E7",
+						},
+					]
 				: []),
 			{
 				id: "projects",
@@ -581,12 +582,40 @@ export default function Dashboard() {
 			});
 		}
 		// Dodaj kafelek urodzin
+		// Dodaj kafelek urodzin
+		// Dodaj kafelek urodzin
 		if (birthdays.length > 0) {
+			const names = birthdays.map((b) => `${b.first_name} ${b.last_name}`);
+
+			let displayText: React.ReactNode; // Zmieniamy typ na ReactNode
+
+			if (names.length === 1) {
+				displayText = names[0];
+			} else if (names.length === 2) {
+				displayText = (
+					<>
+						{names[0]} <span style={{ opacity: 0.4 }}>i</span> {names[1]}
+					</>
+				);
+			} else {
+				const lastTwo = names.slice(-2);
+				const rest = names.slice(0, -2);
+				displayText = (
+					<>
+						{rest.join(", ")}
+						{rest.length > 0 && ", "}
+						{lastTwo[0]} <span style={{ opacity: 0.6 }}>i</span> {lastTwo[1]}
+					</>
+				);
+			}
+
 			baseStats.push({
 				id: "birthdays",
-				label: `🎂 Urodziny dzisiaj`,
-				value: birthdays.length.toString(),
-				subtext: birthdays.slice(0, 3).map(b => `${b.first_name} ${b.last_name}`).join(", ") + (birthdays.length > 3 ? ` +${birthdays.length - 3} więcej` : ""),
+				label:
+					names.length === 1
+						? "Dzisiaj urodziny obchodzi"
+						: "Dzisiaj urodziny obchodzą",
+				value: displayText,
 				icon: <Gift size={24} />,
 				color: "#E84AA9",
 				bgColor: "#FDF2F8",
@@ -629,7 +658,6 @@ export default function Dashboard() {
 		);
 	}
 
-
 	if (error) {
 		return (
 			<div className={styles.dashboard}>
@@ -645,12 +673,8 @@ export default function Dashboard() {
 		);
 	}
 
-
-
-
 	return (
 		<>
-
 			<div className={styles.welcomeCard}>
 				<div className={styles.welcomeCard__content}>
 					<img
@@ -674,18 +698,17 @@ export default function Dashboard() {
 										&nbsp;
 									</span>
 								) : (
-
 									(() => {
-
-										if (user?.role?.toLowerCase() === 'admin' || user?.role === 'Prezes') {
+										if (
+											user?.role?.toLowerCase() === "admin" ||
+											user?.role === "Prezes"
+										) {
 											return user?.team || "—";
 										}
-
 
 										if (user?.pillars) {
 											return transformPillars(user.pillars);
 										}
-
 
 										return user?.team || "—";
 									})()
@@ -707,10 +730,8 @@ export default function Dashboard() {
 				</div>
 			</div>
 
-
 			<div className={styles.stats}>
 				{loadingStats || loadingContributions || loadingBirthdays ? (
-
 					<>
 						{[1, 2, 3, 4, 5].map((i) => (
 							<div key={i} className={styles.statCard}>
@@ -757,7 +778,6 @@ export default function Dashboard() {
 			</div>
 
 			<div className={styles.bottomSection}>
-
 				<div className={styles.notifications}>
 					<h2 className={styles.sectionTitle}>
 						<Bell size={20} />
@@ -765,7 +785,6 @@ export default function Dashboard() {
 					</h2>
 					<div className={styles.notifications__list}>
 						{loadingNotifs ? (
-
 							<>
 								{[1, 2, 3].map((i) => (
 									<div key={i} className={styles.notification}>
@@ -809,7 +828,6 @@ export default function Dashboard() {
 						)}
 					</div>
 				</div>
-
 
 				<div className={styles.quickActions}>
 					<h2 className={styles.sectionTitle}>Szybkie akcje</h2>

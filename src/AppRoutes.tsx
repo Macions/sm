@@ -68,12 +68,12 @@ function AppRoutes() {
 		checkMaintenance();
 
 		const handleStorageChange = (e: StorageEvent) => {
-			if (e.key === 'maintenance') {
+			if (e.key === "maintenance") {
 				checkMaintenance();
 			}
 		};
-		window.addEventListener('storage', handleStorageChange);
-		return () => window.removeEventListener('storage', handleStorageChange);
+		window.addEventListener("storage", handleStorageChange);
+		return () => window.removeEventListener("storage", handleStorageChange);
 	}, []);
 
 	useEffect(() => {
@@ -92,7 +92,10 @@ function AppRoutes() {
 				logger.debug("✅ [Auth] Token ważny");
 				setIsAuthenticated(true);
 			} catch (error: any) {
-				logger.warn("❌ [Auth] Token wygasł lub jest nieprawidłowy", error?.response?.status);
+				logger.warn(
+					"❌ [Auth] Token wygasł lub jest nieprawidłowy",
+					error?.response?.status,
+				);
 				localStorage.removeItem("accessToken");
 				localStorage.removeItem("refreshToken");
 				setIsAuthenticated(false);
@@ -162,7 +165,7 @@ function AppRoutes() {
 				<Route path="/login" element={<Navigate to="/dashboard" replace />} />
 				<Route
 					path="/onboarding"
-					element={<Onboarding onComplete={() => { }} />}
+					element={<Onboarding onComplete={() => {}} />}
 				/>
 				<Route path="/404" element={<NotFound />} />
 				<Route path="*" element={<NotFound />} />
