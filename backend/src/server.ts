@@ -419,8 +419,15 @@ app.use(
 );
 
 app.post("/api/auth/google-token", async (req: any, res: any) => {
+	console.log("🔵 [GOOGLE-TOKEN] Otrzymano żądanie logowania");
+
 	try {
 		const { accessToken } = req.body;
+
+		if (!accessToken) {
+			console.log("🔴 [GOOGLE-TOKEN] Brak accessToken");
+			return res.status(400).json({ error: "Brak tokena dostępu" });
+		}
 
 		const userInfoRes = await fetch(
 			"https://www.googleapis.com/oauth2/v3/userinfo",
@@ -432,25 +439,60 @@ app.post("/api/auth/google-token", async (req: any, res: any) => {
 		);
 
 		if (!userInfoRes.ok) {
+			console.log("🔴 [GOOGLE-TOKEN] Nieprawidłowy token Google");
 			return res.status(400).json({ error: "Nieprawidłowy token Google" });
 		}
 
 		const userInfo = await userInfoRes.json();
 
 		if (!userInfo.email) {
+			console.log("🔴 [GOOGLE-TOKEN] Brak email w profilu Google");
 			return res.status(400).json({ error: "Brak email w profilu Google" });
 		}
+
+		console.log("🔵 [GOOGLE-TOKEN] Email użytkownika:", userInfo.email);
 
 		const user = await prisma.user.findUnique({
 			where: { email: userInfo.email },
 		});
 
 		if (!user) {
-			return res
-				.status(404)
-				.json({ error: "Użytkownik nie istnieje w systemie" });
+			console.log("🔴 [GOOGLE-TOKEN] Użytkownik nie istnieje:", userInfo.email);
+
+			// ❌ LOGOWANIE NIEUDANE - zapis logu
+			try {
+				await prisma.systemLog.create({
+					data: {
+						user_id: 0,
+						user_name: userInfo.email || "Nieznany",
+						user_role: "unknown",
+						action_type: "LOGIN",
+						category: "AUTH",
+						endpoint: "/api/auth/google-token",
+						method: "POST",
+						entity_name: `Nieudane logowanie przez Google: ${userInfo.email}`,
+						changes: JSON.stringify({
+							email: userInfo.email,
+							success: false
+						}),
+						ip_address: req.headers["x-forwarded-for"]?.split(',')[0]?.trim() ||
+							req.socket?.remoteAddress || null,
+						user_agent: req.headers["user-agent"] || null,
+						status: "error",
+						error_message: "Użytkownik nie istnieje w systemie",
+					},
+				});
+				console.log("✅ [GOOGLE-TOKEN] Log nieudanego logowania zapisany");
+			} catch (logError) {
+				console.error("❌ [GOOGLE-TOKEN] Błąd zapisu logu:", logError);
+			}
+
+			return res.status(404).json({
+				error: "Użytkownik nie istnieje w systemie"
+			});
 		}
 
+		// ✅ GENEROWANIE TOKENÓW
 		const token = jwt.sign(
 			{
 				id: user.id,
@@ -467,6 +509,35 @@ app.post("/api/auth/google-token", async (req: any, res: any) => {
 			expiresIn: "7d",
 		});
 
+		// ✅ LOGOWANIE UDANE - zapis logu
+		try {
+			await prisma.systemLog.create({
+				data: {
+					user_id: user.id,
+					user_name: user.email || "Nieznany",
+					user_role: mapRoleId(user.role_id),
+					action_type: "LOGIN",
+					category: "AUTH",
+					endpoint: "/api/auth/google-token",
+					method: "POST",
+					entity_name: `Logowanie przez Google: ${user.email}`,
+					changes: JSON.stringify({
+						email: user.email,
+						success: true,
+						role: mapRoleId(user.role_id),
+					}),
+					ip_address: req.headers["x-forwarded-for"]?.split(',')[0]?.trim() ||
+						req.socket?.remoteAddress || null,
+					user_agent: req.headers["user-agent"] || null,
+					status: "success",
+				},
+			});
+			console.log("✅ [GOOGLE-TOKEN] Log udanego logowania zapisany dla:", user.email);
+		} catch (logError) {
+			console.error("❌ [GOOGLE-TOKEN] Błąd zapisu logu:", logError);
+		}
+
+		// ✅ ODPOWIEDŹ
 		res.json({
 			accessToken: token,
 			refreshToken: refreshToken,
@@ -480,8 +551,36 @@ app.post("/api/auth/google-token", async (req: any, res: any) => {
 				status: user.status,
 			},
 		});
+
 	} catch (error) {
-		console.error("âťŚ Błąd logowania przez Google token:", error);
+		console.error("❌ [GOOGLE-TOKEN] Błąd logowania:", error);
+
+		// ❌ LOGOWANIE NIEUDANE - błąd serwera
+		try {
+			await prisma.systemLog.create({
+				data: {
+					user_id: 0,
+					user_name: "Nieznany",
+					user_role: "unknown",
+					action_type: "LOGIN",
+					category: "AUTH",
+					endpoint: "/api/auth/google-token",
+					method: "POST",
+					entity_name: "Błąd logowania przez Google",
+					changes: JSON.stringify({
+						error: error instanceof Error ? error.message : "Unknown error"
+					}),
+					ip_address: req.headers["x-forwarded-for"]?.split(',')[0]?.trim() ||
+						req.socket?.remoteAddress || null,
+					user_agent: req.headers["user-agent"] || null,
+					status: "error",
+					error_message: error instanceof Error ? error.message : "Błąd serwera",
+				},
+			});
+		} catch (logError) {
+			console.error("❌ [GOOGLE-TOKEN] Błąd zapisu logu błędu:", logError);
+		}
+
 		res.status(500).json({ error: "Błąd logowania" });
 	}
 });
@@ -1318,39 +1417,39 @@ app.post("/api/teams", authMiddleware, async (req: any, res) => {
 });
 // GET /api/dashboard/birthdays
 app.get("/api/dashboard/birthdays", authMiddleware, async (req: any, res) => {
-    try {
-        const today = new Date();
-        const day = today.getDate();
-        const month = today.getMonth() + 1;
+	try {
+		const today = new Date();
+		const day = today.getDate();
+		const month = today.getMonth() + 1;
 
-        const users = await prisma.user.findMany({
-            where: {
-                birthday: {
-                    not: null,
-                },
-                is_active: true,
-            },
-            select: {
-                id: true,
-                first_name: true,
-                last_name: true,
-                email: true,
-                birthday: true,
-            },
-        });
+		const users = await prisma.user.findMany({
+			where: {
+				birthday: {
+					not: null,
+				},
+				is_active: true,
+			},
+			select: {
+				id: true,
+				first_name: true,
+				last_name: true,
+				email: true,
+				birthday: true,
+			},
+		});
 
-        // Filtruj po dniu i miesiącu (ignorując rok)
-        const todayBirthdays = users.filter(user => {
-            if (!user.birthday) return false;
-            const birthDate = new Date(user.birthday);
-            return birthDate.getDate() === day && birthDate.getMonth() + 1 === month;
-        });
+		// Filtruj po dniu i miesiącu (ignorując rok)
+		const todayBirthdays = users.filter(user => {
+			if (!user.birthday) return false;
+			const birthDate = new Date(user.birthday);
+			return birthDate.getDate() === day && birthDate.getMonth() + 1 === month;
+		});
 
-        res.json(todayBirthdays);
-    } catch (error) {
-        logger.error("❌ Błąd pobierania urodzin:", error);
-        res.status(500).json({ error: "Nie udało się pobrać urodzin" });
-    }
+		res.json(todayBirthdays);
+	} catch (error) {
+		logger.error("❌ Błąd pobierania urodzin:", error);
+		res.status(500).json({ error: "Nie udało się pobrać urodzin" });
+	}
 });
 app.get("/api/dashboard/stats", authMiddleware, async (req: any, res) => {
 	try {
