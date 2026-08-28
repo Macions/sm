@@ -5,7 +5,7 @@ services:
       dockerfile: Dockerfile
       no_cache: true
     ports:
-      - "3000:3000"
+      - "127.0.0.1:3000:3000" # ZMIENIONE - TYLKO LOCALHOST!
     environment:
       PORT: ${PORT}
       JWT_SECRET: ${JWT_SECRET}
