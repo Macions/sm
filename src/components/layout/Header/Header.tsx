@@ -334,7 +334,7 @@ export default function Header({
 				<input
 					ref={inputRef}
 					type="text"
-					placeholder="Szukaj członków, projektów, poradników... (Ctrl+K)"
+					placeholder="Szukaj członków, projektów, poradników..."
 					value={localSearchQuery}
 					onChange={handleSearchChange}
 					onFocus={() => setIsSearchFocused(true)}

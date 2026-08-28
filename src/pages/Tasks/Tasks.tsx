@@ -203,7 +203,107 @@ interface Comment {
 	content: string;
 	createdAt: string;
 }
+function ArchivedTasksList({ tasks, currentUser }: { tasks: ArchivedTask[]; currentUser: User }) {
+	const getTimelineLabel = (status: string) => {
+		switch (status) {
+			case "early": return "✅ Przed terminem";
+			case "on_time": return "✅ Na czas";
+			case "late": return "⚠️ Po terminie";
+			default: return "—";
+		}
+	};
 
+	const getTimelineColor = (status: string) => {
+		switch (status) {
+			case "early": return "#059669";
+			case "on_time": return "#2563eb";
+			case "late": return "#dc2626";
+			default: return "#6b7280";
+		}
+	};
+
+	const getDaysText = (days: number) => {
+		if (days === 0) return "mniej niż dzień";
+		if (days === 1) return "1 dzień";
+		if (days < 5) return `${days} dni`;
+		return `${days} dni`;
+	};
+
+	return (
+		<div className={styles.archivedSection}>
+			<div className={styles.tasksSectionHeader}>
+				<h2 className={styles.tasksSectionTitle}>
+					📦 Zarchiwizowane zadania
+					<span className={styles.tasksSectionCount}>{tasks.length}</span>
+				</h2>
+			</div>
+
+			{tasks.length === 0 ? (
+				<div className={styles.archivedEmpty}>
+					<p>Brak zarchiwizowanych zadań</p>
+				</div>
+			) : (
+				<div className={styles.archivedGrid}>
+					{tasks.map((task) => (
+						<div key={task.id} className={styles.archivedCard}>
+							<div className={styles.archivedCard__header}>
+								<h4 className={styles.archivedCard__title}>{task.title}</h4>
+								<span
+									className={styles.archivedCard__timeline}
+									style={{ backgroundColor: getTimelineColor(task.timelineStatus) }}
+								>
+									{getTimelineLabel(task.timelineStatus)}
+								</span>
+							</div>
+
+							<div className={styles.archivedCard__body}>
+								<div className={styles.archivedCard__stats}>
+									<div className={styles.archivedCard__stat}>
+										<span className={styles.archivedCard__statLabel}>Czas wykonania</span>
+										<span className={styles.archivedCard__statValue}>
+											{getDaysText(task.daysToComplete)}
+										</span>
+									</div>
+									<div className={styles.archivedCard__stat}>
+										<span className={styles.archivedCard__statLabel}>Zakończono</span>
+										<span className={styles.archivedCard__statValue}>
+											{new Date(task.completedAt).toLocaleDateString("pl-PL", {
+												day: "numeric",
+												month: "short",
+												year: "numeric"
+											})}
+										</span>
+									</div>
+									<div className={styles.archivedCard__stat}>
+										<span className={styles.archivedCard__statLabel}>Różnica</span>
+										<span className={`${styles.archivedCard__statValue} ${task.daysDiff > 0 ? styles.archivedCard__statLate :
+											task.daysDiff < -1 ? styles.archivedCard__statEarly :
+												styles.archivedCard__statOnTime
+											}`}>
+											{task.daysDiff > 0 ? `+${task.daysDiff} dni` :
+												task.daysDiff < -1 ? `${task.daysDiff} dni` :
+													"na czas"}
+										</span>
+									</div>
+								</div>
+								{task.priority && (
+									<div className={styles.archivedCard__priority}>
+										Priorytet: {PRIORITY_LABELS[task.priority as TaskPriority] || task.priority}
+									</div>
+								)}
+								{task.rating && (
+									<div className={styles.archivedCard__rating}>
+										Ocena: {task.rating}/5 ⭐
+									</div>
+								)}
+							</div>
+						</div>
+					))}
+				</div>
+			)}
+		</div>
+	);
+}
 function Comments({ taskId }: { taskId: string; currentUser: User }) {
 	const [comments, setComments] = useState<Comment[]>([]);
 	const [newComment, setNewComment] = useState("");
@@ -312,6 +412,12 @@ function Comments({ taskId }: { taskId: string; currentUser: User }) {
 			</div>
 		</div>
 	);
+}
+interface ArchivedTask extends Task {
+	completedAt: string;           // Data zakończenia
+	daysToComplete: number;        // Liczba dni od utworzenia do zakończenia
+	timelineStatus: "early" | "on_time" | "late";  // Status terminowości
+	daysDiff: number;              // Różnica dni względem terminu
 }
 interface TaskDetailModalProps {
 	isOpen: boolean;
@@ -853,7 +959,6 @@ function TaskCard({
 	const isAssignedToMe =
 		task.assignedTo === currentUser.id ||
 		(task.assignedUsers && task.assignedUsers.includes(currentUser.id));
-	const isAssigned = String(task.assignedTo) === String(currentUser.id);
 	const [showAllAssignees, setShowAllAssignees] = useState(false);
 
 	const formatDate = (date: string) => {
@@ -1247,8 +1352,6 @@ function TaskModal({
 	const validateForm = () => {
 		const newErrors: Record<string, string> = {};
 		if (!formData.title?.trim()) newErrors.title = "Tytuł jest wymagany";
-		if (!formData.description?.trim())
-			newErrors.description = "Opis jest wymagany";
 
 		if (formData.assignedType === "user" && selectedUsers.length === 0) {
 			newErrors.assignedTo = "Wybierz przynajmniej jednego użytkownika";
@@ -1371,7 +1474,7 @@ function TaskModal({
 						</div>
 						<div className={styles.modal__field}>
 							<label className={styles.modal__label}>
-								Opis <span className={styles.modal__required}>*</span>
+								Opis
 							</label>
 							<textarea
 								className={`${styles.modal__input} ${styles.modal__textarea} ${errors.description ? styles.modal__inputError : ""}`}
@@ -1832,6 +1935,9 @@ export default function Tasks() {
 	const [taskToDelete, setTaskToDelete] = useState<Task | null>(null);
 	const [ratingTask, setRatingTask] = useState<Task | null>(null);
 	const [pillars, setPillars] = useState<string[]>([]);
+	const [archivedTasks, setArchivedTasks] = useState<ArchivedTask[]>([]);
+	const [showArchived, setShowArchived] = useState(false);
+	const [loadingArchived, setLoadingArchived] = useState(false);
 	const [filterPriority, setFilterPriority] = useState<string>("all");
 	const [isModalOpen, setIsModalOpen] = useState(false);
 	const [isUpdating, setIsUpdating] = useState(false);
@@ -1848,6 +1954,51 @@ export default function Tasks() {
 		name: "",
 		role: "member",
 	});
+	const fetchArchivedTasks = useCallback(async () => {
+		try {
+			setLoadingArchived(true);
+			const token = localStorage.getItem("accessToken");
+
+			// Pobierz ukończone zadania dla zalogowanego użytkownika
+			const response = await fetch(`/api/tasks/completed/${currentUser.id}`, {
+				headers: { Authorization: `Bearer ${token}` },
+			});
+
+			if (response.ok) {
+				const data = await response.json();
+
+				// Filtruj zadania starsze niż 3 dni
+				const threeDaysAgo = new Date();
+				threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
+
+				const archived = data.tasks
+					.filter((task: any) => {
+						const completedDate = new Date(task.completedAt);
+						return completedDate <= threeDaysAgo;
+					})
+					.map((task: any) => ({
+						...task,
+						completedAt: task.completedAt,
+						daysToComplete: task.daysToComplete || 0,
+						timelineStatus: task.timelineStatus || "on_time",
+						daysDiff: task.daysDiff || 0,
+					}));
+
+				setArchivedTasks(archived);
+			}
+		} catch (error) {
+			console.error("Błąd pobierania zarchiwizowanych:", error);
+		} finally {
+			setLoadingArchived(false);
+		}
+	}, [currentUser.id]);
+
+	// Wywołaj pobieranie po załadowaniu użytkownika
+	useEffect(() => {
+		if (currentUser.id) {
+			fetchArchivedTasks();
+		}
+	}, [currentUser.id, fetchArchivedTasks]);
 
 	useEffect(() => {
 		const fetchTeamsAndPillars = async () => {
@@ -2570,6 +2721,12 @@ export default function Tasks() {
 						<option value="medium">Średni</option>
 						<option value="low">Niski</option>
 					</select>
+					<button
+						className={`${styles.archivedToggleBtn} ${showArchived ? styles.archivedToggleBtnActive : ""}`}
+						onClick={() => setShowArchived(!showArchived)}
+					>
+						{showArchived ? "📋 Pokaż aktywne" : "📦 Zarchiwizowane"}
+					</button>
 				</div>
 			</div>
 

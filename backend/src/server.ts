@@ -222,7 +222,7 @@ app.post("/api/auth/google", async (req, res) => {
 				last_name: user.last_name,
 			},
 			JWT_SECRET,
-			{ expiresIn: "24h" },
+			{ expiresIn: "30m" },
 		);
 
 		const refreshToken = jwt.sign({ id: user.id }, JWT_SECRET, {
@@ -419,13 +419,11 @@ app.use(
 );
 
 app.post("/api/auth/google-token", async (req: any, res: any) => {
-	console.log("🔵 [GOOGLE-TOKEN] Otrzymano żądanie logowania");
 
 	try {
 		const { accessToken } = req.body;
 
 		if (!accessToken) {
-			console.log("🔴 [GOOGLE-TOKEN] Brak accessToken");
 			return res.status(400).json({ error: "Brak tokena dostępu" });
 		}
 
@@ -439,25 +437,21 @@ app.post("/api/auth/google-token", async (req: any, res: any) => {
 		);
 
 		if (!userInfoRes.ok) {
-			console.log("🔴 [GOOGLE-TOKEN] Nieprawidłowy token Google");
 			return res.status(400).json({ error: "Nieprawidłowy token Google" });
 		}
 
 		const userInfo = await userInfoRes.json();
 
 		if (!userInfo.email) {
-			console.log("🔴 [GOOGLE-TOKEN] Brak email w profilu Google");
 			return res.status(400).json({ error: "Brak email w profilu Google" });
 		}
 
-		console.log("🔵 [GOOGLE-TOKEN] Email użytkownika:", userInfo.email);
 
 		const user = await prisma.user.findUnique({
 			where: { email: userInfo.email },
 		});
 
 		if (!user) {
-			console.log("🔴 [GOOGLE-TOKEN] Użytkownik nie istnieje:", userInfo.email);
 
 			// ❌ LOGOWANIE NIEUDANE - zapis logu
 			try {
@@ -482,7 +476,6 @@ app.post("/api/auth/google-token", async (req: any, res: any) => {
 						error_message: "Użytkownik nie istnieje w systemie",
 					},
 				});
-				console.log("✅ [GOOGLE-TOKEN] Log nieudanego logowania zapisany");
 			} catch (logError) {
 				console.error("❌ [GOOGLE-TOKEN] Błąd zapisu logu:", logError);
 			}
@@ -502,7 +495,7 @@ app.post("/api/auth/google-token", async (req: any, res: any) => {
 				last_name: user.last_name,
 			},
 			JWT_SECRET,
-			{ expiresIn: "24h" },
+			{ expiresIn: "30m" },
 		);
 
 		const refreshToken = jwt.sign({ id: user.id }, JWT_SECRET, {
@@ -532,7 +525,6 @@ app.post("/api/auth/google-token", async (req: any, res: any) => {
 					status: "success",
 				},
 			});
-			console.log("✅ [GOOGLE-TOKEN] Log udanego logowania zapisany dla:", user.email);
 		} catch (logError) {
 			console.error("❌ [GOOGLE-TOKEN] Błąd zapisu logu:", logError);
 		}
@@ -722,75 +714,12 @@ app.post("/api/auth/login", async (req, res) => {
 		});
 
 		if (!user) {
-			try {
-				await prisma.systemLog.create({
-					data: {
-						user_id: 0,
-						user_name: email || "Nieznany",
-						user_role: "unknown",
-						action_type: "LOGIN",
-						category: "AUTH",
-						endpoint: "/api/auth/login",
-						method: "POST",
-						entity_name: `Nieudane logowanie: ${email}`,
-						changes: JSON.stringify({ email, success: false }),
-						status: "error",
-						error_message: "Nieprawidłowy email lub hasło",
-					},
-				});
-			} catch (logError) {
-				logger.error("âťŚ Błąd zapisu logu:", logError);
-			}
-
 			return res.status(401).json({ error: "Nieprawidłowy email lub hasło" });
 		}
 
 		const isPasswordValid = await bcrypt.compare(password, user.password_hash);
 		if (!isPasswordValid) {
-			try {
-				await prisma.systemLog.create({
-					data: {
-						user_id: user.id,
-						user_name: user.email || "Nieznany",
-						user_role: mapRoleId(user.role_id),
-						action_type: "LOGIN",
-						category: "AUTH",
-						endpoint: "/api/auth/login",
-						method: "POST",
-						entity_name: `Nieudane logowanie: ${user.email}`,
-						changes: JSON.stringify({ email, success: false }),
-						status: "error",
-						error_message: "Nieprawidłowe hasło",
-					},
-				});
-			} catch (logError) {
-				logger.error("âťŚ Błąd zapisu logu:", logError);
-			}
-
 			return res.status(401).json({ error: "Nieprawidłowy email lub hasło" });
-		}
-
-		try {
-			await prisma.systemLog.create({
-				data: {
-					user_id: user.id,
-					user_name: user.email || "Nieznany",
-					user_role: mapRoleId(user.role_id),
-					action_type: "LOGIN",
-					category: "AUTH",
-					endpoint: "/api/auth/login",
-					method: "POST",
-					entity_name: `Logowanie: ${user.email}`,
-					changes: JSON.stringify({
-						email: user.email,
-						success: true,
-						role: mapRoleId(user.role_id),
-					}),
-					status: "success",
-				},
-			});
-		} catch (logError) {
-			logger.error("âťŚ Błąd zapisu logu:", logError);
 		}
 
 		const token = jwt.sign(
@@ -802,7 +731,7 @@ app.post("/api/auth/login", async (req, res) => {
 				last_name: user.last_name,
 			},
 			JWT_SECRET,
-			{ expiresIn: "24h" },
+			{ expiresIn: "30m" },
 		);
 
 		const refreshToken = jwt.sign({ id: user.id }, JWT_SECRET, {
@@ -824,7 +753,7 @@ app.post("/api/auth/login", async (req, res) => {
 			onboardingCompleted: true,
 		});
 	} catch (error) {
-		logger.error("âťŚ Błąd logowania:", error);
+		logger.error("❌ Błąd logowania:", error);
 		res.status(500).json({ error: "Wystąpił błąd podczas logowania" });
 	}
 });
@@ -6186,7 +6115,7 @@ app.post("/api/tasks", authMiddleware, async (req: any, res) => {
 			feedbackType,
 		} = req.body;
 
-		if (!title || !description || !assignedTo || !dueDate) {
+		if (!title || !assignedTo || !dueDate) {
 			return res
 				.status(400)
 				.json({ error: "Wszystkie wymagane pola muszą być wypełnione" });
@@ -6824,7 +6753,6 @@ app.get("/api/admin/logs", authMiddleware, async (req: any, res) => {
 				{ user_name: { contains: search } },
 				{ entity_name: { contains: search } },
 				{ endpoint: { contains: search } },
-				{ user_email: { contains: search } },
 			];
 		}
 
@@ -8603,7 +8531,98 @@ app.get("/api/search/data", authMiddleware, async (req: any, res) => {
 		res.status(500).json({ error: "Nie udało się pobrać danych" });
 	}
 });
+app.get("/api/admin/inactive-users", authMiddleware, async (req: any, res: any) => {
+	try {
+		const userRole = req.user?.role;
 
+		// ✅ Tylko admin/board/zarząd mają dostęp
+		if (userRole !== "admin" && userRole !== "board" && userRole !== "Zarząd") {
+			return res.status(403).json({ error: "Brak uprawnień" });
+		}
+
+		// 1️⃣ Pobierz wszystkich aktywnych użytkowników
+		const users = await prisma.user.findMany({
+			where: { is_active: true },
+			select: {
+				id: true,
+				first_name: true,
+				last_name: true,
+				email: true,
+				status: true,
+				join_date: true,
+				created_at: true,
+			},
+		});
+
+		// 2️⃣ Pobierz logi logowania (tylko udane)
+		const loginLogs = await prisma.systemLog.findMany({
+			where: {
+				action_type: "LOGIN",
+				status: "success",
+			},
+			select: {
+				user_id: true,
+				user_name: true,
+				created_at: true,
+			},
+			orderBy: { created_at: "desc" },
+		});
+
+		// 3️⃣ Pobierz użytkowników, którzy ukończyli onboarding
+		const onboardingData = await prisma.onboarding_data.findMany({
+			where: { completed: true },
+			select: { user_id: true },
+		});
+
+		// 4️⃣ Stwórz mapy dla szybkiego wyszukiwania
+		const onboardingUserIds = new Set(onboardingData.map((o: any) => o.user_id));
+		const lastLoginMap = new Map<number, string>();
+
+		loginLogs.forEach((log: any) => {
+			if (!lastLoginMap.has(log.user_id)) {
+				lastLoginMap.set(log.user_id, log.created_at.toISOString());
+			}
+		});
+
+		// 5️⃣ Połącz dane
+		const inactiveUsers = users.map((user: any) => {
+			const hasLogin = lastLoginMap.has(user.id);
+			const hasOnboarding = onboardingUserIds.has(user.id);
+
+			return {
+				id: user.id.toString(),
+				first_name: user.first_name || "—",
+				last_name: user.last_name || "—",
+				email: user.email || "—",
+				status: user.status || "active",
+				join_date: user.join_date?.toISOString() || null,
+				created_at: user.created_at.toISOString(),
+				hasLogin,
+				hasOnboarding,
+				lastLoginDate: lastLoginMap.get(user.id) || null,
+			};
+		});
+
+		// 6️⃣ Sortuj: najpierw nieaktywni (brak logowania i onboardingu)
+		const sortedUsers = inactiveUsers.sort((a, b) => {
+			const aScore = (!a.hasLogin && !a.hasOnboarding) ? 0 : (a.hasLogin && a.hasOnboarding) ? 2 : 1;
+			const bScore = (!b.hasLogin && !b.hasOnboarding) ? 0 : (b.hasLogin && b.hasOnboarding) ? 2 : 1;
+			return aScore - bScore;
+		});
+
+		res.json({
+			users: sortedUsers,
+			total: sortedUsers.length,
+		});
+
+	} catch (error) {
+		console.error("❌ [inactive-users] Błąd:", error);
+		res.status(500).json({
+			error: "Nie udało się pobrać danych",
+			details: error instanceof Error ? error.message : "Unknown error"
+		});
+	}
+});
 app.get(
 	"/api/user/is-coordinator",
 	authMiddleware,

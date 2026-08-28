@@ -278,7 +278,6 @@ export default function Dashboard() {
 
 				if (!res.ok) throw new Error("Nie udało się pobrać urodzin");
 				const data = await res.json();
-				console.log("📅 [Dashboard] Otrzymane urodziny:", data); // <-- DODAJ TĘ LINIĘ
 				setBirthdays(data);
 			} catch (err) {
 				if (err instanceof Error && err.name === "AbortError") return;
@@ -380,7 +379,11 @@ export default function Dashboard() {
 		if (hour >= 4 && hour < 21) return "Dzień dobry";
 		return "Dobry wieczór";
 	}, []);
-
+	const isCurrentUserBirthday = useCallback((): boolean => {
+		if (!user?.id || !birthdays.length) return false;
+		const currentUserId = typeof user.id === 'string' ? parseInt(user.id) : user.id;
+		return birthdays.some((b) => b.id === currentUserId);
+	}, [user?.id, birthdays]);
 	const getMembershipDuration = useCallback(
 		(joinDate: string | null | undefined, isTrial: boolean): string | null => {
 			if (!joinDate || isTrial) return null;
@@ -488,56 +491,56 @@ export default function Dashboard() {
 
 			...(contributionStats
 				? [
-						{
-							id: "contribution",
-							label: (() => {
-								const { month, monthName, year, monthsPaid } =
-									contributionStats.currentMonth;
-								if (monthsPaid > 1) {
-									const months = [];
-									for (let i = 0; i < monthsPaid; i++) {
-										const m = ((month - i + 11) % 12) + 1;
-										months.push(m);
-									}
-									const monthNames = months.map((m) => getMonthName(m));
-									return `Składka ${monthNames.reverse().join("-")} ${year}`;
+					{
+						id: "contribution",
+						label: (() => {
+							const { month, monthName, year, monthsPaid } =
+								contributionStats.currentMonth;
+							if (monthsPaid > 1) {
+								const months = [];
+								for (let i = 0; i < monthsPaid; i++) {
+									const m = ((month - i + 11) % 12) + 1;
+									months.push(m);
 								}
-								return `Składka ${monthName} ${year}`;
-							})(),
-							value:
-								contributionStats.hasContributions === false
-									? ""
-									: `${contributionStats.currentMonth.amount.toFixed(2)} zł`,
-							subtext:
-								contributionStats.hasContributions === false
-									? "Nie dotyczy"
-									: contributionStats.currentMonth.status === "paid"
-										? `Opłacona (${contributionStats.currentMonth.monthsPaid} mies.)`
-										: contributionStats.summary.overdueMonths > 0
-											? `${contributionStats.summary.overdueMonths} mies. zaległości`
-											: "Nieopłacona",
-							icon:
-								contributionStats.hasContributions === false ? (
-									<AlertCircle size={24} />
-								) : contributionStats.currentMonth.status === "paid" ? (
-									<CreditCard size={24} />
-								) : (
-									<Wallet size={24} />
-								),
-							color:
-								contributionStats.hasContributions === false
-									? "#6B7280"
-									: contributionStats.currentMonth.status === "paid"
-										? "#2ECC71"
-										: "#F5A623",
-							bgColor:
-								contributionStats.hasContributions === false
-									? "#F3F4F6"
-									: contributionStats.currentMonth.status === "paid"
-										? "#ECFDF5"
-										: "#FEF9E7",
-						},
-					]
+								const monthNames = months.map((m) => getMonthName(m));
+								return `Składka ${monthNames.reverse().join("-")} ${year}`;
+							}
+							return `Składka ${monthName} ${year}`;
+						})(),
+						value:
+							contributionStats.hasContributions === false
+								? ""
+								: `${contributionStats.currentMonth.amount.toFixed(2)} zł`,
+						subtext:
+							contributionStats.hasContributions === false
+								? "Nie dotyczy"
+								: contributionStats.currentMonth.status === "paid"
+									? `Opłacona (${contributionStats.currentMonth.monthsPaid} mies.)`
+									: contributionStats.summary.overdueMonths > 0
+										? `${contributionStats.summary.overdueMonths} mies. zaległości`
+										: "Nieopłacona",
+						icon:
+							contributionStats.hasContributions === false ? (
+								<AlertCircle size={24} />
+							) : contributionStats.currentMonth.status === "paid" ? (
+								<CreditCard size={24} />
+							) : (
+								<Wallet size={24} />
+							),
+						color:
+							contributionStats.hasContributions === false
+								? "#6B7280"
+								: contributionStats.currentMonth.status === "paid"
+									? "#2ECC71"
+									: "#F5A623",
+						bgColor:
+							contributionStats.hasContributions === false
+								? "#F3F4F6"
+								: contributionStats.currentMonth.status === "paid"
+									? "#ECFDF5"
+									: "#FEF9E7",
+					},
+				]
 				: []),
 			{
 				id: "projects",
@@ -586,10 +589,19 @@ export default function Dashboard() {
 		// Dodaj kafelek urodzin
 		if (birthdays.length > 0) {
 			const names = birthdays.map((b) => `${b.first_name} ${b.last_name}`);
+			const currentUserHasBirthday = isCurrentUserBirthday();
 
-			let displayText: React.ReactNode; // Zmieniamy typ na ReactNode
+			let displayText: React.ReactNode;
 
-			if (names.length === 1) {
+			if (currentUserHasBirthday) {
+				// 🎂 OSOBISTE ŻYCZENIE DLA ZALOGOWANEGO UŻYTKOWNIKA
+				displayText = (
+					<>
+						<strong>Życzymy Ci dużej ilości zadań!</strong>
+						<br />
+					</>
+				);
+			} else if (names.length === 1) {
 				displayText = names[0];
 			} else if (names.length === 2) {
 				displayText = (
@@ -611,14 +623,15 @@ export default function Dashboard() {
 
 			baseStats.push({
 				id: "birthdays",
-				label:
-					names.length === 1
+				label: currentUserHasBirthday
+					? "Wszystkiego najlepszego!"
+					: names.length === 1
 						? "Dzisiaj urodziny obchodzi"
 						: "Dzisiaj urodziny obchodzą",
 				value: displayText,
 				icon: <Gift size={24} />,
-				color: "#E84AA9",
-				bgColor: "#FDF2F8",
+				color: currentUserHasBirthday ? "#FF6B6B" : "#E84AA9",
+				bgColor: currentUserHasBirthday ? "#FFF0F0" : "#FDF2F8",
 			});
 		}
 		return baseStats;

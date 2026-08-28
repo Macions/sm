@@ -62,7 +62,6 @@ function AppRoutes() {
 
 			setIsMaintenance(maintenance);
 
-			console.log("🔧 [Maintenance] Ustawiony na sztywno:", maintenance);
 		};
 
 		checkMaintenance();
@@ -138,7 +137,6 @@ function AppRoutes() {
 
 	// 🔥 JEŚLI TRYB SERWISOWY - POKAŻ STRONĘ MAINTENANCE
 	if (isMaintenance) {
-		console.log("🔧 [Router] Tryb serwisowy - wyświetlam stronę Maintenance");
 		return (
 			<Suspense fallback={<LoadingSpinner />}>
 				<Routes>

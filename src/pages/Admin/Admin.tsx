@@ -15,7 +15,6 @@ import {
 	ChevronDown,
 	ChevronUp,
 	ChevronRight,
-	FolderTree,
 	RefreshCw,
 	Mail,
 	UserCog,
@@ -29,6 +28,7 @@ import {
 	Crown,
 	User,
 	Shield,
+	UserX,
 } from "lucide-react";
 import type { Permission } from "../../utils/permissions";
 import {
@@ -44,25 +44,25 @@ interface SystemLog {
 	user_name: string;
 	user_role: string;
 	action_type:
-		| "CREATE"
-		| "UPDATE"
-		| "DELETE"
-		| "LOGIN"
-		| "LOGOUT"
-		| "APPROVE"
-		| "REJECT";
+	| "CREATE"
+	| "UPDATE"
+	| "DELETE"
+	| "LOGIN"
+	| "LOGOUT"
+	| "APPROVE"
+	| "REJECT";
 	category:
-		| "USER"
-		| "TEAM"
-		| "LEAVE"
-		| "PROJECT"
-		| "VACANCY"
-		| "TUTORIAL"
-		| "SOCIAL_MEDIA"
-		| "PERMISSION"
-		| "STRUCTURE"
-		| "NOTIFICATION"
-		| "AUTH";
+	| "USER"
+	| "TEAM"
+	| "LEAVE"
+	| "PROJECT"
+	| "VACANCY"
+	| "TUTORIAL"
+	| "SOCIAL_MEDIA"
+	| "PERMISSION"
+	| "STRUCTURE"
+	| "NOTIFICATION"
+	| "AUTH";
 	endpoint: string;
 	method: string;
 	entity_id: string | null;
@@ -74,7 +74,204 @@ interface SystemLog {
 	error_message: string | null;
 	created_at: string;
 }
+interface InactiveUser {
+	id: string;
+	first_name: string;
+	last_name: string;
+	email: string;
+	status: string;
+	join_date: string | null;
+	created_at: string;
+	hasLogin: boolean;
+	hasOnboarding: boolean;
+	lastLoginDate?: string | null;
+}
 
+function InactiveUsersManagement() {
+	const [users, setUsers] = useState<InactiveUser[]>([]);
+	const [loading, setLoading] = useState(true);
+	const [searchTerm, setSearchTerm] = useState("");
+	const [filterStatus, _setFilterStatus] = useState<string>("all");
+	const [_total, setTotal] = useState(0);
+	const [showAll, setShowAll] = useState(false);
+
+	const fetchInactiveUsers = async () => {
+		try {
+			setLoading(true);
+			const token = localStorage.getItem("accessToken");
+			const response = await fetch("/api/admin/inactive-users", {
+				headers: {
+					Authorization: `Bearer ${token}`,
+					"Content-Type": "application/json",
+				},
+			});
+
+			if (!response.ok) throw new Error("Błąd pobierania danych");
+			const data = await response.json();
+			setUsers(data.users);
+			setTotal(data.total);
+		} catch (error) {
+			logger.error("Błąd:", error);
+			toast.error("Nie udało się pobrać danych");
+		} finally {
+			setLoading(false);
+		}
+	};
+
+	useEffect(() => {
+		fetchInactiveUsers();
+	}, []);
+
+	// ✅ FILTRUJ TYLKO NIEAKTYWNYCH
+	// ZMIEŃ FILTR NA:
+	const filteredUsers = users
+		.filter((user) => {
+			// ✅ TYLKO CI, KTÓRZY NIE MAJĄ ANI LOGOWANIA, ANI ONBOARDINGU
+			return !user.hasLogin && !user.hasOnboarding;
+		})
+		.filter((user) => {
+			const matchesSearch =
+				user.first_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+				user.last_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+				user.email?.toLowerCase().includes(searchTerm.toLowerCase());
+
+			const matchesFilter = filterStatus === "all" || user.status === filterStatus;
+
+			return matchesSearch && matchesFilter;
+		});
+	const displayUsers = showAll ? filteredUsers : filteredUsers.slice(0, 10);
+	const hasMore = filteredUsers.length > 10;
+
+	const getStatusLabel = (user: InactiveUser) => {
+		if (!user.hasLogin && !user.hasOnboarding) return "Nieaktywny";
+		if (!user.hasLogin) return "Brak logowania";
+		if (!user.hasOnboarding) return "Brak onboardingu";
+		return "Aktywny";
+	};
+
+	const getStatusColor = (user: InactiveUser) => {
+		if (!user.hasLogin && !user.hasOnboarding) return "#dc2626";
+		if (!user.hasLogin) return "#d97706";
+		if (!user.hasOnboarding) return "#d97706";
+		return "#059669";
+	};
+
+	if (loading) {
+		return (
+			<section className={styles.section}>
+				<div className={styles.loading}>
+					<div className={styles.loading__spinner} />
+					<span>Ładowanie użytkowników...</span>
+				</div>
+			</section>
+		);
+	}
+
+	return (
+		<section className={styles.section}>
+			<div className={styles.section__header}>
+				<div className={styles.section__headerLeft}>
+					<h2 className={styles.section__title}>Użytkownicy nieaktywni</h2>
+					<p className={styles.section__subtitle}>
+						Osoby, które ani razu nie zalogowały się do systemu.
+						<strong style={{ color: "#dc2626", marginLeft: "8px" }}>
+							({filteredUsers.length} osób)
+						</strong>
+					</p>
+				</div>
+				<button
+					className={styles.section__refreshBtn}
+					onClick={fetchInactiveUsers}
+					title="Odśwież"
+				>
+					<RefreshCw size={16} />
+				</button>
+			</div>
+
+			<div className={styles.inactiveFilters}>
+				<div className={styles.inactiveFilters__search}>
+					<input
+						type="text"
+						className={styles.inactiveFilters__input}
+						placeholder="Szukaj po imieniu, nazwisku lub email..."
+						value={searchTerm}
+						onChange={(e) => setSearchTerm(e.target.value)}
+					/>
+					{searchTerm && (
+						<button
+							className={styles.inactiveFilters__clear}
+							onClick={() => setSearchTerm("")}
+						>
+							<X size={14} />
+						</button>
+					)}
+				</div>
+			</div>
+
+			{displayUsers.length === 0 ? (
+				<div className={styles.inactiveEmpty}>
+					<CheckCircle size={48} color="#059669" />
+					<h3>Wszyscy użytkownicy są aktywni!</h3>
+					<p>Nie znaleziono użytkowników spełniających kryteria.</p>
+				</div>
+			) : (
+				<>
+					<div className={styles.inactiveGrid}>
+						{displayUsers.map((user) => (
+							<div key={user.id} className={styles.inactiveItem}>
+								<div className={styles.inactiveItem__avatar}>
+									{user.first_name?.[0] || "?"}
+									{user.last_name?.[0] || ""}
+								</div>
+								<div className={styles.inactiveItem__info}>
+									<span className={styles.inactiveItem__name}>
+										{user.first_name} {user.last_name}
+									</span>
+									<span className={styles.inactiveItem__email}>
+										{user.email}
+									</span>
+								</div>
+								<div className={styles.inactiveItem__status}>
+									<span
+										className={styles.inactiveItem__badge}
+										style={{
+											backgroundColor: getStatusColor(user),
+											color: "#fff",
+										}}
+									>
+										{getStatusLabel(user)}
+									</span>
+								</div>
+							</div>
+						))}
+					</div>
+
+					{hasMore && !showAll && (
+						<div className={styles.showMoreContainer}>
+							<button
+								className={styles.showMoreBtn}
+								onClick={() => setShowAll(true)}
+							>
+								Pokaż więcej ({filteredUsers.length - 10} pozostałych)
+							</button>
+						</div>
+					)}
+
+					{showAll && (
+						<div className={styles.showMoreContainer}>
+							<button
+								className={styles.showMoreBtn}
+								onClick={() => setShowAll(false)}
+							>
+								Pokaż mniej
+							</button>
+						</div>
+					)}
+				</>
+			)}
+		</section>
+	);
+}
 interface LogsResponse {
 	logs: SystemLog[];
 	total: number;
@@ -829,8 +1026,8 @@ function StructureManagement({
 		title: "",
 		message: "",
 		confirmText: "Potwierdź",
-		onConfirm: () => {},
-		onCancel: () => {},
+		onConfirm: () => { },
+		onCancel: () => { },
 	});
 	const [expandedTeams, setExpandedTeams] = useState<Record<string, boolean>>(
 		{},
@@ -2774,70 +2971,6 @@ function AccessManagement() {
 	);
 }
 
-function ActivityMonitoring({
-	teams,
-	roles,
-}: {
-	teams: Team[];
-	roles: Role[];
-}) {
-	const totalMembers = teams.reduce(
-		(acc, team) => acc + team.members.length,
-		0,
-	);
-
-	return (
-		<section className={styles.section}>
-			<div className={styles.section__header}>
-				<div className={styles.section__headerLeft}>
-					<h2 className={styles.section__title}>Statystyki organizacji</h2>
-					<p className={styles.section__subtitle}>
-						Podsumowanie danych organizacji.
-					</p>
-				</div>
-			</div>
-
-			<div className={styles.statsGrid}>
-				<div className={styles.statCard}>
-					<div
-						className={styles.statCard__icon}
-						style={{ background: "#dbeafe", color: "#1d4ed8" }}
-					>
-						<Users size={24} />
-					</div>
-					<div className={styles.statCard__content}>
-						<span className={styles.statCard__value}>{totalMembers}</span>
-						<span className={styles.statCard__label}>Członków</span>
-					</div>
-				</div>
-				<div className={styles.statCard}>
-					<div
-						className={styles.statCard__icon}
-						style={{ background: "#d1fae5", color: "#059669" }}
-					>
-						<FolderTree size={24} />
-					</div>
-					<div className={styles.statCard__content}>
-						<span className={styles.statCard__value}>{teams.length}</span>
-						<span className={styles.statCard__label}>Zespołów</span>
-					</div>
-				</div>
-				<div className={styles.statCard}>
-					<div
-						className={styles.statCard__icon}
-						style={{ background: "#fef3c7", color: "#d97706" }}
-					>
-						<Shield size={24} />
-					</div>
-					<div className={styles.statCard__content}>
-						<span className={styles.statCard__value}>{roles.length}</span>
-						<span className={styles.statCard__label}>Ról</span>
-					</div>
-				</div>
-			</div>
-		</section>
-	);
-}
 function AttendanceRanking() {
 	const [loading, setLoading] = useState(true);
 	const [data, setData] = useState<AttendanceRankingData | null>(null);
@@ -3102,9 +3235,8 @@ export default function Admin({ title }: { title?: string }) {
 	const rolesRef = useRef<HTMLDivElement>(null);
 	const teamsRef = useRef<HTMLDivElement>(null);
 	const accessRef = useRef<HTMLDivElement>(null);
-	const statsRef = useRef<HTMLDivElement>(null);
 	const logsRef = useRef<HTMLDivElement>(null);
-	const mainContainerRef = useRef<HTMLDivElement>(null);
+	const inactiveRef = useRef<HTMLDivElement>(null);
 
 	const scrollToSection = (
 		sectionRef: React.RefObject<HTMLDivElement | null>,
@@ -3256,11 +3388,8 @@ export default function Admin({ title }: { title?: string }) {
 			"main._main_xe2ra_67",
 		) as HTMLElement;
 		if (!mainElement) {
-			console.log("❌ Nie znaleziono elementu MAIN");
 			return;
 		}
-
-		console.log("✅ Nasłuchuję na MAIN");
 
 		const handleScroll = () => {
 			const scrollTop = mainElement.scrollTop;
@@ -3344,18 +3473,18 @@ export default function Admin({ title }: { title?: string }) {
 						Dostępy i zasoby
 					</button>
 					<button
-						className={`${styles.tabsNav__tab} ${activeTab === "stats" ? styles.tabsNav__tabActive : ""}`}
-						onClick={() => scrollToSection(statsRef, "stats")}
-					>
-						<FolderTree size={16} />
-						Statystyki
-					</button>
-					<button
 						className={`${styles.tabsNav__tab} ${activeTab === "logs" ? styles.tabsNav__tabActive : ""}`}
 						onClick={() => scrollToSection(logsRef, "logs")}
 					>
 						<RefreshCw size={16} />
 						Historia działań
+					</button>
+					<button
+						className={`${styles.tabsNav__tab} ${activeTab === "inactive" ? styles.tabsNav__tabActive : ""}`}
+						onClick={() => scrollToSection(inactiveRef, "inactive")}
+					>
+						<UserX size={16} />  {/* lub użyj innej ikony */}
+						Nieaktywni
 					</button>
 				</div>
 			</div>
@@ -3402,12 +3531,10 @@ export default function Admin({ title }: { title?: string }) {
 					<AccessManagement />
 				</div>
 
-				<div ref={statsRef}>
-					<ActivityMonitoring teams={teams} roles={roles} />
-				</div>
-
 				<AttendanceRanking />
-
+				<div ref={inactiveRef}>
+					<InactiveUsersManagement />
+				</div>
 				<div ref={logsRef}>
 					<LogsManagement />
 				</div>

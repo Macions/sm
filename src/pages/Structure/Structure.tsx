@@ -424,8 +424,6 @@ export default function Structure() {
 			</div>
 		);
 	}
-	console.log('🔍 Struktura:', JSON.stringify(structureData, null, 2));
-
 	return (
 		<div className={styles.structure}>
 			<div className={styles.header}>

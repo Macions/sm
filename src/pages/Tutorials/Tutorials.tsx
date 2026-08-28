@@ -124,10 +124,6 @@ const downloadFile = async (url: string, fileName: string) => {
 			fullUrl = `/api${url}`;
 		}
 
-		console.log("🔍 Pobieranie pliku:");
-		console.log("🔍 Original URL:", url);
-		console.log("🔍 Full URL:", fullUrl);
-
 		const token = localStorage.getItem("accessToken");
 		const response = await fetch(fullUrl, {
 			headers: {
@@ -141,7 +137,6 @@ const downloadFile = async (url: string, fileName: string) => {
 		}
 
 		const blob = await response.blob();
-		console.log("🔍 Rozmiar pliku:", blob.size, "Typ:", blob.type);
 
 		const downloadUrl = window.URL.createObjectURL(blob);
 		const link = document.createElement("a");
@@ -986,11 +981,6 @@ export default function Tutorials() {
 		const role = (contextUser.role || "member") as
 			"admin" | "board" | "coordinator" | "functional" | "member";
 
-		// ✅ LOGOWANIE
-		console.log("🔍 userTeam:", userTeam);
-		console.log("🔍 userPillars:", userPillars);
-		console.log("🔍 isCoordinatorByTeam:", isCoordinatorByTeam);
-
 		return {
 			id: String(contextUser.id),
 			name: `${contextUser.firstName} ${contextUser.lastName}`,
@@ -1053,15 +1043,6 @@ export default function Tutorials() {
 		fetchUserAndTutorials();
 	}, []);
 	const canViewTutorial = (tutorial: Tutorial): boolean => {
-		// ✅ LOGOWANIE
-		console.log("🔍 ===== SPRAWDZAM PORADNIK =====");
-		console.log("🔍 Tutorial:", tutorial.title, "access:", tutorial.access);
-		console.log("🔍 currentUser:", currentUser);
-		console.log("🔍 isCoordinator:", currentUser?.isCoordinator);
-		console.log("🔍 isLeader:", currentUser?.isLeader);
-		console.log("🔍 role:", currentUser?.role);
-		console.log("🔍 =================================");
-
 		// Admin i Zarząd widzą wszystko
 		const adminRoles = ["admin", "board"];
 		if (currentUser?.role && adminRoles.includes(currentUser.role)) {
@@ -1081,7 +1062,6 @@ export default function Tutorials() {
 
 		// Dla koordynatorów
 		if (tutorial.access === "coordinator") {
-			console.log("🔍 Poradnik dla koordynatorów, czy koordynator?", isCoordinator);
 			return isCoordinator;
 		}
 
