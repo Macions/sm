@@ -56,7 +56,7 @@ function AppRoutes() {
 
 	useEffect(() => {
 		const checkMaintenance = () => {
-			const maintenance = true;
+			const maintenance = false;
 
 			setIsMaintenance(maintenance);
 		};
