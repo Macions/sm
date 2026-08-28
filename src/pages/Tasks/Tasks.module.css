@@ -49,7 +49,6 @@
 	background: #2563eb;
 }
 
-
 .filters {
 	display: flex;
 	gap: 16px;
@@ -119,13 +118,11 @@
 	border-color: #3b82f6;
 }
 
-
 .tasksGrid {
 	display: grid;
 	grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
 	gap: 16px;
 }
-
 
 .taskCard {
 	background: #fff;
@@ -337,7 +334,6 @@
 	background: #fef2f2;
 	color: #dc2626;
 }
-
 
 .modalOverlay {
 	position: fixed;
@@ -600,7 +596,6 @@
 	background: #2563eb;
 }
 
-
 .emptyState {
 	grid-column: 1 / -1;
 	display: flex;
@@ -650,7 +645,6 @@
 	background: #2563eb;
 }
 
-
 .loading {
 	display: flex;
 	flex-direction: column;
@@ -674,7 +668,6 @@
 		transform: rotate(360deg);
 	}
 }
-
 
 @media (max-width: 768px) {
 	.tasks {
@@ -725,7 +718,6 @@
 	color: #94a3b8;
 	margin-top: 4px;
 }
-
 
 .detailModal {
 	max-width: 700px;
@@ -881,7 +873,6 @@
 	margin: 0;
 }
 
-
 @media (max-width: 768px) {
 	.detailRow {
 		grid-template-columns: 1fr;
@@ -891,7 +882,6 @@
 		grid-template-columns: 1fr;
 	}
 }
-
 
 .taskCard__feedbackBtn {
 	display: flex;
@@ -985,7 +975,6 @@
 	flex-shrink: 0;
 }
 
-
 .selectedUsers {
 	display: flex;
 	flex-wrap: wrap;
@@ -1031,7 +1020,6 @@
 	background: #fef2f2;
 }
 
-
 .userSearchWrapper .modal__input {
 	padding-right: 36px;
 }
@@ -1040,7 +1028,6 @@
 	border-color: #3b82f6;
 	box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
-
 
 .userSuggestions::-webkit-scrollbar {
 	width: 4px;
@@ -1060,7 +1047,6 @@
 	background: #94a3b8;
 }
 
-
 @media (max-width: 768px) {
 	.userSuggestions {
 		max-height: 150px;
@@ -1076,7 +1062,6 @@
 		padding: 3px 8px 3px 10px;
 	}
 }
-
 
 .feedbackDownloadBtn {
 	display: inline-flex;
@@ -1200,7 +1185,6 @@
 	padding: 8px 0;
 }
 
-
 .commentInput {
 	display: flex;
 	gap: 8px;
@@ -1263,7 +1247,6 @@
 	cursor: not-allowed;
 	opacity: 0.6;
 }
-
 
 @media (max-width: 768px) {
 	.commentInput {
@@ -1486,13 +1469,11 @@
 	font-size: 11px;
 }
 
-
 .taskCard__createdByBadge {
 	background: #e8f0fe;
 	border-color: #c5d8f0;
 	color: #1a5a8c;
 }
-
 
 .tasksContainer {
 	display: flex;
@@ -1537,7 +1518,6 @@
 	color: #4b5563;
 }
 
-
 .taskCardMyTask {
 	box-shadow: 0 1px 3px rgba(59, 130, 246, 0.1) !important;
 }
@@ -1547,14 +1527,12 @@
 	transform: translateY(-2px);
 }
 
-
 .taskCardMyTask .taskCard__title::after {
 	content: " • Twoje";
 	font-size: 12px;
 	font-weight: 400;
 	color: #3b82f6;
 }
-
 
 @media (max-width: 768px) {
 	.tasksSectionTitle {
@@ -1567,7 +1545,6 @@
 		padding: 0 8px;
 	}
 }
-
 
 .taskCard__assignees {
 	margin-top: 12px;
@@ -1653,7 +1630,6 @@
 	color: #6b7280;
 	font-size: 11px;
 }
-
 
 .showMoreBtn {
 	display: flex;
@@ -1768,7 +1744,6 @@
 	font-weight: 500;
 }
 
-
 .detailAssigneeStatus.status_todo {
 	background: #f0f0f0;
 	color: #666;
@@ -1787,4 +1762,227 @@
 .detailAssigneeStatus.status_done {
 	background: #e8f5e9;
 	color: #2e7d32;
+}
+
+/* ============================================
+   ARCHIWIZACJA
+   ============================================ */
+
+.archivedSection {
+	margin-top: 2rem;
+}
+
+.archivedGrid {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+	gap: 1rem;
+}
+
+.archivedCard {
+	background: var(--bg-secondary, #ffffff);
+	border: 1px solid var(--border-color, #e5e7eb);
+	border-radius: 8px;
+	padding: 1rem;
+	transition: box-shadow 0.2s;
+	cursor: pointer;
+}
+
+.archivedCard:hover {
+	box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+	transform: translateY(-2px);
+	border-color: #3b82f6;
+}
+.archivedCard__header {
+	display: flex;
+	justify-content: space-between;
+	align-items: flex-start;
+	margin-bottom: 0.75rem;
+	gap: 0.5rem;
+}
+
+.archivedCard__title {
+	font-size: 1rem;
+	font-weight: 600;
+	margin: 0;
+	flex: 1;
+	color: var(--text-primary, #111827);
+}
+
+.archivedCard__timeline {
+	padding: 0.25rem 0.75rem;
+	border-radius: 12px;
+	color: white;
+	font-size: 0.75rem;
+	font-weight: 500;
+	white-space: nowrap;
+	flex-shrink: 0;
+}
+
+.archivedCard__body {
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+}
+
+.archivedCard__stats {
+	display: grid;
+	grid-template-columns: repeat(3, 1fr);
+	gap: 0.5rem;
+	margin: 0.5rem 0;
+	padding: 0.5rem;
+	background: var(--bg-tertiary, #f9fafb);
+	border-radius: 6px;
+}
+
+.archivedCard__stat {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	text-align: center;
+}
+
+.archivedCard__statLabel {
+	font-size: 0.65rem;
+	color: var(--text-secondary, #6b7280);
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
+}
+
+.archivedCard__statValue {
+	font-size: 0.9rem;
+	font-weight: 600;
+	color: var(--text-primary, #111827);
+}
+
+.archivedCard__statLate {
+	color: #dc2626 !important;
+}
+
+.archivedCard__statEarly {
+	color: #059669 !important;
+}
+
+.archivedCard__statOnTime {
+	color: #2563eb !important;
+}
+
+.archivedCard__priority {
+	font-size: 0.85rem;
+	color: var(--text-secondary, #6b7280);
+}
+
+.archivedCard__rating {
+	font-size: 0.85rem;
+	color: #f59e0b;
+}
+
+.archivedEmpty {
+	text-align: center;
+	padding: 3rem;
+	color: var(--text-secondary, #6b7280);
+}
+
+/* Przycisk przełączania archiwum */
+.archivedToggleBtn {
+	padding: 0.5rem 1rem;
+	border-radius: 6px;
+	border: 1px solid var(--border-color, #e5e7eb);
+	background: var(--bg-secondary, #ffffff);
+	color: var(--text-primary, #111827);
+	cursor: pointer;
+	font-size: 0.875rem;
+	transition: all 0.2s;
+	white-space: nowrap;
+}
+
+.archivedToggleBtn:hover {
+	background: var(--bg-hover, #f3f4f6);
+}
+
+.archivedToggleBtnActive {
+	background: #3b82f6;
+	color: white;
+	border-color: #3b82f6;
+}
+
+.archivedToggleBtnActive:hover {
+	background: #2563eb;
+}
+
+/* ============================================
+   ZARCHIWIZOWANE ZADANIA
+   ============================================ */
+
+/* Badge "Zarchiwizowane" */
+.archivedBadge {
+	font-size: 0.6rem;
+	font-weight: 600;
+	background: #6b7280;
+	color: white;
+	padding: 0.1rem 0.6rem;
+	border-radius: 12px;
+	margin-left: 0.5rem;
+	vertical-align: middle;
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
+	display: inline-block;
+	line-height: 1.5;
+}
+
+/* Karta zarchiwizowanego zadania - delikatnie przyciemniona */
+.taskCardArchived {
+	opacity: 0.85;
+	background: var(--bg-secondary, #f9fafb);
+	border-color: var(--border-color, #d1d5db);
+}
+
+.taskCardArchived:hover {
+	opacity: 1;
+	background: var(--bg-secondary, #ffffff);
+	border-color: #3b82f6;
+}
+
+/* Sekcja archiwum */
+.archivedSection {
+	margin-top: 0;
+}
+
+.archivedSection .tasksGrid {
+	margin-top: 0;
+}
+
+.archivedEmpty {
+	text-align: center;
+	padding: 3rem;
+	color: var(--text-secondary, #6b7280);
+	background: var(--bg-secondary, #f9fafb);
+	border-radius: 8px;
+	border: 1px dashed var(--border-color, #d1d5db);
+}
+
+/* Przycisk przełączania archiwum */
+.archivedToggleBtn {
+	padding: 0.5rem 1rem;
+	border-radius: 6px;
+	border: 1px solid var(--border-color, #e5e7eb);
+	background: var(--bg-secondary, #ffffff);
+	color: var(--text-primary, #111827);
+	cursor: pointer;
+	font-size: 0.875rem;
+	transition: all 0.2s;
+	white-space: nowrap;
+}
+
+.archivedToggleBtn:hover {
+	background: var(--bg-hover, #f3f4f6);
+}
+
+.archivedToggleBtnActive {
+	background: #6b7280;
+	color: white;
+	border-color: #6b7280;
+}
+
+.archivedToggleBtnActive:hover {
+	background: #4b5563;
 }

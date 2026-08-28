@@ -188,51 +188,51 @@ interface Comment {
 	content: string;
 	createdAt: string;
 }
+
+// FUNKCJE POMOCNICZE DLA ARCHIWIZACJI
+const calculateDaysToComplete = (task: any) => {
+	const created = new Date(task.createdAt);
+	const completed = new Date(task.completedAt || task.updatedAt);
+	const diffTime = Math.abs(completed.getTime() - created.getTime());
+	return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+};
+
+const getTimelineStatus = (task: any) => {
+	const dueDate = new Date(task.dueDate);
+	const completed = new Date(task.completedAt || task.updatedAt);
+
+	const diffDays = Math.ceil(
+		(completed.getTime() - dueDate.getTime()) / (1000 * 60 * 60 * 24),
+	);
+
+	if (diffDays < -1) return "early";
+	if (diffDays <= 0) return "on_time";
+	return "late";
+};
+
+const calculateDaysDiff = (task: any) => {
+	const dueDate = new Date(task.dueDate);
+	const completed = new Date(task.completedAt || task.updatedAt);
+	return Math.ceil(
+		(completed.getTime() - dueDate.getTime()) / (1000 * 60 * 60 * 24),
+	);
+};
 function ArchivedTasksList({
 	tasks,
 	currentUser,
+	onView,
+	onDelete, // DODAJ
 }: {
 	tasks: ArchivedTask[];
 	currentUser: User;
+	onView: (task: Task) => void;
+	onDelete?: (task: Task) => void; // DODAJ
 }) {
-	const getTimelineLabel = (status: string) => {
-		switch (status) {
-			case "early":
-				return "✅ Przed terminem";
-			case "on_time":
-				return "✅ Na czas";
-			case "late":
-				return "⚠️ Po terminie";
-			default:
-				return "—";
-		}
-	};
-
-	const getTimelineColor = (status: string) => {
-		switch (status) {
-			case "early":
-				return "#059669";
-			case "on_time":
-				return "#2563eb";
-			case "late":
-				return "#dc2626";
-			default:
-				return "#6b7280";
-		}
-	};
-
-	const getDaysText = (days: number) => {
-		if (days === 0) return "mniej niż dzień";
-		if (days === 1) return "1 dzień";
-		if (days < 5) return `${days} dni`;
-		return `${days} dni`;
-	};
-
 	return (
 		<div className={styles.archivedSection}>
 			<div className={styles.tasksSectionHeader}>
 				<h2 className={styles.tasksSectionTitle}>
-					📦 Zarchiwizowane zadania
+					Zarchiwizowane zadania
 					<span className={styles.tasksSectionCount}>{tasks.length}</span>
 				</h2>
 			</div>
@@ -242,78 +242,18 @@ function ArchivedTasksList({
 					<p>Brak zarchiwizowanych zadań</p>
 				</div>
 			) : (
-				<div className={styles.archivedGrid}>
+				<div className={styles.tasksGrid}>
 					{tasks.map((task) => (
-						<div key={task.id} className={styles.archivedCard}>
-							<div className={styles.archivedCard__header}>
-								<h4 className={styles.archivedCard__title}>{task.title}</h4>
-								<span
-									className={styles.archivedCard__timeline}
-									style={{
-										backgroundColor: getTimelineColor(task.timelineStatus),
-									}}
-								>
-									{getTimelineLabel(task.timelineStatus)}
-								</span>
-							</div>
-
-							<div className={styles.archivedCard__body}>
-								<div className={styles.archivedCard__stats}>
-									<div className={styles.archivedCard__stat}>
-										<span className={styles.archivedCard__statLabel}>
-											Czas wykonania
-										</span>
-										<span className={styles.archivedCard__statValue}>
-											{getDaysText(task.daysToComplete)}
-										</span>
-									</div>
-									<div className={styles.archivedCard__stat}>
-										<span className={styles.archivedCard__statLabel}>
-											Zakończono
-										</span>
-										<span className={styles.archivedCard__statValue}>
-											{new Date(task.completedAt).toLocaleDateString("pl-PL", {
-												day: "numeric",
-												month: "short",
-												year: "numeric",
-											})}
-										</span>
-									</div>
-									<div className={styles.archivedCard__stat}>
-										<span className={styles.archivedCard__statLabel}>
-											Różnica
-										</span>
-										<span
-											className={`${styles.archivedCard__statValue} ${
-												task.daysDiff > 0
-													? styles.archivedCard__statLate
-													: task.daysDiff < -1
-														? styles.archivedCard__statEarly
-														: styles.archivedCard__statOnTime
-											}`}
-										>
-											{task.daysDiff > 0
-												? `+${task.daysDiff} dni`
-												: task.daysDiff < -1
-													? `${task.daysDiff} dni`
-													: "na czas"}
-										</span>
-									</div>
-								</div>
-								{task.priority && (
-									<div className={styles.archivedCard__priority}>
-										Priorytet:{" "}
-										{PRIORITY_LABELS[task.priority as TaskPriority] ||
-											task.priority}
-									</div>
-								)}
-								{task.rating && (
-									<div className={styles.archivedCard__rating}>
-										Ocena: {task.rating}/5 ⭐
-									</div>
-								)}
-							</div>
-						</div>
+						<TaskCard
+							key={task.id}
+							task={task as Task}
+							currentUser={currentUser}
+							onView={onView}
+							onEdit={undefined}
+							onDelete={onDelete} // DODAJ
+							onStatusChange={() => {}}
+							onFeedback={undefined}
+						/>
 					))}
 				</div>
 			)}
@@ -624,6 +564,8 @@ function TaskDetailModal({
 	if (!isOpen || !task) return null;
 	const [showAllAssigneesDetail, setShowAllAssigneesDetail] = useState(false);
 
+	const isArchived = (task as any).completedAt !== undefined;
+
 	const formatDate = (date: string) => {
 		return new Date(date).toLocaleDateString("pl-PL", {
 			year: "numeric",
@@ -632,6 +574,39 @@ function TaskDetailModal({
 			hour: "2-digit",
 			minute: "2-digit",
 		});
+	};
+
+	const getDaysText = (days: number) => {
+		if (days === 0) return "mniej niż dzień";
+		if (days === 1) return "1 dzień";
+		if (days < 5) return `${days} dni`;
+		return `${days} dni`;
+	};
+
+	const getTimelineLabel = (status: string) => {
+		switch (status) {
+			case "early":
+				return "Przed terminem";
+			case "on_time":
+				return "Na czas";
+			case "late":
+				return "Po terminie";
+			default:
+				return "—";
+		}
+	};
+
+	const getTimelineColor = (status: string) => {
+		switch (status) {
+			case "early":
+				return "#059669";
+			case "on_time":
+				return "#2563eb";
+			case "late":
+				return "#dc2626";
+			default:
+				return "#6b7280";
+		}
 	};
 
 	const handleDownloadFile = async (fileUrl: string, fileName: string) => {
@@ -668,12 +643,13 @@ function TaskDetailModal({
 				window.URL.revokeObjectURL(url);
 			}, 5000);
 
-			toast.success("✅ Plik pobrany!");
+			toast.success("Plik pobrany!");
 		} catch (error) {
-			console.error("❌ Błąd pobierania pliku:", error);
-			toast.error("❌ Nie udało się pobrać pliku");
+			console.error("Błąd pobierania pliku:", error);
+			toast.error("Nie udało się pobrać pliku");
 		}
 	};
+
 	const getStatusLabel = (status: TaskStatus) => {
 		const labels: Record<TaskStatus, string> = {
 			todo: "Do zrobienia",
@@ -726,6 +702,39 @@ function TaskDetailModal({
 							</span>
 						</div>
 					</div>
+
+					{isArchived && (
+						<div className={styles.detailArchivedInfo}>
+							<div className={styles.detailRow}>
+								<div className={styles.detailItem}>
+									<span className={styles.detailLabel}>Data ukończenia</span>
+									<span className={styles.detailValue}>
+										{formatDate((task as any).completedAt)}
+									</span>
+								</div>
+								<div className={styles.detailItem}>
+									<span className={styles.detailLabel}>Czas wykonania</span>
+									<span className={styles.detailValue}>
+										{getDaysText((task as any).daysToComplete || 0)}
+									</span>
+								</div>
+							</div>
+							<div className={styles.detailRow}>
+								<div className={styles.detailItem}>
+									<span className={styles.detailLabel}>Terminowość</span>
+									<span
+										className={styles.detailValue}
+										style={{
+											color: getTimelineColor((task as any).timelineStatus),
+											fontWeight: 600,
+										}}
+									>
+										{getTimelineLabel((task as any).timelineStatus)}
+									</span>
+								</div>
+							</div>
+						</div>
+					)}
 
 					<div className={styles.detailSection}>
 						<h4 className={styles.detailSectionTitle}>Opis</h4>
@@ -820,7 +829,6 @@ function TaskDetailModal({
 												</div>
 											)}
 
-											{}
 											{task.assignees &&
 												task.assignees.length <= 2 &&
 												task.assignees.length > 0 && (
@@ -961,7 +969,7 @@ function TaskDetailModal({
 						<button className={styles.modal__btnCancel} onClick={onClose}>
 							Zamknij
 						</button>
-						{onEdit && canManageTask(currentUser, task) && (
+						{!isArchived && onEdit && canManageTask(currentUser, task) && (
 							<button className={styles.modal__btnSave} onClick={onEdit}>
 								<Edit size={16} />
 								Edytuj
@@ -987,6 +995,8 @@ function TaskCard({
 		task.assignedTo === currentUser.id ||
 		(task.assignedUsers && task.assignedUsers.includes(currentUser.id));
 	const [showAllAssignees, setShowAllAssignees] = useState(false);
+
+	const isArchived = (task as any).completedAt !== undefined;
 
 	const formatDate = (date: string) => {
 		const d = new Date(date);
@@ -1014,6 +1024,7 @@ function TaskCard({
 		? task.assignedUsers?.includes(currentUser.id) || false
 		: task.assignedTo === currentUser.id ||
 			(task.assignedUsers && task.assignedUsers.includes(currentUser.id));
+
 	const getAssignedNames = () => {
 		if (isMultiUser && task.assignees && task.assignees.length > 0) {
 			const canSeeAll =
@@ -1038,9 +1049,10 @@ function TaskCard({
 
 		return task.assignedToName;
 	};
+
 	return (
 		<div
-			className={`${styles.taskCard} ${isOverdue ? styles.taskCardOverdue : ""} ${isAssignedToMe ? styles.taskCardMyTask : ""}`}
+			className={`${styles.taskCard} ${isOverdue ? styles.taskCardOverdue : ""} ${isAssignedToMe ? styles.taskCardMyTask : ""} ${isArchived ? styles.taskCardArchived : ""}`}
 		>
 			<div className={styles.taskCard__header}>
 				<div className={styles.taskCard__titleRow}>
@@ -1103,9 +1115,7 @@ function TaskCard({
 					</div>
 				)}
 			</div>
-			{}
-			{}
-			{}
+
 			{isMultiUser &&
 				task.assignees &&
 				task.assignees.length > 0 &&
@@ -1119,7 +1129,6 @@ function TaskCard({
 							Postęp przypisanych ({task.assignees.length}):
 						</span>
 						<div className={styles.taskCard__assigneesList}>
-							{}
 							{(showAllAssignees
 								? task.assignees
 								: task.assignees.slice(0, 2)
@@ -1144,7 +1153,6 @@ function TaskCard({
 							})}
 						</div>
 
-						{}
 						{task.assignees.length > 2 && (
 							<button
 								className={styles.showMoreBtn}
@@ -1165,8 +1173,9 @@ function TaskCard({
 						)}
 					</div>
 				)}
+
 			<div className={styles.taskCard__actions}>
-				{canChangeStatus && (
+				{!isArchived && canChangeStatus && (
 					<div className={styles.taskCard__statusActions}>
 						{currentUserStatus !== "done" && (
 							<button
@@ -1212,8 +1221,7 @@ function TaskCard({
 						<Eye size={16} />
 					</button>
 
-					{}
-					{canManage && (
+					{!isArchived && canManage && (
 						<button
 							className={styles.taskCard__actionBtn}
 							onClick={() => onEdit?.(task)}
@@ -1223,14 +1231,14 @@ function TaskCard({
 						</button>
 					)}
 
-					{canManage && (
+					{canManage && ( // <-- USUŃ !isArchived
 						<button
 							className={`${styles.taskCard__actionBtn} ${styles.taskCard__actionBtnDanger}`}
 							onClick={() => {
 								if (onDelete) {
 									onDelete(task);
 								} else {
-									console.error("❌ onDelete jest undefined!");
+									console.error("onDelete jest undefined!");
 								}
 							}}
 							title="Usuń"
@@ -1239,7 +1247,8 @@ function TaskCard({
 						</button>
 					)}
 
-					{task.requiresFeedback &&
+					{!isArchived &&
+						task.requiresFeedback &&
 						task.status === "done" &&
 						!task.feedbackSubmittedAt && (
 							<button
@@ -1252,7 +1261,7 @@ function TaskCard({
 							</button>
 						)}
 
-					{task.requiresFeedback && task.feedbackSubmittedAt && (
+					{!isArchived && task.requiresFeedback && task.feedbackSubmittedAt && (
 						<span className={styles.taskCard__feedbackDone}>
 							<Check size={14} />
 							Odpowiedź przesłana
@@ -1920,16 +1929,6 @@ function TaskModal({
 					</div>
 
 					<div className={styles.modal__actions}>
-						{isEdit && canManageTask(currentUser, task) && (
-							<button
-								type="button"
-								className={styles.modal__btnDelete}
-								onClick={handleDelete}
-							>
-								<Trash2 size={16} />
-								Usuń zadanie
-							</button>
-						)}
 						<div className={styles.modal__actionsRight}>
 							<button
 								type="button"
@@ -1985,27 +1984,33 @@ export default function Tasks() {
 			setLoadingArchived(true);
 			const token = localStorage.getItem("accessToken");
 
-			const response = await fetch(`/api/tasks/completed/${currentUser.id}`, {
+			// POPRAWIONY ENDPOINT - pobiera wszystkie zadania i filtruje zakończone
+			const response = await fetch(`/api/tasks`, {
 				headers: { Authorization: `Bearer ${token}` },
 			});
 
 			if (response.ok) {
 				const data = await response.json();
 
+				// Filtruj tylko zakończone (status "done")
+				const doneTasks = data.filter((task: any) => task.status === "done");
+
+				// Filtruj zadania starsze niż 3 dni
 				const threeDaysAgo = new Date();
 				threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
 
-				const archived = data.tasks
+				const archived = doneTasks
 					.filter((task: any) => {
-						const completedDate = new Date(task.completedAt);
+						const completedDate = new Date(task.completedAt || task.updatedAt);
 						return completedDate <= threeDaysAgo;
 					})
 					.map((task: any) => ({
 						...task,
-						completedAt: task.completedAt,
-						daysToComplete: task.daysToComplete || 0,
-						timelineStatus: task.timelineStatus || "on_time",
-						daysDiff: task.daysDiff || 0,
+						id: String(task.id),
+						completedAt: task.completedAt || task.updatedAt,
+						daysToComplete: calculateDaysToComplete(task),
+						timelineStatus: getTimelineStatus(task),
+						daysDiff: calculateDaysDiff(task),
 					}));
 
 				setArchivedTasks(archived);
@@ -2015,7 +2020,7 @@ export default function Tasks() {
 		} finally {
 			setLoadingArchived(false);
 		}
-	}, [currentUser.id]);
+	}, []);
 
 	useEffect(() => {
 		if (currentUser.id) {
@@ -2216,8 +2221,25 @@ export default function Tasks() {
 						isLeader: userData.isLeader === true,
 					} as User),
 				);
-				setTasks(visibleTasks);
-				window.__tasks = visibleTasks;
+
+				const threeDaysAgo = new Date();
+				threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
+
+				const activeTasks = visibleTasks.filter((task: Task) => {
+					// Jeśli zadanie jest zakończone (status "done")
+					if (task.status === "done") {
+						const completedAt = (task as any).completedAt || task.updatedAt;
+						const completedDate = new Date(completedAt);
+						// Jeśli zostało ukończone więcej niż 3 dni temu - to zarchiwizowane, pomiń
+						if (completedDate <= threeDaysAgo) {
+							return false;
+						}
+					}
+					return true;
+				});
+
+				setTasks(activeTasks); // <-- TYLKO TUTAJ, nie setTasks(visibleTasks)
+				window.__tasks = activeTasks; // <-- ZMIEŃ NA activeTasks
 				window.__currentUser = currentUser;
 			}
 		} catch (error) {
@@ -2272,12 +2294,12 @@ export default function Tasks() {
 
 			await fetchData();
 			await sendRatingNotification(taskId, rating);
-			toast.success("✅ Ocena została zapisana!");
+			toast.success("Ocena została zapisana!");
 			setIsRatingModalOpen(false);
 			setRatingTask(null);
 		} catch (error) {
 			console.error("Błąd zapisu oceny:", error);
-			toast.error("❌ Nie udało się zapisać oceny");
+			toast.error("Nie udało się zapisać oceny");
 		}
 	};
 
@@ -2382,7 +2404,6 @@ export default function Tasks() {
 		setSelectedTask(task);
 		setIsDetailOpen(true);
 	};
-
 	const handleEditFromDetail = () => {
 		if (selectedTask) {
 			setIsDetailOpen(false);
@@ -2445,15 +2466,24 @@ export default function Tasks() {
 			});
 
 			if (response.ok) {
+				// Usuń z listy aktywnej
 				setTasks((prev) => prev.filter((t) => t.id !== taskToDelete.id));
+
+				// USUŃ Z ARCHIWUM
+				setArchivedTasks((prev) =>
+					prev.filter((t) => t.id !== taskToDelete.id),
+				);
+
 				toast.success(`Zadanie "${taskToDelete.title}" zostało usunięte`);
 			} else {
 				const error = await response.text();
 				toast.error(`Nie udało się usunąć: ${error}`);
 			}
 		} catch (error) {
-			console.error("❌ Błąd usuwania:", error);
+			console.error("Błąd usuwania:", error);
+			// Usuń lokalnie z obu list
 			setTasks((prev) => prev.filter((t) => t.id !== taskToDelete.id));
+			setArchivedTasks((prev) => prev.filter((t) => t.id !== taskToDelete.id));
 			toast.success(
 				`Zadanie "${taskToDelete.title}" zostało usunięte lokalnie`,
 			);
@@ -2596,16 +2626,12 @@ export default function Tasks() {
 							});
 
 							if (allDone) {
-								toast.success("✅ Wszyscy ukończyli zadanie!");
+								toast.success("Wszyscy ukończyli zadanie!");
 							} else {
-								toast.success(
-									`✅ Zakończyłeś swoje zadanie! Czekaj na innych.`,
-								);
+								toast.success(`Zakończyłeś swoje zadanie! Czekaj na innych.`);
 							}
 						} else {
-							toast.success(
-								`✅ Status zmieniony na ${STATUS_LABELS[newStatus]}`,
-							);
+							toast.success(`Status zmieniony na ${STATUS_LABELS[newStatus]}`);
 						}
 					} else {
 						const error = await response.json();
@@ -2752,17 +2778,36 @@ export default function Tasks() {
 						<option value="medium">Średni</option>
 						<option value="low">Niski</option>
 					</select>
-					<button
-						className={`${styles.archivedToggleBtn} ${showArchived ? styles.archivedToggleBtnActive : ""}`}
-						onClick={() => setShowArchived(!showArchived)}
-					>
-						{showArchived ? "📋 Pokaż aktywne" : "📦 Zarchiwizowane"}
-					</button>
+
+					{(currentUser.role === "admin" || currentUser.role === "board") && (
+						<button
+							className={`${styles.archivedToggleBtn} ${showArchived ? styles.archivedToggleBtnActive : ""}`}
+							onClick={() => setShowArchived(!showArchived)}
+						>
+							{showArchived ? "Pokaż aktywne" : "Zarchiwizowane"}
+						</button>
+					)}
 				</div>
 			</div>
 
 			<div className={styles.tasksContainer}>
-				{filteredTasks.length === 0 ? (
+				{showArchived ? (
+					// WYŚWIETLANIE ZARCHIWIZOWANYCH
+					loadingArchived ? (
+						<div className={styles.loading}>
+							<div className={styles.loading__spinner}></div>
+							<p>Ładowanie zarchiwizowanych zadań...</p>
+						</div>
+					) : (
+						<ArchivedTasksList
+							tasks={archivedTasks}
+							currentUser={currentUser}
+							onView={handleViewTask}
+							onDelete={handleDeleteTask} // DODAJ
+						/>
+					)
+				) : // WYŚWIETLANIE AKTYWNYCH ZADAŃ (ISTNIEJĄCY KOD)
+				filteredTasks.length === 0 ? (
 					<div className={styles.emptyState}>
 						<Check size={48} className={styles.emptyState__icon} />
 						<h3 className={styles.emptyState__title}>Brak zadań</h3>
@@ -2785,6 +2830,7 @@ export default function Tasks() {
 					</div>
 				) : (
 					<>
+						{/* Twoje zadania */}
 						{(() => {
 							const myTasks = filteredTasks.filter(
 								(task) =>
@@ -2823,6 +2869,7 @@ export default function Tasks() {
 							return null;
 						})()}
 
+						{/* Zadania innych */}
 						{(() => {
 							const otherTasks = filteredTasks.filter(
 								(task) =>
