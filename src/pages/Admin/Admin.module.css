@@ -8,7 +8,7 @@
 	margin-bottom: 100px;
 	min-height: 100vh;
 	padding-top: 0;
-	/* ✅ usuń padding-top */
+	
 	padding-bottom: 100px;
 	padding-left: 20px;
 	padding-right: 20px;
@@ -2565,7 +2565,7 @@
 	min-width: 140px;
 	transition: border-color 0.2s;
 	appearance: none;
-	background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236b7280' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+	background-image: url("data:image/svg+xml,%3Csvg xmlns='http:
 	background-repeat: no-repeat;
 	background-position: right 12px center;
 	padding-right: 34px;
@@ -2831,7 +2831,7 @@
 	box-shadow: 0 0 0 3px rgb(74 111 232 / 10%);
 }
 
-/* Przycisk "Pokaż wszystkich" */
+
 .showAllBtn {
 	display: block;
 	width: 100%;
@@ -2853,7 +2853,7 @@
 	color: #1f2937;
 }
 
-/* Przycisk "Pokaż wszystkich" */
+
 .showAllBtn {
 	display: block;
 	width: 100%;
@@ -2879,7 +2879,7 @@
    🔥 STYLE DLA ZWIJANIA SEKCJI "Zespoły i członkowie"
    ============================================================ */
 
-/* Przycisk zwijania sekcji */
+
 .sectionToggleBtn {
 	display: inline-flex;
 	align-items: center;
@@ -2904,7 +2904,7 @@
 	transform: scale(0.95);
 }
 
-/* Przycisk "Pokaż wszystkich" dla listy członków */
+
 .showAllBtn {
 	display: block;
 	width: 100%;
@@ -2938,9 +2938,9 @@
 	border-radius: 4px;
 	transition: all 0.2s;
 	color: #1f2937;
-	/* ✅ Ciemniejszy kolor */
+	
 	font-weight: 500;
-	/* ✅ Pogrubienie */
+	
 }
 
 .memberItem__roleText:hover {
@@ -2950,7 +2950,7 @@
 
 .memberItem__roleEditIcon {
 	opacity: 0.3;
-	/* ✅ Mniej widoczna domyślnie */
+	
 	transition: opacity 0.2s;
 }
 
@@ -2958,7 +2958,7 @@
 	opacity: 1;
 }
 
-/* 🔥 NOWE STYLE - edycja roli obok ikonek */
+
 
 .memberItem {
 	display: flex;
@@ -3009,17 +3009,17 @@
 	color: #6b7280;
 }
 
-/* 🔥 AKCJE - wszystkie przyciski w jednym miejscu */
+
 .memberItem__actions {
 	display: flex;
 	align-items: center;
 	gap: 4px;
 	flex-shrink: 0;
 	margin-left: auto;
-	/* Wyrównuje do prawej */
+	
 }
 
-/* Przycisk edycji roli */
+
 .memberItem__editRole {
 	display: inline-flex;
 	align-items: center;
@@ -3040,7 +3040,7 @@
 	color: #2563eb;
 }
 
-/* Tryb edycji - małe pole obok ikonek */
+
 .memberItem__roleEditInline {
 	display: flex;
 	align-items: center;
@@ -3107,7 +3107,7 @@
 	color: #dc2626;
 }
 
-/* Przyciski lidera i usuwania */
+
 .memberItem__makeLeader,
 .memberItem__removeLeader,
 .memberItem__remove {
@@ -3140,7 +3140,7 @@
 	color: #dc2626;
 }
 
-/* 🔥 ANIMACJA DLA CZŁONKÓW */
+
 .teamCard__members {
 	display: flex;
 	flex-direction: column;
@@ -3149,7 +3149,7 @@
 	overflow: hidden;
 }
 
-/* 🔥 PRZYCISK POKAŻ WSZYSTKICH */
+
 .showAllBtn {
 	display: inline-flex;
 	align-items: center;
@@ -3178,7 +3178,7 @@
 	transform: scale(0.98);
 }
 
-/* 🔥 PRZYCISK POKAŻ WSZYSTKICH / POKAŻ MNIEJ */
+
 .showAllBtn {
 	display: inline-flex;
 	align-items: center;
@@ -3442,7 +3442,7 @@
 	cursor: not-allowed;
 }
 
-/* Sugestie */
+
 .accessSuggestions {
 	position: absolute;
 	top: calc(100% + 4px);
@@ -3592,7 +3592,7 @@
    ============================================ */
 
 
-/* ✅ AKTYWNA ZAKŁADKA - podświetlona na fioletowo */
+
 .tabsNav__tabActive {
 	background: #6C3B6C !important;
 	color: white !important;
@@ -3604,7 +3604,7 @@
 	color: white !important;
 }
 
-/* Responsywność */
+
 @media (max-width: 768px) {
 	.tabsNav {
 		overflow-x: auto;
@@ -3624,18 +3624,18 @@
 /* ============================================
    TABS NAVIGATION
    ============================================ */
-/* W pliku Admin.module.css */
+
 .tabsNav {
 	position: sticky;
 	top: 0;
 	transform: translateY(-10px);
 	z-index: 100;
 	background: rgba(255, 255, 255, 0.98) !important;
-	/* ✅ NIE transparent */
+	
 	backdrop-filter: blur(8px);
 	border-radius: 14px;
 	border: 1px solid #e5e7eb;
-	/* ✅ border zamiast border-bottom */
+	
 	padding: 2px 20px;
 	overflow-x: auto;
 	overflow-y: hidden;
@@ -3644,7 +3644,7 @@
 	display: flex;
 	align-items: center;
 	margin: 16px 20px 0 20px;
-	/* ✅ odstęp od góry i boków */
+	
 
 	scrollbar-width: none;
 	-ms-overflow-style: none;
@@ -3662,7 +3662,7 @@
 	justify-content: center;
 	width: 100%;
 	align-items: center;
-	/* ✅ wyśrodkowanie w pionie */
+	
 }
 
 .tabsNav__tab {
@@ -3670,22 +3670,22 @@
 	align-items: center;
 	gap: 8px;
 	padding: 10px 24px;
-	/* ✅ zwiększone z 10px 20px na 10px 24px */
+	
 	border: none;
 	background: transparent;
 	border-radius: 8px;
 	font-size: 15px;
-	/* ✅ zwiększone z 14px na 15px */
+	
 	font-weight: 500;
 	color: #6b7280;
 	cursor: pointer;
 	transition: all 0.2s ease;
 	white-space: nowrap;
 	height: 40px;
-	/* ✅ stała wysokość przycisków */
+	
 }
 
-/* Responsywność - na mniejszych ekranach mniejsze przyciski */
+
 @media (max-width: 768px) {
 	.tabsNav {
 		padding: 6px 12px;
@@ -3716,7 +3716,7 @@
 }
 
 
-/* Attendance Ranking - nowe style */
+
 .attendanceRankingGrid {
 	display: grid;
 	grid-template-columns: 1fr 1fr;
@@ -3956,7 +3956,7 @@
 	justify-content: center;
 	z-index: 9999;
 
-	/* ✅ PŁYNNE PRZEJŚCIA */
+	
 	opacity: 0;
 	visibility: hidden;
 	transform: translateY(30px) scale(0.8);
@@ -3964,7 +3964,7 @@
 	will-change: transform, opacity, visibility;
 }
 
-/* ✅ KLASA AKTYWNA - przycisk widoczny */
+
 .scrollTopBtn.visible {
 	opacity: 1;
 	visibility: visible;
@@ -4030,7 +4030,7 @@
 	flex: 1;
 	scroll-behavior: smooth;
 
-	/* Ukryj scrollbar */
+	
 	scrollbar-width: none;
 	-ms-overflow-style: none;
 }
@@ -4046,7 +4046,7 @@
 	align-items: center;
 }
 
-/* ✅ Strzałki */
+
 .tabsNavArrow {
 	display: flex;
 	align-items: center;
@@ -4078,7 +4078,7 @@
 	height: 20px;
 }
 
-/* Na małych ekranach */
+
 @media (max-width: 768px) {
 	.tabsNavArrow {
 		width: 30px;
@@ -4169,7 +4169,7 @@
 	border-color: #4A6FE8;
 }
 
-/* Lista nieaktywnych */
+
 .inactiveList {
 	display: flex;
 	flex-direction: column;
@@ -4258,7 +4258,7 @@
 	color: #6b7280;
 }
 
-/* Pusty stan */
+
 .inactiveEmpty {
 	display: flex;
 	flex-direction: column;
@@ -4283,14 +4283,14 @@
 	margin: 0;
 }
 
-/* Siatka - 2 kolumny */
+
 .inactiveGrid {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 12px;
 }
 
-/* Przycisk "Pokaż więcej" */
+
 .showMoreContainer {
     display: flex;
     justify-content: center;
@@ -4314,14 +4314,14 @@
     color: #fff;
 }
 
-/* Responsywność - 1 kolumna na mniejszych ekranach */
+
 @media (max-width: 768px) {
     .inactiveGrid {
         grid-template-columns: 1fr;
     }
 }
 
-/* Siatka - maksymalnie 2 kolumny, automatyczne dopasowanie */
+
 .inactiveGrid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
@@ -4329,21 +4329,21 @@
     gap: 12px;
 }
 
-/* Ograniczenie do 2 kolumn */
+
 @media (min-width: 700px) {
     .inactiveGrid {
         grid-template-columns: repeat(2, 1fr);
     }
 }
 
-/* Na małych ekranach - 1 kolumna */
+
 @media (max-width: 699px) {
     .inactiveGrid {
         grid-template-columns: 1fr;
     }
 }
 
-/* Karta użytkownika - nie wyjeżdża poza ekran */
+
 .inactiveItem {
     display: flex;
     align-items: center;
@@ -4353,9 +4353,9 @@
     border: 1px solid #e5e7eb;
     border-radius: 12px;
     transition: all 0.2s ease;
-    min-width: 0; /* ✅ ZAPOBIEGA WYJEŻDŻANIU */
-    overflow: hidden; /* ✅ UCINA TREŚĆ WYCHODZĄCĄ POZA KARTĘ */
-    max-width: 100%; /* ✅ NIE SZERZEJ NIŻ KONTENER */
+    min-width: 0; 
+    overflow: hidden; 
+    max-width: 100%; 
 }
 
 .inactiveItem:hover {
@@ -4365,8 +4365,8 @@
 
 .inactiveItem__info {
     flex: 1;
-    min-width: 0; /* ✅ ZAPOBIEGA ROZCIĄGANIU */
-    overflow: hidden; /* ✅ UKRYWA NADMIAROWĄ TREŚĆ */
+    min-width: 0; 
+    overflow: hidden; 
 }
 
 .inactiveItem__name {
@@ -4374,9 +4374,9 @@
     font-size: 15px;
     color: #1f2937;
     display: block;
-    white-space: nowrap; /* ✅ ZAPOBIEGA ŁAMANIU W KARCIE */
+    white-space: nowrap; 
     overflow: hidden;
-    text-overflow: ellipsis; /* ✅ DODAJE "..." GDY TEKST ZA DŁUGI */
+    text-overflow: ellipsis; 
 }
 
 .inactiveItem__email {
@@ -4422,7 +4422,7 @@
     white-space: nowrap;
 }
 
-/* Przycisk "Pokaż więcej" */
+
 .showMoreContainer {
     display: flex;
     justify-content: center;
@@ -4450,7 +4450,7 @@
    RESPONSYWNOŚĆ DLA WYKRESU
    ============================================ */
 
-/* Kontener wykresu - responsywny */
+
 .revenueChartContainer {
     width: 100%;
     max-width: 100%;
@@ -4462,14 +4462,14 @@
     margin-bottom: 32px;
 }
 
-/* Sam wykres - dostosowanie do rozmiaru ekranu */
+
 .revenueChartContainer canvas {
     width: 100% !important;
     height: auto !important;
     max-height: 300px;
 }
 
-/* Na małych ekranach mniejszy wykres */
+
 @media (max-width: 768px) {
     .revenueChartContainer {
         padding: 12px;
@@ -4480,13 +4480,13 @@
         max-height: 220px !important;
     }
 
-    /* Mniejszy tytuł wykresu */
+    
     .revenueChartContainer h3 {
         font-size: 16px !important;
         margin-bottom: 8px !important;
     }
 
-    /* Mniejsze legendy i etykiety */
+    
     .revenueChartContainer .chartjs-legend {
         font-size: 11px !important;
     }

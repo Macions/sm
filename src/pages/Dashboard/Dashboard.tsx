@@ -63,7 +63,7 @@ type QuickAction = {
 type Stat = {
 	id: string;
 	label: string;
-	value: string | React.ReactNode; // 👈 Pozwala na ReactNode
+	value: string | React.ReactNode;
 	subtext?: string;
 	icon: React.ReactNode;
 	color: string;
@@ -412,21 +412,18 @@ export default function Dashboard() {
 				(now.getTime() - start.getTime()) / (1000 * 60 * 60 * 24),
 			);
 
-			// Funkcja pomocnicza do odmiany lat
 			const getYearsText = (count: number): string => {
 				if (count === 1) return "rok";
 				if (count >= 2 && count <= 4) return "lata";
 				return "lat";
 			};
 
-			// Funkcja pomocnicza do odmiany miesięcy
 			const getMonthsText = (count: number): string => {
 				if (count === 1) return "miesiąc";
 				if (count >= 2 && count <= 4) return "miesiące";
 				return "miesięcy";
 			};
 
-			// Funkcja pomocnicza do odmiany dni
 			const getDaysText = (count: number): string => {
 				if (count === 1) return "dzień";
 				if (count >= 2 && count <= 4) return "dni";
@@ -570,7 +567,6 @@ export default function Dashboard() {
 			},
 		];
 
-		// Dodaj kafelek poradników tylko jeśli są nowe (newGuides > 0)
 		if (stats.newGuides > 0) {
 			baseStats.push({
 				id: "guides",
@@ -593,9 +589,7 @@ export default function Dashboard() {
 				bgColor: "#EFEBFD",
 			});
 		}
-		// Dodaj kafelek urodzin
-		// Dodaj kafelek urodzin
-		// Dodaj kafelek urodzin
+
 		if (birthdays.length > 0) {
 			const names = birthdays.map((b) => `${b.first_name} ${b.last_name}`);
 			const currentUserHasBirthday = isCurrentUserBirthday();
@@ -603,7 +597,6 @@ export default function Dashboard() {
 			let displayText: React.ReactNode;
 
 			if (currentUserHasBirthday) {
-				// 🎂 OSOBISTE ŻYCZENIE DLA ZALOGOWANEGO UŻYTKOWNIKA
 				displayText = (
 					<>
 						<strong>Życzymy Ci dużej ilości zadań!</strong>

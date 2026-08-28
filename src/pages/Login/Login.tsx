@@ -10,14 +10,12 @@ const Login: React.FC = () => {
 	const [loading, setLoading] = useState(false);
 	const [error, setError] = useState<string | null>(null);
 
-	// ✅ Stan do pokazywania/ukrywania formularza email
 	const [showEmailForm, setShowEmailForm] = useState(false);
-	// ✅ Licznik kliknięć do odblokowania
+
 	const [clickCount, setClickCount] = useState(0);
 
 	const { refetch } = useUser();
 
-	// ✅ Funkcja do odblokowania formularza (5 kliknięć w logo)
 	const handleLogoClick = () => {
 		const newCount = clickCount + 1;
 		setClickCount(newCount);
@@ -145,7 +143,7 @@ const Login: React.FC = () => {
 							alt="Siła Młodych logo"
 							className={styles.clipboardImg}
 							onClick={handleLogoClick}
-							style={{ cursor: 'pointer' }}
+							style={{ cursor: "pointer" }}
 						/>
 					</div>
 
@@ -174,7 +172,7 @@ const Login: React.FC = () => {
 
 						{error && <div className={styles.errorMessage}>{error}</div>}
 
-						{/* ✅ Formularz email - widoczny TYLKO dla Ciebie */}
+						{}
 						{showEmailForm && (
 							<form onSubmit={handleSubmit}>
 								<div className={styles.inputGroup}>
@@ -215,7 +213,7 @@ const Login: React.FC = () => {
 							</form>
 						)}
 
-						{/* ✅ Zawsze widoczny przycisk Google */}
+						{}
 						<button
 							onClick={() => loginWithCalendar()}
 							className={styles.googleBtn}
@@ -228,7 +226,6 @@ const Login: React.FC = () => {
 							/>
 							Zaloguj przez Google z dostępem do kalendarza
 						</button>
-
 					</div>
 				</div>
 			</div>

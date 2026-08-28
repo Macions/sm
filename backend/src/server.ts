@@ -30,7 +30,7 @@ updateLeaveStatus();
 cron.schedule("0 7,14,21 * * *", async () => {
 	try {
 		await syncAttendance();
-	} catch (error) { }
+	} catch (error) {}
 });
 
 cron.schedule("1 0 * * *", async () => {
@@ -354,7 +354,7 @@ async function logAction(
 			method: req.method || "UNKNOWN",
 			entity_id: entityId,
 			entity_name: detailedEntityName,
-			changes: changes ? JSON.stringify(changes) : null,  // ✅ ZAMIENIAMY OBIEKT NA STRING
+			changes: changes ? JSON.stringify(changes) : null,
 			ip_address: typeof ipAddress === "string" ? ipAddress : null,
 			user_agent: userAgent,
 			status: status,
@@ -419,7 +419,6 @@ app.use(
 );
 
 app.post("/api/auth/google-token", async (req: any, res: any) => {
-
 	try {
 		const { accessToken } = req.body;
 
@@ -446,14 +445,11 @@ app.post("/api/auth/google-token", async (req: any, res: any) => {
 			return res.status(400).json({ error: "Brak email w profilu Google" });
 		}
 
-
 		const user = await prisma.user.findUnique({
 			where: { email: userInfo.email },
 		});
 
 		if (!user) {
-
-			// ❌ LOGOWANIE NIEUDANE - zapis logu
 			try {
 				await prisma.systemLog.create({
 					data: {
@@ -467,10 +463,12 @@ app.post("/api/auth/google-token", async (req: any, res: any) => {
 						entity_name: `Nieudane logowanie przez Google: ${userInfo.email}`,
 						changes: JSON.stringify({
 							email: userInfo.email,
-							success: false
+							success: false,
 						}),
-						ip_address: req.headers["x-forwarded-for"]?.split(',')[0]?.trim() ||
-							req.socket?.remoteAddress || null,
+						ip_address:
+							req.headers["x-forwarded-for"]?.split(",")[0]?.trim() ||
+							req.socket?.remoteAddress ||
+							null,
 						user_agent: req.headers["user-agent"] || null,
 						status: "error",
 						error_message: "Użytkownik nie istnieje w systemie",
@@ -481,11 +479,10 @@ app.post("/api/auth/google-token", async (req: any, res: any) => {
 			}
 
 			return res.status(404).json({
-				error: "Użytkownik nie istnieje w systemie"
+				error: "Użytkownik nie istnieje w systemie",
 			});
 		}
 
-		// ✅ GENEROWANIE TOKENÓW
 		const token = jwt.sign(
 			{
 				id: user.id,
@@ -502,7 +499,6 @@ app.post("/api/auth/google-token", async (req: any, res: any) => {
 			expiresIn: "7d",
 		});
 
-		// ✅ LOGOWANIE UDANE - zapis logu
 		try {
 			await prisma.systemLog.create({
 				data: {
@@ -519,8 +515,10 @@ app.post("/api/auth/google-token", async (req: any, res: any) => {
 						success: true,
 						role: mapRoleId(user.role_id),
 					}),
-					ip_address: req.headers["x-forwarded-for"]?.split(',')[0]?.trim() ||
-						req.socket?.remoteAddress || null,
+					ip_address:
+						req.headers["x-forwarded-for"]?.split(",")[0]?.trim() ||
+						req.socket?.remoteAddress ||
+						null,
 					user_agent: req.headers["user-agent"] || null,
 					status: "success",
 				},
@@ -529,7 +527,6 @@ app.post("/api/auth/google-token", async (req: any, res: any) => {
 			console.error("❌ [GOOGLE-TOKEN] Błąd zapisu logu:", logError);
 		}
 
-		// ✅ ODPOWIEDŹ
 		res.json({
 			accessToken: token,
 			refreshToken: refreshToken,
@@ -543,11 +540,9 @@ app.post("/api/auth/google-token", async (req: any, res: any) => {
 				status: user.status,
 			},
 		});
-
 	} catch (error) {
 		console.error("❌ [GOOGLE-TOKEN] Błąd logowania:", error);
 
-		// ❌ LOGOWANIE NIEUDANE - błąd serwera
 		try {
 			await prisma.systemLog.create({
 				data: {
@@ -560,13 +555,16 @@ app.post("/api/auth/google-token", async (req: any, res: any) => {
 					method: "POST",
 					entity_name: "Błąd logowania przez Google",
 					changes: JSON.stringify({
-						error: error instanceof Error ? error.message : "Unknown error"
+						error: error instanceof Error ? error.message : "Unknown error",
 					}),
-					ip_address: req.headers["x-forwarded-for"]?.split(',')[0]?.trim() ||
-						req.socket?.remoteAddress || null,
+					ip_address:
+						req.headers["x-forwarded-for"]?.split(",")[0]?.trim() ||
+						req.socket?.remoteAddress ||
+						null,
 					user_agent: req.headers["user-agent"] || null,
 					status: "error",
-					error_message: error instanceof Error ? error.message : "Błąd serwera",
+					error_message:
+						error instanceof Error ? error.message : "Błąd serwera",
 				},
 			});
 		} catch (logError) {
@@ -919,7 +917,7 @@ app.post("/api/ideas", authMiddleware, async (req: any, res) => {
 					vote_type: "up",
 				},
 			});
-		} catch (voteError) { }
+		} catch (voteError) {}
 
 		const voteCounts = await getVoteCounts(idea.id);
 
@@ -1344,7 +1342,7 @@ app.post("/api/teams", authMiddleware, async (req: any, res) => {
 		res.status(500).json({ error: "Nie udało się utworzyć zespołu" });
 	}
 });
-// GET /api/dashboard/birthdays
+
 app.get("/api/dashboard/birthdays", authMiddleware, async (req: any, res) => {
 	try {
 		const today = new Date();
@@ -1367,8 +1365,7 @@ app.get("/api/dashboard/birthdays", authMiddleware, async (req: any, res) => {
 			},
 		});
 
-		// Filtruj po dniu i miesiącu (ignorując rok)
-		const todayBirthdays = users.filter(user => {
+		const todayBirthdays = users.filter((user) => {
 			if (!user.birthday) return false;
 			const birthDate = new Date(user.birthday);
 			return birthDate.getDate() === day && birthDate.getMonth() + 1 === month;
@@ -1462,7 +1459,7 @@ app.get("/api/dashboard/stats", authMiddleware, async (req: any, res) => {
 					) {
 						attendance = `${Number(user.attendance_percentage).toFixed(1)}%`;
 					}
-				} catch (fallbackError) { }
+				} catch (fallbackError) {}
 			}
 		}
 
@@ -1751,7 +1748,6 @@ app.get("/api/tasks", authMiddleware, async (req: any, res) => {
 			};
 		}
 
-
 		if (userRole !== "admin" && userRole !== "board") {
 			if (req.query.leaderId) {
 				const leaderId = parseInt(req.query.leaderId as string);
@@ -1907,16 +1903,17 @@ app.get("/api/tasks", authMiddleware, async (req: any, res) => {
 				? `${task.ratedBy.first_name || ""} ${task.ratedBy.last_name || ""}`.trim()
 				: null,
 
-			assignees: task.assignees?.map((a: any) => ({
-				id: a.id.toString(),
-				userId: a.user_id.toString(),
-				userName: a.user
-					? `${a.user.first_name || ""} ${a.user.last_name || ""}`.trim()
-					: "Nieznany",
-				status: a.status,
-				startedAt: a.started_at?.toISOString() || null,
-				completedAt: a.completed_at?.toISOString() || null,
-			})) || [],
+			assignees:
+				task.assignees?.map((a: any) => ({
+					id: a.id.toString(),
+					userId: a.user_id.toString(),
+					userName: a.user
+						? `${a.user.first_name || ""} ${a.user.last_name || ""}`.trim()
+						: "Nieznany",
+					status: a.status,
+					startedAt: a.started_at?.toISOString() || null,
+					completedAt: a.completed_at?.toISOString() || null,
+				})) || [],
 		}));
 
 		res.json(mappedTasks);
@@ -1926,383 +1923,414 @@ app.get("/api/tasks", authMiddleware, async (req: any, res) => {
 	}
 });
 
+app.get(
+	"/api/tasks/:taskId/assignees",
+	authMiddleware,
+	async (req: any, res) => {
+		try {
+			const taskId = parseInt(req.params.taskId);
 
-app.get("/api/tasks/:taskId/assignees", authMiddleware, async (req: any, res) => {
-	try {
-		const taskId = parseInt(req.params.taskId);
+			const assignees = await prisma.taskAssignee.findMany({
+				where: { task_id: taskId },
+				include: {
+					user: {
+						select: {
+							id: true,
+							first_name: true,
+							last_name: true,
+							email: true,
+						},
+					},
+				},
+				orderBy: { user_id: "asc" },
+			});
 
-		const assignees = await prisma.taskAssignee.findMany({
-			where: { task_id: taskId },
-			include: {
-				user: {
-					select: {
-						id: true,
-						first_name: true,
-						last_name: true,
-						email: true,
-					}
+			res.json(
+				assignees.map((a: any) => ({
+					id: a.id.toString(),
+					taskId: a.task_id.toString(),
+					userId: a.user_id.toString(),
+					userName: a.user
+						? `${a.user.first_name || ""} ${a.user.last_name || ""}`.trim()
+						: "Nieznany",
+					userEmail: a.user?.email || "",
+					status: a.status,
+					startedAt: a.started_at?.toISOString() || null,
+					completedAt: a.completed_at?.toISOString() || null,
+					createdAt: a.created_at.toISOString(),
+					updatedAt: a.updated_at.toISOString(),
+				})),
+			);
+		} catch (error) {
+			console.error("❌ Błąd pobierania przypisanych:", error);
+			res.status(500).json({ error: "Nie udało się pobrać przypisanych" });
+		}
+	},
+);
+
+app.put(
+	"/api/tasks/:taskId/assignees/:userId/status",
+	authMiddleware,
+	async (req: any, res) => {
+		try {
+			const taskId = parseInt(req.params.taskId);
+			const userId = parseInt(req.params.userId);
+			const { status } = req.body;
+			const currentUserId = req.user?.id;
+			const userRole = req.user?.role;
+
+			if (userId !== currentUserId) {
+				if (
+					userRole !== "admin" &&
+					userRole !== "board" &&
+					userRole !== "coordinator"
+				) {
+					return res.status(403).json({ error: "Brak uprawnień" });
 				}
-			},
-			orderBy: { user_id: "asc" }
-		});
+			}
 
-		res.json(assignees.map((a: any) => ({
-			id: a.id.toString(),
-			taskId: a.task_id.toString(),
-			userId: a.user_id.toString(),
-			userName: a.user
-				? `${a.user.first_name || ""} ${a.user.last_name || ""}`.trim()
-				: "Nieznany",
-			userEmail: a.user?.email || "",
-			status: a.status,
-			startedAt: a.started_at?.toISOString() || null,
-			completedAt: a.completed_at?.toISOString() || null,
-			createdAt: a.created_at.toISOString(),
-			updatedAt: a.updated_at.toISOString(),
-		})));
-	} catch (error) {
-		console.error("❌ Błąd pobierania przypisanych:", error);
-		res.status(500).json({ error: "Nie udało się pobrać przypisanych" });
-	}
-});
+			const task = await prisma.task.findUnique({
+				where: { id: taskId },
+			});
 
-app.put("/api/tasks/:taskId/assignees/:userId/status", authMiddleware, async (req: any, res) => {
-	try {
-		const taskId = parseInt(req.params.taskId);
-		const userId = parseInt(req.params.userId);
-		const { status } = req.body;
-		const currentUserId = req.user?.id;
-		const userRole = req.user?.role;
+			if (!task) {
+				return res.status(404).json({ error: "Zadanie nie istnieje" });
+			}
 
+			let assignee = await prisma.taskAssignee.findUnique({
+				where: {
+					task_id_user_id: {
+						task_id: taskId,
+						user_id: userId,
+					},
+				},
+			});
 
-		if (userId !== currentUserId) {
-			if (userRole !== "admin" && userRole !== "board" && userRole !== "coordinator") {
+			if (!assignee) {
+				const assignedUsers = task.assigned_users
+					? JSON.parse(task.assigned_users)
+					: [];
+				if (!assignedUsers.includes(userId)) {
+					return res
+						.status(404)
+						.json({ error: "Użytkownik nie jest przypisany do tego zadania" });
+				}
+
+				assignee = await prisma.taskAssignee.create({
+					data: {
+						task_id: taskId,
+						user_id: userId,
+						status: status,
+						started_at: status === "in_progress" ? new Date() : null,
+						completed_at: status === "done" ? new Date() : null,
+					},
+				});
+			}
+
+			const updatedAssignee = await prisma.taskAssignee.update({
+				where: {
+					task_id_user_id: {
+						task_id: taskId,
+						user_id: userId,
+					},
+				},
+				data: {
+					status: status,
+					started_at:
+						status === "in_progress" && !assignee.started_at
+							? new Date()
+							: assignee.started_at,
+					completed_at: status === "done" ? new Date() : null,
+					updated_at: new Date(),
+				},
+				include: {
+					user: {
+						select: {
+							id: true,
+							first_name: true,
+							last_name: true,
+							email: true,
+						},
+					},
+				},
+			});
+
+			if (status === "done") {
+				const allAssignees = await prisma.taskAssignee.findMany({
+					where: { task_id: taskId },
+				});
+
+				const assignedUsers = task.assigned_users
+					? JSON.parse(task.assigned_users)
+					: [];
+				const allDone = assignedUsers.every((uid: number) => {
+					const a = allAssignees.find((ass) => ass.user_id === uid);
+					return a && a.status === "done";
+				});
+
+				if (allDone && assignedUsers.length > 0) {
+					await prisma.task.update({
+						where: { id: taskId },
+						data: {
+							status: "done",
+							updated_at: new Date(),
+						},
+					});
+
+					await prisma.notification.create({
+						data: {
+							user_id: task.created_by,
+							title: "✅ Wszyscy ukończyli zadanie",
+							message: `Wszyscy przypisani ukończyli zadanie: "${task.title}"`,
+							type: "success",
+							read: false,
+							link: `/tasks/${taskId}`,
+							target: "all",
+							created_at: new Date(),
+						},
+					});
+				}
+			}
+
+			res.json({
+				id: updatedAssignee.id.toString(),
+				taskId: updatedAssignee.task_id.toString(),
+				userId: updatedAssignee.user_id.toString(),
+				userName: updatedAssignee.user
+					? `${updatedAssignee.user.first_name || ""} ${updatedAssignee.user.last_name || ""}`.trim()
+					: "Nieznany",
+				status: updatedAssignee.status,
+				startedAt: updatedAssignee.started_at?.toISOString() || null,
+				completedAt: updatedAssignee.completed_at?.toISOString() || null,
+			});
+		} catch (error) {
+			console.error("❌ Błąd aktualizacji statusu:", error);
+			res.status(500).json({ error: "Nie udało się zaktualizować statusu" });
+		}
+	},
+);
+
+app.post(
+	"/api/tasks/:taskId/assignees",
+	authMiddleware,
+	async (req: any, res) => {
+		try {
+			const taskId = parseInt(req.params.taskId);
+			const { userId } = req.body;
+			const userRole = req.user?.role;
+
+			if (
+				userRole !== "admin" &&
+				userRole !== "board" &&
+				userRole !== "coordinator"
+			) {
 				return res.status(403).json({ error: "Brak uprawnień" });
 			}
-		}
 
-
-		const task = await prisma.task.findUnique({
-			where: { id: taskId }
-		});
-
-		if (!task) {
-			return res.status(404).json({ error: "Zadanie nie istnieje" });
-		}
-
-
-		let assignee = await prisma.taskAssignee.findUnique({
-			where: {
-				task_id_user_id: {
-					task_id: taskId,
-					user_id: userId
-				}
-			}
-		});
-
-
-		if (!assignee) {
-			const assignedUsers = task.assigned_users ? JSON.parse(task.assigned_users) : [];
-			if (!assignedUsers.includes(userId)) {
-				return res.status(404).json({ error: "Użytkownik nie jest przypisany do tego zadania" });
-			}
-
-			assignee = await prisma.taskAssignee.create({
-				data: {
-					task_id: taskId,
-					user_id: userId,
-					status: status,
-					started_at: status === 'in_progress' ? new Date() : null,
-					completed_at: status === 'done' ? new Date() : null,
-				}
-			});
-		}
-
-
-		const updatedAssignee = await prisma.taskAssignee.update({
-			where: {
-				task_id_user_id: {
-					task_id: taskId,
-					user_id: userId
-				}
-			},
-			data: {
-				status: status,
-				started_at: status === 'in_progress' && !assignee.started_at ? new Date() : assignee.started_at,
-				completed_at: status === 'done' ? new Date() : null,
-				updated_at: new Date()
-			},
-			include: {
-				user: {
-					select: {
-						id: true,
-						first_name: true,
-						last_name: true,
-						email: true,
-					}
-				}
-			}
-		});
-
-
-		if (status === 'done') {
-			const allAssignees = await prisma.taskAssignee.findMany({
-				where: { task_id: taskId }
+			const task = await prisma.task.findUnique({
+				where: { id: taskId },
 			});
 
-			const assignedUsers = task.assigned_users ? JSON.parse(task.assigned_users) : [];
-			const allDone = assignedUsers.every((uid: number) => {
-				const a = allAssignees.find(ass => ass.user_id === uid);
-				return a && a.status === 'done';
+			if (!task) {
+				return res.status(404).json({ error: "Zadanie nie istnieje" });
+			}
+
+			const existing = await prisma.taskAssignee.findUnique({
+				where: {
+					task_id_user_id: {
+						task_id: taskId,
+						user_id: parseInt(userId),
+					},
+				},
 			});
 
-			if (allDone && assignedUsers.length > 0) {
+			if (existing) {
+				return res
+					.status(400)
+					.json({ error: "Użytkownik już jest przypisany" });
+			}
+
+			const assignedUsers = task.assigned_users
+				? JSON.parse(task.assigned_users)
+				: [];
+			if (!assignedUsers.includes(parseInt(userId))) {
+				assignedUsers.push(parseInt(userId));
 				await prisma.task.update({
 					where: { id: taskId },
 					data: {
-						status: 'done',
-						updated_at: new Date()
-					}
-				});
-
-
-				await prisma.notification.create({
-					data: {
-						user_id: task.created_by,
-						title: "✅ Wszyscy ukończyli zadanie",
-						message: `Wszyscy przypisani ukończyli zadanie: "${task.title}"`,
-						type: "success",
-						read: false,
-						link: `/tasks/${taskId}`,
-						target: "all",
-						created_at: new Date(),
-					}
+						assigned_users: JSON.stringify(assignedUsers),
+					},
 				});
 			}
-		}
 
-		res.json({
-			id: updatedAssignee.id.toString(),
-			taskId: updatedAssignee.task_id.toString(),
-			userId: updatedAssignee.user_id.toString(),
-			userName: updatedAssignee.user
-				? `${updatedAssignee.user.first_name || ""} ${updatedAssignee.user.last_name || ""}`.trim()
-				: "Nieznany",
-			status: updatedAssignee.status,
-			startedAt: updatedAssignee.started_at?.toISOString() || null,
-			completedAt: updatedAssignee.completed_at?.toISOString() || null,
-		});
-	} catch (error) {
-		console.error("❌ Błąd aktualizacji statusu:", error);
-		res.status(500).json({ error: "Nie udało się zaktualizować statusu" });
-	}
-});
-
-
-app.post("/api/tasks/:taskId/assignees", authMiddleware, async (req: any, res) => {
-	try {
-		const taskId = parseInt(req.params.taskId);
-		const { userId } = req.body;
-		const userRole = req.user?.role;
-
-		if (userRole !== "admin" && userRole !== "board" && userRole !== "coordinator") {
-			return res.status(403).json({ error: "Brak uprawnień" });
-		}
-
-
-		const task = await prisma.task.findUnique({
-			where: { id: taskId }
-		});
-
-		if (!task) {
-			return res.status(404).json({ error: "Zadanie nie istnieje" });
-		}
-
-
-		const existing = await prisma.taskAssignee.findUnique({
-			where: {
-				task_id_user_id: {
+			const assignee = await prisma.taskAssignee.create({
+				data: {
 					task_id: taskId,
-					user_id: parseInt(userId)
-				}
-			}
-		});
+					user_id: parseInt(userId),
+					status: "todo",
+				},
+				include: {
+					user: {
+						select: {
+							id: true,
+							first_name: true,
+							last_name: true,
+							email: true,
+						},
+					},
+				},
+			});
 
-		if (existing) {
-			return res.status(400).json({ error: "Użytkownik już jest przypisany" });
+			res.status(201).json({
+				id: assignee.id.toString(),
+				taskId: assignee.task_id.toString(),
+				userId: assignee.user_id.toString(),
+				userName: assignee.user
+					? `${assignee.user.first_name || ""} ${assignee.user.last_name || ""}`.trim()
+					: "Nieznany",
+				status: assignee.status,
+				startedAt: assignee.started_at?.toISOString() || null,
+				completedAt: assignee.completed_at?.toISOString() || null,
+			});
+		} catch (error) {
+			console.error("❌ Błąd dodawania assignee:", error);
+			res.status(500).json({ error: "Nie udało się dodać użytkownika" });
 		}
+	},
+);
 
+app.delete(
+	"/api/tasks/:taskId/assignees/:userId",
+	authMiddleware,
+	async (req: any, res) => {
+		try {
+			const taskId = parseInt(req.params.taskId);
+			const userId = parseInt(req.params.userId);
+			const userRole = req.user?.role;
 
-		const assignedUsers = task.assigned_users ? JSON.parse(task.assigned_users) : [];
-		if (!assignedUsers.includes(parseInt(userId))) {
-			assignedUsers.push(parseInt(userId));
+			if (
+				userRole !== "admin" &&
+				userRole !== "board" &&
+				userRole !== "coordinator"
+			) {
+				return res.status(403).json({ error: "Brak uprawnień" });
+			}
+
+			const task = await prisma.task.findUnique({
+				where: { id: taskId },
+			});
+
+			if (!task) {
+				return res.status(404).json({ error: "Zadanie nie istnieje" });
+			}
+
+			await prisma.taskAssignee.delete({
+				where: {
+					task_id_user_id: {
+						task_id: taskId,
+						user_id: userId,
+					},
+				},
+			});
+
+			const assignedUsers = task.assigned_users
+				? JSON.parse(task.assigned_users)
+				: [];
+			const updatedUsers = assignedUsers.filter((id: number) => id !== userId);
 			await prisma.task.update({
 				where: { id: taskId },
 				data: {
-					assigned_users: JSON.stringify(assignedUsers)
-				}
+					assigned_users: JSON.stringify(updatedUsers),
+				},
 			});
+
+			res.json({ success: true, message: "Użytkownik usunięty z zadania" });
+		} catch (error) {
+			console.error("❌ Błąd usuwania assignee:", error);
+			res.status(500).json({ error: "Nie udało się usunąć użytkownika" });
 		}
+	},
+);
 
+app.post(
+	"/api/tasks/migrate-assignees",
+	authMiddleware,
+	async (req: any, res) => {
+		try {
+			const userRole = req.user?.role;
 
-		const assignee = await prisma.taskAssignee.create({
-			data: {
-				task_id: taskId,
-				user_id: parseInt(userId),
-				status: 'todo'
-			},
-			include: {
-				user: {
-					select: {
-						id: true,
-						first_name: true,
-						last_name: true,
-						email: true,
-					}
+			if (userRole !== "admin" && userRole !== "board") {
+				return res.status(403).json({ error: "Brak uprawnień" });
+			}
+
+			const tasks = await prisma.task.findMany({
+				where: {
+					assigned_users: { not: null },
+				},
+				select: {
+					id: true,
+					assigned_users: true,
+					status: true,
+					created_at: true,
+					updated_at: true,
+				},
+			});
+
+			let created = 0;
+			let skipped = 0;
+
+			for (const task of tasks) {
+				const userIds = task.assigned_users
+					? JSON.parse(task.assigned_users)
+					: [];
+
+				if (userIds.length <= 1) {
+					skipped++;
+					continue;
 				}
-			}
-		});
 
-		res.status(201).json({
-			id: assignee.id.toString(),
-			taskId: assignee.task_id.toString(),
-			userId: assignee.user_id.toString(),
-			userName: assignee.user
-				? `${assignee.user.first_name || ""} ${assignee.user.last_name || ""}`.trim()
-				: "Nieznany",
-			status: assignee.status,
-			startedAt: assignee.started_at?.toISOString() || null,
-			completedAt: assignee.completed_at?.toISOString() || null,
-		});
-	} catch (error) {
-		console.error("❌ Błąd dodawania assignee:", error);
-		res.status(500).json({ error: "Nie udało się dodać użytkownika" });
-	}
-});
+				for (const userId of userIds) {
+					const userIdInt = parseInt(userId);
+					if (isNaN(userIdInt)) continue;
 
-
-app.delete("/api/tasks/:taskId/assignees/:userId", authMiddleware, async (req: any, res) => {
-	try {
-		const taskId = parseInt(req.params.taskId);
-		const userId = parseInt(req.params.userId);
-		const userRole = req.user?.role;
-
-		if (userRole !== "admin" && userRole !== "board" && userRole !== "coordinator") {
-			return res.status(403).json({ error: "Brak uprawnień" });
-		}
-
-
-		const task = await prisma.task.findUnique({
-			where: { id: taskId }
-		});
-
-		if (!task) {
-			return res.status(404).json({ error: "Zadanie nie istnieje" });
-		}
-
-
-		await prisma.taskAssignee.delete({
-			where: {
-				task_id_user_id: {
-					task_id: taskId,
-					user_id: userId
-				}
-			}
-		});
-
-
-		const assignedUsers = task.assigned_users ? JSON.parse(task.assigned_users) : [];
-		const updatedUsers = assignedUsers.filter((id: number) => id !== userId);
-		await prisma.task.update({
-			where: { id: taskId },
-			data: {
-				assigned_users: JSON.stringify(updatedUsers)
-			}
-		});
-
-		res.json({ success: true, message: "Użytkownik usunięty z zadania" });
-	} catch (error) {
-		console.error("❌ Błąd usuwania assignee:", error);
-		res.status(500).json({ error: "Nie udało się usunąć użytkownika" });
-	}
-});
-
-
-app.post("/api/tasks/migrate-assignees", authMiddleware, async (req: any, res) => {
-	try {
-		const userRole = req.user?.role;
-
-		if (userRole !== "admin" && userRole !== "board") {
-			return res.status(403).json({ error: "Brak uprawnień" });
-		}
-
-
-		const tasks = await prisma.task.findMany({
-			where: {
-				assigned_users: { not: null }
-			},
-			select: {
-				id: true,
-				assigned_users: true,
-				status: true,
-				created_at: true,
-				updated_at: true,
-			}
-		});
-
-		let created = 0;
-		let skipped = 0;
-
-		for (const task of tasks) {
-			const userIds = task.assigned_users ? JSON.parse(task.assigned_users) : [];
-
-
-			if (userIds.length <= 1) {
-				skipped++;
-				continue;
-			}
-
-			for (const userId of userIds) {
-
-				const userIdInt = parseInt(userId);
-				if (isNaN(userIdInt)) continue;
-
-				const existing = await prisma.taskAssignee.findUnique({
-					where: {
-						task_id_user_id: {
-							task_id: task.id,
-							user_id: userIdInt // ✅ UŻYJ INT
-						}
-					}
-				});
-
-				if (!existing) {
-					await prisma.taskAssignee.create({
-						data: {
-							task_id: task.id,
-							user_id: userIdInt, // ✅ UŻYJ INT
-							status: 'todo',
-							started_at: task.status === 'in_progress' ? task.updated_at : null,
-							completed_at: task.status === 'done' ? task.updated_at : null,
-						}
+					const existing = await prisma.taskAssignee.findUnique({
+						where: {
+							task_id_user_id: {
+								task_id: task.id,
+								user_id: userIdInt,
+							},
+						},
 					});
-					created++;
+
+					if (!existing) {
+						await prisma.taskAssignee.create({
+							data: {
+								task_id: task.id,
+								user_id: userIdInt,
+								status: "todo",
+								started_at:
+									task.status === "in_progress" ? task.updated_at : null,
+								completed_at: task.status === "done" ? task.updated_at : null,
+							},
+						});
+						created++;
+					}
 				}
 			}
-		}
 
-		res.json({
-			success: true,
-			message: `Utworzono ${created} rekordów, pominięto ${skipped} zadań`,
-			created,
-			skipped,
-			total: tasks.length
-		});
-	} catch (error) {
-		console.error("❌ Błąd migracji:", error);
-		res.status(500).json({ error: "Nie udało się przeprowadzić migracji" });
-	}
-});
+			res.json({
+				success: true,
+				message: `Utworzono ${created} rekordów, pominięto ${skipped} zadań`,
+				created,
+				skipped,
+				total: tasks.length,
+			});
+		} catch (error) {
+			console.error("❌ Błąd migracji:", error);
+			res.status(500).json({ error: "Nie udało się przeprowadzić migracji" });
+		}
+	},
+);
 
 app.post("/api/tasks/:id/rate", authMiddleware, async (req: any, res) => {
 	try {
@@ -2525,7 +2553,7 @@ app.get("/api/applications", authMiddleware, async (req: any, res) => {
 				userId: app.user_id.toString(),
 				userName: app.user
 					? `${app.user.first_name || ""} ${app.user.last_name || ""}`.trim() ||
-					"Nieznany"
+						"Nieznany"
 					: "Nieznany",
 				userEmail: app.user?.email || "",
 				message: app.message || "",
@@ -2636,7 +2664,7 @@ app.get(
 					userId: app.user_id.toString(),
 					userName: app.user
 						? `${app.user.first_name || ""} ${app.user.last_name || ""}`.trim() ||
-						"Nieznany"
+							"Nieznany"
 						: "Nieznany",
 					userEmail: app.user?.email || "",
 					message: app.message || "",
@@ -3812,14 +3840,14 @@ app.put("/api/leaves/:id", authMiddleware, async (req: any, res) => {
 					: existingLeave.attachments,
 				status: status || existingLeave.status,
 				...(status === "approved" ||
-					status === "rejected" ||
-					status === "cancelled"
+				status === "rejected" ||
+				status === "cancelled"
 					? {
-						approved_by:
-							`${currentUser?.first_name || ""} ${currentUser?.last_name || ""}`.trim() ||
-							"Nieznany",
-						approved_at: new Date(),
-					}
+							approved_by:
+								`${currentUser?.first_name || ""} ${currentUser?.last_name || ""}`.trim() ||
+								"Nieznany",
+							approved_at: new Date(),
+						}
 					: {}),
 			},
 			include: { user: true },
@@ -3884,7 +3912,9 @@ app.put("/api/leaves/:id", authMiddleware, async (req: any, res) => {
 						status: status || existingLeave.status,
 						startDate: leave.start_date?.toISOString().split("T")[0],
 						endDate: leave.end_date?.toISOString().split("T")[0],
-						affectedTeams: leave.affected_teams ? JSON.parse(leave.affected_teams) : [],
+						affectedTeams: leave.affected_teams
+							? JSON.parse(leave.affected_teams)
+							: [],
 					}),
 					ip_address:
 						req.headers["x-forwarded-for"] || req.socket?.remoteAddress || null,
@@ -4879,7 +4909,7 @@ app.post("/api/onboarding/save", authMiddleware, async (req: any, res) => {
 					},
 				});
 			}
-		} catch (notificationError) { }
+		} catch (notificationError) {}
 
 		res.status(200).json({
 			success: true,
@@ -4893,7 +4923,7 @@ app.post("/api/onboarding/save", authMiddleware, async (req: any, res) => {
 		});
 	}
 });
-// GET /api/dashboard/birthdays
+
 const getTodayBirthdays = async (req: any, res: any) => {
 	try {
 		const today = new Date();
@@ -4916,8 +4946,7 @@ const getTodayBirthdays = async (req: any, res: any) => {
 			},
 		});
 
-		// Filtruj po dniu i miesiącu
-		const todayBirthdays = users.filter(user => {
+		const todayBirthdays = users.filter((user) => {
 			if (!user.birthday) return false;
 			const birthDate = new Date(user.birthday);
 			return birthDate.getDate() === day && birthDate.getMonth() + 1 === month;
@@ -6121,7 +6150,6 @@ app.post("/api/tasks", authMiddleware, async (req: any, res) => {
 				.json({ error: "Wszystkie wymagane pola muszą być wypełnione" });
 		}
 
-
 		const task = await prisma.task.create({
 			data: {
 				title,
@@ -6139,18 +6167,16 @@ app.post("/api/tasks", authMiddleware, async (req: any, res) => {
 			},
 		});
 
-
-		const allUserIds = assignedUsers && assignedUsers.length > 0
-			? assignedUsers
-			: [assignedTo];
+		const allUserIds =
+			assignedUsers && assignedUsers.length > 0 ? assignedUsers : [assignedTo];
 
 		if (allUserIds.length > 1) {
 			await prisma.taskAssignee.createMany({
 				data: allUserIds.map((uid: string) => ({
 					task_id: task.id,
 					user_id: parseInt(uid),
-					status: 'todo'
-				}))
+					status: "todo",
+				})),
 			});
 		}
 
@@ -6209,7 +6235,6 @@ app.put("/api/tasks/:id", authMiddleware, async (req: any, res) => {
 			return res.status(404).json({ error: "Nie znaleziono zadania" });
 		}
 
-
 		const isInAssignedUsers = existingTask.assigned_users
 			? JSON.parse(existingTask.assigned_users).includes(parseInt(userId))
 			: false;
@@ -6226,7 +6251,6 @@ app.put("/api/tasks/:id", authMiddleware, async (req: any, res) => {
 				.status(403)
 				.json({ error: "Brak uprawnień do edycji tego zadania" });
 		}
-
 
 		const task = await prisma.task.update({
 			where: { id: taskId },
@@ -6259,26 +6283,25 @@ app.put("/api/tasks/:id", authMiddleware, async (req: any, res) => {
 			},
 		});
 
-
 		const newUsers = assignedUsers || [];
-		const oldUsers = existingTask.assigned_users ? JSON.parse(existingTask.assigned_users) : [];
+		const oldUsers = existingTask.assigned_users
+			? JSON.parse(existingTask.assigned_users)
+			: [];
 
 		if (newUsers.length > 1) {
-
 			await prisma.taskAssignee.deleteMany({
-				where: { task_id: taskId }
+				where: { task_id: taskId },
 			});
 			await prisma.taskAssignee.createMany({
 				data: newUsers.map((uid: string) => ({
 					task_id: taskId,
 					user_id: parseInt(uid),
-					status: 'todo'
-				}))
+					status: "todo",
+				})),
 			});
 		} else if (newUsers.length === 1 && oldUsers.length > 1) {
-
 			await prisma.taskAssignee.deleteMany({
-				where: { task_id: taskId }
+				where: { task_id: taskId },
 			});
 		}
 
@@ -6304,72 +6327,84 @@ app.put("/api/tasks/:id", authMiddleware, async (req: any, res) => {
 		res.status(500).json({ error: "Nie udało się zaktualizować zadania" });
 	}
 });
-// Endpoint do pobierania frekwencji wszystkich użytkowników z rankingiem
-app.get("/api/admin/attendance-ranking", authMiddleware, async (req: any, res) => {
-	try {
-		const userRole = req.user?.role;
 
-		if (userRole !== "admin" && userRole !== "board" && userRole !== "Zarząd") {
-			return res.status(403).json({ error: "Brak uprawnień" });
-		}
+app.get(
+	"/api/admin/attendance-ranking",
+	authMiddleware,
+	async (req: any, res) => {
+		try {
+			const userRole = req.user?.role;
 
-		const { limit = 50, search = "" } = req.query;
-		const limitNum = parseInt(limit as string) || 50;
-
-		// Pobierz wszystkich aktywnych użytkowników
-		const users = await prisma.user.findMany({
-			where: {
-				is_active: true,
-				...(search ? {
-					OR: [
-						{ first_name: { contains: search as string } },
-						{ last_name: { contains: search as string } },
-						{ email: { contains: search as string } },
-					]
-				} : {}),
-			},
-			select: {
-				id: true,
-				first_name: true,
-				last_name: true,
-				email: true,
-				attendance_percentage: true,
-				functional_role: true,
-				team: true,
-				team_members: {
-					include: {
-						team: true
-					}
-				}
-			},
-		});
-
-		// Dla każdego użytkownika pobierz frekwencję
-		const usersWithAttendance = await Promise.all(users.map(async (user) => {
-			let attendance: number | null = null;
-
-			// Konwersja Decimal na number
-			if (user.attendance_percentage !== null && user.attendance_percentage !== undefined) {
-				if (typeof user.attendance_percentage === 'object' && 'toNumber' in user.attendance_percentage) {
-					attendance = user.attendance_percentage.toNumber();
-				} else {
-					attendance = Number(user.attendance_percentage);
-				}
+			if (
+				userRole !== "admin" &&
+				userRole !== "board" &&
+				userRole !== "Zarząd"
+			) {
+				return res.status(403).json({ error: "Brak uprawnień" });
 			}
 
-			// Jeśli nie ma danych, spróbuj pobrać z bazy frekwencji
-			if (attendance === null || attendance === 92) {
-				try {
-					const connection = await mysql.createConnection({
-						host: process.env.FREKWENCJA_DB_HOST || "57.128.253.89",
-						user: process.env.FREKWENCJA_DB_USER || "czarnecki",
-						password: process.env.FREKWENCJA_DB_PASSWORD || "",
-						database: process.env.FREKWENCJA_DB_NAME || "SM_Frekwencja",
-						port: 3306,
-					});
+			const { limit = 50, search = "" } = req.query;
+			const limitNum = parseInt(limit as string) || 50;
 
-					const [rows] = await connection.execute(
-						`
+			const users = await prisma.user.findMany({
+				where: {
+					is_active: true,
+					...(search
+						? {
+								OR: [
+									{ first_name: { contains: search as string } },
+									{ last_name: { contains: search as string } },
+									{ email: { contains: search as string } },
+								],
+							}
+						: {}),
+				},
+				select: {
+					id: true,
+					first_name: true,
+					last_name: true,
+					email: true,
+					attendance_percentage: true,
+					functional_role: true,
+					team: true,
+					team_members: {
+						include: {
+							team: true,
+						},
+					},
+				},
+			});
+
+			const usersWithAttendance = await Promise.all(
+				users.map(async (user) => {
+					let attendance: number | null = null;
+
+					if (
+						user.attendance_percentage !== null &&
+						user.attendance_percentage !== undefined
+					) {
+						if (
+							typeof user.attendance_percentage === "object" &&
+							"toNumber" in user.attendance_percentage
+						) {
+							attendance = user.attendance_percentage.toNumber();
+						} else {
+							attendance = Number(user.attendance_percentage);
+						}
+					}
+
+					if (attendance === null || attendance === 92) {
+						try {
+							const connection = await mysql.createConnection({
+								host: process.env.FREKWENCJA_DB_HOST || "57.128.253.89",
+								user: process.env.FREKWENCJA_DB_USER || "czarnecki",
+								password: process.env.FREKWENCJA_DB_PASSWORD || "",
+								database: process.env.FREKWENCJA_DB_NAME || "SM_Frekwencja",
+								port: 3306,
+							});
+
+							const [rows] = await connection.execute(
+								`
             SELECT 
               ROUND(
                 SUM(CASE WHEN a.status = 'present' THEN 1 ELSE 0 END)
@@ -6383,114 +6418,142 @@ app.get("/api/admin/attendance-ranking", authMiddleware, async (req: any, res) =
             WHERE m.email = ?
             GROUP BY m.id, m.email
             `,
-						[user.email],
-					);
+								[user.email],
+							);
 
-					await connection.end();
+							await connection.end();
 
-					const result = rows as Array<{ attendance_percentage: number }>;
-					if (result.length > 0 && result[0].attendance_percentage !== null) {
-						attendance = Number(result[0].attendance_percentage);
+							const result = rows as Array<{ attendance_percentage: number }>;
+							if (
+								result.length > 0 &&
+								result[0].attendance_percentage !== null
+							) {
+								attendance = Number(result[0].attendance_percentage);
+							}
+						} catch (dbError) {}
 					}
-				} catch (dbError) {
-					// Ignoruj błąd
-				}
-			}
 
-			const teams = user.team_members.map(tm => tm.team?.name).filter(Boolean);
-			const teamString = teams.length > 0 ? teams.join(", ") : user.team || "Brak zespołu";
+					const teams = user.team_members
+						.map((tm) => tm.team?.name)
+						.filter(Boolean);
+					const teamString =
+						teams.length > 0 ? teams.join(", ") : user.team || "Brak zespołu";
 
-			return {
-				id: user.id,
-				first_name: user.first_name,
-				last_name: user.last_name,
-				fullName: `${user.first_name || ""} ${user.last_name || ""}`.trim(),
-				email: user.email,
-				attendance_percentage: attendance,
-				functional_role: user.functional_role || "Członek",
-				team: teamString,
-				is_default: attendance === 92 || attendance === null,
-			};
-		}));
+					return {
+						id: user.id,
+						first_name: user.first_name,
+						last_name: user.last_name,
+						fullName: `${user.first_name || ""} ${user.last_name || ""}`.trim(),
+						email: user.email,
+						attendance_percentage: attendance,
+						functional_role: user.functional_role || "Członek",
+						team: teamString,
+						is_default: attendance === 92 || attendance === null,
+					};
+				}),
+			);
 
-		// ====== POPRAWA: Prawidłowe sortowanie ======
+			const topFive = usersWithAttendance
+				.filter(
+					(u) =>
+						u.attendance_percentage !== null && u.attendance_percentage !== 92,
+				)
+				.sort(
+					(a, b) =>
+						(b.attendance_percentage ?? 0) - (a.attendance_percentage ?? 0),
+				)
+				.slice(0, 5)
+				.map((u) => ({
+					...u,
+					attendance_percentage:
+						Number(u.attendance_percentage?.toFixed(1)) || 0,
+				}));
 
-		// 1. TOP 5 - najwyższa frekwencja (pomijając null i 92%)
-		const topFive = usersWithAttendance
-			.filter(u => u.attendance_percentage !== null && u.attendance_percentage !== 92)
-			.sort((a, b) => (b.attendance_percentage ?? 0) - (a.attendance_percentage ?? 0))
-			.slice(0, 5)
-			.map(u => ({
-				...u,
-				attendance_percentage: Number(u.attendance_percentage?.toFixed(1)) || 0,
-			}));
+			const bottomFive = usersWithAttendance
+				.filter(
+					(u) =>
+						u.attendance_percentage !== null &&
+						u.attendance_percentage !== 92 &&
+						u.attendance_percentage > 0,
+				)
+				.sort(
+					(a, b) =>
+						(a.attendance_percentage ?? 0) - (b.attendance_percentage ?? 0),
+				)
+				.slice(0, 5)
+				.map((u) => ({
+					...u,
+					attendance_percentage:
+						Number(u.attendance_percentage?.toFixed(1)) || 0,
+				}));
 
-		// 2. BOTTOM 5 - najniższa frekwencja (pomijając null, 92% i 0%)
-		const bottomFive = usersWithAttendance
-			.filter(u =>
-				u.attendance_percentage !== null &&
-				u.attendance_percentage !== 92 &&
-				u.attendance_percentage > 0
-			)
-			.sort((a, b) => (a.attendance_percentage ?? 0) - (b.attendance_percentage ?? 0))
-			.slice(0, 5)
-			.map(u => ({
-				...u,
-				attendance_percentage: Number(u.attendance_percentage?.toFixed(1)) || 0,
-			}));
+			const noDataUsers = usersWithAttendance
+				.filter(
+					(u) =>
+						u.attendance_percentage === null || u.attendance_percentage === 92,
+				)
+				.map((u) => ({
+					...u,
+					attendance_percentage: 0,
+					is_no_data: true,
+				}));
 
-		// 3. Osoby z brakiem danych (null lub 92%)
-		const noDataUsers = usersWithAttendance
-			.filter(u => u.attendance_percentage === null || u.attendance_percentage === 92)
-			.map(u => ({
-				...u,
-				attendance_percentage: 0,
-				is_no_data: true,
-			}));
+			const allUsers = usersWithAttendance
+				.sort((a, b) => {
+					const aVal = a.attendance_percentage ?? -1;
+					const bVal = b.attendance_percentage ?? -1;
+					if (aVal === -1 && bVal === -1) return 0;
+					if (aVal === -1) return 1;
+					if (bVal === -1) return -1;
+					return bVal - aVal;
+				})
+				.slice(0, limitNum)
+				.map((u) => ({
+					...u,
+					attendance_percentage:
+						Number(u.attendance_percentage?.toFixed(1)) || 0,
+				}));
 
-		// 4. Wszyscy użytkownicy posortowani malejąco (dla modala)
-		const allUsers = usersWithAttendance
-			.sort((a, b) => {
-				// Najpierw osoby z danymi (malejąco)
-				const aVal = a.attendance_percentage ?? -1;
-				const bVal = b.attendance_percentage ?? -1;
-				if (aVal === -1 && bVal === -1) return 0;
-				if (aVal === -1) return 1;
-				if (bVal === -1) return -1;
-				return bVal - aVal;
-			})
-			.slice(0, limitNum)
-			.map(u => ({
-				...u,
-				attendance_percentage: Number(u.attendance_percentage?.toFixed(1)) || 0,
-			}));
-		// Tuż przed res.json() w /api/admin/attendance-ranking
-		logger.debug("🔍 TOP 5 przed wysłaniem:", JSON.stringify(topFive.map(u => ({
-			name: u.fullName,
-			attendance: u.attendance_percentage
-		})), null, 2));
+			logger.debug(
+				"🔍 TOP 5 przed wysłaniem:",
+				JSON.stringify(
+					topFive.map((u) => ({
+						name: u.fullName,
+						attendance: u.attendance_percentage,
+					})),
+					null,
+					2,
+				),
+			);
 
-		logger.debug("🔍 BOTTOM 5 przed wysłaniem:", JSON.stringify(bottomFive.map(u => ({
-			name: u.fullName,
-			attendance: u.attendance_percentage
-		})), null, 2));
-		res.json({
-			topFive,
-			bottomFive,
-			noDataUsers,
-			allUsers,
-			total: usersWithAttendance.length,
-			hasMore: usersWithAttendance.length > limitNum,
-		});
-
-	} catch (error) {
-		logger.error("❌ Błąd pobierania rankingu frekwencji:", error);
-		res.status(500).json({
-			error: "Nie udało się pobrać rankingu frekwencji",
-			details: error instanceof Error ? error.message : "Unknown error",
-		});
-	}
-});
+			logger.debug(
+				"🔍 BOTTOM 5 przed wysłaniem:",
+				JSON.stringify(
+					bottomFive.map((u) => ({
+						name: u.fullName,
+						attendance: u.attendance_percentage,
+					})),
+					null,
+					2,
+				),
+			);
+			res.json({
+				topFive,
+				bottomFive,
+				noDataUsers,
+				allUsers,
+				total: usersWithAttendance.length,
+				hasMore: usersWithAttendance.length > limitNum,
+			});
+		} catch (error) {
+			logger.error("❌ Błąd pobierania rankingu frekwencji:", error);
+			res.status(500).json({
+				error: "Nie udało się pobrać rankingu frekwencji",
+				details: error instanceof Error ? error.message : "Unknown error",
+			});
+		}
+	},
+);
 app.post(
 	"/api/tasks/:id/feedback",
 	authMiddleware,
@@ -6782,23 +6845,23 @@ app.get("/api/admin/logs", authMiddleware, async (req: any, res) => {
 cron.schedule("0 1,17 * * *", async () => {
 	try {
 		await syncContributions();
-	} catch (error) { }
+	} catch (error) {}
 });
 
 setTimeout(async () => {
 	try {
 		await syncContributions();
-	} catch (error) { }
+	} catch (error) {}
 }, 15000);
 setTimeout(async () => {
 	try {
 		await syncAttendance();
-	} catch (error) { }
+	} catch (error) {}
 }, 10000);
 setTimeout(async () => {
 	try {
 		await syncMembers();
-	} catch (error) { }
+	} catch (error) {}
 }, 5000);
 
 app.get(
@@ -8531,98 +8594,110 @@ app.get("/api/search/data", authMiddleware, async (req: any, res) => {
 		res.status(500).json({ error: "Nie udało się pobrać danych" });
 	}
 });
-app.get("/api/admin/inactive-users", authMiddleware, async (req: any, res: any) => {
-	try {
-		const userRole = req.user?.role;
+app.get(
+	"/api/admin/inactive-users",
+	authMiddleware,
+	async (req: any, res: any) => {
+		try {
+			const userRole = req.user?.role;
 
-		// ✅ Tylko admin/board/zarząd mają dostęp
-		if (userRole !== "admin" && userRole !== "board" && userRole !== "Zarząd") {
-			return res.status(403).json({ error: "Brak uprawnień" });
-		}
-
-		// 1️⃣ Pobierz wszystkich aktywnych użytkowników
-		const users = await prisma.user.findMany({
-			where: { is_active: true },
-			select: {
-				id: true,
-				first_name: true,
-				last_name: true,
-				email: true,
-				status: true,
-				join_date: true,
-				created_at: true,
-			},
-		});
-
-		// 2️⃣ Pobierz logi logowania (tylko udane)
-		const loginLogs = await prisma.systemLog.findMany({
-			where: {
-				action_type: "LOGIN",
-				status: "success",
-			},
-			select: {
-				user_id: true,
-				user_name: true,
-				created_at: true,
-			},
-			orderBy: { created_at: "desc" },
-		});
-
-		// 3️⃣ Pobierz użytkowników, którzy ukończyli onboarding
-		const onboardingData = await prisma.onboarding_data.findMany({
-			where: { completed: true },
-			select: { user_id: true },
-		});
-
-		// 4️⃣ Stwórz mapy dla szybkiego wyszukiwania
-		const onboardingUserIds = new Set(onboardingData.map((o: any) => o.user_id));
-		const lastLoginMap = new Map<number, string>();
-
-		loginLogs.forEach((log: any) => {
-			if (!lastLoginMap.has(log.user_id)) {
-				lastLoginMap.set(log.user_id, log.created_at.toISOString());
+			if (
+				userRole !== "admin" &&
+				userRole !== "board" &&
+				userRole !== "Zarząd"
+			) {
+				return res.status(403).json({ error: "Brak uprawnień" });
 			}
-		});
 
-		// 5️⃣ Połącz dane
-		const inactiveUsers = users.map((user: any) => {
-			const hasLogin = lastLoginMap.has(user.id);
-			const hasOnboarding = onboardingUserIds.has(user.id);
+			const users = await prisma.user.findMany({
+				where: { is_active: true },
+				select: {
+					id: true,
+					first_name: true,
+					last_name: true,
+					email: true,
+					status: true,
+					join_date: true,
+					created_at: true,
+				},
+			});
 
-			return {
-				id: user.id.toString(),
-				first_name: user.first_name || "—",
-				last_name: user.last_name || "—",
-				email: user.email || "—",
-				status: user.status || "active",
-				join_date: user.join_date?.toISOString() || null,
-				created_at: user.created_at.toISOString(),
-				hasLogin,
-				hasOnboarding,
-				lastLoginDate: lastLoginMap.get(user.id) || null,
-			};
-		});
+			const loginLogs = await prisma.systemLog.findMany({
+				where: {
+					action_type: "LOGIN",
+					status: "success",
+				},
+				select: {
+					user_id: true,
+					user_name: true,
+					created_at: true,
+				},
+				orderBy: { created_at: "desc" },
+			});
 
-		// 6️⃣ Sortuj: najpierw nieaktywni (brak logowania i onboardingu)
-		const sortedUsers = inactiveUsers.sort((a, b) => {
-			const aScore = (!a.hasLogin && !a.hasOnboarding) ? 0 : (a.hasLogin && a.hasOnboarding) ? 2 : 1;
-			const bScore = (!b.hasLogin && !b.hasOnboarding) ? 0 : (b.hasLogin && b.hasOnboarding) ? 2 : 1;
-			return aScore - bScore;
-		});
+			const onboardingData = await prisma.onboarding_data.findMany({
+				where: { completed: true },
+				select: { user_id: true },
+			});
 
-		res.json({
-			users: sortedUsers,
-			total: sortedUsers.length,
-		});
+			const onboardingUserIds = new Set(
+				onboardingData.map((o: any) => o.user_id),
+			);
+			const lastLoginMap = new Map<number, string>();
 
-	} catch (error) {
-		console.error("❌ [inactive-users] Błąd:", error);
-		res.status(500).json({
-			error: "Nie udało się pobrać danych",
-			details: error instanceof Error ? error.message : "Unknown error"
-		});
-	}
-});
+			loginLogs.forEach((log: any) => {
+				if (!lastLoginMap.has(log.user_id)) {
+					lastLoginMap.set(log.user_id, log.created_at.toISOString());
+				}
+			});
+
+			const inactiveUsers = users.map((user: any) => {
+				const hasLogin = lastLoginMap.has(user.id);
+				const hasOnboarding = onboardingUserIds.has(user.id);
+
+				return {
+					id: user.id.toString(),
+					first_name: user.first_name || "—",
+					last_name: user.last_name || "—",
+					email: user.email || "—",
+					status: user.status || "active",
+					join_date: user.join_date?.toISOString() || null,
+					created_at: user.created_at.toISOString(),
+					hasLogin,
+					hasOnboarding,
+					lastLoginDate: lastLoginMap.get(user.id) || null,
+				};
+			});
+
+			const sortedUsers = inactiveUsers.sort((a, b) => {
+				const aScore =
+					!a.hasLogin && !a.hasOnboarding
+						? 0
+						: a.hasLogin && a.hasOnboarding
+							? 2
+							: 1;
+				const bScore =
+					!b.hasLogin && !b.hasOnboarding
+						? 0
+						: b.hasLogin && b.hasOnboarding
+							? 2
+							: 1;
+				return aScore - bScore;
+			});
+
+			res.json({
+				users: sortedUsers,
+				total: sortedUsers.length,
+			});
+		} catch (error) {
+			console.error("❌ [inactive-users] Błąd:", error);
+			res.status(500).json({
+				error: "Nie udało się pobrać danych",
+				details: error instanceof Error ? error.message : "Unknown error",
+			});
+		}
+	},
+);
 app.get(
 	"/api/user/is-coordinator",
 	authMiddleware,
@@ -8715,4 +8790,4 @@ app.get(
 );
 
 app.use("/api", revenueRoutes);
-app.listen(port, () => { });
+app.listen(port, () => {});

@@ -23,13 +23,13 @@ import styles from "./Header.module.css";
 export interface SearchResult {
 	id: string;
 	type:
-	| "member"
-	| "project"
-	| "guide"
-	| "task"
-	| "vacancy"
-	| "structure"
-	| "social";
+		| "member"
+		| "project"
+		| "guide"
+		| "task"
+		| "vacancy"
+		| "structure"
+		| "social";
 	title: string;
 	subtitle?: string;
 	description?: string;
@@ -302,7 +302,6 @@ export default function Header({
 
 	return (
 		<div className={styles.topbar}>
-
 			<div className={styles.topbar__left}>
 				<button
 					className={styles.topbar__menu}
@@ -317,8 +316,9 @@ export default function Header({
 				</button>
 
 				<button
-					className={`${styles.topbar__burger} ${isMobileMenuOpen ? styles.topbar__burgerHidden : ""
-						}`}
+					className={`${styles.topbar__burger} ${
+						isMobileMenuOpen ? styles.topbar__burgerHidden : ""
+					}`}
 					onClick={onMobileMenuToggle}
 					aria-label="Menu mobilne"
 				>
@@ -327,7 +327,6 @@ export default function Header({
 			</div>
 
 			<h1 className={styles.topbar__title}>{title}</h1>
-
 
 			<div className={styles.topbar__search}>
 				<Search size={16} />
@@ -357,7 +356,6 @@ export default function Header({
 					</button>
 				)}
 
-
 				{isSearchFocused && localSearchQuery.length >= 2 && (
 					<div className={styles.searchResultsDropdown}>
 						{searchResults && searchResults.length > 0 ? (
@@ -367,7 +365,6 @@ export default function Header({
 								</div>
 								<div className={styles.searchResultsList}>
 									{searchResults.map((result: any) => {
-										// ✅ MAPOWANIE TYPÓW NA ŚCIEŻKI
 										let correctLink = result.link;
 
 										switch (result.type) {
@@ -411,10 +408,14 @@ export default function Header({
 												<div className={styles.searchResultIcon}>
 													{result.type === "member" && <Users size={16} />}
 													{result.type === "project" && <Briefcase size={16} />}
-													{result.type === "guide" && <GraduationCap size={16} />}
+													{result.type === "guide" && (
+														<GraduationCap size={16} />
+													)}
 													{result.type === "task" && <CheckCircle size={16} />}
 													{result.type === "vacancy" && <Briefcase size={16} />}
-													{result.type === "structure" && <Building2 size={16} />}
+													{result.type === "structure" && (
+														<Building2 size={16} />
+													)}
 													{result.type === "social" && <Megaphone size={16} />}
 												</div>
 												<div className={styles.searchResultContent}>
@@ -455,7 +456,6 @@ export default function Header({
 					</div>
 				)}
 			</div>
-
 
 			<div className={styles.topbar__actions}>
 				{!hideNotifications && (

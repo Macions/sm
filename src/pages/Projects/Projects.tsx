@@ -234,7 +234,7 @@ function ProjectCard({
 	};
 
 	const displayTeamCount = project.team.filter(
-		(member) => member && member.trim() !== "" && member !== "63"
+		(member) => member && member.trim() !== "" && member !== "63",
 	).length;
 	const formatDate = (dateString: string) => {
 		if (!dateString) return "Brak daty";
@@ -713,14 +713,13 @@ function TeamSelector({
 	useEffect(() => {
 		setForceUpdate((prev) => prev + 1);
 	}, [filter, pillar]);
-	// 🔥 DODAJ TEN useEffect - sprawdza czy wybrani użytkownicy to wszyscy
+
 	useEffect(() => {
-		// Jeśli są wybrani użytkownicy
 		if (selectedTeam.length > 0) {
-			// Sprawdź czy wybrani to WSZYSCY użytkownicy
-			const allUserIds = users.map(u => u.id);
-			const isAllSelected = selectedTeam.length === users.length &&
-				selectedTeam.every(id => allUserIds.includes(id));
+			const allUserIds = users.map((u) => u.id);
+			const isAllSelected =
+				selectedTeam.length === users.length &&
+				selectedTeam.every((id) => allUserIds.includes(id));
 
 			if (!isAllSelected && filter === "all") {
 				setFilter("custom");
@@ -1491,11 +1490,11 @@ export default function Projects() {
 						setCurrentUser((prev) =>
 							prev
 								? {
-									...prev,
-									coordinatorPillars: data.leaderTeams.map(
-										(t: any) => t.name,
-									),
-								}
+										...prev,
+										coordinatorPillars: data.leaderTeams.map(
+											(t: any) => t.name,
+										),
+									}
 								: prev,
 						);
 
@@ -1951,7 +1950,7 @@ export default function Projects() {
 				setProjects(mappedProjects);
 			} catch (error) {
 				logger.error("❌ Błąd ładowania projektów:", error);
-				setProjects([]); // Pusta tablica zamiast mocków
+				setProjects([]);
 			} finally {
 				setTimeout(() => {
 					setLoading(false);
@@ -2001,7 +2000,6 @@ export default function Projects() {
 		fetchUsers();
 	}, []);
 	const canManageProject = (project: Project) => {
-		// 🔥 DODAJEMY SPRAWDZENIE ROLI "board"
 		if (currentUser?.role === "board") return true;
 		if (permissions.includes("canManageAllProjects")) return true;
 		if (permissions.includes("canManagePillarProjects")) {
@@ -2362,10 +2360,10 @@ export default function Projects() {
 					{(selectedPillar !== "all" ||
 						selectedStatus !== "all" ||
 						searchTerm) && (
-							<button className={styles.filters__reset} onClick={clearFilters}>
-								Wyczyść filtry
-							</button>
-						)}
+						<button className={styles.filters__reset} onClick={clearFilters}>
+							Wyczyść filtry
+						</button>
+					)}
 				</div>
 			</div>
 
@@ -2381,8 +2379,8 @@ export default function Projects() {
 							<h3 className={styles.emptyState__title}>Brak projektów</h3>
 							<p className={styles.emptyState__description}>
 								{searchTerm ||
-									selectedPillar !== "all" ||
-									selectedStatus !== "all"
+								selectedPillar !== "all" ||
+								selectedStatus !== "all"
 									? "Nie znaleziono projektów spełniających kryteria wyszukiwania."
 									: canManageProjects
 										? 'Nie ma jeszcze żadnych projektów. Kliknij "Dodaj projekt", aby utworzyć pierwszy.'

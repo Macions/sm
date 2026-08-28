@@ -54,14 +54,11 @@ function AppRoutes() {
 	const [isLoading, setIsLoading] = useState(true);
 	const [isMaintenance, setIsMaintenance] = useState(false);
 
-	// 🔥 SPRAWDZANIE TRYBU SERWISOWEGO
 	useEffect(() => {
 		const checkMaintenance = () => {
-			// 🔥 USTAW NA SZTYWNO - DZIAŁA ZAWSZE!
-			const maintenance = false; // 👈 TRUE = WŁĄCZONY, FALSE = WYŁĄCZONY
+			const maintenance = false;
 
 			setIsMaintenance(maintenance);
-
 		};
 
 		checkMaintenance();
@@ -105,7 +102,6 @@ function AppRoutes() {
 		verifyToken();
 	}, []);
 
-	// Nasłuchuj zmian tokena w innych kartach
 	useEffect(() => {
 		const handleStorageChange = (e: StorageEvent) => {
 			if (e.key === "accessToken") {
@@ -135,7 +131,6 @@ function AppRoutes() {
 
 	if (isLoading) return <LoadingSpinner />;
 
-	// 🔥 JEŚLI TRYB SERWISOWY - POKAŻ STRONĘ MAINTENANCE
 	if (isMaintenance) {
 		return (
 			<Suspense fallback={<LoadingSpinner />}>

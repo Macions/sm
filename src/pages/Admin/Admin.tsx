@@ -44,25 +44,25 @@ interface SystemLog {
 	user_name: string;
 	user_role: string;
 	action_type:
-	| "CREATE"
-	| "UPDATE"
-	| "DELETE"
-	| "LOGIN"
-	| "LOGOUT"
-	| "APPROVE"
-	| "REJECT";
+		| "CREATE"
+		| "UPDATE"
+		| "DELETE"
+		| "LOGIN"
+		| "LOGOUT"
+		| "APPROVE"
+		| "REJECT";
 	category:
-	| "USER"
-	| "TEAM"
-	| "LEAVE"
-	| "PROJECT"
-	| "VACANCY"
-	| "TUTORIAL"
-	| "SOCIAL_MEDIA"
-	| "PERMISSION"
-	| "STRUCTURE"
-	| "NOTIFICATION"
-	| "AUTH";
+		| "USER"
+		| "TEAM"
+		| "LEAVE"
+		| "PROJECT"
+		| "VACANCY"
+		| "TUTORIAL"
+		| "SOCIAL_MEDIA"
+		| "PERMISSION"
+		| "STRUCTURE"
+		| "NOTIFICATION"
+		| "AUTH";
 	endpoint: string;
 	method: string;
 	entity_id: string | null;
@@ -122,11 +122,8 @@ function InactiveUsersManagement() {
 		fetchInactiveUsers();
 	}, []);
 
-	// ✅ FILTRUJ TYLKO NIEAKTYWNYCH
-	// ZMIEŃ FILTR NA:
 	const filteredUsers = users
 		.filter((user) => {
-			// ✅ TYLKO CI, KTÓRZY NIE MAJĄ ANI LOGOWANIA, ANI ONBOARDINGU
 			return !user.hasLogin && !user.hasOnboarding;
 		})
 		.filter((user) => {
@@ -135,7 +132,8 @@ function InactiveUsersManagement() {
 				user.last_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
 				user.email?.toLowerCase().includes(searchTerm.toLowerCase());
 
-			const matchesFilter = filterStatus === "all" || user.status === filterStatus;
+			const matchesFilter =
+				filterStatus === "all" || user.status === filterStatus;
 
 			return matchesSearch && matchesFilter;
 		});
@@ -1026,8 +1024,8 @@ function StructureManagement({
 		title: "",
 		message: "",
 		confirmText: "Potwierdź",
-		onConfirm: () => { },
-		onCancel: () => { },
+		onConfirm: () => {},
+		onCancel: () => {},
 	});
 	const [expandedTeams, setExpandedTeams] = useState<Record<string, boolean>>(
 		{},
@@ -2285,7 +2283,7 @@ function AccessManagement() {
 
 	const handleEditAccess = (member: any) => {
 		setSelectedMember(member);
-		// ✅ Upewnij się że accessItems to tablica stringów lub obiektów z access_name
+
 		const items = member.access || [];
 		setAccessItems(
 			items.map((item: any) => {
@@ -2310,14 +2308,14 @@ function AccessManagement() {
 
 		try {
 			const token = localStorage.getItem("accessToken");
-			// ✅ Wyślij tablicę stringów (nazw dostępów)
+
 			const response = await fetch(`/api/members/${selectedMember.id}/access`, {
 				method: "PUT",
 				headers: {
 					Authorization: `Bearer ${token}`,
 					"Content-Type": "application/json",
 				},
-				body: JSON.stringify({ access: accessItems }), // accessItems to już stringi
+				body: JSON.stringify({ access: accessItems }),
 			});
 
 			if (!response.ok) {
@@ -2327,7 +2325,7 @@ function AccessManagement() {
 
 			toast.success("Dostęp zaktualizowany!");
 			handleCloseEdit();
-			await fetchMembers(); // Odśwież listę
+			await fetchMembers();
 		} catch (error) {
 			logger.error("Błąd:", error);
 			toast.error(
@@ -2402,7 +2400,6 @@ function AccessManagement() {
 									<div className={styles.accessItem__tags}>
 										{member.access && member.access.length > 0 ? (
 											member.access.map((item: any, index: number) => {
-												// ✅ Obsługa zarówno stringów jak i obiektów
 												let label = "";
 												let key = `access-${index}`;
 
@@ -2556,7 +2553,7 @@ function AccessManagement() {
 												toast.error("Ten dostęp już istnieje");
 												return;
 											}
-											// ✅ Dodaj jako string
+
 											setAccessItems([...accessItems, newAccess.trim()]);
 											setNewAccess("");
 										}}
@@ -2583,7 +2580,6 @@ function AccessManagement() {
 										</span>
 									) : (
 										accessItems.map((item: any, index: number) => {
-											// ✅ item to już string (z handleEditAccess)
 											return (
 												<span key={index} className={styles.accessTag}>
 													{String(item)}
@@ -3129,7 +3125,7 @@ function AttendanceRanking() {
 				{renderSection("Najniższa frekwencja", data.bottomFive)}
 			</div>
 
-			{/* Brak danych */}
+			{}
 			{data.noDataUsers && data.noDataUsers.length > 0 && (
 				<div className={styles.attendanceSection} style={{ marginTop: "16px" }}>
 					<h3 className={styles.attendanceSection__title}>
@@ -3156,7 +3152,7 @@ function AttendanceRanking() {
 				</button>
 			</div>
 
-			{/* Modal ze wszystkimi użytkownikami */}
+			{}
 			{showAllModal && (
 				<div
 					className={styles.modalOverlay}
@@ -3245,18 +3241,15 @@ export default function Admin({ title }: { title?: string }) {
 		setActiveTab(tabId);
 
 		if (sectionRef.current) {
-			// scrollIntoView z offsetem za pomocą scroll-margin-top
-			// Najpierw dodajemy tymczasowy styl
 			const element = sectionRef.current;
 			const originalMarginTop = element.style.scrollMarginTop;
-			element.style.scrollMarginTop = "100px"; // <- tyle px nad sekcją
+			element.style.scrollMarginTop = "100px";
 
 			element.scrollIntoView({
 				behavior: "smooth",
 				block: "start",
 			});
 
-			// Przywracamy oryginalny styl po chwili
 			setTimeout(() => {
 				element.style.scrollMarginTop = originalMarginTop || "";
 			}, 500);
@@ -3368,7 +3361,6 @@ export default function Admin({ title }: { title?: string }) {
 		setScrollToTeamId(teamId);
 	};
 
-	// DODAJ - funkcja powrotu na górę
 	const scrollToTop = () => {
 		const mainElement = document.querySelector(
 			"main._main_xe2ra_67",
@@ -3380,10 +3372,8 @@ export default function Admin({ title }: { title?: string }) {
 			});
 		}
 	};
-	// DODAJ - wykrywanie która sekcja jest widoczna
-	// ZOSTAW ten useEffect (już masz dobry):
+
 	useEffect(() => {
-		// Znajdź element MAIN
 		const mainElement = document.querySelector(
 			"main._main_xe2ra_67",
 		) as HTMLElement;
@@ -3448,7 +3438,7 @@ export default function Admin({ title }: { title?: string }) {
 
 	return (
 		<>
-			{/* ✅ Panel nawigacyjny - POZA kontenerem .admin */}
+			{}
 			<div className={styles.tabsNav}>
 				<div className={styles.tabsNav__list}>
 					<button
@@ -3483,13 +3473,13 @@ export default function Admin({ title }: { title?: string }) {
 						className={`${styles.tabsNav__tab} ${activeTab === "inactive" ? styles.tabsNav__tabActive : ""}`}
 						onClick={() => scrollToSection(inactiveRef, "inactive")}
 					>
-						<UserX size={16} />  {/* lub użyj innej ikony */}
+						<UserX size={16} /> {}
 						Nieaktywni
 					</button>
 				</div>
 			</div>
 
-			{/* ✅ Główna treść */}
+			{}
 			<div className={styles.admin}>
 				<div className={styles.header}>
 					<div className={styles.header__left}>
@@ -3506,7 +3496,7 @@ export default function Admin({ title }: { title?: string }) {
 					<RevenueChart year={2026} title="Przychody i wydatki" />
 				</div>
 
-				{/* Sekcje z przypisanymi refami */}
+				{}
 				<div ref={rolesRef}>
 					<RolesManagement
 						roles={roles}

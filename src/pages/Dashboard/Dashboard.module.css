@@ -64,7 +64,6 @@
 }
 
 @keyframes pulse {
-
 	0%,
 	100% {
 		opacity: 1;
@@ -256,9 +255,11 @@
 	inset: 0;
 	opacity: 0;
 	transition: opacity 0.25s ease;
-	background: linear-gradient(135deg,
-			var(--purple-50, #f6f4fe) 0%,
-			transparent 100%);
+	background: linear-gradient(
+		135deg,
+		var(--purple-50, #f6f4fe) 0%,
+		transparent 100%
+	);
 }
 
 .quickAction:hover::before {
@@ -602,7 +603,6 @@
 }
 
 @keyframes pulse {
-
 	0%,
 	100% {
 		opacity: 1;
@@ -784,8 +784,6 @@
 	border-radius: 50%;
 }
 
-
-
 .welcomeCard__pillars {
 	display: flex;
 	gap: 8px;
@@ -807,7 +805,6 @@
    Mobile fixes dla kafelków statystyk
    ========================================================================== */
 
-/* Poprawa dla bardzo małych ekranów - kafelki w jednej kolumnie */
 @media (width <=480px) {
 	.stats {
 		grid-template-columns: 1fr 1fr;
@@ -819,7 +816,6 @@
 		gap: 10px;
 		border-radius: var(--radius-sm, 12px);
 		min-width: 0;
-		/* Zapobiega przepełnianiu */
 	}
 
 	.statCard__icon {
@@ -864,7 +860,6 @@
 	}
 }
 
-/* Ekstremalnie małe ekrany - kafelki w jednej kolumnie */
 @media (width <=400px) {
 	.stats {
 		grid-template-columns: 1fr;
@@ -897,7 +892,6 @@
 	}
 }
 
-/* Poprawka dla kafelków z długimi wartościami (np. "2 lata, 3 miesiące") */
 .statCard__valueWrapper {
 	display: flex;
 	align-items: baseline;
@@ -914,7 +908,6 @@
 	word-break: break-word;
 }
 
-/* Dodatkowe zabezpieczenie przed przepełnieniem */
 .statCard {
 	overflow: hidden;
 	min-width: 0;
@@ -940,12 +933,10 @@
 	white-space: nowrap;
 }
 
-/* Specjalne style dla kafelka "Jesteś z nami" z długim tekstem */
 .statCard__value {
 	font-size: clamp(18px, 3vw, 30px);
 }
 
-/* Poprawa dla tabletów */
 @media (width <=768px) and (width > 480px) {
 	.stats {
 		grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -976,7 +967,6 @@
 	}
 }
 
-/* Poprawka dla szerokości między 400-480px */
 @media (width > 400px) and (width <=480px) {
 	.stats {
 		grid-template-columns: 1fr 1fr;
@@ -998,7 +988,6 @@
 	}
 }
 
-/* Zapobieganie przepełnianiu w trybie landscape na małych ekranach */
 @media (max-height: 600px) and (orientation: landscape) {
 	.stats {
 		grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));

@@ -108,19 +108,13 @@ const ACCESS_COLORS: Record<TutorialAccess, string> = {
 
 const downloadFile = async (url: string, fileName: string) => {
 	try {
-		// ✅ Popraw ścieżkę - usuń /api z przodu jeśli URL zaczyna się od /uploads
 		let fullUrl = url;
 
-		// Jeśli URL zaczyna się od /uploads, dodaj /api na początku
 		if (url.startsWith("/uploads")) {
 			fullUrl = `/api${url}`;
-		}
-		// Jeśli URL zaczyna się od http, użyj go bez zmian
-		else if (url.startsWith("http")) {
+		} else if (url.startsWith("http")) {
 			fullUrl = url;
-		}
-		// W przeciwnym razie dodaj /api
-		else {
+		} else {
 			fullUrl = `/api${url}`;
 		}
 
@@ -132,7 +126,11 @@ const downloadFile = async (url: string, fileName: string) => {
 		});
 
 		if (!response.ok) {
-			console.error("❌ Błąd pobierania:", response.status, response.statusText);
+			console.error(
+				"❌ Błąd pobierania:",
+				response.status,
+				response.statusText,
+			);
 			throw new Error(`Błąd pobierania: ${response.status}`);
 		}
 
@@ -964,34 +962,40 @@ export default function Tutorials() {
 	const currentUser = useMemo(() => {
 		if (!contextUser) return null;
 
-		// ✅ Sprawdź czy użytkownik jest koordynatorem po teamie lub pillars
 		const userTeam = (contextUser as any).team || "";
 		const userPillars = (contextUser as any).pillars || "";
 
-		// Koordynator = należy do filaru (ma team "Filar X" lub pillars "X")
-		const isCoordinatorByTeam = userTeam.includes("Filar") ||
+		const isCoordinatorByTeam =
+			userTeam.includes("Filar") ||
 			userPillars.includes("Projektowy") ||
 			userPillars.includes("Filar") ||
 			userTeam.toLowerCase().includes("koordynator");
 
-		const functionalRole = (contextUser as any).function ||
+		const functionalRole =
+			(contextUser as any).function ||
 			(contextUser as any).functional_role ||
-			(contextUser as any).functionalRole || "";
+			(contextUser as any).functionalRole ||
+			"";
 
 		const role = (contextUser.role || "member") as
-			"admin" | "board" | "coordinator" | "functional" | "member";
+			| "admin"
+			| "board"
+			| "coordinator"
+			| "functional"
+			| "member";
 
 		return {
 			id: String(contextUser.id),
 			name: `${contextUser.firstName} ${contextUser.lastName}`,
 			role: role,
 			functionalRole: functionalRole,
-			// ✅ Ustaw isLeader na true jeśli jest koordynatorem
+
 			isLeader: isCoordinatorByTeam,
 			isTeamCoordinator: (contextUser as any).isTeamCoordinator === true,
 			isPillarCoordinator: (contextUser as any).isPillarCoordinator === true,
-			// ✅ Ustaw isCoordinator na true jeśli jest koordynatorem
-			isCoordinator: isCoordinatorByTeam ||
+
+			isCoordinator:
+				isCoordinatorByTeam ||
 				(contextUser as any).isTeamCoordinator === true ||
 				(contextUser as any).isPillarCoordinator === true ||
 				contextUser.role === "coordinator" ||
@@ -1006,7 +1010,6 @@ export default function Tutorials() {
 			return true;
 		}
 
-		// ✅ Koordynatorzy mogą zarządzać (sprawdzamy isCoordinator)
 		if (currentUser.isCoordinator === true) {
 			return true;
 		}
@@ -1043,41 +1046,41 @@ export default function Tutorials() {
 		fetchUserAndTutorials();
 	}, []);
 	const canViewTutorial = (tutorial: Tutorial): boolean => {
-		// Admin i Zarząd widzą wszystko
 		const adminRoles = ["admin", "board"];
 		if (currentUser?.role && adminRoles.includes(currentUser.role)) {
 			return true;
 		}
 
-		// Dla wszystkich - zawsze widoczne
 		if (tutorial.access === "all") return true;
 
-		// Sprawdzenie czy użytkownik jest koordynatorem
 		const isCoordinator =
 			currentUser?.isLeader === true ||
 			currentUser?.isTeamCoordinator === true ||
 			currentUser?.isPillarCoordinator === true ||
 			currentUser?.role === "coordinator" ||
-			(currentUser?.functionalRole && currentUser.functionalRole.toLowerCase().includes("koordynator"));
+			(currentUser?.functionalRole &&
+				currentUser.functionalRole.toLowerCase().includes("koordynator"));
 
-		// Dla koordynatorów
 		if (tutorial.access === "coordinator") {
 			return isCoordinator;
 		}
 
-		// ✅ Dla osób funkcyjnych
 		if (tutorial.access === "functional") {
-			if (isCoordinator || (currentUser?.role && adminRoles.includes(currentUser.role))) {
+			if (
+				isCoordinator ||
+				(currentUser?.role && adminRoles.includes(currentUser.role))
+			) {
 				return true;
 			}
 			if (tutorial.functionalRoles && tutorial.functionalRoles.length > 0) {
 				if (!currentUser) return false;
-				return tutorial.functionalRoles.includes(currentUser.functionalRole || "");
+				return tutorial.functionalRoles.includes(
+					currentUser.functionalRole || "",
+				);
 			}
 			return true;
 		}
 
-		// ✅ Dla zarządu
 		if (tutorial.access === "board") {
 			return currentUser?.role === "admin" || currentUser?.role === "board";
 		}
@@ -1297,10 +1300,10 @@ export default function Tutorials() {
 					{(selectedCategory !== "all" ||
 						selectedAccess !== "all" ||
 						searchTerm) && (
-							<button className={styles.filters__reset} onClick={clearFilters}>
-								Wyczyść filtry
-							</button>
-						)}
+						<button className={styles.filters__reset} onClick={clearFilters}>
+							Wyczyść filtry
+						</button>
+					)}
 				</div>
 			</div>
 
@@ -1316,8 +1319,8 @@ export default function Tutorials() {
 						<h3 className={styles.emptyState__title}>Brak poradników</h3>
 						<p className={styles.emptyState__description}>
 							{searchTerm ||
-								selectedCategory !== "all" ||
-								selectedAccess !== "all"
+							selectedCategory !== "all" ||
+							selectedAccess !== "all"
 								? "Nie znaleziono poradników spełniających kryteria wyszukiwania."
 								: "Nie ma jeszcze żadnych poradników."}
 						</p>

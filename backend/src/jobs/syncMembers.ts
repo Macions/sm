@@ -345,7 +345,7 @@ export async function syncMembers() {
 
 				if (mapped.shouldSkip) {
 					const existing = await prisma.user.findUnique({
-						where: { email: generatedEmail }
+						where: { email: generatedEmail },
 					});
 
 					if (existing) {
@@ -353,8 +353,8 @@ export async function syncMembers() {
 							where: { id: existing.id },
 							data: {
 								is_active: false,
-								status: "inactive"
-							}
+								status: "inactive",
+							},
 						});
 						updated++;
 						logger.debug(`🔒 [SYNC] Dezaktywowano w pętli: ${generatedEmail}`);
@@ -364,7 +364,7 @@ export async function syncMembers() {
 				}
 
 				const existing = await prisma.user.findUnique({
-					where: { email: generatedEmail }
+					where: { email: generatedEmail },
 				});
 
 				const memberId = emailToMemberId.get(generatedEmail);
@@ -377,23 +377,30 @@ export async function syncMembers() {
 				const pillarString =
 					pillarNames.length > 0 ? pillarNames.join(", ") : null;
 				let birthdayDate = null;
-				if (member.birthdate) {  // ← ZMIENIONE z birthday na birthdate
+				if (member.birthdate) {
 					try {
-						if (typeof member.birthdate === 'string') {  // ← ZMIENIONE
-							birthdayDate = new Date(member.birthdate);  // ← ZMIENIONE
-						} else if (member.birthdate instanceof Date) {  // ← ZMIENIONE
-							birthdayDate = member.birthdate;  // ← ZMIENIONE
-						} else if (typeof member.birthdate === 'object' && member.birthdate !== null) {  // ← ZMIENIONE
-							birthdayDate = new Date(member.birthdate);  // ← ZMIENIONE
+						if (typeof member.birthdate === "string") {
+							birthdayDate = new Date(member.birthdate);
+						} else if (member.birthdate instanceof Date) {
+							birthdayDate = member.birthdate;
+						} else if (
+							typeof member.birthdate === "object" &&
+							member.birthdate !== null
+						) {
+							birthdayDate = new Date(member.birthdate);
 						}
 
 						if (birthdayDate && isNaN(birthdayDate.getTime())) {
 							birthdayDate = null;
-							logger.debug(`⚠️ [SYNC] Niepoprawny format daty urodzenia dla ${generatedEmail}: ${member.birthdate}`);  // ← ZMIENIONE
+							logger.debug(
+								`⚠️ [SYNC] Niepoprawny format daty urodzenia dla ${generatedEmail}: ${member.birthdate}`,
+							);
 						}
 					} catch (error) {
 						birthdayDate = null;
-						logger.debug(`⚠️ [SYNC] Błąd konwersji daty urodzenia dla ${generatedEmail}: ${member.birthdate}`);  // ← ZMIENIONE
+						logger.debug(
+							`⚠️ [SYNC] Błąd konwersji daty urodzenia dla ${generatedEmail}: ${member.birthdate}`,
+						);
 					}
 				}
 				const userData = {
@@ -418,9 +425,14 @@ export async function syncMembers() {
 
 				if (existing) {
 					const hasExistingStatus = existing.status && existing.status !== "";
-					const hasExistingPillars = existing.pillars && existing.pillars !== "" && existing.pillars !== null;
-					const hasExistingFunctionalRole = existing.functional_role && existing.functional_role !== "";
-					const hasExistingBirthday = existing.birthday !== null && existing.birthday !== undefined;
+					const hasExistingPillars =
+						existing.pillars &&
+						existing.pillars !== "" &&
+						existing.pillars !== null;
+					const hasExistingFunctionalRole =
+						existing.functional_role && existing.functional_role !== "";
+					const hasExistingBirthday =
+						existing.birthday !== null && existing.birthday !== undefined;
 
 					const dataToUpdate: any = {
 						first_name: userData.first_name,
@@ -449,11 +461,11 @@ export async function syncMembers() {
 						if (existing.pillars && existing.pillars !== "") {
 							pillarsPreserved++;
 							logger.debug(
-								`🔒 [SYNC] Zachowano istniejące filary użytkownika ${generatedEmail}: ${existing.pillars}`
+								`🔒 [SYNC] Zachowano istniejące filary użytkownika ${generatedEmail}: ${existing.pillars}`,
 							);
 						} else {
 							logger.debug(
-								`⏭️ [SYNC] Użytkownik ${generatedEmail} nie ma filarów - pozostawiam puste`
+								`⏭️ [SYNC] Użytkownik ${generatedEmail} nie ma filarów - pozostawiam puste`,
 							);
 						}
 					} else {
@@ -468,12 +480,12 @@ export async function syncMembers() {
 						dataToUpdate.is_trial = existing.is_trial;
 					}
 
-					// Aktualizacja daty urodzenia
 					if (userData.birthday) {
 						const existingBirthday = existing.birthday;
 						const newBirthday = userData.birthday;
 
-						const isSameBirthday = existingBirthday &&
+						const isSameBirthday =
+							existingBirthday &&
 							newBirthday &&
 							existingBirthday.getFullYear() === newBirthday.getFullYear() &&
 							existingBirthday.getMonth() === newBirthday.getMonth() &&
@@ -482,10 +494,14 @@ export async function syncMembers() {
 						if (!isSameBirthday) {
 							dataToUpdate.birthday = newBirthday;
 							birthdaysUpdated++;
-							logger.debug(`🎂 [SYNC] Aktualizacja daty urodzenia dla ${generatedEmail}: ${newBirthday.toISOString().split('T')[0]}`);
+							logger.debug(
+								`🎂 [SYNC] Aktualizacja daty urodzenia dla ${generatedEmail}: ${newBirthday.toISOString().split("T")[0]}`,
+							);
 						} else {
 							birthdaysSkipped++;
-							logger.debug(`⏭️ [SYNC] Data urodzenia bez zmian dla ${generatedEmail}: ${newBirthday.toISOString().split('T')[0]}`);
+							logger.debug(
+								`⏭️ [SYNC] Data urodzenia bez zmian dla ${generatedEmail}: ${newBirthday.toISOString().split("T")[0]}`,
+							);
 						}
 					} else {
 						if (!hasExistingBirthday) {
@@ -497,10 +513,14 @@ export async function syncMembers() {
 						existing.first_name !== dataToUpdate.first_name ||
 						existing.last_name !== dataToUpdate.last_name ||
 						existing.phone !== dataToUpdate.phone ||
-						(hasExistingFunctionalRole ? existing.functional_role !== dataToUpdate.functional_role : false) ||
-						(!hasExistingPillars && existing.pillars !== dataToUpdate.pillars) ||
+						(hasExistingFunctionalRole
+							? existing.functional_role !== dataToUpdate.functional_role
+							: false) ||
+						(!hasExistingPillars &&
+							existing.pillars !== dataToUpdate.pillars) ||
 						(!hasExistingStatus && existing.status !== dataToUpdate.status) ||
-						(!hasExistingStatus && existing.is_trial !== dataToUpdate.is_trial) ||
+						(!hasExistingStatus &&
+							existing.is_trial !== dataToUpdate.is_trial) ||
 						existing.birthday !== dataToUpdate.birthday;
 
 					if (hasChanges) {
@@ -524,7 +544,7 @@ export async function syncMembers() {
 							: `funkcjonalna rola: ${userData.functional_role}`;
 
 						const birthdayMsg = dataToUpdate.birthday
-							? `🎂 data urodzenia: ${dataToUpdate.birthday.toISOString().split('T')[0]}`
+							? `🎂 data urodzenia: ${dataToUpdate.birthday.toISOString().split("T")[0]}`
 							: `data urodzenia: brak`;
 
 						logger.debug(
@@ -535,40 +555,39 @@ export async function syncMembers() {
 						skipped++;
 					}
 				} else {
-					// NOWY UŻYTKOWNIK - z obsługą duplikatów username
 					let baseUsername = generatedEmail.split("@")[0] || generatedEmail;
 					let username = baseUsername;
 					let counter = 1;
 
-					// Sprawdź czy username już istnieje
 					let existingUserByUsername = await prisma.user.findUnique({
-						where: { username: username }
+						where: { username: username },
 					});
 
-					// Jeśli username istnieje, dodaj numer
 					while (existingUserByUsername) {
 						username = `${baseUsername}${counter}`;
 						existingUserByUsername = await prisma.user.findUnique({
-							where: { username: username }
+							where: { username: username },
 						});
 						counter++;
 					}
 
 					if (username !== baseUsername) {
-						logger.debug(`⚠️ [SYNC] Username ${baseUsername} już istnieje, używam: ${username}`);
+						logger.debug(
+							`⚠️ [SYNC] Username ${baseUsername} już istnieje, używam: ${username}`,
+						);
 					}
 
 					const newUser = await prisma.user.create({
 						data: {
 							...userData,
-							username: username, // nadpisujemy username
+							username: username,
 						},
 					});
 					userId = newUser.id;
 					added++;
 
 					const birthdayMsg = userData.birthday
-						? `🎂 data urodzenia: ${userData.birthday.toISOString().split('T')[0]}`
+						? `🎂 data urodzenia: ${userData.birthday.toISOString().split("T")[0]}`
 						: `data urodzenia: brak`;
 
 					logger.debug(
@@ -576,7 +595,6 @@ export async function syncMembers() {
 					);
 				}
 
-				// Obsługa członkostwa w filarach
 				if (pillarNames.length > 0) {
 					const existingTeamMembers = await prisma.teamMember.findMany({
 						where: {
@@ -659,7 +677,7 @@ export async function syncMembers() {
 					error,
 				);
 			}
-		} // ← TO JEST WAŻNE! Zamyka pętlę for
+		}
 
 		const duration = Date.now() - startTime;
 		logger.debug(`✅ [SYNC] Zakończono w ${duration}ms`);
@@ -669,7 +687,9 @@ export async function syncMembers() {
 		logger.debug(`   ⏭️${skipped} bez zmian`);
 		logger.debug(`   ⏭️${skippedRezygnacja} pominiętych (rezygnacja)`);
 		logger.debug(`   ➕${teamMembersAdded} dodanych członkostw w filarach`);
-		logger.debug(`   🔒${pillarsPreserved} zachowanych filarów (nie nadpisano)`);
+		logger.debug(
+			`   🔒${pillarsPreserved} zachowanych filarów (nie nadpisano)`,
+		);
 		logger.debug(`   🎂${birthdaysUpdated} zaktualizowanych dat urodzenia`);
 		logger.debug(`   ⏭️${birthdaysSkipped} dat urodzenia bez zmian`);
 		if (duplicateEmails > 0) {
