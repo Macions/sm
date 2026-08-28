@@ -172,13 +172,21 @@ const STATUS_COLOR_MAP: Record<string, string> = {
 	"Okres próbny": "#ff8989",
 };
 
-const transformPillars = (pillarsString: string): string => {
-	if (!pillarsString) return "";
-	return pillarsString
-		.split(",")
-		.map((p: string) => p.trim())
+const transformPillars = (pillars: unknown): string => {
+	if (!pillars) return "";
+
+	const pillarList =
+		typeof pillars === "string"
+			? pillars.split(",")
+			: Array.isArray(pillars)
+				? pillars
+				: [];
+
+	return pillarList
+		.filter((p): p is string => typeof p === "string")
+		.map((p) => p.trim())
 		.filter(Boolean)
-		.map((p: string) => PILLAR_MAP[p] || p)
+		.map((p) => PILLAR_MAP[p] || p)
 		.join(", ");
 };
 export default function Dashboard() {
@@ -381,7 +389,8 @@ export default function Dashboard() {
 	}, []);
 	const isCurrentUserBirthday = useCallback((): boolean => {
 		if (!user?.id || !birthdays.length) return false;
-		const currentUserId = typeof user.id === 'string' ? parseInt(user.id) : user.id;
+		const currentUserId =
+			typeof user.id === "string" ? parseInt(user.id) : user.id;
 		return birthdays.some((b) => b.id === currentUserId);
 	}, [user?.id, birthdays]);
 	const getMembershipDuration = useCallback(
@@ -491,56 +500,56 @@ export default function Dashboard() {
 
 			...(contributionStats
 				? [
-					{
-						id: "contribution",
-						label: (() => {
-							const { month, monthName, year, monthsPaid } =
-								contributionStats.currentMonth;
-							if (monthsPaid > 1) {
-								const months = [];
-								for (let i = 0; i < monthsPaid; i++) {
-									const m = ((month - i + 11) % 12) + 1;
-									months.push(m);
+						{
+							id: "contribution",
+							label: (() => {
+								const { month, monthName, year, monthsPaid } =
+									contributionStats.currentMonth;
+								if (monthsPaid > 1) {
+									const months = [];
+									for (let i = 0; i < monthsPaid; i++) {
+										const m = ((month - i + 11) % 12) + 1;
+										months.push(m);
+									}
+									const monthNames = months.map((m) => getMonthName(m));
+									return `Składka ${monthNames.reverse().join("-")} ${year}`;
 								}
-								const monthNames = months.map((m) => getMonthName(m));
-								return `Składka ${monthNames.reverse().join("-")} ${year}`;
-							}
-							return `Składka ${monthName} ${year}`;
-						})(),
-						value:
-							contributionStats.hasContributions === false
-								? ""
-								: `${contributionStats.currentMonth.amount.toFixed(2)} zł`,
-						subtext:
-							contributionStats.hasContributions === false
-								? "Nie dotyczy"
-								: contributionStats.currentMonth.status === "paid"
-									? `Opłacona (${contributionStats.currentMonth.monthsPaid} mies.)`
-									: contributionStats.summary.overdueMonths > 0
-										? `${contributionStats.summary.overdueMonths} mies. zaległości`
-										: "Nieopłacona",
-						icon:
-							contributionStats.hasContributions === false ? (
-								<AlertCircle size={24} />
-							) : contributionStats.currentMonth.status === "paid" ? (
-								<CreditCard size={24} />
-							) : (
-								<Wallet size={24} />
-							),
-						color:
-							contributionStats.hasContributions === false
-								? "#6B7280"
-								: contributionStats.currentMonth.status === "paid"
-									? "#2ECC71"
-									: "#F5A623",
-						bgColor:
-							contributionStats.hasContributions === false
-								? "#F3F4F6"
-								: contributionStats.currentMonth.status === "paid"
-									? "#ECFDF5"
-									: "#FEF9E7",
-					},
-				]
+								return `Składka ${monthName} ${year}`;
+							})(),
+							value:
+								contributionStats.hasContributions === false
+									? ""
+									: `${contributionStats.currentMonth.amount.toFixed(2)} zł`,
+							subtext:
+								contributionStats.hasContributions === false
+									? "Nie dotyczy"
+									: contributionStats.currentMonth.status === "paid"
+										? `Opłacona (${contributionStats.currentMonth.monthsPaid} mies.)`
+										: contributionStats.summary.overdueMonths > 0
+											? `${contributionStats.summary.overdueMonths} mies. zaległości`
+											: "Nieopłacona",
+							icon:
+								contributionStats.hasContributions === false ? (
+									<AlertCircle size={24} />
+								) : contributionStats.currentMonth.status === "paid" ? (
+									<CreditCard size={24} />
+								) : (
+									<Wallet size={24} />
+								),
+							color:
+								contributionStats.hasContributions === false
+									? "#6B7280"
+									: contributionStats.currentMonth.status === "paid"
+										? "#2ECC71"
+										: "#F5A623",
+							bgColor:
+								contributionStats.hasContributions === false
+									? "#F3F4F6"
+									: contributionStats.currentMonth.status === "paid"
+										? "#ECFDF5"
+										: "#FEF9E7",
+						},
+					]
 				: []),
 			{
 				id: "projects",
