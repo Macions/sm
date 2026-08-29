@@ -1685,11 +1685,19 @@ app.get("/api/tasks", authMiddleware, async (req: any, res) => {
 		const userRole = req.user?.role;
 		const isLeader = req.user?.isLeader || false;
 
+		// 📍 LOG 1 - Podstawowe informacje o użytkowniku
+		console.log("🔍 [TASKS] === START ===");
+		console.log("🔍 [TASKS] User ID:", userId);
+		console.log("🔍 [TASKS] User Role:", userRole);
+		console.log("🔍 [TASKS] Is Leader:", isLeader);
+		console.log("🔍 [TASKS] Full req.user:", JSON.stringify(req.user, null, 2));
+
 		let whereCondition: any = {};
 
 		if (userRole === "admin" || userRole === "board") {
 			whereCondition = {};
-		} else if (userRole === "coordinator" || isLeader === true) {
+		} else if (isLeader === true) {
+			// <-- USUŃ sprawdzanie roli coordinator
 			const leaderTeams = await prisma.teamMember.findMany({
 				where: {
 					user_id: parseInt(userId),
@@ -1703,21 +1711,54 @@ app.get("/api/tasks", authMiddleware, async (req: any, res) => {
 				},
 			});
 
+			// 📍 LOG 2 - Zespoły w których użytkownik jest liderem
+			console.log("🔍 [TASKS] Leader Teams found:", leaderTeams.length);
+			console.log(
+				"🔍 [TASKS] Leader Teams (raw):",
+				JSON.stringify(leaderTeams, null, 2),
+			);
+
 			const pillarNames = leaderTeams
 				.map((tm: any) => tm.team?.name?.replace("Filar ", ""))
 				.filter(Boolean);
 
+			// 📍 LOG 3 - Nazwy filarów
+			console.log("🔍 [TASKS] Pillar Names (after replace):", pillarNames);
+
 			if (pillarNames.length > 0) {
+				// 📍 LOG 4 - Budowanie warunku dla koordynatora
+				console.log(
+					"🔍 [TASKS] Building WHERE condition for coordinator with pillars:",
+					pillarNames,
+				);
+
 				whereCondition = {
 					OR: [
+						// Szukaj po nazwie filaru (z lub bez "Filar") używając contains
+						...pillarNames.map((name) => ({
+							pillar: { contains: name },
+						})),
 						{
 							assigned_type: "pillar",
 							assigned_group: { in: pillarNames },
 						},
 						{ assigned_to: parseInt(userId) },
+						// Dodaj też wyszukiwanie po assigned_users
+						{
+							assigned_users: {
+								contains: `"${userId}"`,
+							},
+						},
 					],
 				};
+
+				console.log(
+					"🔍 [TASKS] WHERE condition (coordinator):",
+					JSON.stringify(whereCondition, null, 2),
+				);
 			} else {
+				console.log("🔍 [TASKS] No pillar teams found, using basic filter");
+
 				whereCondition = {
 					OR: [
 						{ assigned_to: parseInt(userId) },
@@ -1728,8 +1769,15 @@ app.get("/api/tasks", authMiddleware, async (req: any, res) => {
 						},
 					],
 				};
+
+				console.log(
+					"🔍 [TASKS] WHERE condition (basic):",
+					JSON.stringify(whereCondition, null, 2),
+				);
 			}
 		} else {
+			console.log("🔍 [TASKS] Regular member - only own tasks");
+
 			whereCondition = {
 				OR: [
 					{ assigned_to: parseInt(userId) },
@@ -1738,7 +1786,6 @@ app.get("/api/tasks", authMiddleware, async (req: any, res) => {
 							contains: `"${userId}"`,
 						},
 					},
-
 					{
 						assigned_users: {
 							contains: `${userId}`,
@@ -1746,10 +1793,20 @@ app.get("/api/tasks", authMiddleware, async (req: any, res) => {
 					},
 				],
 			};
+
+			console.log(
+				"🔍 [TASKS] WHERE condition (member):",
+				JSON.stringify(whereCondition, null, 2),
+			);
 		}
+
+		// 📍 LOG 5 - Dodatkowe filtry z query
+		console.log("🔍 [TASKS] Query params:", req.query);
 
 		if (userRole !== "admin" && userRole !== "board") {
 			if (req.query.leaderId) {
+				console.log("🔍 [TASKS] Filtering by leaderId:", req.query.leaderId);
+
 				const leaderId = parseInt(req.query.leaderId as string);
 				const leaderTeams = await prisma.teamMember.findMany({
 					where: {
@@ -1768,6 +1825,8 @@ app.get("/api/tasks", authMiddleware, async (req: any, res) => {
 					.map((tm: any) => tm.team?.name?.replace("Filar ", ""))
 					.filter(Boolean);
 
+				console.log("🔍 [TASKS] Leader teams for leaderId:", pillarNames);
+
 				if (pillarNames.length > 0) {
 					whereCondition = {
 						OR: [
@@ -1781,12 +1840,28 @@ app.get("/api/tasks", authMiddleware, async (req: any, res) => {
 				} else {
 					whereCondition = { assigned_to: leaderId };
 				}
+
+				console.log(
+					"🔍 [TASKS] WHERE after leaderId filter:",
+					JSON.stringify(whereCondition, null, 2),
+				);
 			}
 
 			if (req.query.userId && !req.query.leaderId) {
+				console.log("🔍 [TASKS] Filtering by userId:", req.query.userId);
 				whereCondition = { assigned_to: parseInt(req.query.userId as string) };
+				console.log(
+					"🔍 [TASKS] WHERE after userId filter:",
+					JSON.stringify(whereCondition, null, 2),
+				);
 			}
 		}
+
+		// 📍 LOG 6 - Finalne zapytanie do bazy
+		console.log(
+			"🔍 [TASKS] Final WHERE condition:",
+			JSON.stringify(whereCondition, null, 2),
+		);
 
 		const tasks = await prisma.task.findMany({
 			where: whereCondition,
@@ -1832,7 +1907,6 @@ app.get("/api/tasks", authMiddleware, async (req: any, res) => {
 						last_name: true,
 					},
 				},
-
 				assignees: {
 					include: {
 						user: {
@@ -1850,6 +1924,21 @@ app.get("/api/tasks", authMiddleware, async (req: any, res) => {
 				created_at: "desc",
 			},
 		});
+
+		// 📍 LOG 7 - Wyniki zapytania
+		console.log("🔍 [TASKS] ✅ Tasks found:", tasks.length);
+		console.log(
+			"🔍 [TASKS] Task IDs:",
+			tasks.map((t: any) => t.id),
+		);
+		console.log(
+			"🔍 [TASKS] Task pillars:",
+			tasks.map((t: any) => ({
+				id: t.id,
+				pillar: t.pillar,
+				assigned_to: t.assigned_to,
+			})),
+		);
 
 		const mappedTasks = tasks.map((task: any) => ({
 			id: task.id.toString(),
@@ -1902,7 +1991,6 @@ app.get("/api/tasks", authMiddleware, async (req: any, res) => {
 			rated_by_name: task.ratedBy
 				? `${task.ratedBy.first_name || ""} ${task.ratedBy.last_name || ""}`.trim()
 				: null,
-
 			assignees:
 				task.assignees?.map((a: any) => ({
 					id: a.id.toString(),
@@ -1916,8 +2004,17 @@ app.get("/api/tasks", authMiddleware, async (req: any, res) => {
 				})) || [],
 		}));
 
+		// 📍 LOG 8 - Odpowiedź
+		console.log("🔍 [TASKS] === END ===");
+		console.log("🔍 [TASKS] Returning:", mappedTasks.length, "tasks");
+		console.log(
+			"🔍 [TASKS] First task IDs:",
+			mappedTasks.slice(0, 5).map((t: any) => t.id),
+		);
+
 		res.json(mappedTasks);
 	} catch (error) {
+		console.error("❌ [TASKS] ERROR:", error);
 		logger.error("❌ Błąd pobierania zadań:", error);
 		res.status(500).json({ error: "Nie udało się pobrać zadań" });
 	}

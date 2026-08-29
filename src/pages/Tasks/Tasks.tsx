@@ -1296,7 +1296,6 @@ function TaskModal({
 	pillars = [],
 	onClose,
 	onSave,
-	onDelete,
 }: TaskModalProps) {
 	const [searchUser, setSearchUser] = useState("");
 	const [userSuggestions, setUserSuggestions] = useState<
@@ -2067,8 +2066,16 @@ export default function Tasks() {
 		}
 
 		if (user.isLeader === true) {
-			if (task.pillar === user.pillarName) {
-				return true;
+			// 🔥 POPRAWA: Użyj contains zamiast dokładnego porównania
+			if (task.pillar && user.pillarName) {
+				// Sprawdź czy nazwa filaru pasuje (z lub bez "Filar")
+				if (
+					task.pillar === user.pillarName ||
+					task.pillar.includes(user.pillarName) ||
+					user.pillarName.includes(task.pillar)
+				) {
+					return true;
+				}
 			}
 
 			if (
