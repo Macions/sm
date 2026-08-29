@@ -6142,6 +6142,7 @@ app.post("/api/tasks", authMiddleware, async (req: any, res) => {
 			tags,
 			requiresFeedback,
 			feedbackType,
+			pillar,
 		} = req.body;
 
 		if (!title || !assignedTo || !dueDate) {
@@ -6164,6 +6165,7 @@ app.post("/api/tasks", authMiddleware, async (req: any, res) => {
 				tags: tags ? JSON.stringify(tags) : null,
 				requires_feedback: requiresFeedback || false,
 				feedback_type: feedbackType || "text",
+				pillar: pillar || null,
 			},
 		});
 
@@ -6220,6 +6222,7 @@ app.put("/api/tasks/:id", authMiddleware, async (req: any, res) => {
 			tags,
 			requiresFeedback,
 			feedbackType,
+			pillar,
 		} = req.body;
 
 		const taskId = parseInt(id);
@@ -6279,6 +6282,7 @@ app.put("/api/tasks/:id", authMiddleware, async (req: any, res) => {
 						? requiresFeedback
 						: existingTask.requires_feedback,
 				feedback_type: feedbackType || existingTask.feedback_type,
+				pillar: pillar !== undefined ? pillar : existingTask.pillar,
 				updated_at: new Date(),
 			},
 		});
@@ -7011,6 +7015,7 @@ app.post("/api/tasks/recurring", authMiddleware, async (req: any, res) => {
 			recurrenceEndDate,
 			assignedType,
 			assignedGroup,
+			pillar,
 		} = req.body;
 
 		const parentTask = await prisma.task.create({
@@ -7031,6 +7036,7 @@ app.post("/api/tasks/recurring", authMiddleware, async (req: any, res) => {
 				is_recurring: true,
 				recurrence_pattern: recurrencePattern || "weekly",
 				recurrence_end_date: new Date(recurrenceEndDate),
+				pillar: pillar || null,
 			},
 		});
 
