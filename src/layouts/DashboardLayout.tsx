@@ -22,8 +22,8 @@ export default function DashboardLayout() {
 	useEffect(() => {
 		const checkSocialMediaAccess = async () => {
 			try {
-				const token = localStorage.getItem("accessToken");
-				if (!token) {
+				const user = localStorage.getItem("user");
+				if (!user) {
 					setLoading(false);
 					return;
 				}
@@ -40,9 +40,7 @@ export default function DashboardLayout() {
 				} else {
 					try {
 						logger.debug("🔍 Sprawdzam przez /api/social/members/check...");
-						const socialCheck = await fetch("/api/social/members/check", {
-							headers: { Authorization: `Bearer ${token}` },
-						});
+						const socialCheck = await fetch("/api/social/members/check");
 
 						if (socialCheck.ok) {
 							const checkData = await socialCheck.json();
@@ -109,8 +107,6 @@ export default function DashboardLayout() {
 				return "Poradniki";
 			case "tasks":
 				return "Zadania";
-
-
 			case "vacancies":
 				return "Aktualne wakaty";
 			case "structure":
@@ -133,6 +129,7 @@ export default function DashboardLayout() {
 			</div>
 		);
 	}
+
 	const handleGlobalSearch = async (query: string) => {
 		setGlobalSearchQuery(query);
 
@@ -145,12 +142,10 @@ export default function DashboardLayout() {
 		setIsSearching(true);
 
 		try {
-			const token = localStorage.getItem("accessToken");
 			const response = await fetch(
 				`/api/search?q=${encodeURIComponent(query)}`,
 				{
 					headers: {
-						Authorization: `Bearer ${token}`,
 						"Content-Type": "application/json",
 					},
 				},
@@ -166,6 +161,7 @@ export default function DashboardLayout() {
 			setIsSearching(false);
 		}
 	};
+
 	return (
 		<div className={styles.layout}>
 			<div className={styles.content}>
@@ -181,7 +177,6 @@ export default function DashboardLayout() {
 					onMobileMenuToggle={toggleMobileMenu}
 				/>
 
-				
 				<div className={styles.mainWrapper}>
 					<Header
 						title={getPageTitle()}

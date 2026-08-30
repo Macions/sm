@@ -60,11 +60,9 @@ const Login: React.FC = () => {
 					throw new Error(data.error || "Błąd logowania przez Google");
 				}
 
-				localStorage.setItem("accessToken", data.accessToken);
-				localStorage.setItem("refreshToken", data.refreshToken);
 				localStorage.setItem("user", JSON.stringify(data.user));
 
-				logger.debug("🔑 Token zapisany w localStorage");
+				logger.debug("✅ Dane użytkownika zapisane");
 
 				await refetch();
 				await checkOnboardingStatus();
@@ -116,8 +114,6 @@ const Login: React.FC = () => {
 				throw new Error(data.error || "Błąd logowania");
 			}
 
-			localStorage.setItem("accessToken", data.accessToken);
-			localStorage.setItem("refreshToken", data.refreshToken);
 			localStorage.setItem("user", JSON.stringify(data.user));
 
 			await refetch();

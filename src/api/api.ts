@@ -15,10 +15,6 @@ const api = axios.create({
 
 api.interceptors.request.use(
 	(config) => {
-		const token = localStorage.getItem("accessToken");
-		if (token) {
-			config.headers.Authorization = `Bearer ${token}`;
-		}
 		return config;
 	},
 	(error) => Promise.reject(error),
@@ -29,10 +25,7 @@ api.interceptors.response.use(
 		const apiVersion = response.headers["x-api-version"];
 		if (apiVersion && apiVersion !== API_VERSION) {
 			logger.warn("Nowa wersja API - wylogowywanie...");
-			localStorage.removeItem("accessToken");
-			localStorage.removeItem("refreshToken");
 			localStorage.removeItem("user");
-			localStorage.removeItem("userVersion");
 			window.location.href = "/login";
 			return Promise.reject(new Error("Nowa wersja API"));
 		}
@@ -43,20 +36,14 @@ api.interceptors.response.use(
 
 		if (error.response?.status === 401) {
 			logger.warn("401 - Brak autoryzacji, wylogowywanie...");
-			localStorage.removeItem("accessToken");
-			localStorage.removeItem("refreshToken");
 			localStorage.removeItem("user");
-			localStorage.removeItem("userVersion");
 			window.location.href = "/login";
 			return Promise.reject(error);
 		}
 
 		if (error.response?.status === 403) {
 			logger.warn("403 - Brak uprawnień, wylogowywanie...");
-			localStorage.removeItem("accessToken");
-			localStorage.removeItem("refreshToken");
 			localStorage.removeItem("user");
-			localStorage.removeItem("userVersion");
 			window.location.href = "/login";
 			return Promise.reject(error);
 		}
@@ -64,26 +51,13 @@ api.interceptors.response.use(
 		if (error.response?.status === 401 && !originalRequest._retry) {
 			originalRequest._retry = true;
 			try {
-				const refreshToken = localStorage.getItem("refreshToken");
-				if (!refreshToken) {
-					throw new Error("Brak refresh token");
-				}
-
-				const response = await axios.post(`${API_URL}/api/auth/refresh`, {
-					refreshToken,
-				});
-
+				const response = await axios.post(`${API_URL}/api/auth/refresh`, {});
 				const { accessToken } = response.data;
-				localStorage.setItem("accessToken", accessToken);
-
 				originalRequest.headers.Authorization = `Bearer ${accessToken}`;
 				return api(originalRequest);
 			} catch (refreshError) {
 				logger.error("Błąd odświeżania tokenu:", refreshError);
-				localStorage.removeItem("accessToken");
-				localStorage.removeItem("refreshToken");
 				localStorage.removeItem("user");
-				localStorage.removeItem("userVersion");
 				window.location.href = "/login";
 				return Promise.reject(refreshError);
 			}
@@ -95,9 +69,6 @@ api.interceptors.response.use(
 
 export const checkUserVersion = async () => {
 	try {
-		const token = localStorage.getItem("accessToken");
-		if (!token) return;
-
 		const response = await api.get("/api/user/version");
 
 		if (response.status === 200) {
@@ -106,10 +77,7 @@ export const checkUserVersion = async () => {
 
 			if (savedVersion && data.version !== savedVersion) {
 				logger.warn("Zmiana wersji użytkownika - wylogowywanie...");
-				localStorage.removeItem("accessToken");
-				localStorage.removeItem("refreshToken");
 				localStorage.removeItem("user");
-				localStorage.removeItem("userVersion");
 				window.location.href = "/login";
 				return;
 			}

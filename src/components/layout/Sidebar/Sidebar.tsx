@@ -37,9 +37,7 @@ export default function Sidebar({
 	});
 
 	const handleLogout = () => {
-		localStorage.removeItem("accessToken");
 		localStorage.removeItem("user");
-		localStorage.removeItem("refreshToken");
 		window.location.href = "/login";
 	};
 
@@ -50,7 +48,6 @@ export default function Sidebar({
 
 	return (
 		<>
-			
 			<div
 				className={`${styles.mobileMenu} ${isMobileMenuOpen ? styles.mobileMenuOpen : ""
 					}`}
@@ -72,7 +69,6 @@ export default function Sidebar({
 					</button>
 				</div>
 
-				
 				<div className={styles.mobileNavWrapper}>
 					<nav className={styles.mobileNav}>
 						{filteredNavItems.map(({ key, label, icon: Icon }) => (
@@ -97,7 +93,6 @@ export default function Sidebar({
 				</div>
 			</div>
 
-			
 			{isMobileMenuOpen && (
 				<div
 					className={styles.overlay}
@@ -114,7 +109,6 @@ export default function Sidebar({
 				/>
 			)}
 
-			
 			<aside
 				className={`${styles.sidebar} ${collapsed ? styles.sidebarCollapsed : ""
 					}`}

@@ -48,18 +48,16 @@ export const authMiddleware = async (
 ) => {
 	if (isPublicPath(req.path)) {
 		logger.debug(
-			`🔓 Publiczny endpoint: ${req.method} ${req.path} - pomijam autoryzację`,
+			`Publiczny endpoint: ${req.method} ${req.path} - pomijam autoryzację`,
 		);
 		return next();
 	}
 
-	const authHeader = req.headers.authorization;
+	const token = req.cookies.accessToken;
 
-	if (!authHeader || !authHeader.startsWith("Bearer ")) {
+	if (!token) {
 		return res.status(401).json({ error: "Brak tokenu autoryzacyjnego" });
 	}
-
-	const token = authHeader.split(" ")[1];
 
 	try {
 		const decoded = jwt.verify(token, JWT_SECRET) as any;
@@ -106,13 +104,9 @@ export const authMiddleware = async (
 			leaderPillarNames: leaderPillarNames,
 		};
 
-		logger.debug(
-			`🔐 Użytkownik autoryzowany: ${user.email}, isLeader: ${isLeader}, pillarName: ${pillarName}`,
-		);
-
 		next();
 	} catch (error: any) {
-		logger.error(`❌ Błąd autoryzacji: ${error.message}`);
+		logger.error(`Błąd autoryzacji: ${error.message}`);
 		return res.status(401).json({ error: "Nieprawidłowy token" });
 	}
 };

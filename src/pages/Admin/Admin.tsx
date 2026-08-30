@@ -44,25 +44,25 @@ interface SystemLog {
 	user_name: string;
 	user_role: string;
 	action_type:
-		| "CREATE"
-		| "UPDATE"
-		| "DELETE"
-		| "LOGIN"
-		| "LOGOUT"
-		| "APPROVE"
-		| "REJECT";
+	| "CREATE"
+	| "UPDATE"
+	| "DELETE"
+	| "LOGIN"
+	| "LOGOUT"
+	| "APPROVE"
+	| "REJECT";
 	category:
-		| "USER"
-		| "TEAM"
-		| "LEAVE"
-		| "PROJECT"
-		| "VACANCY"
-		| "TUTORIAL"
-		| "SOCIAL_MEDIA"
-		| "PERMISSION"
-		| "STRUCTURE"
-		| "NOTIFICATION"
-		| "AUTH";
+	| "USER"
+	| "TEAM"
+	| "LEAVE"
+	| "PROJECT"
+	| "VACANCY"
+	| "TUTORIAL"
+	| "SOCIAL_MEDIA"
+	| "PERMISSION"
+	| "STRUCTURE"
+	| "NOTIFICATION"
+	| "AUTH";
 	endpoint: string;
 	method: string;
 	entity_id: string | null;
@@ -98,10 +98,8 @@ function InactiveUsersManagement() {
 	const fetchInactiveUsers = async () => {
 		try {
 			setLoading(true);
-			const token = localStorage.getItem("accessToken");
 			const response = await fetch("/api/admin/inactive-users", {
 				headers: {
-					Authorization: `Bearer ${token}`,
 					"Content-Type": "application/json",
 				},
 			});
@@ -444,7 +442,6 @@ function LogsManagement() {
 	const fetchLogs = async () => {
 		try {
 			setLoading(true);
-			const token = localStorage.getItem("accessToken");
 
 			let url = `/api/admin/logs?page=${page}&limit=${limit}`;
 			if (searchTerm) url += `&search=${encodeURIComponent(searchTerm)}`;
@@ -454,7 +451,6 @@ function LogsManagement() {
 
 			const response = await fetch(url, {
 				headers: {
-					Authorization: `Bearer ${token}`,
 					"Content-Type": "application/json",
 				},
 			});
@@ -1024,8 +1020,8 @@ function StructureManagement({
 		title: "",
 		message: "",
 		confirmText: "Potwierdź",
-		onConfirm: () => {},
-		onCancel: () => {},
+		onConfirm: () => { },
+		onCancel: () => { },
 	});
 	const [expandedTeams, setExpandedTeams] = useState<Record<string, boolean>>(
 		{},
@@ -1079,17 +1075,11 @@ function StructureManagement({
 		}
 
 		try {
-			const token = localStorage.getItem("accessToken");
-
 			const response = await fetch(`/api/admin/team-members/${memberId}`, {
 				method: "PUT",
 				headers: {
-					Authorization: `Bearer ${token}`,
 					"Content-Type": "application/json",
 				},
-				body: JSON.stringify({
-					role_in_team: trimmed,
-				}),
 			});
 
 			if (!response.ok) throw new Error("Błąd aktualizacji roli");
@@ -1249,14 +1239,11 @@ function StructureManagement({
 	const handleAddTeam = async (e: React.FormEvent) => {
 		e.preventDefault();
 		try {
-			const token = localStorage.getItem("accessToken");
 			const response = await fetch("/api/admin/teams", {
 				method: "POST",
 				headers: {
-					Authorization: `Bearer ${token}`,
 					"Content-Type": "application/json",
 				},
-				body: JSON.stringify(teamForm),
 			});
 
 			if (!response.ok) throw new Error("Błąd dodawania zespołu");
@@ -1275,14 +1262,11 @@ function StructureManagement({
 		if (!editingTeam) return;
 
 		try {
-			const token = localStorage.getItem("accessToken");
 			const response = await fetch(`/api/admin/teams/${editingTeam.id}`, {
 				method: "PUT",
 				headers: {
-					Authorization: `Bearer ${token}`,
 					"Content-Type": "application/json",
 				},
-				body: JSON.stringify(teamForm),
 			});
 
 			if (!response.ok) throw new Error("Błąd edycji zespołu");
@@ -3470,7 +3454,7 @@ export default function Admin({ title }: { title?: string }) {
 						className={`${styles.tabsNav__tab} ${activeTab === "inactive" ? styles.tabsNav__tabActive : ""}`}
 						onClick={() => scrollToSection(inactiveRef, "inactive")}
 					>
-						<UserX size={16} /> {}
+						<UserX size={16} /> { }
 						Nieaktywni
 					</button>
 				</div>

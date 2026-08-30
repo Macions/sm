@@ -11,6 +11,7 @@ import memberRoutes from "./routes/member.routes";
 import contributionRoutes from "./routes/contribution.routes";
 import calendarRoutes from "./routes/calendar.routes";
 import { syncContributions } from "./jobs/syncContributions";
+import cookieParser from 'cookie-parser';
 import { syncAttendance } from "./jobs/syncAttendance";
 import cron from "node-cron";
 import dashboardRoutes from "./routes/dashboard.routes";
@@ -30,7 +31,7 @@ updateLeaveStatus();
 cron.schedule("0 7,14,21 * * *", async () => {
 	try {
 		await syncAttendance();
-	} catch (error) {}
+	} catch (error) { }
 });
 
 cron.schedule("1 0 * * *", async () => {
@@ -123,16 +124,25 @@ app.use(
 		maxAge: 3600,
 	}),
 );
-app.use((_req, res, next) => {
-	res.setHeader("X-Frame-Options", "DENY");
 
-	res.setHeader("X-Content-Type-Options", "nosniff");
+app.use((req, res, next) => {
+	const isHttps = req.headers['x-forwarded-proto'] === 'https';
+	const isLocalhost = req.hostname === 'localhost' || req.hostname === '127.0.0.1';
 
-	res.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
+	if (!isHttps && !isLocalhost) {
+		const httpsUrl = `https://${req.headers.host}${req.url}`;
+		return res.redirect(301, httpsUrl);
+	}
+
+	res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload');
+	res.setHeader('X-Content-Type-Options', 'nosniff');
+	res.setHeader('X-Frame-Options', 'DENY');
+	res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
 
 	next();
 });
 
+app.use(cookieParser());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -229,9 +239,23 @@ app.post("/api/auth/google", async (req, res) => {
 			expiresIn: "7d",
 		});
 
+		// Ustaw ciasteczka HttpOnly
+		res.cookie('accessToken', token, {
+			httpOnly: true,
+			secure: process.env.NODE_ENV === 'production',
+			sameSite: 'strict',
+			maxAge: 15 * 60 * 1000 // 15 minut
+		});
+
+		res.cookie('refreshToken', refreshToken, {
+			httpOnly: true,
+			secure: process.env.NODE_ENV === 'production',
+			sameSite: 'strict',
+			maxAge: 7 * 24 * 60 * 60 * 1000 // 7 dni
+		});
+
 		res.json({
-			accessToken: token,
-			refreshToken: refreshToken,
+			success: true,
 			user: {
 				id: user.id,
 				email: user.email,
@@ -527,9 +551,22 @@ app.post("/api/auth/google-token", async (req: any, res: any) => {
 			console.error("❌ [GOOGLE-TOKEN] Błąd zapisu logu:", logError);
 		}
 
+		res.cookie('accessToken', token, {
+			httpOnly: true,
+			secure: process.env.NODE_ENV === 'production',
+			sameSite: 'strict',
+			maxAge: 15 * 60 * 1000
+		});
+
+		res.cookie('refreshToken', refreshToken, {
+			httpOnly: true,
+			secure: process.env.NODE_ENV === 'production',
+			sameSite: 'strict',
+			maxAge: 7 * 24 * 60 * 60 * 1000
+		});
+
 		res.json({
-			accessToken: token,
-			refreshToken: refreshToken,
+			success: true,
 			user: {
 				id: user.id,
 				email: user.email,
@@ -539,6 +576,7 @@ app.post("/api/auth/google-token", async (req: any, res: any) => {
 				team: user.team,
 				status: user.status,
 			},
+			onboardingCompleted: true,
 		});
 	} catch (error) {
 		console.error("❌ [GOOGLE-TOKEN] Błąd logowania:", error);
@@ -736,9 +774,22 @@ app.post("/api/auth/login", async (req, res) => {
 			expiresIn: "7d",
 		});
 
+		res.cookie('accessToken', token, {
+			httpOnly: true,
+			secure: process.env.NODE_ENV === 'production',
+			sameSite: 'strict',
+			maxAge: 15 * 60 * 1000
+		});
+
+		res.cookie('refreshToken', refreshToken, {
+			httpOnly: true,
+			secure: process.env.NODE_ENV === 'production',
+			sameSite: 'strict',
+			maxAge: 7 * 24 * 60 * 60 * 1000 // 7 dni
+		});
+
 		res.json({
-			accessToken: token,
-			refreshToken: refreshToken,
+			success: true,
 			user: {
 				id: user.id,
 				email: user.email,
@@ -917,7 +968,7 @@ app.post("/api/ideas", authMiddleware, async (req: any, res) => {
 					vote_type: "up",
 				},
 			});
-		} catch (voteError) {}
+		} catch (voteError) { }
 
 		const voteCounts = await getVoteCounts(idea.id);
 
@@ -1459,7 +1510,7 @@ app.get("/api/dashboard/stats", authMiddleware, async (req: any, res) => {
 					) {
 						attendance = `${Number(user.attendance_percentage).toFixed(1)}%`;
 					}
-				} catch (fallbackError) {}
+				} catch (fallbackError) { }
 			}
 		}
 
@@ -2640,7 +2691,7 @@ app.get("/api/applications", authMiddleware, async (req: any, res) => {
 				userId: app.user_id.toString(),
 				userName: app.user
 					? `${app.user.first_name || ""} ${app.user.last_name || ""}`.trim() ||
-						"Nieznany"
+					"Nieznany"
 					: "Nieznany",
 				userEmail: app.user?.email || "",
 				message: app.message || "",
@@ -2751,7 +2802,7 @@ app.get(
 					userId: app.user_id.toString(),
 					userName: app.user
 						? `${app.user.first_name || ""} ${app.user.last_name || ""}`.trim() ||
-							"Nieznany"
+						"Nieznany"
 						: "Nieznany",
 					userEmail: app.user?.email || "",
 					message: app.message || "",
@@ -3927,14 +3978,14 @@ app.put("/api/leaves/:id", authMiddleware, async (req: any, res) => {
 					: existingLeave.attachments,
 				status: status || existingLeave.status,
 				...(status === "approved" ||
-				status === "rejected" ||
-				status === "cancelled"
+					status === "rejected" ||
+					status === "cancelled"
 					? {
-							approved_by:
-								`${currentUser?.first_name || ""} ${currentUser?.last_name || ""}`.trim() ||
-								"Nieznany",
-							approved_at: new Date(),
-						}
+						approved_by:
+							`${currentUser?.first_name || ""} ${currentUser?.last_name || ""}`.trim() ||
+							"Nieznany",
+						approved_at: new Date(),
+					}
 					: {}),
 			},
 			include: { user: true },
@@ -4996,7 +5047,7 @@ app.post("/api/onboarding/save", authMiddleware, async (req: any, res) => {
 					},
 				});
 			}
-		} catch (notificationError) {}
+		} catch (notificationError) { }
 
 		res.status(200).json({
 			success: true,
@@ -6442,12 +6493,12 @@ app.get(
 					is_active: true,
 					...(search
 						? {
-								OR: [
-									{ first_name: { contains: search as string } },
-									{ last_name: { contains: search as string } },
-									{ email: { contains: search as string } },
-								],
-							}
+							OR: [
+								{ first_name: { contains: search as string } },
+								{ last_name: { contains: search as string } },
+								{ email: { contains: search as string } },
+							],
+						}
 						: {}),
 				},
 				select: {
@@ -6521,7 +6572,7 @@ app.get(
 							) {
 								attendance = Number(result[0].attendance_percentage);
 							}
-						} catch (dbError) {}
+						} catch (dbError) { }
 					}
 
 					const teams = user.team_members
@@ -6936,23 +6987,23 @@ app.get("/api/admin/logs", authMiddleware, async (req: any, res) => {
 cron.schedule("0 1,17 * * *", async () => {
 	try {
 		await syncContributions();
-	} catch (error) {}
+	} catch (error) { }
 });
 
 setTimeout(async () => {
 	try {
 		await syncContributions();
-	} catch (error) {}
+	} catch (error) { }
 }, 15000);
 setTimeout(async () => {
 	try {
 		await syncAttendance();
-	} catch (error) {}
+	} catch (error) { }
 }, 10000);
 setTimeout(async () => {
 	try {
 		await syncMembers();
-	} catch (error) {}
+	} catch (error) { }
 }, 5000);
 
 app.get(
@@ -8883,4 +8934,4 @@ app.get(
 );
 
 app.use("/api", revenueRoutes);
-app.listen(port, () => {});
+app.listen(port, () => { });

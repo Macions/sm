@@ -57,7 +57,6 @@ function AppRoutes() {
 	useEffect(() => {
 		const checkMaintenance = () => {
 			const maintenance = false;
-
 			setIsMaintenance(maintenance);
 		};
 
@@ -74,9 +73,9 @@ function AppRoutes() {
 
 	useEffect(() => {
 		const verifyToken = async () => {
-			const token = localStorage.getItem("accessToken");
-			if (!token) {
-				logger.debug("🔐 [Auth] Brak tokena");
+			const user = localStorage.getItem("user");
+			if (!user) {
+				logger.debug("🔐 [Auth] Brak użytkownika");
 				setIsAuthenticated(false);
 				setIsLoading(false);
 				return;
@@ -92,41 +91,13 @@ function AppRoutes() {
 					"❌ [Auth] Token wygasł lub jest nieprawidłowy",
 					error?.response?.status,
 				);
-				localStorage.removeItem("accessToken");
-				localStorage.removeItem("refreshToken");
+				localStorage.removeItem("user");
 				setIsAuthenticated(false);
 			} finally {
 				setIsLoading(false);
 			}
 		};
 		verifyToken();
-	}, []);
-
-	useEffect(() => {
-		const handleStorageChange = (e: StorageEvent) => {
-			if (e.key === "accessToken") {
-				if (!e.newValue) {
-					setIsAuthenticated(false);
-				} else {
-					setIsLoading(true);
-					const verifyNewToken = async () => {
-						try {
-							await api.get("/auth/me");
-							setIsAuthenticated(true);
-						} catch {
-							localStorage.removeItem("accessToken");
-							setIsAuthenticated(false);
-						} finally {
-							setIsLoading(false);
-						}
-					};
-					verifyNewToken();
-				}
-			}
-		};
-
-		window.addEventListener("storage", handleStorageChange);
-		return () => window.removeEventListener("storage", handleStorageChange);
 	}, []);
 
 	if (isLoading) return <LoadingSpinner />;
@@ -158,7 +129,7 @@ function AppRoutes() {
 				<Route path="/login" element={<Navigate to="/dashboard" replace />} />
 				<Route
 					path="/onboarding"
-					element={<Onboarding onComplete={() => {}} />}
+					element={<Onboarding onComplete={() => { }} />}
 				/>
 				<Route path="/404" element={<NotFound />} />
 				<Route path="*" element={<NotFound />} />

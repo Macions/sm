@@ -27,10 +27,10 @@ export function useAuth() {
 	});
 
 	const verifyToken = useCallback(async () => {
-		const token = localStorage.getItem("accessToken");
+		const user = localStorage.getItem("user");
 
-		if (!token) {
-			logger.debug("🔐 [useAuth] Brak tokena");
+		if (!user) {
+			logger.debug("🔐 [useAuth] Brak użytkownika");
 			setState({
 				user: null,
 				loading: false,
@@ -42,10 +42,8 @@ export function useAuth() {
 		try {
 			logger.debug("🔐 [useAuth] Weryfikacja tokena...");
 
-
 			const response = await api.get("/auth/me");
 			const userData = response.data;
-
 
 			const user: User = {
 				id: userData.id,
@@ -75,9 +73,7 @@ export function useAuth() {
 				error?.response?.status,
 			);
 
-
-			localStorage.removeItem("accessToken");
-			localStorage.removeItem("refreshToken");
+			localStorage.removeItem("user");
 
 			setState({
 				user: null,
@@ -88,7 +84,6 @@ export function useAuth() {
 		}
 	}, []);
 
-
 	useEffect(() => {
 		const loadUser = async () => {
 			await verifyToken();
@@ -97,47 +92,13 @@ export function useAuth() {
 		loadUser();
 	}, [verifyToken]);
 
-
-	useEffect(() => {
-		const handleStorageChange = async (e: StorageEvent) => {
-			if (e.key === "accessToken") {
-				if (!e.newValue) {
-					logger.debug("🔐 [useAuth] Token usunięty w innej karcie");
-					setState({
-						user: null,
-						loading: false,
-						isAuthenticated: false,
-					});
-				} else {
-					logger.debug(
-						"🔐 [useAuth] Token dodany w innej karcie - weryfikacja...",
-					);
-					setState((prev) => ({ ...prev, loading: true }));
-					await verifyToken();
-				}
-			}
-		};
-
-		window.addEventListener("storage", handleStorageChange);
-		return () => window.removeEventListener("storage", handleStorageChange);
-	}, [verifyToken]);
-
 	const login = useCallback(async (email: string, password: string) => {
 		try {
 			setState((prev) => ({ ...prev, loading: true }));
 			logger.debug("🔐 [useAuth] Próba logowania...");
 
 			const response = await api.post("/auth/login", { email, password });
-			const { accessToken, refreshToken, user: userData } = response.data;
-
-
-			if (accessToken) {
-				localStorage.setItem("accessToken", accessToken);
-			}
-			if (refreshToken) {
-				localStorage.setItem("refreshToken", refreshToken);
-			}
-
+			const { user: userData } = response.data;
 
 			const user: User = {
 				id: userData.id,
@@ -152,6 +113,8 @@ export function useAuth() {
 				first_name: userData.first_name,
 				last_name: userData.last_name,
 			};
+
+			localStorage.setItem("user", JSON.stringify(userData));
 
 			setState({
 				user,
@@ -179,16 +142,10 @@ export function useAuth() {
 	const logout = useCallback(() => {
 		logger.debug("🔐 [useAuth] Wylogowywanie...");
 
-
 		try {
-			api.post("/auth/logout").catch(() => {});
-		} catch (error) {
+			api.post("/auth/logout").catch(() => { });
+		} catch (error) { }
 
-		}
-
-
-		localStorage.removeItem("accessToken");
-		localStorage.removeItem("refreshToken");
 		localStorage.removeItem("user");
 
 		setState({
@@ -199,30 +156,6 @@ export function useAuth() {
 
 		logger.debug("✅ [useAuth] Wylogowano pomyślnie");
 	}, []);
-
-	const refreshToken = useCallback(async () => {
-		try {
-			const refreshToken = localStorage.getItem("refreshToken");
-			if (!refreshToken) {
-				throw new Error("Brak refresh token");
-			}
-
-			logger.debug("🔄 [useAuth] Odświeżanie tokena...");
-			const response = await api.post("/auth/refresh", { refreshToken });
-			const { accessToken } = response.data;
-
-			if (accessToken) {
-				localStorage.setItem("accessToken", accessToken);
-				logger.debug("✅ [useAuth] Token odświeżony");
-				return true;
-			}
-			return false;
-		} catch (error) {
-			logger.warn("❌ [useAuth] Nie udało się odświeżyć tokena");
-			await logout();
-			return false;
-		}
-	}, [logout]);
 
 	const updateUser = useCallback((updatedData: Partial<User>) => {
 		setState((prev) => ({
@@ -250,18 +183,14 @@ export function useAuth() {
 	}, [state.user]);
 
 	return {
-
 		user: state.user,
 		loading: state.loading,
 		isAuthenticated: state.isAuthenticated,
 
-
 		login,
 		logout,
-		refreshToken,
 		updateUser,
 		verifyToken,
-
 
 		hasRole,
 		isAdmin,

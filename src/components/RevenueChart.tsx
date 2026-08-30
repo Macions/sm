@@ -130,16 +130,8 @@ export function RevenueChart({ year = 2026, title = "Przychody i wydatki" }: Rev
 	const fetchData = async () => {
 		try {
 			setLoading(true);
-			const token = localStorage.getItem("accessToken");
-
-
-
-
-
-
 			const response = await fetch(`/api/revenue?year=${selectedYear}`, {
 				headers: {
-					'Authorization': `Bearer ${token}`,
 					'Content-Type': 'application/json'
 				}
 			});
@@ -158,7 +150,6 @@ export function RevenueChart({ year = 2026, title = "Przychody i wydatki" }: Rev
 			try {
 				const categoriesResponse = await fetch(`/api/revenue/categories?year=${selectedYear}`, {
 					headers: {
-						'Authorization': `Bearer ${token}`,
 						'Content-Type': 'application/json'
 					}
 				});
@@ -284,7 +275,7 @@ export function RevenueChart({ year = 2026, title = "Przychody i wydatki" }: Rev
 			border: '1px solid #e5e7eb',
 			boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
 		}}>
-			
+
 			<div style={{
 				display: 'flex',
 				justifyContent: 'space-between',
@@ -353,7 +344,7 @@ export function RevenueChart({ year = 2026, title = "Przychody i wydatki" }: Rev
 				</div>
 			</div>
 
-			
+
 			<div style={{
 				display: 'grid',
 				gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))',
@@ -401,7 +392,7 @@ export function RevenueChart({ year = 2026, title = "Przychody i wydatki" }: Rev
 				</div>
 			</div>
 
-			
+
 			<div style={{ width: '100%', height: '400px' }}>
 				<ResponsiveContainer>
 					<ComposedChart
@@ -448,7 +439,7 @@ export function RevenueChart({ year = 2026, title = "Przychody i wydatki" }: Rev
 							<>
 								<Bar
 									dataKey="skladki"
-									fill={COLORS.skladki}           
+									fill={COLORS.skladki}
 									name="skladki"
 									radius={[4, 4, 0, 0]}
 									barSize={30}
@@ -469,7 +460,7 @@ export function RevenueChart({ year = 2026, title = "Przychody i wydatki" }: Rev
 								</Bar>
 								<Bar
 									dataKey="granty"
-									fill={COLORS.granty}            
+									fill={COLORS.granty}
 									name="granty"
 									radius={[4, 4, 0, 0]}
 									barSize={30}
@@ -484,7 +475,7 @@ export function RevenueChart({ year = 2026, title = "Przychody i wydatki" }: Rev
 								</Bar>
 								<Bar
 									dataKey="darowizny"
-									fill={COLORS.darowizny}         
+									fill={COLORS.darowizny}
 									name="darowizny"
 									radius={[4, 4, 0, 0]}
 									barSize={30}
@@ -499,7 +490,7 @@ export function RevenueChart({ year = 2026, title = "Przychody i wydatki" }: Rev
 								</Bar>
 								<Bar
 									dataKey="faktury"
-									fill={COLORS.faktury}           
+									fill={COLORS.faktury}
 									name="faktury"
 									radius={[4, 4, 0, 0]}
 									barSize={30}
@@ -514,7 +505,7 @@ export function RevenueChart({ year = 2026, title = "Przychody i wydatki" }: Rev
 								</Bar>
 								<Bar
 									dataKey="inne"
-									fill={COLORS.inne}              
+									fill={COLORS.inne}
 									name="inne"
 									radius={[4, 4, 0, 0]}
 									barSize={30}
@@ -527,10 +518,10 @@ export function RevenueChart({ year = 2026, title = "Przychody i wydatki" }: Rev
 										/>
 									))}
 								</Bar>
-								
+
 								<Bar
 									dataKey="wydatkiBiurowe"
-									fill={COLORS.wydatkiBiurowe}    
+									fill={COLORS.wydatkiBiurowe}
 									name="Wydatki biurowe"
 									radius={[4, 4, 0, 0]}
 									barSize={30}
@@ -549,7 +540,7 @@ export function RevenueChart({ year = 2026, title = "Przychody i wydatki" }: Rev
 							<>
 								<Bar
 									dataKey="skladki"
-									stackId="a"                    
+									stackId="a"
 									fill={COLORS.skladki}
 									name="skladki"
 									radius={[4, 4, 0, 0]}
@@ -557,7 +548,7 @@ export function RevenueChart({ year = 2026, title = "Przychody i wydatki" }: Rev
 								/>
 								<Bar
 									dataKey="granty"
-									stackId="a"                    
+									stackId="a"
 									fill={COLORS.granty}
 									name="granty"
 									radius={[4, 4, 0, 0]}
@@ -565,7 +556,7 @@ export function RevenueChart({ year = 2026, title = "Przychody i wydatki" }: Rev
 								/>
 								<Bar
 									dataKey="darowizny"
-									stackId="a"                    
+									stackId="a"
 									fill={COLORS.darowizny}
 									name="darowizny"
 									radius={[4, 4, 0, 0]}
@@ -573,7 +564,7 @@ export function RevenueChart({ year = 2026, title = "Przychody i wydatki" }: Rev
 								/>
 								<Bar
 									dataKey="faktury"
-									stackId="a"                    
+									stackId="a"
 									fill={COLORS.faktury}
 									name="faktury"
 									radius={[4, 4, 0, 0]}
@@ -581,7 +572,7 @@ export function RevenueChart({ year = 2026, title = "Przychody i wydatki" }: Rev
 								/>
 								<Bar
 									dataKey="inne"
-									stackId="a"                    
+									stackId="a"
 									fill={COLORS.inne}
 									name="inne"
 									radius={[4, 4, 0, 0]}
@@ -589,7 +580,7 @@ export function RevenueChart({ year = 2026, title = "Przychody i wydatki" }: Rev
 								/>
 								<Bar
 									dataKey="wydatkiBiurowe"
-									stackId="a"                    
+									stackId="a"
 									fill={COLORS.wydatkiBiurowe}
 									name="Wydatki biurowe"
 									radius={[4, 4, 0, 0]}
@@ -598,7 +589,7 @@ export function RevenueChart({ year = 2026, title = "Przychody i wydatki" }: Rev
 							</>
 						)}
 
-						
+
 						<Line
 							type="monotone"
 							dataKey="profit"
@@ -617,7 +608,7 @@ export function RevenueChart({ year = 2026, title = "Przychody i wydatki" }: Rev
 				</ResponsiveContainer>
 			</div>
 
-			
+
 			{showDetails && selectedMonth && (
 				<div style={{
 					marginTop: '16px',

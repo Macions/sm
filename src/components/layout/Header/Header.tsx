@@ -23,13 +23,13 @@ import styles from "./Header.module.css";
 export interface SearchResult {
 	id: string;
 	type:
-		| "member"
-		| "project"
-		| "guide"
-		| "task"
-		| "vacancy"
-		| "structure"
-		| "social";
+	| "member"
+	| "project"
+	| "guide"
+	| "task"
+	| "vacancy"
+	| "structure"
+	| "social";
 	title: string;
 	subtitle?: string;
 	description?: string;
@@ -95,15 +95,14 @@ export default function Header({
 		try {
 			isFetching.current = true;
 			setLoading(true);
-			const token = localStorage.getItem("accessToken");
-
-			const response = await fetch("/api/dashboard/notifications?limit=20", {
-				headers: {
-					Authorization: `Bearer ${token}`,
-					"Content-Type": "application/json",
-				},
-			});
-
+			const response = await fetch(
+				"/api/dashboard/notifications?limit=20",
+				{
+					headers: {
+						"Content-Type": "application/json",
+					},
+				}
+			);
 			if (!response.ok) {
 				throw new Error("Błąd pobierania powiadomień");
 			}
@@ -128,12 +127,8 @@ export default function Header({
 
 		try {
 			isFetching.current = true;
-			const token = localStorage.getItem("accessToken");
 			const response = await fetch(
-				"/api/dashboard/notifications/unread-count",
-				{
-					headers: { Authorization: `Bearer ${token}` },
-				},
+				"/api/dashboard/notifications/unread-count"
 			);
 			if (response.ok) {
 				const data = await response.json();
@@ -148,12 +143,9 @@ export default function Header({
 
 	const markAsRead = async (id: string) => {
 		try {
-			const token = localStorage.getItem("accessToken");
-
 			await fetch(`/api/dashboard/notifications/${id}/read`, {
 				method: "PUT",
 				headers: {
-					Authorization: `Bearer ${token}`,
 					"Content-Type": "application/json",
 				},
 			});
@@ -170,12 +162,9 @@ export default function Header({
 
 	const markAllAsRead = async () => {
 		try {
-			const token = localStorage.getItem("accessToken");
-
 			await fetch("/api/dashboard/notifications/read-all", {
 				method: "PUT",
 				headers: {
-					Authorization: `Bearer ${token}`,
 					"Content-Type": "application/json",
 				},
 			});
@@ -189,12 +178,9 @@ export default function Header({
 
 	const deleteNotification = async (id: string) => {
 		try {
-			const token = localStorage.getItem("accessToken");
-
 			await fetch(`/api/dashboard/notifications/${id}`, {
 				method: "DELETE",
 				headers: {
-					Authorization: `Bearer ${token}`,
 					"Content-Type": "application/json",
 				},
 			});
@@ -316,9 +302,8 @@ export default function Header({
 				</button>
 
 				<button
-					className={`${styles.topbar__burger} ${
-						isMobileMenuOpen ? styles.topbar__burgerHidden : ""
-					}`}
+					className={`${styles.topbar__burger} ${isMobileMenuOpen ? styles.topbar__burgerHidden : ""
+						}`}
 					onClick={onMobileMenuToggle}
 					aria-label="Menu mobilne"
 				>

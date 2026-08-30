@@ -36,8 +36,8 @@ export function UserProvider({ children }: { children: ReactNode }) {
 	const fetchUser = async () => {
 		try {
 			setLoading(true);
-			const token = localStorage.getItem("accessToken");
-			if (!token) {
+			const cachedUser = localStorage.getItem("user");
+			if (!cachedUser) {
 				setUser(null);
 				setLoading(false);
 				return;
@@ -49,13 +49,12 @@ export function UserProvider({ children }: { children: ReactNode }) {
 					const parsed = JSON.parse(cached);
 					setUser(parsed);
 				} catch (e) {
-
+					// ignore
 				}
 			}
 
 			const response = await fetch("/api/profile", {
 				headers: {
-					Authorization: `Bearer ${token}`,
 					"Content-Type": "application/json",
 				},
 			});

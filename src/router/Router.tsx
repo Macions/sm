@@ -58,10 +58,10 @@ function AppRoutes() {
 
 	useEffect(() => {
 		const verifyToken = async () => {
-			const token = localStorage.getItem("accessToken");
+			const user = localStorage.getItem("user");
 
-			if (!token) {
-				logger.debug("🔐 [Auth] Brak tokena");
+			if (!user) {
+				logger.debug("🔐 [Auth] Brak użytkownika");
 				setIsAuthenticated(false);
 				setIsLoading(false);
 				return;
@@ -70,7 +70,7 @@ function AppRoutes() {
 			try {
 				logger.debug("🔐 [Auth] Weryfikacja tokena...");
 
-				await api.get("/auth/me"); 
+				await api.get("/auth/me");
 				logger.debug("✅ [Auth] Token ważny");
 				setIsAuthenticated(true);
 			} catch (error: any) {
@@ -78,8 +78,7 @@ function AppRoutes() {
 					"❌ [Auth] Token wygasł lub jest nieprawidłowy",
 					error?.response?.status,
 				);
-				localStorage.removeItem("accessToken");
-				localStorage.removeItem("refreshToken"); 
+				localStorage.removeItem("user");
 				setIsAuthenticated(false);
 			} finally {
 				setIsLoading(false);
@@ -89,37 +88,6 @@ function AppRoutes() {
 		verifyToken();
 	}, []);
 
-
-	useEffect(() => {
-		const handleStorageChange = (e: StorageEvent) => {
-			if (e.key === "accessToken") {
-				if (!e.newValue) {
-					logger.debug("🔐 [Auth] Token usunięty w innej karcie");
-					setIsAuthenticated(false);
-				} else {
-
-					setIsLoading(true);
-					const verifyNewToken = async () => {
-						try {
-							await api.get("/auth/me");
-							setIsAuthenticated(true);
-						} catch {
-							localStorage.removeItem("accessToken");
-							setIsAuthenticated(false);
-						} finally {
-							setIsLoading(false);
-						}
-					};
-					verifyNewToken();
-				}
-			}
-		};
-
-		window.addEventListener("storage", handleStorageChange);
-		return () => window.removeEventListener("storage", handleStorageChange);
-	}, []);
-
-
 	if (isLoading) {
 		return <Loading />;
 	}
@@ -128,8 +96,8 @@ function AppRoutes() {
 	logger.debug("🚀 [Router] START RENDER");
 	logger.debug("📂 PATH:", window.location.pathname);
 	logger.debug(
-		"🔑 TOKEN:",
-		localStorage.getItem("accessToken") ? "Jest" : "BRAK",
+		"🔑 USER:",
+		localStorage.getItem("user") ? "Jest" : "BRAK",
 	);
 	logger.debug("✅ AUTH:", isAuthenticated ? "ZALOGOWANY" : "NIEZALOGOWANY");
 	logger.debug("═══════════════════════════════════════════════════════════");
@@ -158,7 +126,7 @@ function AppRoutes() {
 				/>
 				<Route
 					path="/onboarding"
-					element={<Onboarding onComplete={() => {}} />}
+					element={<Onboarding onComplete={() => { }} />}
 				/>
 				<Route element={<DashboardLayout />}>
 					<Route path="/" element={<Dashboard />} />
