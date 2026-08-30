@@ -189,7 +189,6 @@ interface Comment {
 	createdAt: string;
 }
 
-// FUNKCJE POMOCNICZE DLA ARCHIWIZACJI
 const calculateDaysToComplete = (task: any) => {
 	const created = new Date(task.createdAt);
 	const completed = new Date(task.completedAt || task.updatedAt);
@@ -221,12 +220,12 @@ function ArchivedTasksList({
 	tasks,
 	currentUser,
 	onView,
-	onDelete, // DODAJ
+	onDelete,
 }: {
 	tasks: ArchivedTask[];
 	currentUser: User;
 	onView: (task: Task) => void;
-	onDelete?: (task: Task) => void; // DODAJ
+	onDelete?: (task: Task) => void;
 }) {
 	return (
 		<div className={styles.archivedSection}>
@@ -250,7 +249,7 @@ function ArchivedTasksList({
 							currentUser={currentUser}
 							onView={onView}
 							onEdit={undefined}
-							onDelete={onDelete} // DODAJ
+							onDelete={onDelete}
 							onStatusChange={() => {}}
 							onFeedback={undefined}
 						/>
@@ -1231,7 +1230,7 @@ function TaskCard({
 						</button>
 					)}
 
-					{canManage && ( // <-- USUŃ !isArchived
+					{canManage && (
 						<button
 							className={`${styles.taskCard__actionBtn} ${styles.taskCard__actionBtnDanger}`}
 							onClick={() => {
@@ -1972,7 +1971,6 @@ export default function Tasks() {
 			setLoadingArchived(true);
 			const token = localStorage.getItem("accessToken");
 
-			// POPRAWIONY ENDPOINT - pobiera wszystkie zadania i filtruje zakończone
 			const response = await fetch(`/api/tasks`, {
 				headers: { Authorization: `Bearer ${token}` },
 			});
@@ -1980,10 +1978,8 @@ export default function Tasks() {
 			if (response.ok) {
 				const data = await response.json();
 
-				// Filtruj tylko zakończone (status "done")
 				const doneTasks = data.filter((task: any) => task.status === "done");
 
-				// Filtruj zadania starsze niż 3 dni
 				const threeDaysAgo = new Date();
 				threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
 
@@ -2066,9 +2062,7 @@ export default function Tasks() {
 		}
 
 		if (user.isLeader === true) {
-			// 🔥 POPRAWA: Użyj contains zamiast dokładnego porównania
 			if (task.pillar && user.pillarName) {
-				// Sprawdź czy nazwa filaru pasuje (z lub bez "Filar")
 				if (
 					task.pillar === user.pillarName ||
 					task.pillar.includes(user.pillarName) ||
@@ -2222,11 +2216,10 @@ export default function Tasks() {
 				threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
 
 				const activeTasks = visibleTasks.filter((task: Task) => {
-					// Jeśli zadanie jest zakończone (status "done")
 					if (task.status === "done") {
 						const completedAt = (task as any).completedAt || task.updatedAt;
 						const completedDate = new Date(completedAt);
-						// Jeśli zostało ukończone więcej niż 3 dni temu - to zarchiwizowane, pomiń
+
 						if (completedDate <= threeDaysAgo) {
 							return false;
 						}
@@ -2234,8 +2227,8 @@ export default function Tasks() {
 					return true;
 				});
 
-				setTasks(activeTasks); // <-- TYLKO TUTAJ, nie setTasks(visibleTasks)
-				window.__tasks = activeTasks; // <-- ZMIEŃ NA activeTasks
+				setTasks(activeTasks);
+				window.__tasks = activeTasks;
 				window.__currentUser = currentUser;
 			}
 		} catch (error) {
@@ -2462,10 +2455,8 @@ export default function Tasks() {
 			});
 
 			if (response.ok) {
-				// Usuń z listy aktywnej
 				setTasks((prev) => prev.filter((t) => t.id !== taskToDelete.id));
 
-				// USUŃ Z ARCHIWUM
 				setArchivedTasks((prev) =>
 					prev.filter((t) => t.id !== taskToDelete.id),
 				);
@@ -2477,7 +2468,7 @@ export default function Tasks() {
 			}
 		} catch (error) {
 			console.error("Błąd usuwania:", error);
-			// Usuń lokalnie z obu list
+
 			setTasks((prev) => prev.filter((t) => t.id !== taskToDelete.id));
 			setArchivedTasks((prev) => prev.filter((t) => t.id !== taskToDelete.id));
 			toast.success(
@@ -2788,7 +2779,6 @@ export default function Tasks() {
 
 			<div className={styles.tasksContainer}>
 				{showArchived ? (
-					// WYŚWIETLANIE ZARCHIWIZOWANYCH
 					loadingArchived ? (
 						<div className={styles.loading}>
 							<div className={styles.loading__spinner}></div>
@@ -2799,11 +2789,10 @@ export default function Tasks() {
 							tasks={archivedTasks}
 							currentUser={currentUser}
 							onView={handleViewTask}
-							onDelete={handleDeleteTask} // DODAJ
+							onDelete={handleDeleteTask}
 						/>
 					)
-				) : // WYŚWIETLANIE AKTYWNYCH ZADAŃ (ISTNIEJĄCY KOD)
-				filteredTasks.length === 0 ? (
+				) : filteredTasks.length === 0 ? (
 					<div className={styles.emptyState}>
 						<Check size={48} className={styles.emptyState__icon} />
 						<h3 className={styles.emptyState__title}>Brak zadań</h3>
@@ -2826,7 +2815,7 @@ export default function Tasks() {
 					</div>
 				) : (
 					<>
-						{/* Twoje zadania */}
+						{}
 						{(() => {
 							const myTasks = filteredTasks.filter(
 								(task) =>
@@ -2865,7 +2854,7 @@ export default function Tasks() {
 							return null;
 						})()}
 
-						{/* Zadania innych */}
+						{}
 						{(() => {
 							const otherTasks = filteredTasks.filter(
 								(task) =>

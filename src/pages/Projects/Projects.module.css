@@ -1,13 +1,7 @@
-/* --------------------------------------------------------------------------
-   GŁÓWNY KONTENER
-   -------------------------------------------------------------------------- */
 .projects {
 	width: 100%;
 }
 
-/* --------------------------------------------------------------------------
-   NAGŁÓWEK
-   -------------------------------------------------------------------------- */
 .header {
 	display: flex;
 	justify-content: space-between;
@@ -62,9 +56,6 @@
 	transform: translateY(0);
 }
 
-/* --------------------------------------------------------------------------
-   STATYSTYKI
-   -------------------------------------------------------------------------- */
 .stats {
 	display: flex;
 	gap: 16px;
@@ -100,9 +91,6 @@
 	color: var(--gray-600, #64748b);
 }
 
-/* --------------------------------------------------------------------------
-   FILTRY
-   -------------------------------------------------------------------------- */
 .filters {
 	display: flex;
 	flex-wrap: wrap;
@@ -212,18 +200,12 @@
 	color: var(--gray-900, #1a1a2e);
 }
 
-/* --------------------------------------------------------------------------
-   SIATKA PROJEKTÓW
-   -------------------------------------------------------------------------- */
 .projectsGrid {
 	display: grid;
 	grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
 	gap: 20px;
 }
 
-/* --------------------------------------------------------------------------
-   KARTA PROJEKTU
-   -------------------------------------------------------------------------- */
 .projectCard {
 	background: #fff;
 	border-radius: 14px;
@@ -436,9 +418,6 @@
 	color: #dc2626;
 }
 
-/* --------------------------------------------------------------------------
-   PUSTY STAN
-   -------------------------------------------------------------------------- */
 .emptyState {
 	grid-column: 1 / -1;
 	display: flex;
@@ -490,9 +469,6 @@
 	background: var(--purple-700, #6d28d9);
 }
 
-/* --------------------------------------------------------------------------
-   MODAL
-   -------------------------------------------------------------------------- */
 .modalOverlay {
 	position: fixed;
 	inset: 0;
@@ -756,9 +732,6 @@
 	background: var(--purple-700, #6d28d9);
 }
 
-/* --------------------------------------------------------------------------
-   RESPONSYWNOŚĆ
-   -------------------------------------------------------------------------- */
 @media (width <=768px) {
 	.projects {
 		padding: 16px;
@@ -1198,9 +1171,6 @@
 	margin-top: 20px;
 }
 
-/* --------------------------------------------------------------------------
-   ZAKŁADKI (TABS)
-   -------------------------------------------------------------------------- */
 .tabs {
 	display: flex;
 	gap: 4px;
@@ -1252,9 +1222,6 @@
 	color: var(--purple-700, #6d28d9);
 }
 
-/* --------------------------------------------------------------------------
-   PRZYCISK ZGŁOŚ POMYSŁ
-   -------------------------------------------------------------------------- */
 .header__actions {
 	display: flex;
 	gap: 12px;
@@ -1287,9 +1254,6 @@
 	transform: translateY(0);
 }
 
-/* --------------------------------------------------------------------------
-   MODAL ZGŁOSZENIA POMYSŁU
-   -------------------------------------------------------------------------- */
 .modal__headerLeft {
 	display: flex;
 	align-items: center;
@@ -1329,9 +1293,6 @@
 	line-height: 1.5;
 }
 
-/* --------------------------------------------------------------------------
-   NAGŁÓWEK POMYSŁÓW
-   -------------------------------------------------------------------------- */
 .ideasHeader {
 	display: flex;
 	justify-content: space-between;
@@ -1359,9 +1320,6 @@
 	border-radius: 20px;
 }
 
-/* --------------------------------------------------------------------------
-   SIATKA POMYSŁÓW (dostosowanie do istniejących styli)
-   -------------------------------------------------------------------------- */
 .ideasGrid {
 	display: grid;
 	grid-template-columns: repeat(auto-fill, minmax(390px, 1fr));
@@ -1369,9 +1327,6 @@
 	margin-top: 4px;
 }
 
-/* --------------------------------------------------------------------------
-   KARTA POMYSŁU (dostosowanie do ciemnego tła)
-   -------------------------------------------------------------------------- */
 .ideaCard {
 	background: #fff;
 	border-radius: 14px;
@@ -1545,9 +1500,6 @@
 	background: #fecaca;
 }
 
-/* --------------------------------------------------------------------------
-   RESPONSYWNOŚĆ DLA POMYSŁÓW
-   -------------------------------------------------------------------------- */
 @media (width <=768px) {
 	.tabs {
 		flex-wrap: wrap;
@@ -1639,10 +1591,6 @@
 	cursor: not-allowed;
 }
 
-/* --------------------------------------------------------------------------
-   STYLE DLA AUTORA POMYSŁU
-   -------------------------------------------------------------------------- */
-
 .ideaCard__authorBadge {
 	display: inline-flex;
 	align-items: center;
@@ -1710,9 +1658,6 @@
 	border: 1px solid #22c55e40;
 }
 
-/* --------------------------------------------------------------------------
-   STATYSTYKI KOORDYNATORA
-   -------------------------------------------------------------------------- */
 .coordinatorStats {
 	display: flex;
 	flex-wrap: wrap;
@@ -1844,9 +1789,6 @@
 	flex-shrink: 0;
 }
 
-/* --------------------------------------------------------------------------
-   PRZYCISKI AKCJI POMYSŁÓW
-   -------------------------------------------------------------------------- */
 .ideaCard__actions {
 	display: flex !important;
 	flex-wrap: wrap;
@@ -1901,7 +1843,6 @@
 	box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3) !important;
 }
 
-
 .loading {
 	display: flex;
 	flex-direction: column;
@@ -1950,10 +1891,6 @@
 	}
 }
 
-/* ============================================================
-   🔘 PRZYCISKI AKCJI W POMYSŁACH (IdeaCard)
-   ============================================================ */
-
 .ideaCard__actions {
 	display: flex;
 	gap: 8px;
@@ -1987,7 +1924,6 @@
 	transform: translateY(0);
 }
 
-
 .ideaCard__actionBtnSuccess {
 	background: #10b981;
 	color: white;
@@ -1997,7 +1933,6 @@
 	background: #059669;
 	box-shadow: 0 2px 12px rgba(16, 185, 129, 0.3);
 }
-
 
 .ideaCard__actionBtnDanger {
 	background: #ef4444;
@@ -2009,7 +1944,6 @@
 	box-shadow: 0 2px 12px rgba(239, 68, 68, 0.3);
 }
 
-
 .ideaCard__actionBtnInfo {
 	background: #3b82f6;
 	color: white;
@@ -2020,7 +1954,6 @@
 	box-shadow: 0 2px 12px rgba(59, 130, 246, 0.3);
 }
 
-
 .ideaCard__actionBtnSecondary {
 	background: #6b7280;
 	color: white;
@@ -2030,10 +1963,6 @@
 	background: #4b5563;
 	box-shadow: 0 2px 12px rgba(107, 114, 128, 0.3);
 }
-
-/* ============================================================
-   🎯 STATYSTYKI KOORDYNATORA
-   ============================================================ */
 
 .coordinatorStats {
 	display: flex;
@@ -2077,10 +2006,6 @@
 	font-size: 12px;
 	color: #64748b;
 }
-
-/* ============================================================
-   🗳️ GŁOSOWANIE (już masz, ale uzupełniam)
-   ============================================================ */
 
 .ideaCard__votes {
 	display: flex;
@@ -2183,10 +2108,6 @@
 	font-weight: 500;
 }
 
-/* ============================================================
-   🔘 PRZYCISKI AKCJI W POMYSŁACH
-   ============================================================ */
-
 .ideaCard__actions {
 	display: flex;
 	gap: 8px;
@@ -2220,7 +2141,6 @@
 	transform: translateY(0);
 }
 
-
 .ideaCard__actionBtnSuccess {
 	background: #10b981;
 	color: white;
@@ -2231,7 +2151,6 @@
 	box-shadow: 0 2px 12px rgba(16, 185, 129, 0.3);
 }
 
-
 .ideaCard__actionBtnDanger {
 	background: #ef4444;
 	color: white;
@@ -2241,11 +2160,6 @@
 	background: #dc2626;
 	box-shadow: 0 2px 12px rgba(239, 68, 68, 0.3);
 }
-
-/* ============================================================
-   🔘 PRZYCISKI AKCJI - WYŚWIETLANIE (NAJWAŻNIEJSZE!)
-   ============================================================ */
-
 
 .ideaCard__actions {
 	display: flex !important;
@@ -2259,7 +2173,6 @@
 	height: auto !important;
 	overflow: visible !important;
 }
-
 
 .ideaCard__actionBtn {
 	display: inline-flex !important;
@@ -2279,7 +2192,6 @@
 	opacity: 1 !important;
 }
 
-
 .ideaCard__actionBtnSuccess {
 	background: #10b981 !important;
 	color: #ffffff !important;
@@ -2295,7 +2207,6 @@
 .ideaCard__actionBtnSuccess:active {
 	transform: translateY(0) !important;
 }
-
 
 .ideaCard__actionBtnDanger {
 	background: #ef4444 !important;
@@ -2313,17 +2224,11 @@
 	transform: translateY(0) !important;
 }
 
-
 .ideaCard__actionBtn svg {
 	flex-shrink: 0 !important;
 	width: 16px !important;
 	height: 16px !important;
 }
-
-/* ============================================================
-   🔘 PRZYCISKI AKCJI - OSTATECZNE ROZWIĄZANIE
-   ============================================================ */
-
 
 .projects .ideaCard__actions,
 .ideaCard .ideaCard__actions,
@@ -2339,7 +2244,6 @@ div.ideaCard__actions {
 	height: auto !important;
 	overflow: visible !important;
 }
-
 
 .projects .ideaCard__actionBtn,
 .ideaCard .ideaCard__actionBtn,
@@ -2367,7 +2271,6 @@ button.ideaCard__actionBtn {
 	appearance: none !important;
 }
 
-
 .projects .ideaCard__actionBtnSuccess,
 .ideaCard .ideaCard__actionBtnSuccess,
 button.ideaCard__actionBtnSuccess,
@@ -2385,7 +2288,6 @@ button.ideaCard__actionBtnSuccess:hover {
 	transform: translateY(-2px) !important;
 	box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4) !important;
 }
-
 
 .projects .ideaCard__actionBtnDanger,
 .ideaCard .ideaCard__actionBtnDanger,
@@ -2405,7 +2307,6 @@ button.ideaCard__actionBtnDanger:hover {
 	box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4) !important;
 }
 
-
 .projects .ideaCard__actionBtn svg,
 .ideaCard .ideaCard__actionBtn svg,
 .ideaCard__actionBtn svg {
@@ -2414,10 +2315,6 @@ button.ideaCard__actionBtnDanger:hover {
 	height: 16px !important;
 	color: inherit !important;
 }
-
-/* ============================================================
-   PROJECT TASKS - ZADANIA W PROJEKCIE
-   ============================================================ */
 
 .projectTasks {
 	margin-top: 12px;
@@ -2515,7 +2412,6 @@ button.ideaCard__actionBtnDanger:hover {
 	flex-shrink: 0;
 }
 
-
 .statusTodo {
 	color: #94a3b8;
 }
@@ -2531,10 +2427,6 @@ button.ideaCard__actionBtnDanger:hover {
 .statusDone {
 	color: #22c55e;
 }
-
-/* ============================================================
-   RESPONSYWNOŚĆ DLA ZADAŃ W PROJEKCIE
-   ============================================================ */
 
 @media (max-width: 768px) {
 	.projectTasks__item {

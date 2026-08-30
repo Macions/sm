@@ -1685,7 +1685,6 @@ app.get("/api/tasks", authMiddleware, async (req: any, res) => {
 		const userRole = req.user?.role;
 		const isLeader = req.user?.isLeader || false;
 
-		// 📍 LOG 1 - Podstawowe informacje o użytkowniku
 		console.log("🔍 [TASKS] === START ===");
 		console.log("🔍 [TASKS] User ID:", userId);
 		console.log("🔍 [TASKS] User Role:", userRole);
@@ -1697,7 +1696,6 @@ app.get("/api/tasks", authMiddleware, async (req: any, res) => {
 		if (userRole === "admin" || userRole === "board") {
 			whereCondition = {};
 		} else if (isLeader === true) {
-			// <-- USUŃ sprawdzanie roli coordinator
 			const leaderTeams = await prisma.teamMember.findMany({
 				where: {
 					user_id: parseInt(userId),
@@ -1711,7 +1709,6 @@ app.get("/api/tasks", authMiddleware, async (req: any, res) => {
 				},
 			});
 
-			// 📍 LOG 2 - Zespoły w których użytkownik jest liderem
 			console.log("🔍 [TASKS] Leader Teams found:", leaderTeams.length);
 			console.log(
 				"🔍 [TASKS] Leader Teams (raw):",
@@ -1722,11 +1719,9 @@ app.get("/api/tasks", authMiddleware, async (req: any, res) => {
 				.map((tm: any) => tm.team?.name?.replace("Filar ", ""))
 				.filter(Boolean);
 
-			// 📍 LOG 3 - Nazwy filarów
 			console.log("🔍 [TASKS] Pillar Names (after replace):", pillarNames);
 
 			if (pillarNames.length > 0) {
-				// 📍 LOG 4 - Budowanie warunku dla koordynatora
 				console.log(
 					"🔍 [TASKS] Building WHERE condition for coordinator with pillars:",
 					pillarNames,
@@ -1734,7 +1729,6 @@ app.get("/api/tasks", authMiddleware, async (req: any, res) => {
 
 				whereCondition = {
 					OR: [
-						// Szukaj po nazwie filaru (z lub bez "Filar") używając contains
 						...pillarNames.map((name) => ({
 							pillar: { contains: name },
 						})),
@@ -1743,7 +1737,7 @@ app.get("/api/tasks", authMiddleware, async (req: any, res) => {
 							assigned_group: { in: pillarNames },
 						},
 						{ assigned_to: parseInt(userId) },
-						// Dodaj też wyszukiwanie po assigned_users
+
 						{
 							assigned_users: {
 								contains: `"${userId}"`,
@@ -1800,7 +1794,6 @@ app.get("/api/tasks", authMiddleware, async (req: any, res) => {
 			);
 		}
 
-		// 📍 LOG 5 - Dodatkowe filtry z query
 		console.log("🔍 [TASKS] Query params:", req.query);
 
 		if (userRole !== "admin" && userRole !== "board") {
@@ -1857,7 +1850,6 @@ app.get("/api/tasks", authMiddleware, async (req: any, res) => {
 			}
 		}
 
-		// 📍 LOG 6 - Finalne zapytanie do bazy
 		console.log(
 			"🔍 [TASKS] Final WHERE condition:",
 			JSON.stringify(whereCondition, null, 2),
@@ -1925,7 +1917,6 @@ app.get("/api/tasks", authMiddleware, async (req: any, res) => {
 			},
 		});
 
-		// 📍 LOG 7 - Wyniki zapytania
 		console.log("🔍 [TASKS] ✅ Tasks found:", tasks.length);
 		console.log(
 			"🔍 [TASKS] Task IDs:",
@@ -2004,7 +1995,6 @@ app.get("/api/tasks", authMiddleware, async (req: any, res) => {
 				})) || [],
 		}));
 
-		// 📍 LOG 8 - Odpowiedź
 		console.log("🔍 [TASKS] === END ===");
 		console.log("🔍 [TASKS] Returning:", mappedTasks.length, "tasks");
 		console.log(

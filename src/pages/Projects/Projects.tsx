@@ -511,30 +511,6 @@ function ProjectModal({
 		onClose();
 	};
 
-	/*
-	const availablePillars = useMemo(() => {
-		if (isAdminOrBoard) {
-			return Object.keys(PILLAR_LABELS_FALLBACK);
-		}
-		const userPillarKeys = userPillars.map(p => {
-			const entry = Object.entries(PILLAR_LABELS_FALLBACK).find(
-				([key, label]) => label === p || p === key
-			);
-			return entry ? entry[0] : null;
-		}).filter(Boolean) as string[];
-		return userPillarKeys;
-	}, [userPillars, isAdminOrBoard]);
-
-	useEffect(() => {
-		if (availablePillars.length === 1 && !formData.pillar) {
-			setFormData(prev => ({
-				...prev,
-				pillar: availablePillars[0] as ProjectPillar,
-			}));
-		}
-	}, [availablePillars]);
-	*/
-
 	return (
 		<div className={styles.modalOverlay} onClick={onClose}>
 			<div className={styles.modal} onClick={(e) => e.stopPropagation()}>

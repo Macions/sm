@@ -1,6 +1,4 @@
 .members {
-
-
 	margin: 0 auto;
 	width: 100%;
 }
@@ -971,8 +969,6 @@
 	filter: grayscale(0.5);
 }
 
-
-
 .contributionStatsGrid {
 	display: grid;
 	grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
@@ -1049,9 +1045,6 @@
 	font-size: 14px;
 }
 
-/* ============================================
-   BADGE ZESPOŁÓW - WIDOK GRID
-   ============================================ */
 .memberCard__teams {
 	display: flex;
 	flex-wrap: wrap;
@@ -1077,7 +1070,6 @@
 	transition: all 0.2s ease;
 	border: 1px solid rgba(255, 255, 255, 0.15);
 }
-
 
 .memberCard__teamBadge--court {
 	background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
@@ -1112,16 +1104,12 @@
 	box-shadow: 0 2px 4px rgba(108, 92, 231, 0.3);
 }
 
-
 .memberCard__teamBadge svg {
 	width: 12px;
 	height: 12px;
 	opacity: 0.9;
 }
 
-/* ============================================
-   BADGE ZESPOŁÓW - WIDOK LISTY
-   ============================================ */
 .memberCard__detail--team {
 	display: inline-flex;
 	align-items: center;
@@ -1146,7 +1134,6 @@
 	width: 14px;
 	height: 14px;
 }
-
 
 .memberCard__detail--team-court {
 	background: #fef2f2;
@@ -1198,9 +1185,6 @@
 	color: #7c3aed;
 }
 
-/* ============================================
-   ANIMACJE
-   ============================================ */
 @keyframes badgePulse {
 	0% {
 		transform: scale(1);
@@ -1219,9 +1203,6 @@
 	animation: badgePulse 2s ease-in-out infinite;
 }
 
-/* ============================================
-   RESPONSYWNOŚĆ
-   ============================================ */
 @media (max-width: 768px) {
 	.memberCard__teams {
 		gap: 4px;
@@ -1240,10 +1221,6 @@
 	}
 }
 
-/* ============================================================
-   BADGE STATUSU SKŁADKI - PROSTA WERSJA
-   ============================================================ */
-
 .contributionBadge {
 	display: inline-flex;
 	align-items: center;
@@ -1259,7 +1236,6 @@
 	flex-shrink: 0;
 }
 
-
 .contributionBadgePaid {
 	background: #e8f5e9;
 	color: #2e7d32;
@@ -1270,7 +1246,6 @@
 	color: #43a047;
 }
 
-
 .contributionBadgePending {
 	background: #ffebee;
 	color: #c62828;
@@ -1280,7 +1255,6 @@
 .contributionBadgePending svg {
 	color: #e53935;
 }
-
 
 .contributionBadgeNone {
 	display: inline-flex;
@@ -1299,7 +1273,6 @@
 	color: #757575;
 }
 
-
 .contributionBadge:hover {
 	transform: translateY(-1px);
 	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
@@ -1317,16 +1290,12 @@
 	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
 }
 
-
 .modal__value {
 	display: flex;
 	align-items: center;
 	padding: 4px 0;
 }
 
-/* --------------------------------------------
-   MAŁY BADGE - DO KARTY CZŁONKA
-   -------------------------------------------- */
 .contributionBadgeSmall {
 	display: inline-flex;
 	align-items: center;
@@ -1356,9 +1325,6 @@
 	border: 1px solid #e0e0e0;
 }
 
-/* --------------------------------------------
-   ANIMACJA ŁADOWANIA
-   -------------------------------------------- */
 @keyframes pulse {
 	0%,
 	100% {
@@ -1395,21 +1361,16 @@
 }
 
 .contributionDotPaid {
-
 	color: #2e7d32;
-
 }
 
 .contributionDotPending {
-
 	color: #c62828;
-
 }
 
 .contributionDot:hover {
 	transform: scale(1.1);
 }
-
 
 .memberCardList .contributionDot {
 	width: 18px;
@@ -1420,10 +1381,6 @@
 	width: 11px;
 	height: 11px;
 }
-
-/* ============================================================
-   KROPKA STATUSU SKŁADKI NA KARCIE CZŁONKA
-   ============================================================ */
 
 .contributionDot {
 	display: inline-flex;
@@ -1440,21 +1397,16 @@
 }
 
 .contributionDotPaid {
-
 	color: #166534;
-
 }
 
 .contributionDotPending {
-
 	color: #991b1b;
-
 }
 
 .contributionDot:hover {
 	transform: scale(1.15);
 }
-
 
 .memberCardList .contributionDot {
 	width: 16px;
@@ -1466,10 +1418,6 @@
 	width: 10px !important;
 	height: 10px !important;
 }
-
-/* --------------------------------------------
-   BADGE STATUSU SKŁADKI W PROFILU
-   -------------------------------------------- */
 
 .contributionBadge {
 	display: inline-flex;
@@ -1518,7 +1466,6 @@
 	color: #9ca3af;
 }
 
-
 .contributionBadge:hover {
 	transform: translateY(-1px);
 	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
@@ -1532,16 +1479,11 @@
 	box-shadow: 0 2px 12px rgba(239, 68, 68, 0.15);
 }
 
-
 .modal__value {
 	display: flex;
 	align-items: center;
 	padding: 4px 0;
 }
-
-/* --------------------------------------------
-   ANIMACJA ŁADOWANIA
-   -------------------------------------------- */
 
 @keyframes pulse {
 	0%,
@@ -1564,10 +1506,6 @@
 	color: #9ca3af;
 	border: 1px solid #d1d5db;
 }
-
-/* --------------------------------------------
-   STATYSTYKI SKŁADEK W PROFILU
-   -------------------------------------------- */
 
 .contributionStatsGrid {
 	display: grid;
@@ -1620,5 +1558,3 @@
 	padding: 12px 0;
 	text-align: center;
 }
-
-

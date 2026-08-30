@@ -13,7 +13,6 @@ const api = axios.create({
 	timeout: 30000,
 });
 
-// Interceptor dla requestów
 api.interceptors.request.use(
 	(config) => {
 		const token = localStorage.getItem("accessToken");
@@ -25,10 +24,8 @@ api.interceptors.request.use(
 	(error) => Promise.reject(error),
 );
 
-// Interceptor dla response - WYLOGOWYWANIE
 api.interceptors.response.use(
 	(response) => {
-		// Sprawdź czy API zwraca nową wersję
 		const apiVersion = response.headers["x-api-version"];
 		if (apiVersion && apiVersion !== API_VERSION) {
 			logger.warn("Nowa wersja API - wylogowywanie...");
@@ -44,7 +41,6 @@ api.interceptors.response.use(
 	async (error) => {
 		const originalRequest = error.config;
 
-		// 401 - Nieautoryzowany
 		if (error.response?.status === 401) {
 			logger.warn("401 - Brak autoryzacji, wylogowywanie...");
 			localStorage.removeItem("accessToken");
@@ -55,7 +51,6 @@ api.interceptors.response.use(
 			return Promise.reject(error);
 		}
 
-		// 403 - Zabronione (zmiana roli/uprawnień)
 		if (error.response?.status === 403) {
 			logger.warn("403 - Brak uprawnień, wylogowywanie...");
 			localStorage.removeItem("accessToken");
@@ -66,7 +61,6 @@ api.interceptors.response.use(
 			return Promise.reject(error);
 		}
 
-		// Obsługa odświeżania tokenu (opcjonalnie)
 		if (error.response?.status === 401 && !originalRequest._retry) {
 			originalRequest._retry = true;
 			try {
@@ -99,7 +93,6 @@ api.interceptors.response.use(
 	},
 );
 
-// Funkcja do sprawdzania wersji użytkownika
 export const checkUserVersion = async () => {
 	try {
 		const token = localStorage.getItem("accessToken");
@@ -124,7 +117,6 @@ export const checkUserVersion = async () => {
 			localStorage.setItem("userVersion", data.version);
 		}
 	} catch (error) {
-		// Ignoruj błędy sprawdzania wersji
 		logger.error("Błąd sprawdzania wersji:", error);
 	}
 };

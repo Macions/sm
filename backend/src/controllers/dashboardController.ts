@@ -1,11 +1,8 @@
-
-
 import { Request, Response } from "express";
 import { PrismaClient } from "@prisma/client";
 import { logger } from "../utils/logger";
 
 const prisma = new PrismaClient();
-
 
 interface AuthRequest extends Request {
 	user?: {
@@ -34,10 +31,6 @@ function getMonthName(month: number): string {
 	return months[month - 1] || month.toString();
 }
 export class DashboardController {
-	/**
-	 * Pobiera statystyki dla dashboardu
-	 */
-
 	async getDashboardStats(req: AuthRequest, res: Response) {
 		try {
 			const userId = req.user?.id;
@@ -70,11 +63,9 @@ export class DashboardController {
 				},
 			});
 
-
 			const currentDate = new Date();
 			const currentMonth = currentDate.getMonth() + 1;
 			const currentYear = currentDate.getFullYear();
-
 
 			let contributionStats = null;
 			if (userId) {
@@ -105,7 +96,7 @@ export class DashboardController {
 			res.json({
 				members: totalMembers,
 				projects: totalProjects,
-				attendance: "92%", 
+				attendance: "92%",
 				announcements: announcements,
 				newGuides: newGuides,
 				contributions: contributionStats,
@@ -116,9 +107,6 @@ export class DashboardController {
 		}
 	}
 
-	/**
-	 * Pobiera powiadomienia dla użytkownika
-	 */
 	async getNotifications(req: AuthRequest, res: Response) {
 		try {
 			const userId = req.user?.id;
@@ -156,17 +144,6 @@ export class DashboardController {
 		}
 	}
 
-	/**
-	 * Oznacza powiadomienie jako przeczytane
-	 */
-	/**
-	 * Oznacza powiadomienie jako przeczytane
-	 */
-
-
-
-
-
 	async getContributionStats(req: AuthRequest, res: Response) {
 		try {
 			const userId = req.user?.id;
@@ -192,7 +169,7 @@ export class DashboardController {
 						amount: 0,
 						monthName: getMonthName(currentMonth),
 						year: currentYear,
-						monthsPaid: 0, 
+						monthsPaid: 0,
 					},
 					summary: {
 						overdueMonths: 0,
@@ -209,7 +186,7 @@ export class DashboardController {
 
 			const isPaid = currentMonthContribution?.status === "PAID";
 			const amount = currentMonthContribution?.amount || 0;
-			const monthsPaid = currentMonthContribution?.monthsPaid || 1; 
+			const monthsPaid = currentMonthContribution?.monthsPaid || 1;
 			const overdueMonths = contributions.filter(
 				(c) => c.status === "PENDING",
 			).length;
@@ -222,7 +199,7 @@ export class DashboardController {
 					monthName: getMonthName(currentMonth),
 					month: currentMonth,
 					year: currentYear,
-					monthsPaid: monthsPaid, 
+					monthsPaid: monthsPaid,
 				},
 				summary: {
 					overdueMonths: overdueMonths,
@@ -237,7 +214,7 @@ export class DashboardController {
 					monthName: getMonthName(c.month),
 					status: c.status,
 					amount: c.amount,
-					monthsPaid: c.monthsPaid || 1, 
+					monthsPaid: c.monthsPaid || 1,
 				})),
 			});
 		} catch (error) {
@@ -258,7 +235,6 @@ export class DashboardController {
 				return res.status(400).json({ error: "Nieprawidłowe ID użytkownika" });
 			}
 
-
 			const user = await prisma.user.findUnique({
 				where: { id: id },
 				select: { id: true, email: true, first_name: true, last_name: true },
@@ -272,13 +248,11 @@ export class DashboardController {
 			const currentMonth = currentDate.getMonth() + 1;
 			const currentYear = currentDate.getFullYear();
 
-
 			const contributions = await prisma.contribution.findMany({
 				where: { userId: id },
 				orderBy: [{ year: "desc" }, { month: "desc" }],
 				take: 12,
 			});
-
 
 			if (contributions.length === 0) {
 				return res.json({
@@ -299,7 +273,6 @@ export class DashboardController {
 				});
 			}
 
-
 			const currentMonthContribution = contributions.find(
 				(c) => c.month === currentMonth && c.year === currentYear,
 			);
@@ -308,11 +281,9 @@ export class DashboardController {
 			const amount = currentMonthContribution?.amount || 0;
 			const monthsPaid = currentMonthContribution?.monthsPaid || 1;
 
-
 			const overdueMonths = contributions.filter(
 				(c) => c.status === "PENDING",
 			).length;
-
 
 			const totalPaid = contributions
 				.filter((c) => c.status === "PAID")
@@ -356,7 +327,6 @@ export class DashboardController {
 	async markNotificationRead(req: AuthRequest, res: Response) {
 		try {
 			const userId = req.user?.id;
-
 
 			const idParam = req.params.id;
 			const id =
@@ -410,9 +380,6 @@ export class DashboardController {
 		}
 	}
 
-	/**
-	 * Oznacza wszystkie powiadomienia jako przeczytane
-	 */
 	async markAllNotificationsRead(req: AuthRequest, res: Response) {
 		try {
 			const userId = req.user?.id;
@@ -443,16 +410,9 @@ export class DashboardController {
 		}
 	}
 
-	/**
-	 * Usuwa powiadomienie
-	 */
-	/**
-	 * Usuwa powiadomienie
-	 */
 	async deleteNotification(req: AuthRequest, res: Response) {
 		try {
 			const userId = req.user?.id;
-
 
 			const idParam = req.params.id;
 			const id =
@@ -484,9 +444,6 @@ export class DashboardController {
 	}
 }
 
-/**
- * Formatuje datę jako "X czasu temu"
- */
 function formatTimeAgo(date: Date): string {
 	const now = new Date();
 	const diffMs = now.getTime() - date.getTime();

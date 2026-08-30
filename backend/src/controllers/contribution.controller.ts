@@ -1,5 +1,3 @@
-
-
 import { Request, Response } from "express";
 import { PrismaClient } from "@prisma/client";
 import { logger } from "../utils/logger";
@@ -10,7 +8,7 @@ interface PaymentRow {
 	Legitymacja: number;
 	pay_from: Date | null;
 	suspended_until: Date | null;
-	payment_status: 'paid' | 'pending';
+	payment_status: "paid" | "pending";
 	amount: number | null;
 	payment_date: Date | null;
 	total_payments: number;
@@ -23,7 +21,7 @@ interface HistoryRow {
 	amount: number;
 	payment_date: Date;
 	assigned_months: number;
-	status: 'paid' | 'pending';
+	status: "paid" | "pending";
 	description: string;
 }
 
@@ -46,9 +44,6 @@ const CONTRIBUTIONS_DB_CONFIG = {
 };
 
 export class ContributionController {
-	/**
-	 * Pobiera statystyki składek dla zalogowanego użytkownika
-	 */
 	async getMyContributionStats(req: AuthRequest, res: Response) {
 		try {
 			const userId = req.user?.id;
@@ -61,7 +56,6 @@ export class ContributionController {
 			const currentMonth = currentDate.getMonth() + 1;
 			const currentYear = currentDate.getFullYear();
 
-
 			const contributions = await prisma.contribution.findMany({
 				where: {
 					userId: userId,
@@ -69,11 +63,9 @@ export class ContributionController {
 				orderBy: [{ year: "desc" }, { month: "desc" }],
 			});
 
-
 			const currentMonthContribution = contributions.find(
 				(c) => c.month === currentMonth && c.year === currentYear,
 			);
-
 
 			const totalPaid = contributions
 				.filter((c) => c.status === "PAID")
@@ -86,7 +78,6 @@ export class ContributionController {
 			const totalPaidCount = contributions.filter(
 				(c) => c.status === "PAID",
 			).length;
-
 
 			const last12Months = [];
 			for (let i = 0; i < 12; i++) {
@@ -135,12 +126,8 @@ export class ContributionController {
 		}
 	}
 
-	/**
-	 * Pobiera wszystkich użytkowników z zaległymi składkami (dla admina)
-	 */
 	async getOverdueContributions(req: AuthRequest, res: Response) {
 		try {
-
 			if (req.user?.role !== "admin" && req.user?.role !== "board") {
 				return res.status(403).json({ error: "Brak uprawnień" });
 			}
@@ -194,19 +181,14 @@ export class ContributionController {
 		}
 	}
 
-	/**
-	 * Ręczna synchronizacja składek (dla admina)
-	 */
 	async syncContributionsManual(req: AuthRequest, res: Response) {
 		try {
-
 			if (req.user?.role !== "admin" && req.user?.role !== "board") {
 				return res.status(403).json({ error: "Brak uprawnień" });
 			}
 
 			const { syncContributions } =
 				await import("../jobs/syncContributions.js");
-
 
 			syncContributions()
 				.then(() => {
@@ -226,12 +208,8 @@ export class ContributionController {
 		}
 	}
 
-	/**
-	 * Pobiera składki dla wszystkich użytkowników (dla listy członków)
-	 */
 	async getAllContributionsSummary(req: AuthRequest, res: Response) {
 		try {
-
 			if (req.user?.role !== "admin" && req.user?.role !== "board") {
 				return res.status(403).json({ error: "Brak uprawnień" });
 			}
@@ -239,7 +217,6 @@ export class ContributionController {
 			const currentDate = new Date();
 			const currentMonth = currentDate.getMonth() + 1;
 			const currentYear = currentDate.getFullYear();
-
 
 			const contributions = await prisma.contribution.findMany({
 				where: {
@@ -252,7 +229,6 @@ export class ContributionController {
 					amount: true,
 				},
 			});
-
 
 			const contributionMap = new Map();
 			contributions.forEach((c) => {
@@ -276,17 +252,15 @@ export class ContributionController {
 		}
 	}
 
-	/**
-	 * Pobiera wszystkie składki użytkownika
-	 */
 	async getUserContributions(req: AuthRequest, res: Response) {
 		try {
-
 			const paramUserId = req.params.userId;
 			let targetUserId: number | undefined;
 
 			if (paramUserId) {
-				const userIdStr = Array.isArray(paramUserId) ? paramUserId[0] : (paramUserId as string);
+				const userIdStr = Array.isArray(paramUserId)
+					? paramUserId[0]
+					: (paramUserId as string);
 
 				targetUserId = parseInt(userIdStr);
 
@@ -302,7 +276,6 @@ export class ContributionController {
 			if (!targetUserId) {
 				return res.status(401).json({ error: "Nieautoryzowany" });
 			}
-
 
 			if (paramUserId && req.user?.id !== targetUserId) {
 				if (req.user?.role !== "admin" && req.user?.role !== "board") {
@@ -324,9 +297,6 @@ export class ContributionController {
 		}
 	}
 
-	/**
-	 * Dodaje ręcznie składkę (dla admina)
-	 */
 	async addContribution(req: AuthRequest, res: Response) {
 		try {
 			if (req.user?.role !== "admin" && req.user?.role !== "board") {
@@ -339,11 +309,10 @@ export class ContributionController {
 				return res.status(400).json({ error: "Brak wymaganych pól" });
 			}
 
-
 			const userIdStr = Array.isArray(userId) ? userId[0] : userId;
 
 			const user = await prisma.user.findUnique({
-				where: { id: parseInt(userIdStr) }, 
+				where: { id: parseInt(userIdStr) },
 			});
 
 			if (!user) {
@@ -352,7 +321,7 @@ export class ContributionController {
 
 			const existing = await prisma.contribution.findFirst({
 				where: {
-					userId: parseInt(userIdStr), 
+					userId: parseInt(userIdStr),
 					month,
 					year,
 				},
@@ -366,7 +335,7 @@ export class ContributionController {
 
 			const contribution = await prisma.contribution.create({
 				data: {
-					userId: parseInt(userIdStr), 
+					userId: parseInt(userIdStr),
 					amount,
 					month,
 					year,
@@ -376,7 +345,7 @@ export class ContributionController {
 			});
 
 			await prisma.user.update({
-				where: { id: parseInt(userIdStr) }, 
+				where: { id: parseInt(userIdStr) },
 				data: {
 					contributionStatus: "PAID",
 					lastContributionPaidAt: paidAt ? new Date(paidAt) : new Date(),
@@ -393,9 +362,6 @@ export class ContributionController {
 		}
 	}
 
-	/**
-	 * Aktualizuje składkę (dla admina)
-	 */
 	async updateContribution(req: AuthRequest, res: Response) {
 		try {
 			if (req.user?.role !== "admin" && req.user?.role !== "board") {
@@ -434,9 +400,6 @@ export class ContributionController {
 		}
 	}
 
-	/**
-	 * Usuwa składkę (dla admina)
-	 */
 	async deleteContribution(req: AuthRequest, res: Response) {
 		try {
 			if (req.user?.role !== "admin" && req.user?.role !== "board") {
@@ -457,15 +420,10 @@ export class ContributionController {
 		}
 	}
 
-	/**
-	 * Pobiera historię składek użytkownika z bazy SM
-	 * GET /api/contributions/history/:userId
-	 */
 	async getContributionHistory(req: AuthRequest, res: Response) {
 		try {
 			let userId = req.params.userId;
 			const currentUserId = req.user?.id;
-
 
 			if (userId === "me") {
 				if (!currentUserId) {
@@ -478,7 +436,6 @@ export class ContributionController {
 				return res.status(400).json({ error: "Brak ID użytkownika" });
 			}
 
-
 			const userIdStr = Array.isArray(userId) ? userId[0] : userId;
 			const isAuthorized =
 				req.user?.role === "admin" ||
@@ -487,7 +444,7 @@ export class ContributionController {
 
 			if (!isAuthorized) {
 				return res.status(403).json({
-					error: "Brak uprawnień do przeglądania historii składek"
+					error: "Brak uprawnień do przeglądania historii składek",
 				});
 			}
 
@@ -497,8 +454,8 @@ export class ContributionController {
 					id: true,
 					email: true,
 					first_name: true,
-					last_name: true
-				}
+					last_name: true,
+				},
 			});
 
 			if (!user) {
@@ -507,8 +464,8 @@ export class ContributionController {
 
 			const connection = await mysql.createConnection(CONTRIBUTIONS_DB_CONFIG);
 
-
-			const [rows] = await connection.execute(`
+			const [rows] = await connection.execute(
+				`
                 SELECT 
                     MONTH(payment_date) as month,
                     YEAR(payment_date) as year,
@@ -530,17 +487,20 @@ export class ContributionController {
                 AND YEAR(payment_date) >= YEAR(CURRENT_DATE) - 1
                 ORDER BY payment_date DESC
                 LIMIT 24
-            `, [user.email]);
+            `,
+				[user.email],
+			);
 
 			await connection.end();
 
-
 			const historyData = Array.isArray(rows) ? (rows as HistoryRow[]) : [];
 
-
 			if (historyData.length === 0) {
-				const connection2 = await mysql.createConnection(CONTRIBUTIONS_DB_CONFIG);
-				const [memberRows] = await connection2.execute(`
+				const connection2 = await mysql.createConnection(
+					CONTRIBUTIONS_DB_CONFIG,
+				);
+				const [memberRows] = await connection2.execute(
+					`
                     SELECT 
                         MONTH(pay_from) as month,
                         YEAR(pay_from) as year,
@@ -549,7 +509,9 @@ export class ContributionController {
                         'Aktywacja członkostwa' as description
                     FROM members
                     WHERE email = ?
-                `, [user.email]);
+                `,
+					[user.email],
+				);
 				await connection2.end();
 
 				const memberData = Array.isArray(memberRows) ? memberRows : [];
@@ -559,7 +521,7 @@ export class ContributionController {
 					total: memberData.length,
 					userId: user.id,
 					userEmail: user.email,
-					userName: `${user.first_name} ${user.last_name}`
+					userName: `${user.first_name} ${user.last_name}`,
 				});
 			}
 
@@ -568,26 +530,20 @@ export class ContributionController {
 				total: historyData.length,
 				userId: user.id,
 				userEmail: user.email,
-				userName: `${user.first_name} ${user.last_name}`
+				userName: `${user.first_name} ${user.last_name}`,
 			});
-
 		} catch (error) {
 			logger.error("❌ Błąd pobierania historii składek:", error);
 			return res.status(500).json({
-				error: "Nie udało się pobrać historii składek"
+				error: "Nie udało się pobrać historii składek",
 			});
 		}
 	}
 
-	/**
-	 * Pobiera aktualny stan składki użytkownika z bazy SM
-	 * GET /api/contributions/current/:userId
-	 */
 	async getCurrentContribution(req: AuthRequest, res: Response) {
 		try {
 			let userId = req.params.userId;
 			const currentUserId = req.user?.id;
-
 
 			if (userId === "me") {
 				if (!currentUserId) {
@@ -600,7 +556,6 @@ export class ContributionController {
 				return res.status(400).json({ error: "Brak ID użytkownika" });
 			}
 
-
 			const userIdStr = Array.isArray(userId) ? userId[0] : userId;
 			const isAuthorized =
 				req.user?.role === "admin" ||
@@ -609,7 +564,7 @@ export class ContributionController {
 
 			if (!isAuthorized) {
 				return res.status(403).json({
-					error: "Brak uprawnień do przeglądania danych składek"
+					error: "Brak uprawnień do przeglądania danych składek",
 				});
 			}
 			const user = await prisma.user.findUnique({
@@ -618,8 +573,8 @@ export class ContributionController {
 					id: true,
 					email: true,
 					first_name: true,
-					last_name: true
-				}
+					last_name: true,
+				},
 			});
 
 			if (!user) {
@@ -632,7 +587,8 @@ export class ContributionController {
 
 			const connection = await mysql.createConnection(CONTRIBUTIONS_DB_CONFIG);
 
-			const [rows] = await connection.execute(`
+			const [rows] = await connection.execute(
+				`
                 SELECT 
                     m.Legitymacja,
                     m.pay_from,
@@ -682,18 +638,22 @@ export class ContributionController {
                     ) as total_paid
                 FROM members m
                 WHERE m.email = ?
-            `, [user.email]);
+            `,
+				[user.email],
+			);
 
 			await connection.end();
 
-
-			const data = Array.isArray(rows) && rows.length > 0 ? (rows[0] as PaymentRow) : null;
-
+			const data =
+				Array.isArray(rows) && rows.length > 0 ? (rows[0] as PaymentRow) : null;
 
 			let overdueMonths = 0;
-			if (data && data.payment_status === 'pending') {
-				const connection2 = await mysql.createConnection(CONTRIBUTIONS_DB_CONFIG);
-				const [overdueRows] = await connection2.execute(`
+			if (data && data.payment_status === "pending") {
+				const connection2 = await mysql.createConnection(
+					CONTRIBUTIONS_DB_CONFIG,
+				);
+				const [overdueRows] = await connection2.execute(
+					`
                     SELECT COUNT(*) as count
                     FROM (
                         SELECT 
@@ -713,10 +673,15 @@ export class ContributionController {
                             AND p.payment_date < DATE_ADD(months.month_start, INTERVAL 1 MONTH)
                             AND p.blacklisted = 0
                     )
-                `, [data.Legitymacja]);
+                `,
+					[data.Legitymacja],
+				);
 				await connection2.end();
 
-				const overdueData = Array.isArray(overdueRows) && overdueRows.length > 0 ? (overdueRows[0] as any) : null;
+				const overdueData =
+					Array.isArray(overdueRows) && overdueRows.length > 0
+						? (overdueRows[0] as any)
+						: null;
 				overdueMonths = overdueData?.count || 0;
 			}
 
@@ -724,7 +689,7 @@ export class ContributionController {
 				userId: user.id,
 				currentMonth: currentMonth,
 				currentYear: currentYear,
-				status: data?.payment_status || 'pending',
+				status: data?.payment_status || "pending",
 				amount: data?.amount || 0,
 				paymentDate: data?.payment_date || null,
 				payFrom: data?.pay_from || null,
@@ -736,11 +701,10 @@ export class ContributionController {
 				memberName: `${user.first_name} ${user.last_name}`,
 				memberEmail: user.email,
 			});
-
 		} catch (error) {
 			logger.error("❌ Błąd pobierania aktualnej składki:", error);
 			return res.status(500).json({
-				error: "Nie udało się pobrać danych składki"
+				error: "Nie udało się pobrać danych składki",
 			});
 		}
 	}

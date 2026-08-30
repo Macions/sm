@@ -1,14 +1,8 @@
-/* ========================================
-   LEAVE.MODULE.CSS
-   ======================================== */
-
-
 .leave {
 	margin: 0 auto;
 	width: 100%;
 	min-height: 100vh;
 }
-
 
 .header {
 	display: flex;
@@ -71,7 +65,6 @@
 	box-shadow: 0 6px 20px rgb(124 58 237 / 35%);
 }
 
-
 .statuses {
 	display: flex;
 	flex-wrap: wrap;
@@ -129,7 +122,6 @@
 	background: rgb(255 255 255 / 20%);
 	color: white;
 }
-
 
 .filters {
 	display: flex;
@@ -233,7 +225,6 @@
 	background: #e2e8f0;
 	color: #0f172a;
 }
-
 
 .leaveCard {
 	background: white;
@@ -548,7 +539,6 @@
 	background: #fee2e2;
 	color: #dc2626;
 }
-
 
 .modalOverlay {
 	position: fixed;
@@ -920,7 +910,6 @@
 	box-shadow: 0 6px 20px rgb(124 58 237 / 35%);
 }
 
-
 .emptyState {
 	text-align: center;
 	padding: 64px 24px;
@@ -968,13 +957,11 @@
 	box-shadow: 0 6px 20px rgb(124 58 237 / 35%);
 }
 
-
 .leavesGrid {
 	display: grid;
 	grid-template-columns: 1fr;
 	gap: 20px;
 }
-
 
 @keyframes fadeIn {
 	from {
@@ -997,7 +984,6 @@
 		transform: translateY(0);
 	}
 }
-
 
 @media (width <=768px) {
 	.leave {
@@ -1126,7 +1112,6 @@
 	border: 1px solid #fecaca;
 }
 
-
 .leaveCard__scope {
 	display: flex;
 	gap: 8px;
@@ -1165,7 +1150,6 @@
 	font-style: italic;
 	margin: 8px 0 12px;
 }
-
 
 .calendar {
 	background: white;
@@ -1277,7 +1261,6 @@
 	color: #94a3b8;
 	text-align: center;
 }
-
 
 .header__right {
 	display: flex;
@@ -1399,7 +1382,6 @@
 	margin-top: 4px;
 }
 
-
 .modal__teams {
 	display: grid;
 	grid-template-columns: 1fr 1fr;
@@ -1431,7 +1413,6 @@
 	cursor: pointer;
 }
 
-
 @media (width <=768px) {
 	.header__notifDropdown {
 		width: 300px;
@@ -1451,7 +1432,6 @@
 		font-size: 9px;
 	}
 }
-
 
 @media (width <=768px) {
 	.filters__viewToggle {
@@ -1503,7 +1483,6 @@
 		padding: 1px 2px;
 	}
 }
-
 
 .filters__group {
 	display: flex;
@@ -1594,7 +1573,6 @@
 	}
 }
 
-
 .modal__validation {
 	margin-top: 8px;
 	margin-bottom: 12px;
@@ -1621,8 +1599,6 @@
 	font-size: 13px;
 }
 
-
-
 .loading {
 	display: flex;
 	justify-content: center;
@@ -1635,7 +1611,7 @@
 	width: 40px;
 	height: 40px;
 	border: 3px solid #e5e7eb;
-	border-top-color: #4A6FE8;
+	border-top-color: #4a6fe8;
 	border-radius: 50%;
 	animation: spin 0.8s linear infinite;
 }

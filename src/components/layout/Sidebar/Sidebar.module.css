@@ -1,14 +1,11 @@
-/* ==========================================================================
-   Sidebar - Siła Młodych
-   Motyw: fioletowy gradient, jasne ikony, aktywny stan
-   ========================================================================== */
-
 .sidebar {
 	width: 300px;
 	flex-shrink: 0;
-	background: linear-gradient(180deg,
-			var(--purple-800, #3b2196) 0%,
-			var(--purple-900, #2e1a6b) 100%);
+	background: linear-gradient(
+		180deg,
+		var(--purple-800, #3b2196) 0%,
+		var(--purple-900, #2e1a6b) 100%
+	);
 	color: #fff;
 	padding: 32px 24px;
 	display: flex !important;
@@ -26,7 +23,6 @@
 	width: 100px;
 	padding: 32px 16px;
 }
-
 
 .logo {
 	display: flex;
@@ -75,7 +71,6 @@
 	max-width: 0;
 	margin: 0;
 }
-
 
 .nav {
 	display: flex;
@@ -168,7 +163,6 @@
 	margin: 0;
 }
 
-
 .footer {
 	margin-top: auto;
 	padding-top: 28px;
@@ -197,7 +191,6 @@
 	margin: 0;
 }
 
-
 .logout {
 	margin-top: auto;
 	padding-top: 16px;
@@ -211,11 +204,6 @@
 	border: 1px solid white;
 	border-radius: 15px;
 }
-
-/* ============================================================
-   RESPONSYWNOŚĆ (w tym dla sidebaru)
-   ============================================================ */
-
 
 @media (width <=1200px) {
 	.sidebar {
@@ -254,19 +242,17 @@
 	}
 }
 
-/* ============================================================
-   MOBILNE MENU (WYSYWANE) - widoczne tylko na <= 768px
-   ============================================================ */
-
 .mobileMenu {
 	position: fixed;
 	top: 0;
 	left: 0;
 	width: 280px;
 	height: 100vh;
-	background: linear-gradient(180deg,
-			var(--purple-800, #3b2196) 0%,
-			var(--purple-900, #2e1a6b) 100%);
+	background: linear-gradient(
+		180deg,
+		var(--purple-800, #3b2196) 0%,
+		var(--purple-900, #2e1a6b) 100%
+	);
 	color: #fff;
 	z-index: 999;
 	transform: translateX(-100%);
@@ -281,7 +267,6 @@
 .mobileMenuOpen {
 	transform: translateX(0);
 }
-
 
 .mobileMenuHeader {
 	display: flex;
@@ -319,7 +304,6 @@
 	color: #fff;
 }
 
-
 .mobileNavWrapper {
 	flex: 1;
 	overflow-y: auto;
@@ -342,7 +326,6 @@
 .mobileNavWrapper::-webkit-scrollbar-track {
 	background: transparent;
 }
-
 
 .mobileNav {
 	display: flex;
@@ -385,7 +368,6 @@
 	font-weight: 500;
 }
 
-
 .mobileLogout {
 	border-top: 1px solid rgba(255, 255, 255, 0.1);
 	padding-top: 16px;
@@ -402,7 +384,6 @@
 	background: rgba(255, 100, 100, 0.1);
 	color: #ff6b6b;
 }
-
 
 .mobileMenuClose {
 	display: flex;
@@ -432,7 +413,6 @@
 	background: rgba(255, 255, 255, 0.15);
 }
 
-
 .overlay {
 	position: fixed;
 	top: 0;
@@ -454,11 +434,6 @@
 	}
 }
 
-/* ============================================================
-   RESPONSYWNOŚĆ – UKRYJ SIDEBAR NA MOBILNYCH
-   ============================================================ */
-
-
 @media (max-width: 768px) {
 	.sidebar {
 		display: none !important;
@@ -468,7 +443,6 @@
 		display: flex !important;
 	}
 }
-
 
 @media (min-width: 769px) {
 	.sidebar {

@@ -12,9 +12,9 @@ export interface AuthRequest extends Request {
 		id: number;
 		email: string | null;
 		role: string;
-		isLeader?: boolean; // <-- DODAJ
+		isLeader?: boolean;
 		pillarName?: string | null;
-		leaderPillarNames?: string[]; // <-- DODAJ (opcjonalnie)
+		leaderPillarNames?: string[];
 	};
 }
 
@@ -64,7 +64,6 @@ export const authMiddleware = async (
 	try {
 		const decoded = jwt.verify(token, JWT_SECRET) as any;
 
-		// Pobierz użytkownika z bazy wraz z informacją o byciu liderem
 		const user = await prisma.user.findUnique({
 			where: { id: decoded.id },
 			include: {
@@ -81,20 +80,16 @@ export const authMiddleware = async (
 			return res.status(401).json({ error: "Użytkownik nie znaleziony" });
 		}
 
-		// Sprawdź czy użytkownik jest liderem jakiegokolwiek zespołu
 		const isLeader = user.team_members.length > 0;
 
-		// Znajdź nazwy filarów których użytkownik jest liderem
 		const leaderPillarNames = user.team_members
 			.filter((tm: any) => tm.team?.name?.includes("Filar"))
 			.map((tm: any) => tm.team?.name?.replace("Filar ", ""))
 			.filter(Boolean);
 
-		// Weź pierwszy filar jako główny (dla kompatybilności z istniejącym kodem)
 		const pillarName =
 			leaderPillarNames.length > 0 ? leaderPillarNames[0] : null;
 
-		// Mapowanie roli
 		const roleMap: Record<number, string> = {
 			1: "admin",
 			2: "board",
@@ -106,9 +101,9 @@ export const authMiddleware = async (
 			id: user.id,
 			email: user.email,
 			role: roleMap[user.role_id || 4] || "member",
-			isLeader: isLeader, // <-- KLUCZOWE!
-			pillarName: pillarName, // <-- DODAJ
-			leaderPillarNames: leaderPillarNames, // <-- DODAJ
+			isLeader: isLeader,
+			pillarName: pillarName,
+			leaderPillarNames: leaderPillarNames,
 		};
 
 		logger.debug(

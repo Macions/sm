@@ -7,15 +7,16 @@
 html,
 body {
 	height: 100%;
-
 }
 
 .loginContainer {
 	height: 100vh;
 	width: 100vw;
-	background: linear-gradient(to bottom right,
-			rgb(69 22 156 / 40.6%) 0%,
-			rgb(87 29 119 / 40.6%) 100%);
+	background: linear-gradient(
+		to bottom right,
+		rgb(69 22 156 / 40.6%) 0%,
+		rgb(87 29 119 / 40.6%) 100%
+	);
 	display: flex;
 	align-items: center;
 	justify-content: center;
@@ -278,7 +279,6 @@ body {
 }
 
 @media (width <=768px) {
-
 	html,
 	body {
 		overflow: auto;
@@ -476,7 +476,7 @@ body {
 	width: 100% !important;
 }
 
-.googleButtonWrapper>div {
+.googleButtonWrapper > div {
 	width: 100% !important;
 }
 
@@ -484,8 +484,6 @@ body {
 	width: 100% !important;
 	max-width: 300px;
 }
-
-
 
 .calendarScopeWrapper {
 	margin-top: 12px;
@@ -530,8 +528,6 @@ body {
 	text-align: center;
 }
 
-
-
 .googleBtn {
 	display: flex;
 	align-items: center;
@@ -570,10 +566,6 @@ body {
 	flex-shrink: 0;
 }
 
-/* ============================================
-   HINT DLA DEVELOPERA
-   ============================================ */
-
 .devHint {
 	margin-top: 12px;
 	padding: 8px 12px;
@@ -594,10 +586,6 @@ body {
 	opacity: 1;
 }
 
-/* ============================================
-   PRZYCISK ZAPOMNIAŁEŚ HASŁA
-   ============================================ */
-
 .formOptions {
 	display: flex;
 	justify-content: flex-end;
@@ -612,6 +600,6 @@ body {
 }
 
 .forgot:hover {
-	color: var(--primary, #6C3B6C);
+	color: var(--primary, #6c3b6c);
 	text-decoration: underline;
 }

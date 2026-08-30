@@ -922,10 +922,6 @@
 	margin: 4px 0 0 0;
 }
 
-/* ============================================================
-   USER SEARCH - WYSZUKIWANIE UŻYTKOWNIKÓW
-   ============================================================ */
-
 .userSearchWrapper {
 	position: relative;
 	width: 100%;
@@ -1085,10 +1081,6 @@
 .feedbackDownloadBtn:active {
 	transform: scale(0.97);
 }
-
-/* ============================================================
-   COMMENTS - KOMENTARZE
-   ============================================================ */
 
 .commentsSection {
 	width: 100% !important;
@@ -1264,10 +1256,6 @@
 	}
 }
 
-/* ============================================================
-   STYLE DLA INPUT FILE W TASKDETAILMODAL
-   ============================================================ */
-
 .fileInputWrapper {
 	display: flex;
 	align-items: center;
@@ -1333,10 +1321,6 @@
 	background: #fef2f2;
 }
 
-/* ============================================================
-   STYLE DLA PRZYCISKU POBIERANIA ZAŁĄCZNIKA
-   ============================================================ */
-
 .feedbackFile {
 	display: flex;
 	align-items: center;
@@ -1379,10 +1363,6 @@
 .feedbackDownloadBtn:active {
 	transform: scale(0.97);
 }
-
-/* ============================================================
-   STYLE DLA OCENY ZADANIA W DETAIL MODAL
-   ============================================================ */
 
 .ratingDisplay {
 	display: flex;
@@ -1655,10 +1635,6 @@
 	transition: transform 0.2s;
 }
 
-/* ============================================
-   ASSIGNEES - WIDOK SZCZEGÓŁÓW
-   ============================================ */
-
 .detailAssigneesWrapper {
 	display: flex;
 	flex-direction: column;
@@ -1763,10 +1739,6 @@
 	background: #e8f5e9;
 	color: #2e7d32;
 }
-
-/* ============================================
-   ARCHIWIZACJA
-   ============================================ */
 
 .archivedSection {
 	margin-top: 2rem;
@@ -1882,7 +1854,6 @@
 	color: var(--text-secondary, #6b7280);
 }
 
-/* Przycisk przełączania archiwum */
 .archivedToggleBtn {
 	padding: 0.5rem 1rem;
 	border-radius: 6px;
@@ -1909,11 +1880,6 @@
 	background: #2563eb;
 }
 
-/* ============================================
-   ZARCHIWIZOWANE ZADANIA
-   ============================================ */
-
-/* Badge "Zarchiwizowane" */
 .archivedBadge {
 	font-size: 0.6rem;
 	font-weight: 600;
@@ -1929,7 +1895,6 @@
 	line-height: 1.5;
 }
 
-/* Karta zarchiwizowanego zadania - delikatnie przyciemniona */
 .taskCardArchived {
 	opacity: 0.85;
 	background: var(--bg-secondary, #f9fafb);
@@ -1942,7 +1907,6 @@
 	border-color: #3b82f6;
 }
 
-/* Sekcja archiwum */
 .archivedSection {
 	margin-top: 0;
 }
@@ -1960,7 +1924,6 @@
 	border: 1px dashed var(--border-color, #d1d5db);
 }
 
-/* Przycisk przełączania archiwum */
 .archivedToggleBtn {
 	padding: 0.5rem 1rem;
 	border-radius: 6px;
