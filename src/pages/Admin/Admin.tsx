@@ -3125,7 +3125,6 @@ function AttendanceRanking() {
 				{renderSection("Najniższa frekwencja", data.bottomFive)}
 			</div>
 
-			{}
 			{data.noDataUsers && data.noDataUsers.length > 0 && (
 				<div className={styles.attendanceSection} style={{ marginTop: "16px" }}>
 					<h3 className={styles.attendanceSection__title}>
@@ -3152,7 +3151,6 @@ function AttendanceRanking() {
 				</button>
 			</div>
 
-			{}
 			{showAllModal && (
 				<div
 					className={styles.modalOverlay}
@@ -3438,7 +3436,6 @@ export default function Admin({ title }: { title?: string }) {
 
 	return (
 		<>
-			{}
 			<div className={styles.tabsNav}>
 				<div className={styles.tabsNav__list}>
 					<button
@@ -3479,7 +3476,6 @@ export default function Admin({ title }: { title?: string }) {
 				</div>
 			</div>
 
-			{}
 			<div className={styles.admin}>
 				<div className={styles.header}>
 					<div className={styles.header__left}>
@@ -3496,7 +3492,6 @@ export default function Admin({ title }: { title?: string }) {
 					<RevenueChart year={2026} title="Przychody i wydatki" />
 				</div>
 
-				{}
 				<div ref={rolesRef}>
 					<RolesManagement
 						roles={roles}

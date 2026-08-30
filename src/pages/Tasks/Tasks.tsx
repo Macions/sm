@@ -2815,7 +2815,6 @@ export default function Tasks() {
 					</div>
 				) : (
 					<>
-						{}
 						{(() => {
 							const myTasks = filteredTasks.filter(
 								(task) =>
@@ -2854,7 +2853,6 @@ export default function Tasks() {
 							return null;
 						})()}
 
-						{}
 						{(() => {
 							const otherTasks = filteredTasks.filter(
 								(task) =>

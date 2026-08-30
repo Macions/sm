@@ -172,7 +172,6 @@ const Login: React.FC = () => {
 
 						{error && <div className={styles.errorMessage}>{error}</div>}
 
-						{}
 						{showEmailForm && (
 							<form onSubmit={handleSubmit}>
 								<div className={styles.inputGroup}>
@@ -213,7 +212,6 @@ const Login: React.FC = () => {
 							</form>
 						)}
 
-						{}
 						<button
 							onClick={() => loginWithCalendar()}
 							className={styles.googleBtn}
