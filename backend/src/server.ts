@@ -11,7 +11,7 @@ import memberRoutes from "./routes/member.routes";
 import contributionRoutes from "./routes/contribution.routes";
 import calendarRoutes from "./routes/calendar.routes";
 import { syncContributions } from "./jobs/syncContributions";
-import cookieParser from 'cookie-parser';
+import cookieParser from "cookie-parser";
 import { syncAttendance } from "./jobs/syncAttendance";
 import cron from "node-cron";
 import dashboardRoutes from "./routes/dashboard.routes";
@@ -26,21 +26,21 @@ import { syncMembers } from "./jobs/syncMembers";
 import dotenv from "dotenv";
 dotenv.config();
 
-updateLeaveStatus();
+// updateLeaveStatus();
 
-cron.schedule("0 7,14,21 * * *", async () => {
-	try {
-		await syncAttendance();
-	} catch (error) { }
-});
+// cron.schedule("0 7,14,21 * * *", async () => {
+// 	try {
+// 		await syncAttendance();
+// 	} catch (error) { }
+// });
 
-cron.schedule("1 0 * * *", async () => {
-	await updateLeaveStatus();
-});
-const googleClient = new OAuth2Client(process.env.VITE_GOOGLE_CLIENT_ID);
-cron.schedule("0 3 */2 * *", async () => {
-	await syncMembers();
-});
+// cron.schedule("1 0 * * *", async () => {
+// 	await updateLeaveStatus();
+// });
+// const googleClient = new OAuth2Client(process.env.VITE_GOOGLE_CLIENT_ID);
+// cron.schedule("0 3 */2 * *", async () => {
+// 	await syncMembers();
+// });
 const PUBLIC_ENDPOINTS = [
 	"/api/auth/login",
 	"/api/auth/google",
@@ -125,22 +125,26 @@ app.use(
 	}),
 );
 
-app.use((req, res, next) => {
-	const isHttps = req.headers['x-forwarded-proto'] === 'https';
-	const isLocalhost = req.hostname === 'localhost' || req.hostname === '127.0.0.1';
+// app.use((req, res, next) => {
+// 	const isHttps = req.headers["x-forwarded-proto"] === "https";
+// 	const isLocalhost =
+// 		req.hostname === "localhost" || req.hostname === "127.0.0.1";
 
-	if (!isHttps && !isLocalhost) {
-		const httpsUrl = `https://${req.headers.host}${req.url}`;
-		return res.redirect(301, httpsUrl);
-	}
+// 	if (!isHttps && !isLocalhost) {
+// 		const httpsUrl = `https://${req.headers.host}${req.url}`;
+// 		return res.redirect(301, httpsUrl);
+// 	}
 
-	res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload');
-	res.setHeader('X-Content-Type-Options', 'nosniff');
-	res.setHeader('X-Frame-Options', 'DENY');
-	res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+// 	res.setHeader(
+// 		"Strict-Transport-Security",
+// 		"max-age=31536000; includeSubDomains; preload",
+// 	);
+// 	res.setHeader("X-Content-Type-Options", "nosniff");
+// 	res.setHeader("X-Frame-Options", "DENY");
+// 	res.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
 
-	next();
-});
+// 	next();
+// });
 
 app.use(cookieParser());
 app.use(express.json());
@@ -240,18 +244,18 @@ app.post("/api/auth/google", async (req, res) => {
 		});
 
 		// Ustaw ciasteczka HttpOnly
-		res.cookie('accessToken', token, {
+		res.cookie("accessToken", token, {
 			httpOnly: true,
-			secure: process.env.NODE_ENV === 'production',
-			sameSite: 'strict',
-			maxAge: 15 * 60 * 1000 // 15 minut
+			secure: process.env.NODE_ENV === "production",
+			sameSite: "strict",
+			maxAge: 15 * 60 * 1000, // 15 minut
 		});
 
-		res.cookie('refreshToken', refreshToken, {
+		res.cookie("refreshToken", refreshToken, {
 			httpOnly: true,
-			secure: process.env.NODE_ENV === 'production',
-			sameSite: 'strict',
-			maxAge: 7 * 24 * 60 * 60 * 1000 // 7 dni
+			secure: process.env.NODE_ENV === "production",
+			sameSite: "strict",
+			maxAge: 7 * 24 * 60 * 60 * 1000, // 7 dni
 		});
 
 		res.json({
@@ -551,18 +555,18 @@ app.post("/api/auth/google-token", async (req: any, res: any) => {
 			console.error("❌ [GOOGLE-TOKEN] Błąd zapisu logu:", logError);
 		}
 
-		res.cookie('accessToken', token, {
+		res.cookie("accessToken", token, {
 			httpOnly: true,
-			secure: process.env.NODE_ENV === 'production',
-			sameSite: 'strict',
-			maxAge: 15 * 60 * 1000
+			secure: process.env.NODE_ENV === "production",
+			sameSite: "strict",
+			maxAge: 15 * 60 * 1000,
 		});
 
-		res.cookie('refreshToken', refreshToken, {
+		res.cookie("refreshToken", refreshToken, {
 			httpOnly: true,
-			secure: process.env.NODE_ENV === 'production',
-			sameSite: 'strict',
-			maxAge: 7 * 24 * 60 * 60 * 1000
+			secure: process.env.NODE_ENV === "production",
+			sameSite: "strict",
+			maxAge: 7 * 24 * 60 * 60 * 1000,
 		});
 
 		res.json({
@@ -774,18 +778,18 @@ app.post("/api/auth/login", async (req, res) => {
 			expiresIn: "7d",
 		});
 
-		res.cookie('accessToken', token, {
+		res.cookie("accessToken", token, {
 			httpOnly: true,
-			secure: process.env.NODE_ENV === 'production',
-			sameSite: 'strict',
-			maxAge: 15 * 60 * 1000
+			secure: process.env.NODE_ENV === "production",
+			sameSite: "strict",
+			maxAge: 15 * 60 * 1000,
 		});
 
-		res.cookie('refreshToken', refreshToken, {
+		res.cookie("refreshToken", refreshToken, {
 			httpOnly: true,
-			secure: process.env.NODE_ENV === 'production',
-			sameSite: 'strict',
-			maxAge: 7 * 24 * 60 * 60 * 1000 // 7 dni
+			secure: process.env.NODE_ENV === "production",
+			sameSite: "strict",
+			maxAge: 7 * 24 * 60 * 60 * 1000, // 7 dni
 		});
 
 		res.json({
@@ -968,7 +972,7 @@ app.post("/api/ideas", authMiddleware, async (req: any, res) => {
 					vote_type: "up",
 				},
 			});
-		} catch (voteError) { }
+		} catch (voteError) {}
 
 		const voteCounts = await getVoteCounts(idea.id);
 
@@ -1510,7 +1514,7 @@ app.get("/api/dashboard/stats", authMiddleware, async (req: any, res) => {
 					) {
 						attendance = `${Number(user.attendance_percentage).toFixed(1)}%`;
 					}
-				} catch (fallbackError) { }
+				} catch (fallbackError) {}
 			}
 		}
 
@@ -2691,7 +2695,7 @@ app.get("/api/applications", authMiddleware, async (req: any, res) => {
 				userId: app.user_id.toString(),
 				userName: app.user
 					? `${app.user.first_name || ""} ${app.user.last_name || ""}`.trim() ||
-					"Nieznany"
+						"Nieznany"
 					: "Nieznany",
 				userEmail: app.user?.email || "",
 				message: app.message || "",
@@ -2802,7 +2806,7 @@ app.get(
 					userId: app.user_id.toString(),
 					userName: app.user
 						? `${app.user.first_name || ""} ${app.user.last_name || ""}`.trim() ||
-						"Nieznany"
+							"Nieznany"
 						: "Nieznany",
 					userEmail: app.user?.email || "",
 					message: app.message || "",
@@ -3978,14 +3982,14 @@ app.put("/api/leaves/:id", authMiddleware, async (req: any, res) => {
 					: existingLeave.attachments,
 				status: status || existingLeave.status,
 				...(status === "approved" ||
-					status === "rejected" ||
-					status === "cancelled"
+				status === "rejected" ||
+				status === "cancelled"
 					? {
-						approved_by:
-							`${currentUser?.first_name || ""} ${currentUser?.last_name || ""}`.trim() ||
-							"Nieznany",
-						approved_at: new Date(),
-					}
+							approved_by:
+								`${currentUser?.first_name || ""} ${currentUser?.last_name || ""}`.trim() ||
+								"Nieznany",
+							approved_at: new Date(),
+						}
 					: {}),
 			},
 			include: { user: true },
@@ -5047,7 +5051,7 @@ app.post("/api/onboarding/save", authMiddleware, async (req: any, res) => {
 					},
 				});
 			}
-		} catch (notificationError) { }
+		} catch (notificationError) {}
 
 		res.status(200).json({
 			success: true,
@@ -6493,12 +6497,12 @@ app.get(
 					is_active: true,
 					...(search
 						? {
-							OR: [
-								{ first_name: { contains: search as string } },
-								{ last_name: { contains: search as string } },
-								{ email: { contains: search as string } },
-							],
-						}
+								OR: [
+									{ first_name: { contains: search as string } },
+									{ last_name: { contains: search as string } },
+									{ email: { contains: search as string } },
+								],
+							}
 						: {}),
 				},
 				select: {
@@ -6572,7 +6576,7 @@ app.get(
 							) {
 								attendance = Number(result[0].attendance_percentage);
 							}
-						} catch (dbError) { }
+						} catch (dbError) {}
 					}
 
 					const teams = user.team_members
@@ -6984,123 +6988,123 @@ app.get("/api/admin/logs", authMiddleware, async (req: any, res) => {
 		res.status(500).json({ error: "Nie udało się pobrać logów" });
 	}
 });
-cron.schedule("0 1,17 * * *", async () => {
-	try {
-		await syncContributions();
-	} catch (error) { }
-});
+// cron.schedule("0 1,17 * * *", async () => {
+// 	try {
+// 		await syncContributions();
+// 	} catch (error) { }
+// });
 
-setTimeout(async () => {
-	try {
-		await syncContributions();
-	} catch (error) { }
-}, 15000);
-setTimeout(async () => {
-	try {
-		await syncAttendance();
-	} catch (error) { }
-}, 10000);
-setTimeout(async () => {
-	try {
-		await syncMembers();
-	} catch (error) { }
-}, 5000);
+// setTimeout(async () => {
+// 	try {
+// 		await syncContributions();
+// 	} catch (error) { }
+// }, 15000);
+// setTimeout(async () => {
+// 	try {
+// 		await syncAttendance();
+// 	} catch (error) { }
+// }, 10000);
+// setTimeout(async () => {
+// 	try {
+// 		await syncMembers();
+// 	} catch (error) { }
+// }, 5000);
 
-app.get(
-	"/api/admin/onboarding-contacts",
-	authMiddleware,
-	async (req: any, res: any) => {
-		try {
-			const userRole = req.user?.role;
+// app.get(
+// 	"/api/admin/onboarding-contacts",
+// 	authMiddleware,
+// 	async (req: any, res: any) => {
+// 		try {
+// 			const userRole = req.user?.role;
 
-			if (
-				userRole !== "admin" &&
-				userRole !== "board" &&
-				userRole !== "Zarząd"
-			) {
-				return res.status(403).json({ error: "Brak uprawnień" });
-			}
+// 			if (
+// 				userRole !== "admin" &&
+// 				userRole !== "board" &&
+// 				userRole !== "Zarząd"
+// 			) {
+// 				return res.status(403).json({ error: "Brak uprawnień" });
+// 			}
 
-			const users = await prisma.user.findMany({
-				where: {
-					is_active: true,
-				},
-				select: {
-					id: true,
-					first_name: true,
-					last_name: true,
-					email: true,
-					phone: true,
-					province: true,
-					onboarding_data: {
-						orderBy: { created_at: "desc" },
-						take: 1,
-					},
-				},
-			});
+// 			const users = await prisma.user.findMany({
+// 				where: {
+// 					is_active: true,
+// 				},
+// 				select: {
+// 					id: true,
+// 					first_name: true,
+// 					last_name: true,
+// 					email: true,
+// 					phone: true,
+// 					province: true,
+// 					onboarding_data: {
+// 						orderBy: { created_at: "desc" },
+// 						take: 1,
+// 					},
+// 				},
+// 			});
 
-			const formattedContacts = users
-				.map((user: any) => {
-					const onboarding = user.onboarding_data?.[0] || {};
+// 			const formattedContacts = users
+// 				.map((user: any) => {
+// 					const onboarding = user.onboarding_data?.[0] || {};
 
-					const hasContacts =
-						(onboarding.sala_contacts &&
-							onboarding.sala_contacts !== "[]" &&
-							onboarding.sala_contacts !== '[""]') ||
-						(onboarding.mp_contacts &&
-							onboarding.mp_contacts !== "[]" &&
-							onboarding.mp_contacts !== '[""]') ||
-						(onboarding.institution_contacts &&
-							onboarding.institution_contacts !== "[]" &&
-							onboarding.institution_contacts !== '[""]') ||
-						(onboarding.other_contacts &&
-							onboarding.other_contacts !== "[]" &&
-							onboarding.other_contacts !== '[""]');
+// 					const hasContacts =
+// 						(onboarding.sala_contacts &&
+// 							onboarding.sala_contacts !== "[]" &&
+// 							onboarding.sala_contacts !== '[""]') ||
+// 						(onboarding.mp_contacts &&
+// 							onboarding.mp_contacts !== "[]" &&
+// 							onboarding.mp_contacts !== '[""]') ||
+// 						(onboarding.institution_contacts &&
+// 							onboarding.institution_contacts !== "[]" &&
+// 							onboarding.institution_contacts !== '[""]') ||
+// 						(onboarding.other_contacts &&
+// 							onboarding.other_contacts !== "[]" &&
+// 							onboarding.other_contacts !== '[""]');
 
-					if (!hasContacts) return null;
+// 					if (!hasContacts) return null;
 
-					const parseJSON = (data: any) => {
-						if (!data) return [];
-						try {
-							const parsed = JSON.parse(data);
-							return Array.isArray(parsed) ? parsed : [];
-						} catch (e) {
-							return [];
-						}
-					};
+// 					const parseJSON = (data: any) => {
+// 						if (!data) return [];
+// 						try {
+// 							const parsed = JSON.parse(data);
+// 							return Array.isArray(parsed) ? parsed : [];
+// 						} catch (e) {
+// 							return [];
+// 						}
+// 					};
 
-					return {
-						id: user.id.toString(),
-						userId: user.id.toString(),
-						userName:
-							`${user.first_name || ""} ${user.last_name || ""}`.trim() ||
-							"Nieznany",
-						email: user.email || "",
-						phone: user.phone || "",
-						province: user.province || "",
-						salaContacts: parseJSON(onboarding.sala_contacts),
-						mpContacts: parseJSON(onboarding.mp_contacts),
-						institutionContacts: parseJSON(onboarding.institution_contacts),
-						otherContacts: parseJSON(onboarding.other_contacts),
-						developmentAreas: parseJSON(onboarding.development_areas),
-						skills: parseJSON(onboarding.skills),
-						experience: onboarding.experience || "none",
-						availability: onboarding.availability || "",
-						description: onboarding.description || "",
-					};
-				})
-				.filter(Boolean);
+// 					return {
+// 						id: user.id.toString(),
+// 						userId: user.id.toString(),
+// 						userName:
+// 							`${user.first_name || ""} ${user.last_name || ""}`.trim() ||
+// 							"Nieznany",
+// 						email: user.email || "",
+// 						phone: user.phone || "",
+// 						province: user.province || "",
+// 						salaContacts: parseJSON(onboarding.sala_contacts),
+// 						mpContacts: parseJSON(onboarding.mp_contacts),
+// 						institutionContacts: parseJSON(onboarding.institution_contacts),
+// 						otherContacts: parseJSON(onboarding.other_contacts),
+// 						developmentAreas: parseJSON(onboarding.development_areas),
+// 						skills: parseJSON(onboarding.skills),
+// 						experience: onboarding.experience || "none",
+// 						availability: onboarding.availability || "",
+// 						description: onboarding.description || "",
+// 					};
+// 				})
+// 				.filter(Boolean);
 
-			res.json(formattedContacts);
-		} catch (error) {
-			console.error("❌ Błąd pobierania kontaktów onboardingu:", error);
-			res.status(500).json({
-				error: "Nie udało się pobrać kontaktów",
-				details: error instanceof Error ? error.message : "Unknown error",
-			});
-		}
-	},
-);
+// 			res.json(formattedContacts);
+// 		} catch (error) {
+// 			console.error("❌ Błąd pobierania kontaktów onboardingu:", error);
+// 			res.status(500).json({
+// 				error: "Nie udało się pobrać kontaktów",
+// 				details: error instanceof Error ? error.message : "Unknown error",
+// 			});
+// 		}
+// 	},
+// );
 
 app.post(
 	"/api/notifications/task-created",
@@ -8934,4 +8938,4 @@ app.get(
 );
 
 app.use("/api", revenueRoutes);
-app.listen(port, () => { });
+app.listen(port, () => {});

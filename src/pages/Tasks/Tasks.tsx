@@ -1377,6 +1377,10 @@ function TaskModal({
 				isRecurring: false,
 				recurrencePattern: "weekly",
 				recurrenceEndDate: "",
+				pillar:
+					currentUser.isPillarCoordinator || currentUser.isLeader
+						? currentUser.pillarName || ""
+						: "",
 			});
 			setSelectedUsers([]);
 		}
@@ -1560,7 +1564,6 @@ function TaskModal({
 								</select>
 							</div>
 						</div>
-
 						<div className={styles.modal__field}>
 							<label className={styles.modal__label}>
 								Projekt (opcjonalnie)
@@ -1583,7 +1586,6 @@ function TaskModal({
 								))}
 							</select>
 						</div>
-
 						<div className={styles.modal__field}>
 							<label
 								className={styles.modal__label}
@@ -1607,7 +1609,6 @@ function TaskModal({
 								Wymaga odpowiedzi zwrotnej
 							</label>
 						</div>
-
 						{formData.requiresFeedback && (
 							<div className={styles.modal__field}>
 								<label className={styles.modal__label}>Typ odpowiedzi</label>
@@ -1630,22 +1631,52 @@ function TaskModal({
 						)}
 						<div className={styles.modal__field}>
 							<label className={styles.modal__label}>Filar</label>
-							<select
-								className={styles.modal__select}
-								value={formData.pillar || ""}
-								onChange={(e) => {
-									setFormData({ ...formData, pillar: e.target.value });
-								}}
-							>
-								<option value="">Wybierz filar...</option>
-								{pillars.map((p) => (
-									<option key={p} value={p}>
-										{p}
-									</option>
-								))}
-							</select>
+							{currentUser.isPillarCoordinator || currentUser.isLeader ? (
+								// Jeśli jest liderem/koordynatorem filaru, pokaż tylko jego filar (disabled)
+								<>
+									<input
+										type="text"
+										className={`${styles.modal__input} ${styles.modal__inputDisabled}`}
+										value={currentUser.pillarName || "Brak przypisanego filaru"}
+										disabled
+										style={{
+											backgroundColor: "#f3f4f6",
+											color: "#6b7280",
+											cursor: "not-allowed",
+										}}
+									/>
+									{/* Ukryte pole które przechowuje wartość filaru */}
+									<input
+										type="hidden"
+										value={currentUser.pillarName || ""}
+										onChange={(e) => {
+											setFormData({ ...formData, pillar: e.target.value });
+										}}
+									/>
+									<span className={styles.modal__helper}>
+										<i>
+											Możesz tworzyć zadania tylko dla filaru "
+											{currentUser.pillarName}".
+										</i>
+									</span>
+								</>
+							) : (
+								<select
+									className={styles.modal__select}
+									value={formData.pillar || ""}
+									onChange={(e) => {
+										setFormData({ ...formData, pillar: e.target.value });
+									}}
+								>
+									<option value="">Wybierz filar...</option>
+									{pillars.map((p) => (
+										<option key={p} value={p}>
+											{p}
+										</option>
+									))}
+								</select>
+							)}
 						</div>
-
 						<div className={styles.modal__row}>
 							<div className={styles.modal__field}>
 								<label className={styles.modal__label}>Przypisz do</label>
@@ -1691,7 +1722,6 @@ function TaskModal({
 								)}
 							</div>
 						</div>
-
 						{formData.assignedType === "user" && (
 							<div className={styles.modal__field}>
 								<label className={styles.modal__label}>
@@ -1772,7 +1802,6 @@ function TaskModal({
 								)}
 							</div>
 						)}
-
 						{formData.assignedType !== "user" && (
 							<div className={styles.modal__field}>
 								<label className={styles.modal__label}>
@@ -1817,7 +1846,6 @@ function TaskModal({
 								</select>
 							</div>
 						)}
-
 						<div className={styles.modal__field}>
 							<label
 								className={styles.modal__label}
@@ -2113,6 +2141,7 @@ export default function Tasks() {
 					pillarId: userData.pillarId?.toString(),
 					pillarName: userData.pillarName,
 					isLeader: userData.isLeader === true,
+					isPillarCoordinator: userData.isLeader === true,
 				});
 			}
 
@@ -2490,7 +2519,12 @@ export default function Tasks() {
 			const token = localStorage.getItem("accessToken");
 			const isEdit = tasks.some((t) => t.id === task.id);
 			const isNumericId = /^\d+$/.test(task.id);
-
+			if (
+				(currentUser.isLeader || currentUser.isPillarCoordinator) &&
+				currentUser.pillarName
+			) {
+				task.pillar = currentUser.pillarName;
+			}
 			if (
 				task.isRecurring &&
 				task.recurrencePattern &&
