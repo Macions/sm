@@ -7,6 +7,7 @@ declare global {
 import { useState, useEffect, useCallback } from "react";
 import { toast } from "react-hot-toast";
 import { ConfirmDialog } from "../../components/common/ConfirmDialog";
+import { UserGroupManager } from "./UserGroupManager";
 import {
 	Plus,
 	Search,
@@ -111,7 +112,18 @@ type User = {
 	isTeamCoordinator?: boolean;
 	isPillarCoordinator?: boolean;
 };
-
+type UserGroup = {
+	id: string;
+	name: string;
+	description: string | null;
+	is_public: boolean;
+	created_by: string;
+	created_by_name: string;
+	users: { id: string; name: string; email: string }[];
+	user_ids: string[];
+	created_at: string;
+	updated_at: string;
+};
 const STATUS_LABELS: Record<TaskStatus, string> = {
 	todo: "Do zrobienia",
 	in_progress: "W trakcie",
@@ -1303,7 +1315,7 @@ function TaskModal({
 	const [selectedUsers, setSelectedUsers] = useState<
 		{ id: string; name: string }[]
 	>([]);
-
+	const [selectedGroupId, setSelectedGroupId] = useState<string>("");
 	const [formData, setFormData] = useState<Partial<Task>>({
 		title: "",
 		description: "",
@@ -1321,9 +1333,31 @@ function TaskModal({
 		recurrencePattern: "weekly",
 		recurrenceEndDate: "",
 	});
+	const handleGroupsChange = useCallback((updatedGroups: UserGroup[]) => {
+		setGroups(updatedGroups);
+	}, []);
 	const [newTag, setNewTag] = useState("");
 	const [errors, setErrors] = useState<Record<string, string>>({});
-
+	const [groups, setGroups] = useState<UserGroup[]>([]);
+	useEffect(() => {
+		const fetchGroups = async () => {
+			try {
+				const token = localStorage.getItem("accessToken");
+				const response = await fetch("/api/user-groups", {
+					headers: { Authorization: `Bearer ${token}` },
+				});
+				if (response.ok) {
+					const data = await response.json();
+					setGroups(data);
+				}
+			} catch (error) {
+				console.error("Błąd pobierania grup:", error);
+			}
+		};
+		if (isOpen) {
+			fetchGroups();
+		}
+	}, [isOpen]);
 	useEffect(() => {
 		if (task) {
 			setFormData({
@@ -1721,6 +1755,27 @@ function TaskModal({
 									<span className={styles.modal__error}>{errors.dueDate}</span>
 								)}
 							</div>
+						</div>
+						<div className={styles.modal__field}>
+							<label className={styles.modal__label}>
+								Reguła (szybkie przypisanie)
+							</label>
+							<UserGroupManager
+								members={members}
+								selectedGroupId={selectedGroupId}
+								onSelectGroup={(groupId) => {
+									setSelectedGroupId(groupId);
+									const group = groups.find((g) => g.id === groupId);
+									if (group) {
+										const users = group.users.map((u) => ({
+											id: u.id,
+											name: u.name,
+										}));
+										setSelectedUsers(users);
+									}
+								}}
+								onGroupsChange={handleGroupsChange}
+							/>
 						</div>
 						{formData.assignedType === "user" && (
 							<div className={styles.modal__field}>

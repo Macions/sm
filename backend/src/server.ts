@@ -37,7 +37,7 @@ dotenv.config();
 // cron.schedule("1 0 * * *", async () => {
 // 	await updateLeaveStatus();
 // });
-// const googleClient = new OAuth2Client(process.env.VITE_GOOGLE_CLIENT_ID);
+const googleClient = new OAuth2Client(process.env.VITE_GOOGLE_CLIENT_ID);
 // cron.schedule("0 3 */2 * *", async () => {
 // 	await syncMembers();
 // });
@@ -248,18 +248,20 @@ app.post("/api/auth/google", async (req, res) => {
 			httpOnly: true,
 			secure: process.env.NODE_ENV === "production",
 			sameSite: "strict",
-			maxAge: 15 * 60 * 1000, // 15 minut
+			maxAge: 15 * 60 * 1000,
 		});
 
 		res.cookie("refreshToken", refreshToken, {
 			httpOnly: true,
 			secure: process.env.NODE_ENV === "production",
 			sameSite: "strict",
-			maxAge: 7 * 24 * 60 * 60 * 1000, // 7 dni
+			maxAge: 7 * 24 * 60 * 60 * 1000,
 		});
 
 		res.json({
 			success: true,
+			accessToken: token, // <-- DODAJ TĘ LINIĘ
+			refreshToken: refreshToken, // <-- DODAJ TĘ LINIĘ
 			user: {
 				id: user.id,
 				email: user.email,
@@ -568,9 +570,10 @@ app.post("/api/auth/google-token", async (req: any, res: any) => {
 			sameSite: "strict",
 			maxAge: 7 * 24 * 60 * 60 * 1000,
 		});
-
 		res.json({
 			success: true,
+			accessToken: token, // <-- DODAJ TĘ LINIĘ
+			refreshToken: refreshToken, // <-- DODAJ TĘ LINIĘ
 			user: {
 				id: user.id,
 				email: user.email,
@@ -794,6 +797,8 @@ app.post("/api/auth/login", async (req, res) => {
 
 		res.json({
 			success: true,
+			accessToken: token, // <-- DODAJ TĘ LINIĘ
+			refreshToken: refreshToken, // <-- DODAJ TĘ LINIĘ
 			user: {
 				id: user.id,
 				email: user.email,
@@ -8262,7 +8267,67 @@ app.post("/api/members/:id/access", authMiddleware, async (req: any, res) => {
 		res.status(500).json({ error: "Nie udało się dodać dostępu" });
 	}
 });
+app.post("/api/auth/refresh-token", async (req, res) => {
+	try {
+		const { refreshToken } = req.body;
 
+		if (!refreshToken) {
+			return res.status(400).json({ error: "Brak refresh token" });
+		}
+
+		try {
+			const decoded = jwt.verify(refreshToken, JWT_SECRET) as any;
+
+			const user = await prisma.user.findUnique({
+				where: { id: decoded.id },
+			});
+
+			if (!user) {
+				return res.status(401).json({ error: "Użytkownik nie istnieje" });
+			}
+
+			const newAccessToken = jwt.sign(
+				{
+					id: user.id,
+					email: user.email,
+					role: mapRoleId(user.role_id),
+					first_name: user.first_name,
+					last_name: user.last_name,
+				},
+				JWT_SECRET,
+				{ expiresIn: "30m" },
+			);
+
+			const newRefreshToken = jwt.sign({ id: user.id }, JWT_SECRET, {
+				expiresIn: "7d",
+			});
+
+			res.cookie("accessToken", newAccessToken, {
+				httpOnly: true,
+				secure: process.env.NODE_ENV === "production",
+				sameSite: "strict",
+				maxAge: 15 * 60 * 1000,
+			});
+
+			res.cookie("refreshToken", newRefreshToken, {
+				httpOnly: true,
+				secure: process.env.NODE_ENV === "production",
+				sameSite: "strict",
+				maxAge: 7 * 24 * 60 * 60 * 1000,
+			});
+
+			res.json({
+				success: true,
+				accessToken: newAccessToken,
+				refreshToken: newRefreshToken,
+			});
+		} catch (error) {
+			return res.status(401).json({ error: "Nieprawidłowy refresh token" });
+		}
+	} catch (error) {
+		res.status(500).json({ error: "Błąd serwera" });
+	}
+});
 app.delete(
 	"/api/members/:id/access/:accessId",
 	authMiddleware,
@@ -8669,6 +8734,272 @@ app.get("/api/search", authMiddleware, async (req: any, res) => {
 			error: "Nie udało się wykonać wyszukiwania",
 			details: error instanceof Error ? error.message : "Unknown error",
 		});
+	}
+});
+
+app.get("/api/user-groups", authMiddleware, async (req: any, res) => {
+	try {
+		const userId = req.user?.id;
+
+		const groups = await prisma.userGroup.findMany({
+			where: {
+				OR: [{ created_by: parseInt(userId) }, { is_public: true }],
+			},
+			include: {
+				users: {
+					include: {
+						user: {
+							select: {
+								id: true,
+								first_name: true,
+								last_name: true,
+								email: true,
+							},
+						},
+					},
+				},
+				created_by_user: {
+					select: {
+						id: true,
+						first_name: true,
+						last_name: true,
+					},
+				},
+			},
+			orderBy: {
+				created_at: "desc",
+			},
+		});
+
+		const formattedGroups = groups.map((group: any) => ({
+			id: group.id.toString(),
+			name: group.name,
+			description: group.description,
+			is_public: group.is_public,
+			created_by: group.created_by.toString(),
+			created_by_name: group.created_by_user
+				? `${group.created_by_user.first_name} ${group.created_by_user.last_name}`.trim()
+				: "Nieznany",
+			users: group.users.map((gu: any) => ({
+				id: gu.user.id.toString(),
+				name:
+					`${gu.user.first_name || ""} ${gu.user.last_name || ""}`.trim() ||
+					gu.user.email ||
+					"Nieznany",
+				email: gu.user.email,
+			})),
+			user_ids: group.users.map((gu: any) => gu.user_id.toString()),
+			created_at: group.created_at,
+			updated_at: group.updated_at,
+		}));
+
+		res.json(formattedGroups);
+	} catch (error) {
+		console.error("Błąd pobierania grup:", error);
+		res.status(500).json({ error: "Nie udało się pobrać grup" });
+	}
+});
+
+app.post("/api/user-groups", authMiddleware, async (req: any, res) => {
+	try {
+		const userId = req.user?.id;
+		const { name, description, user_ids, is_public } = req.body;
+
+		if (!name || !name.trim()) {
+			return res.status(400).json({ error: "Nazwa grupy jest wymagana" });
+		}
+
+		if (!user_ids || !Array.isArray(user_ids) || user_ids.length === 0) {
+			return res
+				.status(400)
+				.json({ error: "Wybierz przynajmniej jednego użytkownika" });
+		}
+
+		const group = await prisma.userGroup.create({
+			data: {
+				name: name.trim(),
+				description: description || null,
+				is_public: is_public || false,
+				created_by: parseInt(userId),
+				users: {
+					create: user_ids.map((id: string) => ({
+						user_id: parseInt(id),
+					})),
+				},
+			},
+			include: {
+				users: {
+					include: {
+						user: {
+							select: {
+								id: true,
+								first_name: true,
+								last_name: true,
+								email: true,
+							},
+						},
+					},
+				},
+				created_by_user: {
+					select: {
+						id: true,
+						first_name: true,
+						last_name: true,
+					},
+				},
+			},
+		});
+
+		res.status(201).json({
+			id: group.id.toString(),
+			name: group.name,
+			description: group.description,
+			is_public: group.is_public,
+			created_by: group.created_by.toString(),
+			created_by_name: group.created_by_user
+				? `${group.created_by_user.first_name} ${group.created_by_user.last_name}`.trim()
+				: "Nieznany",
+			users: group.users.map((gu: any) => ({
+				id: gu.user.id.toString(),
+				name:
+					`${gu.user.first_name || ""} ${gu.user.last_name || ""}`.trim() ||
+					gu.user.email ||
+					"Nieznany",
+				email: gu.user.email,
+			})),
+			user_ids: group.users.map((gu: any) => gu.user_id.toString()),
+			created_at: group.created_at,
+			updated_at: group.updated_at,
+		});
+	} catch (error) {
+		console.error("Błąd tworzenia grupy:", error);
+		res.status(500).json({ error: "Nie udało się utworzyć grupy" });
+	}
+});
+
+app.put("/api/user-groups/:id", authMiddleware, async (req: any, res) => {
+	try {
+		const userId = req.user?.id;
+		const groupId = parseInt(req.params.id);
+		const { name, description, user_ids, is_public } = req.body;
+
+		const existingGroup = await prisma.userGroup.findUnique({
+			where: { id: groupId },
+		});
+
+		if (!existingGroup) {
+			return res.status(404).json({ error: "Grupa nie istnieje" });
+		}
+
+		if (existingGroup.created_by !== parseInt(userId)) {
+			return res
+				.status(403)
+				.json({ error: "Nie masz uprawnień do edycji tej grupy" });
+		}
+
+		if (!name || !name.trim()) {
+			return res.status(400).json({ error: "Nazwa grupy jest wymagana" });
+		}
+
+		if (!user_ids || !Array.isArray(user_ids) || user_ids.length === 0) {
+			return res
+				.status(400)
+				.json({ error: "Wybierz przynajmniej jednego użytkownika" });
+		}
+
+		await prisma.userGroupUser.deleteMany({
+			where: { group_id: groupId },
+		});
+
+		const updatedGroup = await prisma.userGroup.update({
+			where: { id: groupId },
+			data: {
+				name: name.trim(),
+				description: description || null,
+				is_public: is_public || false,
+				users: {
+					create: user_ids.map((id: string) => ({
+						user_id: parseInt(id),
+					})),
+				},
+			},
+			include: {
+				users: {
+					include: {
+						user: {
+							select: {
+								id: true,
+								first_name: true,
+								last_name: true,
+								email: true,
+							},
+						},
+					},
+				},
+				created_by_user: {
+					select: {
+						id: true,
+						first_name: true,
+						last_name: true,
+					},
+				},
+			},
+		});
+
+		res.json({
+			id: updatedGroup.id.toString(),
+			name: updatedGroup.name,
+			description: updatedGroup.description,
+			is_public: updatedGroup.is_public,
+			created_by: updatedGroup.created_by.toString(),
+			created_by_name: updatedGroup.created_by_user
+				? `${updatedGroup.created_by_user.first_name} ${updatedGroup.created_by_user.last_name}`.trim()
+				: "Nieznany",
+			users: updatedGroup.users.map((gu: any) => ({
+				id: gu.user.id.toString(),
+				name:
+					`${gu.user.first_name || ""} ${gu.user.last_name || ""}`.trim() ||
+					gu.user.email ||
+					"Nieznany",
+				email: gu.user.email,
+			})),
+			user_ids: updatedGroup.users.map((gu: any) => gu.user_id.toString()),
+			created_at: updatedGroup.created_at,
+			updated_at: updatedGroup.updated_at,
+		});
+	} catch (error) {
+		console.error("Błąd aktualizacji grupy:", error);
+		res.status(500).json({ error: "Nie udało się zaktualizować grupy" });
+	}
+});
+
+app.delete("/api/user-groups/:id", authMiddleware, async (req: any, res) => {
+	try {
+		const userId = req.user?.id;
+		const groupId = parseInt(req.params.id);
+
+		const existingGroup = await prisma.userGroup.findUnique({
+			where: { id: groupId },
+		});
+
+		if (!existingGroup) {
+			return res.status(404).json({ error: "Grupa nie istnieje" });
+		}
+
+		if (existingGroup.created_by !== parseInt(userId)) {
+			return res
+				.status(403)
+				.json({ error: "Nie masz uprawnień do usunięcia tej grupy" });
+		}
+
+		await prisma.userGroup.delete({
+			where: { id: groupId },
+		});
+
+		res.json({ success: true, message: "Grupa usunięta" });
+	} catch (error) {
+		console.error("Błąd usuwania grupy:", error);
+		res.status(500).json({ error: "Nie udało się usunąć grupy" });
 	}
 });
 

@@ -33,7 +33,7 @@ const Login: React.FC = () => {
 		return "Fioletowego dnia!";
 	};
 
-	const checkOnboardingStatus = async () => {
+	const checkOnboardingStatus = () => {
 		window.location.href = "/dashboard";
 	};
 
@@ -60,12 +60,21 @@ const Login: React.FC = () => {
 					throw new Error(data.error || "Błąd logowania przez Google");
 				}
 
+				// ZAPISZ TOKENY!
+				if (data.accessToken) {
+					localStorage.setItem("accessToken", data.accessToken);
+				}
+				if (data.refreshToken) {
+					localStorage.setItem("refreshToken", data.refreshToken);
+				}
 				localStorage.setItem("user", JSON.stringify(data.user));
 
-				logger.debug("✅ Dane użytkownika zapisane");
+				logger.debug("✅ Dane użytkownika i tokeny zapisane");
+				logger.debug("🔑 accessToken:", data.accessToken ? "Jest" : "BRAK");
+				logger.debug("🔑 refreshToken:", data.refreshToken ? "Jest" : "BRAK");
 
 				await refetch();
-				await checkOnboardingStatus();
+				checkOnboardingStatus();
 			} catch (error) {
 				logger.error("❌ Błąd logowania:", error);
 				setError(
@@ -114,10 +123,21 @@ const Login: React.FC = () => {
 				throw new Error(data.error || "Błąd logowania");
 			}
 
+			// ZAPISZ TOKENY!
+			if (data.accessToken) {
+				localStorage.setItem("accessToken", data.accessToken);
+			}
+			if (data.refreshToken) {
+				localStorage.setItem("refreshToken", data.refreshToken);
+			}
 			localStorage.setItem("user", JSON.stringify(data.user));
 
+			logger.debug("✅ Dane użytkownika i tokeny zapisane");
+			logger.debug("🔑 accessToken:", data.accessToken ? "Jest" : "BRAK");
+			logger.debug("🔑 refreshToken:", data.refreshToken ? "Jest" : "BRAK");
+
 			await refetch();
-			await checkOnboardingStatus();
+			checkOnboardingStatus();
 		} catch (error) {
 			setError(
 				error instanceof Error

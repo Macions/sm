@@ -63,17 +63,7 @@ const PRIORITY_LABELS: Record<TaskPriority, string> = {
 	urgent: "Krytyczny",
 };
 
-type User = {
-	id: string;
-	name: string;
-	role: string;
-};
-
-const API_URL =
-	import.meta.env.VITE_API_URL ||
-	(window.location.hostname === "panel.silamlodych.pl"
-		? ""
-		: "http://localhost:3000");
+const API_URL = import.meta.env.VITE_API_URL || "";
 
 export default function Calendar() {
 	const [currentDate, setCurrentDate] = useState(new Date());
@@ -82,75 +72,129 @@ export default function Calendar() {
 	const [isModalOpen, setIsModalOpen] = useState(false);
 	const [selectedTask, setSelectedTask] = useState<CalendarTask | null>(null);
 	const [loading, setLoading] = useState(true);
-	const [_isSyncing, _setIsSyncing] = useState(false);
 	const [googleEvents, setGoogleEvents] = useState<any[]>([]);
 	const [isGoogleAuth, setIsGoogleAuth] = useState(false);
-	const [_isGoogleLoading, setIsGoogleLoading] = useState(false);
-	const [_currentUser] = useState<User>({
-		id: "",
-		name: "",
-		role: "member",
-	});
+	const [isGoogleLoading, setIsGoogleLoading] = useState(false);
 
 	const currentYear = currentDate.getFullYear();
 	const currentMonth = currentDate.getMonth();
 
+	// Sprawdź autoryzację Google - NIE WYLOGOWUJE
 	const checkGoogleAuth = async () => {
 		try {
 			const token = localStorage.getItem("accessToken");
+			if (!token) {
+				setIsGoogleAuth(false);
+				return;
+			}
+
 			const res = await fetch(`${API_URL}/api/calendar/status`, {
 				headers: { Authorization: `Bearer ${token}` },
 			});
-			const data = await res.json();
-			setIsGoogleAuth(data.authenticated);
-			if (data.authenticated) {
-				await fetchGoogleEvents();
+
+			// NIE WYLOGOWUJ PRZY 401!
+			if (res.status === 401) {
+				console.log("⚠️ [Google] Brak autoryzacji - kontynuuję bez Google");
+				setIsGoogleAuth(false);
+				return;
+			}
+
+			if (res.ok) {
+				const data = await res.json();
+				setIsGoogleAuth(data.authenticated);
+				if (data.authenticated) {
+					await fetchGoogleEvents();
+				}
 			}
 		} catch (error) {
+			console.log("⚠️ [Google] Błąd sprawdzania autoryzacji:", error);
 			setIsGoogleAuth(false);
 		}
 	};
 
+	// Pobierz wydarzenia z Google - NIE WYLOGOWUJE
 	const fetchGoogleEvents = async () => {
 		if (!isGoogleAuth) return;
+
 		setIsGoogleLoading(true);
 		try {
 			const token = localStorage.getItem("accessToken");
+			if (!token) {
+				setIsGoogleAuth(false);
+				return;
+			}
+
 			const res = await fetch(`${API_URL}/api/calendar/events`, {
 				headers: { Authorization: `Bearer ${token}` },
 			});
+
+			if (res.status === 401) {
+				console.log("⚠️ [Google] 401 - wyłączam Google");
+				setIsGoogleAuth(false);
+				return;
+			}
+
 			if (res.ok) {
 				const data = await res.json();
 				setGoogleEvents(data);
 			}
 		} catch (error) {
+			console.log("⚠️ [Google] Błąd pobierania wydarzeń:", error);
 		} finally {
 			setIsGoogleLoading(false);
 		}
 	};
 
+	// Pobierz zadania systemowe - NIE WYLOGOWUJE
 	const fetchTasks = async () => {
 		try {
 			setLoading(true);
 			const token = localStorage.getItem("accessToken");
+
+			if (!token) {
+				console.warn("⚠️ [Calendar] Brak tokena - pokazuję puste zadania");
+				setTasks([]);
+				setLoading(false);
+				return;
+			}
+
 			const tasksRes = await fetch(`${API_URL}/api/tasks`, {
 				headers: { Authorization: `Bearer ${token}` },
 			});
+
+			if (tasksRes.status === 401) {
+				console.warn("⚠️ [Calendar] 401 - pokazuję puste zadania");
+				setTasks([]);
+				setLoading(false);
+				return;
+			}
+
 			if (tasksRes.ok) {
 				const data = await tasksRes.json();
 				setTasks(data);
+			} else {
+				setTasks([]);
 			}
 		} catch (error) {
-			console.error("Błąd pobierania:", error);
-			toast.error("Nie udało się pobrać zadań");
+			console.error("❌ [Calendar] Błąd:", error);
+			setTasks([]);
 		} finally {
 			setLoading(false);
 		}
 	};
+
 	useEffect(() => {
+		console.log("📅 [Calendar] Montowanie");
 		fetchTasks();
 		checkGoogleAuth();
 	}, []);
+
+	// Odśwież wydarzenia gdy zmienia się autoryzacja
+	useEffect(() => {
+		if (isGoogleAuth) {
+			fetchGoogleEvents();
+		}
+	}, [isGoogleAuth]);
 
 	const goToPreviousMonth = () => {
 		setCurrentDate(new Date(currentYear, currentMonth - 1, 1));
@@ -179,6 +223,7 @@ export default function Calendar() {
 		const date = new Date(currentYear, currentMonth, day);
 		const dateStr = date.toISOString().split("T")[0];
 
+		// Zadania systemowe
 		const taskEvents = tasks
 			.filter((task) => {
 				const taskDate = new Date(task.dueDate);
@@ -190,6 +235,7 @@ export default function Calendar() {
 				type: "task" as const,
 			}));
 
+		// Wydarzenia z Google
 		let googleEventsForDay: any[] = [];
 		if (isGoogleAuth && googleEvents.length > 0) {
 			googleEventsForDay = googleEvents
@@ -264,6 +310,11 @@ export default function Calendar() {
 		const dateStr = date.toISOString().split("T")[0];
 		const events = getEventsForDay(day);
 
+		if (events.length === 0) {
+			toast("Brak wydarzeń na ten dzień");
+			return;
+		}
+
 		if (events.length === 1) {
 			const event = events[0];
 			if (event.source === "google" && event.htmlLink) {
@@ -273,12 +324,10 @@ export default function Calendar() {
 			setSelectedTask(event);
 			setSelectedDate(dateStr);
 			setIsModalOpen(true);
-		} else if (events.length > 1) {
+		} else {
 			setSelectedDate(dateStr);
 			setSelectedTask(null);
 			setIsModalOpen(true);
-		} else {
-			toast("Brak wydarzeń na ten dzień");
 		}
 	};
 
@@ -294,6 +343,30 @@ export default function Calendar() {
 	const closeModal = () => {
 		setIsModalOpen(false);
 		setSelectedTask(null);
+	};
+
+	const handleDownloadFile = async (fileUrl: string, fileName: string) => {
+		try {
+			const token = localStorage.getItem("accessToken");
+			const response = await fetch(fileUrl, {
+				headers: { Authorization: `Bearer ${token}` },
+			});
+			if (response.ok) {
+				const blob = await response.blob();
+				const url = window.URL.createObjectURL(blob);
+				const link = document.createElement("a");
+				link.href = url;
+				link.download = fileName;
+				document.body.appendChild(link);
+				link.click();
+				document.body.removeChild(link);
+				window.URL.revokeObjectURL(url);
+				toast.success("Plik pobrany!");
+			}
+		} catch (error) {
+			console.error("Błąd pobierania:", error);
+			toast.error("Nie udało się pobrać pliku");
+		}
 	};
 
 	const monthNames = [
@@ -313,12 +386,16 @@ export default function Calendar() {
 
 	const dayNames = ["Pon", "Wt", "Śr", "Czw", "Pt", "Sob", "Niedz"];
 
-	if (loading) {
+	if (loading || isGoogleLoading) {
 		return (
 			<div className={styles.calendar}>
 				<div className={styles.loading}>
 					<div className={styles.loadingSpinner}></div>
-					<p>Ładowanie kalendarza...</p>
+					<p>
+						{isGoogleLoading
+							? "Ładowanie wydarzeń z Google..."
+							: "Ładowanie kalendarza..."}
+					</p>
 				</div>
 			</div>
 		);
@@ -330,7 +407,15 @@ export default function Calendar() {
 				<div className={styles.headerLeft}>
 					<h1 className={styles.title}>Kalendarz</h1>
 					<p className={styles.subtitle}>
-						Przeglądaj swoje zadania w kalendarzu
+						{isGoogleAuth
+							? "Zadania systemowe + wydarzenia z Google Calendar"
+							: "Zadania systemowe"}
+						{isGoogleAuth && (
+							<span className={styles.googleConnected}>
+								{" "}
+								✅ Połączono z Google
+							</span>
+						)}
 					</p>
 				</div>
 				<div className={styles.headerRight}>
@@ -377,6 +462,9 @@ export default function Calendar() {
 						const isTodayDate = isToday(day);
 						const isPastDate = isPast(day);
 
+						const hasGoogleEvent = dayEvents.some((e) => e.source === "google");
+						const hasSystemTask = dayEvents.some((e) => e.source === "system");
+
 						return (
 							<div
 								key={day}
@@ -386,7 +474,11 @@ export default function Calendar() {
 								<div className={styles.dayHeader}>
 									<span className={styles.dayNumber}>{day}</span>
 									{dayEvents.length > 0 && (
-										<span className={styles.taskCount}>{dayEvents.length}</span>
+										<span className={styles.taskCount}>
+											{dayEvents.length}
+											{hasGoogleEvent && hasSystemTask && " 📅✅"}
+											{hasGoogleEvent && !hasSystemTask && " 📅"}
+										</span>
 									)}
 								</div>
 
@@ -480,27 +572,32 @@ export default function Calendar() {
 											<Clock size={16} />
 											<span>{formatTime(selectedTask.dueDate)}</span>
 										</div>
-										<div className={styles.metaItem}>
-											<span
-												className={styles.statusBadge}
-												style={{
-													backgroundColor: STATUS_COLORS[selectedTask.status],
-												}}
-											>
-												{STATUS_LABELS[selectedTask.status]}
-											</span>
-										</div>
-										<div className={styles.metaItem}>
-											<span
-												className={styles.priorityBadge}
-												style={{
-													backgroundColor:
-														PRIORITY_COLORS[selectedTask.priority],
-												}}
-											>
-												{PRIORITY_LABELS[selectedTask.priority]}
-											</span>
-										</div>
+										{selectedTask.source !== "google" && (
+											<>
+												<div className={styles.metaItem}>
+													<span
+														className={styles.statusBadge}
+														style={{
+															backgroundColor:
+																STATUS_COLORS[selectedTask.status],
+														}}
+													>
+														{STATUS_LABELS[selectedTask.status]}
+													</span>
+												</div>
+												<div className={styles.metaItem}>
+													<span
+														className={styles.priorityBadge}
+														style={{
+															backgroundColor:
+																PRIORITY_COLORS[selectedTask.priority],
+														}}
+													>
+														{PRIORITY_LABELS[selectedTask.priority]}
+													</span>
+												</div>
+											</>
+										)}
 										{selectedTask.pillar && (
 											<div className={styles.metaItem}>
 												<Tag size={16} />
@@ -524,7 +621,7 @@ export default function Calendar() {
 											)}
 									</div>
 
-									{selectedTask.tags.length > 0 && (
+									{selectedTask.tags && selectedTask.tags.length > 0 && (
 										<div className={styles.tags}>
 											{selectedTask.tags.map((tag) => (
 												<span key={tag} className={styles.tag}>
@@ -552,7 +649,7 @@ export default function Calendar() {
 							) : (
 								<div className={styles.dayTasksList}>
 									<p className={styles.dayTasksTitle}>
-										Zadania na {selectedDate ? formatDate(selectedDate) : ""}
+										Wydarzenia na {selectedDate ? formatDate(selectedDate) : ""}
 									</p>
 									{selectedDate && (
 										<div className={styles.tasksList}>

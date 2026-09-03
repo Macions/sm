@@ -64,6 +64,9 @@ model User {
   roles                     roles?               @relation(fields: [role_id], references: [id], onUpdate: Restrict, map: "users_ibfk_1")
   vacancies                 Vacancy[]
   vacancyApplications       VacancyApplication[]
+  userGroups                UserGroup[]
+  userGroupUsers            UserGroupUser[]
+  googleToken               GoogleToken?
 
   @@index([role_id], map: "idx_users_role_id")
   @@index([status], map: "idx_users_status")
@@ -620,6 +623,7 @@ model Contribution {
   @@index([paidAt])
   @@index([status])
   @@index([month, year])
+  @@map("contributions") // <-- TO MUSI BYĆ!
 }
 
 model MemberAccess {
@@ -722,4 +726,47 @@ enum tasks_priority {
   medium
   high
   urgent
+}
+
+model UserGroup {
+  id          Int      @id @default(autoincrement())
+  name        String
+  description String?
+  is_public   Boolean  @default(false)
+  created_by  Int
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+
+  created_by_user User            @relation(fields: [created_by], references: [id])
+  users           UserGroupUser[]
+
+  @@map("user_groups")
+}
+
+model UserGroupUser {
+  id         Int      @id @default(autoincrement())
+  group_id   Int
+  user_id    Int
+  created_at DateTime @default(now())
+
+  group UserGroup @relation(fields: [group_id], references: [id], onDelete: Cascade)
+  user  User      @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@unique([group_id, user_id])
+  @@map("user_group_users")
+}
+
+model GoogleToken {
+  id            Int       @id @default(autoincrement())
+  user_id       Int       @unique
+  access_token  String    @db.Text
+  refresh_token String?   @db.Text
+  expires_at    DateTime?
+  created_at    DateTime  @default(now())
+  updated_at    DateTime  @updatedAt
+
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([user_id], map: "idx_google_tokens_user_id")
+  @@map("google_tokens")
 }
