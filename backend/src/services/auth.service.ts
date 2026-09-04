@@ -77,7 +77,7 @@ class AuthService {
 	async logout(): Promise<void> {
 		try {
 			logger.debug("🔐 [AuthService] Wylogowywanie...");
-			await api.post("/api/auth/logout").catch(() => { });
+			await api.post("/api/auth/logout").catch(() => {});
 		} catch (error) {
 		} finally {
 			localStorage.removeItem(this.USER_KEY);
@@ -91,7 +91,7 @@ class AuthService {
 
 			const response = await api.post<RefreshTokenResponse>(
 				"/api/auth/refresh",
-				{}
+				{},
 			);
 			const newToken = response.data.accessToken;
 

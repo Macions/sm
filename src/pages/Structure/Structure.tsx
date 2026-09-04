@@ -11,6 +11,8 @@ import {
 	Building2,
 	Search,
 	X,
+	List,
+	LayoutGrid,
 } from "lucide-react";
 import styles from "./Structure.module.css";
 import { logger } from "@/utils/logger";
@@ -54,6 +56,20 @@ const countAllPeople = (node: Node): number => {
 		count += countAllPeople(child);
 	}
 	return count;
+};
+
+const collectAllPeople = (node: Node): Person[] => {
+	let people: Person[] = [];
+
+	if (node.people && node.people.length > 0) {
+		people = [...people, ...node.people];
+	}
+
+	for (const child of node.children) {
+		people = [...people, ...collectAllPeople(child)];
+	}
+
+	return people;
 };
 
 interface TreeNodeProps {
@@ -132,7 +148,6 @@ function TreeNode({
 				p.province?.toLowerCase().includes(search),
 		);
 	}, [searchTerm, node]);
-
 
 	useEffect(() => {
 		if (searchTerm && (isHighlighted || isPersonHighlighted)) {
@@ -289,11 +304,242 @@ function TreeNode({
 		</div>
 	);
 }
+function TextView({ structureData }: { structureData: Node }) {
+	const allPeople = useMemo(
+		() => collectAllPeople(structureData),
+		[structureData],
+	);
+
+	// Grupujemy osoby po ID, żeby zebrać wszystkie ich role z kontekstem
+	const peopleWithAllRoles = useMemo(() => {
+		const peopleMap = new Map<
+			string,
+			Person & { allRoles: string[]; roleContexts: string[] }
+		>();
+
+		const collectWithRoles = (node: Node) => {
+			if (node.people) {
+				node.people.forEach((person) => {
+					let contextualRole = person.role;
+
+					// SPECJALNE PRZYPADKI - ważniejsze od reszty
+					// Wiceprezesi - bez "Zarząd"
+					if (person.role === "Wiceprezes ds. dokumentów i składek") {
+						contextualRole = "Wiceprezes ds. dokumentów i składek";
+					} else if (person.role === "Wiceprezes ds. rekrutacji") {
+						contextualRole = "Wiceprezes ds. rekrutacji";
+					}
+					// Prezes
+					else if (person.role === "Prezes") {
+						contextualRole = "Prezes Zarządu";
+					}
+					// Członek zarządu
+					else if (person.role === "Członek zarządu") {
+						contextualRole = "Członek Zarządu";
+					}
+					// Dyrektor Operacyjny
+					else if (person.role === "Dyrektor Operacyjny") {
+						contextualRole = "Dyrektor Operacyjny";
+					}
+					// Rzecznik organizacji
+					else if (person.role === "Rzecznik organizacji") {
+						contextualRole = "Rzecznik organizacji";
+					}
+					// Koordynator
+					else if (person.role === "Koordynator") {
+						contextualRole = `Koordynator ${node.name}`;
+					}
+					// Pełnomocnicy - pomijamy nazwę węzła i zamieniamy na "Pełnomocnik"
+					else if (
+						person.role.startsWith("Peł.") ||
+						person.role.startsWith("peł.") ||
+						person.role.includes("Peł. ") ||
+						person.role.includes("peł. ")
+					) {
+						// Zamieniamy "Peł." lub "peł." na "Pełnomocnik"
+						contextualRole = person.role
+							.replace(/Peł\.\s*/g, "Pełnomocnik ")
+							.replace(/pe?eł\.\s*/g, "Pełnomocnik ")
+							.replace(/Peł\s/g, "Pełnomocnik ")
+							.replace(/pe?eł\s/g, "Pełnomocnik ");
+					}
+					// Jeśli ktoś jest w grupie "Pełnomocnicy" i ma rolę "Członek"
+					else if (person.role === "Członek" && node.name === "Pełnomocnicy") {
+						contextualRole = "Pełnomocnik";
+					}
+					// Mentorzy - zamieniamy na "Mentor"
+					else if (person.role === "Członek" && node.name === "Mentorzy") {
+						contextualRole = "Mentor";
+					}
+					// Inne przypadki - dodajemy kontekst
+					else if (
+						person.role === "Przewodniczący" ||
+						person.role === "Przewodnicząca"
+					) {
+						contextualRole = `${node.name} (${person.role})`;
+					} else if (
+						person.role === "Wiceprzewodniczący" ||
+						person.role === "Wiceprzewodnicząca"
+					) {
+						contextualRole = `${node.name} (${person.role})`;
+					} else if (person.role === "Sekretarz") {
+						contextualRole = `${node.name} (${person.role})`;
+					} else if (person.role === "Członek") {
+						// Dla zwykłego członka - pokazujemy kontekst
+						contextualRole = `${node.name} (Członek)`;
+					} else if (person.role.startsWith("Członek ")) {
+						contextualRole = person.role;
+					} else {
+						// Dla innych ról
+						contextualRole = `${node.name} (${person.role})`;
+					}
+
+					if (peopleMap.has(person.id)) {
+						const existing = peopleMap.get(person.id)!;
+						if (!existing.allRoles.includes(person.role)) {
+							existing.allRoles.push(person.role);
+							existing.roleContexts.push(contextualRole);
+						}
+					} else {
+						peopleMap.set(person.id, {
+							...person,
+							allRoles: [person.role],
+							roleContexts: [contextualRole],
+						});
+					}
+				});
+			}
+
+			node.children.forEach((child) => collectWithRoles(child));
+		};
+
+		collectWithRoles(structureData);
+		return Array.from(peopleMap.values());
+	}, [structureData]);
+
+	// Funkcja do filtrowania i czyszczenia ról
+	const cleanAndFilterRoles = (roleContexts: string[]): string[] => {
+		// 1. Najpierw sprawdzamy czy są jakieś ważne role
+		const importantRoles = roleContexts.filter((role) => {
+			// Pomijamy samego "Członka"
+			if (role === "Członek") return false;
+			// Pomijamy "Nazwa (Członek)" jeśli jest inna ważniejsza rola
+			if (role.includes("(Członek)")) return false;
+			return true;
+		});
+
+		// 2. Jeśli są ważne role, zwracamy tylko je
+		if (importantRoles.length > 0) {
+			return importantRoles;
+		}
+
+		// 3. Jeśli nie ma ważnych ról, ale jest "Członek" z kontekstem
+		const memberRoles = roleContexts.filter((role) => {
+			if (role === "Członek") return false;
+			if (role.includes("(Członek)")) return true;
+			return false;
+		});
+
+		if (memberRoles.length > 0) {
+			return memberRoles;
+		}
+
+		// 4. Jeśli nie ma żadnej roli
+		return ["Brak funkcji"];
+	};
+
+	// Funkcja do generowania tekstu listy
+	const generateListText = useMemo(() => {
+		return peopleWithAllRoles
+			.map((person, index) => {
+				const cleanedRoles = cleanAndFilterRoles(person.roleContexts);
+				const roles = cleanedRoles.join(", ");
+				return `${index + 1}. ${person.firstName} ${person.lastName}: ${roles}`;
+			})
+			.join("\n");
+	}, [peopleWithAllRoles]);
+
+	// Funkcja do kopiowania całego tekstu
+	const copyAllToClipboard = () => {
+		navigator.clipboard
+			.writeText(generateListText)
+			.then(() => {
+				const btn = document.getElementById("copyAllBtn");
+				if (btn) {
+					const originalText = btn.textContent;
+					btn.textContent = "Skopiowano!";
+					btn.classList.add(styles.copiedSuccess);
+					setTimeout(() => {
+						btn.textContent = originalText;
+						btn.classList.remove(styles.copiedSuccess);
+					}, 2000);
+				}
+			})
+			.catch((err) => {
+				console.error("Błąd kopiowania:", err);
+				alert("Nie udało się skopiować");
+			});
+	};
+
+	return (
+		<div className={styles.textView}>
+			<div className={styles.textViewHeader}>
+				<div>
+					<h2>Lista członków w strukturze SM</h2>
+					<p className={styles.textViewSubtitle}>
+						Łącznie: {peopleWithAllRoles.length}{" "}
+						{peopleWithAllRoles.length === 1
+							? "osoba"
+							: peopleWithAllRoles.length % 10 >= 2 &&
+								  peopleWithAllRoles.length % 10 <= 4 &&
+								  (peopleWithAllRoles.length % 100 < 10 ||
+										peopleWithAllRoles.length % 100 >= 20)
+								? "osoby"
+								: "osób"}
+					</p>
+				</div>
+				<button
+					id="copyAllBtn"
+					className={styles.copyAllButton}
+					onClick={copyAllToClipboard}
+				>
+					Kopiuj listę
+				</button>
+			</div>
+
+			<div className={styles.textViewBox}>
+				<pre className={styles.textViewPre}>{generateListText}</pre>
+			</div>
+		</div>
+	);
+}
+// Znajdź linię: export default function Structure() {
+// ZMIEŃ całą funkcję Structure na poniższą:
 
 export default function Structure() {
 	const [searchTerm, setSearchTerm] = useState("");
 	const [structureData, setStructureData] = useState<Node | null>(null);
 	const [loading, setLoading] = useState(true);
+	const [viewMode, setViewMode] = useState<"tree" | "text">("tree");
+
+	// DODAJ tę sekcję:
+	const currentUser = useMemo(() => {
+		try {
+			const userStr = localStorage.getItem("user");
+			if (userStr) {
+				return JSON.parse(userStr);
+			}
+		} catch (error) {
+			logger.error("Błąd parsowania danych użytkownika:", error);
+		}
+		return null;
+	}, []);
+
+	const isKasperBrudniewicz = useMemo(() => {
+		if (!currentUser) return false;
+		// Sprawdzamy po emailu - to bezpieczniejsze
+		return currentUser.email === "kasper.brudniewicz@silamlodych.pl";
+	}, [currentUser]);
 
 	useEffect(() => {
 		const fetchStructure = async () => {
@@ -380,7 +626,6 @@ export default function Structure() {
 	const totalFilars = useMemo(() => {
 		if (!structureData) return 0;
 
-
 		const findFilaryNode = (node: Node): Node | null => {
 			if (node.name === "Filary organizacji") {
 				return node;
@@ -395,9 +640,9 @@ export default function Structure() {
 		const filaryNode = findFilaryNode(structureData);
 		if (!filaryNode) return 0;
 
-
-		return filaryNode.children.filter(child =>
-			child.name.includes('Filar') && !child.name.includes('pozafilarowe')
+		return filaryNode.children.filter(
+			(child) =>
+				child.name.includes("Filar") && !child.name.includes("pozafilarowe"),
 		).length;
 	}, [structureData]);
 
@@ -424,6 +669,8 @@ export default function Structure() {
 			</div>
 		);
 	}
+
+	// ZMIEŃ sekcję return na poniższą:
 	return (
 		<div className={styles.structure}>
 			<div className={styles.header}>
@@ -434,51 +681,81 @@ export default function Structure() {
 						poszczególne obszary działalności.
 					</p>
 				</div>
-				<div className={styles.header__stats}>
-					<div className={styles.header__stat}>
-						<span className={styles.header__statValue}>{totalMembers}</span>
-						<span className={styles.header__statLabel}>
-							Człon{getPolishPlural(totalMembers, "ek", "ków", "ków")}
-						</span>
+				<div className={styles.header__right}>
+					<div className={styles.header__stats}>
+						<div className={styles.header__stat}>
+							<span className={styles.header__statValue}>{totalMembers}</span>
+							<span className={styles.header__statLabel}>
+								Człon{getPolishPlural(totalMembers, "ek", "ków", "ków")}
+							</span>
+						</div>
+						<div className={styles.header__stat}>
+							<span className={styles.header__statValue}>{totalFilars}</span>
+							<span className={styles.header__statLabel}>
+								Fil{getPolishPlural(totalFilars, "ar", "ary", "arów")}
+							</span>
+						</div>
+						<div className={styles.header__stat}>
+							<span className={styles.header__statValue}>{totalTeams}</span>
+							<span className={styles.header__statLabel}>
+								Zesp{getPolishPlural(totalTeams, "ół", "oły", "ołów")}
+							</span>
+						</div>
 					</div>
-					<div className={styles.header__stat}>
-						<span className={styles.header__statValue}>{totalFilars}</span>
-						<span className={styles.header__statLabel}>
-							Fil{getPolishPlural(totalFilars, "ar", "ary", "arów")}
-						</span>
-					</div>
-					<div className={styles.header__stat}>
-						<span className={styles.header__statValue}>{totalTeams}</span>
-						<span className={styles.header__statLabel}>
-							Zesp{getPolishPlural(totalTeams, "ół", "oły", "ołów")}
-						</span>
-					</div>
-				</div>
-			</div>
 
-			<div className={styles.searchWrapper}>
-				<div className={styles.searchBox}>
-					<Search size={18} className={styles.searchBox__icon} />
-					<input
-						type="text"
-						className={styles.searchBox__input}
-						placeholder="Szukaj po imieniu, nazwisku, funkcji, zespole lub województwie..."
-						value={searchTerm}
-						onChange={(e) => setSearchTerm(e.target.value)}
-					/>
-					{searchTerm && (
-						<button
-							className={styles.searchBox__clear}
-							onClick={() => setSearchTerm("")}
-						>
-							<X size={16} />
-						</button>
+					{/* DODAJ ten przycisk - tylko dla Kaspera Brudniewicza */}
+					{isKasperBrudniewicz && (
+						<div className={styles.viewToggle}>
+							<button
+								className={`${styles.viewToggleBtn} ${viewMode === "tree" ? styles.viewToggleBtnActive : ""}`}
+								onClick={() => setViewMode("tree")}
+								title="Widok drzewa"
+							>
+								<LayoutGrid size={18} />
+							</button>
+							<button
+								className={`${styles.viewToggleBtn} ${viewMode === "text" ? styles.viewToggleBtnActive : ""}`}
+								onClick={() => setViewMode("text")}
+								title="Widok tekstowy"
+							>
+								<List size={18} />
+							</button>
+						</div>
 					)}
 				</div>
 			</div>
 
+			{/* Ukryj wyszukiwarkę gdy widok tekstowy jest aktywny */}
+			{viewMode === "tree" && (
+				<div className={styles.searchWrapper}>
+					<div className={styles.searchBox}>
+						<Search size={18} className={styles.searchBox__icon} />
+						<input
+							type="text"
+							className={styles.searchBox__input}
+							placeholder="Szukaj po imieniu, nazwisku, funkcji, zespole lub województwie..."
+							value={searchTerm}
+							onChange={(e) => setSearchTerm(e.target.value)}
+						/>
+						{searchTerm && (
+							<button
+								className={styles.searchBox__clear}
+								onClick={() => setSearchTerm("")}
+							>
+								<X size={16} />
+							</button>
+						)}
+					</div>
+				</div>
+			)}
+
 			<div className={styles.treeContainer}>
-				<TreeNode node={structureData} isRoot searchTerm={searchTerm} />
+				{/* ZMIEŃ to: */}
+				{viewMode === "tree" ? (
+					<TreeNode node={structureData} isRoot searchTerm={searchTerm} />
+				) : (
+					<TextView structureData={structureData} />
+				)}
 			</div>
 		</div>
 	);
