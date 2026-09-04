@@ -305,11 +305,6 @@ function TreeNode({
 	);
 }
 function TextView({ structureData }: { structureData: Node }) {
-	const allPeople = useMemo(
-		() => collectAllPeople(structureData),
-		[structureData],
-	);
-
 	// Grupujemy osoby po ID, żeby zebrać wszystkie ich role z kontekstem
 	const peopleWithAllRoles = useMemo(() => {
 		const peopleMap = new Map<

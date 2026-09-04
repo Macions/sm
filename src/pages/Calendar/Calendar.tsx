@@ -338,30 +338,6 @@ export default function Calendar() {
 		setSelectedTask(null);
 	};
 
-	const handleDownloadFile = async (fileUrl: string, fileName: string) => {
-		try {
-			const token = localStorage.getItem("accessToken");
-			const response = await fetch(fileUrl, {
-				headers: { Authorization: `Bearer ${token}` },
-			});
-			if (response.ok) {
-				const blob = await response.blob();
-				const url = window.URL.createObjectURL(blob);
-				const link = document.createElement("a");
-				link.href = url;
-				link.download = fileName;
-				document.body.appendChild(link);
-				link.click();
-				document.body.removeChild(link);
-				window.URL.revokeObjectURL(url);
-				toast.success("Plik pobrany!");
-			}
-		} catch (error) {
-			console.error("Błąd pobierania:", error);
-			toast.error("Nie udało się pobrać pliku");
-		}
-	};
-
 	const monthNames = [
 		"Styczeń",
 		"Luty",
