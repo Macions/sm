@@ -48,9 +48,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
 				try {
 					const parsed = JSON.parse(cached);
 					setUser(parsed);
-				} catch (e) {
-					// ignore
-				}
+				} catch (e) {}
 			}
 
 			const response = await fetch("/api/profile", {

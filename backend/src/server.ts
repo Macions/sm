@@ -243,7 +243,6 @@ app.post("/api/auth/google", async (req, res) => {
 			expiresIn: "7d",
 		});
 
-		// Ustaw ciasteczka HttpOnly
 		res.cookie("accessToken", token, {
 			httpOnly: true,
 			secure: process.env.NODE_ENV === "production",
@@ -260,8 +259,8 @@ app.post("/api/auth/google", async (req, res) => {
 
 		res.json({
 			success: true,
-			accessToken: token, // <-- DODAJ TĘ LINIĘ
-			refreshToken: refreshToken, // <-- DODAJ TĘ LINIĘ
+			accessToken: token,
+			refreshToken: refreshToken,
 			user: {
 				id: user.id,
 				email: user.email,
@@ -572,8 +571,8 @@ app.post("/api/auth/google-token", async (req: any, res: any) => {
 		});
 		res.json({
 			success: true,
-			accessToken: token, // <-- DODAJ TĘ LINIĘ
-			refreshToken: refreshToken, // <-- DODAJ TĘ LINIĘ
+			accessToken: token,
+			refreshToken: refreshToken,
 			user: {
 				id: user.id,
 				email: user.email,
@@ -792,13 +791,13 @@ app.post("/api/auth/login", async (req, res) => {
 			httpOnly: true,
 			secure: process.env.NODE_ENV === "production",
 			sameSite: "strict",
-			maxAge: 7 * 24 * 60 * 60 * 1000, // 7 dni
+			maxAge: 7 * 24 * 60 * 60 * 1000,
 		});
 
 		res.json({
 			success: true,
-			accessToken: token, // <-- DODAJ TĘ LINIĘ
-			refreshToken: refreshToken, // <-- DODAJ TĘ LINIĘ
+			accessToken: token,
+			refreshToken: refreshToken,
 			user: {
 				id: user.id,
 				email: user.email,

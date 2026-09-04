@@ -79,7 +79,6 @@ export default function Calendar() {
 	const currentYear = currentDate.getFullYear();
 	const currentMonth = currentDate.getMonth();
 
-	// Sprawdź autoryzację Google - NIE WYLOGOWUJE
 	const checkGoogleAuth = async () => {
 		try {
 			const token = localStorage.getItem("accessToken");
@@ -92,7 +91,6 @@ export default function Calendar() {
 				headers: { Authorization: `Bearer ${token}` },
 			});
 
-			// NIE WYLOGOWUJ PRZY 401!
 			if (res.status === 401) {
 				console.log("⚠️ [Google] Brak autoryzacji - kontynuuję bez Google");
 				setIsGoogleAuth(false);
@@ -112,7 +110,6 @@ export default function Calendar() {
 		}
 	};
 
-	// Pobierz wydarzenia z Google - NIE WYLOGOWUJE
 	const fetchGoogleEvents = async () => {
 		if (!isGoogleAuth) return;
 
@@ -145,7 +142,6 @@ export default function Calendar() {
 		}
 	};
 
-	// Pobierz zadania systemowe - NIE WYLOGOWUJE
 	const fetchTasks = async () => {
 		try {
 			setLoading(true);
@@ -189,7 +185,6 @@ export default function Calendar() {
 		checkGoogleAuth();
 	}, []);
 
-	// Odśwież wydarzenia gdy zmienia się autoryzacja
 	useEffect(() => {
 		if (isGoogleAuth) {
 			fetchGoogleEvents();
@@ -223,7 +218,6 @@ export default function Calendar() {
 		const date = new Date(currentYear, currentMonth, day);
 		const dateStr = date.toISOString().split("T")[0];
 
-		// Zadania systemowe
 		const taskEvents = tasks
 			.filter((task) => {
 				const taskDate = new Date(task.dueDate);
@@ -235,7 +229,6 @@ export default function Calendar() {
 				type: "task" as const,
 			}));
 
-		// Wydarzenia z Google
 		let googleEventsForDay: any[] = [];
 		if (isGoogleAuth && googleEvents.length > 0) {
 			googleEventsForDay = googleEvents

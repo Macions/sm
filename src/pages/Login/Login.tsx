@@ -60,7 +60,6 @@ const Login: React.FC = () => {
 					throw new Error(data.error || "Błąd logowania przez Google");
 				}
 
-				// ZAPISZ TOKENY!
 				if (data.accessToken) {
 					localStorage.setItem("accessToken", data.accessToken);
 				}
@@ -123,7 +122,6 @@ const Login: React.FC = () => {
 				throw new Error(data.error || "Błąd logowania");
 			}
 
-			// ZAPISZ TOKENY!
 			if (data.accessToken) {
 				localStorage.setItem("accessToken", data.accessToken);
 			}

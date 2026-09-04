@@ -1666,7 +1666,6 @@ function TaskModal({
 						<div className={styles.modal__field}>
 							<label className={styles.modal__label}>Filar</label>
 							{currentUser.isPillarCoordinator || currentUser.isLeader ? (
-								// Jeśli jest liderem/koordynatorem filaru, pokaż tylko jego filar (disabled)
 								<>
 									<input
 										type="text"
@@ -1679,7 +1678,6 @@ function TaskModal({
 											cursor: "not-allowed",
 										}}
 									/>
-									{/* Ukryte pole które przechowuje wartość filaru */}
 									<input
 										type="hidden"
 										value={currentUser.pillarName || ""}
