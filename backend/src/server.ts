@@ -7364,7 +7364,186 @@ app.delete("/api/comments/:id", authMiddleware, async (req: any, res) => {
 		res.status(500).json({ error: "Nie udało się usunąć komentarza" });
 	}
 });
+// Endpoint do zgłaszania nieobecności
+// Endpoint do zgłaszania nieobecności (wersja z osobną tabelą)
+app.post(
+	"/api/tasks/:taskId/absence",
+	authMiddleware,
+	async (req: any, res: any) => {
+		try {
+			const { taskId } = req.params;
+			const userId = req.user?.id;
 
+			if (!userId) {
+				return res.status(401).json({ message: "Brak autoryzacji" });
+			}
+
+			// Sprawdź czy zadanie istnieje
+			const task = await prisma.task.findUnique({
+				where: { id: parseInt(taskId) },
+			});
+
+			if (!task) {
+				return res.status(404).json({ message: "Zadanie nie istnieje" });
+			}
+
+			// Sprawdź czy zadanie należy do użytkownika
+			if (task.assigned_to !== userId) {
+				return res.status(403).json({ message: "Brak uprawnień" });
+			}
+
+			// Sprawdź czy można zgłosić nieobecność (minimum 24h)
+			const now = new Date();
+			const dueDate = new Date(task.due_date);
+			const diffHours = (dueDate.getTime() - now.getTime()) / (1000 * 60 * 60);
+
+			if (diffHours < 24) {
+				return res.status(400).json({
+					message: "Nieobecność można zgłosić minimum 24h przed wydarzeniem",
+				});
+			}
+
+			// Sprawdź czy już zgłoszono
+			const existingAbsence = await prisma.taskAbsence.findUnique({
+				where: {
+					task_id_user_id: {
+						task_id: parseInt(taskId),
+						user_id: userId,
+					},
+				},
+			});
+
+			if (existingAbsence) {
+				return res.status(400).json({
+					message: "Nieobecność została już zgłoszona",
+				});
+			}
+
+			// Utwórz zgłoszenie nieobecności
+			const absence = await prisma.taskAbsence.create({
+				data: {
+					task_id: parseInt(taskId),
+					user_id: userId,
+					status: "pending",
+				},
+			});
+
+			// Opcjonalnie: wyślij powiadomienie do admina/koordynatora
+			try {
+				// Znajdź admina lub koordynatora
+				const admin = await prisma.user.findFirst({
+					where: {
+						role_id: 1, // admin
+					},
+					select: { id: true },
+				});
+
+				if (admin) {
+					await prisma.notification.create({
+						data: {
+							user_id: admin.id,
+							title: "Zgłoszono nieobecność",
+							message: `Użytkownik ${req.user?.first_name || ""} ${req.user?.last_name || ""} zgłosił nieobecność na zadaniu: "${task.title}"`,
+							type: "info",
+							read: false,
+							link: `/tasks/${taskId}`,
+							target: "admin",
+							created_at: new Date(),
+						},
+					});
+				}
+			} catch (notifError) {
+				console.error("Błąd tworzenia powiadomienia:", notifError);
+			}
+
+			res.json({
+				success: true,
+				message: "Nieobecność zgłoszona pomyślnie",
+				absence: {
+					id: absence.id,
+					taskId: absence.task_id,
+					status: absence.status,
+					reportedAt: absence.reported_at,
+				},
+			});
+		} catch (error) {
+			console.error("Błąd zgłaszania nieobecności:", error);
+			res.status(500).json({
+				message: "Wystąpił błąd podczas zgłaszania nieobecności",
+				error: error instanceof Error ? error.message : "Unknown error",
+			});
+		}
+	},
+);
+
+// Endpoint do sprawdzania statusu zgłoszenia nieobecności
+app.get(
+	"/api/tasks/:taskId/absence-status",
+	authMiddleware,
+	async (req: any, res: any) => {
+		try {
+			const { taskId } = req.params;
+			const userId = req.user?.id;
+
+			if (!userId) {
+				return res.status(401).json({ message: "Brak autoryzacji" });
+			}
+
+			const absence = await prisma.taskAbsence.findUnique({
+				where: {
+					task_id_user_id: {
+						task_id: parseInt(taskId),
+						user_id: userId,
+					},
+				},
+			});
+
+			res.json({
+				hasReported: !!absence,
+				status: absence?.status || null,
+				reportedAt: absence?.reported_at || null,
+			});
+		} catch (error) {
+			console.error("Błąd sprawdzania statusu nieobecności:", error);
+			res.status(500).json({ message: "Wystąpił błąd serwera" });
+		}
+	},
+);
+
+// Endpoint dla admina do zarządzania zgłoszeniami nieobecności
+app.put(
+	"/api/tasks/absence/:absenceId",
+	authMiddleware,
+	async (req: any, res: any) => {
+		try {
+			const { absenceId } = req.params;
+			const { status } = req.body;
+			const userRole = req.user?.role;
+
+			if (userRole !== "admin" && userRole !== "board") {
+				return res.status(403).json({ message: "Brak uprawnień" });
+			}
+
+			if (!["pending", "approved", "rejected"].includes(status)) {
+				return res.status(400).json({ message: "Nieprawidłowy status" });
+			}
+
+			const absence = await prisma.taskAbsence.update({
+				where: { id: parseInt(absenceId) },
+				data: { status },
+			});
+
+			res.json({
+				success: true,
+				message: "Status zgłoszenia zaktualizowany",
+				absence,
+			});
+		} catch (error) {
+			console.error("Błąd aktualizacji zgłoszenia:", error);
+			res.status(500).json({ message: "Wystąpił błąd serwera" });
+		}
+	},
+);
 app.get(
 	"/api/tasks/completed/:userId",
 	authMiddleware,

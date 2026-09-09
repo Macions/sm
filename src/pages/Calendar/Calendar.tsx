@@ -12,6 +12,7 @@ import {
 	CalendarDays,
 	Video,
 	Link2,
+	AlertCircle,
 } from "lucide-react";
 
 type TaskStatus = "todo" | "in_progress" | "review" | "done";
@@ -33,6 +34,7 @@ type CalendarTask = {
 	hangoutLink?: string | null;
 	hasMeeting?: boolean;
 	htmlLink?: string;
+	absenceReported?: boolean;
 };
 
 const STATUS_COLORS: Record<TaskStatus, string> = {
@@ -75,6 +77,7 @@ export default function Calendar() {
 	const [googleEvents, setGoogleEvents] = useState<any[]>([]);
 	const [isGoogleAuth, setIsGoogleAuth] = useState(false);
 	const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+	const [isReportingAbsence, setIsReportingAbsence] = useState(false);
 
 	const currentYear = currentDate.getFullYear();
 	const currentMonth = currentDate.getMonth();
@@ -298,6 +301,49 @@ export default function Calendar() {
 		});
 	};
 
+	// Funkcja sprawdzająca czy można zgłosić nieobecność (minimum 24h przed)
+	const canReportAbsence = (eventDate: string): boolean => {
+		const now = new Date();
+		const event = new Date(eventDate);
+		const diffHours = (event.getTime() - now.getTime()) / (1000 * 60 * 60);
+		return diffHours >= 24;
+	};
+
+	// Funkcja do zgłaszania nieobecności
+	const handleReportAbsence = async (taskId: string) => {
+		try {
+			setIsReportingAbsence(true);
+			const token = localStorage.getItem("accessToken");
+			if (!token) {
+				toast.error("Musisz być zalogowany");
+				return;
+			}
+
+			const res = await fetch(`${API_URL}/api/tasks/${taskId}/absence`, {
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json",
+					Authorization: `Bearer ${token}`,
+				},
+			});
+
+			if (res.ok) {
+				toast.success("✅ Zgłoszono nieobecność!");
+				// Odśwież zadania
+				await fetchTasks();
+				closeModal();
+			} else {
+				const error = await res.json();
+				toast.error(error.message || "Nie udało się zgłosić nieobecności");
+			}
+		} catch (error) {
+			console.error("Błąd zgłaszania nieobecności:", error);
+			toast.error("Wystąpił błąd podczas zgłaszania nieobecności");
+		} finally {
+			setIsReportingAbsence(false);
+		}
+	};
+
 	const handleDayClick = (day: number) => {
 		const date = new Date(currentYear, currentMonth, day);
 		const dateStr = date.toISOString().split("T")[0];
@@ -308,27 +354,12 @@ export default function Calendar() {
 			return;
 		}
 
-		if (events.length === 1) {
-			const event = events[0];
-			if (event.source === "google" && event.htmlLink) {
-				window.open(event.htmlLink, "_blank");
-				return;
-			}
-			setSelectedTask(event);
-			setSelectedDate(dateStr);
-			setIsModalOpen(true);
-		} else {
-			setSelectedDate(dateStr);
-			setSelectedTask(null);
-			setIsModalOpen(true);
-		}
+		setSelectedDate(dateStr);
+		setSelectedTask(null);
+		setIsModalOpen(true);
 	};
 
 	const handleTaskClick = (task: any) => {
-		if (task.source === "google" && task.htmlLink) {
-			window.open(task.htmlLink, "_blank");
-			return;
-		}
 		setSelectedTask(task);
 		setIsModalOpen(true);
 	};
@@ -336,6 +367,7 @@ export default function Calendar() {
 	const closeModal = () => {
 		setIsModalOpen(false);
 		setSelectedTask(null);
+		setIsReportingAbsence(false);
 	};
 
 	const monthNames = [
@@ -458,15 +490,7 @@ export default function Calendar() {
 											className={`${styles.dayTaskItem} ${event.source === "google" ? styles.googleTaskItem : ""}`}
 											onClick={(e) => {
 												e.stopPropagation();
-												if (event.source === "google" && event.hangoutLink) {
-													window.open(event.hangoutLink, "_blank");
-													return;
-												}
-												if (event.source === "google") {
-													window.open(event.htmlLink || "#", "_blank");
-												} else {
-													handleTaskClick(event);
-												}
+												handleTaskClick(event);
 											}}
 										>
 											<span
@@ -489,6 +513,12 @@ export default function Calendar() {
 												)}
 												{event.source === "google" && (
 													<span className={styles.googleBadge}>Google</span>
+												)}
+												{event.source === "system" && 
+												 event.absenceReported && (
+													<span className={styles.absenceReportedBadge}>
+														<AlertCircle size={10} /> Zgłoszono nieobecność
+													</span>
 												)}
 											</span>
 										</div>
@@ -525,7 +555,7 @@ export default function Calendar() {
 							{selectedTask ? (
 								<div className={styles.taskDetail}>
 									<p className={styles.taskDescription}>
-										{selectedTask.description}
+										{selectedTask.description || "Brak opisu"}
 									</p>
 
 									<div className={styles.taskMeta}>
@@ -601,6 +631,7 @@ export default function Calendar() {
 										</div>
 									)}
 
+									{/* Przycisk dołącz do Meet (tylko dla Google) */}
 									{selectedTask.source === "google" &&
 										selectedTask.hangoutLink && (
 											<a
@@ -614,6 +645,37 @@ export default function Calendar() {
 												<Link2 size={14} />
 											</a>
 										)}
+
+									{/* Przycisk zgłaszania nieobecności (tylko dla zadań systemowych) */}
+									{selectedTask.source !== "google" && (
+										<>
+											{selectedTask.absenceReported ? (
+												<div className={styles.absenceReportedInfo}>
+													<AlertCircle size={20} />
+													<span>✅ Nieobecność została już zgłoszona</span>
+												</div>
+											) : canReportAbsence(selectedTask.dueDate) ? (
+												<button
+													className={styles.absenceButton}
+													onClick={() => handleReportAbsence(selectedTask.id)}
+													disabled={isReportingAbsence}
+												>
+													{isReportingAbsence ? (
+														<>⏳ Zgłaszanie...</>
+													) : (
+														<>📅 Zgłoś nieobecność</>
+													)}
+												</button>
+											) : (
+												<div className={styles.absenceNotAvailable}>
+													<AlertCircle size={16} />
+													<span>
+														Nieobecność można zgłosić minimum 24h przed wydarzeniem
+													</span>
+												</div>
+											)}
+										</>
+									)}
 								</div>
 							) : (
 								<div className={styles.dayTasksList}>
@@ -629,18 +691,7 @@ export default function Calendar() {
 													key={event.id}
 													className={`${styles.taskItem} ${event.source === "google" ? styles.googleTaskItem : ""}`}
 													onClick={() => {
-														if (
-															event.source === "google" &&
-															event.hangoutLink
-														) {
-															window.open(event.hangoutLink, "_blank");
-															return;
-														}
-														if (event.source === "google") {
-															window.open(event.htmlLink || "#", "_blank");
-														} else {
-															handleTaskClick(event);
-														}
+														handleTaskClick(event);
 													}}
 												>
 													<div
@@ -668,6 +719,12 @@ export default function Calendar() {
 																		</span>
 																	)}
 																</>
+															)}
+															{event.source === "system" && 
+															 event.absenceReported && (
+																<span className={styles.absenceReportedBadge}>
+																	<AlertCircle size={10} /> Zgłoszono nieobecność
+																</span>
 															)}
 														</span>
 														<span className={styles.taskAssignedTo}>

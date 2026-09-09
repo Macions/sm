@@ -99,8 +99,8 @@ interface CreatorsSectionProps {
 	creators: ContentCreator[];
 	canManage: boolean;
 	onAddCreator?: () => void;
-	onEditCreator?: (creator: ContentCreator) => void; 
-	onDeleteCreator?: (id: string) => void; 
+	onEditCreator?: (creator: ContentCreator) => void;
+	onDeleteCreator?: (id: string) => void;
 }
 interface TeamMember {
 	id: string;
@@ -460,9 +460,7 @@ function OnboardingContactsSection({
 }) {
 	const [searchTerm, setSearchTerm] = useState("");
 
-
 	const filteredContacts = useMemo(() => {
-
 		const contactsWithData = contacts.filter((c) => {
 			const hasAnyContact =
 				c.salaContacts.length > 0 ||
@@ -472,11 +470,9 @@ function OnboardingContactsSection({
 			return hasAnyContact;
 		});
 
-
 		if (!searchTerm.trim()) {
 			return contactsWithData;
 		}
-
 
 		const search = searchTerm.toLowerCase();
 		return contactsWithData.filter((c) => {
@@ -495,7 +491,6 @@ function OnboardingContactsSection({
 		});
 	}, [contacts, searchTerm]);
 
-
 	return (
 		<section className={styles.section}>
 			<div className={styles.section__header}>
@@ -511,7 +506,6 @@ function OnboardingContactsSection({
 				</span>
 			</div>
 
-			
 			<div className={styles.section__filters}>
 				<div className={styles.section__search}>
 					<Search size={18} className={styles.section__searchIcon} />
@@ -534,7 +528,6 @@ function OnboardingContactsSection({
 				</div>
 			</div>
 
-			
 			{filteredContacts.length === 0 ? (
 				<div className={styles.emptyState}>
 					<User size={48} className={styles.emptyState__icon} />
@@ -581,7 +574,6 @@ function OnboardingContactsSection({
 								</div>
 							</div>
 
-							
 							<div className={styles.onboardingContactCard__contacts}>
 								{contact.salaContacts.length > 0 && (
 									<div className={styles.onboardingContactCard__contactGroup}>
@@ -1244,8 +1236,8 @@ interface TeamSectionProps {
 	members: TeamMember[];
 	canManage: boolean;
 	onAddMember?: () => void;
-	onEditMember?: (member: TeamMember) => void; 
-	onDeleteMember?: (id: string) => void; 
+	onEditMember?: (member: TeamMember) => void;
+	onDeleteMember?: (id: string) => void;
 }
 
 interface PublicationsSectionProps {
@@ -1487,10 +1479,11 @@ function AddCreatorModal({
 											return (
 												<div
 													key={user.id}
-													className={`${styles.searchableSelect__item} ${formData.user_id === user.id
+													className={`${styles.searchableSelect__item} ${
+														formData.user_id === user.id
 															? styles.searchableSelect__itemSelected
 															: ""
-														}`}
+													}`}
 													onClick={() => handleSelectUser(user.id)}
 												>
 													<span className={styles.searchableSelect__itemName}>
@@ -1696,10 +1689,11 @@ function AddMemberModal({
 											return (
 												<div
 													key={user.id}
-													className={`${styles.searchableSelect__item} ${formData.user_id === user.id
+													className={`${styles.searchableSelect__item} ${
+														formData.user_id === user.id
 															? styles.searchableSelect__itemSelected
 															: ""
-														}`}
+													}`}
 													onClick={() => handleSelectUser(user.id)}
 												>
 													<span className={styles.searchableSelect__itemName}>
@@ -2214,8 +2208,8 @@ function TeamSection({
 	members,
 	canManage,
 	onAddMember,
-	onEditMember, 
-	onDeleteMember, 
+	onEditMember,
+	onDeleteMember,
 }: TeamSectionProps) {
 	const [searchTerm, setSearchTerm] = useState("");
 	const [selectedRole, setSelectedRole] = useState<SocialRole | "all">("all");
@@ -2366,8 +2360,8 @@ function CreatorsSection({
 	creators,
 	canManage,
 	onAddCreator,
-	onEditCreator, 
-	onDeleteCreator, 
+	onEditCreator,
+	onDeleteCreator,
 }: CreatorsSectionProps) {
 	const [searchTerm, setSearchTerm] = useState("");
 
@@ -2816,12 +2810,13 @@ function TasksSection({
 							<h3 className={styles.taskCard__title}>{task.name}</h3>
 							<div className={styles.taskCard__actions}>
 								<span
-									className={`${styles.taskCard__status} ${task.status === "done"
+									className={`${styles.taskCard__status} ${
+										task.status === "done"
 											? styles.taskStatusDone
 											: task.status === "in_progress"
 												? styles.taskStatusInProgress
 												: styles.taskStatusPending
-										}`}
+									}`}
 								>
 									{TASK_STATUS_LABELS[task.status]}
 								</span>
@@ -3028,9 +3023,6 @@ function EditMemberModal({
 	);
 }
 
-
-
-
 interface EditCreatorModalProps {
 	isOpen: boolean;
 	creator: ContentCreator | null;
@@ -3204,17 +3196,13 @@ export default function SocialMedia({ title }: { title?: string }) {
 	};
 	const fetchOnboardingContacts = async () => {
 		try {
-
 			const token = localStorage.getItem("accessToken");
 			const response = await fetch("/api/admin/onboarding-contacts", {
 				headers: { Authorization: `Bearer ${token}` },
 			});
 
-
-
 			if (response.ok) {
 				const data = await response.json();
-
 
 				setOnboardingContacts(data);
 			} else {
@@ -3378,8 +3366,8 @@ export default function SocialMedia({ title }: { title?: string }) {
 		title: "",
 		message: "",
 		confirmText: "Potwierdź",
-		onConfirm: () => { },
-		onCancel: () => { },
+		onConfirm: () => {},
+		onCancel: () => {},
 	});
 	useEffect(() => {
 		const fetchAllData = async () => {
@@ -3396,10 +3384,10 @@ export default function SocialMedia({ title }: { title?: string }) {
 				const isCoordinator = role === "coordinator";
 				const isBoard = role === "board" || role === "zarząd";
 
-				const canManageAll = isAdmin || isCoordinator || isBoard; 
+				const canManageAll = isAdmin || isCoordinator || isBoard;
 
-				setCanManage(canManageAll); 
-				setCanView(canManageAll); 
+				setCanManage(canManageAll);
+				setCanView(canManageAll);
 				const [
 					membersRes,
 					creatorsRes,
@@ -3748,16 +3736,16 @@ export default function SocialMedia({ title }: { title?: string }) {
 				members={members}
 				canManage={canManage}
 				onAddMember={() => setIsMemberModalOpen(true)}
-				onEditMember={handleEditMember} 
-				onDeleteMember={handleDeleteMember} 
+				onEditMember={handleEditMember}
+				onDeleteMember={handleDeleteMember}
 			/>
 
 			<CreatorsSection
 				creators={creators}
 				canManage={canManage}
 				onAddCreator={() => setIsCreatorModalOpen(true)}
-				onEditCreator={handleEditCreator} 
-				onDeleteCreator={handleDeleteCreator} 
+				onEditCreator={handleEditCreator}
+				onDeleteCreator={handleDeleteCreator}
 			/>
 
 			<MaterialsBoard
@@ -3817,7 +3805,7 @@ export default function SocialMedia({ title }: { title?: string }) {
 				contacts={onboardingContacts}
 				canManage={canManage}
 			/>
-			<section className={styles.section}>
+			<section className={styles.section__infobox}>
 				<div className={styles.infoBox}>
 					<div className={styles.infoBox__icon}>
 						<AlertCircle size={24} />
@@ -3901,7 +3889,6 @@ export default function SocialMedia({ title }: { title?: string }) {
 				/>
 			)}
 
-			
 			{isEditCreatorModalOpen && editingCreator && (
 				<EditCreatorModal
 					isOpen={isEditCreatorModalOpen}
