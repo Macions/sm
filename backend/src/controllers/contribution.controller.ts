@@ -121,7 +121,7 @@ export class ContributionController {
 
 			res.json(stats);
 		} catch (error) {
-			logger.error("❌ [Contribution] Błąd pobierania statystyk:", error);
+			logger.error(" [Contribution] Błąd pobierania statystyk:", error);
 			res.status(500).json({ error: "Nie udało się pobrać statystyk składek" });
 		}
 	}
@@ -176,7 +176,7 @@ export class ContributionController {
 				users: overdueUsers,
 			});
 		} catch (error) {
-			logger.error("❌ [Contribution] Błąd pobierania zaległych:", error);
+			logger.error(" [Contribution] Błąd pobierania zaległych:", error);
 			res.status(500).json({ error: "Nie udało się pobrać zaległych składek" });
 		}
 	}
@@ -192,10 +192,10 @@ export class ContributionController {
 
 			syncContributions()
 				.then(() => {
-					logger.info("✅ [Manual] Synchronizacja składek zakończona");
+					logger.info(" [Manual] Synchronizacja składek zakończona");
 				})
 				.catch((error: Error) => {
-					logger.error("❌ [Manual] Błąd synchronizacji składek:", error);
+					logger.error(" [Manual] Błąd synchronizacji składek:", error);
 				});
 
 			res.json({
@@ -203,7 +203,7 @@ export class ContributionController {
 				status: "processing",
 			});
 		} catch (error) {
-			logger.error("❌ [Contribution] Błąd ręcznej synchronizacji:", error);
+			logger.error(" [Contribution] Błąd ręcznej synchronizacji:", error);
 			res.status(500).json({ error: "Nie udało się uruchomić synchronizacji" });
 		}
 	}
@@ -245,7 +245,7 @@ export class ContributionController {
 			});
 		} catch (error) {
 			logger.error(
-				"❌ [Contribution] Błąd pobierania wszystkich składek:",
+				" [Contribution] Błąd pobierania wszystkich składek:",
 				error,
 			);
 			res.status(500).json({ error: "Nie udało się pobrać składek" });
@@ -292,7 +292,7 @@ export class ContributionController {
 
 			res.json(contributions);
 		} catch (error) {
-			logger.error("❌ [Contribution] Błąd pobierania składek:", error);
+			logger.error(" [Contribution] Błąd pobierania składek:", error);
 			res.status(500).json({ error: "Nie udało się pobrać składek" });
 		}
 	}
@@ -353,11 +353,11 @@ export class ContributionController {
 			});
 
 			logger.info(
-				`✅ [Contribution] Dodano składkę dla ${user.email} - ${amount} zł`,
+				` [Contribution] Dodano składkę dla ${user.email} - ${amount} zł`,
 			);
 			res.status(201).json(contribution);
 		} catch (error) {
-			logger.error("❌ [Contribution] Błąd dodawania składki:", error);
+			logger.error(" [Contribution] Błąd dodawania składki:", error);
 			res.status(500).json({ error: "Nie udało się dodać składki" });
 		}
 	}
@@ -392,10 +392,10 @@ export class ContributionController {
 				});
 			}
 
-			logger.info(`✅ [Contribution] Zaktualizowano składkę ${id}`);
+			logger.info(` [Contribution] Zaktualizowano składkę ${id}`);
 			res.json(contribution);
 		} catch (error) {
-			logger.error("❌ [Contribution] Błąd aktualizacji składki:", error);
+			logger.error(" [Contribution] Błąd aktualizacji składki:", error);
 			res.status(500).json({ error: "Nie udało się zaktualizować składki" });
 		}
 	}
@@ -412,10 +412,10 @@ export class ContributionController {
 				where: { id: idStr },
 			});
 
-			logger.info(`✅ [Contribution] Usunięto składkę ${id}`);
+			logger.info(` [Contribution] Usunięto składkę ${id}`);
 			res.json({ message: "Składka usunięta" });
 		} catch (error) {
-			logger.error("❌ [Contribution] Błąd usuwania składki:", error);
+			logger.error(" [Contribution] Błąd usuwania składki:", error);
 			res.status(500).json({ error: "Nie udało się usunąć składki" });
 		}
 	}
@@ -533,7 +533,7 @@ export class ContributionController {
 				userName: `${user.first_name} ${user.last_name}`,
 			});
 		} catch (error) {
-			logger.error("❌ Błąd pobierania historii składek:", error);
+			logger.error(" Błąd pobierania historii składek:", error);
 			return res.status(500).json({
 				error: "Nie udało się pobrać historii składek",
 			});
@@ -702,7 +702,7 @@ export class ContributionController {
 				memberEmail: user.email,
 			});
 		} catch (error) {
-			logger.error("❌ Błąd pobierania aktualnej składki:", error);
+			logger.error(" Błąd pobierania aktualnej składki:", error);
 			return res.status(500).json({
 				error: "Nie udało się pobrać danych składki",
 			});

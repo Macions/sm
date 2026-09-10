@@ -215,7 +215,7 @@ export default function Dashboard() {
 				const cachedData = localStorage.getItem("onboardingData");
 
 				if (cachedStatus === "true" && cachedData) {
-					logger.debug("✅ [Dashboard] Onboarding ukończony (z cache)");
+					logger.debug(" [Dashboard] Onboarding ukończony (z cache)");
 					setCheckingOnboarding(false);
 					return;
 				}
@@ -226,7 +226,7 @@ export default function Dashboard() {
 					return;
 				}
 
-				logger.debug("🔄 [Dashboard] Sprawdzam onboarding w API...");
+				logger.debug(" [Dashboard] Sprawdzam onboarding w API...");
 				const response = await fetch("/api/auth/onboarding-status", {
 					headers: {
 						Authorization: `Bearer ${token}`,
@@ -247,21 +247,21 @@ export default function Dashboard() {
 						localStorage.setItem("onboardingData", JSON.stringify(data.data));
 					}
 
-					logger.debug(`📋 [Dashboard] Onboarding status: ${completed}`);
+					logger.debug(` [Dashboard] Onboarding status: ${completed}`);
 
 					if (!completed) {
-						logger.debug("🔄 [Dashboard] Przekierowanie do onboardingu");
+						logger.debug(" [Dashboard] Przekierowanie do onboardingu");
 
 						window.location.href = "/onboarding";
 						return;
 					}
 				} else {
 					logger.warn(
-						"⚠️ [Dashboard] Nie udało się sprawdzić statusu onboardingu",
+						" [Dashboard] Nie udało się sprawdzić statusu onboardingu",
 					);
 				}
 			} catch (error) {
-				logger.error("❌ [Dashboard] Błąd sprawdzania onboardingu:", error);
+				logger.error(" [Dashboard] Błąd sprawdzania onboardingu:", error);
 			} finally {
 				setCheckingOnboarding(false);
 			}
@@ -289,7 +289,7 @@ export default function Dashboard() {
 				setBirthdays(data);
 			} catch (err) {
 				if (err instanceof Error && err.name === "AbortError") return;
-				console.error("❌ [Dashboard] Błąd pobierania urodzin:", err);
+				console.error(" [Dashboard] Błąd pobierania urodzin:", err);
 			} finally {
 				setLoadingBirthdays(false);
 			}
@@ -313,7 +313,7 @@ export default function Dashboard() {
 				setStats(data);
 			} catch (err) {
 				if (err instanceof Error && err.name === "AbortError") return;
-				console.error("❌ [Dashboard] Błąd statystyk:", err);
+				console.error(" [Dashboard] Błąd statystyk:", err);
 				setError("Nie udało się pobrać statystyk");
 			} finally {
 				setLoadingStats(false);
@@ -339,7 +339,7 @@ export default function Dashboard() {
 				setContributionStats(data);
 			} catch (err) {
 				if (err instanceof Error && err.name === "AbortError") return;
-				console.error("❌ [Dashboard] Błąd składek:", err);
+				console.error(" [Dashboard] Błąd składek:", err);
 			} finally {
 				setLoadingContributions(false);
 			}
@@ -364,7 +364,7 @@ export default function Dashboard() {
 				setNotifications(data);
 			} catch (err) {
 				if (err instanceof Error && err.name === "AbortError") return;
-				console.error("❌ [Dashboard] Błąd powiadomień:", err);
+				console.error(" [Dashboard] Błąd powiadomień:", err);
 				setError("Nie udało się pobrać powiadomień");
 			} finally {
 				setLoadingNotifs(false);

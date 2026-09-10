@@ -61,21 +61,21 @@ function AppRoutes() {
 			const user = localStorage.getItem("user");
 
 			if (!user) {
-				logger.debug("🔐 [Auth] Brak użytkownika");
+				logger.debug(" [Auth] Brak użytkownika");
 				setIsAuthenticated(false);
 				setIsLoading(false);
 				return;
 			}
 
 			try {
-				logger.debug("🔐 [Auth] Weryfikacja tokena...");
+				logger.debug(" [Auth] Weryfikacja tokena...");
 
 				await api.get("/auth/me");
-				logger.debug("✅ [Auth] Token ważny");
+				logger.debug(" [Auth] Token ważny");
 				setIsAuthenticated(true);
 			} catch (error: any) {
 				logger.warn(
-					"❌ [Auth] Token wygasł lub jest nieprawidłowy",
+					" [Auth] Token wygasł lub jest nieprawidłowy",
 					error?.response?.status,
 				);
 				localStorage.removeItem("user");
@@ -93,17 +93,14 @@ function AppRoutes() {
 	}
 
 	logger.debug("═══════════════════════════════════════════════════════════");
-	logger.debug("🚀 [Router] START RENDER");
-	logger.debug("📂 PATH:", window.location.pathname);
-	logger.debug(
-		"🔑 USER:",
-		localStorage.getItem("user") ? "Jest" : "BRAK",
-	);
-	logger.debug("✅ AUTH:", isAuthenticated ? "ZALOGOWANY" : "NIEZALOGOWANY");
+	logger.debug(" [Router] START RENDER");
+	logger.debug(" PATH:", window.location.pathname);
+	logger.debug(" USER:", localStorage.getItem("user") ? "Jest" : "BRAK");
+	logger.debug(" AUTH:", isAuthenticated ? "ZALOGOWANY" : "NIEZALOGOWANY");
 	logger.debug("═══════════════════════════════════════════════════════════");
 
 	if (!isAuthenticated) {
-		logger.debug("🔐 [Router] NIEZALOGOWANY -> /login");
+		logger.debug(" [Router] NIEZALOGOWANY -> /login");
 		return (
 			<Suspense fallback={<Loading />}>
 				<Routes>
@@ -114,7 +111,7 @@ function AppRoutes() {
 		);
 	}
 
-	logger.debug("✅ [Router] ZALOGOWANY -> Dashboard");
+	logger.debug(" [Router] ZALOGOWANY -> Dashboard");
 	return (
 		<Suspense fallback={<Loading />}>
 			<Routes>
@@ -126,7 +123,7 @@ function AppRoutes() {
 				/>
 				<Route
 					path="/onboarding"
-					element={<Onboarding onComplete={() => { }} />}
+					element={<Onboarding onComplete={() => {}} />}
 				/>
 				<Route element={<DashboardLayout />}>
 					<Route path="/" element={<Dashboard />} />

@@ -39,19 +39,19 @@ class AuthService {
 
 	async login(credentials: LoginCredentials): Promise<AuthResponse> {
 		try {
-			logger.debug("🔐 [AuthService] Próba logowania dla:", credentials.email);
+			logger.debug(" [AuthService] Próba logowania dla:", credentials.email);
 
 			const response = await api.post("/api/auth/login", credentials);
 			const data = response.data;
 
 			this.setUser(data.user);
 
-			logger.debug("✅ [AuthService] Zalogowano pomyślnie:", data.user.email);
+			logger.debug(" [AuthService] Zalogowano pomyślnie:", data.user.email);
 			return data;
 		} catch (error: any) {
 			const errorMessage =
 				error?.response?.data?.message || error.message || "Błąd logowania";
-			logger.error("❌ [AuthService] Błąd logowania:", errorMessage);
+			logger.error(" [AuthService] Błąd logowania:", errorMessage);
 
 			localStorage.removeItem(this.USER_KEY);
 			throw new Error(errorMessage);
@@ -60,34 +60,34 @@ class AuthService {
 
 	async register(data: RegisterData): Promise<any> {
 		try {
-			logger.debug("📝 [AuthService] Próba rejestracji dla:", data.email);
+			logger.debug(" [AuthService] Próba rejestracji dla:", data.email);
 
 			const response = await api.post("/api/auth/register", data);
 
-			logger.debug("✅ [AuthService] Zarejestrowano pomyślnie:", data.email);
+			logger.debug(" [AuthService] Zarejestrowano pomyślnie:", data.email);
 			return response.data;
 		} catch (error: any) {
 			const errorMessage =
 				error?.response?.data?.message || error.message || "Błąd rejestracji";
-			logger.error("❌ [AuthService] Błąd rejestracji:", errorMessage);
+			logger.error(" [AuthService] Błąd rejestracji:", errorMessage);
 			throw new Error(errorMessage);
 		}
 	}
 
 	async logout(): Promise<void> {
 		try {
-			logger.debug("🔐 [AuthService] Wylogowywanie...");
+			logger.debug(" [AuthService] Wylogowywanie...");
 			await api.post("/api/auth/logout").catch(() => {});
 		} catch (error) {
 		} finally {
 			localStorage.removeItem(this.USER_KEY);
-			logger.debug("✅ [AuthService] Wylogowano pomyślnie");
+			logger.debug(" [AuthService] Wylogowano pomyślnie");
 		}
 	}
 
 	async refreshToken(): Promise<string> {
 		try {
-			logger.debug("🔄 [AuthService] Odświeżanie tokena...");
+			logger.debug(" [AuthService] Odświeżanie tokena...");
 
 			const response = await api.post<RefreshTokenResponse>(
 				"/api/auth/refresh",
@@ -99,14 +99,14 @@ class AuthService {
 				throw new Error("Brak nowego tokena w odpowiedzi");
 			}
 
-			logger.debug("✅ [AuthService] Token odświeżony pomyślnie");
+			logger.debug(" [AuthService] Token odświeżony pomyślnie");
 			return newToken;
 		} catch (error: any) {
 			const errorMessage =
 				error?.response?.data?.message ||
 				error.message ||
 				"Błąd odświeżania tokena";
-			logger.error("❌ [AuthService] Błąd odświeżania tokena:", errorMessage);
+			logger.error(" [AuthService] Błąd odświeżania tokena:", errorMessage);
 
 			localStorage.removeItem(this.USER_KEY);
 			throw new Error(errorMessage);
@@ -121,7 +121,7 @@ class AuthService {
 			}
 			return null;
 		} catch (error) {
-			logger.error("❌ [AuthService] Błąd parsowania użytkownika:", error);
+			logger.error(" [AuthService] Błąd parsowania użytkownika:", error);
 			return null;
 		}
 	}
@@ -139,7 +139,7 @@ class AuthService {
 		if (currentUser) {
 			const updatedUser = { ...currentUser, ...userData };
 			localStorage.setItem(this.USER_KEY, JSON.stringify(updatedUser));
-			logger.debug("✅ [AuthService] Zaktualizowano dane użytkownika");
+			logger.debug(" [AuthService] Zaktualizowano dane użytkownika");
 		}
 	}
 

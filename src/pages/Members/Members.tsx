@@ -29,9 +29,6 @@ import {
 } from "lucide-react";
 import styles from "./Members.module.css";
 
-
-
-
 const PILLAR_MAP: Record<string, string> = {
 	Konferencyjny: "Filar Konferencyjny",
 	Projektowy: "Filar Projektowy",
@@ -60,14 +57,10 @@ const AREA_LABELS: Record<string, string> = {
 	event_organization: "Organizacja wydarzeń",
 };
 
-
 const mapAreas = (areas: string[]): string[] => {
 	if (!areas || !Array.isArray(areas)) return [];
 	return areas.map((area) => AREA_LABELS[area] || area);
 };
-
-
-
 
 type MemberStatus = "active" | "trial" | "mentor" | "vacation" | "";
 type MemberVacation = {
@@ -170,97 +163,95 @@ const mapApiUserToMember = (user: ApiUser): Member => {
 		interests:
 			hasOnboardingData && onboarding.development_areas
 				? (() => {
-					try {
-						return JSON.parse(onboarding.development_areas);
-					} catch (e) {
-						return [];
-					}
-				})()
+						try {
+							return JSON.parse(onboarding.development_areas);
+						} catch (e) {
+							return [];
+						}
+					})()
 				: [],
 		skills:
 			hasOnboardingData && onboarding.skills
 				? (() => {
-					try {
-						return JSON.parse(onboarding.skills);
-					} catch (e) {
-						return [];
-					}
-				})()
+						try {
+							return JSON.parse(onboarding.skills);
+						} catch (e) {
+							return [];
+						}
+					})()
 				: [],
 		smAreas:
 			hasOnboardingData && onboarding.development_areas
 				? (() => {
-					try {
-						return JSON.parse(onboarding.development_areas);
-					} catch (e) {
-						return [];
-					}
-				})()
+						try {
+							return JSON.parse(onboarding.development_areas);
+						} catch (e) {
+							return [];
+						}
+					})()
 				: [],
 		email: user.email || "",
 		phone: user.phone || "",
 		joinDate: user.join_date
 			? new Date(user.join_date).toISOString().split("T")[0]
 			: user.created_at?.split("T")[0] ||
-			new Date().toISOString().split("T")[0],
+				new Date().toISOString().split("T")[0],
 		contacts: {
 			salaContacts:
 				hasOnboardingData && onboarding.sala_contacts
 					? (() => {
-						try {
-							return JSON.parse(onboarding.sala_contacts);
-						} catch (e) {
-							return [];
-						}
-					})()
+							try {
+								return JSON.parse(onboarding.sala_contacts);
+							} catch (e) {
+								return [];
+							}
+						})()
 					: [],
 			mpContacts:
 				hasOnboardingData && onboarding.mp_contacts
 					? (() => {
-						try {
-							return JSON.parse(onboarding.mp_contacts);
-						} catch (e) {
-							return [];
-						}
-					})()
+							try {
+								return JSON.parse(onboarding.mp_contacts);
+							} catch (e) {
+								return [];
+							}
+						})()
 					: [],
 			otherContacts: [
 				...(hasOnboardingData && onboarding.institution_contacts
 					? (() => {
-						try {
-							return JSON.parse(onboarding.institution_contacts);
-						} catch (e) {
-							return [];
-						}
-					})()
+							try {
+								return JSON.parse(onboarding.institution_contacts);
+							} catch (e) {
+								return [];
+							}
+						})()
 					: []),
 				...(hasOnboardingData && onboarding.other_contacts
 					? (() => {
-						try {
-							return JSON.parse(onboarding.other_contacts);
-						} catch (e) {
-							return [];
-						}
-					})()
+							try {
+								return JSON.parse(onboarding.other_contacts);
+							} catch (e) {
+								return [];
+							}
+						})()
 					: []),
 			],
 		},
 		trainingAreas:
 			hasOnboardingData && onboarding.skills
 				? (() => {
-					try {
-						return JSON.parse(onboarding.skills);
-					} catch (e) {
-						return [];
-					}
-				})()
+						try {
+							return JSON.parse(onboarding.skills);
+						} catch (e) {
+							return [];
+						}
+					})()
 				: [],
 		contributionInfo: {
 			status: "paid",
 			arrears: 0,
 		},
-
-
 	};
 };
 const STATUS_LABELS: Record<MemberStatus, string> = {
@@ -286,10 +277,6 @@ const STATUS_ICONS: Record<MemberStatus, React.ReactNode> = {
 	vacation: <Umbrella size={14} />,
 	"": <Clock size={14} />,
 };
-
-
-
-
 
 interface MemberCardProps {
 	member: Member;
@@ -330,14 +317,13 @@ function MemberCard({
 					<div className={styles.memberCard__nameRow}>
 						<h3 className={styles.memberCard__name}>
 							{member.firstName || ""} {member.lastName || ""}
-							
-							
 							{contributionBadge && contributionBadge !== "none" && (
 								<span
-									className={`${styles.contributionDot} ${contributionBadge === "paid"
+									className={`${styles.contributionDot} ${
+										contributionBadge === "paid"
 											? styles.contributionDotPaid
 											: styles.contributionDotPending
-										}`}
+									}`}
 									title={
 										contributionBadge === "paid"
 											? "Opłacona składka"
@@ -357,7 +343,6 @@ function MemberCard({
 						</span>
 					</div>
 					<div className={styles.memberCard__details}>
-						
 						{member.pillars && (
 							<span className={styles.memberCard__detail}>
 								<Users size={14} />
@@ -365,7 +350,6 @@ function MemberCard({
 							</span>
 						)}
 
-						
 						{member.team && member.team !== "Brak zespołu" && (
 							<span className={styles.memberCard__detail}>
 								<Users size={14} />
@@ -386,7 +370,7 @@ function MemberCard({
 									.join(", ")}
 							</span>
 						)}
-						
+
 						{member.province &&
 							member.province !== "" &&
 							member.province !== "Brak" &&
@@ -435,13 +419,13 @@ function MemberCard({
 			</div>
 			<h3 className={styles.memberCard__name}>
 				{member.firstName || ""} {member.lastName || ""}
-				
 				{contributionBadge && contributionBadge !== "none" && (
 					<span
-						className={`${styles.contributionDot} ${contributionBadge === "paid"
+						className={`${styles.contributionDot} ${
+							contributionBadge === "paid"
 								? styles.contributionDotPaid
 								: styles.contributionDotPending
-							}`}
+						}`}
 						title={
 							contributionBadge === "paid"
 								? "Opłacona składka"
@@ -453,10 +437,7 @@ function MemberCard({
 				)}
 			</h3>
 			<p className={styles.memberCard__function}>{member.function}</p>
-			
-			
-			
-			
+
 			{member.pillars && (
 				<p className={styles.memberCard__team}>
 					<Users size={14} />
@@ -548,10 +529,6 @@ function MemberCard({
 	);
 }
 
-
-
-
-
 interface ProfileModalProps {
 	isOpen: boolean;
 	member: Member | null;
@@ -586,8 +563,8 @@ function ProfileModal({
 	isEdit = false,
 	onClose,
 	onSave,
-	contributionStats, 
-	loadingContributions, 
+	contributionStats,
+	loadingContributions,
 }: ProfileModalProps) {
 	const [formData, setFormData] = useState<Partial<Member>>({
 		firstName: "",
@@ -628,10 +605,6 @@ function ProfileModal({
 
 	useEffect(() => {
 		if (member) {
-
-
-
-
 			const newFormData = {
 				id: member.id,
 				firstName: member.firstName || "",
@@ -775,11 +748,6 @@ function ProfileModal({
 		(hasPermission(currentUser?.role, "canViewAllUsers") ||
 			currentUser.id === currentMember?.id);
 
-
-
-
-
-
 	const addItem = (
 		list: string[],
 		setList: (list: string[]) => void,
@@ -807,8 +775,6 @@ function ProfileModal({
 		}
 
 		if (onSave && canEdit) {
-
-
 			const saveData: Member = {
 				...currentMember,
 				...formData,
@@ -953,7 +919,6 @@ function ProfileModal({
 															? formData.pillars.split(", ")
 															: [];
 
-
 														if (currentPillars.length >= 2) {
 															toast.error("Można dodać maksymalnie 2 filary");
 															e.target.value = "";
@@ -999,13 +964,6 @@ function ProfileModal({
 																	(p) => p !== pillar,
 																);
 
-
-
-
-
-
-
-
 																setFormData({
 																	...formData,
 																	pillars: newPillars.join(", "),
@@ -1043,7 +1001,6 @@ function ProfileModal({
 							</div>
 						</div>
 
-						
 						{canViewContributions && (
 							<div className={styles.modal__row}>
 								<div className={styles.modal__field}>
@@ -1056,10 +1013,11 @@ function ProfileModal({
 											/>
 										) : contributionStats?.hasContributions ? (
 											<span
-												className={`${styles.contributionBadge} ${contributionStats.currentMonth?.status === "paid"
+												className={`${styles.contributionBadge} ${
+													contributionStats.currentMonth?.status === "paid"
 														? styles.contributionBadgePaid
 														: styles.contributionBadgePending
-													}`}
+												}`}
 											>
 												{contributionStats.currentMonth?.status === "paid" ? (
 													<Coins size={16} />
@@ -1074,7 +1032,7 @@ function ProfileModal({
 											</span>
 										) : (
 											<span className={styles.contributionBadgeNone}>
-												<Coins size={16} /> 
+												<Coins size={16} />
 												Brak danych
 											</span>
 										)}
@@ -1890,12 +1848,13 @@ function ProfileModal({
 														Bieżący miesiąc
 													</span>
 													<span
-														className={`${styles.contributionStatValue} ${contributionStats.currentMonth?.status === "paid"
+														className={`${styles.contributionStatValue} ${
+															contributionStats.currentMonth?.status === "paid"
 																? styles.statusPaid
 																: contributionStats.hasContributions === false
 																	? styles.statusNone
 																	: styles.statusPending
-															}`}
+														}`}
 													>
 														{contributionStats.currentMonth?.status === "paid"
 															? "Opłacona"
@@ -1919,13 +1878,14 @@ function ProfileModal({
 														Zaległości
 													</span>
 													<span
-														className={`${styles.contributionStatValue} ${contributionStats.summary?.overdueMonths > 0
+														className={`${styles.contributionStatValue} ${
+															contributionStats.summary?.overdueMonths > 0
 																? styles.statusOverdue
 																: ""
-															}`}
+														}`}
 													>
 														{contributionStats.summary?.overdueMonths > 0
-															? `️ ${contributionStats.summary.overdueMonths} mies.`
+															? ` ${contributionStats.summary.overdueMonths} mies.`
 															: "Brak zaległości"}
 													</span>
 												</div>
@@ -1973,10 +1933,6 @@ function ProfileModal({
 		</div>
 	);
 }
-
-
-
-
 
 export default function Members({ title }: { title?: string }) {
 	const navigate = useNavigate();
@@ -2027,8 +1983,6 @@ export default function Members({ title }: { title?: string }) {
 				? `/api/dashboard/contributions/${memberId}`
 				: "/api/dashboard/contributions";
 
-
-
 			const response = await fetch(url, {
 				headers: {
 					Authorization: `Bearer ${token}`,
@@ -2041,13 +1995,12 @@ export default function Members({ title }: { title?: string }) {
 
 				setContributionStats(data);
 
-
 				setMembers((prev) => [...prev]);
 			} else {
-				console.error("❌ [fetch] Błąd:", response.status);
+				console.error(" [fetch] Błąd:", response.status);
 			}
 		} catch (error) {
-			console.error("❌ [fetch] Błąd:", error);
+			console.error(" [fetch] Błąd:", error);
 		} finally {
 			setLoadingContributions(false);
 		}
@@ -2067,12 +2020,11 @@ export default function Members({ title }: { title?: string }) {
 				setAllContributions(data.contributions || {});
 			}
 		} catch (error) {
-			console.error("❌ Błąd pobierania składek dla wszystkich:", error);
+			console.error(" Błąd pobierania składek dla wszystkich:", error);
 		} finally {
 			setLoadingAllContributions(false);
 		}
 	};
-
 
 	useEffect(() => {
 		if (currentUser?.role === "admin" || currentUser?.role === "board") {
@@ -2081,17 +2033,8 @@ export default function Members({ title }: { title?: string }) {
 	}, [currentUser]);
 
 	useEffect(() => {
-
-
-
-
-
-
-
-
 		if (isProfileOpen || isEditOpen) {
 			if (selectedMember?.id) {
-
 				fetchContributionStats(selectedMember.id);
 			}
 		}
@@ -2152,14 +2095,11 @@ export default function Members({ title }: { title?: string }) {
 				const membersData = await membersResponse.json();
 				logger.debug("Dane z backendu:", membersData);
 
-
-
-
 				const mappedMembers = membersData.map(mapApiUserToMember);
 
 				logger.debug("Wszyscy członkowie po mapowaniu:", mappedMembers);
 				logger.debug(
-					"️ Lista zespołów:",
+					" Lista zespołów:",
 					mappedMembers.map((m: any) => m.team),
 				);
 				setMembers(mappedMembers);
@@ -2207,7 +2147,6 @@ export default function Members({ title }: { title?: string }) {
 
 	const handleAddNewMember = useCallback(
 		async (member: Member) => {
-
 			const pillarsArray = member.pillars
 				? member.pillars.split(", ").filter(Boolean)
 				: [];
@@ -2221,7 +2160,6 @@ export default function Members({ title }: { title?: string }) {
 				);
 				return;
 			}
-
 
 			if (!member.status) {
 				toast.error("Wybierz status członka");
@@ -2377,7 +2315,6 @@ export default function Members({ title }: { title?: string }) {
 	const teams = useMemo(() => {
 		const allTeams = new Set<string>();
 		members.forEach((member) => {
-
 			const teamList = member.team.split(", ");
 			teamList.forEach((team) => {
 				if (team && team !== "Brak zespołu") {
@@ -2448,7 +2385,6 @@ export default function Members({ title }: { title?: string }) {
 	const filteredMembers = useMemo(() => {
 		const result = members
 			.filter((member) => {
-
 				const isSystemAdmin =
 					member.email === "admin@system.pl" ||
 					(member.firstName === "Admin" && member.lastName === "System");
@@ -2462,12 +2398,11 @@ export default function Members({ title }: { title?: string }) {
 				const matchesFunction =
 					selectedFunction === "all" || member.function === selectedFunction;
 
-
 				const fullName =
 					`${member.firstName || ""} ${member.lastName || ""}`.toLowerCase();
 
 				const matchesSearch =
-					fullName.includes(searchLower) || 
+					fullName.includes(searchLower) ||
 					(member.firstName || "").toLowerCase().includes(searchLower) ||
 					(member.lastName || "").toLowerCase().includes(searchLower) ||
 					(member.function || "").toLowerCase().includes(searchLower) ||
@@ -2492,7 +2427,6 @@ export default function Members({ title }: { title?: string }) {
 
 			.map((member) => {
 				let contributionBadge: "paid" | "pending" | "none" = "none";
-
 
 				const contribution = allContributions[member.id];
 				if (contribution) {
@@ -2537,8 +2471,8 @@ export default function Members({ title }: { title?: string }) {
 		selectedFunction,
 		sortBy,
 		sortOrder,
-		contributionStats, 
-		selectedMember, 
+		contributionStats,
+		selectedMember,
 		allContributions,
 	]);
 
@@ -2575,7 +2509,6 @@ export default function Members({ title }: { title?: string }) {
 					throw new Error(errorData.error || "Błąd zmiany statusu");
 				}
 
-
 				const membersResponse = await fetch("/api/members", {
 					headers: { Authorization: `Bearer ${token}` },
 				});
@@ -2599,7 +2532,6 @@ export default function Members({ title }: { title?: string }) {
 	);
 	const handleSaveMember = useCallback(
 		async (updatedMember: Member) => {
-
 			const pillarsArray = updatedMember.pillars
 				? updatedMember.pillars.split(", ").filter(Boolean)
 				: [];
@@ -2622,9 +2554,7 @@ export default function Members({ title }: { title?: string }) {
 					return;
 				}
 
-
 				await handleStatusChange(updatedMember, updatedMember.status);
-
 
 				const response = await fetch(`/api/members/${updatedMember.id}`, {
 					method: "PUT",
@@ -2642,14 +2572,12 @@ export default function Members({ title }: { title?: string }) {
 						email: updatedMember.email,
 						phone: updatedMember.phone,
 						joinDate: updatedMember.joinDate,
-
 					}),
 				});
 
 				if (!response.ok) {
 					throw new Error("Błąd aktualizacji danych");
 				}
-
 
 				const membersResponse = await fetch("/api/members", {
 					headers: { Authorization: `Bearer ${token}` },
@@ -2680,7 +2608,7 @@ export default function Members({ title }: { title?: string }) {
 		setSearchTerm("");
 		setSelectedProvince("all");
 		setSelectedTeam("all");
-		setSelectedFunction("all"); 
+		setSelectedFunction("all");
 	}, []);
 
 	const toggleSort = useCallback(
@@ -2804,12 +2732,12 @@ export default function Members({ title }: { title?: string }) {
 
 					{(selectedProvince !== "all" ||
 						selectedTeam !== "all" ||
-						selectedFunction !== "all" || 
+						selectedFunction !== "all" ||
 						searchTerm) && (
-							<button className={styles.filters__reset} onClick={clearFilters}>
-								Wyczyść filtry
-							</button>
-						)}
+						<button className={styles.filters__reset} onClick={clearFilters}>
+							Wyczyść filtry
+						</button>
+					)}
 				</div>
 			</div>
 
@@ -2887,8 +2815,8 @@ export default function Members({ title }: { title?: string }) {
 						<h3 className={styles.emptyState__title}>Brak członków</h3>
 						<p className={styles.emptyState__description}>
 							{searchTerm ||
-								selectedProvince !== "all" ||
-								selectedTeam !== "all"
+							selectedProvince !== "all" ||
+							selectedTeam !== "all"
 								? "Nie znaleziono członków spełniających kryteria wyszukiwania."
 								: "Nie ma jeszcze żadnych członków w organizacji."}
 						</p>
@@ -2948,9 +2876,6 @@ export default function Members({ title }: { title?: string }) {
 					setIsProfileOpen(false);
 					setSelectedMember(null);
 				}}
-
-
-
 				contributionStats={contributionStats}
 				loadingContributions={loadingContributions}
 			/>
@@ -2964,9 +2889,6 @@ export default function Members({ title }: { title?: string }) {
 					setSelectedMember(null);
 				}}
 				onSave={handleSaveMember}
-
-
-
 				contributionStats={contributionStats}
 				loadingContributions={loadingContributions}
 			/>

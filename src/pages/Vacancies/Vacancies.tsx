@@ -2895,7 +2895,7 @@ export default function Vacancies({ title }: { title?: string }) {
 				const token = localStorage.getItem("accessToken");
 
 				if (!token) {
-					logger.warn("⚠️ Brak tokenu - przekierowanie do logowania");
+					logger.warn(" Brak tokenu - przekierowanie do logowania");
 					setLoading(false);
 					return;
 				}
@@ -3024,11 +3024,11 @@ export default function Vacancies({ title }: { title?: string }) {
 
 					setVacancies(mapped);
 				} else {
-					logger.warn("⚠️ Błąd pobierania wakatów:", vacanciesResponse.status);
+					logger.warn(" Błąd pobierania wakatów:", vacanciesResponse.status);
 					setVacancies([]);
 				}
 			} catch (error) {
-				logger.error("❌ Błąd pobierania danych:", error);
+				logger.error(" Błąd pobierania danych:", error);
 				setVacancies([]);
 				setApplications([]);
 			} finally {
@@ -3168,10 +3168,10 @@ export default function Vacancies({ title }: { title?: string }) {
 
 			try {
 				logger.debug(
-					"📤 Wysyłam zgłoszenie do:",
+					" Wysyłam zgłoszenie do:",
 					`/api/vacancies/${vacancy.id}/apply`,
 				);
-				logger.debug("📦 Dane:", {
+				logger.debug(" Dane:", {
 					message: finalMessage || "",
 					answers: answers || {},
 				});
@@ -3188,17 +3188,17 @@ export default function Vacancies({ title }: { title?: string }) {
 					}),
 				});
 
-				logger.debug("📥 Status odpowiedzi:", response.status);
+				logger.debug(" Status odpowiedzi:", response.status);
 
 				if (!response.ok) {
 					const errorText = await response.text();
-					logger.warn("⚠️ Backend zwrócił błąd:", response.status, errorText);
+					logger.warn(" Backend zwrócił błąd:", response.status, errorText);
 				} else {
 					const result = await response.json();
-					logger.debug("✅ Zapisano w backendzie:", result);
+					logger.debug(" Zapisano w backendzie:", result);
 				}
 			} catch (error) {
-				logger.warn("⚠️ Backend niedostępny, zapisano lokalnie:", error);
+				logger.warn(" Backend niedostępny, zapisano lokalnie:", error);
 			}
 
 			toast.success(
@@ -3302,7 +3302,7 @@ export default function Vacancies({ title }: { title?: string }) {
 					}),
 				});
 			} catch (error) {
-				logger.warn("⚠️ Backend niedostępny, zapisano lokalnie");
+				logger.warn(" Backend niedostępny, zapisano lokalnie");
 			}
 		} catch (error) {
 			logger.error("Błąd zapisywania:", error);

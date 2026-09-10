@@ -75,20 +75,20 @@ function AppRoutes() {
 		const verifyToken = async () => {
 			const user = localStorage.getItem("user");
 			if (!user) {
-				logger.debug("🔐 [Auth] Brak użytkownika");
+				logger.debug(" [Auth] Brak użytkownika");
 				setIsAuthenticated(false);
 				setIsLoading(false);
 				return;
 			}
 
 			try {
-				logger.debug("🔐 [Auth] Weryfikacja tokena...");
+				logger.debug(" [Auth] Weryfikacja tokena...");
 				await api.get("/auth/me");
-				logger.debug("✅ [Auth] Token ważny");
+				logger.debug(" [Auth] Token ważny");
 				setIsAuthenticated(true);
 			} catch (error: any) {
 				logger.warn(
-					"❌ [Auth] Token wygasł lub jest nieprawidłowy",
+					" [Auth] Token wygasł lub jest nieprawidłowy",
 					error?.response?.status,
 				);
 				localStorage.removeItem("user");

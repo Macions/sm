@@ -504,7 +504,7 @@ app.post("/api/auth/google-token", async (req: any, res: any) => {
 					},
 				});
 			} catch (logError) {
-				console.error("❌ [GOOGLE-TOKEN] Błąd zapisu logu:", logError);
+				console.error(" [GOOGLE-TOKEN] Błąd zapisu logu:", logError);
 			}
 
 			return res.status(404).json({
@@ -553,7 +553,7 @@ app.post("/api/auth/google-token", async (req: any, res: any) => {
 				},
 			});
 		} catch (logError) {
-			console.error("❌ [GOOGLE-TOKEN] Błąd zapisu logu:", logError);
+			console.error(" [GOOGLE-TOKEN] Błąd zapisu logu:", logError);
 		}
 
 		res.cookie("accessToken", token, {
@@ -585,7 +585,7 @@ app.post("/api/auth/google-token", async (req: any, res: any) => {
 			onboardingCompleted: true,
 		});
 	} catch (error) {
-		console.error("❌ [GOOGLE-TOKEN] Błąd logowania:", error);
+		console.error(" [GOOGLE-TOKEN] Błąd logowania:", error);
 
 		try {
 			await prisma.systemLog.create({
@@ -612,7 +612,7 @@ app.post("/api/auth/google-token", async (req: any, res: any) => {
 				},
 			});
 		} catch (logError) {
-			console.error("❌ [GOOGLE-TOKEN] Błąd zapisu logu błędu:", logError);
+			console.error(" [GOOGLE-TOKEN] Błąd zapisu logu błędu:", logError);
 		}
 
 		res.status(500).json({ error: "Błąd logowania" });
@@ -810,7 +810,7 @@ app.post("/api/auth/login", async (req, res) => {
 			onboardingCompleted: true,
 		});
 	} catch (error) {
-		logger.error("❌ Błąd logowania:", error);
+		logger.error(" Błąd logowania:", error);
 		res.status(500).json({ error: "Wystąpił błąd podczas logowania" });
 	}
 });
@@ -1290,7 +1290,7 @@ app.get("/api/members", authMiddleware, async (req: any, res) => {
 
 		res.json(members);
 	} catch (error) {
-		console.error("❌ Błąd:", error);
+		console.error(" Błąd:", error);
 		res.status(500).json({
 			error: "Błąd pobierania członków",
 			details: error instanceof Error ? error.message : "Unknown error",
@@ -1338,7 +1338,7 @@ app.get("/api/mentors", authMiddleware, async (req: any, res) => {
 
 		res.json(mentors);
 	} catch (error) {
-		console.error("❌ Błąd:", error);
+		console.error(" Błąd:", error);
 		res.status(500).json({ error: "Błąd pobierania mentorów" });
 	}
 });
@@ -1432,7 +1432,7 @@ app.get("/api/dashboard/birthdays", authMiddleware, async (req: any, res) => {
 
 		res.json(todayBirthdays);
 	} catch (error) {
-		logger.error("❌ Błąd pobierania urodzin:", error);
+		logger.error(" Błąd pobierania urodzin:", error);
 		res.status(500).json({ error: "Nie udało się pobrać urodzin" });
 	}
 });
@@ -1744,11 +1744,11 @@ app.get("/api/tasks", authMiddleware, async (req: any, res) => {
 		const userRole = req.user?.role;
 		const isLeader = req.user?.isLeader || false;
 
-		console.log("🔍 [TASKS] === START ===");
-		console.log("🔍 [TASKS] User ID:", userId);
-		console.log("🔍 [TASKS] User Role:", userRole);
-		console.log("🔍 [TASKS] Is Leader:", isLeader);
-		console.log("🔍 [TASKS] Full req.user:", JSON.stringify(req.user, null, 2));
+		console.log(" [TASKS] === START ===");
+		console.log(" [TASKS] User ID:", userId);
+		console.log(" [TASKS] User Role:", userRole);
+		console.log(" [TASKS] Is Leader:", isLeader);
+		console.log(" [TASKS] Full req.user:", JSON.stringify(req.user, null, 2));
 
 		let whereCondition: any = {};
 
@@ -1768,9 +1768,9 @@ app.get("/api/tasks", authMiddleware, async (req: any, res) => {
 				},
 			});
 
-			console.log("🔍 [TASKS] Leader Teams found:", leaderTeams.length);
+			console.log(" [TASKS] Leader Teams found:", leaderTeams.length);
 			console.log(
-				"🔍 [TASKS] Leader Teams (raw):",
+				" [TASKS] Leader Teams (raw):",
 				JSON.stringify(leaderTeams, null, 2),
 			);
 
@@ -1778,11 +1778,11 @@ app.get("/api/tasks", authMiddleware, async (req: any, res) => {
 				.map((tm: any) => tm.team?.name?.replace("Filar ", ""))
 				.filter(Boolean);
 
-			console.log("🔍 [TASKS] Pillar Names (after replace):", pillarNames);
+			console.log(" [TASKS] Pillar Names (after replace):", pillarNames);
 
 			if (pillarNames.length > 0) {
 				console.log(
-					"🔍 [TASKS] Building WHERE condition for coordinator with pillars:",
+					" [TASKS] Building WHERE condition for coordinator with pillars:",
 					pillarNames,
 				);
 
@@ -1806,11 +1806,11 @@ app.get("/api/tasks", authMiddleware, async (req: any, res) => {
 				};
 
 				console.log(
-					"🔍 [TASKS] WHERE condition (coordinator):",
+					" [TASKS] WHERE condition (coordinator):",
 					JSON.stringify(whereCondition, null, 2),
 				);
 			} else {
-				console.log("🔍 [TASKS] No pillar teams found, using basic filter");
+				console.log(" [TASKS] No pillar teams found, using basic filter");
 
 				whereCondition = {
 					OR: [
@@ -1824,12 +1824,12 @@ app.get("/api/tasks", authMiddleware, async (req: any, res) => {
 				};
 
 				console.log(
-					"🔍 [TASKS] WHERE condition (basic):",
+					" [TASKS] WHERE condition (basic):",
 					JSON.stringify(whereCondition, null, 2),
 				);
 			}
 		} else {
-			console.log("🔍 [TASKS] Regular member - only own tasks");
+			console.log(" [TASKS] Regular member - only own tasks");
 
 			whereCondition = {
 				OR: [
@@ -1848,16 +1848,16 @@ app.get("/api/tasks", authMiddleware, async (req: any, res) => {
 			};
 
 			console.log(
-				"🔍 [TASKS] WHERE condition (member):",
+				" [TASKS] WHERE condition (member):",
 				JSON.stringify(whereCondition, null, 2),
 			);
 		}
 
-		console.log("🔍 [TASKS] Query params:", req.query);
+		console.log(" [TASKS] Query params:", req.query);
 
 		if (userRole !== "admin" && userRole !== "board") {
 			if (req.query.leaderId) {
-				console.log("🔍 [TASKS] Filtering by leaderId:", req.query.leaderId);
+				console.log(" [TASKS] Filtering by leaderId:", req.query.leaderId);
 
 				const leaderId = parseInt(req.query.leaderId as string);
 				const leaderTeams = await prisma.teamMember.findMany({
@@ -1877,7 +1877,7 @@ app.get("/api/tasks", authMiddleware, async (req: any, res) => {
 					.map((tm: any) => tm.team?.name?.replace("Filar ", ""))
 					.filter(Boolean);
 
-				console.log("🔍 [TASKS] Leader teams for leaderId:", pillarNames);
+				console.log(" [TASKS] Leader teams for leaderId:", pillarNames);
 
 				if (pillarNames.length > 0) {
 					whereCondition = {
@@ -1894,23 +1894,23 @@ app.get("/api/tasks", authMiddleware, async (req: any, res) => {
 				}
 
 				console.log(
-					"🔍 [TASKS] WHERE after leaderId filter:",
+					" [TASKS] WHERE after leaderId filter:",
 					JSON.stringify(whereCondition, null, 2),
 				);
 			}
 
 			if (req.query.userId && !req.query.leaderId) {
-				console.log("🔍 [TASKS] Filtering by userId:", req.query.userId);
+				console.log(" [TASKS] Filtering by userId:", req.query.userId);
 				whereCondition = { assigned_to: parseInt(req.query.userId as string) };
 				console.log(
-					"🔍 [TASKS] WHERE after userId filter:",
+					" [TASKS] WHERE after userId filter:",
 					JSON.stringify(whereCondition, null, 2),
 				);
 			}
 		}
 
 		console.log(
-			"🔍 [TASKS] Final WHERE condition:",
+			" [TASKS] Final WHERE condition:",
 			JSON.stringify(whereCondition, null, 2),
 		);
 
@@ -1976,13 +1976,13 @@ app.get("/api/tasks", authMiddleware, async (req: any, res) => {
 			},
 		});
 
-		console.log("🔍 [TASKS] ✅ Tasks found:", tasks.length);
+		console.log(" [TASKS]  Tasks found:", tasks.length);
 		console.log(
-			"🔍 [TASKS] Task IDs:",
+			" [TASKS] Task IDs:",
 			tasks.map((t: any) => t.id),
 		);
 		console.log(
-			"🔍 [TASKS] Task pillars:",
+			" [TASKS] Task pillars:",
 			tasks.map((t: any) => ({
 				id: t.id,
 				pillar: t.pillar,
@@ -2054,17 +2054,17 @@ app.get("/api/tasks", authMiddleware, async (req: any, res) => {
 				})) || [],
 		}));
 
-		console.log("🔍 [TASKS] === END ===");
-		console.log("🔍 [TASKS] Returning:", mappedTasks.length, "tasks");
+		console.log(" [TASKS] === END ===");
+		console.log(" [TASKS] Returning:", mappedTasks.length, "tasks");
 		console.log(
-			"🔍 [TASKS] First task IDs:",
+			" [TASKS] First task IDs:",
 			mappedTasks.slice(0, 5).map((t: any) => t.id),
 		);
 
 		res.json(mappedTasks);
 	} catch (error) {
-		console.error("❌ [TASKS] ERROR:", error);
-		logger.error("❌ Błąd pobierania zadań:", error);
+		console.error(" [TASKS] ERROR:", error);
+		logger.error(" Błąd pobierania zadań:", error);
 		res.status(500).json({ error: "Nie udało się pobrać zadań" });
 	}
 });
@@ -2108,7 +2108,7 @@ app.get(
 				})),
 			);
 		} catch (error) {
-			console.error("❌ Błąd pobierania przypisanych:", error);
+			console.error(" Błąd pobierania przypisanych:", error);
 			res.status(500).json({ error: "Nie udało się pobrać przypisanych" });
 		}
 	},
@@ -2226,7 +2226,7 @@ app.put(
 					await prisma.notification.create({
 						data: {
 							user_id: task.created_by,
-							title: "✅ Wszyscy ukończyli zadanie",
+							title: " Wszyscy ukończyli zadanie",
 							message: `Wszyscy przypisani ukończyli zadanie: "${task.title}"`,
 							type: "success",
 							read: false,
@@ -2250,7 +2250,7 @@ app.put(
 				completedAt: updatedAssignee.completed_at?.toISOString() || null,
 			});
 		} catch (error) {
-			console.error("❌ Błąd aktualizacji statusu:", error);
+			console.error(" Błąd aktualizacji statusu:", error);
 			res.status(500).json({ error: "Nie udało się zaktualizować statusu" });
 		}
 	},
@@ -2339,7 +2339,7 @@ app.post(
 				completedAt: assignee.completed_at?.toISOString() || null,
 			});
 		} catch (error) {
-			console.error("❌ Błąd dodawania assignee:", error);
+			console.error(" Błąd dodawania assignee:", error);
 			res.status(500).json({ error: "Nie udało się dodać użytkownika" });
 		}
 	},
@@ -2392,7 +2392,7 @@ app.delete(
 
 			res.json({ success: true, message: "Użytkownik usunięty z zadania" });
 		} catch (error) {
-			console.error("❌ Błąd usuwania assignee:", error);
+			console.error(" Błąd usuwania assignee:", error);
 			res.status(500).json({ error: "Nie udało się usunąć użytkownika" });
 		}
 	},
@@ -2472,7 +2472,7 @@ app.post(
 				total: tasks.length,
 			});
 		} catch (error) {
-			console.error("❌ Błąd migracji:", error);
+			console.error(" Błąd migracji:", error);
 			res.status(500).json({ error: "Nie udało się przeprowadzić migracji" });
 		}
 	},
@@ -4320,10 +4320,10 @@ app.use(
 		res: express.Response,
 		next: express.NextFunction,
 	) => {
-		console.error("❌ Błąd:", err);
+		console.error(" Błąd:", err);
 
 		if (res.headersSent) {
-			console.warn("⚠️ Odpowiedź już została wysłana - pomijam handler błędów");
+			console.warn(" Odpowiedź już została wysłana - pomijam handler błędów");
 			return next(err);
 		}
 
@@ -4355,7 +4355,7 @@ app.use(
 				res.status(statusCode).json({ error: message });
 			}
 		} catch (e) {
-			console.error("💥 Krytyczny błąd w handlerze błędów:", e);
+			console.error(" Krytyczny błąd w handlerze błędów:", e);
 
 			if (!res.headersSent) {
 				res.statusCode = 500;
@@ -5100,7 +5100,7 @@ const getTodayBirthdays = async (req: any, res: any) => {
 
 		res.json(todayBirthdays);
 	} catch (error) {
-		logger.error("❌ Błąd pobierania urodzin:", error);
+		logger.error(" Błąd pobierania urodzin:", error);
 		res.status(500).json({ error: "Nie udało się pobrać urodzin" });
 	}
 };
@@ -6264,11 +6264,11 @@ app.get("/api/auth/me", async (req, res) => {
 				status: user.status,
 			});
 		} catch (jwtError) {
-			console.error("❌ Błąd JWT:", jwtError);
+			console.error(" Błąd JWT:", jwtError);
 			return res.status(401).json({ error: "Nieprawidłowy token" });
 		}
 	} catch (error) {
-		console.error("❌ Błąd pobierania profilu:", error);
+		console.error(" Błąd pobierania profilu:", error);
 		res.status(500).json({ error: "Błąd serwera" });
 	}
 });
@@ -6346,7 +6346,7 @@ app.post("/api/tasks", authMiddleware, async (req: any, res) => {
 			feedbackType: task.feedback_type || "text",
 		});
 	} catch (error) {
-		logger.error("❌ Błąd tworzenia zadania:", error);
+		logger.error(" Błąd tworzenia zadania:", error);
 		res.status(500).json({ error: "Nie udało się utworzyć zadania" });
 	}
 });
@@ -6473,7 +6473,7 @@ app.put("/api/tasks/:id", authMiddleware, async (req: any, res) => {
 			feedbackType: task.feedback_type || "text",
 		});
 	} catch (error) {
-		console.error("❌ [BACKEND] Błąd aktualizacji zadania:", error);
+		console.error(" [BACKEND] Błąd aktualizacji zadania:", error);
 		res.status(500).json({ error: "Nie udało się zaktualizować zadania" });
 	}
 });
@@ -6665,7 +6665,7 @@ app.get(
 				}));
 
 			logger.debug(
-				"🔍 TOP 5 przed wysłaniem:",
+				" TOP 5 przed wysłaniem:",
 				JSON.stringify(
 					topFive.map((u) => ({
 						name: u.fullName,
@@ -6677,7 +6677,7 @@ app.get(
 			);
 
 			logger.debug(
-				"🔍 BOTTOM 5 przed wysłaniem:",
+				" BOTTOM 5 przed wysłaniem:",
 				JSON.stringify(
 					bottomFive.map((u) => ({
 						name: u.fullName,
@@ -6696,7 +6696,7 @@ app.get(
 				hasMore: usersWithAttendance.length > limitNum,
 			});
 		} catch (error) {
-			logger.error("❌ Błąd pobierania rankingu frekwencji:", error);
+			logger.error(" Błąd pobierania rankingu frekwencji:", error);
 			res.status(500).json({
 				error: "Nie udało się pobrać rankingu frekwencji",
 				details: error instanceof Error ? error.message : "Unknown error",
@@ -7101,7 +7101,7 @@ app.get("/api/admin/logs", authMiddleware, async (req: any, res) => {
 
 // 			res.json(formattedContacts);
 // 		} catch (error) {
-// 			console.error("❌ Błąd pobierania kontaktów onboardingu:", error);
+// 			console.error(" Błąd pobierania kontaktów onboardingu:", error);
 // 			res.status(500).json({
 // 				error: "Nie udało się pobrać kontaktów",
 // 				details: error instanceof Error ? error.message : "Unknown error",
@@ -7742,10 +7742,10 @@ app.put(
 
 			return res.json(formattedMember);
 		} catch (error) {
-			console.error("❌ [MEMBERS] Błąd aktualizacji:", error);
+			console.error(" [MEMBERS] Błąd aktualizacji:", error);
 
 			if (res.headersSent) {
-				console.warn("⚠️ Odpowiedź już wysłana, pomijam");
+				console.warn(" Odpowiedź już wysłana, pomijam");
 				return;
 			}
 
@@ -7790,10 +7790,10 @@ app.delete(
 				message: "Członek usunięty",
 			});
 		} catch (error) {
-			console.error("❌ [MEMBERS] Błąd usuwania:", error);
+			console.error(" [MEMBERS] Błąd usuwania:", error);
 
 			if (res.headersSent) {
-				console.warn("⚠️ Odpowiedź już wysłana, pomijam");
+				console.warn(" Odpowiedź już wysłana, pomijam");
 				return;
 			}
 
@@ -7886,10 +7886,10 @@ app.put(
 
 			return res.json(formattedCreator);
 		} catch (error) {
-			console.error("❌ [CREATORS] Błąd aktualizacji:", error);
+			console.error(" [CREATORS] Błąd aktualizacji:", error);
 
 			if (res.headersSent) {
-				console.warn("⚠️ Odpowiedź już wysłana, pomijam");
+				console.warn(" Odpowiedź już wysłana, pomijam");
 				return;
 			}
 
@@ -7934,10 +7934,10 @@ app.delete(
 				message: "Twórca usunięty",
 			});
 		} catch (error) {
-			console.error("❌ [CREATORS] Błąd usuwania:", error);
+			console.error(" [CREATORS] Błąd usuwania:", error);
 
 			if (res.headersSent) {
-				console.warn("⚠️ Odpowiedź już wysłana, pomijam");
+				console.warn(" Odpowiedź już wysłana, pomijam");
 				return;
 			}
 
@@ -7997,7 +7997,7 @@ app.get("/api/admin/member-access", authMiddleware, async (req: any, res) => {
 
 		res.json(formattedMembers);
 	} catch (error) {
-		console.error("❌ [member-access] Błąd:", error);
+		console.error(" [member-access] Błąd:", error);
 		res.status(500).json({ error: "Nie udało się pobrać dostępów" });
 	}
 });
@@ -8116,7 +8116,7 @@ app.put("/api/members/:id/status", authMiddleware, async (req: any, res) => {
 			user: updatedUser,
 		});
 	} catch (error) {
-		console.error("❌ Błąd:", error);
+		console.error(" Błąd:", error);
 		res.status(500).json({ error: "Błąd zmiany statusu" });
 	}
 });
@@ -8211,7 +8211,7 @@ app.get("/api/members/:id/items", authMiddleware, async (req: any, res) => {
 
 		res.json(items);
 	} catch (error) {
-		logger.error("❌ Błąd pobierania przedmiotów:", error);
+		logger.error(" Błąd pobierania przedmiotów:", error);
 		res.status(500).json({ error: "Nie udało się pobrać przedmiotów" });
 	}
 });
@@ -8258,7 +8258,7 @@ app.post("/api/members/:id/items", authMiddleware, async (req: any, res) => {
 			created_at: item.created_at,
 		});
 	} catch (error) {
-		logger.error("❌ Błąd dodawania przedmiotu:", error);
+		logger.error(" Błąd dodawania przedmiotu:", error);
 		res.status(500).json({ error: "Nie udało się dodać przedmiotu" });
 	}
 });
@@ -8313,7 +8313,7 @@ app.put("/api/items/:id", authMiddleware, async (req: any, res) => {
 			created_at: updatedItem.created_at,
 		});
 	} catch (error) {
-		logger.error("❌ Błąd edycji przedmiotu:", error);
+		logger.error(" Błąd edycji przedmiotu:", error);
 		res.status(500).json({ error: "Nie udało się edytować przedmiotu" });
 	}
 });
@@ -8352,7 +8352,7 @@ app.delete("/api/items/:id", authMiddleware, async (req: any, res) => {
 
 		res.json({ success: true, message: "Przedmiot usunięty" });
 	} catch (error) {
-		logger.error("❌ Błąd usuwania przedmiotu:", error);
+		logger.error(" Błąd usuwania przedmiotu:", error);
 		res.status(500).json({ error: "Nie udało się usunąć przedmiotu" });
 	}
 });
@@ -8387,7 +8387,7 @@ app.get("/api/admin/member-items", authMiddleware, async (req: any, res) => {
 
 		res.json(members);
 	} catch (error) {
-		logger.error("❌ Błąd pobierania przedmiotów:", error);
+		logger.error(" Błąd pobierania przedmiotów:", error);
 		res.status(500).json({ error: "Nie udało się pobrać przedmiotów" });
 	}
 });
@@ -8907,7 +8907,7 @@ app.get("/api/search", authMiddleware, async (req: any, res) => {
 			results: sortedResults,
 		});
 	} catch (error) {
-		logger.error("❌ Błąd wyszukiwania:", error);
+		logger.error(" Błąd wyszukiwania:", error);
 		res.status(500).json({
 			error: "Nie udało się wykonać wyszukiwania",
 			details: error instanceof Error ? error.message : "Unknown error",
@@ -9247,7 +9247,7 @@ app.get("/api/search/data", authMiddleware, async (req: any, res) => {
 			})),
 		});
 	} catch (error) {
-		logger.error("❌ Błąd pobierania danych do wyszukiwania:", error);
+		logger.error(" Błąd pobierania danych do wyszukiwania:", error);
 		res.status(500).json({ error: "Nie udało się pobrać danych" });
 	}
 });
@@ -9347,7 +9347,7 @@ app.get(
 				total: sortedUsers.length,
 			});
 		} catch (error) {
-			console.error("❌ [inactive-users] Błąd:", error);
+			console.error(" [inactive-users] Błąd:", error);
 			res.status(500).json({
 				error: "Nie udało się pobrać danych",
 				details: error instanceof Error ? error.message : "Unknown error",

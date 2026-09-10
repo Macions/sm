@@ -4,14 +4,14 @@ const prisma = new PrismaClient();
 
 export async function updateLeaveStatus() {
 	try {
-		logger.debug("🔄 [JOB] Sprawdzanie statusów urlopowych...");
+		logger.debug(" [JOB] Sprawdzanie statusów urlopowych...");
 
 		const now = new Date();
 		const today = new Date(
 			Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()),
 		);
 
-		logger.debug("📅 TODAY:", today.toISOString());
+		logger.debug(" TODAY:", today.toISOString());
 
 		const usersOnLeave = await prisma.user.findMany({
 			where: {
@@ -36,7 +36,7 @@ export async function updateLeaveStatus() {
 			},
 		});
 
-		logger.debug("👥 Użytkownicy aktualnie na urlopie:");
+		logger.debug(" Użytkownicy aktualnie na urlopie:");
 		console.table(usersOnLeave);
 
 		const usersNotOnLeave = await prisma.user.findMany({
@@ -69,7 +69,7 @@ export async function updateLeaveStatus() {
 			},
 		});
 
-		logger.debug("🔙 Użytkownicy wracający z urlopu:");
+		logger.debug(" Użytkownicy wracający z urlopu:");
 		console.table(usersNotOnLeave);
 
 		for (const user of usersOnLeave) {
@@ -85,11 +85,11 @@ export async function updateLeaveStatus() {
 				});
 
 				logger.debug(
-					`✅ ${updatedUser.first_name} ${updatedUser.last_name}: ${user.status} -> vacation (zapisano poprzedni: ${user.status})`,
+					` ${updatedUser.first_name} ${updatedUser.last_name}: ${user.status} -> vacation (zapisano poprzedni: ${user.status})`,
 				);
 			} else {
 				logger.debug(
-					`ℹ️ ${user.first_name} ${user.last_name} już ma status vacation (poprzedni: ${user.previous_status || "brak"})`,
+					`ℹ ${user.first_name} ${user.last_name} już ma status vacation (poprzedni: ${user.previous_status || "brak"})`,
 				);
 			}
 		}
@@ -108,14 +108,14 @@ export async function updateLeaveStatus() {
 			});
 
 			logger.debug(
-				`✅ ${updatedUser.first_name} ${updatedUser.last_name}: vacation -> ${previousStatus} (przywrócono)`,
+				` ${updatedUser.first_name} ${updatedUser.last_name}: vacation -> ${previousStatus} (przywrócono)`,
 			);
 		}
 
 		logger.debug(
-			`📊 [JOB] Zakończono: ${usersOnLeave.length} na urlopie, ${usersNotOnLeave.length} wróciło`,
+			` [JOB] Zakończono: ${usersOnLeave.length} na urlopie, ${usersNotOnLeave.length} wróciło`,
 		);
 	} catch (error) {
-		logger.error("❌ [JOB] Błąd aktualizacji statusów:", error);
+		logger.error(" [JOB] Błąd aktualizacji statusów:", error);
 	}
 }

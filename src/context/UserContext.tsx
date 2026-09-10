@@ -85,7 +85,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
 				localStorage.setItem("user", JSON.stringify(userData));
 			}
 		} catch (error) {
-			logger.error("❌ Błąd pobierania profilu:", error);
+			logger.error(" Błąd pobierania profilu:", error);
 		} finally {
 			setLoading(false);
 		}

@@ -30,16 +30,14 @@ export function TaskRatingModal({
 
 	const handleSubmit = async () => {
 		if (rating === 0) {
-			toast.error("❌ Oceń zadanie gwiazdkami!");
+			toast.error(" Oceń zadanie gwiazdkami!");
 			return;
 		}
 
 		setIsSubmitting(true);
 		try {
 			await onSubmit(task.id, rating, comment || "");
-
 		} catch (error) {
-
 		} finally {
 			setIsSubmitting(false);
 		}
@@ -73,7 +71,6 @@ export function TaskRatingModal({
 				</div>
 
 				<div className={styles.body}>
-					
 					<div className={styles.section}>
 						<label className={styles.label}>
 							Poziom trudności <span className={styles.required}>*</span>
@@ -104,7 +101,6 @@ export function TaskRatingModal({
 						)}
 					</div>
 
-					
 					<div className={styles.section}>
 						<label className={styles.label}>
 							Komentarz <span className={styles.optional}>(opcjonalnie)</span>

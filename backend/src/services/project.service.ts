@@ -39,10 +39,10 @@ export class ProjectService {
 				orderBy: { created_at: "desc" },
 			});
 
-			logger.debug("✅ Znaleziono aktywnych projektów:", projects.length);
+			logger.debug(" Znaleziono aktywnych projektów:", projects.length);
 			return projects.map((p: any) => this.toResponse(p));
 		} catch (error) {
-			logger.error("❌ Błąd pobierania projektów:", error);
+			logger.error(" Błąd pobierania projektów:", error);
 			throw new Error("Nie udało się pobrać projektów");
 		}
 	}
@@ -54,7 +54,7 @@ export class ProjectService {
 			});
 			return project ? this.toResponse(project) : null;
 		} catch (error) {
-			logger.error("❌ Błąd pobierania projektu:", error);
+			logger.error(" Błąd pobierania projektu:", error);
 			throw new Error("Nie udało się pobrać projektu");
 		}
 	}
@@ -67,7 +67,7 @@ export class ProjectService {
 			});
 			return projects.map((p: any) => this.toResponse(p));
 		} catch (error) {
-			logger.error("❌ Błąd pobierania projektów dla filaru:", error);
+			logger.error(" Błąd pobierania projektów dla filaru:", error);
 			throw new Error("Nie udało się pobrać projektów dla filaru");
 		}
 	}
@@ -80,7 +80,7 @@ export class ProjectService {
 			});
 			return projects.map((p: any) => this.toResponse(p));
 		} catch (error) {
-			logger.error("❌ Błąd pobierania projektów dla statusu:", error);
+			logger.error(" Błąd pobierania projektów dla statusu:", error);
 			throw new Error("Nie udało się pobrać projektów dla statusu");
 		}
 	}
@@ -107,7 +107,7 @@ export class ProjectService {
 
 			return this.toResponse(project);
 		} catch (error) {
-			logger.error("❌ Błąd tworzenia projektu:", error);
+			logger.error(" Błąd tworzenia projektu:", error);
 			throw new Error("Nie udało się utworzyć projektu");
 		}
 	}
@@ -134,7 +134,7 @@ export class ProjectService {
 
 			return this.toResponse(project);
 		} catch (error) {
-			logger.error("❌ Błąd aktualizacji projektu:", error);
+			logger.error(" Błąd aktualizacji projektu:", error);
 			throw new Error("Nie udało się zaktualizować projektu");
 		}
 	}
@@ -145,9 +145,9 @@ export class ProjectService {
 				where: { id: parseInt(id) },
 				data: { is_active: 0 },
 			});
-			logger.debug(`✅ Projekt ${id} został dezaktywowany`);
+			logger.debug(` Projekt ${id} został dezaktywowany`);
 		} catch (error) {
-			logger.error("❌ Błąd dezaktywacji projektu:", error);
+			logger.error(" Błąd dezaktywacji projektu:", error);
 			throw new Error("Nie udało się dezaktywować projektu");
 		}
 	}

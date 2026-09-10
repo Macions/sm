@@ -6,9 +6,9 @@ import mysql from "mysql2/promise";
 
 const prisma = new PrismaClient();
 
-logger.debug("📋 [SYNC] Ładowanie konfiguracji z .env...");
-logger.debug("📋 [SYNC] EWIDENCJA_DB_HOST:", process.env.EWIDENCJA_DB_HOST);
-logger.debug("📋 [SYNC] EWIDENCJA_DB_USER:", process.env.EWIDENCJA_DB_USER);
+logger.debug(" [SYNC] Ładowanie konfiguracji z .env...");
+logger.debug(" [SYNC] EWIDENCJA_DB_HOST:", process.env.EWIDENCJA_DB_HOST);
+logger.debug(" [SYNC] EWIDENCJA_DB_USER:", process.env.EWIDENCJA_DB_USER);
 
 const ALLOWED_PILLARS = [
 	"Konferencyjny",
@@ -139,13 +139,13 @@ function mapStatus(statusText: string): {
 	}
 
 	logger.debug(
-		`⚠️ [SYNC] Nieznany status: "${statusText}" - traktuję jako trial`,
+		` [SYNC] Nieznany status: "${statusText}" - traktuję jako trial`,
 	);
 	return { status: "trial", isTrial: true, isActive: true, shouldSkip: false };
 }
 
 export async function syncMembers() {
-	logger.debug("🔄 [SYNC] Rozpoczynam synchronizację członków...");
+	logger.debug(" [SYNC] Rozpoczynam synchronizację członków...");
 	const startTime = Date.now();
 	let birthdaysUpdated = 0;
 	let birthdaysSkipped = 0;
@@ -168,12 +168,10 @@ export async function syncMembers() {
               AND lastname != ''
         `)) as any[];
 
-		logger.debug(
-			`📥 [SYNC] Pobrano ${rows.length} rekordów z zewnętrznej bazy`,
-		);
+		logger.debug(` [SYNC] Pobrano ${rows.length} rekordów z zewnętrznej bazy`);
 
 		if (rows.length === 0) {
-			logger.debug("⚠️ [SYNC] Brak danych do synchronizacji");
+			logger.debug(" [SYNC] Brak danych do synchronizacji");
 			return;
 		}
 
@@ -190,7 +188,7 @@ export async function syncMembers() {
 
 		if (resignedMembers.length > 0) {
 			logger.debug(
-				`👥 [SYNC] Znaleziono ${resignedMembers.length} użytkowników z rezygnacją do dezaktywacji`,
+				` [SYNC] Znaleziono ${resignedMembers.length} użytkowników z rezygnacją do dezaktywacji`,
 			);
 
 			let deactivatedCount = 0;
@@ -213,19 +211,19 @@ export async function syncMembers() {
 						});
 						deactivatedCount++;
 						logger.debug(
-							`🔒 [SYNC] Dezaktywowano użytkownika z rezygnacją: ${email}`,
+							` [SYNC] Dezaktywowano użytkownika z rezygnacją: ${email}`,
 						);
 					} catch (deleteError) {
-						logger.error(`❌ [SYNC] Błąd dezaktywacji ${email}:`, deleteError);
+						logger.error(` [SYNC] Błąd dezaktywacji ${email}:`, deleteError);
 					}
 				}
 			}
 			logger.debug(
-				`🔒 [SYNC] Dezaktywowano ${deactivatedCount} użytkowników z rezygnacją`,
+				` [SYNC] Dezaktywowano ${deactivatedCount} użytkowników z rezygnacją`,
 			);
 		}
 
-		logger.debug("📥 [SYNC] Pobieranie filarów z SM_Frekwencja...");
+		logger.debug(" [SYNC] Pobieranie filarów z SM_Frekwencja...");
 
 		const [memberPillars] = (await frekwencjaDb.query(`
             SELECT 
@@ -257,7 +255,7 @@ export async function syncMembers() {
 		}
 
 		logger.debug(
-			`📊 [SYNC] Pobrano filary dla ${pillarMap.size} członków z SM_Frekwencja`,
+			` [SYNC] Pobrano filary dla ${pillarMap.size} członków z SM_Frekwencja`,
 		);
 
 		const teams = await prisma.team.findMany({
@@ -282,7 +280,7 @@ export async function syncMembers() {
 			const status = member.status || "unknown";
 			statusStats[status] = (statusStats[status] || 0) + 1;
 		}
-		logger.debug("📊 [SYNC] Statystyki statusów w SM_Ewidencja:");
+		logger.debug(" [SYNC] Statystyki statusów w SM_Ewidencja:");
 		Object.entries(statusStats).forEach(([status, count]) => {
 			logger.debug(`   ${status}: ${count}`);
 		});
@@ -314,7 +312,7 @@ export async function syncMembers() {
 		);
 
 		logger.debug(
-			`📊 [SYNC] W głównej bazie: ${existingUsers.length} użytkowników`,
+			` [SYNC] W głównej bazie: ${existingUsers.length} użytkowników`,
 		);
 
 		let added = 0;
@@ -335,7 +333,7 @@ export async function syncMembers() {
 				if (usedEmails.has(generatedEmail)) {
 					duplicateEmails++;
 					logger.debug(
-						`⚠️ [SYNC] Duplikat emaila: ${generatedEmail} (${member.firstname} ${member.lastname}) - pomijam`,
+						` [SYNC] Duplikat emaila: ${generatedEmail} (${member.firstname} ${member.lastname}) - pomijam`,
 					);
 					continue;
 				}
@@ -357,7 +355,7 @@ export async function syncMembers() {
 							},
 						});
 						updated++;
-						logger.debug(`🔒 [SYNC] Dezaktywowano w pętli: ${generatedEmail}`);
+						logger.debug(` [SYNC] Dezaktywowano w pętli: ${generatedEmail}`);
 					}
 					skippedRezygnacja++;
 					continue;
@@ -393,13 +391,13 @@ export async function syncMembers() {
 						if (birthdayDate && isNaN(birthdayDate.getTime())) {
 							birthdayDate = null;
 							logger.debug(
-								`⚠️ [SYNC] Niepoprawny format daty urodzenia dla ${generatedEmail}: ${member.birthdate}`,
+								` [SYNC] Niepoprawny format daty urodzenia dla ${generatedEmail}: ${member.birthdate}`,
 							);
 						}
 					} catch (error) {
 						birthdayDate = null;
 						logger.debug(
-							`⚠️ [SYNC] Błąd konwersji daty urodzenia dla ${generatedEmail}: ${member.birthdate}`,
+							` [SYNC] Błąd konwersji daty urodzenia dla ${generatedEmail}: ${member.birthdate}`,
 						);
 					}
 				}
@@ -461,11 +459,11 @@ export async function syncMembers() {
 						if (existing.pillars && existing.pillars !== "") {
 							pillarsPreserved++;
 							logger.debug(
-								`🔒 [SYNC] Zachowano istniejące filary użytkownika ${generatedEmail}: ${existing.pillars}`,
+								` [SYNC] Zachowano istniejące filary użytkownika ${generatedEmail}: ${existing.pillars}`,
 							);
 						} else {
 							logger.debug(
-								`⏭️ [SYNC] Użytkownik ${generatedEmail} nie ma filarów - pozostawiam puste`,
+								`⏭ [SYNC] Użytkownik ${generatedEmail} nie ma filarów - pozostawiam puste`,
 							);
 						}
 					} else {
@@ -495,12 +493,12 @@ export async function syncMembers() {
 							dataToUpdate.birthday = newBirthday;
 							birthdaysUpdated++;
 							logger.debug(
-								`🎂 [SYNC] Aktualizacja daty urodzenia dla ${generatedEmail}: ${newBirthday.toISOString().split("T")[0]}`,
+								` [SYNC] Aktualizacja daty urodzenia dla ${generatedEmail}: ${newBirthday.toISOString().split("T")[0]}`,
 							);
 						} else {
 							birthdaysSkipped++;
 							logger.debug(
-								`⏭️ [SYNC] Data urodzenia bez zmian dla ${generatedEmail}: ${newBirthday.toISOString().split("T")[0]}`,
+								`⏭ [SYNC] Data urodzenia bez zmian dla ${generatedEmail}: ${newBirthday.toISOString().split("T")[0]}`,
 							);
 						}
 					} else {
@@ -532,23 +530,23 @@ export async function syncMembers() {
 						updated++;
 
 						const statusMsg = hasExistingStatus
-							? `⏭️ status niezmieniony (zachowano: ${existing.status})`
+							? `⏭ status niezmieniony (zachowano: ${existing.status})`
 							: `status: ${member.status} -> ${userData.status}`;
 
 						const pillarsMsg = hasExistingPillars
-							? `🔒 filary zachowane: ${existing.pillars}`
+							? ` filary zachowane: ${existing.pillars}`
 							: `filary: ${userData.pillars || "brak"}`;
 
 						const functionalRoleMsg = hasExistingFunctionalRole
-							? `🔒 funkcjonalna rola zachowana: ${existing.functional_role}`
+							? ` funkcjonalna rola zachowana: ${existing.functional_role}`
 							: `funkcjonalna rola: ${userData.functional_role}`;
 
 						const birthdayMsg = dataToUpdate.birthday
-							? `🎂 data urodzenia: ${dataToUpdate.birthday.toISOString().split("T")[0]}`
+							? ` data urodzenia: ${dataToUpdate.birthday.toISOString().split("T")[0]}`
 							: `data urodzenia: brak`;
 
 						logger.debug(
-							`🔄 [SYNC] Zaktualizowano: ${generatedEmail} | ${statusMsg} | ${pillarsMsg} | ${functionalRoleMsg} | ${birthdayMsg}`,
+							` [SYNC] Zaktualizowano: ${generatedEmail} | ${statusMsg} | ${pillarsMsg} | ${functionalRoleMsg} | ${birthdayMsg}`,
 						);
 					} else {
 						userId = existing.id;
@@ -573,7 +571,7 @@ export async function syncMembers() {
 
 					if (username !== baseUsername) {
 						logger.debug(
-							`⚠️ [SYNC] Username ${baseUsername} już istnieje, używam: ${username}`,
+							` [SYNC] Username ${baseUsername} już istnieje, używam: ${username}`,
 						);
 					}
 
@@ -587,11 +585,11 @@ export async function syncMembers() {
 					added++;
 
 					const birthdayMsg = userData.birthday
-						? `🎂 data urodzenia: ${userData.birthday.toISOString().split("T")[0]}`
+						? ` data urodzenia: ${userData.birthday.toISOString().split("T")[0]}`
 						: `data urodzenia: brak`;
 
 					logger.debug(
-						`✅ [SYNC] Dodano: ${generatedEmail} (${userData.first_name} ${userData.last_name}) | status: ${userData.status} | filary: ${userData.pillars || "brak"} | ${birthdayMsg}`,
+						` [SYNC] Dodano: ${generatedEmail} (${userData.first_name} ${userData.last_name}) | status: ${userData.status} | filary: ${userData.pillars || "brak"} | ${birthdayMsg}`,
 					);
 				}
 
@@ -620,7 +618,7 @@ export async function syncMembers() {
 
 						if (!teamId) {
 							logger.warn(
-								`⚠️ [SYNC] Nie znaleziono zespołu dla filaru: ${teamName}`,
+								` [SYNC] Nie znaleziono zespołu dla filaru: ${teamName}`,
 							);
 							continue;
 						}
@@ -643,7 +641,7 @@ export async function syncMembers() {
 
 							teamMembersAdded++;
 							logger.debug(
-								`➕ [TEAM] Dodano członkostwo: ${generatedEmail} -> ${teamName}`,
+								` [TEAM] Dodano członkostwo: ${generatedEmail} -> ${teamName}`,
 							);
 						}
 					}
@@ -656,7 +654,7 @@ export async function syncMembers() {
 							},
 						});
 						logger.debug(
-							`🗑️ [TEAM] Usunięto członkostwo: ${generatedEmail} z filaru ID: ${teamId}`,
+							` [TEAM] Usunięto członkostwo: ${generatedEmail} z filaru ID: ${teamId}`,
 						);
 					}
 				} else {
@@ -673,27 +671,25 @@ export async function syncMembers() {
 				}
 			} catch (error) {
 				logger.error(
-					`❌ [SYNC] Błąd przetwarzania ${member.firstname} ${member.lastname}:`,
+					` [SYNC] Błąd przetwarzania ${member.firstname} ${member.lastname}:`,
 					error,
 				);
 			}
 		}
 
 		const duration = Date.now() - startTime;
-		logger.debug(`✅ [SYNC] Zakończono w ${duration}ms`);
-		logger.debug(`📊 [SYNC] Podsumowanie:`);
+		logger.debug(` [SYNC] Zakończono w ${duration}ms`);
+		logger.debug(` [SYNC] Podsumowanie:`);
 		logger.debug(`   +${added} dodanych`);
-		logger.debug(`   🔄${updated} zaktualizowanych`);
-		logger.debug(`   ⏭️${skipped} bez zmian`);
-		logger.debug(`   ⏭️${skippedRezygnacja} pominiętych (rezygnacja)`);
-		logger.debug(`   ➕${teamMembersAdded} dodanych członkostw w filarach`);
-		logger.debug(
-			`   🔒${pillarsPreserved} zachowanych filarów (nie nadpisano)`,
-		);
-		logger.debug(`   🎂${birthdaysUpdated} zaktualizowanych dat urodzenia`);
-		logger.debug(`   ⏭️${birthdaysSkipped} dat urodzenia bez zmian`);
+		logger.debug(`   ${updated} zaktualizowanych`);
+		logger.debug(`   ⏭${skipped} bez zmian`);
+		logger.debug(`   ⏭${skippedRezygnacja} pominiętych (rezygnacja)`);
+		logger.debug(`   ${teamMembersAdded} dodanych członkostw w filarach`);
+		logger.debug(`   ${pillarsPreserved} zachowanych filarów (nie nadpisano)`);
+		logger.debug(`   ${birthdaysUpdated} zaktualizowanych dat urodzenia`);
+		logger.debug(`   ⏭${birthdaysSkipped} dat urodzenia bez zmian`);
 		if (duplicateEmails > 0) {
-			logger.debug(`   ⚠️${duplicateEmails} pominiętych (duplikaty emaili)`);
+			logger.debug(`   ${duplicateEmails} pominiętych (duplikaty emaili)`);
 		}
 
 		try {
@@ -725,18 +721,18 @@ export async function syncMembers() {
 				},
 			});
 		} catch (logError) {
-			logger.error("❌ [SYNC] Błąd zapisu logu:", logError);
+			logger.error(" [SYNC] Błąd zapisu logu:", logError);
 		}
 	} catch (error) {
-		logger.error("❌ [SYNC] Błąd synchronizacji:", error);
+		logger.error(" [SYNC] Błąd synchronizacji:", error);
 	}
 }
 export async function runSync() {
 	try {
 		await syncMembers();
-		logger.debug("✅ [SYNC] Synchronizacja zakończona pomyślnie");
+		logger.debug(" [SYNC] Synchronizacja zakończona pomyślnie");
 	} catch (error) {
-		logger.error("❌ [SYNC] Krytyczny błąd synchronizacji:", error);
+		logger.error(" [SYNC] Krytyczny błąd synchronizacji:", error);
 	}
 }
 

@@ -38,72 +38,63 @@ interface PaymentSummary {
 function findUserByNameAndEmail(
 	users: any[],
 	fullName: string,
-	email: string
+	email: string,
 ): any | null {
-
-	const byEmail = users.find(u => u.email === email);
+	const byEmail = users.find((u) => u.email === email);
 	if (byEmail) return byEmail;
-
 
 	const nameParts = fullName.trim().split(/\s+/);
 	const firstName = nameParts[0];
 	const lastName = nameParts[nameParts.length - 1];
-	const middleNames = nameParts.slice(1, -1).join(' ');
+	const middleNames = nameParts.slice(1, -1).join(" ");
 
-
-	const byExact = users.find(u =>
-		u.first_name === firstName &&
-		u.last_name === lastName
+	const byExact = users.find(
+		(u) => u.first_name === firstName && u.last_name === lastName,
 	);
 	if (byExact) return byExact;
 
-
-	const byInitial = users.find(u =>
-		u.last_name === lastName &&
-		u.first_name &&
-		u.first_name[0] === firstName[0]
+	const byInitial = users.find(
+		(u) =>
+			u.last_name === lastName &&
+			u.first_name &&
+			u.first_name[0] === firstName[0],
 	);
 	if (byInitial) return byInitial;
 
-
-	const byStartsWith = users.find(u =>
-		u.last_name === lastName &&
-		u.first_name &&
-		firstName.includes(u.first_name)
+	const byStartsWith = users.find(
+		(u) =>
+			u.last_name === lastName &&
+			u.first_name &&
+			firstName.includes(u.first_name),
 	);
 	if (byStartsWith) return byStartsWith;
 
-
-	const byMiddleName = users.find(u => {
+	const byMiddleName = users.find((u) => {
 		if (!u.first_name) return false;
 		const userFirstName = u.first_name.toLowerCase();
 		const fullNameLower = fullName.toLowerCase();
-		return fullNameLower.includes(userFirstName) &&
-			u.last_name?.toLowerCase() === lastName.toLowerCase();
+		return (
+			fullNameLower.includes(userFirstName) &&
+			u.last_name?.toLowerCase() === lastName.toLowerCase()
+		);
 	});
 	if (byMiddleName) return byMiddleName;
 
-
-	const byLastName = users.find(u =>
-		u.last_name === lastName
-	);
+	const byLastName = users.find((u) => u.last_name === lastName);
 	if (byLastName) return byLastName;
 
 	return null;
 }
 export async function syncPayments() {
-	logger.debug("🔄 [PAYMENTS] Rozpoczynam synchronizację składek...");
+	logger.debug(" [PAYMENTS] Rozpoczynam synchronizację składek...");
 	const startTime = Date.now();
 
 	let connection: mysql.Connection | null = null;
 
 	try {
-		logger.debug("📡 [PAYMENTS] Łączenie z bazą składek...");
+		logger.debug(" [PAYMENTS] Łączenie z bazą składek...");
 		connection = await mysql.createConnection(PAYMENTS_DB_CONFIG);
-		logger.debug("✅ [PAYMENTS] Połączono z bazą składek");
-
-
-
+		logger.debug(" [PAYMENTS] Połączono z bazą składek");
 
 		const allUsers = await prisma.user.findMany({
 			select: {
@@ -114,7 +105,9 @@ export async function syncPayments() {
 			},
 		});
 
-		logger.debug(`👥 [PAYMENTS] Pobrano ${allUsers.length} użytkowników z głównej bazy`);
+		logger.debug(
+			` [PAYMENTS] Pobrano ${allUsers.length} użytkowników z głównej bazy`,
+		);
 
 		const [rows] = await connection.execute(`
 			SELECT 
@@ -150,10 +143,10 @@ export async function syncPayments() {
 		`);
 
 		const paymentData = rows as MemberPaymentData[];
-		logger.debug(`📊 [PAYMENTS] Pobrano ${paymentData.length} rekordów składek`);
+		logger.debug(` [PAYMENTS] Pobrano ${paymentData.length} rekordów składek`);
 
 		if (paymentData.length === 0) {
-			logger.debug("⚠️ [PAYMENTS] Brak danych do synchronizacji");
+			logger.debug(" [PAYMENTS] Brak danych do synchronizacji");
 			return;
 		}
 
@@ -165,25 +158,20 @@ export async function syncPayments() {
 
 		for (const record of paymentData) {
 			try {
-
-
-
 				let user = await prisma.user.findUnique({
 					where: { email: record.email },
 					select: { id: true },
 				});
 
-				let matchMethod = 'none';
+				let matchMethod = "none";
 
 				if (user) {
 					matchedByEmail++;
-					matchMethod = 'email';
+					matchMethod = "email";
 				} else {
-
 					const nameParts = record.fullName.trim().split(/\s+/);
 					const firstName = nameParts[0];
 					const lastName = nameParts[nameParts.length - 1];
-
 
 					const byName = await prisma.user.findFirst({
 						where: {
@@ -196,10 +184,11 @@ export async function syncPayments() {
 					if (byName) {
 						user = byName;
 						matchedByName++;
-						matchMethod = 'name';
-						logger.debug(`🔍 [PAYMENTS] Dopasowano po nazwie: ${record.fullName} → ${firstName} ${lastName}`);
+						matchMethod = "name";
+						logger.debug(
+							` [PAYMENTS] Dopasowano po nazwie: ${record.fullName} → ${firstName} ${lastName}`,
+						);
 					} else {
-
 						const byInitial = await prisma.user.findFirst({
 							where: {
 								last_name: lastName,
@@ -213,15 +202,19 @@ export async function syncPayments() {
 						if (byInitial) {
 							user = byInitial;
 							matchedByName++;
-							matchMethod = 'initial';
-							logger.debug(`🔍 [PAYMENTS] Dopasowano po inicjale: ${record.fullName} → ${firstName[0]}. ${lastName}`);
+							matchMethod = "initial";
+							logger.debug(
+								` [PAYMENTS] Dopasowano po inicjale: ${record.fullName} → ${firstName[0]}. ${lastName}`,
+							);
 						}
 					}
 				}
 
 				if (!user) {
 					skippedCount++;
-					logger.debug(`⚠️ [PAYMENTS] Nie znaleziono użytkownika dla: ${record.fullName} (${record.email})`);
+					logger.debug(
+						` [PAYMENTS] Nie znaleziono użytkownika dla: ${record.fullName} (${record.email})`,
+					);
 					continue;
 				}
 
@@ -264,19 +257,21 @@ export async function syncPayments() {
 					createdCount++;
 				}
 			} catch (error) {
-				logger.error(`❌ [PAYMENTS] Błąd zapisu dla ${record.email}:`, error);
+				logger.error(` [PAYMENTS] Błąd zapisu dla ${record.email}:`, error);
 				skippedCount++;
 			}
 		}
 
 		const duration = Date.now() - startTime;
-		logger.debug(`✅ [PAYMENTS] Zakończono w ${duration}ms`);
-		logger.debug(`📊 [PAYMENTS] Podsumowanie:`);
-		logger.debug(`   ✅ Zaktualizowano: ${updatedCount} użytkowników`);
-		logger.debug(`   🆕 Utworzono: ${createdCount} użytkowników`);
-		logger.debug(`   ⏭️ Pominięto: ${skippedCount} (nie znaleziono w głównej bazie)`);
-		logger.debug(`   📧 Dopasowano po email: ${matchedByEmail}`);
-		logger.debug(`   👤 Dopasowano po nazwie: ${matchedByName}`);
+		logger.debug(` [PAYMENTS] Zakończono w ${duration}ms`);
+		logger.debug(` [PAYMENTS] Podsumowanie:`);
+		logger.debug(`    Zaktualizowano: ${updatedCount} użytkowników`);
+		logger.debug(`    Utworzono: ${createdCount} użytkowników`);
+		logger.debug(
+			`   ⏭ Pominięto: ${skippedCount} (nie znaleziono w głównej bazie)`,
+		);
+		logger.debug(`    Dopasowano po email: ${matchedByEmail}`);
+		logger.debug(`    Dopasowano po nazwie: ${matchedByName}`);
 
 		return {
 			members: paymentData,
@@ -288,17 +283,19 @@ export async function syncPayments() {
 				),
 				totalPaid: paymentData.reduce((sum, m) => sum + m.totalPaid, 0),
 				averageArrears:
-					paymentData.reduce((sum, m) => sum + Math.max(0, m.monthsArrears), 0) /
-					paymentData.length || 0,
+					paymentData.reduce(
+						(sum, m) => sum + Math.max(0, m.monthsArrears),
+						0,
+					) / paymentData.length || 0,
 			},
 		};
 	} catch (error) {
-		logger.error("❌ [PAYMENTS] Błąd synchronizacji:", error);
+		logger.error(" [PAYMENTS] Błąd synchronizacji:", error);
 		throw error;
 	} finally {
 		if (connection) {
 			await connection.end();
-			logger.debug("🔌 [PAYMENTS] Zamknięto połączenie z bazą składek");
+			logger.debug(" [PAYMENTS] Zamknięto połączenie z bazą składek");
 		}
 		await prisma.$disconnect();
 	}

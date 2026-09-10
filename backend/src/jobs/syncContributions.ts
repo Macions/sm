@@ -1,12 +1,8 @@
-
-
 import { PrismaClient } from "@prisma/client";
 import mysql from "mysql2/promise";
 import { logger } from "../utils/logger";
 
-
-
-logger.info("🚀 [START] Uruchamianie syncContributions...");
+logger.info(" [START] Uruchamianie syncContributions...");
 
 const prisma = new PrismaClient();
 
@@ -19,29 +15,21 @@ const CONTRIBUTIONS_DB_CONFIG = {
 };
 
 export async function syncContributions() {
-
-	logger.info("🔄 [CONTRIBUTIONS] Rozpoczynam synchronizację składek...");
+	logger.info(" [CONTRIBUTIONS] Rozpoczynam synchronizację składek...");
 	const startTime = Date.now();
 
 	let connection: mysql.Connection | null = null;
 
 	try {
-
-		logger.info("📡 [CONTRIBUTIONS] Próba połączenia z SM_Skladki...");
-
+		logger.info(" [CONTRIBUTIONS] Próba połączenia z SM_Skladki...");
 
 		connection = await mysql.createConnection(CONTRIBUTIONS_DB_CONFIG);
 
-		logger.info("✅ [CONTRIBUTIONS] Połączono z SM_Skladki");
+		logger.info(" [CONTRIBUTIONS] Połączono z SM_Skladki");
 
 		const currentDate = new Date();
 		const currentMonth = currentDate.getMonth() + 1;
 		const currentYear = currentDate.getFullYear();
-
-
-
-
-
 
 		const [members] = await connection.execute(`
             SELECT 
@@ -123,11 +111,8 @@ export async function syncContributions() {
 			last_payment_date: Date | null;
 		}>;
 
-
-
-
 		logger.info(
-			`👥 [CONTRIBUTIONS] Znaleziono ${membersData.length} aktywnych członków`,
+			` [CONTRIBUTIONS] Znaleziono ${membersData.length} aktywnych członków`,
 		);
 
 		let paidCount = 0;
@@ -135,10 +120,8 @@ export async function syncContributions() {
 		let skippedCount = 0;
 		let errorCount = 0;
 
-
 		for (const member of membersData) {
 			try {
-
 				const user = await prisma.user.findUnique({
 					where: { email: member.email },
 					select: {
@@ -151,14 +134,13 @@ export async function syncContributions() {
 
 				if (!user) {
 					logger.warn(
-						`⚠️ [CONTRIBUTIONS] Nie znaleziono użytkownika: ${member.email}`,
+						` [CONTRIBUTIONS] Nie znaleziono użytkownika: ${member.email}`,
 					);
 					skippedCount++;
 					continue;
 				}
 
 				const isPaid = member.payment_status === "paid";
-
 
 				const existingContribution = await prisma.contribution.findFirst({
 					where: {
@@ -169,7 +151,6 @@ export async function syncContributions() {
 				});
 
 				if (isPaid && member.amount) {
-
 					const amountFloat = parseFloat(member.amount.toString());
 
 					if (existingContribution) {
@@ -187,7 +168,7 @@ export async function syncContributions() {
 						await prisma.contribution.create({
 							data: {
 								userId: user.id,
-								amount: amountFloat, 
+								amount: amountFloat,
 								month: currentMonth,
 								year: currentYear,
 								paidAt: member.payment_date || new Date(),
@@ -208,13 +189,10 @@ export async function syncContributions() {
 
 					paidCount++;
 
-
-
 					logger.debug(
-						`✅ [CONTRIBUTIONS] ${member.full_name}: opłacono ${amountFloat} zł`,
+						` [CONTRIBUTIONS] ${member.full_name}: opłacono ${amountFloat} zł`,
 					);
 				} else {
-
 					if (existingContribution) {
 						await prisma.contribution.update({
 							where: { id: existingContribution.id },
@@ -244,7 +222,6 @@ export async function syncContributions() {
 						},
 					});
 
-
 					if (
 						!member.suspended_until ||
 						new Date(member.suspended_until) < new Date()
@@ -258,45 +235,33 @@ export async function syncContributions() {
 					}
 
 					pendingCount++;
-
 				}
 			} catch (error) {
-				console.error(
-					`❌ [CONTRIBUTIONS] Błąd dla ${member.full_name}:`,
-					error,
-				);
-				logger.error(`❌ [CONTRIBUTIONS] Błąd dla ${member.full_name}:`, error);
+				console.error(` [CONTRIBUTIONS] Błąd dla ${member.full_name}:`, error);
+				logger.error(` [CONTRIBUTIONS] Błąd dla ${member.full_name}:`, error);
 				errorCount++;
 			}
 		}
 
 		const duration = Date.now() - startTime;
 
-
-
-
-
-
-
-
-
-		logger.info(`✅ [CONTRIBUTIONS] Zakończono w ${duration}ms`);
-		logger.info(`📊 [CONTRIBUTIONS] Podsumowanie:`);
-		logger.info(`   ✅ Opłacone: ${paidCount} użytkowników`);
-		logger.info(`   ❌ Nieopłacone: ${pendingCount} użytkowników`);
+		logger.info(` [CONTRIBUTIONS] Zakończono w ${duration}ms`);
+		logger.info(` [CONTRIBUTIONS] Podsumowanie:`);
+		logger.info(`    Opłacone: ${paidCount} użytkowników`);
+		logger.info(`    Nieopłacone: ${pendingCount} użytkowników`);
 		logger.info(
-			`   ⏭️ Pominięto: ${skippedCount} (nie znaleziono w głównej bazie)`,
+			`   ⏭ Pominięto: ${skippedCount} (nie znaleziono w głównej bazie)`,
 		);
-		logger.info(`   ❌ Błędów: ${errorCount}`);
+		logger.info(`    Błędów: ${errorCount}`);
 	} catch (error) {
-		console.error("❌ [CONTRIBUTIONS] Błąd synchronizacji:", error);
-		logger.error("❌ [CONTRIBUTIONS] Błąd synchronizacji:", error);
+		console.error(" [CONTRIBUTIONS] Błąd synchronizacji:", error);
+		logger.error(" [CONTRIBUTIONS] Błąd synchronizacji:", error);
 		throw error;
 	} finally {
 		if (connection) {
 			await connection.end();
 
-			logger.info("🔌 [CONTRIBUTIONS] Zamknięto połączenie z SM_Skladki");
+			logger.info(" [CONTRIBUTIONS] Zamknięto połączenie z SM_Skladki");
 		}
 		await prisma.$disconnect();
 	}
@@ -334,11 +299,11 @@ async function checkAndSendNotification(
 				},
 			});
 
-			logger.debug(`📨 [CONTRIBUTIONS] Wysłano powiadomienie dla ${fullName}`);
+			logger.debug(` [CONTRIBUTIONS] Wysłano powiadomienie dla ${fullName}`);
 		}
 	} catch (error) {
-		console.error(`❌ [CONTRIBUTIONS] Błąd wysyłania powiadomienia:`, error);
-		logger.error(`❌ [CONTRIBUTIONS] Błąd wysyłania powiadomienia:`, error);
+		console.error(` [CONTRIBUTIONS] Błąd wysyłania powiadomienia:`, error);
+		logger.error(` [CONTRIBUTIONS] Błąd wysyłania powiadomienia:`, error);
 	}
 }
 
@@ -380,20 +345,13 @@ function getMonthName(
 	return months[form][month - 1] || month.toString();
 }
 
-
-
-
 if (require.main === module) {
-
-
 	syncContributions()
 		.then(() => {
-
-
 			process.exit(0);
 		})
 		.catch((error) => {
-			console.error("❌ [DIRECT] Błąd synchronizacji:", error);
+			console.error(" [DIRECT] Błąd synchronizacji:", error);
 			process.exit(1);
 		});
 }

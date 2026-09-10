@@ -102,7 +102,7 @@ export class DashboardController {
 				contributions: contributionStats,
 			});
 		} catch (error) {
-			logger.error("❌ [Dashboard] Błąd statystyk:", error);
+			logger.error(" [Dashboard] Błąd statystyk:", error);
 			res.status(500).json({ error: "Nie udało się pobrać statystyk" });
 		}
 	}
@@ -136,7 +136,7 @@ export class DashboardController {
 
 			res.json(mappedNotifications);
 		} catch (error) {
-			logger.error("❌ [Dashboard] Błąd pobierania powiadomień:", error);
+			logger.error(" [Dashboard] Błąd pobierania powiadomień:", error);
 			res.status(500).json({
 				error: "Nie udało się pobrać powiadomień",
 				details: error instanceof Error ? error.message : "Unknown error",
@@ -218,7 +218,7 @@ export class DashboardController {
 				})),
 			});
 		} catch (error) {
-			logger.error("❌ [Dashboard] Błąd pobierania statystyk składek:", error);
+			logger.error(" [Dashboard] Błąd pobierania statystyk składek:", error);
 			res.status(500).json({ error: "Nie udało się pobrać statystyk składek" });
 		}
 	}
@@ -314,10 +314,7 @@ export class DashboardController {
 				})),
 			});
 		} catch (error) {
-			logger.error(
-				"❌ [Dashboard] Błąd pobierania składek użytkownika:",
-				error,
-			);
+			logger.error(" [Dashboard] Błąd pobierania składek użytkownika:", error);
 			res.status(500).json({
 				error: "Nie udało się pobrać składek użytkownika",
 				details: error instanceof Error ? error.message : "Unknown error",
@@ -372,7 +369,7 @@ export class DashboardController {
 				},
 			});
 		} catch (error) {
-			logger.error("❌ [Dashboard] Błąd oznaczania:", error);
+			logger.error(" [Dashboard] Błąd oznaczania:", error);
 			res.status(500).json({
 				error: "Nie udało się oznaczyć",
 				details: error instanceof Error ? error.message : "Unknown error",
@@ -402,7 +399,7 @@ export class DashboardController {
 				count: result.count,
 			});
 		} catch (error) {
-			logger.error("❌ [Dashboard] Błąd oznaczania wszystkich:", error);
+			logger.error(" [Dashboard] Błąd oznaczania wszystkich:", error);
 			res.status(500).json({
 				error: "Nie udało się oznaczyć wszystkich",
 				details: error instanceof Error ? error.message : "Unknown error",
@@ -438,7 +435,7 @@ export class DashboardController {
 
 			res.status(200).json({ message: "Usunięto powiadomienie" });
 		} catch (error) {
-			logger.error("❌ [Dashboard] Błąd usuwania:", error);
+			logger.error(" [Dashboard] Błąd usuwania:", error);
 			res.status(500).json({ error: "Nie udało się usunąć" });
 		}
 	}

@@ -30,7 +30,7 @@ export function useAuth() {
 		const user = localStorage.getItem("user");
 
 		if (!user) {
-			logger.debug("🔐 [useAuth] Brak użytkownika");
+			logger.debug(" [useAuth] Brak użytkownika");
 			setState({
 				user: null,
 				loading: false,
@@ -40,7 +40,7 @@ export function useAuth() {
 		}
 
 		try {
-			logger.debug("🔐 [useAuth] Weryfikacja tokena...");
+			logger.debug(" [useAuth] Weryfikacja tokena...");
 
 			const response = await api.get("/auth/me");
 			const userData = response.data;
@@ -65,11 +65,11 @@ export function useAuth() {
 				isAuthenticated: true,
 			});
 
-			logger.debug("✅ [useAuth] Użytkownik zalogowany:", user.name);
+			logger.debug(" [useAuth] Użytkownik zalogowany:", user.name);
 			return true;
 		} catch (error: any) {
 			logger.warn(
-				"❌ [useAuth] Token wygasł lub jest nieprawidłowy",
+				" [useAuth] Token wygasł lub jest nieprawidłowy",
 				error?.response?.status,
 			);
 
@@ -95,7 +95,7 @@ export function useAuth() {
 	const login = useCallback(async (email: string, password: string) => {
 		try {
 			setState((prev) => ({ ...prev, loading: true }));
-			logger.debug("🔐 [useAuth] Próba logowania...");
+			logger.debug(" [useAuth] Próba logowania...");
 
 			const response = await api.post("/auth/login", { email, password });
 			const { user: userData } = response.data;
@@ -122,11 +122,11 @@ export function useAuth() {
 				isAuthenticated: true,
 			});
 
-			logger.debug("✅ [useAuth] Zalogowano pomyślnie:", user.name);
+			logger.debug(" [useAuth] Zalogowano pomyślnie:", user.name);
 			return { success: true, user };
 		} catch (error: any) {
 			logger.error(
-				"❌ [useAuth] Błąd logowania:",
+				" [useAuth] Błąd logowania:",
 				error?.response?.data?.message || error.message,
 			);
 
@@ -140,11 +140,11 @@ export function useAuth() {
 	}, []);
 
 	const logout = useCallback(() => {
-		logger.debug("🔐 [useAuth] Wylogowywanie...");
+		logger.debug(" [useAuth] Wylogowywanie...");
 
 		try {
-			api.post("/auth/logout").catch(() => { });
-		} catch (error) { }
+			api.post("/auth/logout").catch(() => {});
+		} catch (error) {}
 
 		localStorage.removeItem("user");
 
@@ -154,7 +154,7 @@ export function useAuth() {
 			isAuthenticated: false,
 		});
 
-		logger.debug("✅ [useAuth] Wylogowano pomyślnie");
+		logger.debug(" [useAuth] Wylogowano pomyślnie");
 	}, []);
 
 	const updateUser = useCallback((updatedData: Partial<User>) => {

@@ -3166,7 +3166,7 @@ export default function SocialMedia({ title }: { title?: string }) {
 			setMembers(members.map((m) => (m.id === id ? updated : m)));
 			toast.success("Członek zaktualizowany!");
 		} catch (error) {
-			logger.error("❌ Błąd:", error);
+			logger.error(" Błąd:", error);
 			toast.error("Nie udało się zaktualizować członka");
 		}
 	};
@@ -3190,7 +3190,7 @@ export default function SocialMedia({ title }: { title?: string }) {
 			setCreators(creators.map((c) => (c.id === id ? updated : c)));
 			toast.success("Twórca zaktualizowany!");
 		} catch (error) {
-			logger.error("❌ Błąd:", error);
+			logger.error(" Błąd:", error);
 			toast.error("Nie udało się zaktualizować twórcy");
 		}
 	};
@@ -3207,10 +3207,10 @@ export default function SocialMedia({ title }: { title?: string }) {
 				setOnboardingContacts(data);
 			} else {
 				const error = await response.json();
-				console.error("❌ [onboarding] Błąd:", error);
+				console.error(" [onboarding] Błąd:", error);
 			}
 		} catch (error) {
-			logger.error("❌ Błąd pobierania kontaktów onboardingu:", error);
+			logger.error(" Błąd pobierania kontaktów onboardingu:", error);
 		}
 	};
 	const handleAddCreator = async (data: CreatorFormData) => {
@@ -3229,7 +3229,7 @@ export default function SocialMedia({ title }: { title?: string }) {
 			setCreators([...creators, newCreator]);
 			toast.success("Twórca dodany!");
 		} catch (error) {
-			logger.error("❌ Błąd:", error);
+			logger.error(" Błąd:", error);
 			toast.error("Nie udało się dodać twórcy");
 		}
 	};
@@ -3302,7 +3302,7 @@ export default function SocialMedia({ title }: { title?: string }) {
 			setMaterials(materials.map((m) => (m.id === id ? updated : m)));
 			toast.success("Materiał zaktualizowany!");
 		} catch (error) {
-			logger.error("❌ Błąd:", error);
+			logger.error(" Błąd:", error);
 			toast.error("Nie udało się zaktualizować materiału");
 		}
 	};
@@ -3323,7 +3323,7 @@ export default function SocialMedia({ title }: { title?: string }) {
 					setMaterials(materials.filter((m) => m.id !== id));
 					toast.success("Materiał usunięty!");
 				} catch (error) {
-					logger.error("❌ Błąd:", error);
+					logger.error(" Błąd:", error);
 					toast.error("Nie udało się usunąć materiału");
 				}
 			},
@@ -3350,7 +3350,7 @@ export default function SocialMedia({ title }: { title?: string }) {
 			setMaterials([...materials, newMaterial]);
 			toast.success("Materiał dodany!");
 		} catch (error) {
-			logger.error("❌ Błąd:", error);
+			logger.error(" Błąd:", error);
 			toast.error("Nie udało się dodać materiału");
 		}
 	};
@@ -3429,7 +3429,7 @@ export default function SocialMedia({ title }: { title?: string }) {
 				if (usersRes.ok) setAvailableUsers(await usersRes.json());
 				await fetchOnboardingContacts();
 			} catch (error) {
-				logger.error("❌ Błąd pobierania danych:", error);
+				logger.error(" Błąd pobierania danych:", error);
 				toast.error("Nie udało się pobrać danych");
 			} finally {
 				setLoading(false);
@@ -3473,7 +3473,7 @@ export default function SocialMedia({ title }: { title?: string }) {
 			setPublications(publications.map((p) => (p.id === id ? updated : p)));
 			toast.success("Publikacja zaktualizowana!");
 		} catch (error) {
-			logger.error("❌ Błąd:", error);
+			logger.error(" Błąd:", error);
 			toast.error("Nie udało się zaktualizować publikacji");
 		}
 	};
@@ -3494,7 +3494,7 @@ export default function SocialMedia({ title }: { title?: string }) {
 			setTasks(tasks.map((t) => (t.id === id ? updated : t)));
 			toast.success("Zadanie zaktualizowane!");
 		} catch (error) {
-			logger.error("❌ Błąd:", error);
+			logger.error(" Błąd:", error);
 			toast.error("Nie udało się zaktualizować zadania");
 		}
 	};
@@ -3515,7 +3515,7 @@ export default function SocialMedia({ title }: { title?: string }) {
 			setContacts(contacts.map((c) => (c.id === id ? updated : c)));
 			toast.success("Kontakt zaktualizowany!");
 		} catch (error) {
-			logger.error("❌ Błąd:", error);
+			logger.error(" Błąd:", error);
 			toast.error("Nie udało się zaktualizować kontaktu");
 		}
 	};
@@ -3558,7 +3558,7 @@ export default function SocialMedia({ title }: { title?: string }) {
 					setPublications(publications.filter((p) => p.id !== id));
 					toast.success("Publikacja usunięta!");
 				} catch (error) {
-					logger.error("❌ Błąd:", error);
+					logger.error(" Błąd:", error);
 					toast.error("Nie udało się usunąć publikacji");
 				}
 			},
@@ -3581,7 +3581,7 @@ export default function SocialMedia({ title }: { title?: string }) {
 					setTasks(tasks.filter((t) => t.id !== id));
 					toast.success("Zadanie usunięte!");
 				} catch (error) {
-					logger.error("❌ Błąd:", error);
+					logger.error(" Błąd:", error);
 					toast.error("Nie udało się usunąć zadania");
 				}
 			},
@@ -3604,7 +3604,7 @@ export default function SocialMedia({ title }: { title?: string }) {
 					setContacts(contacts.filter((c) => c.id !== id));
 					toast.success("Kontakt usunięty!");
 				} catch (error) {
-					logger.error("❌ Błąd:", error);
+					logger.error(" Błąd:", error);
 					toast.error("Nie udało się usunąć kontaktu");
 				}
 			},
@@ -3641,7 +3641,7 @@ export default function SocialMedia({ title }: { title?: string }) {
 
 			toast.success("Członek dodany!");
 		} catch (error) {
-			logger.error("❌ Błąd:", error);
+			logger.error(" Błąd:", error);
 			toast.error(
 				error instanceof Error ? error.message : "Nie udało się dodać członka",
 			);
@@ -3664,7 +3664,7 @@ export default function SocialMedia({ title }: { title?: string }) {
 			setPublications([...publications, newPublication]);
 			toast.success("Publikacja dodana!");
 		} catch (error) {
-			logger.error("❌ Błąd:", error);
+			logger.error(" Błąd:", error);
 			toast.error("Nie udało się dodać publikacji");
 		}
 	};
@@ -3685,7 +3685,7 @@ export default function SocialMedia({ title }: { title?: string }) {
 			setTasks([...tasks, newTask]);
 			toast.success("Zadanie dodane!");
 		} catch (error) {
-			logger.error("❌ Błąd:", error);
+			logger.error(" Błąd:", error);
 			toast.error("Nie udało się dodać zadania");
 		}
 	};
@@ -3706,7 +3706,7 @@ export default function SocialMedia({ title }: { title?: string }) {
 			setContacts([...contacts, newContact]);
 			toast.success("Kontakt dodany!");
 		} catch (error) {
-			logger.error("❌ Błąd:", error);
+			logger.error(" Błąd:", error);
 			toast.error("Nie udało się dodać kontaktu");
 		}
 	};

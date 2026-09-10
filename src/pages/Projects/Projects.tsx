@@ -195,7 +195,7 @@ function ProjectCard({
 	users,
 	tasks = [],
 }: ProjectCardProps) {
-	logger.debug("🔍 ProjectCard - projekt:", {
+	logger.debug(" ProjectCard - projekt:", {
 		id: project.id,
 		name: project.name,
 		coordinator_id: project.coordinator_id,
@@ -1299,7 +1299,7 @@ export default function Projects() {
 	const refreshAllData = useCallback(async () => {
 		const token = localStorage.getItem("accessToken");
 		if (!token) {
-			console.warn("⚠️ [REFRESH] Brak tokenu");
+			console.warn(" [REFRESH] Brak tokenu");
 			return;
 		}
 
@@ -1407,7 +1407,7 @@ export default function Projects() {
 				setProjects(mappedProjects);
 			}
 		} catch (error) {
-			console.error("❌ [REFRESH] Błąd odświeżania:", error);
+			console.error(" [REFRESH] Błąd odświeżania:", error);
 		}
 	}, []);
 
@@ -1481,7 +1481,7 @@ export default function Projects() {
 				const perms = await getCachedPermissions(currentUser.role);
 				setPermissions(perms);
 			} catch (error) {
-				logger.error("❌ Błąd pobierania uprawnień:", error);
+				logger.error(" Błąd pobierania uprawnień:", error);
 				const perms = await getCachedPermissions(currentUser.role);
 				setPermissions(perms);
 			}
@@ -1536,7 +1536,7 @@ export default function Projects() {
 		try {
 			const token = localStorage.getItem("accessToken");
 
-			logger.debug("📤 Wysyłam pomysł do backendu:", idea);
+			logger.debug(" Wysyłam pomysł do backendu:", idea);
 
 			const response = await fetch("/api/ideas", {
 				method: "POST",
@@ -1553,11 +1553,11 @@ export default function Projects() {
 				}),
 			});
 
-			logger.debug("📥 Status odpowiedzi:", response.status);
+			logger.debug(" Status odpowiedzi:", response.status);
 
 			if (!response.ok) {
 				const errorText = await response.text();
-				logger.error("❌ Błąd odpowiedzi:", response.status, errorText);
+				logger.error(" Błąd odpowiedzi:", response.status, errorText);
 
 				const newIdea: Idea = {
 					id: `idea-${Date.now()}`,
@@ -1582,14 +1582,14 @@ export default function Projects() {
 			}
 
 			const newIdea = await response.json();
-			logger.debug("✅ Nowy pomysł z backendu:", newIdea);
+			logger.debug(" Nowy pomysł z backendu:", newIdea);
 
 			setIdeas([newIdea, ...ideas]);
 			toast.success("Pomysł został zgłoszony!");
 
 			setIsIdeaModalOpen(false);
 
-			logger.debug("🔄 Przeładowuję stronę i otwieram zakładkę pomysły...");
+			logger.debug(" Przeładowuję stronę i otwieram zakładkę pomysły...");
 
 			sessionStorage.setItem("openIdeasTab", "true");
 
@@ -1597,7 +1597,7 @@ export default function Projects() {
 				window.location.reload();
 			}, 1500);
 		} catch (error) {
-			logger.error("❌ Błąd:", error);
+			logger.error(" Błąd:", error);
 
 			const newIdea: Idea = {
 				id: `idea-${Date.now()}`,
@@ -1635,7 +1635,7 @@ export default function Projects() {
 
 			if (currentIdea.currentUserVote === type) {
 				toast("Już zagłosowałeś w ten sposób", {
-					icon: "ℹ️",
+					icon: "ℹ",
 					duration: 3000,
 				});
 				return;
@@ -1693,7 +1693,7 @@ export default function Projects() {
 
 			toast.success(type === "up" ? "Głos oddany!" : "Głos oddany!");
 		} catch (error) {
-			logger.error("❌ Błąd:", error);
+			logger.error(" Błąd:", error);
 			toast.error("Nie udało się zagłosować");
 		}
 	};
@@ -1713,7 +1713,7 @@ export default function Projects() {
 			if (!response.ok) throw new Error("Błąd zmiany statusu");
 
 			const updatedIdea = await response.json();
-			logger.debug("📦 Odpowiedź z API po zmianie statusu:", updatedIdea);
+			logger.debug(" Odpowiedź z API po zmianie statusu:", updatedIdea);
 
 			setIdeas(
 				ideas.map((i: Idea) => {
@@ -1738,7 +1738,7 @@ export default function Projects() {
 		const fetchPillars = async () => {
 			try {
 				const token = localStorage.getItem("accessToken");
-				logger.debug("🔍 Pobieranie filarów z API...");
+				logger.debug(" Pobieranie filarów z API...");
 
 				const response = await fetch("/api/teams", {
 					headers: {
@@ -1747,11 +1747,11 @@ export default function Projects() {
 					},
 				});
 
-				logger.debug("📥 Status odpowiedzi /api/teams:", response.status);
+				logger.debug(" Status odpowiedzi /api/teams:", response.status);
 
 				if (response.ok) {
 					const data = await response.json();
-					logger.debug("📦 Surowe dane z API /api/teams:", data);
+					logger.debug(" Surowe dane z API /api/teams:", data);
 
 					const pillarNames = data
 						.filter(
@@ -1761,19 +1761,19 @@ export default function Projects() {
 						)
 						.map((team: any) => team.name);
 
-					logger.debug("📋 Przefiltrowane filary z bazy:", pillarNames);
-					logger.debug("📊 Liczba filarów:", pillarNames.length);
+					logger.debug(" Przefiltrowane filary z bazy:", pillarNames);
+					logger.debug(" Liczba filarów:", pillarNames.length);
 
 					setPillars(pillarNames);
 				} else {
 					logger.warn(
-						"⚠️ Odpowiedź nie OK:",
+						" Odpowiedź nie OK:",
 						response.status,
 						response.statusText,
 					);
 				}
 			} catch (error) {
-				logger.error("❌ Błąd pobierania filarów:", error);
+				logger.error(" Błąd pobierania filarów:", error);
 
 				const fallback = [
 					"Filar Projektowy",
@@ -1781,7 +1781,7 @@ export default function Projects() {
 					"Filar Rzeczniczy",
 					"Filar Symulacyjny",
 				];
-				logger.debug("📋 Używam fallback filarów:", fallback);
+				logger.debug(" Używam fallback filarów:", fallback);
 				setPillars(fallback);
 			}
 		};
@@ -1794,10 +1794,10 @@ export default function Projects() {
 			setLoading(true);
 			try {
 				const token = localStorage.getItem("accessToken");
-				logger.debug("🔍 Pobieranie pomysłów z API...");
+				logger.debug(" Pobieranie pomysłów z API...");
 
 				if (!token) {
-					logger.warn("⚠️ Brak tokenu");
+					logger.warn(" Brak tokenu");
 					setIdeas([]);
 					return;
 				}
@@ -1809,21 +1809,21 @@ export default function Projects() {
 					},
 				});
 
-				logger.debug("📥 Status odpowiedzi /api/ideas:", response.status);
+				logger.debug(" Status odpowiedzi /api/ideas:", response.status);
 
 				if (!response.ok) {
-					logger.warn(`⚠️ Błąd API (${response.status})`);
+					logger.warn(` Błąd API (${response.status})`);
 					setIdeas([]);
 					return;
 				}
 
 				const data = await response.json();
-				logger.debug("📦 Surowe dane pomysłów:", data);
-				logger.debug("📊 Liczba pomysłów:", data.length);
+				logger.debug(" Surowe dane pomysłów:", data);
+				logger.debug(" Liczba pomysłów:", data.length);
 
 				const pillarsInIdeas = data.map((i: any) => i.pillar);
-				logger.debug("🏷️ Filary w pomysłach:", pillarsInIdeas);
-				logger.debug("🏷️ Unikalne filary w pomysłach:", [
+				logger.debug(" Filary w pomysłach:", pillarsInIdeas);
+				logger.debug(" Unikalne filary w pomysłach:", [
 					...new Set(pillarsInIdeas),
 				]);
 
@@ -1842,10 +1842,10 @@ export default function Projects() {
 					currentUserVote: idea.user_vote || null,
 				}));
 
-				logger.debug("✅ Zamapowane pomysły:", mappedIdeas);
+				logger.debug(" Zamapowane pomysły:", mappedIdeas);
 				setIdeas(mappedIdeas);
 			} catch (error) {
-				logger.error("❌ Błąd pobierania pomysłów:", error);
+				logger.error(" Błąd pobierania pomysłów:", error);
 				setIdeas([]);
 			} finally {
 				setLoading(false);
@@ -1858,7 +1858,7 @@ export default function Projects() {
 	useEffect(() => {
 		const shouldOpenIdeas = sessionStorage.getItem("openIdeasTab") === "true";
 		if (shouldOpenIdeas) {
-			logger.debug("📋 Otwieram zakładkę pomysły po reloadzie");
+			logger.debug(" Otwieram zakładkę pomysły po reloadzie");
 			setActiveTab("ideas");
 
 			sessionStorage.removeItem("openIdeasTab");
@@ -1869,7 +1869,7 @@ export default function Projects() {
 			setLoading(true);
 			try {
 				const token = localStorage.getItem("accessToken");
-				logger.debug("🔍 Pobieranie projektów z API...");
+				logger.debug(" Pobieranie projektów z API...");
 
 				const response = await fetch("/api/projects", {
 					headers: {
@@ -1878,11 +1878,11 @@ export default function Projects() {
 					},
 				});
 
-				logger.debug("📥 Status odpowiedzi /api/projects:", response.status);
+				logger.debug(" Status odpowiedzi /api/projects:", response.status);
 
 				if (response.status === 401) {
 					logger.warn(
-						"⚠️ Token wygasł lub nieprawidłowy - przekierowanie do login",
+						" Token wygasł lub nieprawidłowy - przekierowanie do login",
 					);
 					safeNavigate("/login", navigate);
 					return;
@@ -1893,17 +1893,17 @@ export default function Projects() {
 				}
 
 				const data = await response.json();
-				logger.debug("📦 Surowe dane z API /api/projects:", data);
-				logger.debug("📊 Liczba projektów:", data.length);
+				logger.debug(" Surowe dane z API /api/projects:", data);
+				logger.debug(" Liczba projektów:", data.length);
 				if (data.length > 0) {
-					logger.debug("📋 Pierwszy projekt:", data[0]);
-					logger.debug("📋 Klucze projektu:", Object.keys(data[0]));
-					logger.debug("👤 coordinator_id:", data[0].coordinator_id);
+					logger.debug(" Pierwszy projekt:", data[0]);
+					logger.debug(" Klucze projektu:", Object.keys(data[0]));
+					logger.debug(" coordinator_id:", data[0].coordinator_id);
 				}
 
 				const pillarsInProjects = data.map((p: any) => p.pillar);
-				logger.debug("🏷️ Filary w projektach:", pillarsInProjects);
-				logger.debug("🏷️ Unikalne filary w projektach:", [
+				logger.debug(" Filary w projektach:", pillarsInProjects);
+				logger.debug(" Unikalne filary w projektach:", [
 					...new Set(pillarsInProjects),
 				]);
 
@@ -1922,10 +1922,10 @@ export default function Projects() {
 					updated_at: apiProject.updated_at,
 				}));
 
-				logger.debug("✅ Zamapowane projekty:", mappedProjects);
+				logger.debug(" Zamapowane projekty:", mappedProjects);
 				setProjects(mappedProjects);
 			} catch (error) {
-				logger.error("❌ Błąd ładowania projektów:", error);
+				logger.error(" Błąd ładowania projektów:", error);
 				setProjects([]);
 			} finally {
 				setTimeout(() => {
@@ -1969,7 +1969,7 @@ export default function Projects() {
 					setUsers(mappedUsers);
 				}
 			} catch (error) {
-				logger.error("❌ Błąd pobierania użytkowników:", error);
+				logger.error(" Błąd pobierania użytkowników:", error);
 			}
 		};
 
@@ -2075,16 +2075,16 @@ export default function Projects() {
 			}
 
 			setProjects(projects.filter((p) => p.id !== id));
-			logger.debug(`✅ Projekt ${id} został usunięty`);
+			logger.debug(` Projekt ${id} został usunięty`);
 		} catch (error) {
-			logger.error("❌ Błąd usuwania projektu:", error);
+			logger.error(" Błąd usuwania projektu:", error);
 			alert("Nie udało się usunąć projektu. Spróbuj ponownie.");
 		}
 	};
 
 	const handleSaveProject = async (project: Project) => {
-		logger.debug("📤 Team przed wysyłką:", project.team);
-		logger.debug("📤 Team jako string:", project.team.join(", "));
+		logger.debug(" Team przed wysyłką:", project.team);
+		logger.debug(" Team jako string:", project.team.join(", "));
 		try {
 			const token = localStorage.getItem("accessToken");
 			const isEdit = projects.some((p) => p.id === project.id);
@@ -2101,12 +2101,12 @@ export default function Projects() {
 				estimated_end: project.estimated_end,
 			};
 
-			logger.debug("📤 Team przed wysyłką:", project.team);
-			logger.debug("📤 Team jako string:", project.team.join(", "));
-			logger.debug("📤 Liczba członków:", project.team.length);
-			logger.debug("📤 Cały payload:", payload);
+			logger.debug(" Team przed wysyłką:", project.team);
+			logger.debug(" Team jako string:", project.team.join(", "));
+			logger.debug(" Liczba członków:", project.team.length);
+			logger.debug(" Cały payload:", payload);
 
-			logger.debug("📤 Wysyłane dane:", payload);
+			logger.debug(" Wysyłane dane:", payload);
 
 			const response = await fetch(url, {
 				method,
@@ -2157,12 +2157,12 @@ export default function Projects() {
 	};
 
 	useEffect(() => {
-		logger.debug("📊 PODSUMOWANIE DANYCH:");
-		logger.debug("📋 Filary:", pillars);
-		logger.debug("📋 Projekty:", projects.length);
-		logger.debug("📋 Użytkownicy:", users.length);
-		logger.debug("📋 Pomysły:", ideas.length);
-		logger.debug("👤 Aktualny użytkownik:", currentUser);
+		logger.debug(" PODSUMOWANIE DANYCH:");
+		logger.debug(" Filary:", pillars);
+		logger.debug(" Projekty:", projects.length);
+		logger.debug(" Użytkownicy:", users.length);
+		logger.debug(" Pomysły:", ideas.length);
+		logger.debug(" Aktualny użytkownik:", currentUser);
 	}, [pillars, projects, users, ideas, currentUser]);
 
 	return (

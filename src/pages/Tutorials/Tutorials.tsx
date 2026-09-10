@@ -126,11 +126,7 @@ const downloadFile = async (url: string, fileName: string) => {
 		});
 
 		if (!response.ok) {
-			console.error(
-				"❌ Błąd pobierania:",
-				response.status,
-				response.statusText,
-			);
+			console.error(" Błąd pobierania:", response.status, response.statusText);
 			throw new Error(`Błąd pobierania: ${response.status}`);
 		}
 
@@ -150,7 +146,7 @@ const downloadFile = async (url: string, fileName: string) => {
 
 		toast.success("Plik pobrany pomyślnie!");
 	} catch (error) {
-		console.error("❌ Błąd pobierania:", error);
+		console.error(" Błąd pobierania:", error);
 		toast.error("Nie udało się pobrać pliku");
 	}
 };
@@ -515,14 +511,14 @@ function TutorialModal({
 					throw new Error("Nie udało się usunąć pliku");
 				}
 
-				toast.success(`️ Usunięto plik: ${attachment.name}`);
+				toast.success(` Usunięto plik: ${attachment.name}`);
 			} catch (error) {
 				logger.error("Błąd usuwania pliku:", error);
 				toast.error("Nie udało się usunąć pliku");
 				return;
 			}
 		} else if (attachment) {
-			toast.success(`️ Usunięto plik: ${attachment.name}`);
+			toast.success(` Usunięto plik: ${attachment.name}`);
 		}
 
 		if (attachment) {
@@ -1147,10 +1143,10 @@ export default function Tutorials() {
 			const allTutorials = await fetchResponse.json();
 			setTutorials(allTutorials);
 
-			toast.success(`🗑️ Poradnik "${deletingTutorialTitle}" został usunięty!`);
+			toast.success(` Poradnik "${deletingTutorialTitle}" został usunięty!`);
 		} catch (error) {
-			logger.error("❌ Błąd usuwania:", error);
-			toast.error("❌ Nie udało się usunąć poradnika");
+			logger.error(" Błąd usuwania:", error);
+			toast.error(" Nie udało się usunąć poradnika");
 		} finally {
 			setIsDeleteDialogOpen(false);
 			setDeletingTutorialId(null);

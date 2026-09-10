@@ -173,8 +173,6 @@ export default function Onboarding({ initialData = {} }: OnboardingProps) {
 		isTrial: initialData.isTrial !== undefined ? initialData.isTrial : false,
 	});
 
-
-
 	const [newSkill, setNewSkill] = useState("");
 	const [newSalaContact, setNewSalaContact] = useState("");
 	const [newMpContact, setNewMpContact] = useState("");
@@ -204,7 +202,7 @@ export default function Onboarding({ initialData = {} }: OnboardingProps) {
 					return;
 				}
 
-				logger.debug("🔍 Sprawdzanie statusu onboardingu...");
+				logger.debug(" Sprawdzanie statusu onboardingu...");
 
 				const response = await fetch("/api/auth/onboarding-status", {
 					headers: {
@@ -215,11 +213,11 @@ export default function Onboarding({ initialData = {} }: OnboardingProps) {
 
 				if (response.ok) {
 					const data = await response.json();
-					logger.debug("📋 Status onboardingu:", data);
+					logger.debug(" Status onboardingu:", data);
 
 					if (data.completed === true) {
 						logger.debug(
-							"✅ Użytkownik już przeszedł onboarding - przekierowanie na dashboard",
+							" Użytkownik już przeszedł onboarding - przekierowanie na dashboard",
 						);
 						setHasCompletedOnboarding(true);
 						setTimeout(() => {
@@ -229,12 +227,12 @@ export default function Onboarding({ initialData = {} }: OnboardingProps) {
 					}
 				} else {
 					logger.warn(
-						"⚠️ Nie udało się sprawdzić statusu onboardingu:",
+						" Nie udało się sprawdzić statusu onboardingu:",
 						response.status,
 					);
 				}
 			} catch (error) {
-				logger.error("❌ Błąd sprawdzania statusu onboardingu:", error);
+				logger.error(" Błąd sprawdzania statusu onboardingu:", error);
 			} finally {
 				setIsLoading(false);
 			}
@@ -247,7 +245,6 @@ export default function Onboarding({ initialData = {} }: OnboardingProps) {
 			try {
 				const token = localStorage.getItem("accessToken");
 
-
 				const response = await fetch("/api/teams", {
 					headers: {
 						Authorization: `Bearer ${token}`,
@@ -255,14 +252,8 @@ export default function Onboarding({ initialData = {} }: OnboardingProps) {
 					},
 				});
 
-
-
 				if (response.ok) {
 					const data = await response.json();
-
-
-
-
 
 					const pillarsList = data.filter((team: any) => {
 						const isPillar =
@@ -271,13 +262,11 @@ export default function Onboarding({ initialData = {} }: OnboardingProps) {
 						return isPillar;
 					});
 
-
 					setPillars(pillarsList);
 				} else {
-
 				}
 			} catch (error) {
-				console.error("❌ Błąd pobierania filarów:", error);
+				console.error(" Błąd pobierania filarów:", error);
 			}
 		};
 
@@ -289,8 +278,6 @@ export default function Onboarding({ initialData = {} }: OnboardingProps) {
 				const token = localStorage.getItem("accessToken");
 				if (!token) return;
 
-
-
 				const profileResponse = await fetch("/api/profile", {
 					headers: {
 						Authorization: `Bearer ${token}`,
@@ -298,25 +285,14 @@ export default function Onboarding({ initialData = {} }: OnboardingProps) {
 					},
 				});
 
-
-
-
-
-
 				if (profileResponse.ok) {
 					const userData = await profileResponse.json();
 
-
-
 					const userPillarNames = userData.pillars || [];
 
-
 					if (userPillarNames.length > 0 && pillars.length > 0) {
-
 						const matchedPillarIds = pillars
 							.filter((pillar) => {
-
-
 								return userPillarNames.some((userPillarName: string) => {
 									const pillarNameWithoutPrefix = pillar.name.replace(
 										"Filar ",
@@ -330,25 +306,15 @@ export default function Onboarding({ initialData = {} }: OnboardingProps) {
 							})
 							.map((pillar) => pillar.id);
 
-
-
 						if (matchedPillarIds.length > 0) {
 							setSelectedPillars(matchedPillarIds);
-
-
-
-
 						} else {
-
 						}
 					} else {
-
-
-
 					}
 				}
 			} catch (error) {
-				console.error("❌ [DEBUG] Błąd pobierania filarów użytkownika:", error);
+				console.error(" [DEBUG] Błąd pobierania filarów użytkownika:", error);
 			}
 		};
 
@@ -359,15 +325,9 @@ export default function Onboarding({ initialData = {} }: OnboardingProps) {
 	useEffect(() => {
 		const userData = localStorage.getItem("user");
 
-
 		if (userData) {
 			try {
 				const user = JSON.parse(userData);
-
-
-
-
-
 
 				const phoneValue =
 					user.phone ||
@@ -377,21 +337,15 @@ export default function Onboarding({ initialData = {} }: OnboardingProps) {
 					user.mobile ||
 					"";
 
-
 				const firstName = user.firstName || user.first_name || "";
 				const lastName = user.lastName || user.last_name || "";
 				const email = user.email || "";
 				const province = user.province || "";
 
-
-
-
 				if (firstName) {
-
 					handleInputChange("firstName", firstName);
 				}
 				if (lastName) {
-
 					handleInputChange("lastName", lastName);
 				}
 				if (email && !formData.email) {
@@ -405,10 +359,9 @@ export default function Onboarding({ initialData = {} }: OnboardingProps) {
 					handleInputChange("phone", formattedPhone);
 				}
 			} catch (e) {
-				console.error("❌ Błąd parsowania user data:", e);
+				console.error(" Błąd parsowania user data:", e);
 			}
 		} else {
-
 		}
 	}, []);
 
@@ -418,7 +371,7 @@ export default function Onboarding({ initialData = {} }: OnboardingProps) {
 				const token = localStorage.getItem("accessToken");
 				if (!token) return;
 
-				logger.debug("📱 [Onboarding] Pobieram profil z API...");
+				logger.debug(" [Onboarding] Pobieram profil z API...");
 				const response = await fetch("/api/profile", {
 					headers: {
 						Authorization: `Bearer ${token}`,
@@ -434,7 +387,7 @@ export default function Onboarding({ initialData = {} }: OnboardingProps) {
 					}
 				}
 			} catch (error) {
-				logger.error("❌ [Onboarding] Błąd pobierania profilu:", error);
+				logger.error(" [Onboarding] Błąd pobierania profilu:", error);
 			}
 		};
 
@@ -484,14 +437,10 @@ export default function Onboarding({ initialData = {} }: OnboardingProps) {
 	}, [formData.firstName, formData.lastName, isEmailManuallyEdited]);
 	useEffect(() => {
 		const fetchProfileIfNeeded = async () => {
-
 			if (!formData.firstName || !formData.lastName) {
 				try {
 					const token = localStorage.getItem("accessToken");
 					if (!token) return;
-
-
-
 
 					const response = await fetch("/api/profile", {
 						headers: {
@@ -503,10 +452,7 @@ export default function Onboarding({ initialData = {} }: OnboardingProps) {
 					if (response.ok) {
 						const data = await response.json();
 
-
-
 						if (data.isTrial !== undefined) {
-
 							handleInputChange(
 								"isTrial",
 								data.isTrial === true || data.isTrial === 1,
@@ -528,7 +474,7 @@ export default function Onboarding({ initialData = {} }: OnboardingProps) {
 						}
 					}
 				} catch (error) {
-					console.error("❌ [DEBUG] Błąd pobierania profilu:", error);
+					console.error(" [DEBUG] Błąd pobierania profilu:", error);
 				}
 			}
 		};
@@ -558,7 +504,7 @@ export default function Onboarding({ initialData = {} }: OnboardingProps) {
 			} else {
 				if (prev.length >= 2) {
 					toast.error("Możesz wybrać maksymalnie 2 filary", {
-						icon: "⚠️",
+						icon: "",
 						duration: 3000,
 						style: {
 							background: "#1e293b",
@@ -603,8 +549,8 @@ export default function Onboarding({ initialData = {} }: OnboardingProps) {
 	};
 
 	const handleSubmit = async () => {
-		logger.debug("🚀 [SUBMIT] START");
-		logger.debug("🔍 [SUBMIT] selectedPillars:", selectedPillars);
+		logger.debug(" [SUBMIT] START");
+		logger.debug(" [SUBMIT] selectedPillars:", selectedPillars);
 
 		setIsSubmitting(true);
 
@@ -620,7 +566,6 @@ export default function Onboarding({ initialData = {} }: OnboardingProps) {
 				}
 			}
 
-
 			const selectedPillarNames = selectedPillars
 				.map((id) => {
 					const pillar = pillars.find((p) => p.id === id);
@@ -630,8 +575,6 @@ export default function Onboarding({ initialData = {} }: OnboardingProps) {
 
 			const pillarsString = selectedPillarNames.join(", ");
 
-
-
 			const payload = {
 				...formData,
 				joinDate: joinDate,
@@ -639,8 +582,6 @@ export default function Onboarding({ initialData = {} }: OnboardingProps) {
 				pillarIds: selectedPillars,
 				pillars: pillarsString,
 			};
-
-
 
 			const response = await fetch("/api/onboarding/save", {
 				method: "POST",
@@ -653,13 +594,9 @@ export default function Onboarding({ initialData = {} }: OnboardingProps) {
 
 			const result = await response.json();
 
-
 			if (!response.ok) {
 				throw new Error(result.error || "Błąd zapisu onboardingu");
 			}
-
-
-
 
 			const profilePayload = {
 				pillars: pillarsString,
@@ -668,8 +605,6 @@ export default function Onboarding({ initialData = {} }: OnboardingProps) {
 				province: formData.province,
 				phone: formData.phone,
 			};
-
-
 
 			const profileResponse = await fetch("/api/profile", {
 				method: "PUT",
@@ -680,9 +615,7 @@ export default function Onboarding({ initialData = {} }: OnboardingProps) {
 				body: JSON.stringify(profilePayload),
 			});
 
-
 			const profileText = await profileResponse.text();
-
 
 			let profileResult;
 			try {
@@ -691,23 +624,19 @@ export default function Onboarding({ initialData = {} }: OnboardingProps) {
 				profileResult = { error: profileText };
 			}
 
-
 			if (!profileResponse.ok) {
 				console.warn(
-					"⚠️ [DEBUG] Nie udało się zaktualizować profilu:",
+					" [DEBUG] Nie udało się zaktualizować profilu:",
 					profileResult,
 				);
 			} else {
-
 			}
-
 
 			localStorage.setItem("onboardingCompleted", "true");
 			localStorage.setItem(
 				"onboardingData",
 				JSON.stringify(result.data || formData),
 			);
-
 
 			const userData = localStorage.getItem("user");
 			if (userData) {
@@ -718,21 +647,20 @@ export default function Onboarding({ initialData = {} }: OnboardingProps) {
 					user.last_name = formData.lastName;
 					user.province = formData.province;
 					localStorage.setItem("user", JSON.stringify(user));
-
 				} catch (e) {
 					console.warn(
-						"⚠️ [DEBUG] Nie udało się zaktualizować user w localStorage",
+						" [DEBUG] Nie udało się zaktualizować user w localStorage",
 					);
 				}
 			}
 
-			logger.debug("🚀 [ONBOARDING] Przekierowuję na dashboard...");
+			logger.debug(" [ONBOARDING] Przekierowuję na dashboard...");
 			safeNavigate("/dashboard", navigate);
 		} catch (error) {
-			logger.error("❌ Błąd zapisu onboardingu:", error);
+			logger.error(" Błąd zapisu onboardingu:", error);
 			alert(
-				"❌ Wystąpił błąd: " +
-				(error instanceof Error ? error.message : "Nieznany błąd"),
+				" Wystąpił błąd: " +
+					(error instanceof Error ? error.message : "Nieznany błąd"),
 			);
 		} finally {
 			setIsSubmitting(false);
@@ -1368,7 +1296,8 @@ export default function Onboarding({ initialData = {} }: OnboardingProps) {
 							<div className={styles.form__privateNote}>
 								<AlertCircle size={16} />
 								<span>
-									Te dane są prywatne i widoczne tylko dla Ciebie, zarządu i zespołu Social Media.
+									Te dane są prywatne i widoczne tylko dla Ciebie, zarządu i
+									zespołu Social Media.
 								</span>
 							</div>
 						</div>
@@ -1484,80 +1413,80 @@ export default function Onboarding({ initialData = {} }: OnboardingProps) {
 									formData.mpContacts.length > 0 ||
 									formData.institutionContacts.length > 0 ||
 									formData.otherContacts.length > 0) && (
-										<div className={styles.summary__section}>
-											<h4 className={styles.summary__title}>Kontakty prywatne</h4>
-											<div className={styles.summary__grid}>
-												{formData.salaContacts.length > 0 && (
-													<div>
-														<span className={styles.summary__label}>
-															Kontakty do sal
-														</span>
-														<div className={styles.summary__tags}>
-															{formData.salaContacts.map((contact) => (
-																<span
-																	key={contact}
-																	className={styles.summary__tag}
-																>
-																	{contact}
-																</span>
-															))}
-														</div>
+									<div className={styles.summary__section}>
+										<h4 className={styles.summary__title}>Kontakty prywatne</h4>
+										<div className={styles.summary__grid}>
+											{formData.salaContacts.length > 0 && (
+												<div>
+													<span className={styles.summary__label}>
+														Kontakty do sal
+													</span>
+													<div className={styles.summary__tags}>
+														{formData.salaContacts.map((contact) => (
+															<span
+																key={contact}
+																className={styles.summary__tag}
+															>
+																{contact}
+															</span>
+														))}
 													</div>
-												)}
-												{formData.mpContacts.length > 0 && (
-													<div>
-														<span className={styles.summary__label}>
-															Kontakty do posłów
-														</span>
-														<div className={styles.summary__tags}>
-															{formData.mpContacts.map((contact) => (
-																<span
-																	key={contact}
-																	className={styles.summary__tag}
-																>
-																	{contact}
-																</span>
-															))}
-														</div>
+												</div>
+											)}
+											{formData.mpContacts.length > 0 && (
+												<div>
+													<span className={styles.summary__label}>
+														Kontakty do posłów
+													</span>
+													<div className={styles.summary__tags}>
+														{formData.mpContacts.map((contact) => (
+															<span
+																key={contact}
+																className={styles.summary__tag}
+															>
+																{contact}
+															</span>
+														))}
 													</div>
-												)}
-												{formData.institutionContacts.length > 0 && (
-													<div>
-														<span className={styles.summary__label}>
-															Kontakty do instytucji
-														</span>
-														<div className={styles.summary__tags}>
-															{formData.institutionContacts.map((contact) => (
-																<span
-																	key={contact}
-																	className={styles.summary__tag}
-																>
-																	{contact}
-																</span>
-															))}
-														</div>
+												</div>
+											)}
+											{formData.institutionContacts.length > 0 && (
+												<div>
+													<span className={styles.summary__label}>
+														Kontakty do instytucji
+													</span>
+													<div className={styles.summary__tags}>
+														{formData.institutionContacts.map((contact) => (
+															<span
+																key={contact}
+																className={styles.summary__tag}
+															>
+																{contact}
+															</span>
+														))}
 													</div>
-												)}
-												{formData.otherContacts.length > 0 && (
-													<div>
-														<span className={styles.summary__label}>
-															Inne kontakty
-														</span>
-														<div className={styles.summary__tags}>
-															{formData.otherContacts.map((contact) => (
-																<span
-																	key={contact}
-																	className={styles.summary__tag}
-																>
-																	{contact}
-																</span>
-															))}
-														</div>
+												</div>
+											)}
+											{formData.otherContacts.length > 0 && (
+												<div>
+													<span className={styles.summary__label}>
+														Inne kontakty
+													</span>
+													<div className={styles.summary__tags}>
+														{formData.otherContacts.map((contact) => (
+															<span
+																key={contact}
+																className={styles.summary__tag}
+															>
+																{contact}
+															</span>
+														))}
 													</div>
-												)}
-											</div>
+												</div>
+											)}
 										</div>
-									)}
+									</div>
+								)}
 
 								{formData.description && (
 									<div className={styles.summary__section}>

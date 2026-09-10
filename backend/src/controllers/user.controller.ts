@@ -7,7 +7,6 @@ const prisma = new PrismaClient();
 export class UserController {
 	async getAllUsers(req: Request, res: Response) {
 		try {
-
 			const users = await prisma.$queryRaw`
 				SELECT 
 					id, 
@@ -29,8 +28,11 @@ export class UserController {
 
 			const mappedUsers = (users as any[]).map((user: any) => ({
 				id: user.id.toString(),
-				name: `${user.first_name || ''} ${user.last_name || ''}`.trim() || user.email || 'Nieznany',
-				email: user.email || '',
+				name:
+					`${user.first_name || ""} ${user.last_name || ""}`.trim() ||
+					user.email ||
+					"Nieznany",
+				email: user.email || "",
 				role: mapRoleId(user.role_id),
 				team: user.team || null,
 				status: user.status || "active",
@@ -38,15 +40,20 @@ export class UserController {
 				phone: user.phone || "",
 				province: user.province || "",
 				pillar: null,
-				pillars: user.pillars ? user.pillars.split(",").map((p: string) => p.trim()).filter(Boolean) : [],
+				pillars: user.pillars
+					? user.pillars
+							.split(",")
+							.map((p: string) => p.trim())
+							.filter(Boolean)
+					: [],
 			}));
 
 			res.json(mappedUsers);
 		} catch (error) {
-			logger.error("❌ Błąd pobierania użytkowników:", error);
+			logger.error(" Błąd pobierania użytkowników:", error);
 			res.status(500).json({
 				error: "Nie udało się pobrać użytkowników",
-				details: error instanceof Error ? error.message : "Unknown error"
+				details: error instanceof Error ? error.message : "Unknown error",
 			});
 		}
 	}
@@ -85,7 +92,10 @@ export class UserController {
 
 			res.json({
 				id: user.id.toString(),
-				name: `${user.first_name || ''} ${user.last_name || ''}`.trim() || user.email || 'Nieznany',
+				name:
+					`${user.first_name || ""} ${user.last_name || ""}`.trim() ||
+					user.email ||
+					"Nieznany",
 				email: user.email,
 				username: user.username,
 				role: mapRoleId(user.role_id),
@@ -102,7 +112,7 @@ export class UserController {
 				pillars: [],
 			});
 		} catch (error) {
-			logger.error("❌ Błąd pobierania użytkownika:", error);
+			logger.error(" Błąd pobierania użytkownika:", error);
 			res.status(500).json({ error: "Nie udało się pobrać użytkownika" });
 		}
 	}
@@ -137,7 +147,6 @@ export class UserController {
 				return res.status(404).json({ error: "Użytkownik nie znaleziony" });
 			}
 
-
 			const updatedUser = await prisma.user.update({
 				where: { id },
 				data: {
@@ -160,7 +169,7 @@ export class UserController {
 				role: mapRoleId(updatedUser.role_id),
 			});
 		} catch (error) {
-			logger.error("❌ Błąd aktualizacji użytkownika:", error);
+			logger.error(" Błąd aktualizacji użytkownika:", error);
 			res
 				.status(500)
 				.json({ error: "Nie udało się zaktualizować użytkownika" });
@@ -175,7 +184,6 @@ export class UserController {
 				return res.status(400).json({ error: "Nieprawidłowe ID użytkownika" });
 			}
 
-
 			await prisma.user.update({
 				where: { id },
 				data: { is_active: false },
@@ -183,7 +191,7 @@ export class UserController {
 
 			res.json({ message: "Użytkownik został dezaktywowany" });
 		} catch (error) {
-			logger.error("❌ Błąd usuwania użytkownika:", error);
+			logger.error(" Błąd usuwania użytkownika:", error);
 			res.status(500).json({ error: "Nie udało się usunąć użytkownika" });
 		}
 	}

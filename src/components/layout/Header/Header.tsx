@@ -23,13 +23,13 @@ import styles from "./Header.module.css";
 export interface SearchResult {
 	id: string;
 	type:
-	| "member"
-	| "project"
-	| "guide"
-	| "task"
-	| "vacancy"
-	| "structure"
-	| "social";
+		| "member"
+		| "project"
+		| "guide"
+		| "task"
+		| "vacancy"
+		| "structure"
+		| "social";
 	title: string;
 	subtitle?: string;
 	description?: string;
@@ -95,20 +95,17 @@ export default function Header({
 		try {
 			isFetching.current = true;
 			setLoading(true);
-			const response = await fetch(
-				"/api/dashboard/notifications?limit=20",
-				{
-					headers: {
-						"Content-Type": "application/json",
-					},
-				}
-			);
+			const response = await fetch("/api/dashboard/notifications?limit=20", {
+				headers: {
+					"Content-Type": "application/json",
+				},
+			});
 			if (!response.ok) {
 				throw new Error("Błąd pobierania powiadomień");
 			}
 
 			const data = await response.json();
-			logger.debug("📊 Powiadomienia w Header:", data);
+			logger.debug(" Powiadomienia w Header:", data);
 
 			setNotifications(data);
 
@@ -127,9 +124,7 @@ export default function Header({
 
 		try {
 			isFetching.current = true;
-			const response = await fetch(
-				"/api/dashboard/notifications/unread-count"
-			);
+			const response = await fetch("/api/dashboard/notifications/unread-count");
 			if (response.ok) {
 				const data = await response.json();
 				setUnreadCount(data.count);
@@ -302,8 +297,9 @@ export default function Header({
 				</button>
 
 				<button
-					className={`${styles.topbar__burger} ${isMobileMenuOpen ? styles.topbar__burgerHidden : ""
-						}`}
+					className={`${styles.topbar__burger} ${
+						isMobileMenuOpen ? styles.topbar__burgerHidden : ""
+					}`}
 					onClick={onMobileMenuToggle}
 					aria-label="Menu mobilne"
 				>

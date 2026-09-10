@@ -51,7 +51,7 @@ class MemberService {
 			const response = await api.get("/api/users");
 			return response.data.map((user: any) => this.mapToMember(user));
 		} catch (error) {
-			logger.error("❌ Błąd pobierania członków:", error);
+			logger.error(" Błąd pobierania członków:", error);
 			throw error;
 		}
 	}
@@ -61,7 +61,7 @@ class MemberService {
 			const response = await api.get(`/api/users/${id}`);
 			return this.mapToMember(response.data);
 		} catch (error) {
-			logger.error("❌ Błąd pobierania członka:", error);
+			logger.error(" Błąd pobierania członka:", error);
 			throw error;
 		}
 	}
@@ -93,7 +93,7 @@ class MemberService {
 			});
 			return this.mapToMember(response.data);
 		} catch (error) {
-			logger.error("❌ Błąd tworzenia członka:", error);
+			logger.error(" Błąd tworzenia członka:", error);
 			throw error;
 		}
 	}
@@ -120,7 +120,7 @@ class MemberService {
 			});
 			return this.mapToMember(response.data);
 		} catch (error) {
-			logger.error("❌ Błąd aktualizacji członka:", error);
+			logger.error(" Błąd aktualizacji członka:", error);
 			throw error;
 		}
 	}
@@ -129,7 +129,7 @@ class MemberService {
 		try {
 			await api.delete(`/api/users/${id}`);
 		} catch (error) {
-			logger.error("❌ Błąd usuwania członka:", error);
+			logger.error(" Błąd usuwania członka:", error);
 			throw error;
 		}
 	}

@@ -60,24 +60,24 @@ export const authMiddleware = async (
 	const authHeader = req.headers.authorization;
 	if (authHeader && authHeader.startsWith("Bearer ")) {
 		token = authHeader.split(" ")[1];
-		logger.debug(`🔐 Token pobrany z header`);
+		logger.debug(` Token pobrany z header`);
 	}
 
 	if (!token) {
 		token = req.cookies?.accessToken;
 		if (token) {
-			logger.debug(`🔐 Token pobrany z cookie`);
+			logger.debug(` Token pobrany z cookie`);
 		}
 	}
 
 	if (!token) {
-		logger.warn(`❌ Brak tokena dla: ${req.method} ${req.path}`);
+		logger.warn(` Brak tokena dla: ${req.method} ${req.path}`);
 		return res.status(401).json({ error: "Brak tokenu autoryzacyjnego" });
 	}
 
 	try {
 		const decoded = jwt.verify(token, JWT_SECRET) as any;
-		logger.debug(`✅ Token zweryfikowany dla użytkownika: ${decoded.id}`);
+		logger.debug(` Token zweryfikowany dla użytkownika: ${decoded.id}`);
 
 		const user = await prisma.user.findUnique({
 			where: { id: decoded.id },
@@ -92,7 +92,7 @@ export const authMiddleware = async (
 		});
 
 		if (!user) {
-			logger.warn(`❌ Użytkownik ${decoded.id} nie znaleziony`);
+			logger.warn(` Użytkownik ${decoded.id} nie znaleziony`);
 			return res.status(401).json({ error: "Użytkownik nie znaleziony" });
 		}
 
@@ -131,7 +131,7 @@ export const authMiddleware = async (
 
 		next();
 	} catch (error: any) {
-		logger.error(`❌ Błąd autoryzacji: ${error.message}`);
+		logger.error(` Błąd autoryzacji: ${error.message}`);
 
 		if (error.name === "TokenExpiredError") {
 			return res.status(401).json({ error: "Token wygasł" });

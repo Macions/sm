@@ -1,15 +1,10 @@
-
 import express from "express";
 import pool from "../config/db";
 
 const router = express.Router();
 
-
 router.get("/status", async (req, res) => {
 	try {
-
-
-
 		const [rows] = await pool.query(`
             SELECT 
                 m.id,
@@ -44,7 +39,6 @@ router.get("/status", async (req, res) => {
 
 		const members = rows as any[];
 
-
 		const summary = {
 			totalMembers: members.length,
 			totalArrears: members.reduce(
@@ -57,10 +51,8 @@ router.get("/status", async (req, res) => {
 			),
 			averageArrears:
 				members.reduce((sum, m) => sum + Math.max(0, m.monthsArrears || 0), 0) /
-				members.length || 0,
+					members.length || 0,
 		};
-
-
 
 		res.json({
 			success: true,
@@ -68,7 +60,7 @@ router.get("/status", async (req, res) => {
 			summary,
 		});
 	} catch (error) {
-		console.error("❌ [PAYMENTS] Błąd:", error);
+		console.error(" [PAYMENTS] Błąd:", error);
 		res.status(500).json({
 			success: false,
 			error: "Nie udało się pobrać danych składek",
@@ -76,7 +68,6 @@ router.get("/status", async (req, res) => {
 		});
 	}
 });
-
 
 router.get("/member/:id", async (req, res) => {
 	try {
@@ -134,7 +125,7 @@ router.get("/member/:id", async (req, res) => {
 			data: member,
 		});
 	} catch (error) {
-		console.error("❌ [PAYMENTS] Błąd:", error);
+		console.error(" [PAYMENTS] Błąd:", error);
 		res.status(500).json({
 			success: false,
 			error: "Nie udało się pobrać danych",

@@ -122,7 +122,7 @@ export class ProjectController {
 			await projectService.deleteProject(id.toString());
 			res.status(204).send();
 		} catch (error) {
-			logger.error(`❌ Błąd usuwania projektu:`, error);
+			logger.error(` Błąd usuwania projektu:`, error);
 			res.status(500).json({ error: "Nie udało się usunąć projektu" });
 		}
 	}

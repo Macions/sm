@@ -1,4 +1,3 @@
-
 import { smPool, ewidencjaPool } from "../config/db";
 
 interface MonthlyRevenue {
@@ -33,11 +32,6 @@ export class RevenueService {
 		year: number = new Date().getFullYear(),
 	): Promise<RevenueData> {
 		try {
-
-
-
-
-
 			const [paymentRows]: any[] = await smPool.query(
 				`SELECT 
 					MONTH(payment_date) as month,
@@ -52,9 +46,6 @@ export class RevenueService {
 				[year],
 			);
 
-
-
-
 			const [invoiceRows]: any[] = await ewidencjaPool.query(
 				`SELECT 
 					MONTH(invoice_date) as month,
@@ -68,8 +59,18 @@ export class RevenueService {
 			);
 
 			const monthNames = [
-				"Styczeń", "Luty", "Marzec", "Kwiecień", "Maj", "Czerwiec",
-				"Lipiec", "Sierpień", "Wrzesień", "Październik", "Listopad", "Grudzień"
+				"Styczeń",
+				"Luty",
+				"Marzec",
+				"Kwiecień",
+				"Maj",
+				"Czerwiec",
+				"Lipiec",
+				"Sierpień",
+				"Wrzesień",
+				"Październik",
+				"Listopad",
+				"Grudzień",
 			];
 
 			const revenueMap = new Map<number, number>();
@@ -89,9 +90,6 @@ export class RevenueService {
 				});
 			}
 
-
-
-
 			const MONTHLY_OFFICE_COST = 60.27;
 
 			const months: MonthlyRevenue[] = monthNames.map((monthName, index) => {
@@ -100,8 +98,8 @@ export class RevenueService {
 				const expensesFromPayments = expensesMap.get(monthNumber) || 0;
 				const expensesFromInvoices = invoiceMap.get(monthNumber) || 0;
 
-
-				const totalExpenses = expensesFromPayments + expensesFromInvoices + MONTHLY_OFFICE_COST;
+				const totalExpenses =
+					expensesFromPayments + expensesFromInvoices + MONTHLY_OFFICE_COST;
 
 				return {
 					month: monthName,
@@ -136,21 +134,13 @@ export class RevenueService {
 				netProfit: Math.round((totalRevenue - totalExpenses) * 100) / 100,
 			};
 		} catch (error) {
-			console.error("❌ Błąd pobierania danych przychodów:", error);
+			console.error(" Błąd pobierania danych przychodów:", error);
 			return this.getEmptyRevenueData(year);
 		}
 	}
 
-
-
-
 	async getRevenueByCategory(year: number): Promise<CategoryData[]> {
 		try {
-
-
-
-
-
 			const [rows]: any[] = await smPool.query(
 				`SELECT 
 					MONTH(payment_date) as month,
@@ -205,20 +195,10 @@ export class RevenueService {
 				[year],
 			);
 
-
-
-
-
 			if (Array.isArray(rows) && rows.length > 0) {
-				rows.forEach((row: any) => {
-
-				});
+				rows.forEach((row: any) => {});
 			} else {
-
 			}
-
-
-
 
 			const [invoiceRows]: any[] = await ewidencjaPool.query(
 				`SELECT 
@@ -241,8 +221,6 @@ export class RevenueService {
 				GROUP BY month, category`,
 				[year],
 			);
-
-
 
 			const monthNames = [
 				"Styczeń",
@@ -272,14 +250,12 @@ export class RevenueService {
 
 			const result: any = {};
 
-
 			monthNames.forEach((month, index) => {
 				result[month] = { month, monthIndex: index + 1 };
 				categories.forEach((cat) => {
 					result[month][cat] = 0;
 				});
 			});
-
 
 			if (Array.isArray(rows)) {
 				rows.forEach((row: any) => {
@@ -295,7 +271,6 @@ export class RevenueService {
 				});
 			}
 
-
 			if (Array.isArray(invoiceRows)) {
 				invoiceRows.forEach((row: any) => {
 					const monthName = monthNames[row.month - 1];
@@ -305,36 +280,25 @@ export class RevenueService {
 				});
 			}
 
-
-
-
-			const MONTHLY_OFFICE_COST = 60.27; 
+			const MONTHLY_OFFICE_COST = 60.27;
 
 			monthNames.forEach((month) => {
 				if (result[month]) {
-					result[month]['Wydatki biurowe'] = MONTHLY_OFFICE_COST;
+					result[month]["Wydatki biurowe"] = MONTHLY_OFFICE_COST;
 				}
 			});
 
-
-
-
-
-
 			const resultValues = Object.values(result);
-
 
 			return resultValues as CategoryData[];
 		} catch (error) {
-			console.error("❌ [KATEGORIE] Błąd pobierania kategorii:", error);
+			console.error(" [KATEGORIE] Błąd pobierania kategorii:", error);
 			return [];
 		}
 	}
 
 	async getMonthlyDetails(year: number, month: number): Promise<any> {
 		try {
-
-
 			const [revenueRows]: any[] = await smPool.query(
 				`SELECT 
 					id,
@@ -440,7 +404,7 @@ export class RevenueService {
 				count: allTransactions.length,
 			};
 		} catch (error) {
-			console.error("❌ Błąd pobierania szczegółów:", error);
+			console.error(" Błąd pobierania szczegółów:", error);
 			return {
 				year,
 				month,

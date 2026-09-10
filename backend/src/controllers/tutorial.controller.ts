@@ -75,7 +75,7 @@ export const getTutorials = async (req: Request, res: Response) => {
 
 		res.json(tutorials);
 	} catch (error) {
-		logger.error("❌ Błąd pobierania poradników:", error);
+		logger.error(" Błąd pobierania poradników:", error);
 		res.status(500).json({ error: "Błąd pobierania poradników" });
 	}
 };
@@ -86,18 +86,15 @@ export const getTutorialById = async (req: Request, res: Response) => {
 
 		res.json({ id, message: "Pobrano poradnik" });
 	} catch (error) {
-		logger.error("❌ Błąd pobierania poradnika:", error);
+		logger.error(" Błąd pobierania poradnika:", error);
 		res.status(500).json({ error: "Błąd pobierania poradnika" });
 	}
 };
 
 export const createTutorial = async (req: Request, res: Response) => {
 	try {
-		logger.debug("📥 Otrzymano żądanie POST /tutorials");
-		logger.debug(
-			"📁 Pliki:",
-			(req.files as Express.Multer.File[])?.length || 0,
-		);
+		logger.debug(" Otrzymano żądanie POST /tutorials");
+		logger.debug(" Pliki:", (req.files as Express.Multer.File[])?.length || 0);
 
 		let tutorialData;
 		try {
@@ -138,10 +135,10 @@ export const createTutorial = async (req: Request, res: Response) => {
 			updatedAt: tutorialData.updatedAt || new Date().toISOString(),
 		};
 
-		logger.debug("✅ Utworzono poradnik:", result);
+		logger.debug(" Utworzono poradnik:", result);
 		res.status(201).json(result);
 	} catch (error) {
-		logger.error("❌ Błąd tworzenia poradnika:", error);
+		logger.error(" Błąd tworzenia poradnika:", error);
 
 		const files = req.files as Express.Multer.File[];
 		if (files) {
@@ -160,7 +157,7 @@ export const createTutorial = async (req: Request, res: Response) => {
 export const updateTutorial = async (req: Request, res: Response) => {
 	try {
 		const { id } = req.params;
-		logger.debug(`📥 Otrzymano żądanie PUT /tutorials/${id}`);
+		logger.debug(` Otrzymano żądanie PUT /tutorials/${id}`);
 
 		let tutorialData;
 		try {
@@ -195,10 +192,10 @@ export const updateTutorial = async (req: Request, res: Response) => {
 			updatedAt: new Date().toISOString(),
 		};
 
-		logger.debug("✅ Zaktualizowano poradnik:", result);
+		logger.debug(" Zaktualizowano poradnik:", result);
 		res.json(result);
 	} catch (error) {
-		logger.error("❌ Błąd aktualizacji poradnika:", error);
+		logger.error(" Błąd aktualizacji poradnika:", error);
 		res.status(500).json({ error: "Błąd aktualizacji poradnika" });
 	}
 };
@@ -206,12 +203,12 @@ export const updateTutorial = async (req: Request, res: Response) => {
 export const deleteTutorial = async (req: Request, res: Response) => {
 	try {
 		const { id } = req.params;
-		logger.debug(`🗑️ Usuwanie poradnika: ${id}`);
+		logger.debug(` Usuwanie poradnika: ${id}`);
 
-		logger.debug("✅ Usunięto poradnik");
+		logger.debug(" Usunięto poradnik");
 		res.json({ success: true });
 	} catch (error) {
-		logger.error("❌ Błąd usuwania poradnika:", error);
+		logger.error(" Błąd usuwania poradnika:", error);
 		res.status(500).json({ error: "Błąd usuwania poradnika" });
 	}
 };
@@ -219,12 +216,12 @@ export const deleteTutorial = async (req: Request, res: Response) => {
 export const deleteAttachment = async (req: Request, res: Response) => {
 	try {
 		const { id } = req.params;
-		logger.debug(`🗑️ Usuwanie załącznika: ${id}`);
+		logger.debug(` Usuwanie załącznika: ${id}`);
 
-		logger.debug("✅ Usunięto załącznik");
+		logger.debug(" Usunięto załącznik");
 		res.json({ success: true });
 	} catch (error) {
-		logger.error("❌ Błąd usuwania załącznika:", error);
+		logger.error(" Błąd usuwania załącznika:", error);
 		res.status(500).json({ error: "Błąd usuwania załącznika" });
 	}
 };
@@ -240,7 +237,7 @@ export const getFile = async (req: Request, res: Response) => {
 
 		res.sendFile(filePath);
 	} catch (error) {
-		logger.error("❌ Błąd pobierania pliku:", error);
+		logger.error(" Błąd pobierania pliku:", error);
 		res.status(500).json({ error: "Błąd pobierania pliku" });
 	}
 };

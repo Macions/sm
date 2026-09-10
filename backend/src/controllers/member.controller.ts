@@ -67,7 +67,7 @@ export const getMembers = async (req: Request, res: Response) => {
 
 		res.json(mappedMembers);
 	} catch (error) {
-		logger.error("❌ Błąd pobierania członków:", error);
+		logger.error(" Błąd pobierania członków:", error);
 		res.status(500).json({ error: "Nie udało się pobrać członków" });
 	}
 };
@@ -167,18 +167,15 @@ export const getMemberById = async (req: Request, res: Response) => {
 
 		res.json(mappedMember);
 	} catch (error) {
-		logger.error("❌ Błąd pobierania członka:", error);
+		logger.error(" Błąd pobierania członka:", error);
 		res.status(500).json({ error: "Nie udało się pobrać członka" });
 	}
 };
 
 export const createMember = async (req: Request, res: Response) => {
 	try {
-		logger.debug("📥 [createMember] - START");
-		logger.debug(
-			"📥 [createMember] - body:",
-			JSON.stringify(req.body, null, 2),
-		);
+		logger.debug(" [createMember] - START");
+		logger.debug(" [createMember] - body:", JSON.stringify(req.body, null, 2));
 
 		const {
 			firstName,
@@ -199,9 +196,8 @@ export const createMember = async (req: Request, res: Response) => {
 			contributionInfo,
 		} = req.body;
 
-
 		if (!pillars || pillars.trim() === "") {
-			logger.debug("❌ [createMember] - Brak filarów");
+			logger.debug(" [createMember] - Brak filarów");
 			return res.status(400).json({
 				error: "Członek musi być przypisany do przynajmniej jednego filaru",
 			});
@@ -209,16 +205,14 @@ export const createMember = async (req: Request, res: Response) => {
 
 		const pillarsArray = pillars.split(", ").filter(Boolean);
 		if (pillarsArray.length > 2) {
-			logger.debug(
-				`❌ [createMember] - Za dużo filarów: ${pillarsArray.length}`,
-			);
+			logger.debug(` [createMember] - Za dużo filarów: ${pillarsArray.length}`);
 			return res.status(400).json({
 				error: "Członek może być przypisany do maksymalnie 2 filarów",
 			});
 		}
 
 		if (!firstName || !lastName || !email) {
-			logger.debug("❌ [createMember] - Brak wymaganych pól");
+			logger.debug(" [createMember] - Brak wymaganych pól");
 			return res.status(400).json({
 				error: "Imię, nazwisko i email są wymagane",
 			});
@@ -229,7 +223,7 @@ export const createMember = async (req: Request, res: Response) => {
 		});
 
 		if (existingUser) {
-			logger.debug("❌ [createMember] - Email już istnieje:", email);
+			logger.debug(" [createMember] - Email już istnieje:", email);
 
 			const existingTeamMember = await prisma.teamMember.findFirst({
 				where: {
@@ -314,12 +308,12 @@ export const createMember = async (req: Request, res: Response) => {
 
 				team_members: teamId
 					? {
-						create: {
-							team_id: teamId,
-							role: func || "Członek",
-							is_leader: false,
-						},
-					}
+							create: {
+								team_id: teamId,
+								role: func || "Członek",
+								is_leader: false,
+							},
+						}
 					: undefined,
 			},
 		});
@@ -376,10 +370,10 @@ export const createMember = async (req: Request, res: Response) => {
 			},
 		};
 
-		logger.debug("✅ [createMember] - SUKCES!");
+		logger.debug(" [createMember] - SUKCES!");
 		res.status(201).json(mappedMember);
 	} catch (error) {
-		logger.error("❌ [createMember] - BŁĄD:", error);
+		logger.error(" [createMember] - BŁĄD:", error);
 		res.status(500).json({
 			error: "Nie udało się utworzyć członka",
 			details: error instanceof Error ? error.message : "Nieznany błąd",
@@ -415,26 +409,20 @@ export const updateMember = async (req: Request, res: Response) => {
 			contributionInfo,
 		} = req.body;
 
-
-
 		if (!pillars || pillars.trim() === "") {
-			logger.debug("❌ [updateMember] - Brak filarów");
+			logger.debug(" [updateMember] - Brak filarów");
 			return res.status(400).json({
 				error: "Członek musi być przypisany do przynajmniej jednego filaru",
 			});
 		}
 
-
 		const pillarsArray = pillars.split(", ").filter(Boolean);
 		if (pillarsArray.length > 2) {
-			logger.debug(
-				`❌ [updateMember] - Za dużo filarów: ${pillarsArray.length}`,
-			);
+			logger.debug(` [updateMember] - Za dużo filarów: ${pillarsArray.length}`);
 			return res.status(400).json({
 				error: "Członek może być przypisany do maksymalnie 2 filarów",
 			});
 		}
-
 
 		const existingUser = await prisma.user.findUnique({
 			where: { id: userId },
@@ -444,8 +432,6 @@ export const updateMember = async (req: Request, res: Response) => {
 			return res.status(404).json({ error: "Nie znaleziono użytkownika" });
 		}
 
-
-
 		const user = await prisma.user.update({
 			where: { id: userId },
 			data: {
@@ -454,14 +440,13 @@ export const updateMember = async (req: Request, res: Response) => {
 				email: email,
 				phone: phone || null,
 				functional_role: func || null,
-				team: team || null, 
+				team: team || null,
 				pillars: pillars || null,
 				province: province || null,
 				status: status || existingUser.status,
 				join_date: joinDate ? new Date(joinDate) : undefined,
 			},
 		});
-
 
 		try {
 			const existingOnboarding = await prisma.onboarding_data.findFirst({
@@ -477,7 +462,6 @@ export const updateMember = async (req: Request, res: Response) => {
 						email: email,
 						phone: phone || null,
 
-
 						province: province || "",
 						development_areas: JSON.stringify(interests || []),
 						skills: JSON.stringify(skills || []),
@@ -488,7 +472,6 @@ export const updateMember = async (req: Request, res: Response) => {
 					},
 				});
 			} else {
-
 				await prisma.onboarding_data.create({
 					data: {
 						first_name: firstName,
@@ -512,11 +495,8 @@ export const updateMember = async (req: Request, res: Response) => {
 				});
 			}
 		} catch (onboardingError) {
-
-			logger.error("❌ Błąd przy zapisie onboarding_data:", onboardingError);
-
+			logger.error(" Błąd przy zapisie onboarding_data:", onboardingError);
 		}
-
 
 		const mappedMember = {
 			id: user.id.toString(),
@@ -525,7 +505,7 @@ export const updateMember = async (req: Request, res: Response) => {
 			function: user.functional_role || func || "Członek",
 			team: user.team || team || "Brak zespołu",
 			teamId: "",
-			pillars: user.pillars || pillars || "", 
+			pillars: user.pillars || pillars || "",
 			province: user.province || province || "",
 			status: user.status || status || "trial",
 			interests: interests || [],
@@ -550,7 +530,7 @@ export const updateMember = async (req: Request, res: Response) => {
 
 		res.json(mappedMember);
 	} catch (error) {
-		logger.error("❌ Błąd aktualizacji członka:", error);
+		logger.error(" Błąd aktualizacji członka:", error);
 		res.status(500).json({
 			error: "Nie udało się zaktualizować członka",
 			details: error instanceof Error ? error.message : "Nieznany błąd",
@@ -582,7 +562,7 @@ export const deleteMember = async (req: Request, res: Response) => {
 
 		res.status(204).send();
 	} catch (error) {
-		logger.error("❌ Błąd usuwania członka:", error);
+		logger.error(" Błąd usuwania członka:", error);
 		res.status(500).json({ error: "Nie udało się usunąć członka" });
 	}
 };

@@ -1,4 +1,4 @@
-import { Response } from 'express';
+import { Response } from "express";
 import { PrismaClient } from "@prisma/client";
 import { AuthRequest } from "../middleware/auth.middleware";
 import { logger } from "../utils/logger";
@@ -19,7 +19,7 @@ export class NotificationController {
 
 			res.json(notifications);
 		} catch (error) {
-			logger.error("❌ Błąd pobierania powiadomień:", error);
+			logger.error(" Błąd pobierania powiadomień:", error);
 			res.status(500).json({ error: "Nie udało się pobrać powiadomień" });
 		}
 	}
@@ -39,7 +39,7 @@ export class NotificationController {
 
 			res.status(200).json({ message: "Oznaczono jako przeczytane" });
 		} catch (error) {
-			logger.error("❌ Błąd oznaczania:", error);
+			logger.error(" Błąd oznaczania:", error);
 			res.status(500).json({ error: "Nie udało się oznaczyć" });
 		}
 	}
@@ -58,7 +58,7 @@ export class NotificationController {
 
 			res.status(200).json({ message: "Wszystkie oznaczone jako przeczytane" });
 		} catch (error) {
-			logger.error("❌ Błąd oznaczania wszystkich:", error);
+			logger.error(" Błąd oznaczania wszystkich:", error);
 			res.status(500).json({ error: "Nie udało się oznaczyć wszystkich" });
 		}
 	}
@@ -77,7 +77,7 @@ export class NotificationController {
 
 			res.status(200).json({ message: "Usunięto powiadomienie" });
 		} catch (error) {
-			logger.error("❌ Błąd usuwania:", error);
+			logger.error(" Błąd usuwania:", error);
 			res.status(500).json({ error: "Nie udało się usunąć" });
 		}
 	}

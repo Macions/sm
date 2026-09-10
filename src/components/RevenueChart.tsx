@@ -1,5 +1,4 @@
-﻿
-import { useState, useEffect } from "react";
+﻿import { useState, useEffect } from "react";
 import {
 	Bar,
 	XAxis,
@@ -46,58 +45,74 @@ const COLORS = {
 	wydatkiBiurowe: "#F97316",
 };
 
-
 const CustomTooltip = ({ active, payload }: any) => {
 	if (active && payload && payload.length) {
 		const data = payload[0].payload;
 		return (
-			<div style={{
-				backgroundColor: 'white',
-				padding: '16px',
-				border: '1px solid #e5e7eb',
-				borderRadius: '12px',
-				boxShadow: '0 10px 25px rgba(0,0,0,0.1)',
-				minWidth: '220px',
-				maxWidth: '300px',
-			}}>
-				<p style={{ margin: '0 0 8px 0', fontWeight: 'bold', fontSize: '16px', color: '#1f2937' }}>
+			<div
+				style={{
+					backgroundColor: "white",
+					padding: "16px",
+					border: "1px solid #e5e7eb",
+					borderRadius: "12px",
+					boxShadow: "0 10px 25px rgba(0,0,0,0.1)",
+					minWidth: "220px",
+					maxWidth: "300px",
+				}}
+			>
+				<p
+					style={{
+						margin: "0 0 8px 0",
+						fontWeight: "bold",
+						fontSize: "16px",
+						color: "#1f2937",
+					}}
+				>
 					{data.monthName}
 				</p>
 
-				<div style={{ borderTop: '1px solid #f3f4f6', paddingTop: '8px' }}>
-					<p style={{ margin: '4px 0', fontSize: '14px', color: '#4A6FE8' }}>
+				<div style={{ borderTop: "1px solid #f3f4f6", paddingTop: "8px" }}>
+					<p style={{ margin: "4px 0", fontSize: "14px", color: "#4A6FE8" }}>
 						Przychód: <strong>{data.revenue.toFixed(2)} zł</strong>
 					</p>
-					<p style={{ margin: '4px 0', fontSize: '14px', color: '#EF4444' }}>
+					<p style={{ margin: "4px 0", fontSize: "14px", color: "#EF4444" }}>
 						Wydatki: <strong>{data.expenses.toFixed(2)} zł</strong>
 					</p>
-					<p style={{ margin: '4px 0', fontSize: '14px', color: '#10B981' }}>
+					<p style={{ margin: "4px 0", fontSize: "14px", color: "#10B981" }}>
 						Zysk: <strong>{data.profit.toFixed(2)} zł</strong>
 					</p>
 				</div>
 
-				<div style={{ borderTop: '1px solid #f3f4f6', marginTop: '8px', paddingTop: '8px' }}>
-					<p style={{ margin: '2px 0', fontSize: '12px', color: '#6b7280' }}>
+				<div
+					style={{
+						borderTop: "1px solid #f3f4f6",
+						marginTop: "8px",
+						paddingTop: "8px",
+					}}
+				>
+					<p style={{ margin: "2px 0", fontSize: "12px", color: "#6b7280" }}>
 						Składki: <strong>{data.skladki.toFixed(2)} zł</strong>
 					</p>
-					<p style={{ margin: '2px 0', fontSize: '12px', color: '#6b7280' }}>
+					<p style={{ margin: "2px 0", fontSize: "12px", color: "#6b7280" }}>
 						Granty: <strong>{data.granty.toFixed(2)} zł</strong>
 					</p>
-					<p style={{ margin: '2px 0', fontSize: '12px', color: '#6b7280' }}>
+					<p style={{ margin: "2px 0", fontSize: "12px", color: "#6b7280" }}>
 						Darowizny: <strong>{data.darowizny.toFixed(2)} zł</strong>
 					</p>
-					<p style={{ margin: '2px 0', fontSize: '12px', color: '#6b7280' }}>
+					<p style={{ margin: "2px 0", fontSize: "12px", color: "#6b7280" }}>
 						Faktury: <strong>{data.faktury.toFixed(2)} zł</strong>
 					</p>
-					<p style={{ margin: '2px 0', fontSize: '12px', color: '#6b7280' }}>
+					<p style={{ margin: "2px 0", fontSize: "12px", color: "#6b7280" }}>
 						Inne: <strong>{data.inne.toFixed(2)} zł</strong>
 					</p>
-					<p style={{ margin: '2px 0', fontSize: '12px', color: '#F97316' }}>
-						Wydatki biurowe: <strong>{data.wydatkiBiurowe.toFixed(2)} zł</strong>
+					<p style={{ margin: "2px 0", fontSize: "12px", color: "#F97316" }}>
+						Wydatki biurowe:{" "}
+						<strong>{data.wydatkiBiurowe.toFixed(2)} zł</strong>
 					</p>
 					{data.expensesFromInvoices > 0 && (
-						<p style={{ margin: '2px 0', fontSize: '12px', color: '#6b7280' }}>
-							Wydatki (faktury): <strong>{data.expensesFromInvoices.toFixed(2)} zł</strong>
+						<p style={{ margin: "2px 0", fontSize: "12px", color: "#6b7280" }}>
+							Wydatki (faktury):{" "}
+							<strong>{data.expensesFromInvoices.toFixed(2)} zł</strong>
 						</p>
 					)}
 				</div>
@@ -107,22 +122,24 @@ const CustomTooltip = ({ active, payload }: any) => {
 	return null;
 };
 
-
 const formatCurrency = (value: number): string => {
-	return new Intl.NumberFormat('pl-PL', {
-		style: 'currency',
-		currency: 'PLN',
+	return new Intl.NumberFormat("pl-PL", {
+		style: "currency",
+		currency: "PLN",
 		minimumFractionDigits: 2,
 		maximumFractionDigits: 2,
 	}).format(value);
 };
 
-export function RevenueChart({ year = 2026, title = "Przychody i wydatki" }: RevenueChartProps) {
+export function RevenueChart({
+	year = 2026,
+	title = "Przychody i wydatki",
+}: RevenueChartProps) {
 	const [data, setData] = useState<RevenueData[]>([]);
 	const [loading, setLoading] = useState(true);
 	const [selectedYear, setSelectedYear] = useState(year);
 	const [error, setError] = useState<string | null>(null);
-	const [chartType, setChartType] = useState<'bar' | 'stack'>('bar');
+	const [chartType, setChartType] = useState<"bar" | "stack">("bar");
 	const [showDetails, setShowDetails] = useState(false);
 	const [selectedMonth, setSelectedMonth] = useState<string | null>(null);
 	const [hoveredBar, setHoveredBar] = useState<string | null>(null);
@@ -132,8 +149,8 @@ export function RevenueChart({ year = 2026, title = "Przychody i wydatki" }: Rev
 			setLoading(true);
 			const response = await fetch(`/api/revenue?year=${selectedYear}`, {
 				headers: {
-					'Content-Type': 'application/json'
-				}
+					"Content-Type": "application/json",
+				},
 			});
 
 			if (!response.ok) {
@@ -142,36 +159,36 @@ export function RevenueChart({ year = 2026, title = "Przychody i wydatki" }: Rev
 
 			const result = await response.json();
 
-
-
-
-
 			let categoriesData = null;
 			try {
-				const categoriesResponse = await fetch(`/api/revenue/categories?year=${selectedYear}`, {
-					headers: {
-						'Content-Type': 'application/json'
-					}
-				});
+				const categoriesResponse = await fetch(
+					`/api/revenue/categories?year=${selectedYear}`,
+					{
+						headers: {
+							"Content-Type": "application/json",
+						},
+					},
+				);
 
 				if (categoriesResponse.ok) {
 					const categoriesResult = await categoriesResponse.json();
 
 					categoriesData = categoriesResult.data;
 				} else {
-					console.warn('[RevenueChart] Nie udało się pobrać kategorii:', categoriesResponse.status);
+					console.warn(
+						"[RevenueChart] Nie udało się pobrać kategorii:",
+						categoriesResponse.status,
+					);
 				}
 			} catch (err) {
-				console.warn('[RevenueChart] Błąd pobierania kategorii:', err);
+				console.warn("[RevenueChart] Błąd pobierania kategorii:", err);
 			}
-
-
-
 
 			if (result.success && result.data && result.data.months) {
 				const mappedData = result.data.months.map((item: any) => {
-
-					const categoryData = categoriesData?.find((c: any) => c.month === item.month);
+					const categoryData = categoriesData?.find(
+						(c: any) => c.month === item.month,
+					);
 
 					return {
 						month: item.month,
@@ -183,19 +200,20 @@ export function RevenueChart({ year = 2026, title = "Przychody i wydatki" }: Rev
 						granty: categoryData?.Granty || 0,
 						darowizny: categoryData?.Darowizny || 0,
 						faktury: categoryData?.Faktury || 0,
-						inne: categoryData?.['Inne przychody'] || 0,
-						expensesFromInvoices: categoryData?.['Wydatki (faktury)'] || 0,
-						wydatkiBiurowe: categoryData?.['Wydatki biurowe'] || 0,
+						inne: categoryData?.["Inne przychody"] || 0,
+						expensesFromInvoices: categoryData?.["Wydatki (faktury)"] || 0,
+						wydatkiBiurowe: categoryData?.["Wydatki biurowe"] || 0,
 					};
 				});
-
 
 				setData(mappedData);
 			}
 		} catch (error) {
-			console.error('[RevenueChart] Błąd:', error);
-			setError(error instanceof Error ? error.message : 'Błąd pobierania danych');
-			toast.error('Nie udało się pobrać danych');
+			console.error("[RevenueChart] Błąd:", error);
+			setError(
+				error instanceof Error ? error.message : "Błąd pobierania danych",
+			);
+			toast.error("Nie udało się pobrać danych");
 		} finally {
 			setLoading(false);
 		}
@@ -207,35 +225,37 @@ export function RevenueChart({ year = 2026, title = "Przychody i wydatki" }: Rev
 
 	if (loading) {
 		return (
-			<div style={{ padding: '40px', textAlign: 'center' }}>
-				<div style={{
-					width: '32px',
-					height: '32px',
-					border: '3px solid #e5e7eb',
-					borderTopColor: '#4A6FE8',
-					borderRadius: '50%',
-					animation: 'spin 0.8s linear infinite',
-					margin: '0 auto 10px'
-				}} />
-				<p style={{ color: '#6b7280' }}>Ładowanie danych...</p>
+			<div style={{ padding: "40px", textAlign: "center" }}>
+				<div
+					style={{
+						width: "32px",
+						height: "32px",
+						border: "3px solid #e5e7eb",
+						borderTopColor: "#4A6FE8",
+						borderRadius: "50%",
+						animation: "spin 0.8s linear infinite",
+						margin: "0 auto 10px",
+					}}
+				/>
+				<p style={{ color: "#6b7280" }}>Ładowanie danych...</p>
 			</div>
 		);
 	}
 
 	if (error) {
 		return (
-			<div style={{ padding: '20px', textAlign: 'center', color: '#dc2626' }}>
+			<div style={{ padding: "20px", textAlign: "center", color: "#dc2626" }}>
 				<p>{error}</p>
 				<button
 					onClick={fetchData}
 					style={{
-						marginTop: '8px',
-						padding: '6px 16px',
-						background: '#4A6FE8',
-						color: 'white',
-						border: 'none',
-						borderRadius: '6px',
-						cursor: 'pointer'
+						marginTop: "8px",
+						padding: "6px 16px",
+						background: "#4A6FE8",
+						color: "white",
+						border: "none",
+						borderRadius: "6px",
+						cursor: "pointer",
 					}}
 				>
 					Spróbuj ponownie
@@ -246,7 +266,7 @@ export function RevenueChart({ year = 2026, title = "Przychody i wydatki" }: Rev
 
 	if (!data || data.length === 0) {
 		return (
-			<div style={{ padding: '20px', textAlign: 'center', color: '#6b7280' }}>
+			<div style={{ padding: "20px", textAlign: "center", color: "#6b7280" }}>
 				<p>Brak danych dla roku {selectedYear}</p>
 			</div>
 		);
@@ -268,75 +288,96 @@ export function RevenueChart({ year = 2026, title = "Przychody i wydatki" }: Rev
 	};
 
 	return (
-		<div style={{
-			background: 'white',
-			borderRadius: '12px',
-			padding: '24px',
-			border: '1px solid #e5e7eb',
-			boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-		}}>
-
-			<div style={{
-				display: 'flex',
-				justifyContent: 'space-between',
-				alignItems: 'center',
-				marginBottom: '20px',
-				flexWrap: 'wrap',
-				gap: '12px',
-			}}>
+		<div
+			style={{
+				background: "white",
+				borderRadius: "12px",
+				padding: "24px",
+				border: "1px solid #e5e7eb",
+				boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
+			}}
+		>
+			<div
+				style={{
+					display: "flex",
+					justifyContent: "space-between",
+					alignItems: "center",
+					marginBottom: "20px",
+					flexWrap: "wrap",
+					gap: "12px",
+				}}
+			>
 				<div>
-					<h2 style={{ margin: 0, fontSize: '20px', fontWeight: '600', color: '#1f2937' }}>
+					<h2
+						style={{
+							margin: 0,
+							fontSize: "20px",
+							fontWeight: "600",
+							color: "#1f2937",
+						}}
+					>
 						{title}
 					</h2>
-					<p style={{ margin: '4px 0 0 0', fontSize: '14px', color: '#6b7280' }}>
+					<p
+						style={{ margin: "4px 0 0 0", fontSize: "14px", color: "#6b7280" }}
+					>
 						Rok {selectedYear}
 					</p>
 				</div>
 
-				<div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
+				<div
+					style={{
+						display: "flex",
+						gap: "12px",
+						alignItems: "center",
+						flexWrap: "wrap",
+					}}
+				>
 					<select
 						value={selectedYear}
 						onChange={(e) => setSelectedYear(Number(e.target.value))}
 						style={{
-							padding: '6px 12px',
-							border: '1px solid #e5e7eb',
-							borderRadius: '6px',
-							fontSize: '14px',
-							background: 'white',
-							cursor: 'pointer',
+							padding: "6px 12px",
+							border: "1px solid #e5e7eb",
+							borderRadius: "6px",
+							fontSize: "14px",
+							background: "white",
+							cursor: "pointer",
 						}}
 					>
 						{[2023, 2024, 2025, 2026, 2027].map((y) => (
-							<option key={y} value={y}>{y}</option>
+							<option key={y} value={y}>
+								{y}
+							</option>
 						))}
 					</select>
 
 					<button
-						onClick={() => setChartType(chartType === 'bar' ? 'stack' : 'bar')}
+						onClick={() => setChartType(chartType === "bar" ? "stack" : "bar")}
 						style={{
-							padding: '6px 12px',
-							border: '1px solid #e5e7eb',
-							borderRadius: '6px',
-							fontSize: '14px',
-							background: 'white',
-							cursor: 'pointer',
-							display: 'flex',
-							alignItems: 'center',
-							gap: '4px',
+							padding: "6px 12px",
+							border: "1px solid #e5e7eb",
+							borderRadius: "6px",
+							fontSize: "14px",
+							background: "white",
+							cursor: "pointer",
+							display: "flex",
+							alignItems: "center",
+							gap: "4px",
 						}}
 					>
-						{chartType === 'bar' ? 'Grupowany' : 'Skumulowany'}
+						{chartType === "bar" ? "Grupowany" : "Skumulowany"}
 					</button>
 
 					<button
 						onClick={fetchData}
 						style={{
-							padding: '6px 12px',
-							border: '1px solid #e5e7eb',
-							borderRadius: '6px',
-							fontSize: '14px',
-							background: 'white',
-							cursor: 'pointer',
+							padding: "6px 12px",
+							border: "1px solid #e5e7eb",
+							borderRadius: "6px",
+							fontSize: "14px",
+							background: "white",
+							cursor: "pointer",
 						}}
 					>
 						Odśwież
@@ -344,75 +385,131 @@ export function RevenueChart({ year = 2026, title = "Przychody i wydatki" }: Rev
 				</div>
 			</div>
 
-
-			<div style={{
-				display: 'grid',
-				gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))',
-				gap: '12px',
-				marginBottom: '20px',
-				padding: '16px',
-				background: '#f9fafb',
-				borderRadius: '8px',
-			}}>
-				<div style={{ textAlign: 'center' }}>
-					<p style={{ margin: 0, fontSize: '12px', color: '#6b7280' }}>Przychody</p>
-					<p style={{ margin: 0, fontSize: '18px', fontWeight: 'bold', color: '#22C55E' }}>
+			<div
+				style={{
+					display: "grid",
+					gridTemplateColumns: "repeat(auto-fit, minmax(120px, 1fr))",
+					gap: "12px",
+					marginBottom: "20px",
+					padding: "16px",
+					background: "#f9fafb",
+					borderRadius: "8px",
+				}}
+			>
+				<div style={{ textAlign: "center" }}>
+					<p style={{ margin: 0, fontSize: "12px", color: "#6b7280" }}>
+						Przychody
+					</p>
+					<p
+						style={{
+							margin: 0,
+							fontSize: "18px",
+							fontWeight: "bold",
+							color: "#22C55E",
+						}}
+					>
 						{formatCurrency(totalRevenue)}
 					</p>
 				</div>
-				<div style={{ textAlign: 'center' }}>
-					<p style={{ margin: 0, fontSize: '12px', color: '#6b7280' }}>Wydatki</p>
-					<p style={{ margin: 0, fontSize: '18px', fontWeight: 'bold', color: '#EF4444' }}>
+				<div style={{ textAlign: "center" }}>
+					<p style={{ margin: 0, fontSize: "12px", color: "#6b7280" }}>
+						Wydatki
+					</p>
+					<p
+						style={{
+							margin: 0,
+							fontSize: "18px",
+							fontWeight: "bold",
+							color: "#EF4444",
+						}}
+					>
 						{formatCurrency(totalExpenses)}
 					</p>
 				</div>
-				<div style={{ textAlign: 'center' }}>
-					<p style={{ margin: 0, fontSize: '12px', color: '#6b7280' }}>Zysk</p>
-					<p style={{ margin: 0, fontSize: '18px', fontWeight: 'bold', color: '#10B981' }}>
+				<div style={{ textAlign: "center" }}>
+					<p style={{ margin: 0, fontSize: "12px", color: "#6b7280" }}>Zysk</p>
+					<p
+						style={{
+							margin: 0,
+							fontSize: "18px",
+							fontWeight: "bold",
+							color: "#10B981",
+						}}
+					>
 						{formatCurrency(totalProfit)}
 					</p>
 				</div>
-				<div style={{ textAlign: 'center' }}>
-					<p style={{ margin: 0, fontSize: '12px', color: '#6b7280' }}>Składki</p>
-					<p style={{ margin: 0, fontSize: '16px', fontWeight: 'bold', color: '#4A6FE8' }}>
+				<div style={{ textAlign: "center" }}>
+					<p style={{ margin: 0, fontSize: "12px", color: "#6b7280" }}>
+						Składki
+					</p>
+					<p
+						style={{
+							margin: 0,
+							fontSize: "16px",
+							fontWeight: "bold",
+							color: "#4A6FE8",
+						}}
+					>
 						{formatCurrency(totalSkladki)}
 					</p>
 				</div>
-				<div style={{ textAlign: 'center' }}>
-					<p style={{ margin: 0, fontSize: '12px', color: '#6b7280' }}>Granty</p>
-					<p style={{ margin: 0, fontSize: '16px', fontWeight: 'bold', color: '#8B5CF6' }}>
+				<div style={{ textAlign: "center" }}>
+					<p style={{ margin: 0, fontSize: "12px", color: "#6b7280" }}>
+						Granty
+					</p>
+					<p
+						style={{
+							margin: 0,
+							fontSize: "16px",
+							fontWeight: "bold",
+							color: "#8B5CF6",
+						}}
+					>
 						{formatCurrency(totalGranty)}
 					</p>
 				</div>
-				<div style={{ textAlign: 'center' }}>
-					<p style={{ margin: 0, fontSize: '12px', color: '#6b7280' }}>Darowizny</p>
-					<p style={{ margin: 0, fontSize: '16px', fontWeight: 'bold', color: '#F59E0B' }}>
+				<div style={{ textAlign: "center" }}>
+					<p style={{ margin: 0, fontSize: "12px", color: "#6b7280" }}>
+						Darowizny
+					</p>
+					<p
+						style={{
+							margin: 0,
+							fontSize: "16px",
+							fontWeight: "bold",
+							color: "#F59E0B",
+						}}
+					>
 						{formatCurrency(totalDarowizny)}
 					</p>
 				</div>
 			</div>
 
-
-			<div style={{ width: '100%', height: '400px' }}>
+			<div style={{ width: "100%", height: "400px" }}>
 				<ResponsiveContainer>
 					<ComposedChart
 						data={data}
 						margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
 						onClick={handleBarClick}
 					>
-						<CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" vertical={false} />
+						<CartesianGrid
+							strokeDasharray="3 3"
+							stroke="#e5e7eb"
+							vertical={false}
+						/>
 
 						<XAxis
 							dataKey="monthName"
-							tick={{ fill: '#6b7280', fontSize: 12 }}
-							axisLine={{ stroke: '#e5e7eb' }}
+							tick={{ fill: "#6b7280", fontSize: 12 }}
+							axisLine={{ stroke: "#e5e7eb" }}
 							tickLine={false}
 						/>
 
 						<YAxis
 							tickFormatter={(value) => `${value} zł`}
-							tick={{ fill: '#6b7280', fontSize: 12 }}
-							axisLine={{ stroke: '#e5e7eb' }}
+							tick={{ fill: "#6b7280", fontSize: 12 }}
+							axisLine={{ stroke: "#e5e7eb" }}
 							tickLine={false}
 						/>
 
@@ -423,19 +520,18 @@ export function RevenueChart({ year = 2026, title = "Przychody i wydatki" }: Rev
 							height={36}
 							formatter={(value) => {
 								const labels: Record<string, string> = {
-									skladki: 'Składki',
-									granty: 'Granty',
-									darowizny: 'Darowizny',
-									faktury: 'Faktury',
-									inne: 'Inne',
-									wydatkiBiurowe: 'Wydatki biurowe',
+									skladki: "Składki",
+									granty: "Granty",
+									darowizny: "Darowizny",
+									faktury: "Faktury",
+									inne: "Inne",
+									wydatkiBiurowe: "Wydatki biurowe",
 								};
 								return labels[value] || value;
 							}}
 						/>
 
-						{chartType === 'bar' ? (
-
+						{chartType === "bar" ? (
 							<>
 								<Bar
 									dataKey="skladki"
@@ -453,8 +549,14 @@ export function RevenueChart({ year = 2026, title = "Przychody i wydatki" }: Rev
 									{data.map((entry, index) => (
 										<Cell
 											key={`cell-${index}`}
-											fill={entry.monthName === selectedMonth ? '#2563EB' : COLORS.skladki}
-											opacity={hoveredBar && hoveredBar !== entry.monthName ? 0.6 : 1}
+											fill={
+												entry.monthName === selectedMonth
+													? "#2563EB"
+													: COLORS.skladki
+											}
+											opacity={
+												hoveredBar && hoveredBar !== entry.monthName ? 0.6 : 1
+											}
 										/>
 									))}
 								</Bar>
@@ -468,8 +570,14 @@ export function RevenueChart({ year = 2026, title = "Przychody i wydatki" }: Rev
 									{data.map((entry, index) => (
 										<Cell
 											key={`cell-${index}`}
-											fill={entry.monthName === selectedMonth ? '#7C3AED' : COLORS.granty}
-											opacity={hoveredBar && hoveredBar !== entry.monthName ? 0.6 : 1}
+											fill={
+												entry.monthName === selectedMonth
+													? "#7C3AED"
+													: COLORS.granty
+											}
+											opacity={
+												hoveredBar && hoveredBar !== entry.monthName ? 0.6 : 1
+											}
 										/>
 									))}
 								</Bar>
@@ -483,8 +591,14 @@ export function RevenueChart({ year = 2026, title = "Przychody i wydatki" }: Rev
 									{data.map((entry, index) => (
 										<Cell
 											key={`cell-${index}`}
-											fill={entry.monthName === selectedMonth ? '#D97706' : COLORS.darowizny}
-											opacity={hoveredBar && hoveredBar !== entry.monthName ? 0.6 : 1}
+											fill={
+												entry.monthName === selectedMonth
+													? "#D97706"
+													: COLORS.darowizny
+											}
+											opacity={
+												hoveredBar && hoveredBar !== entry.monthName ? 0.6 : 1
+											}
 										/>
 									))}
 								</Bar>
@@ -498,8 +612,14 @@ export function RevenueChart({ year = 2026, title = "Przychody i wydatki" }: Rev
 									{data.map((entry, index) => (
 										<Cell
 											key={`cell-${index}`}
-											fill={entry.monthName === selectedMonth ? '#DB2777' : COLORS.faktury}
-											opacity={hoveredBar && hoveredBar !== entry.monthName ? 0.6 : 1}
+											fill={
+												entry.monthName === selectedMonth
+													? "#DB2777"
+													: COLORS.faktury
+											}
+											opacity={
+												hoveredBar && hoveredBar !== entry.monthName ? 0.6 : 1
+											}
 										/>
 									))}
 								</Bar>
@@ -513,8 +633,14 @@ export function RevenueChart({ year = 2026, title = "Przychody i wydatki" }: Rev
 									{data.map((entry, index) => (
 										<Cell
 											key={`cell-${index}`}
-											fill={entry.monthName === selectedMonth ? '#4B5563' : COLORS.inne}
-											opacity={hoveredBar && hoveredBar !== entry.monthName ? 0.6 : 1}
+											fill={
+												entry.monthName === selectedMonth
+													? "#4B5563"
+													: COLORS.inne
+											}
+											opacity={
+												hoveredBar && hoveredBar !== entry.monthName ? 0.6 : 1
+											}
 										/>
 									))}
 								</Bar>
@@ -529,14 +655,19 @@ export function RevenueChart({ year = 2026, title = "Przychody i wydatki" }: Rev
 									{data.map((entry, index) => (
 										<Cell
 											key={`cell-${index}`}
-											fill={entry.monthName === selectedMonth ? '#EA580C' : COLORS.wydatkiBiurowe}
-											opacity={hoveredBar && hoveredBar !== entry.monthName ? 0.6 : 1}
+											fill={
+												entry.monthName === selectedMonth
+													? "#EA580C"
+													: COLORS.wydatkiBiurowe
+											}
+											opacity={
+												hoveredBar && hoveredBar !== entry.monthName ? 0.6 : 1
+											}
 										/>
 									))}
 								</Bar>
 							</>
 						) : (
-
 							<>
 								<Bar
 									dataKey="skladki"
@@ -589,7 +720,6 @@ export function RevenueChart({ year = 2026, title = "Przychody i wydatki" }: Rev
 							</>
 						)}
 
-
 						<Line
 							type="monotone"
 							dataKey="profit"
@@ -608,63 +738,105 @@ export function RevenueChart({ year = 2026, title = "Przychody i wydatki" }: Rev
 				</ResponsiveContainer>
 			</div>
 
-
 			{showDetails && selectedMonth && (
-				<div style={{
-					marginTop: '16px',
-					padding: '16px',
-					background: '#f0f4ff',
-					borderRadius: '8px',
-					border: '1px solid #dbeafe',
-				}}>
-					<div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-						<h4 style={{ margin: 0, color: '#1f2937' }}>
+				<div
+					style={{
+						marginTop: "16px",
+						padding: "16px",
+						background: "#f0f4ff",
+						borderRadius: "8px",
+						border: "1px solid #dbeafe",
+					}}
+				>
+					<div
+						style={{
+							display: "flex",
+							justifyContent: "space-between",
+							alignItems: "center",
+						}}
+					>
+						<h4 style={{ margin: 0, color: "#1f2937" }}>
 							Szczegóły dla: {selectedMonth}
 						</h4>
 						<button
-							onClick={() => { setShowDetails(false); setSelectedMonth(null); }}
-							style={{
-								background: 'none',
-								border: 'none',
-								fontSize: '18px',
-								cursor: 'pointer',
-								color: '#6b7280'
+							onClick={() => {
+								setShowDetails(false);
+								setSelectedMonth(null);
 							}}
-						>
-							✕
-						</button>
+							style={{
+								background: "none",
+								border: "none",
+								fontSize: "18px",
+								cursor: "pointer",
+								color: "#6b7280",
+							}}
+						></button>
 					</div>
-					<div style={{
-						display: 'grid',
-						gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
-						gap: '8px',
-						marginTop: '8px',
-					}}>
-						{data.filter(d => d.monthName === selectedMonth).map((d, i) => (
-							<div key={i}>
-								<p style={{ margin: '4px 0', fontSize: '14px' }}>
-									Przychód: <strong>{formatCurrency(d.revenue)}</strong>
-								</p>
-								<p style={{ margin: '4px 0', fontSize: '14px' }}>
-									Wydatki: <strong>{formatCurrency(d.expenses)}</strong>
-								</p>
-								<p style={{ margin: '4px 0', fontSize: '14px', color: '#10B981' }}>
-									Zysk: <strong>{formatCurrency(d.profit)}</strong>
-								</p>
-								<p style={{ margin: '4px 0', fontSize: '13px', color: '#6b7280' }}>
-									Składki: {formatCurrency(d.skladki)}
-								</p>
-								<p style={{ margin: '4px 0', fontSize: '13px', color: '#6b7280' }}>
-									Granty: {formatCurrency(d.granty)}
-								</p>
-								<p style={{ margin: '4px 0', fontSize: '13px', color: '#6b7280' }}>
-									Darowizny: {formatCurrency(d.darowizny)}
-								</p>
-								<p style={{ margin: '4px 0', fontSize: '13px', color: '#6b7280' }}>
-									Faktury: {formatCurrency(d.faktury)}
-								</p>
-							</div>
-						))}
+					<div
+						style={{
+							display: "grid",
+							gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))",
+							gap: "8px",
+							marginTop: "8px",
+						}}
+					>
+						{data
+							.filter((d) => d.monthName === selectedMonth)
+							.map((d, i) => (
+								<div key={i}>
+									<p style={{ margin: "4px 0", fontSize: "14px" }}>
+										Przychód: <strong>{formatCurrency(d.revenue)}</strong>
+									</p>
+									<p style={{ margin: "4px 0", fontSize: "14px" }}>
+										Wydatki: <strong>{formatCurrency(d.expenses)}</strong>
+									</p>
+									<p
+										style={{
+											margin: "4px 0",
+											fontSize: "14px",
+											color: "#10B981",
+										}}
+									>
+										Zysk: <strong>{formatCurrency(d.profit)}</strong>
+									</p>
+									<p
+										style={{
+											margin: "4px 0",
+											fontSize: "13px",
+											color: "#6b7280",
+										}}
+									>
+										Składki: {formatCurrency(d.skladki)}
+									</p>
+									<p
+										style={{
+											margin: "4px 0",
+											fontSize: "13px",
+											color: "#6b7280",
+										}}
+									>
+										Granty: {formatCurrency(d.granty)}
+									</p>
+									<p
+										style={{
+											margin: "4px 0",
+											fontSize: "13px",
+											color: "#6b7280",
+										}}
+									>
+										Darowizny: {formatCurrency(d.darowizny)}
+									</p>
+									<p
+										style={{
+											margin: "4px 0",
+											fontSize: "13px",
+											color: "#6b7280",
+										}}
+									>
+										Faktury: {formatCurrency(d.faktury)}
+									</p>
+								</div>
+							))}
 					</div>
 				</div>
 			)}

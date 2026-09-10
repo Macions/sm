@@ -950,9 +950,7 @@ function TaskDetailModal({
 											<span
 												key={star}
 												className={`${styles.ratingStar} ${star <= (task.rating || 0) ? styles.ratingStarFilled : ""}`}
-											>
-												★
-											</span>
+											></span>
 										))}
 										<span className={styles.ratingValue}>{task.rating}/5</span>
 									</div>

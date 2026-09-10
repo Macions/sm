@@ -29,8 +29,8 @@ export type Permission =
 	| "canManageTeams"
 	| "canViewStructure"
 	| "canEditProfile"
-	| "canManageAllProjects" 
-	| "canManagePillarProjects" 
+	| "canManageAllProjects"
+	| "canManagePillarProjects"
 	| "canManagePillarIdeas";
 
 export const PERMISSION_LABELS: Record<Permission, string> = {
@@ -95,9 +95,9 @@ export const DEFAULT_PERMISSIONS: Record<UserRole, Permission[]> = {
 		"canRejectLeaves",
 		"canViewAllUsers",
 		"canEditUsers",
-		"canApproveLeaves",   
+		"canApproveLeaves",
 		"canRejectLeaves",
-		"canDeleteAllLeaves",   
+		"canDeleteAllLeaves",
 		"canEditAllLeaves",
 		"canDeleteUsers",
 		"canManageProjects",
@@ -168,18 +168,14 @@ export function clearPermissionsCache(): void {
 }
 
 export async function fetchPermissions(role: string): Promise<Permission[]> {
-	logger.debug(
-		`🔍 [fetchPermissions] Pobieranie uprawnień dla roli: "${role}"`,
-	);
+	logger.debug(` [fetchPermissions] Pobieranie uprawnień dla roli: "${role}"`);
 
 	try {
 		const token = localStorage.getItem("accessToken");
-		logger.debug(
-			`🔍 [fetchPermissions] Token: ${token ? "Jest ✅" : "Brak ❌"}`,
-		);
+		logger.debug(` [fetchPermissions] Token: ${token ? "Jest " : "Brak "}`);
 
 		const url = `/api/admin/permissions/${role}`;
-		logger.debug(`🔍 [fetchPermissions] URL: ${url}`);
+		logger.debug(` [fetchPermissions] URL: ${url}`);
 
 		const response = await fetch(url, {
 			headers: {
@@ -188,31 +184,31 @@ export async function fetchPermissions(role: string): Promise<Permission[]> {
 			},
 		});
 
-		logger.debug(`🔍 [fetchPermissions] Status odpowiedzi: ${response.status}`);
+		logger.debug(` [fetchPermissions] Status odpowiedzi: ${response.status}`);
 
 		if (!response.ok) {
 			const errorText = await response.text();
 			logger.error(
-				`❌ [fetchPermissions] Błąd: ${response.status} - ${errorText}`,
+				` [fetchPermissions] Błąd: ${response.status} - ${errorText}`,
 			);
 			throw new Error("Błąd pobierania uprawnień");
 		}
 
 		const data = await response.json();
 		logger.debug(
-			`🔍 [fetchPermissions] Otrzymane dane:`,
+			` [fetchPermissions] Otrzymane dane:`,
 			JSON.stringify(data, null, 2),
 		);
 
 		const permissions =
 			data.permissions || DEFAULT_PERMISSIONS[role as UserRole] || [];
-		logger.debug(`🔍 [fetchPermissions] Zwracane uprawnienia:`, permissions);
+		logger.debug(` [fetchPermissions] Zwracane uprawnienia:`, permissions);
 
 		return permissions;
 	} catch (error) {
-		logger.error("❌ [fetchPermissions] Błąd pobierania uprawnień:", error);
+		logger.error(" [fetchPermissions] Błąd pobierania uprawnień:", error);
 		const fallback = DEFAULT_PERMISSIONS[role as UserRole] || [];
-		logger.debug(`🔍 [fetchPermissions] Używam fallback:`, fallback);
+		logger.debug(` [fetchPermissions] Używam fallback:`, fallback);
 		return fallback;
 	}
 }
@@ -373,7 +369,7 @@ export async function updateRolePermissions(
 		clearPermissionsCache();
 		return true;
 	} catch (error) {
-		logger.error("❌ Błąd aktualizacji uprawnień:", error);
+		logger.error(" Błąd aktualizacji uprawnień:", error);
 		return false;
 	}
 }

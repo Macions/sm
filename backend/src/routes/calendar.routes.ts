@@ -10,13 +10,11 @@ const oauth2Client = new google.auth.OAuth2(
 	process.env.GOOGLE_CLIENT_ID,
 	process.env.GOOGLE_CLIENT_SECRET,
 	process.env.GOOGLE_REDIRECT_URI ||
-	(process.env.NODE_ENV === "production"
-		? "https://panel.silamlodych.pl/api/calendar/callback" 
-		: "http://localhost:3000/api/calendar/callback"),
+		(process.env.NODE_ENV === "production"
+			? "https://panel.silamlodych.pl/api/calendar/callback"
+			: "http://localhost:3000/api/calendar/callback"),
 );
 router.use((req, res, next) => {
-
-
 	if (
 		req.path === "/callback" ||
 		req.path === "/auth" ||
@@ -25,14 +23,12 @@ router.use((req, res, next) => {
 		req.path.includes("callback") ||
 		req.path.includes("auth")
 	) {
-
 		return next();
 	}
 	next();
 });
 
 router.get("/status", authMiddleware, async (req: any, res) => {
-
 	try {
 		const userId = req.user?.id;
 		if (!userId) {
@@ -48,30 +44,23 @@ router.get("/status", authMiddleware, async (req: any, res) => {
 			authenticated: !!user?.google_calendar_token,
 		});
 	} catch (error) {
-		console.error("❌ Błąd sprawdzania statusu:", error);
+		console.error(" Błąd sprawdzania statusu:", error);
 		res.status(500).json({ error: "Błąd serwera" });
 	}
 });
-
-
-
 
 router.get("/events", authMiddleware, async (req: any, res) => {
 	try {
 		const userId = req.user?.id;
 
-
 		if (!userId) {
 			return res.status(401).json({ error: "Brak autoryzacji" });
 		}
-
 
 		const user = await prisma.user.findUnique({
 			where: { id: parseInt(userId) },
 			select: { google_calendar_token: true },
 		});
-
-
 
 		if (!user?.google_calendar_token) {
 			return res.status(401).json({
@@ -82,7 +71,6 @@ router.get("/events", authMiddleware, async (req: any, res) => {
 
 		const tokenData = JSON.parse(user.google_calendar_token);
 
-
 		oauth2Client.setCredentials({
 			access_token: tokenData.access_token,
 			refresh_token: tokenData.refresh_token,
@@ -90,19 +78,11 @@ router.get("/events", authMiddleware, async (req: any, res) => {
 
 		const calendar = google.calendar({ version: "v3", auth: oauth2Client });
 
-
 		const now = new Date();
 		const startDate = new Date(now);
 		startDate.setDate(startDate.getDate() - 30);
 		const endDate = new Date(now);
 		endDate.setDate(endDate.getDate() + 30);
-
-
-
-
-
-
-
 
 		const response = await calendar.events.list({
 			calendarId: "primary",
@@ -113,25 +93,155 @@ router.get("/events", authMiddleware, async (req: any, res) => {
 			orderBy: "startTime",
 		});
 
+		const events = response.data.items || [];
 
+		// Pobierz zgłoszone nieobecności tego użytkownika
+		const absences = await prisma.eventAbsence.findMany({
+			where: {
+				user_id: parseInt(userId),
+			},
+			select: { event_id: true },
+		});
 
+		const absenceIds = new Set(absences.map((a) => a.event_id));
 
+		// Wzbogać eventy o pole absenceReported
+		const enrichedEvents = events.map((ev) => ({
+			...ev,
+			absenceReported: absenceIds.has(ev.id || ""),
+		}));
 
-		res.json(response.data.items || []);
+		res.json(enrichedEvents);
 	} catch (error) {
-		console.error("❌ [EVENTS] Błąd:", error);
+		console.error(" [EVENTS] Błąd:", error);
 		res.status(500).json({
 			error: "Nie udało się pobrać wydarzeń",
 			details: error instanceof Error ? error.message : "Unknown error",
 		});
 	}
 });
+// Zgłoś nieobecność na wydarzeniu Google Calendar
+router.post(
+	"/events/:eventId/absence",
+	authMiddleware,
+	async (req: any, res) => {
+		try {
+			const userId = req.user?.id;
+			const { eventId } = req.params;
+			const { eventTitle, eventDate } = req.body;
 
+			if (!userId) {
+				return res.status(401).json({ message: "Brak autoryzacji" });
+			}
 
+			if (!eventId || !eventDate) {
+				return res.status(400).json({ message: "Brak ID wydarzenia lub daty" });
+			}
 
+			// Walidacja 24h
+			const eventDateTime = new Date(eventDate);
+			const diffHours =
+				(eventDateTime.getTime() - Date.now()) / (1000 * 60 * 60);
 
+			if (diffHours < 24) {
+				return res.status(400).json({
+					message: "Nieobecność można zgłosić minimum 24h przed wydarzeniem",
+				});
+			}
+
+			// Sprawdź czy już zgłoszono
+			const existing = await prisma.eventAbsence.findUnique({
+				where: {
+					unique_event_user_absence: {
+						event_id: eventId,
+						user_id: parseInt(userId),
+					},
+				},
+			});
+
+			if (existing) {
+				return res
+					.status(400)
+					.json({ message: "Nieobecność została już zgłoszona" });
+			}
+
+			// Utwórz zgłoszenie
+			const absence = await prisma.eventAbsence.create({
+				data: {
+					event_id: eventId,
+					user_id: parseInt(userId),
+					event_title: eventTitle || "Bez tytułu",
+					event_date: eventDateTime,
+					source: "google",
+					status: "pending",
+				},
+			});
+
+			// Powiadomienie do admina
+			try {
+				const admin = await prisma.user.findFirst({
+					where: { role_id: 1 },
+					select: { id: true },
+				});
+
+				if (admin) {
+					await prisma.notification.create({
+						data: {
+							user_id: admin.id,
+							title: "Zgłoszono nieobecność",
+							message: `${req.user?.first_name || ""} ${req.user?.last_name || ""} zgłosił(a) nieobecność na: "${eventTitle || "Bez tytułu"}"`,
+							type: "info",
+							read: false,
+							link: "/calendar",
+							target: "admin",
+							created_at: new Date(),
+						},
+					});
+				}
+			} catch (notifError) {
+				console.error("[NOTIF] Błąd:", notifError);
+			}
+
+			res.json({
+				success: true,
+				message: "Nieobecność zgłoszona pomyślnie",
+				absence: {
+					id: absence.id,
+					eventId: absence.event_id,
+					status: absence.status,
+					reportedAt: absence.reported_at,
+				},
+			});
+		} catch (error) {
+			console.error("[EVENT ABSENCE] Błąd:", error);
+			res.status(500).json({
+				message: "Wystąpił błąd podczas zgłaszania nieobecności",
+				details: error instanceof Error ? error.message : "Unknown error",
+			});
+		}
+	},
+);
+
+// Pobierz moje zgłoszone nieobecności (opcjonalnie do debugowania)
+router.get("/absences/my", authMiddleware, async (req: any, res) => {
+	try {
+		const userId = req.user?.id;
+		if (!userId) {
+			return res.status(401).json({ message: "Brak autoryzacji" });
+		}
+
+		const absences = await prisma.eventAbsence.findMany({
+			where: { user_id: parseInt(userId) },
+			orderBy: { reported_at: "desc" },
+		});
+
+		res.json(absences);
+	} catch (error) {
+		console.error("[ABSENCES] Błąd:", error);
+		res.status(500).json({ message: "Błąd serwera" });
+	}
+});
 router.post("/sync", authMiddleware, async (req: any, res) => {
-
 	try {
 		const userId = req.user?.id;
 		const { taskId } = req.body;
@@ -152,7 +262,6 @@ router.post("/sync", authMiddleware, async (req: any, res) => {
 			});
 		}
 
-
 		const task = await prisma.task.findUnique({
 			where: { id: parseInt(taskId) },
 		});
@@ -169,7 +278,6 @@ router.post("/sync", authMiddleware, async (req: any, res) => {
 
 		const calendar = google.calendar({ version: "v3", auth: oauth2Client });
 
-
 		const event = {
 			summary: task.title,
 			description: task.description || "Zadanie z Siły Młodych",
@@ -180,7 +288,7 @@ router.post("/sync", authMiddleware, async (req: any, res) => {
 			end: {
 				dateTime: new Date(
 					new Date(task.due_date).getTime() + 3600000,
-				).toISOString(), 
+				).toISOString(),
 				timeZone: "Europe/Warsaw",
 			},
 		};
@@ -196,7 +304,7 @@ router.post("/sync", authMiddleware, async (req: any, res) => {
 			eventId: response.data.id,
 		});
 	} catch (error) {
-		console.error("❌ Błąd synchronizacji z Google:", error);
+		console.error(" Błąd synchronizacji z Google:", error);
 		res.status(500).json({
 			error: "Nie udało się zsynchronizować",
 			details: error instanceof Error ? error.message : "Unknown error",
@@ -204,13 +312,8 @@ router.post("/sync", authMiddleware, async (req: any, res) => {
 	}
 });
 
-
-
-
 router.get("/auth", async (req: any, res) => {
-
 	try {
-
 		let userId = null;
 		const authHeader = req.headers.authorization;
 		if (authHeader && authHeader.startsWith("Bearer ")) {
@@ -224,16 +327,13 @@ router.get("/auth", async (req: any, res) => {
 					userId = decoded.id as string;
 				}
 			} catch (e) {
-				console.error("❌ [AUTH] Błąd weryfikacji:", e);
+				console.error(" [AUTH] Błąd weryfikacji:", e);
 			}
 		}
 
 		if (!userId) {
-
 			userId = "1";
 		}
-
-
 
 		const stateData = JSON.stringify({ userId: userId });
 		const authUrl = oauth2Client.generateAuthUrl({
@@ -253,67 +353,44 @@ router.get("/auth", async (req: any, res) => {
 
 		res.json({ authUrl });
 	} catch (error) {
-		console.error("❌ [AUTH] Błąd:", error);
+		console.error(" [AUTH] Błąd:", error);
 		res.status(500).json({ error: "Nie udało się wygenerować URL" });
 	}
 });
 
-
 router.get("/callback", async (req: any, res) => {
-
 	try {
 		const { code, state } = req.query;
 
-
-
-
-
-
-
 		if (!code) {
-
 			return res.redirect(`${process.env.FRONTEND_URL}/calendar?auth=error`);
 		}
-
 
 		let userId = null;
 		if (state) {
 			try {
 				const stateObj = JSON.parse(state as string);
 				userId = stateObj.userId || stateObj.user_id;
-
 			} catch (e) {
-				console.error("❌ [CALLBACK] Błąd parsowania state:", e);
+				console.error(" [CALLBACK] Błąd parsowania state:", e);
 			}
 		}
 
-
 		if (!userId) {
-
 			userId = "1";
 		}
 
-
-
 		const { tokens } = await oauth2Client.getToken(code as string);
-
-
-
-
-
 
 		const user = await prisma.user.findUnique({
 			where: { id: parseInt(userId) },
 		});
 
 		if (!user) {
-			console.error(`❌ [CALLBACK] Użytkownik ${userId} nie istnieje!`);
+			console.error(` [CALLBACK] Użytkownik ${userId} nie istnieje!`);
 
 			const firstUser = await prisma.user.findFirst();
 			if (firstUser) {
-
-
-
 				await prisma.user.update({
 					where: { id: firstUser.id },
 					data: {
@@ -327,8 +404,6 @@ router.get("/callback", async (req: any, res) => {
 			return res.redirect(`${process.env.FRONTEND_URL}/calendar?auth=error`);
 		}
 
-
-
 		await prisma.user.update({
 			where: { id: parseInt(userId) },
 			data: {
@@ -336,10 +411,9 @@ router.get("/callback", async (req: any, res) => {
 			},
 		});
 
-
 		res.redirect(`${process.env.FRONTEND_URL}/calendar?auth=success`);
 	} catch (error) {
-		console.error("❌ [CALLBACK] Błąd:", error);
+		console.error(" [CALLBACK] Błąd:", error);
 		res.redirect(`${process.env.FRONTEND_URL}/calendar?auth=error`);
 	}
 });

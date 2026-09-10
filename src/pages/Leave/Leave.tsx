@@ -567,7 +567,7 @@ function LeaveModal({
 				}
 
 				const userData = await response.json();
-				logger.debug("📊 Dane z /api/profile:", userData);
+				logger.debug(" Dane z /api/profile:", userData);
 
 				const teams = userData.pillars || [];
 
@@ -577,9 +577,9 @@ function LeaveModal({
 					setUserTeams(teams);
 				}
 
-				logger.debug("✅ Zespoły użytkownika:", teams);
+				logger.debug(" Zespoły użytkownika:", teams);
 			} catch (error) {
-				logger.error("❌ Błąd pobierania zespołów:", error);
+				logger.error(" Błąd pobierania zespołów:", error);
 
 				if (currentUser.team) {
 					setUserTeams([currentUser.team]);
@@ -1242,8 +1242,8 @@ export default function Leave({ title }: { title?: string }) {
 				if (!userResponse.ok) throw new Error("Błąd pobierania profilu");
 
 				const userData = await userResponse.json();
-				logger.debug("📊 Dane użytkownika z API:", userData);
-				logger.debug("📊 Rola z API:", userData.role);
+				logger.debug(" Dane użytkownika z API:", userData);
+				logger.debug(" Rola z API:", userData.role);
 
 				const mappedUser = {
 					id: userData.id,
@@ -1256,7 +1256,7 @@ export default function Leave({ title }: { title?: string }) {
 				};
 
 				setCurrentUser(mappedUser);
-				logger.debug("✅ Zmapowany użytkownik:", mappedUser);
+				logger.debug(" Zmapowany użytkownik:", mappedUser);
 
 				const leavesResponse = await fetch("/api/leaves", {
 					headers: { Authorization: `Bearer ${token}` },
@@ -1267,7 +1267,7 @@ export default function Leave({ title }: { title?: string }) {
 				const leavesData = await leavesResponse.json();
 				setLeaves(leavesData);
 			} catch (error) {
-				logger.error("❌ Błąd:", error);
+				logger.error(" Błąd:", error);
 				toast.error("Nie udało się pobrać danych");
 			} finally {
 				setLoading(false);
@@ -1288,7 +1288,7 @@ export default function Leave({ title }: { title?: string }) {
 	};
 
 	const handleViewLeave = (leave: LeaveRequest) => {
-		logger.debug("📋 Viewing leave:", leave);
+		logger.debug(" Viewing leave:", leave);
 		setViewingLeave(leave);
 		setIsViewModalOpen(true);
 	};
@@ -1301,7 +1301,7 @@ export default function Leave({ title }: { title?: string }) {
 			async () => {
 				try {
 					const token = localStorage.getItem("accessToken");
-					logger.debug(`🔍 [FRONTEND] Usuwanie wniosku: ${id}`);
+					logger.debug(` [FRONTEND] Usuwanie wniosku: ${id}`);
 
 					const response = await fetch(`/api/leaves/${id}`, {
 						method: "DELETE",
@@ -1311,11 +1311,11 @@ export default function Leave({ title }: { title?: string }) {
 						},
 					});
 
-					logger.debug(`🔍 [FRONTEND] Status odpowiedzi: ${response.status}`);
+					logger.debug(` [FRONTEND] Status odpowiedzi: ${response.status}`);
 
 					if (response.ok) {
 						const data = await response.json();
-						logger.debug("🔍 [FRONTEND] Odpowiedź:", data);
+						logger.debug(" [FRONTEND] Odpowiedź:", data);
 
 						setLeaves(leaves.filter((l) => l.id !== id));
 						toast.success("Wniosek usunięty!");
@@ -1324,7 +1324,7 @@ export default function Leave({ title }: { title?: string }) {
 						toast.error(error.error || "Nie udało się usunąć wniosku");
 					}
 				} catch (error) {
-					logger.error("🔍 [FRONTEND] Błąd:", error);
+					logger.error(" [FRONTEND] Błąd:", error);
 					toast.error("Wystąpił błąd podczas usuwania");
 				}
 			},
@@ -1420,7 +1420,7 @@ export default function Leave({ title }: { title?: string }) {
 						`Wniosek ${status === "approved" ? "zaakceptowany" : "odrzucony"}!`,
 					);
 				} catch (error) {
-					logger.error("❌ Błąd:", error);
+					logger.error(" Błąd:", error);
 					toast.dismiss();
 					toast.error("Wystąpił błąd podczas zmiany statusu");
 				}
@@ -1488,7 +1488,7 @@ export default function Leave({ title }: { title?: string }) {
 						`Urlop użytkownika ${leave.userName} został anulowany!`,
 					);
 				} catch (error) {
-					logger.error("❌ Błąd anulowania:", error);
+					logger.error(" Błąd anulowania:", error);
 					toast.dismiss();
 					toast.error("Wystąpił błąd podczas anulowania urlopu");
 				}
@@ -1515,7 +1515,7 @@ export default function Leave({ title }: { title?: string }) {
 				status: leave.status || "pending",
 			};
 
-			logger.debug("📤 Wysyłam dane do API:", { url, method, payload });
+			logger.debug(" Wysyłam dane do API:", { url, method, payload });
 
 			const response = await fetch(url, {
 				method,
@@ -1528,12 +1528,12 @@ export default function Leave({ title }: { title?: string }) {
 
 			if (!response.ok) {
 				const errorText = await response.text();
-				logger.error("❌ Błąd odpowiedzi:", response.status, errorText);
+				logger.error(" Błąd odpowiedzi:", response.status, errorText);
 				throw new Error(`Błąd zapisu: ${response.status} ${errorText}`);
 			}
 
 			const data = await response.json();
-			logger.debug("✅ Otrzymane dane z API:", data);
+			logger.debug(" Otrzymane dane z API:", data);
 
 			const savedLeave = {
 				...leave,
@@ -1560,7 +1560,7 @@ export default function Leave({ title }: { title?: string }) {
 				toast.success("Wniosek wysłany!");
 			}
 		} catch (error) {
-			logger.error("❌ Błąd:", error);
+			logger.error(" Błąd:", error);
 			toast.error("Nie udało się zapisać wniosku");
 		}
 	};

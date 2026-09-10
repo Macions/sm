@@ -36,38 +36,36 @@ export default function DashboardLayout() {
 
 				if (userData?.role === "admin") {
 					hasSocialAccess = true;
-					logger.debug("✅ Admin - dostęp do Social Media");
+					logger.debug(" Admin - dostęp do Social Media");
 				} else {
 					try {
-						logger.debug("🔍 Sprawdzam przez /api/social/members/check...");
+						logger.debug(" Sprawdzam przez /api/social/members/check...");
 						const socialCheck = await fetch("/api/social/members/check");
 
 						if (socialCheck.ok) {
 							const checkData = await socialCheck.json();
-							logger.debug("📊 Wynik check:", checkData);
+							logger.debug(" Wynik check:", checkData);
 
 							hasSocialAccess =
 								checkData.isMember === true ||
 								checkData.isSocialMember === true;
-							logger.debug(`📊 hasSocialAccess: ${hasSocialAccess}`);
+							logger.debug(` hasSocialAccess: ${hasSocialAccess}`);
 						} else {
 							logger.debug(
-								`❌ /api/social/members/check zwrócił ${socialCheck.status}`,
+								` /api/social/members/check zwrócił ${socialCheck.status}`,
 							);
 							hasSocialAccess = false;
 						}
 					} catch (error) {
-						logger.error("❌ Błąd sprawdzania:", error);
+						logger.error(" Błąd sprawdzania:", error);
 						hasSocialAccess = false;
 					}
 				}
 
-				logger.debug(
-					`🎯 Ostateczny wynik: hasSocialAccess = ${hasSocialAccess}`,
-				);
+				logger.debug(` Ostateczny wynik: hasSocialAccess = ${hasSocialAccess}`);
 				setIsSocialMember(hasSocialAccess);
 			} catch (error) {
-				logger.error("❌ Błąd:", error);
+				logger.error(" Błąd:", error);
 				setIsSocialMember(false);
 			} finally {
 				setLoading(false);

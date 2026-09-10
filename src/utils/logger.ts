@@ -23,7 +23,6 @@ class Logger {
 		);
 	}
 
-
 	private output(level: LogLevel, ...args: LogArgs) {
 		if (!this.canLog(level)) return;
 
@@ -34,13 +33,13 @@ class Logger {
 				console.debug(prefix, ...args);
 				break;
 			case "info":
-				console.info(prefix, ...args); 
+				console.info(prefix, ...args);
 				break;
 			case "warn":
-				console.warn(prefix, ...args); 
+				console.warn(prefix, ...args);
 				break;
 			case "error":
-				console.error(prefix, ...args); 
+				console.error(prefix, ...args);
 				break;
 		}
 	}
@@ -63,13 +62,13 @@ class Logger {
 
 	api = {
 		request: (endpoint: string, data?: unknown) => {
-			this.debug("🌐 API Request:", endpoint, data);
+			this.debug(" API Request:", endpoint, data);
 		},
 		response: (endpoint: string, data?: unknown) => {
-			this.debug("✅ API Response:", endpoint, data);
+			this.debug(" API Response:", endpoint, data);
 		},
 		error: (endpoint: string, error: unknown) => {
-			this.error("❌ API Error:", endpoint, error);
+			this.error(" API Error:", endpoint, error);
 		},
 	};
 

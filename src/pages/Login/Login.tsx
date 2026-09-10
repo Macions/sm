@@ -22,7 +22,7 @@ const Login: React.FC = () => {
 		if (newCount >= 5) {
 			setShowEmailForm(true);
 			setClickCount(0);
-			logger.debug("🔓 Formularz email odblokowany!");
+			logger.debug(" Formularz email odblokowany!");
 		}
 	};
 	const getGreeting = () => {
@@ -39,7 +39,7 @@ const Login: React.FC = () => {
 
 	const loginWithCalendar = useGoogleLogin({
 		onSuccess: async (tokenResponse) => {
-			logger.debug("✅ Logowanie z zakresami kalendarza - sukces!");
+			logger.debug(" Logowanie z zakresami kalendarza - sukces!");
 			setLoading(true);
 			setError(null);
 
@@ -68,14 +68,14 @@ const Login: React.FC = () => {
 				}
 				localStorage.setItem("user", JSON.stringify(data.user));
 
-				logger.debug("✅ Dane użytkownika i tokeny zapisane");
-				logger.debug("🔑 accessToken:", data.accessToken ? "Jest" : "BRAK");
-				logger.debug("🔑 refreshToken:", data.refreshToken ? "Jest" : "BRAK");
+				logger.debug(" Dane użytkownika i tokeny zapisane");
+				logger.debug(" accessToken:", data.accessToken ? "Jest" : "BRAK");
+				logger.debug(" refreshToken:", data.refreshToken ? "Jest" : "BRAK");
 
 				await refetch();
 				checkOnboardingStatus();
 			} catch (error) {
-				logger.error("❌ Błąd logowania:", error);
+				logger.error(" Błąd logowania:", error);
 				setError(
 					error instanceof Error
 						? error.message
@@ -86,7 +86,7 @@ const Login: React.FC = () => {
 			}
 		},
 		onError: (error) => {
-			logger.error("❌ Błąd logowania Google:", error);
+			logger.error(" Błąd logowania Google:", error);
 			setError(
 				"Nie udało się zalogować z dostępem do kalendarza. Spróbuj ponownie.",
 			);
@@ -130,9 +130,9 @@ const Login: React.FC = () => {
 			}
 			localStorage.setItem("user", JSON.stringify(data.user));
 
-			logger.debug("✅ Dane użytkownika i tokeny zapisane");
-			logger.debug("🔑 accessToken:", data.accessToken ? "Jest" : "BRAK");
-			logger.debug("🔑 refreshToken:", data.refreshToken ? "Jest" : "BRAK");
+			logger.debug(" Dane użytkownika i tokeny zapisane");
+			logger.debug(" accessToken:", data.accessToken ? "Jest" : "BRAK");
+			logger.debug(" refreshToken:", data.refreshToken ? "Jest" : "BRAK");
 
 			await refetch();
 			checkOnboardingStatus();

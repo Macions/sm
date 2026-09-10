@@ -69,6 +69,8 @@ model User {
   googleToken               GoogleToken?
   taskAbsences              TaskAbsence[]
   eventAbsences             EventAbsence[]
+  eventAbsencesApproved     EventAbsence[]       @relation("EventAbsenceApprover")
+
   @@index([role_id], map: "idx_users_role_id")
   @@index([status], map: "idx_users_status")
   @@map("users")

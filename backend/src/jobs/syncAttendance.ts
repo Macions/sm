@@ -13,18 +13,18 @@ const FREKWENCJA_DB_CONFIG = {
 };
 
 export async function syncAttendance() {
-	logger.debug("🔄 [ATTENDANCE] Rozpoczynam synchronizację frekwencji...");
+	logger.debug(" [ATTENDANCE] Rozpoczynam synchronizację frekwencji...");
 	const startTime = Date.now();
 
 	let connection: mysql.Connection | null = null;
 
 	try {
-		logger.debug("📡 [ATTENDANCE] Łączenie z SM_Frekwencja...");
+		logger.debug(" [ATTENDANCE] Łączenie z SM_Frekwencja...");
 		connection = await mysql.createConnection(FREKWENCJA_DB_CONFIG);
-		logger.debug("✅ [ATTENDANCE] Połączono z SM_Frekwencja");
+		logger.debug(" [ATTENDANCE] Połączono z SM_Frekwencja");
 
 		const [tables] = await connection.execute("SHOW TABLES");
-		logger.debug("📋 [ATTENDANCE] Tabele w SM_Frekwencja:", tables);
+		logger.debug(" [ATTENDANCE] Tabele w SM_Frekwencja:", tables);
 
 		const [rows] = await connection.execute(`
     SELECT
@@ -48,15 +48,15 @@ export async function syncAttendance() {
 			attendance_percentage: number;
 		}>;
 		logger.debug(
-			`📊 [ATTENDANCE] Pobrano ${attendanceData.length} rekordów frekwencji`,
+			` [ATTENDANCE] Pobrano ${attendanceData.length} rekordów frekwencji`,
 		);
 
 		if (attendanceData.length === 0) {
-			logger.debug("⚠️ [ATTENDANCE] Brak danych do synchronizacji");
+			logger.debug(" [ATTENDANCE] Brak danych do synchronizacji");
 			return;
 		}
 
-		logger.debug("🔄 [ATTENDANCE] Aktualizacja frekwencji użytkowników...");
+		logger.debug(" [ATTENDANCE] Aktualizacja frekwencji użytkowników...");
 		let updatedCount = 0;
 		let skippedCount = 0;
 
@@ -82,7 +82,7 @@ export async function syncAttendance() {
 				updatedCount++;
 			} catch (error) {
 				logger.error(
-					`❌ [ATTENDANCE] Błąd aktualizacji dla ${record.email}:`,
+					` [ATTENDANCE] Błąd aktualizacji dla ${record.email}:`,
 					error,
 				);
 				skippedCount++;
@@ -90,19 +90,19 @@ export async function syncAttendance() {
 		}
 
 		const duration = Date.now() - startTime;
-		logger.debug(`✅ [ATTENDANCE] Zakończono w ${duration}ms`);
-		logger.debug(`📊 [ATTENDANCE] Podsumowanie:`);
-		logger.debug(`   ✅ Zaktualizowano: ${updatedCount} użytkowników`);
+		logger.debug(` [ATTENDANCE] Zakończono w ${duration}ms`);
+		logger.debug(` [ATTENDANCE] Podsumowanie:`);
+		logger.debug(`    Zaktualizowano: ${updatedCount} użytkowników`);
 		logger.debug(
-			`   ⏭️ Pominięto: ${skippedCount} (nie znaleziono w głównej bazie)`,
+			`   ⏭ Pominięto: ${skippedCount} (nie znaleziono w głównej bazie)`,
 		);
 	} catch (error) {
-		logger.error("❌ [ATTENDANCE] Błąd synchronizacji:", error);
+		logger.error(" [ATTENDANCE] Błąd synchronizacji:", error);
 		throw error;
 	} finally {
 		if (connection) {
 			await connection.end();
-			logger.debug("🔌 [ATTENDANCE] Zamknięto połączenie z SM_Frekwencja");
+			logger.debug(" [ATTENDANCE] Zamknięto połączenie z SM_Frekwencja");
 		}
 		await prisma.$disconnect();
 	}
