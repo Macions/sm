@@ -11,6 +11,7 @@ const Admin = lazy(() => import("@/pages/Admin/Admin"));
 const Structure = lazy(() => import("@/pages/Structure/Structure"));
 const Projects = lazy(() => import("@/pages/Projects/Projects"));
 const Tutorials = lazy(() => import("@/pages/Tutorials/Tutorials"));
+const FAQ = lazy(() => import("@/pages/FAQ/Faq"));
 const Members = lazy(() => import("@/pages/Members/Members"));
 const Vacancies = lazy(() => import("@/pages/Vacancies/Vacancies"));
 const Leave = lazy(() => import("@/pages/Leave/Leave"));
@@ -140,6 +141,7 @@ function AppRoutes() {
 					<Route path="/structure" element={<Structure />} />
 					<Route path="/projects" element={<Projects />} />
 					<Route path="/guides" element={<Tutorials />} />
+					<Route path="/faq" element={<FAQ title="Najczęstsze pytania" />} />
 					<Route path="/members" element={<Members />} />
 					<Route path="/vacancies" element={<Vacancies />} />
 					<Route path="/leave" element={<Leave />} />

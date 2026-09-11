@@ -19,6 +19,7 @@ export const NAV_ITEMS = [
 
 	{ key: "tasks", label: "Zadania", icon: CheckSquare },
 	{ key: "guides", label: "Poradniki", icon: BookOpen },
+	{ key: "faq", label: "Najczęstsze pytania", icon: BookOpen },
 	{ key: "members", label: "Członkowie", icon: Users },
 	{ key: "vacancies", label: "Wakaty", icon: Megaphone },
 	{ key: "profile", label: "Mój profil", icon: User },

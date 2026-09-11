@@ -976,7 +976,7 @@ app.post("/api/ideas", authMiddleware, async (req: any, res) => {
 					vote_type: "up",
 				},
 			});
-		} catch (voteError) {}
+		} catch (voteError) { }
 
 		const voteCounts = await getVoteCounts(idea.id);
 
@@ -1518,7 +1518,7 @@ app.get("/api/dashboard/stats", authMiddleware, async (req: any, res) => {
 					) {
 						attendance = `${Number(user.attendance_percentage).toFixed(1)}%`;
 					}
-				} catch (fallbackError) {}
+				} catch (fallbackError) { }
 			}
 		}
 
@@ -2699,7 +2699,7 @@ app.get("/api/applications", authMiddleware, async (req: any, res) => {
 				userId: app.user_id.toString(),
 				userName: app.user
 					? `${app.user.first_name || ""} ${app.user.last_name || ""}`.trim() ||
-						"Nieznany"
+					"Nieznany"
 					: "Nieznany",
 				userEmail: app.user?.email || "",
 				message: app.message || "",
@@ -2810,7 +2810,7 @@ app.get(
 					userId: app.user_id.toString(),
 					userName: app.user
 						? `${app.user.first_name || ""} ${app.user.last_name || ""}`.trim() ||
-							"Nieznany"
+						"Nieznany"
 						: "Nieznany",
 					userEmail: app.user?.email || "",
 					message: app.message || "",
@@ -3986,14 +3986,14 @@ app.put("/api/leaves/:id", authMiddleware, async (req: any, res) => {
 					: existingLeave.attachments,
 				status: status || existingLeave.status,
 				...(status === "approved" ||
-				status === "rejected" ||
-				status === "cancelled"
+					status === "rejected" ||
+					status === "cancelled"
 					? {
-							approved_by:
-								`${currentUser?.first_name || ""} ${currentUser?.last_name || ""}`.trim() ||
-								"Nieznany",
-							approved_at: new Date(),
-						}
+						approved_by:
+							`${currentUser?.first_name || ""} ${currentUser?.last_name || ""}`.trim() ||
+							"Nieznany",
+						approved_at: new Date(),
+					}
 					: {}),
 			},
 			include: { user: true },
@@ -5055,7 +5055,7 @@ app.post("/api/onboarding/save", authMiddleware, async (req: any, res) => {
 					},
 				});
 			}
-		} catch (notificationError) {}
+		} catch (notificationError) { }
 
 		res.status(200).json({
 			success: true,
@@ -6501,12 +6501,12 @@ app.get(
 					is_active: true,
 					...(search
 						? {
-								OR: [
-									{ first_name: { contains: search as string } },
-									{ last_name: { contains: search as string } },
-									{ email: { contains: search as string } },
-								],
-							}
+							OR: [
+								{ first_name: { contains: search as string } },
+								{ last_name: { contains: search as string } },
+								{ email: { contains: search as string } },
+							],
+						}
 						: {}),
 				},
 				select: {
@@ -6580,7 +6580,7 @@ app.get(
 							) {
 								attendance = Number(result[0].attendance_percentage);
 							}
-						} catch (dbError) {}
+						} catch (dbError) { }
 					}
 
 					const teams = user.team_members
@@ -8356,7 +8356,152 @@ app.delete("/api/items/:id", authMiddleware, async (req: any, res) => {
 		res.status(500).json({ error: "Nie udało się usunąć przedmiotu" });
 	}
 });
+/* ═══════════════════════════════════════════════════════════
+   FAQ – Najczęściej zadawane pytania
+   ═══════════════════════════════════════════════════════════ */
 
+/* ─── Lista kategorii ─── */
+app.get("/api/faq/categories", authMiddleware, async (req: any, res) => {
+	try {
+		const categories = await prisma.faqCategory.findMany({
+			orderBy: { order: "asc" },
+		});
+
+		res.json(
+			categories.map((c: any) => ({
+				id: c.id.toString(),
+				name: c.name,
+			})),
+		);
+	} catch (error) {
+		logger.error("[FAQ] Błąd pobierania kategorii:", error);
+		res.status(500).json({ error: "Nie udało się pobrać kategorii" });
+	}
+});
+
+/* ─── Lista pytań ─── */
+app.get("/api/faq", authMiddleware, async (req: any, res) => {
+	try {
+		const items = await prisma.faqItem.findMany({
+			orderBy: { created_at: "desc" },
+		});
+
+		res.json(
+			items.map((i: any) => ({
+				id: i.id.toString(),
+				question: i.question,
+				answer: i.answer,
+				category: i.category_id?.toString() || "",
+				createdAt: i.created_at.toISOString(),
+				updatedAt: i.updated_at.toISOString(),
+			})),
+		);
+	} catch (error) {
+		logger.error("[FAQ] Błąd pobierania pytań:", error);
+		res.status(500).json({ error: "Nie udało się pobrać pytań" });
+	}
+});
+
+/* ─── Dodanie pytania ─── */
+app.post("/api/faq", authMiddleware, async (req: any, res) => {
+	try {
+		const userRole = req.user?.role;
+		if (userRole !== "admin" && userRole !== "board") {
+			return res.status(403).json({ error: "Brak uprawnień" });
+		}
+
+		const { question, answer, category } = req.body;
+
+		if (!question?.trim() || !answer?.trim() || !category) {
+			return res
+				.status(400)
+				.json({ error: "Pytanie, odpowiedź i kategoria są wymagane" });
+		}
+
+		const item = await prisma.faqItem.create({
+			data: {
+				question: question.trim(),
+				answer: answer.trim(),
+				category_id: parseInt(category),
+				created_by: req.user?.id || null,
+			},
+		});
+
+		res.status(201).json({
+			id: item.id.toString(),
+			question: item.question,
+			answer: item.answer,
+			category: item.category_id?.toString() || "",
+			createdAt: item.created_at.toISOString(),
+			updatedAt: item.updated_at.toISOString(),
+		});
+	} catch (error) {
+		logger.error("[FAQ] Błąd tworzenia pytania:", error);
+		res.status(500).json({ error: "Nie udało się dodać pytania" });
+	}
+});
+
+/* ─── Edycja pytania ─── */
+app.put("/api/faq/:id", authMiddleware, async (req: any, res) => {
+	try {
+		const userRole = req.user?.role;
+		if (userRole !== "admin" && userRole !== "board") {
+			return res.status(403).json({ error: "Brak uprawnień" });
+		}
+
+		const id = parseInt(req.params.id);
+		const { question, answer, category } = req.body;
+
+		const existing = await prisma.faqItem.findUnique({ where: { id } });
+		if (!existing) {
+			return res.status(404).json({ error: "Nie znaleziono pytania" });
+		}
+
+		const item = await prisma.faqItem.update({
+			where: { id },
+			data: {
+				question: question?.trim() || existing.question,
+				answer: answer?.trim() || existing.answer,
+				category_id: category ? parseInt(category) : existing.category_id,
+				updated_at: new Date(),
+			},
+		});
+
+		res.json({
+			id: item.id.toString(),
+			question: item.question,
+			answer: item.answer,
+			category: item.category_id?.toString() || "",
+			createdAt: item.created_at.toISOString(),
+			updatedAt: item.updated_at.toISOString(),
+		});
+	} catch (error) {
+		logger.error("[FAQ] Błąd edycji pytania:", error);
+		res.status(500).json({ error: "Nie udało się edytować pytania" });
+	}
+});
+
+/* ─── Usunięcie pytania ─── */
+app.delete("/api/faq/:id", authMiddleware, async (req: any, res) => {
+	try {
+		const userRole = req.user?.role;
+		if (userRole !== "admin" && userRole !== "board") {
+			return res.status(403).json({ error: "Brak uprawnień" });
+		}
+
+		const id = parseInt(req.params.id);
+		const existing = await prisma.faqItem.findUnique({ where: { id } });
+		if (!existing) {
+			return res.status(404).json({ error: "Nie znaleziono pytania" });
+		}
+
+		await prisma.faqItem.delete({ where: { id } });
+		res.status(204).send();
+	} catch (error) {
+		logger.error("[FAQ] Błąd usuwania pytania:", error);
+		res.status(500).json({ error: "Nie udało się usunąć pytania" });
+	}
+});
 app.get("/api/admin/member-items", authMiddleware, async (req: any, res) => {
 	try {
 		const userRole = req.user?.role;
@@ -9447,4 +9592,4 @@ app.get(
 );
 
 app.use("/api", revenueRoutes);
-app.listen(port, () => {});
+app.listen(port, () => { });
