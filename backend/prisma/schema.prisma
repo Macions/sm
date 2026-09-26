@@ -627,7 +627,7 @@ model Contribution {
   @@index([paidAt])
   @@index([status])
   @@index([month, year])
-  @@map("contributions") // <-- TO MUSI BYĆ!
+  @@map("Contribution") // <-- TO MUSI BYĆ!
 }
 
 model MemberAccess {
@@ -818,4 +818,29 @@ model TaskAbsence {
   @@index([task_id])
   @@index([user_id])
   @@map("task_absences")
+}
+
+model FaqCategory {
+  id         Int       @id @default(autoincrement())
+  name       String    @db.VarChar(100)
+  order      Int       @default(0)
+  created_at DateTime  @default(now())
+  updated_at DateTime  @updatedAt
+  items      FaqItem[]
+
+  @@map("faq_categories")
+}
+
+model FaqItem {
+  id          Int          @id @default(autoincrement())
+  question    String       @db.Text
+  answer      String       @db.LongText
+  category_id Int?
+  created_by  Int?
+  created_at  DateTime     @default(now())
+  updated_at  DateTime     @updatedAt
+  category    FaqCategory? @relation(fields: [category_id], references: [id], onDelete: SetNull)
+
+  @@index([category_id])
+  @@map("faq_items")
 }

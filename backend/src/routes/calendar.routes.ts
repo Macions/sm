@@ -96,20 +96,61 @@ router.get("/events", authMiddleware, async (req: any, res) => {
 		const events = response.data.items || [];
 
 		// Pobierz zgłoszone nieobecności tego użytkownika
-		const absences = await prisma.eventAbsence.findMany({
+		// Pobierz zgłoszone nieobecności tego użytkownika
+		const myAbsences = await prisma.eventAbsence.findMany({
 			where: {
 				user_id: parseInt(userId),
 			},
 			select: { event_id: true },
 		});
 
-		const absenceIds = new Set(absences.map((a) => a.event_id));
+		const absenceIds = new Set(myAbsences.map((a) => a.event_id));
 
-		// Wzbogać eventy o pole absenceReported
-		const enrichedEvents = events.map((ev) => ({
-			...ev,
-			absenceReported: absenceIds.has(ev.id || ""),
-		}));
+		// Pobierz WSZYSTKIE nieobecności (do pokazania organizatorowi)
+		const allAbsences = await prisma.eventAbsence.findMany({
+			select: {
+				event_id: true,
+				user_id: true,
+				reported_at: true,
+				user: {
+					select: {
+						id: true,
+						first_name: true,
+						last_name: true,
+						email: true,
+					},
+				},
+			},
+		});
+
+		// Grupuj nieobecności po event_id
+		const absencesByEvent: Record<string, any[]> = {};
+		allAbsences.forEach((a) => {
+			if (!absencesByEvent[a.event_id]) {
+				absencesByEvent[a.event_id] = [];
+			}
+			absencesByEvent[a.event_id].push({
+				userId: a.user_id,
+				userName: a.user
+					? `${a.user.first_name || ""} ${a.user.last_name || ""}`.trim() ||
+						a.user.email
+					: "Nieznany",
+				userEmail: a.user?.email || "",
+				reportedAt: a.reported_at,
+			});
+		});
+
+		// Wzbogać eventy
+		const enrichedEvents = events.map((ev) => {
+			const isOrganizer = ev.organizer?.email === req.user?.email;
+			return {
+				...ev,
+				absenceReported: absenceIds.has(ev.id || ""),
+				// Lista nieobecności — tylko dla organizatora
+				absentees: isOrganizer ? absencesByEvent[ev.id || ""] || [] : [],
+				isOrganizer,
+			};
+		});
 
 		res.json(enrichedEvents);
 	} catch (error) {
@@ -152,7 +193,7 @@ router.post(
 			// Sprawdź czy już zgłoszono
 			const existing = await prisma.eventAbsence.findUnique({
 				where: {
-					unique_event_user_absence: {
+					event_id_user_id: {
 						event_id: eventId,
 						user_id: parseInt(userId),
 					},
@@ -178,25 +219,94 @@ router.post(
 			});
 
 			// Powiadomienie do admina
+			// Powiadomienie do organizatora spotkania
 			try {
-				const admin = await prisma.user.findFirst({
-					where: { role_id: 1 },
-					select: { id: true },
+				// 1. Pobierz token Google zgłaszającego
+				const user = await prisma.user.findUnique({
+					where: { id: parseInt(userId) },
+					select: { google_calendar_token: true },
 				});
 
-				if (admin) {
-					await prisma.notification.create({
-						data: {
-							user_id: admin.id,
-							title: "Zgłoszono nieobecność",
-							message: `${req.user?.first_name || ""} ${req.user?.last_name || ""} zgłosił(a) nieobecność na: "${eventTitle || "Bez tytułu"}"`,
-							type: "info",
-							read: false,
-							link: "/calendar",
-							target: "admin",
-							created_at: new Date(),
-						},
+				let organizerEmail: string | null = null;
+
+				if (user?.google_calendar_token) {
+					try {
+						const tokenData = JSON.parse(user.google_calendar_token);
+						oauth2Client.setCredentials({
+							access_token: tokenData.access_token,
+							refresh_token: tokenData.refresh_token,
+						});
+
+						const calendar = google.calendar({
+							version: "v3",
+							auth: oauth2Client,
+						});
+
+						const eventRes = await calendar.events.get({
+							calendarId: "primary",
+							eventId: eventId,
+						});
+
+						organizerEmail = eventRes.data.organizer?.email || null;
+						console.log(`[NOTIF] Organizer email: ${organizerEmail}`);
+					} catch (googleError) {
+						console.error(
+							"[NOTIF] Błąd pobierania eventu z Google:",
+							googleError,
+						);
+					}
+				}
+
+				// 2. Znajdź organizatora w bazie
+				if (organizerEmail) {
+					const organizer = await prisma.user.findUnique({
+						where: { email: organizerEmail },
+						select: { id: true, first_name: true, last_name: true },
 					});
+
+					if (organizer) {
+						await prisma.notification.create({
+							data: {
+								user_id: organizer.id,
+								title: "Zgłoszono nieobecność",
+								message: `${req.user?.first_name || ""} ${req.user?.last_name || ""} zgłosił(a) nieobecność na spotkaniu: "${eventTitle || "Bez tytułu"}"`,
+								type: "info",
+								read: false,
+								link: "/calendar",
+								target: "user",
+								created_at: new Date(),
+							},
+						});
+						console.log(
+							`[NOTIF] Powiadomienie → organizator: ${organizerEmail} (id=${organizer.id})`,
+						);
+					} else {
+						console.log(
+							`[NOTIF] Organizator ${organizerEmail} nie istnieje w systemie`,
+						);
+					}
+				} else {
+					// 3. Fallback — jeśli brak organizatora, powiadom admina
+					const admin = await prisma.user.findFirst({
+						where: { role_id: 1 },
+						select: { id: true },
+					});
+
+					if (admin) {
+						await prisma.notification.create({
+							data: {
+								user_id: admin.id,
+								title: "Zgłoszono nieobecność",
+								message: `${req.user?.first_name || ""} ${req.user?.last_name || ""} zgłosił(a) nieobecność na: "${eventTitle || "Bez tytułu"}"`,
+								type: "info",
+								read: false,
+								link: "/calendar",
+								target: "admin",
+								created_at: new Date(),
+							},
+						});
+						console.log(`[NOTIF] Brak organizatora — powiadomiono admina`);
+					}
 				}
 			} catch (notifError) {
 				console.error("[NOTIF] Błąd:", notifError);

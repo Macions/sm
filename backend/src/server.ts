@@ -511,6 +511,22 @@ app.post("/api/auth/google-token", async (req: any, res: any) => {
 				error: "Użytkownik nie istnieje w systemie",
 			});
 		}
+		try {
+			await prisma.user.update({
+				where: { id: user.id },
+				data: {
+					google_calendar_token: JSON.stringify({
+						access_token: accessToken,
+						token_type: "Bearer",
+						// access_token z implicit flow żyje ~1h
+						expiry_date: Date.now() + 3600 * 1000,
+					}),
+				},
+			});
+			console.log(` [GOOGLE-TOKEN] Token Google zapisany dla user ${user.id}`);
+		} catch (saveError) {
+			console.error(" [GOOGLE-TOKEN] Błąd zapisu tokenu Google:", saveError);
+		}
 
 		const token = jwt.sign(
 			{
@@ -976,7 +992,7 @@ app.post("/api/ideas", authMiddleware, async (req: any, res) => {
 					vote_type: "up",
 				},
 			});
-		} catch (voteError) { }
+		} catch (voteError) {}
 
 		const voteCounts = await getVoteCounts(idea.id);
 
@@ -1476,7 +1492,7 @@ app.get("/api/dashboard/stats", authMiddleware, async (req: any, res) => {
 					user: process.env.FREKWENCJA_DB_USER || "czarnecki",
 					password: process.env.FREKWENCJA_DB_PASSWORD || "",
 					database: process.env.FREKWENCJA_DB_NAME || "SM_Frekwencja",
-					port: 3306,
+					port: parseInt(process.env.FREKWENCJA_DB_PORT || "3306"),
 				});
 
 				const [rows] = await connection.execute(
@@ -1518,7 +1534,7 @@ app.get("/api/dashboard/stats", authMiddleware, async (req: any, res) => {
 					) {
 						attendance = `${Number(user.attendance_percentage).toFixed(1)}%`;
 					}
-				} catch (fallbackError) { }
+				} catch (fallbackError) {}
 			}
 		}
 
@@ -2699,7 +2715,7 @@ app.get("/api/applications", authMiddleware, async (req: any, res) => {
 				userId: app.user_id.toString(),
 				userName: app.user
 					? `${app.user.first_name || ""} ${app.user.last_name || ""}`.trim() ||
-					"Nieznany"
+						"Nieznany"
 					: "Nieznany",
 				userEmail: app.user?.email || "",
 				message: app.message || "",
@@ -2810,7 +2826,7 @@ app.get(
 					userId: app.user_id.toString(),
 					userName: app.user
 						? `${app.user.first_name || ""} ${app.user.last_name || ""}`.trim() ||
-						"Nieznany"
+							"Nieznany"
 						: "Nieznany",
 					userEmail: app.user?.email || "",
 					message: app.message || "",
@@ -3986,14 +4002,14 @@ app.put("/api/leaves/:id", authMiddleware, async (req: any, res) => {
 					: existingLeave.attachments,
 				status: status || existingLeave.status,
 				...(status === "approved" ||
-					status === "rejected" ||
-					status === "cancelled"
+				status === "rejected" ||
+				status === "cancelled"
 					? {
-						approved_by:
-							`${currentUser?.first_name || ""} ${currentUser?.last_name || ""}`.trim() ||
-							"Nieznany",
-						approved_at: new Date(),
-					}
+							approved_by:
+								`${currentUser?.first_name || ""} ${currentUser?.last_name || ""}`.trim() ||
+								"Nieznany",
+							approved_at: new Date(),
+						}
 					: {}),
 			},
 			include: { user: true },
@@ -5055,7 +5071,7 @@ app.post("/api/onboarding/save", authMiddleware, async (req: any, res) => {
 					},
 				});
 			}
-		} catch (notificationError) { }
+		} catch (notificationError) {}
 
 		res.status(200).json({
 			success: true,
@@ -6501,12 +6517,12 @@ app.get(
 					is_active: true,
 					...(search
 						? {
-							OR: [
-								{ first_name: { contains: search as string } },
-								{ last_name: { contains: search as string } },
-								{ email: { contains: search as string } },
-							],
-						}
+								OR: [
+									{ first_name: { contains: search as string } },
+									{ last_name: { contains: search as string } },
+									{ email: { contains: search as string } },
+								],
+							}
 						: {}),
 				},
 				select: {
@@ -6550,7 +6566,7 @@ app.get(
 								user: process.env.FREKWENCJA_DB_USER || "czarnecki",
 								password: process.env.FREKWENCJA_DB_PASSWORD || "",
 								database: process.env.FREKWENCJA_DB_NAME || "SM_Frekwencja",
-								port: 3306,
+								port: parseInt(process.env.FREKWENCJA_DB_PORT || "3306"),
 							});
 
 							const [rows] = await connection.execute(
@@ -6580,7 +6596,7 @@ app.get(
 							) {
 								attendance = Number(result[0].attendance_percentage);
 							}
-						} catch (dbError) { }
+						} catch (dbError) {}
 					}
 
 					const teams = user.team_members
@@ -6992,123 +7008,123 @@ app.get("/api/admin/logs", authMiddleware, async (req: any, res) => {
 		res.status(500).json({ error: "Nie udało się pobrać logów" });
 	}
 });
-// cron.schedule("0 1,17 * * *", async () => {
-// 	try {
-// 		await syncContributions();
-// 	} catch (error) { }
-// });
+cron.schedule("0 1,17 * * *", async () => {
+	try {
+		await syncContributions();
+	} catch (error) {}
+});
 
-// setTimeout(async () => {
-// 	try {
-// 		await syncContributions();
-// 	} catch (error) { }
-// }, 15000);
-// setTimeout(async () => {
-// 	try {
-// 		await syncAttendance();
-// 	} catch (error) { }
-// }, 10000);
-// setTimeout(async () => {
-// 	try {
-// 		await syncMembers();
-// 	} catch (error) { }
-// }, 5000);
+setTimeout(async () => {
+	try {
+		await syncContributions();
+	} catch (error) {}
+}, 15000);
+setTimeout(async () => {
+	try {
+		await syncAttendance();
+	} catch (error) {}
+}, 10000);
+setTimeout(async () => {
+	try {
+		await syncMembers();
+	} catch (error) {}
+}, 5000);
 
-// app.get(
-// 	"/api/admin/onboarding-contacts",
-// 	authMiddleware,
-// 	async (req: any, res: any) => {
-// 		try {
-// 			const userRole = req.user?.role;
+app.get(
+	"/api/admin/onboarding-contacts",
+	authMiddleware,
+	async (req: any, res: any) => {
+		try {
+			const userRole = req.user?.role;
 
-// 			if (
-// 				userRole !== "admin" &&
-// 				userRole !== "board" &&
-// 				userRole !== "Zarząd"
-// 			) {
-// 				return res.status(403).json({ error: "Brak uprawnień" });
-// 			}
+			if (
+				userRole !== "admin" &&
+				userRole !== "board" &&
+				userRole !== "Zarząd"
+			) {
+				return res.status(403).json({ error: "Brak uprawnień" });
+			}
 
-// 			const users = await prisma.user.findMany({
-// 				where: {
-// 					is_active: true,
-// 				},
-// 				select: {
-// 					id: true,
-// 					first_name: true,
-// 					last_name: true,
-// 					email: true,
-// 					phone: true,
-// 					province: true,
-// 					onboarding_data: {
-// 						orderBy: { created_at: "desc" },
-// 						take: 1,
-// 					},
-// 				},
-// 			});
+			const users = await prisma.user.findMany({
+				where: {
+					is_active: true,
+				},
+				select: {
+					id: true,
+					first_name: true,
+					last_name: true,
+					email: true,
+					phone: true,
+					province: true,
+					onboarding_data: {
+						orderBy: { created_at: "desc" },
+						take: 1,
+					},
+				},
+			});
 
-// 			const formattedContacts = users
-// 				.map((user: any) => {
-// 					const onboarding = user.onboarding_data?.[0] || {};
+			const formattedContacts = users
+				.map((user: any) => {
+					const onboarding = user.onboarding_data?.[0] || {};
 
-// 					const hasContacts =
-// 						(onboarding.sala_contacts &&
-// 							onboarding.sala_contacts !== "[]" &&
-// 							onboarding.sala_contacts !== '[""]') ||
-// 						(onboarding.mp_contacts &&
-// 							onboarding.mp_contacts !== "[]" &&
-// 							onboarding.mp_contacts !== '[""]') ||
-// 						(onboarding.institution_contacts &&
-// 							onboarding.institution_contacts !== "[]" &&
-// 							onboarding.institution_contacts !== '[""]') ||
-// 						(onboarding.other_contacts &&
-// 							onboarding.other_contacts !== "[]" &&
-// 							onboarding.other_contacts !== '[""]');
+					const hasContacts =
+						(onboarding.sala_contacts &&
+							onboarding.sala_contacts !== "[]" &&
+							onboarding.sala_contacts !== '[""]') ||
+						(onboarding.mp_contacts &&
+							onboarding.mp_contacts !== "[]" &&
+							onboarding.mp_contacts !== '[""]') ||
+						(onboarding.institution_contacts &&
+							onboarding.institution_contacts !== "[]" &&
+							onboarding.institution_contacts !== '[""]') ||
+						(onboarding.other_contacts &&
+							onboarding.other_contacts !== "[]" &&
+							onboarding.other_contacts !== '[""]');
 
-// 					if (!hasContacts) return null;
+					if (!hasContacts) return null;
 
-// 					const parseJSON = (data: any) => {
-// 						if (!data) return [];
-// 						try {
-// 							const parsed = JSON.parse(data);
-// 							return Array.isArray(parsed) ? parsed : [];
-// 						} catch (e) {
-// 							return [];
-// 						}
-// 					};
+					const parseJSON = (data: any) => {
+						if (!data) return [];
+						try {
+							const parsed = JSON.parse(data);
+							return Array.isArray(parsed) ? parsed : [];
+						} catch (e) {
+							return [];
+						}
+					};
 
-// 					return {
-// 						id: user.id.toString(),
-// 						userId: user.id.toString(),
-// 						userName:
-// 							`${user.first_name || ""} ${user.last_name || ""}`.trim() ||
-// 							"Nieznany",
-// 						email: user.email || "",
-// 						phone: user.phone || "",
-// 						province: user.province || "",
-// 						salaContacts: parseJSON(onboarding.sala_contacts),
-// 						mpContacts: parseJSON(onboarding.mp_contacts),
-// 						institutionContacts: parseJSON(onboarding.institution_contacts),
-// 						otherContacts: parseJSON(onboarding.other_contacts),
-// 						developmentAreas: parseJSON(onboarding.development_areas),
-// 						skills: parseJSON(onboarding.skills),
-// 						experience: onboarding.experience || "none",
-// 						availability: onboarding.availability || "",
-// 						description: onboarding.description || "",
-// 					};
-// 				})
-// 				.filter(Boolean);
+					return {
+						id: user.id.toString(),
+						userId: user.id.toString(),
+						userName:
+							`${user.first_name || ""} ${user.last_name || ""}`.trim() ||
+							"Nieznany",
+						email: user.email || "",
+						phone: user.phone || "",
+						province: user.province || "",
+						salaContacts: parseJSON(onboarding.sala_contacts),
+						mpContacts: parseJSON(onboarding.mp_contacts),
+						institutionContacts: parseJSON(onboarding.institution_contacts),
+						otherContacts: parseJSON(onboarding.other_contacts),
+						developmentAreas: parseJSON(onboarding.development_areas),
+						skills: parseJSON(onboarding.skills),
+						experience: onboarding.experience || "none",
+						availability: onboarding.availability || "",
+						description: onboarding.description || "",
+					};
+				})
+				.filter(Boolean);
 
-// 			res.json(formattedContacts);
-// 		} catch (error) {
-// 			console.error(" Błąd pobierania kontaktów onboardingu:", error);
-// 			res.status(500).json({
-// 				error: "Nie udało się pobrać kontaktów",
-// 				details: error instanceof Error ? error.message : "Unknown error",
-// 			});
-// 		}
-// 	},
-// );
+			res.json(formattedContacts);
+		} catch (error) {
+			console.error(" Błąd pobierania kontaktów onboardingu:", error);
+			res.status(500).json({
+				error: "Nie udało się pobrać kontaktów",
+				details: error instanceof Error ? error.message : "Unknown error",
+			});
+		}
+	},
+);
 
 app.post(
 	"/api/notifications/task-created",
@@ -9396,6 +9412,187 @@ app.get("/api/search/data", authMiddleware, async (req: any, res) => {
 		res.status(500).json({ error: "Nie udało się pobrać danych" });
 	}
 });
+
+/* ─── Dodanie kategorii ─── */
+app.post("/api/faq/categories", authMiddleware, async (req: any, res) => {
+	try {
+		const userRole = req.user?.role;
+		if (userRole !== "admin" && userRole !== "board") {
+			return res.status(403).json({ error: "Brak uprawnień" });
+		}
+
+		const { name, order } = req.body;
+
+		if (!name?.trim()) {
+			return res.status(400).json({ error: "Nazwa kategorii jest wymagana" });
+		}
+
+		const category = await prisma.faqCategory.create({
+			data: {
+				name: name.trim(),
+				order: order ?? 0,
+			},
+		});
+
+		res.status(201).json({
+			id: category.id.toString(),
+			name: category.name,
+		});
+	} catch (error) {
+		console.error("[FAQ] Błąd tworzenia kategorii:", error);
+		res.status(500).json({ error: "Nie udało się dodać kategorii" });
+	}
+});
+
+/* ─── Edycja kategorii ─── */
+app.put("/api/faq/categories/:id", authMiddleware, async (req: any, res) => {
+	try {
+		const userRole = req.user?.role;
+		if (userRole !== "admin" && userRole !== "board") {
+			return res.status(403).json({ error: "Brak uprawnień" });
+		}
+
+		const id = parseInt(req.params.id);
+		const { name, order } = req.body;
+
+		const existing = await prisma.faqCategory.findUnique({ where: { id } });
+		if (!existing) {
+			return res.status(404).json({ error: "Nie znaleziono kategorii" });
+		}
+
+		const category = await prisma.faqCategory.update({
+			where: { id },
+			data: {
+				name: name?.trim() || existing.name,
+				order: order !== undefined ? order : existing.order,
+				updated_at: new Date(),
+			},
+		});
+
+		res.json({
+			id: category.id.toString(),
+			name: category.name,
+		});
+	} catch (error) {
+		console.error("[FAQ] Błąd edycji kategorii:", error);
+		res.status(500).json({ error: "Nie udało się edytować kategorii" });
+	}
+});
+
+/* ─── Usunięcie kategorii ─── */
+app.delete("/api/faq/categories/:id", authMiddleware, async (req: any, res) => {
+	try {
+		const userRole = req.user?.role;
+		if (userRole !== "admin" && userRole !== "board") {
+			return res.status(403).json({ error: "Brak uprawnień" });
+		}
+
+		const id = parseInt(req.params.id);
+		const existing = await prisma.faqCategory.findUnique({ where: { id } });
+		if (!existing) {
+			return res.status(404).json({ error: "Nie znaleziono kategorii" });
+		}
+
+		await prisma.faqCategory.delete({ where: { id } });
+		res.status(204).send();
+	} catch (error) {
+		console.error("[FAQ] Błąd usuwania kategorii:", error);
+		res.status(500).json({ error: "Nie udało się usunąć kategorii" });
+	}
+});
+/* ─── Dodanie kategorii ─── */
+app.post("/api/faq/categories", authMiddleware, async (req: any, res) => {
+	try {
+		const userRole = req.user?.role;
+		if (userRole !== "admin" && userRole !== "board") {
+			return res.status(403).json({ error: "Brak uprawnień" });
+		}
+
+		const { name } = req.body;
+
+		if (!name?.trim()) {
+			return res.status(400).json({ error: "Nazwa kategorii jest wymagana" });
+		}
+
+		const category = await prisma.faqCategory.create({
+			data: {
+				name: name.trim(),
+				order: 0,
+			},
+		});
+
+		res.status(201).json({
+			id: category.id.toString(),
+			name: category.name,
+		});
+	} catch (error) {
+		console.error("[FAQ] Błąd tworzenia kategorii:", error);
+		res.status(500).json({ error: "Nie udało się dodać kategorii" });
+	}
+});
+
+/* ─── Usunięcie kategorii ─── */
+app.delete("/api/faq/categories/:id", authMiddleware, async (req: any, res) => {
+	try {
+		const userRole = req.user?.role;
+		if (userRole !== "admin" && userRole !== "board") {
+			return res.status(403).json({ error: "Brak uprawnień" });
+		}
+
+		const id = parseInt(req.params.id);
+		const existing = await prisma.faqCategory.findUnique({
+			where: { id },
+		});
+		if (!existing) {
+			return res.status(404).json({ error: "Nie znaleziono kategorii" });
+		}
+
+		await prisma.faqCategory.delete({ where: { id } });
+		res.status(204).send();
+	} catch (error) {
+		console.error("[FAQ] Błąd usuwania kategorii:", error);
+		res.status(500).json({ error: "Nie udało się usunąć kategorii" });
+	}
+});
+
+app.get("/api/admin/meetings-stats", authMiddleware, async (req: any, res) => {
+	try {
+		const userRole = req.user?.role;
+
+		if (userRole !== "admin" && userRole !== "board" && userRole !== "Zarząd") {
+			return res.status(403).json({ error: "Brak uprawnień" });
+		}
+
+		const connection = await mysql.createConnection({
+			host: process.env.FREKWENCJA_DB_HOST || "127.0.0.1",
+			user: process.env.FREKWENCJA_DB_USER,
+			password: process.env.FREKWENCJA_DB_PASSWORD,
+			database: process.env.FREKWENCJA_DB_NAME || "SM_Frekwencja",
+			port: parseInt(process.env.FREKWENCJA_DB_PORT || "3306"),
+		});
+
+		const [rows] = await connection.execute(`
+				SELECT 
+					YEAR(meeting_date) AS year,
+					MONTH(meeting_date) AS month,
+					COUNT(*) AS count
+				FROM att_meetings
+				WHERE meeting_date >= DATE_SUB(CURDATE(), INTERVAL 12 MONTH)
+				GROUP BY YEAR(meeting_date), MONTH(meeting_date)
+				ORDER BY year ASC, month ASC
+			`);
+
+		await connection.end();
+
+		res.json(rows);
+	} catch (error) {
+		console.error("[MEETINGS-STATS] Błąd:", error);
+		res.status(500).json({
+			error: "Nie udało się pobrać statystyk spotkań",
+			details: error instanceof Error ? error.message : "Unknown error",
+		});
+	}
+});
 app.get(
 	"/api/admin/inactive-users",
 	authMiddleware,
@@ -9592,4 +9789,4 @@ app.get(
 );
 
 app.use("/api", revenueRoutes);
-app.listen(port, () => { });
+app.listen(port, () => {});

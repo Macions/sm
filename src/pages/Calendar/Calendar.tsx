@@ -35,6 +35,13 @@ type CalendarTask = {
 	hasMeeting?: boolean;
 	htmlLink?: string;
 	absenceReported?: boolean;
+	absentees?: Array<{
+		userId: number;
+		userName: string;
+		userEmail: string;
+		reportedAt: string;
+	}>;
+	isOrganizer?: boolean;
 };
 
 const STATUS_COLORS: Record<TaskStatus, string> = {
@@ -81,7 +88,16 @@ export default function Calendar() {
 
 	const currentYear = currentDate.getFullYear();
 	const currentMonth = currentDate.getMonth();
+	const [viewMode, setViewMode] = useState<"month" | "week">("month");
 
+	useEffect(() => {
+		const checkWidth = () => {
+			setViewMode(window.innerWidth <= 768 ? "week" : "month");
+		};
+		checkWidth();
+		window.addEventListener("resize", checkWidth);
+		return () => window.removeEventListener("resize", checkWidth);
+	}, []);
 	const checkGoogleAuth = async () => {
 		try {
 			const token = localStorage.getItem("accessToken");
@@ -92,6 +108,7 @@ export default function Calendar() {
 
 			const res = await fetch(`${API_URL}/api/calendar/status`, {
 				headers: { Authorization: `Bearer ${token}` },
+				cache: "no-store",
 			});
 
 			if (res.status === 401) {
@@ -102,10 +119,14 @@ export default function Calendar() {
 
 			if (res.ok) {
 				const data = await res.json();
+				console.log("[Google] status data:", data);
 				setIsGoogleAuth(data.authenticated);
 				if (data.authenticated) {
 					await fetchGoogleEvents();
 				}
+			} else {
+				console.warn("[Google] status HTTP:", res.status);
+				setIsGoogleAuth(false);
 			}
 		} catch (error) {
 			console.log(" [Google] Błąd sprawdzania autoryzacji:", error);
@@ -114,8 +135,6 @@ export default function Calendar() {
 	};
 
 	const fetchGoogleEvents = async () => {
-		if (!isGoogleAuth) return;
-
 		setIsGoogleLoading(true);
 		try {
 			const token = localStorage.getItem("accessToken");
@@ -126,6 +145,7 @@ export default function Calendar() {
 
 			const res = await fetch(`${API_URL}/api/calendar/events`, {
 				headers: { Authorization: `Bearer ${token}` },
+				cache: "no-store",
 			});
 
 			if (res.status === 401) {
@@ -136,7 +156,13 @@ export default function Calendar() {
 
 			if (res.ok) {
 				const data = await res.json();
+				console.log(
+					"[Google] events:",
+					Array.isArray(data) ? data.length : data,
+				);
 				setGoogleEvents(data);
+			} else {
+				console.warn("[Google] events HTTP:", res.status);
 			}
 		} catch (error) {
 			console.log(" [Google] Błąd pobierania wydarzeń:", error);
@@ -201,7 +227,48 @@ export default function Calendar() {
 	const goToNextMonth = () => {
 		setCurrentDate(new Date(currentYear, currentMonth + 1, 1));
 	};
+	const goToPreviousWeek = () => {
+		const newDate = new Date(currentDate);
+		newDate.setDate(newDate.getDate() - 7);
+		setCurrentDate(newDate);
+	};
 
+	const goToNextWeek = () => {
+		const newDate = new Date(currentDate);
+		newDate.setDate(newDate.getDate() + 7);
+		setCurrentDate(newDate);
+	};
+
+	const getWeekDays = () => {
+		const days: Date[] = [];
+		const start = new Date(currentDate);
+		const dayOfWeek = start.getDay();
+		const diff = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+		start.setDate(start.getDate() + diff);
+
+		for (let i = 0; i < 7; i++) {
+			const d = new Date(start);
+			d.setDate(d.getDate() + i);
+			days.push(d);
+		}
+		return days;
+	};
+
+	const getWeekLabel = () => {
+		const days = getWeekDays();
+		const first = days[0];
+		const last = days[6];
+		const sameMonth = first.getMonth() === last.getMonth();
+		const sameYear = first.getFullYear() === last.getFullYear();
+
+		const formatDay = (d: Date) =>
+			d.toLocaleDateString("pl-PL", { day: "numeric", month: "short" });
+
+		if (sameMonth && sameYear) {
+			return `${first.getDate()} - ${last.getDate()} ${last.toLocaleDateString("pl-PL", { month: "long", year: "numeric" })}`;
+		}
+		return `${formatDay(first)} - ${formatDay(last)} ${last.getFullYear()}`;
+	};
 	const goToToday = () => {
 		setCurrentDate(new Date());
 	};
@@ -217,8 +284,7 @@ export default function Calendar() {
 	const daysInMonth = getDaysInMonth(currentYear, currentMonth);
 	const firstDay = getFirstDayOfMonth(currentYear, currentMonth);
 
-	const getEventsForDay = (day: number) => {
-		const date = new Date(currentYear, currentMonth, day);
+	const getEventsForDay = (date: Date) => {
 		const dateStr = date.toISOString().split("T")[0];
 
 		const taskEvents = tasks
@@ -263,6 +329,8 @@ export default function Calendar() {
 						event.hangoutLink || event.conferenceData?.entryPoints?.length > 0
 					),
 					absenceReported: event.absenceReported === true,
+					absentees: event.absentees || [],
+					isOrganizer: event.isOrganizer === true,
 				}));
 		}
 
@@ -324,44 +392,6 @@ export default function Calendar() {
 		return diffDays >= 1;
 	};
 
-	// Funkcja do zgłaszania nieobecności
-	const handleReportAbsence = async (taskId: string) => {
-		try {
-			setIsReportingAbsence(true);
-			const token = localStorage.getItem("accessToken");
-			if (!token) {
-				toast.error("Musisz być zalogowany");
-				return;
-			}
-
-			const url = `${API_URL}/api/tasks/${taskId}/absence`;
-			console.log("[DEBUG] POST", url);
-
-			const res = await fetch(url, {
-				method: "POST",
-				headers: {
-					"Content-Type": "application/json",
-					Authorization: `Bearer ${token}`,
-				},
-			});
-
-			console.log("[DEBUG] Response status:", res.status);
-			if (res.ok) {
-				toast.success(" Zgłoszono nieobecność!");
-				// Odśwież zadania
-				await fetchTasks();
-				closeModal();
-			} else {
-				const error = await res.json();
-				toast.error(error.message || "Nie udało się zgłosić nieobecności");
-			}
-		} catch (error) {
-			console.error("Błąd zgłaszania nieobecności:", error);
-			toast.error("Wystąpił błąd podczas zgłaszania nieobecności");
-		} finally {
-			setIsReportingAbsence(false);
-		}
-	};
 	// Zgłaszanie nieobecności na wydarzeniu Google Calendar
 	const handleReportGoogleAbsence = async (
 		eventId: string,
@@ -410,10 +440,9 @@ export default function Calendar() {
 			setIsReportingAbsence(false);
 		}
 	};
-	const handleDayClick = (day: number) => {
-		const date = new Date(currentYear, currentMonth, day);
+	const handleDayClick = (date: Date) => {
 		const dateStr = date.toISOString().split("T")[0];
-		const events = getEventsForDay(day);
+		const events = getEventsForDay(date);
 
 		if (events.length === 0) {
 			toast("Brak wydarzeń na ten dzień");
@@ -475,7 +504,88 @@ export default function Calendar() {
 			</div>
 		);
 	}
+	const renderDay = (date: Date, day: number) => {
+		const dayEvents = getEventsForDay(date);
+		const isTodayDate =
+			date.getDate() === new Date().getDate() &&
+			date.getMonth() === new Date().getMonth() &&
+			date.getFullYear() === new Date().getFullYear();
 
+		const today = new Date();
+		today.setHours(0, 0, 0, 0);
+		const dateMidnight = new Date(date);
+		dateMidnight.setHours(0, 0, 0, 0);
+		const isPastDate = dateMidnight < today;
+
+		const hasGoogleEvent = dayEvents.some((e) => e.source === "google");
+		const hasSystemTask = dayEvents.some((e) => e.source === "system");
+
+		return (
+			<div
+				key={date.toISOString()}
+				className={`${styles.day} ${isTodayDate ? styles.today : ""} ${isPastDate ? styles.past : ""}`}
+				onClick={() => handleDayClick(date)}
+			>
+				<div className={styles.dayHeader}>
+					<span className={styles.dayNumber}>{day}</span>
+					{viewMode === "week" && (
+						<span className={styles.dayName}>
+							{date.toLocaleDateString("pl-PL", { weekday: "short" })}
+						</span>
+					)}
+					{dayEvents.length > 0 && (
+						<span className={styles.taskCount}>{dayEvents.length}</span>
+					)}
+				</div>
+
+				<div className={styles.dayTasks}>
+					{dayEvents.slice(0, 3).map((event) => (
+						<div
+							key={event.id}
+							className={`${styles.dayTaskItem} ${event.source === "google" ? styles.googleTaskItem : ""}`}
+							onClick={(e) => {
+								e.stopPropagation();
+								handleTaskClick(event);
+							}}
+						>
+							<span
+								className={styles.dayTaskDot}
+								style={{
+									backgroundColor:
+										event.source === "google"
+											? event.hasMeeting
+												? "#0b57d0"
+												: "#4285f4"
+											: PRIORITY_COLORS[event.priority as TaskPriority],
+								}}
+							/>
+							<span className={styles.dayTaskTitle}>
+								{event.title}
+								{event.hasMeeting && (
+									<span className={styles.meetBadge}>
+										<Video size={10} /> Meet
+									</span>
+								)}
+								{event.source === "google" && (
+									<span className={styles.googleBadge}>Google</span>
+								)}
+								{event.source === "system" && event.absenceReported && (
+									<span className={styles.absenceReportedBadge}>
+										<AlertCircle size={10} /> Zgłoszono nieobecność
+									</span>
+								)}
+							</span>
+						</div>
+					))}
+					{dayEvents.length > 3 && (
+						<div className={styles.moreTasks}>
+							+{dayEvents.length - 3} więcej
+						</div>
+					)}
+				</div>
+			</div>
+		);
+	};
 	return (
 		<div className={styles.calendar}>
 			<div className={styles.header}>
@@ -483,14 +593,8 @@ export default function Calendar() {
 					<h1 className={styles.title}>Kalendarz</h1>
 					<p className={styles.subtitle}>
 						{isGoogleAuth
-							? "Zadania systemowe + wydarzenia z Google Calendar"
+							? "Zadania systemowe i wydarzenia z Google Calendar"
 							: "Zadania systemowe"}
-						{isGoogleAuth && (
-							<span className={styles.googleConnected}>
-								{" "}
-								Połączono z Google
-							</span>
-						)}
 					</p>
 				</div>
 				<div className={styles.headerRight}>
@@ -503,108 +607,58 @@ export default function Calendar() {
 
 			<div className={styles.controls}>
 				<div className={styles.navigation}>
-					<button className={styles.navBtn} onClick={goToPreviousMonth}>
+					<button
+						className={styles.navBtn}
+						onClick={
+							viewMode === "month" ? goToPreviousMonth : goToPreviousWeek
+						}
+					>
 						<ChevronLeft size={20} />
 					</button>
 					<span className={styles.monthYear}>
-						{monthNames[currentMonth]} {currentYear}
+						{viewMode === "month"
+							? `${monthNames[currentMonth]} ${currentYear}`
+							: getWeekLabel()}
 					</span>
-					<button className={styles.navBtn} onClick={goToNextMonth}>
+					<button
+						className={styles.navBtn}
+						onClick={viewMode === "month" ? goToNextMonth : goToNextWeek}
+					>
 						<ChevronRight size={20} />
 					</button>
 				</div>
 			</div>
 
 			<div className={styles.calendarGrid}>
-				<div className={styles.weekDays}>
-					{dayNames.map((day) => (
-						<div key={day} className={styles.weekDay}>
-							{day}
-						</div>
-					))}
-				</div>
+				{viewMode === "month" && (
+					<div className={styles.weekDays}>
+						{dayNames.map((day) => (
+							<div key={day} className={styles.weekDay}>
+								{day}
+							</div>
+						))}
+					</div>
+				)}
 
 				<div className={styles.daysGrid}>
-					{Array.from({ length: firstDay === 0 ? 6 : firstDay - 1 }).map(
-						(_, index) => (
-							<div key={`empty-${index}`} className={styles.emptyDay} />
-						),
+					{viewMode === "month" ? (
+						<>
+							{Array.from({ length: firstDay === 0 ? 6 : firstDay - 1 }).map(
+								(_, index) => (
+									<div key={`empty-${index}`} className={styles.emptyDay} />
+								),
+							)}
+							{Array.from({ length: daysInMonth }).map((_, index) => {
+								const day = index + 1;
+								const date = new Date(currentYear, currentMonth, day);
+								return renderDay(date, day);
+							})}
+						</>
+					) : (
+						getWeekDays().map((date) => {
+							return renderDay(date, date.getDate());
+						})
 					)}
-
-					{Array.from({ length: daysInMonth }).map((_, index) => {
-						const day = index + 1;
-						const dayEvents = getEventsForDay(day);
-						const isTodayDate = isToday(day);
-						const isPastDate = isPast(day);
-
-						const hasGoogleEvent = dayEvents.some((e) => e.source === "google");
-						const hasSystemTask = dayEvents.some((e) => e.source === "system");
-
-						return (
-							<div
-								key={day}
-								className={`${styles.day} ${isTodayDate ? styles.today : ""} ${isPastDate ? styles.past : ""}`}
-								onClick={() => handleDayClick(day)}
-							>
-								<div className={styles.dayHeader}>
-									<span className={styles.dayNumber}>{day}</span>
-									{dayEvents.length > 0 && (
-										<span className={styles.taskCount}>
-											{dayEvents.length}
-											{hasGoogleEvent && hasSystemTask && " "}
-											{hasGoogleEvent && !hasSystemTask && " "}
-										</span>
-									)}
-								</div>
-
-								<div className={styles.dayTasks}>
-									{dayEvents.slice(0, 3).map((event) => (
-										<div
-											key={event.id}
-											className={`${styles.dayTaskItem} ${event.source === "google" ? styles.googleTaskItem : ""}`}
-											onClick={(e) => {
-												e.stopPropagation();
-												handleTaskClick(event);
-											}}
-										>
-											<span
-												className={styles.dayTaskDot}
-												style={{
-													backgroundColor:
-														event.source === "google"
-															? event.hasMeeting
-																? "#0b57d0"
-																: "#4285f4"
-															: PRIORITY_COLORS[event.priority as TaskPriority],
-												}}
-											/>
-											<span className={styles.dayTaskTitle}>
-												{event.title}
-												{event.hasMeeting && (
-													<span className={styles.meetBadge}>
-														<Video size={10} /> Meet
-													</span>
-												)}
-												{event.source === "google" && (
-													<span className={styles.googleBadge}>Google</span>
-												)}
-												{event.source === "system" && event.absenceReported && (
-													<span className={styles.absenceReportedBadge}>
-														<AlertCircle size={10} /> Zgłoszono nieobecność
-													</span>
-												)}
-											</span>
-										</div>
-									))}
-									{dayEvents.length > 3 && (
-										<div className={styles.moreTasks}>
-											+{dayEvents.length - 3} więcej
-										</div>
-									)}
-								</div>
-							</div>
-						);
-					})}
 				</div>
 			</div>
 
@@ -679,16 +733,65 @@ export default function Calendar() {
 										{selectedTask.source === "google" &&
 											selectedTask.hasMeeting && (
 												<div
-													className={styles.metaItem}
-													style={{
-														gridColumn: "1 / -1",
-														background: "#e8f0fe",
-													}}
+													className={`${styles.metaItem} ${styles.metaItemFull}`}
 												>
-													<Video size={16} color="#1a73e8" />
-													<span style={{ fontWeight: 600, color: "#1a73e8" }}>
-														Spotkanie Google Meet
-													</span>
+													<Video size={16} />
+													<span>Spotkanie Google Meet</span>
+												</div>
+											)}
+										{/* Lista nieobecności — tylko dla organizatora */}
+										{selectedTask.source === "google" &&
+											selectedTask.isOrganizer &&
+											selectedTask.absentees &&
+											selectedTask.absentees.length > 0 && (
+												<div className={styles.absenteesBox}>
+													<div className={styles.absenteesHeader}>
+														<AlertCircle size={16} />
+														<span>Zgłoszone nieobecności</span>
+														<span className={styles.absenteesCount}>
+															{selectedTask.absentees.length}
+														</span>
+													</div>
+													<ul className={styles.absenteesList}>
+														{selectedTask.absentees.map((a) => {
+															const initials = a.userName
+																.split(" ")
+																.map((n) => n[0])
+																.join("")
+																.substring(0, 2)
+																.toUpperCase();
+															const time = new Date(
+																a.reportedAt,
+															).toLocaleString("pl-PL", {
+																day: "numeric",
+																month: "short",
+																hour: "2-digit",
+																minute: "2-digit",
+															});
+
+															return (
+																<li
+																	key={a.userId}
+																	className={styles.absenteeItem}
+																>
+																	<div className={styles.absenteeAvatar}>
+																		{initials}
+																	</div>
+																	<div className={styles.absenteeInfo}>
+																		<span className={styles.absenteeName}>
+																			{a.userName}
+																		</span>
+																		<span className={styles.absenteeEmail}>
+																			{a.userEmail}
+																		</span>
+																	</div>
+																	<span className={styles.absenteeTime}>
+																		{time}
+																	</span>
+																</li>
+															);
+														})}
+													</ul>
 												</div>
 											)}
 									</div>
@@ -726,7 +829,7 @@ export default function Calendar() {
 											{selectedTask.absenceReported ? (
 												<div className={styles.absenceReportedInfo}>
 													<AlertCircle size={20} />
-													<span> Nieobecność została już zgłoszona</span>
+													<span>Nieobecność została już zgłoszona</span>
 												</div>
 											) : (
 												<>
@@ -750,8 +853,8 @@ export default function Calendar() {
 														}
 													>
 														{isReportingAbsence
-															? "⏳ Zgłaszanie..."
-															: " Zgłoś nieobecność"}
+															? "Zgłaszanie..."
+															: "Zgłoś nieobecność"}
 													</button>
 
 													{!canReportAbsence(selectedTask.dueDate) && (
@@ -767,125 +870,96 @@ export default function Calendar() {
 											)}
 										</>
 									)}
-
-									{/* Przycisk zgłaszania nieobecności (tylko dla zadań systemowych) */}
-									<>
-										{selectedTask.absenceReported ? (
-											<div className={styles.absenceReportedInfo}>
-												<AlertCircle size={20} />
-												<span> Nieobecność została już zgłoszona</span>
-											</div>
-										) : (
-											<>
-												<button
-													className={styles.absenceButton}
-													onClick={() => handleReportAbsence(selectedTask.id)}
-													disabled={
-														isReportingAbsence ||
-														!canReportAbsence(selectedTask.dueDate)
-													}
-													title={
-														!canReportAbsence(selectedTask.dueDate)
-															? "Nieobecność można zgłosić min. 24h przed wydarzeniem"
-															: ""
-													}
-												>
-													{isReportingAbsence
-														? "⏳ Zgłaszanie..."
-														: " Zgłoś nieobecność"}
-												</button>
-
-												{!canReportAbsence(selectedTask.dueDate) && (
-													<div className={styles.absenceNotAvailable}>
-														<AlertCircle size={16} />
-														<span>
-															Nieobecność można zgłosić minimum 24h przed
-															wydarzeniem
-														</span>
-													</div>
-												)}
-											</>
-										)}
-									</>
 								</div>
 							) : (
 								<div className={styles.dayTasksList}>
 									<p className={styles.dayTasksTitle}>
 										Wydarzenia na {selectedDate ? formatDate(selectedDate) : ""}
 									</p>
-									{selectedDate && (
-										<div className={styles.tasksList}>
-											{getEventsForDay(
-												parseInt(selectedDate.split("-")[2]),
-											).map((event: any) => (
-												<div
-													key={event.id}
-													className={`${styles.taskItem} ${event.source === "google" ? styles.googleTaskItem : ""}`}
-													onClick={() => {
-														handleTaskClick(event);
-													}}
-												>
-													<div
-														className={styles.taskStatusDot}
-														style={{
-															backgroundColor:
-																event.source === "google"
-																	? event.hasMeeting
-																		? "#0b57d0"
-																		: "#4285f4"
-																	: STATUS_COLORS[event.status as TaskStatus],
-														}}
-													/>
-													<div className={styles.taskInfo}>
-														<span className={styles.taskTitle}>
-															{event.title}
-															{event.source === "google" && (
-																<>
-																	<span className={styles.googleBadge}>
-																		Google
-																	</span>
-																	{event.hasMeeting && (
-																		<span className={styles.meetBadge}>
-																			<Video size={12} /> Meet
-																		</span>
-																	)}
-																</>
-															)}
-															{event.source === "system" &&
-																event.absenceReported && (
-																	<span className={styles.absenceReportedBadge}>
-																		<AlertCircle size={10} /> Zgłoszono
-																		nieobecność
-																	</span>
-																)}
-														</span>
-														<span className={styles.taskAssignedTo}>
-															{event.assignedToName}
-														</span>
-													</div>
-													{event.source !== "google" && (
-														<span
-															className={styles.taskPriority}
-															style={{
-																color:
-																	PRIORITY_COLORS[
-																		event.priority as TaskPriority
-																	],
+									{selectedDate &&
+										(() => {
+											const [y, m, d] = selectedDate.split("-").map(Number);
+											const date = new Date(y, m - 1, d);
+											const events = getEventsForDay(date);
+											return (
+												<div className={styles.tasksList}>
+													{events.map((event: any) => (
+														<div
+															key={event.id}
+															className={`${styles.taskItem} ${event.source === "google" ? styles.googleTaskItem : ""}`}
+															onClick={() => {
+																handleTaskClick(event);
 															}}
 														>
-															{PRIORITY_LABELS[event.priority as TaskPriority]}
-														</span>
+															<div
+																className={styles.taskStatusDot}
+																style={{
+																	backgroundColor:
+																		event.source === "google"
+																			? event.hasMeeting
+																				? "#0b57d0"
+																				: "#4285f4"
+																			: STATUS_COLORS[
+																					event.status as TaskStatus
+																				],
+																}}
+															/>
+															<div className={styles.taskInfo}>
+																<span className={styles.taskTitle}>
+																	{event.title}
+																	{event.source === "google" && (
+																		<>
+																			<span className={styles.googleBadge}>
+																				Google
+																			</span>
+																			{event.hasMeeting && (
+																				<span className={styles.meetBadge}>
+																					<Video size={12} /> Meet
+																				</span>
+																			)}
+																		</>
+																	)}
+																	{event.source === "system" &&
+																		event.absenceReported && (
+																			<span
+																				className={styles.absenceReportedBadge}
+																			>
+																				<AlertCircle size={10} /> Zgłoszono
+																				nieobecność
+																			</span>
+																		)}
+																</span>
+																<span className={styles.taskAssignedTo}>
+																	{event.assignedToName}
+																</span>
+															</div>
+															{event.source !== "google" && (
+																<span
+																	className={styles.taskPriority}
+																	style={{
+																		color:
+																			PRIORITY_COLORS[
+																				event.priority as TaskPriority
+																			],
+																	}}
+																>
+																	{
+																		PRIORITY_LABELS[
+																			event.priority as TaskPriority
+																		]
+																	}
+																</span>
+															)}
+														</div>
+													))}
+													{events.length === 0 && (
+														<p className={styles.noTasks}>
+															Brak wydarzeń na ten dzień
+														</p>
 													)}
 												</div>
-											))}
-											{getEventsForDay(parseInt(selectedDate.split("-")[2]))
-												.length === 0 && (
-												<p className={styles.noTasks}>
-													Brak wydarzeń na ten dzień
-												</p>
-											)}
-										</div>
-									)}
+											);
+										})()}
 								</div>
 							)}
 						</div>

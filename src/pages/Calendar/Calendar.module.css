@@ -1,11 +1,12 @@
 .calendar {
 	width: 100%;
+	/* max-width: 1400px; */
 	margin: 0 auto;
-	padding: 40px;
+	/* padding: 32px; */
 	font-family:
-		-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-	color: #111827;
-	background: #f8fafc;
+		-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue",
+		sans-serif;
+	color: #0a0a0a;
 	min-height: 100vh;
 }
 
@@ -14,17 +15,19 @@
 	flex-direction: column;
 	align-items: center;
 	justify-content: center;
-	min-height: 600px;
-	gap: 24px;
+	min-height: 60vh;
+	gap: 20px;
+	color: #737373;
+	font-size: 14px;
 }
 
 .loadingSpinner {
-	width: 52px;
-	height: 52px;
-	border: 4px solid #e2e8f0;
-	border-top: 4px solid #111827;
+	width: 32px;
+	height: 32px;
+	border: 2px solid #e5e5e5;
+	border-top-color: #0a0a0a;
 	border-radius: 50%;
-	animation: spin 0.8s linear infinite;
+	animation: spin 0.7s linear infinite;
 }
 
 @keyframes spin {
@@ -36,151 +39,167 @@
 .header {
 	display: flex;
 	justify-content: space-between;
-	align-items: center;
-	margin-bottom: 36px;
-	padding-bottom: 24px;
-	border-bottom: 2px solid #e2e8f0;
+	align-items: flex-end;
+	margin-bottom: 32px;
+	gap: 24px;
+}
+
+.headerLeft {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
 }
 
 .title {
-	font-size: 36px;
-	font-weight: 700;
-	color: #111827;
+	font-size: 32px;
+	font-weight: 600;
+	color: #0a0a0a;
 	margin: 0;
-	letter-spacing: -0.5px;
+	letter-spacing: -0.02em;
 }
 
 .subtitle {
-	font-size: 16px;
-	color: #64748b;
-	margin: 8px 0 0 0;
+	font-size: 14px;
+	color: #737373;
+	margin: 0;
 	font-weight: 400;
 }
 
 .googleConnected {
-	color: #22c55e;
-	font-weight: 600;
+	color: #0a0a0a;
+	font-weight: 500;
+	margin-left: 4px;
 }
 
 .headerRight {
 	display: flex;
-	gap: 14px;
+	gap: 8px;
 }
 
 .todayBtn {
-	padding: 12px 28px;
-	background: #ffffff;
-	border: 1px solid #d1d5db;
-	border-radius: 10px;
-	font-size: 15px;
-	font-weight: 600;
-	color: #111827;
+	padding: 10px 18px;
+	background: #0a0a0a;
+	border: 1px solid #0a0a0a;
+	border-radius: 8px;
+	font-size: 14px;
+	font-weight: 500;
+	color: #ffffff;
 	cursor: pointer;
-	transition: all 0.2s;
-	display: flex;
+	transition:
+		background 0.15s,
+		transform 0.15s;
+	display: inline-flex;
 	align-items: center;
-	gap: 10px;
+	gap: 8px;
 }
 
 .todayBtn:hover {
-	background: #111827;
-	color: #ffffff;
-	border-color: #111827;
+	background: #262626;
+	border-color: #262626;
+}
+
+.todayBtn:active {
+	transform: scale(0.98);
 }
 
 .controls {
 	display: flex;
 	justify-content: space-between;
 	align-items: center;
-	margin-bottom: 32px;
-	padding: 18px 24px;
-	background: #ffffff;
-	border-radius: 12px;
-	border: 1px solid #e2e8f0;
+	margin-bottom: 24px;
 }
 
 .navigation {
 	display: flex;
 	align-items: center;
-	gap: 20px;
+	gap: 8px;
 }
 
 .navBtn {
-	display: flex;
+	display: inline-flex;
 	align-items: center;
 	justify-content: center;
-	width: 44px;
-	height: 44px;
-	border: 1px solid #d1d5db;
-	border-radius: 10px;
+	width: 36px;
+	height: 36px;
+	border: 1px solid #e5e5e5;
+	border-radius: 8px;
 	background: #ffffff;
-	color: #111827;
+	color: #0a0a0a;
 	cursor: pointer;
-	transition: all 0.2s;
-	font-size: 20px;
+	transition:
+		background 0.15s,
+		border-color 0.15s;
 }
 
 .navBtn:hover {
-	background: #111827;
-	color: #ffffff;
-	border-color: #111827;
+	background: #fafafa;
+	border-color: #d4d4d4;
 }
 
 .monthYear {
-	font-size: 22px;
-	font-weight: 700;
-	color: #111827;
-	min-width: 200px;
+	font-size: 16px;
+	font-weight: 600;
+	color: #0a0a0a;
+	min-width: 160px;
 	text-align: center;
+	letter-spacing: -0.01em;
 }
 
 .calendarGrid {
 	background: #ffffff;
+	border: 1px solid #e5e5e5;
 	border-radius: 12px;
-	border: 1px solid #e2e8f0;
 	overflow: hidden;
 }
 
 .weekDays {
 	display: grid;
-	grid-template-columns: repeat(7, 1fr);
-	background: #f1f4f9;
+	grid-template-columns: repeat(7, minmax(0, 1fr));
+	background: #fafafa;
+	border-bottom: 1px solid #e5e5e5;
 }
 
 .weekDay {
-	padding: 16px 12px;
+	padding: 12px 8px;
 	text-align: center;
-	font-size: 14px;
-	font-weight: 700;
-	color: #475569;
+	font-size: 11px;
+	font-weight: 600;
+	color: #737373;
 	text-transform: uppercase;
-	letter-spacing: 0.5px;
+	letter-spacing: 0.06em;
 }
 
 .daysGrid {
 	display: grid;
-	grid-template-columns: repeat(7, 1fr);
+	grid-template-columns: repeat(7, minmax(0, 1fr));
 }
 
 .emptyDay {
-	min-height: 160px;
-	background: #fafbfc;
+	min-height: 140px;
+	background: #fafafa;
 	border-right: 1px solid #f0f0f0;
 	border-bottom: 1px solid #f0f0f0;
+	overflow: hidden;
+	min-width: 0;
 }
 
 .day {
-	min-height: 160px;
-	padding: 14px 16px;
+	min-height: 140px;
+	padding: 10px;
 	border-right: 1px solid #f0f0f0;
 	border-bottom: 1px solid #f0f0f0;
 	cursor: pointer;
-	transition: background 0.2s;
+	transition: background 0.15s;
 	background: #ffffff;
+	overflow: hidden;
+	min-width: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
 }
 
 .day:hover {
-	background: #f8fafc;
+	background: #fafafa;
 }
 
 .day:nth-child(7n) {
@@ -188,283 +207,295 @@
 }
 
 .day.past {
-	opacity: 0.4;
+	background: #fafafa;
+}
+
+.day.past .dayNumber {
+	color: #a3a3a3;
 }
 
 .day.today {
-	background: #f1f4f9;
+	background: #fafafa;
 }
 
 .dayHeader {
 	display: flex;
 	justify-content: space-between;
 	align-items: center;
-	margin-bottom: 10px;
 }
 
 .dayNumber {
-	font-size: 18px;
-	font-weight: 600;
-	color: #111827;
+	font-size: 13px;
+	font-weight: 500;
+	color: #0a0a0a;
+	width: 24px;
+	height: 24px;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	border-radius: 6px;
 }
 
 .day.today .dayNumber {
-	background: #111827;
+	background: #0a0a0a;
 	color: #ffffff;
-	width: 36px;
-	height: 36px;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	border-radius: 50%;
-	font-weight: 700;
-	font-size: 17px;
+	font-weight: 600;
 }
 
 .taskCount {
-	font-size: 13px;
-	background: #111827;
-	color: #ffffff;
-	padding: 0 14px;
-	border-radius: 16px;
-	font-weight: 600;
-	line-height: 24px;
+	font-size: 11px;
+	color: #737373;
+	font-weight: 500;
+	padding: 0 6px;
+	border-radius: 4px;
+	line-height: 18px;
 }
 
 .dayTasks {
 	display: flex;
 	flex-direction: column;
-	gap: 6px;
-	margin-top: 8px;
+	gap: 3px;
+	overflow: hidden;
+	min-width: 0;
 }
 
 .dayTaskItem {
 	display: flex;
 	align-items: center;
-	gap: 8px;
-	padding: 6px 10px;
-	font-size: 13px;
+	gap: 6px;
+	padding: 4px 6px;
+	font-size: 12px;
 	cursor: pointer;
-	border-radius: 6px;
-	background: #f8fafc;
+	border-radius: 4px;
+	background: transparent;
 	transition: background 0.15s;
 	overflow: hidden;
-	white-space: nowrap;
-	text-overflow: ellipsis;
-	min-height: 28px;
+	min-width: 0;
 }
 
 .dayTaskItem:hover {
-	background: #eef3ff;
+	background: #f5f5f5;
 }
 
 .dayTaskDot {
-	width: 10px;
-	height: 10px;
+	width: 6px;
+	height: 6px;
 	border-radius: 50%;
 	flex-shrink: 0;
 }
 
 .dayTaskTitle {
-	font-size: 13px;
-	color: #111827;
+	font-size: 12px;
+	color: #404040;
 	overflow: hidden;
 	text-overflow: ellipsis;
 	white-space: nowrap;
-	font-weight: 500;
+	font-weight: 400;
+	min-width: 0;
+	flex: 1;
 }
 
-.dayTaskTitle .googleBadge {
-	font-size: 10px;
-	padding: 0 8px;
-	background: #4285f4;
-	color: #ffffff;
-	border-radius: 4px;
-	margin-left: 6px;
-}
-
-.dayTaskTitle .meetBadge {
-	font-size: 10px;
-	padding: 0 8px;
-	background: #e8f0fe;
-	color: #1a73e8;
-	border-radius: 4px;
-	margin-left: 6px;
-	display: inline-flex;
-	align-items: center;
-	gap: 3px;
+.dayTaskTitle .googleBadge,
+.dayTaskTitle .meetBadge,
+.absenceReportedBadge {
+	flex-shrink: 0;
 }
 
 .moreTasks {
-	font-size: 12px;
-	color: #94a3b8;
-	font-weight: 600;
-	padding: 0 6px;
+	font-size: 11px;
+	color: #a3a3a3;
+	font-weight: 500;
+	padding: 2px 6px;
 }
 
 .modalOverlay {
 	position: fixed;
-	top: 0;
-	left: 0;
-	right: 0;
-	bottom: 0;
-	background: rgba(0, 0, 0, 0.6);
+	inset: 0;
+	background: rgba(10, 10, 10, 0.4);
 	display: flex;
 	align-items: center;
 	justify-content: center;
 	z-index: 1000;
+	backdrop-filter: blur(2px);
 }
 
 .modal {
 	background: #ffffff;
-	border-radius: 16px;
+	border: 1px solid #e5e5e5;
+	border-radius: 14px;
 	max-width: 640px;
-	width: 94%;
-	max-height: 88vh;
+	width: 92%;
+	max-height: 86vh;
 	overflow: hidden;
-	box-shadow: 0 24px 80px rgba(0, 0, 0, 0.25);
+	box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
+	display: flex;
+	flex-direction: column;
 }
 
 .modalHeader {
 	display: flex;
 	justify-content: space-between;
-	align-items: center;
-	padding: 28px 32px;
-	border-bottom: 2px solid #e2e8f0;
+	align-items: flex-start;
+	padding: 24px 28px 20px;
+	border-bottom: 1px solid #f0f0f0;
+	gap: 16px;
+	flex-shrink: 0;
 }
 
 .modalTitle {
-	font-size: 22px;
-	font-weight: 700;
-	color: #111827;
+	font-size: 18px;
+	font-weight: 600;
+	color: #0a0a0a;
 	margin: 0;
+	line-height: 1.4;
+	letter-spacing: -0.01em;
+	word-break: break-word;
+	overflow-wrap: anywhere;
 }
 
 .modalClose {
-	width: 40px;
-	height: 40px;
-	border: none;
-	border-radius: 50%;
+	width: 32px;
+	height: 32px;
+	border: 1px solid transparent;
+	border-radius: 8px;
 	background: transparent;
-	color: #94a3b8;
+	color: #737373;
 	cursor: pointer;
-	font-size: 24px;
-	transition: background 0.15s;
-	display: flex;
+	transition:
+		background 0.15s,
+		border-color 0.15s,
+		color 0.15s;
+	display: inline-flex;
 	align-items: center;
 	justify-content: center;
+	flex-shrink: 0;
 }
 
 .modalClose:hover {
-	background: #f1f4f9;
-	color: #111827;
+	border-color: #e5e5e5;
+	color: #0a0a0a;
 }
 
 .modalBody {
-	padding: 32px;
+	padding: 24px 28px;
 	overflow-y: auto;
-	max-height: calc(88vh - 80px);
+	flex: 1;
+	min-height: 0;
 }
 
 .taskDetail {
 	display: flex;
 	flex-direction: column;
-	gap: 20px;
+	gap: 16px;
 }
 
 .taskDescription {
-	font-size: 16px;
-	color: #334155;
-	line-height: 1.8;
+	font-size: 14px;
+	color: #404040;
+	line-height: 1.7;
 	margin: 0;
-	padding: 16px 20px;
-	background: #f8fafc;
-	border-radius: 10px;
-	border-left: 5px solid #111827;
+	padding: 14px 16px;
+	border: 1px solid #f0f0f0;
+	border-radius: 8px;
+	word-break: break-word;
+	overflow-wrap: anywhere;
 }
 
 .taskMeta {
 	display: grid;
-	grid-template-columns: 1fr 1fr;
-	gap: 12px;
+	grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+	gap: 8px;
 }
 
 .metaItem {
 	display: flex;
 	align-items: center;
-	gap: 12px;
-	font-size: 15px;
-	color: #334155;
-	padding: 10px 16px;
-	background: #f8fafc;
+	gap: 10px;
+	font-size: 13px;
+	color: #404040;
+	padding: 10px 12px;
+	border: 1px solid #f0f0f0;
 	border-radius: 8px;
+	min-width: 0;
 }
 
 .metaItem svg {
-	color: #64748b;
-	width: 20px;
-	height: 20px;
+	color: #a3a3a3;
+	width: 16px;
+	height: 16px;
+	flex-shrink: 0;
+}
+
+.metaItem span {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	min-width: 0;
 }
 
 .statusBadge,
 .priorityBadge {
 	display: inline-block;
-	padding: 4px 16px;
-	border-radius: 8px;
-	font-size: 13px;
-	font-weight: 600;
+	padding: 3px 10px;
+	border-radius: 6px;
+	font-size: 12px;
+	font-weight: 500;
 	color: #ffffff;
 }
 
 .tags {
 	display: flex;
 	flex-wrap: wrap;
-	gap: 10px;
-	padding-top: 6px;
+	gap: 6px;
 }
 
 .tag {
-	display: inline-block;
-	background: #f1f4f9;
-	padding: 4px 16px;
-	border-radius: 8px;
-	font-size: 14px;
-	color: #111827;
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+	padding: 4px 10px;
+	border: 1px solid #f0f0f0;
+	border-radius: 6px;
+	font-size: 12px;
+	color: #404040;
 	font-weight: 500;
 }
 
 .dayTasksTitle {
-	font-size: 20px;
-	font-weight: 700;
-	color: #111827;
-	margin: 0 0 18px 0;
+	font-size: 16px;
+	font-weight: 600;
+	color: #0a0a0a;
+	margin: 0 0 16px 0;
+	letter-spacing: -0.01em;
 }
 
 .tasksList {
 	display: flex;
 	flex-direction: column;
-	gap: 12px;
+	gap: 6px;
 }
 
 .taskItem {
 	display: flex;
 	align-items: center;
-	gap: 16px;
-	padding: 14px 18px;
-	background: #f8fafc;
-	border-radius: 10px;
+	gap: 12px;
+	padding: 12px 14px;
+	border: 1px solid #f0f0f0;
+	border-radius: 8px;
 	cursor: pointer;
-	transition: background 0.15s;
+	transition:
+		background 0.15s,
+		border-color 0.15s;
 	min-height: 52px;
 }
 
 .taskItem:hover {
-	background: #f1f4f9;
+	border-color: #d4d4d4;
 }
 
 .taskStatusDot {
-	width: 14px;
-	height: 14px;
+	width: 8px;
+	height: 8px;
 	border-radius: 50%;
 	flex-shrink: 0;
 }
@@ -473,219 +504,279 @@
 	flex: 1;
 	display: flex;
 	flex-direction: column;
-	gap: 3px;
+	gap: 2px;
+	min-width: 0;
 }
 
 .taskTitle {
-	font-size: 16px;
-	font-weight: 600;
-	color: #111827;
+	font-size: 14px;
+	font-weight: 500;
+	color: #0a0a0a;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
 }
 
 .taskAssignedTo {
-	font-size: 14px;
-	color: #94a3b8;
+	font-size: 12px;
+	color: #a3a3a3;
 }
 
 .taskPriority {
-	font-size: 13px;
-	font-weight: 600;
-	padding: 0 14px;
+	font-size: 12px;
+	font-weight: 500;
+	flex-shrink: 0;
 }
 
 .noTasks {
 	text-align: center;
-	color: #94a3b8;
-	padding: 48px 0;
-	font-size: 16px;
+	color: #a3a3a3;
+	padding: 40px 0;
+	font-size: 14px;
 }
 
-.syncSection {
-	margin-top: 16px;
+.googleBadge {
+	display: inline-block;
+	font-size: 10px;
+	padding: 2px 6px;
+	border: 1px solid #e5e5e5;
+	border-radius: 4px;
+	margin-left: 6px;
+	color: #404040;
+	font-weight: 500;
 }
 
-.syncBtn {
-	display: flex;
+.googleTaskItem {
+	border-left: 2px solid #0a0a0a;
+}
+
+.meetBadge {
+	display: inline-flex;
+	align-items: center;
+	gap: 3px;
+	padding: 2px 6px;
+	border: 1px solid #e5e5e5;
+	border-radius: 4px;
+	font-size: 10px;
+	font-weight: 500;
+	margin-left: 6px;
+	color: #404040;
+}
+
+.meetButton {
+	display: inline-flex;
 	align-items: center;
 	justify-content: center;
-	gap: 12px;
-	width: 100%;
-	padding: 14px 24px;
-	background: #111827;
-	color: #ffffff;
-	border: none;
-	border-radius: 10px;
-	font-size: 16px;
-	font-weight: 600;
+	gap: 8px;
+	padding: 12px 18px;
+	background: transparent;
+	color: #0a0a0a;
+	border: 1px solid #0a0a0a;
+	border-radius: 8px;
+	font-size: 14px;
+	font-weight: 500;
+	text-decoration: none;
 	cursor: pointer;
-	transition: background 0.2s;
+	transition:
+		background 0.15s,
+		color 0.15s;
+	margin-top: 4px;
 }
 
-.syncBtn:hover:not(:disabled) {
-	background: #1f2937;
+.meetButton:hover {
+	background: #0a0a0a;
+	color: #ffffff;
+	text-decoration: none;
 }
 
-.syncBtn:disabled {
+.absenceButton {
+	padding: 12px 18px;
+	background: transparent;
+	color: #0a0a0a;
+	border: 1px solid #e5e5e5;
+	border-radius: 8px;
+	font-weight: 500;
+	cursor: pointer;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 8px;
+	transition: border-color 0.15s;
+	width: 100%;
+	font-size: 14px;
+}
+
+.absenceButton:hover:not(:disabled) {
+	border-color: #0a0a0a;
+}
+
+.absenceButton:disabled {
 	opacity: 0.5;
 	cursor: not-allowed;
 }
 
-.authInfo {
-	display: block;
-	margin-top: 10px;
-	font-size: 14px;
-	color: #94a3b8;
-	text-align: center;
-}
-
-.spinner {
-	display: inline-block;
-	width: 20px;
-	height: 20px;
-	border: 2px solid rgba(255, 255, 255, 0.3);
-	border-top: 2px solid #ffffff;
-	border-radius: 50%;
-	animation: spin 0.8s linear infinite;
-}
-
-.googleDot {
-	border: 2px solid #4285f4;
-}
-
-.googleBadge {
-	font-size: 12px;
-	background: #4285f4;
-	color: #ffffff;
-	padding: 2px 14px;
-	border-radius: 6px;
-	margin-left: 10px;
-	font-weight: 600;
-}
-
-.googleTaskItem {
-	border-left: 5px solid #4285f4;
-}
-
-.meetBadge {
-	display: inline-block;
-	padding: 2px 14px;
-	background: #e8f0fe;
-	color: #1a73e8;
-	border-radius: 6px;
-	font-size: 13px;
-	font-weight: 600;
-	margin-left: 10px;
-}
-
-.meetButton {
+.absenceReportedInfo {
+	padding: 12px 14px;
+	border: 1px solid #f0f0f0;
+	border-radius: 8px;
+	color: #404040;
 	display: flex;
 	align-items: center;
-	justify-content: center;
-	gap: 12px;
-	padding: 14px 24px;
-	background: #1a73e8;
-	color: #ffffff;
-	border: none;
-	border-radius: 10px;
-	font-size: 16px;
-	font-weight: 600;
-	text-decoration: none;
-	cursor: pointer;
-	transition: background 0.2s;
-	margin-top: 12px;
+	gap: 8px;
+	font-size: 13px;
+	font-weight: 500;
 }
 
-.meetButton:hover {
-	background: #1557b0;
-	color: #ffffff;
-	text-decoration: none;
+.absenceNotAvailable {
+	padding: 10px 14px;
+	border: 1px solid #f0f0f0;
+	border-radius: 8px;
+	color: #737373;
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	font-size: 13px;
+}
+
+.absenceReportedBadge {
+	display: inline-flex;
+	align-items: center;
+	gap: 3px;
+	padding: 2px 6px;
+	border: 1px solid #e5e5e5;
+	border-radius: 4px;
+	font-size: 10px;
+	font-weight: 500;
+	margin-left: 6px;
+	color: #404040;
+}
+
+.absenteesBox {
+	grid-column: 1 / -1;
+	border: 1px solid #f0f0f0;
+	border-radius: 8px;
+	padding: 14px 16px;
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+}
+
+.absenteesHeader {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	font-weight: 600;
+	color: #0a0a0a;
+	font-size: 13px;
+}
+
+.absenteesHeader svg {
+	color: #737373;
+	flex-shrink: 0;
+}
+
+.absenteesCount {
+	border: 1px solid #e5e5e5;
+	color: #0a0a0a;
+	font-size: 11px;
+	font-weight: 600;
+	padding: 1px 8px;
+	border-radius: 10px;
+	margin-left: 2px;
+}
+
+.absenteesList {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	max-height: 200px;
+	overflow-y: auto;
+}
+
+.absenteeItem {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	padding: 8px 10px;
+	border: 1px solid #f0f0f0;
+	border-radius: 6px;
+	font-size: 13px;
+	color: #404040;
+}
+
+.absenteeAvatar {
+	width: 26px;
+	height: 26px;
+	border: 1px solid #e5e5e5;
+	border-radius: 50%;
+	color: #0a0a0a;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	font-weight: 600;
+	font-size: 10px;
+	flex-shrink: 0;
+	letter-spacing: 0.02em;
+}
+
+.absenteeInfo {
+	display: flex;
+	flex-direction: column;
+	gap: 1px;
+	flex: 1;
+	min-width: 0;
+}
+
+.absenteeName {
+	font-weight: 500;
+	color: #0a0a0a;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.absenteeEmail {
+	font-size: 11px;
+	color: #a3a3a3;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.absenteeTime {
+	font-size: 11px;
+	color: #a3a3a3;
+	white-space: nowrap;
+	flex-shrink: 0;
+}
+
+.metaItemFull {
+	grid-column: 1 / -1;
 }
 
 @media (max-width: 1024px) {
 	.calendar {
-		padding: 28px;
+		padding: 24px;
 	}
 
-	.day {
-		min-height: 140px;
-		padding: 12px 14px;
+	.day,
+	.emptyDay {
+		min-height: 120px;
 	}
 }
 
 @media (max-width: 768px) {
 	.calendar {
-		padding: 18px;
-	}
-
-	.title {
-		font-size: 26px;
-	}
-
-	.day {
-		min-height: 100px;
-		padding: 8px 10px;
-	}
-
-	.dayNumber {
-		font-size: 15px;
-	}
-
-	.day.today .dayNumber {
-		width: 30px;
-		height: 30px;
-		font-size: 14px;
-	}
-
-	.dayTaskItem {
-		font-size: 11px;
-		padding: 3px 6px;
-		min-height: 22px;
-	}
-
-	.dayTaskTitle {
-		font-size: 11px;
-	}
-
-	.weekDay {
-		font-size: 12px;
-		padding: 12px 6px;
-	}
-
-	.modal {
-		width: 96%;
-		max-height: 92vh;
-	}
-
-	.modalHeader {
-		padding: 18px 22px;
-	}
-
-	.modalTitle {
-		font-size: 19px;
-	}
-
-	.modalBody {
-		padding: 22px;
-	}
-
-	.taskMeta {
-		grid-template-columns: 1fr;
-	}
-
-	.taskDescription {
-		font-size: 15px;
-	}
-
-	.controls {
-		flex-direction: column;
-		gap: 14px;
-		padding: 14px 18px;
+		padding: 16px;
 	}
 
 	.header {
 		flex-direction: column;
-		align-items: flex-start;
-		gap: 14px;
+		align-items: stretch;
+		gap: 16px;
 	}
 
 	.headerRight {
@@ -697,9 +788,65 @@
 		justify-content: center;
 	}
 
-	.monthYear {
-		font-size: 18px;
-		min-width: 140px;
+	.title {
+		font-size: 24px;
+	}
+
+	.day,
+	.emptyDay {
+		min-height: 96px;
+		padding: 8px;
+	}
+
+	.dayNumber {
+		font-size: 12px;
+		width: 22px;
+		height: 22px;
+	}
+
+	.dayTaskItem {
+		font-size: 11px;
+		padding: 3px 4px;
+	}
+
+	.dayTaskTitle {
+		font-size: 11px;
+	}
+
+	.weekDay {
+		font-size: 10px;
+		padding: 10px 4px;
+	}
+
+	.modal {
+		width: 96%;
+	}
+
+	.modalHeader {
+		padding: 18px 20px 16px;
+	}
+
+	.modalTitle {
+		font-size: 16px;
+	}
+
+	.modalBody {
+		padding: 18px 20px;
+	}
+
+	.taskMeta {
+		grid-template-columns: 1fr;
+	}
+
+	.controls {
+		flex-direction: column;
+		align-items: stretch;
+		gap: 12px;
+	}
+
+	.navigation {
+		justify-content: space-between;
+		width: 100%;
 	}
 }
 
@@ -709,34 +856,28 @@
 	}
 
 	.title {
-		font-size: 22px;
+		font-size: 20px;
 	}
 
-	.day {
-		min-height: 80px;
-		padding: 6px 8px;
+	.day,
+	.emptyDay {
+		min-height: 76px;
+		padding: 6px;
 	}
 
 	.dayNumber {
-		font-size: 13px;
-	}
-
-	.day.today .dayNumber {
-		width: 28px;
-		height: 28px;
-		font-size: 13px;
+		font-size: 11px;
+		width: 20px;
+		height: 20px;
 	}
 
 	.taskCount {
-		font-size: 11px;
-		padding: 0 10px;
-		line-height: 20px;
+		font-size: 10px;
 	}
 
 	.dayTaskItem {
 		font-size: 10px;
-		padding: 2px 5px;
-		min-height: 18px;
+		padding: 2px 3px;
 	}
 
 	.dayTaskTitle {
@@ -744,13 +885,13 @@
 	}
 
 	.dayTaskDot {
-		width: 7px;
-		height: 7px;
+		width: 5px;
+		height: 5px;
 	}
 
 	.weekDay {
-		font-size: 10px;
-		padding: 10px 4px;
+		font-size: 9px;
+		padding: 8px 2px;
 	}
 
 	.modal {
@@ -758,43 +899,42 @@
 	}
 
 	.modalHeader {
-		padding: 14px 18px;
+		padding: 14px 16px 12px;
 	}
 
 	.modalTitle {
-		font-size: 17px;
+		font-size: 15px;
 	}
 
 	.modalBody {
-		padding: 18px;
+		padding: 16px;
 	}
 
 	.taskDescription {
-		font-size: 14px;
-		padding: 12px 16px;
+		font-size: 13px;
+		padding: 12px 14px;
 	}
 
 	.metaItem {
-		font-size: 13px;
-		padding: 8px 12px;
+		font-size: 12px;
+		padding: 8px 10px;
 	}
 
 	.metaItem svg {
-		width: 16px;
-		height: 16px;
+		width: 14px;
+		height: 14px;
 	}
 
 	.taskItem {
-		padding: 10px 14px;
-		min-height: 44px;
+		padding: 10px 12px;
 	}
 
 	.taskTitle {
-		font-size: 14px;
+		font-size: 13px;
 	}
 
 	.taskAssignedTo {
-		font-size: 12px;
+		font-size: 11px;
 	}
 
 	.taskPriority {
@@ -804,104 +944,110 @@
 	.statusBadge,
 	.priorityBadge {
 		font-size: 11px;
-		padding: 3px 12px;
+		padding: 2px 8px;
 	}
 
 	.tag {
-		font-size: 12px;
-		padding: 3px 12px;
-	}
-
-	.googleBadge {
-		font-size: 10px;
-		padding: 1px 10px;
-	}
-
-	.meetBadge {
 		font-size: 11px;
-		padding: 1px 10px;
+		padding: 3px 8px;
 	}
 
-	.syncBtn {
-		font-size: 14px;
-		padding: 12px 18px;
+	.googleBadge,
+	.meetBadge {
+		font-size: 9px;
+		padding: 1px 5px;
 	}
 
-	.meetButton {
-		font-size: 14px;
-		padding: 12px 18px;
+	.meetButton,
+	.absenceButton {
+		font-size: 13px;
+		padding: 10px 14px;
+	}
+
+	.absenteesBox {
+		padding: 10px 12px;
+	}
+
+	.absenteesHeader {
+		font-size: 12px;
+	}
+
+	.absenteeItem {
+		padding: 6px 8px;
+		font-size: 12px;
+	}
+
+	.absenteeAvatar {
+		width: 22px;
+		height: 22px;
+		font-size: 9px;
+	}
+
+	.absenteeEmail,
+	.absenteeTime {
+		display: none;
 	}
 }
 
-/* Przycisk zgłaszania nieobecności */
-.absenceButton {
-	margin-top: 16px;
-	padding: 12px 20px;
-	background: #ef4444;
-	color: white;
-	border: none;
-	border-radius: 8px;
-	font-weight: 600;
-	cursor: pointer;
-	display: inline-flex;
-	align-items: center;
-	justify-content: center;
-	gap: 8px;
-	transition: all 0.2s;
-	width: 100%;
-	font-size: 15px;
-}
-
-.absenceButton:hover:not(:disabled) {
-	background: #dc2626;
-	transform: translateY(-1px);
-	box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
-}
-
-.absenceButton:disabled {
-	opacity: 0.6;
-	cursor: not-allowed;
-	transform: none;
-}
-
-/* Informacja o zgłoszonej nieobecności */
-.absenceReportedInfo {
-	margin-top: 16px;
-	padding: 12px 16px;
-	background: #dcfce7;
-	border: 1px solid #86efac;
-	border-radius: 8px;
-	color: #166534;
-	display: flex;
-	align-items: center;
-	gap: 8px;
+.dayName {
+	font-size: 11px;
+	color: #737373;
+	text-transform: capitalize;
 	font-weight: 500;
 }
+@media (max-width: 768px) {
+	.weekDays {
+		display: none;
+	}
 
-/* Komunikat gdy nie można zgłosić nieobecności */
-.absenceNotAvailable {
-	margin-top: 16px;
-	padding: 12px 16px;
-	background: #fef3c7;
-	border: 1px solid #fcd34d;
-	border-radius: 8px;
-	color: #92400e;
-	display: flex;
-	align-items: center;
-	gap: 8px;
-	font-size: 14px;
-}
+	.daysGrid {
+		display: flex;
+		flex-direction: column;
+		gap: 4px;
+		padding: 8px;
+	}
 
-/* Badge "Zgłoszono nieobecność" */
-.absenceReportedBadge {
-	display: inline-flex;
-	align-items: center;
-	gap: 4px;
-	background: #dcfce7;
-	color: #166534;
-	padding: 2px 8px;
-	border-radius: 12px;
-	font-size: 10px;
-	font-weight: 600;
-	margin-left: 6px;
+	.emptyDay {
+		display: none;
+	}
+
+	.day {
+		min-height: auto;
+		padding: 12px 14px;
+		border: 1px solid #f0f0f0;
+		border-radius: 8px;
+		flex-direction: column;
+		gap: 8px;
+	}
+
+	.dayHeader {
+		flex-direction: row;
+		align-items: center;
+		justify-content: space-between;
+		gap: 8px;
+	}
+
+	.dayNumber {
+		width: auto;
+		height: auto;
+		font-size: 14px;
+		font-weight: 600;
+	}
+
+	.dayName {
+		font-size: 11px;
+		color: #737373;
+		margin-right: auto;
+		margin-left: 8px;
+	}
+
+	.dayTasks {
+		gap: 4px;
+	}
+
+	.calendarGrid {
+		border: none;
+		border-radius: 0;
+		background: transparent;
+	}
 }

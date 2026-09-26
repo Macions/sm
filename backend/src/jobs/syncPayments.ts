@@ -9,7 +9,7 @@ const PAYMENTS_DB_CONFIG = {
 	user: process.env.PAYMENTS_DB_USER || "czarnecki",
 	password: process.env.PAYMENTS_DB_PASSWORD || "N7#vQ4!xLp9@Tw2K",
 	database: process.env.PAYMENTS_DB_NAME || "SM_Skladki",
-	port: 3306,
+	port: parseInt(process.env.PAYMENTS_DB_PORT || "3306"),
 };
 
 interface MemberPaymentData {

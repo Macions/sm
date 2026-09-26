@@ -9,7 +9,7 @@ const FREKWENCJA_DB_CONFIG = {
 	user: process.env.FREKWENCJA_DB_USER || "czarnecki",
 	password: process.env.FREKWENCJA_DB_PASSWORD || "",
 	database: process.env.FREKWENCJA_DB_NAME || "SM_Frekwencja",
-	port: 3306,
+	port: parseInt(process.env.FREKWENCJA_DB_PORT || "3306"),
 };
 
 export async function syncAttendance() {

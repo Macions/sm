@@ -248,6 +248,7 @@
 	left: 0;
 	width: 280px;
 	height: 100vh;
+	height: 100dvh;
 	background: linear-gradient(
 		180deg,
 		var(--purple-800, #3b2196) 0%,
@@ -256,16 +257,27 @@
 	color: #fff;
 	z-index: 999;
 	transform: translateX(-100%);
-	transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+	transition:
+		transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+		visibility 0s 0.3s;
 	padding: 20px;
+	padding-bottom: calc(20px + env(safe-area-inset-bottom, 0px));
 	display: flex;
 	flex-direction: column;
 	box-shadow: 2px 0 20px rgba(0, 0, 0, 0.3);
 	overflow: hidden;
+	min-height: 0;
+	visibility: hidden;
+	pointer-events: none;
 }
 
 .mobileMenuOpen {
 	transform: translateX(0);
+	visibility: visible;
+	pointer-events: auto;
+	transition:
+		transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+		visibility 0s 0s;
 }
 
 .mobileMenuHeader {
@@ -306,10 +318,11 @@
 
 .mobileNavWrapper {
 	flex: 1;
+	min-height: 0;
 	overflow-y: auto;
 	overflow-x: hidden;
 	margin: 0 -8px;
-	padding: 0 8px;
+	padding: 0 8px 80px 8px;
 	scrollbar-width: thin;
 	scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
 }
@@ -369,10 +382,14 @@
 }
 
 .mobileLogout {
+	position: absolute;
+	bottom: 0;
+	left: 20px;
+	right: 20px;
+	background: var(--purple-900, #2e1a6b);
 	border-top: 1px solid rgba(255, 255, 255, 0.1);
 	padding-top: 16px;
 	padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px));
-	margin-top: auto;
 	flex-shrink: 0;
 }
 

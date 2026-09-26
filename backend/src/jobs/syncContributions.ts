@@ -11,7 +11,7 @@ const CONTRIBUTIONS_DB_CONFIG = {
 	user: process.env.CONTRIBUTIONS_DB_USER || "czarnecki",
 	password: process.env.CONTRIBUTIONS_DB_PASSWORD || "",
 	database: process.env.CONTRIBUTIONS_DB_NAME || "SM",
-	port: 3306,
+	port: parseInt(process.env.CONTRIBUTIONS_DB_PORT || "3306"),
 };
 
 export async function syncContributions() {

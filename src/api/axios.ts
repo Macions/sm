@@ -210,6 +210,18 @@ window.fetch = function (...args) {
 			handleLogout();
 			throw new Error("Unauthorized");
 		}
+
+		// 304 Not Modified → wymuś ponowne pobranie z no-store
+		if (response.status === 304) {
+			const headers = options.headers as Record<string, string> | undefined;
+			options.headers = {
+				...(headers || {}),
+				"Cache-Control": "no-cache",
+			};
+			options.cache = "no-store";
+			return originalFetch.call(this, url, options);
+		}
+
 		return response;
 	});
 };

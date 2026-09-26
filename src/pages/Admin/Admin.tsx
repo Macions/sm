@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import { logger } from "@/utils/logger";
 import { RevenueChart } from "@/components/RevenueChart";
+import { MeetingsChart } from "@/components/MeetingsChart";
 import styles from "./Admin.module.css";
 
 import {
@@ -44,25 +45,25 @@ interface SystemLog {
 	user_name: string;
 	user_role: string;
 	action_type:
-	| "CREATE"
-	| "UPDATE"
-	| "DELETE"
-	| "LOGIN"
-	| "LOGOUT"
-	| "APPROVE"
-	| "REJECT";
+		| "CREATE"
+		| "UPDATE"
+		| "DELETE"
+		| "LOGIN"
+		| "LOGOUT"
+		| "APPROVE"
+		| "REJECT";
 	category:
-	| "USER"
-	| "TEAM"
-	| "LEAVE"
-	| "PROJECT"
-	| "VACANCY"
-	| "TUTORIAL"
-	| "SOCIAL_MEDIA"
-	| "PERMISSION"
-	| "STRUCTURE"
-	| "NOTIFICATION"
-	| "AUTH";
+		| "USER"
+		| "TEAM"
+		| "LEAVE"
+		| "PROJECT"
+		| "VACANCY"
+		| "TUTORIAL"
+		| "SOCIAL_MEDIA"
+		| "PERMISSION"
+		| "STRUCTURE"
+		| "NOTIFICATION"
+		| "AUTH";
 	endpoint: string;
 	method: string;
 	entity_id: string | null;
@@ -1020,8 +1021,8 @@ function StructureManagement({
 		title: "",
 		message: "",
 		confirmText: "Potwierdź",
-		onConfirm: () => { },
-		onCancel: () => { },
+		onConfirm: () => {},
+		onCancel: () => {},
 	});
 	const [expandedTeams, setExpandedTeams] = useState<Record<string, boolean>>(
 		{},
@@ -3454,7 +3455,7 @@ export default function Admin({ title }: { title?: string }) {
 						className={`${styles.tabsNav__tab} ${activeTab === "inactive" ? styles.tabsNav__tabActive : ""}`}
 						onClick={() => scrollToSection(inactiveRef, "inactive")}
 					>
-						<UserX size={16} /> { }
+						<UserX size={16} /> {}
 						Nieaktywni
 					</button>
 				</div>
@@ -3474,6 +3475,10 @@ export default function Admin({ title }: { title?: string }) {
 
 				<div style={{ marginBottom: "32px" }}>
 					<RevenueChart year={2026} title="Przychody i wydatki" />
+				</div>
+
+				<div style={{ marginBottom: "32px" }}>
+					<MeetingsChart year={2026} title="Spotkania w SM" />
 				</div>
 
 				<div ref={rolesRef}>
