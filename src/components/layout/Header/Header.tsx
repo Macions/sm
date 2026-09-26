@@ -23,13 +23,13 @@ import styles from "./Header.module.css";
 export interface SearchResult {
 	id: string;
 	type:
-		| "member"
-		| "project"
-		| "guide"
-		| "task"
-		| "vacancy"
-		| "structure"
-		| "social";
+	| "member"
+	| "project"
+	| "guide"
+	| "task"
+	| "vacancy"
+	| "structure"
+	| "social";
 	title: string;
 	subtitle?: string;
 	description?: string;
@@ -233,7 +233,7 @@ export default function Header({
 		}
 		setIsNotificationsOpen(false);
 		if (notification.link) {
-			(window as any).goTo(notification.link);
+			window.location.href = notification.link;
 		}
 	};
 
@@ -297,9 +297,8 @@ export default function Header({
 				</button>
 
 				<button
-					className={`${styles.topbar__burger} ${
-						isMobileMenuOpen ? styles.topbar__burgerHidden : ""
-					}`}
+					className={`${styles.topbar__burger} ${isMobileMenuOpen ? styles.topbar__burgerHidden : ""
+						}`}
 					onClick={onMobileMenuToggle}
 					aria-label="Menu mobilne"
 				>

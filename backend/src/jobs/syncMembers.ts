@@ -19,20 +19,18 @@ const ALLOWED_PILLARS = [
 
 const externalDb = mysql.createPool({
 	host: process.env.EWIDENCJA_DB_HOST || "57.128.253.89",
+	port: Number(process.env.EWIDENCJA_DB_PORT) || 3306,   // <-- DODAJ
 	user: process.env.EWIDENCJA_DB_USER || "czarnecki",
 	password: process.env.EWIDENCJA_DB_PASSWORD || "N7#vQ4!xLp9@Tw2K",
 	database: process.env.EWIDENCJA_DB_NAME || "SM_Ewidencja",
-	waitForConnections: true,
-	connectionLimit: 10,
 });
 
 const frekwencjaDb = mysql.createPool({
 	host: process.env.FREKWENCJA_DB_HOST || "57.128.253.89",
+	port: Number(process.env.FREKWENCJA_DB_PORT) || 3306,   // <-- DODAJ
 	user: process.env.FREKWENCJA_DB_USER || "czarnecki",
 	password: process.env.FREKWENCJA_DB_PASSWORD || "N7#vQ4!xLp9@Tw2K",
 	database: process.env.FREKWENCJA_DB_NAME || "SM_Frekwencja",
-	waitForConnections: true,
-	connectionLimit: 5,
 });
 
 function generateEmail(firstname: string, lastname: string): string {
@@ -205,7 +203,7 @@ export async function syncMembers() {
 							where: { id: existingUser.id },
 							data: {
 								is_active: false,
-								status: "inactive",
+								status: "vacation",      // <-- ZMIANA
 								pillars: null,
 							},
 						});
@@ -351,7 +349,7 @@ export async function syncMembers() {
 							where: { id: existing.id },
 							data: {
 								is_active: false,
-								status: "inactive",
+								status: "vacation",
 							},
 						});
 						updated++;
