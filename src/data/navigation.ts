@@ -4,9 +4,10 @@ import {
 	FolderKanban,
 	BookOpen,
 	User,
-	CalendarOff,
+	FileText,
 	Megaphone,
 	Settings,
+	UsersRound,
 	CheckSquare,
 	Calendar,
 } from "lucide-react";
@@ -14,6 +15,7 @@ import {
 export const NAV_ITEMS = [
 	{ key: "dashboard", label: "Panel główny", icon: Home },
 	{ key: "structure", label: "Struktura SM", icon: Users },
+	{ key: "myTeam", label: "Mój zespół", icon: UsersRound },
 	{ key: "projects", label: "Projekty", icon: FolderKanban },
 	{ key: "calendar", label: "Kalendarz", icon: Calendar },
 
@@ -23,7 +25,7 @@ export const NAV_ITEMS = [
 	{ key: "members", label: "Członkowie", icon: Users },
 	{ key: "vacancies", label: "Wakaty", icon: Megaphone },
 	{ key: "profile", label: "Mój profil", icon: User },
-	{ key: "leave", label: "Urlop", icon: CalendarOff },
+	{ key: "requests", label: "Wnioski", icon: FileText },
 	{ key: "social", label: "Social Media", icon: Megaphone },
 	{ key: "admin", label: "Administracja", icon: Settings },
 ];

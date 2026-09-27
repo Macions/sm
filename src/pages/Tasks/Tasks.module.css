@@ -1970,3 +1970,59 @@
 	color: #2563eb;
 	font-weight: 500;
 }
+/* ---------- OSTRZEŻENIE O NIEDOSTĘPNOŚCI (urlop) ---------- */
+.availabilityWarning {
+	display: flex;
+	gap: 12px;
+	align-items: flex-start;
+	padding: 14px 18px;
+	background: #fffbeb;
+	border: 1px solid #fcd34d;
+	border-left: 4px solid #f59e0b;
+	border-radius: 10px;
+	color: #78350f;
+	font-size: 13px;
+	margin-top: 12px;
+	margin-bottom: 12px;
+	line-height: 1.5;
+}
+
+.availabilityWarning svg {
+	color: #f59e0b;
+	flex-shrink: 0;
+	margin-top: 2px;
+}
+
+.availabilityWarning__content {
+	flex: 1;
+	min-width: 0;
+}
+
+.availabilityWarning__content strong {
+	display: block;
+	margin-bottom: 8px;
+	font-weight: 700;
+	color: #92400e;
+	font-size: 13px;
+}
+
+.availabilityWarning__list {
+	margin: 0;
+	padding-left: 20px;
+	list-style: disc;
+}
+
+.availabilityWarning__list li {
+	margin-bottom: 4px;
+	line-height: 1.4;
+	color: #78350f;
+}
+
+.availabilityWarning__list li:last-child {
+	margin-bottom: 0;
+}
+
+.availabilityWarning__list li b {
+	color: #92400e;
+	font-weight: 700;
+}

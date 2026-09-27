@@ -3,6 +3,7 @@ import { BrowserRouter } from "react-router-dom";
 import "@fortawesome/fontawesome-free/css/all.min.css";
 import { GoogleOAuthProvider } from "@react-oauth/google";
 import { UserProvider } from "./context/UserContext";
+import { AuthProvider } from "./context/AuthContext";
 import App from "./App";
 import "./styles/reset.css";
 import "./styles/variables.css";
@@ -23,10 +24,12 @@ createRoot(document.getElementById("root")!).render(
 		clientId={clientId}
 		onScriptLoadError={() => console.error(" Google script error")}
 	>
-		<UserProvider>
-			<BrowserRouter>
-				<App />
-			</BrowserRouter>
-		</UserProvider>
+		<AuthProvider>
+			<UserProvider>
+				<BrowserRouter>
+					<App />
+				</BrowserRouter>
+			</UserProvider>
+		</AuthProvider>
 	</GoogleOAuthProvider>,
 );

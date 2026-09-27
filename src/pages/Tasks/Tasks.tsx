@@ -5,6 +5,7 @@ declare global {
 	}
 }
 import { useState, useEffect, useCallback } from "react";
+
 import { toast } from "react-hot-toast";
 import { ConfirmDialog } from "../../components/common/ConfirmDialog";
 import { UserGroupManager } from "./UserGroupManager";
@@ -27,6 +28,7 @@ import {
 	MessageCircle,
 	ChevronDown,
 	ChevronUp,
+	AlertCircle,
 } from "lucide-react";
 import { FiInfo } from "react-icons/fi";
 import styles from "./Tasks.module.css";
@@ -1314,6 +1316,9 @@ function TaskModal({
 		{ id: string; name: string }[]
 	>([]);
 	const [selectedGroupId, setSelectedGroupId] = useState<string>("");
+	const [availabilityConflicts, setAvailabilityConflicts] = useState<
+		{ userId: string; userName: string; reason: string; details: string }[]
+	>([]);
 	const [formData, setFormData] = useState<Partial<Task>>({
 		title: "",
 		description: "",
@@ -1356,6 +1361,39 @@ function TaskModal({
 			fetchGroups();
 		}
 	}, [isOpen]);
+	useEffect(() => {
+		const checkAvailability = async () => {
+			if (!isOpen) return;
+			if (selectedUsers.length === 0 || !formData.dueDate) {
+				setAvailabilityConflicts([]);
+				return;
+			}
+
+			try {
+				const token = localStorage.getItem("accessToken");
+				const res = await fetch("/api/tasks/check-availability", {
+					method: "POST",
+					headers: {
+						Authorization: `Bearer ${token}`,
+						"Content-Type": "application/json",
+					},
+					body: JSON.stringify({
+						userIds: selectedUsers.map((u) => u.id),
+						dueDate: formData.dueDate,
+					}),
+				});
+
+				if (res.ok) {
+					const data = await res.json();
+					setAvailabilityConflicts(data.conflicts || []);
+				}
+			} catch (e) {
+				console.error("Błąd sprawdzania dostępności:", e);
+			}
+		};
+
+		checkAvailability();
+	}, [isOpen, selectedUsers, formData.dueDate]);
 	useEffect(() => {
 		if (task) {
 			setFormData({
@@ -1752,6 +1790,22 @@ function TaskModal({
 								)}
 							</div>
 						</div>
+
+						{availabilityConflicts.length > 0 && (
+							<div className={styles.availabilityWarning}>
+								<AlertCircle size={18} />
+								<div className={styles.availabilityWarning__content}>
+									<strong>Uwaga - konflikt:</strong>
+									<ul className={styles.availabilityWarning__list}>
+										{availabilityConflicts.map((c, i) => (
+											<li key={i}>
+												<b>{c.userName}</b>: {c.details}
+											</li>
+										))}
+									</ul>
+								</div>
+							</div>
+						)}
 						<div className={styles.modal__field}>
 							<label className={styles.modal__label}>
 								Reguła (szybkie przypisanie)

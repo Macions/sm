@@ -4,8 +4,10 @@ import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import { logger } from "@/utils/logger";
 import { RevenueChart } from "@/components/RevenueChart";
+import { StableMembersSection } from "@/components/StableMembersSection";
 import { MeetingsChart } from "@/components/MeetingsChart";
 import styles from "./Admin.module.css";
+import { TeamAttendanceSection } from "@/components/TeamAttendanceSection";
 
 import {
 	Users,
@@ -30,6 +32,8 @@ import {
 	User,
 	Shield,
 	UserX,
+	TrendingUp,
+	IdCard,
 } from "lucide-react";
 import type { Permission } from "../../utils/permissions";
 import {
@@ -2951,7 +2955,324 @@ function AccessManagement() {
 		</section>
 	);
 }
+interface BoardMember {
+	id: number;
+	role_title: string;
+	responsibilities: string | null;
+	order: number;
+	user: {
+		id: number;
+		first_name: string;
+		last_name: string;
+		email: string;
+		phone: string | null;
+		avatar: string | null;
+	};
+}
 
+function BoardManagement({
+	canManage,
+	availableUsers,
+}: {
+	canManage: boolean;
+	availableUsers: AvailableUser[];
+}) {
+	const [board, setBoard] = useState<BoardMember[]>([]);
+	const [loading, setLoading] = useState(true);
+	const [editing, setEditing] = useState<BoardMember | null>(null);
+	const [isAdding, setIsAdding] = useState(false);
+	const [form, setForm] = useState({
+		user_id: "",
+		role_title: "",
+		responsibilities: "",
+		order: 0,
+	});
+
+	const fetchBoard = async () => {
+		try {
+			setLoading(true);
+			const token = localStorage.getItem("accessToken");
+			const res = await fetch("/api/board", {
+				headers: { Authorization: `Bearer ${token}` },
+			});
+			if (res.ok) {
+				const data = await res.json();
+				setBoard(data);
+			}
+		} catch (e) {
+			logger.error(e);
+			toast.error("Nie udało się pobrać zarządu");
+		} finally {
+			setLoading(false);
+		}
+	};
+
+	useEffect(() => {
+		fetchBoard();
+	}, []);
+
+	const resetForm = () => {
+		setForm({ user_id: "", role_title: "", responsibilities: "", order: 0 });
+		setEditing(null);
+		setIsAdding(false);
+	};
+
+	const startEdit = (b: BoardMember) => {
+		setEditing(b);
+		setForm({
+			user_id: b.user.id.toString(),
+			role_title: b.role_title,
+			responsibilities: b.responsibilities || "",
+			order: b.order,
+		});
+		setIsAdding(true);
+	};
+
+	const handleSave = async () => {
+		if (!form.role_title.trim()) {
+			toast.error("Podaj funkcję");
+			return;
+		}
+		if (!editing && !form.user_id) {
+			toast.error("Wybierz użytkownika");
+			return;
+		}
+		try {
+			const token = localStorage.getItem("accessToken");
+			const url = editing ? `/api/board/${editing.id}` : "/api/board";
+			const method = editing ? "PUT" : "POST";
+			const body = editing
+				? {
+						role_title: form.role_title,
+						responsibilities: form.responsibilities,
+						order: form.order,
+					}
+				: {
+						user_id: form.user_id,
+						role_title: form.role_title,
+						responsibilities: form.responsibilities,
+						order: form.order,
+					};
+
+			const res = await fetch(url, {
+				method,
+				headers: {
+					Authorization: `Bearer ${token}`,
+					"Content-Type": "application/json",
+				},
+				body: JSON.stringify(body),
+			});
+
+			if (!res.ok) {
+				const err = await res.json();
+				throw new Error(err.error || "Błąd zapisu");
+			}
+
+			toast.success(editing ? "Zapisano!" : "Dodano!");
+			resetForm();
+			await fetchBoard();
+		} catch (e: any) {
+			toast.error(e?.message || "Nie udało się zapisać");
+		}
+	};
+
+	const handleDelete = async (id: number) => {
+		if (!confirm("Usunąć z zarządu?")) return;
+		try {
+			const token = localStorage.getItem("accessToken");
+			const res = await fetch(`/api/board/${id}`, {
+				method: "DELETE",
+				headers: { Authorization: `Bearer ${token}` },
+			});
+			if (res.ok) {
+				toast.success("Usunięto");
+				await fetchBoard();
+			}
+		} catch {
+			toast.error("Nie udało się usunąć");
+		}
+	};
+
+	if (loading) {
+		return (
+			<section className={styles.section}>
+				<div className={styles.loading}>
+					<div className={styles.loading__spinner} />
+					<span>Ładowanie zarządu...</span>
+				</div>
+			</section>
+		);
+	}
+
+	return (
+		<section className={styles.section}>
+			<div className={styles.section__header}>
+				<div className={styles.section__headerLeft}>
+					<h2 className={styles.section__title}>Zarząd – zakresy obowiązków</h2>
+					<p className={styles.section__subtitle}>
+						Kto za co odpowiada w Siłę Młodych.
+					</p>
+				</div>
+				{canManage && (
+					<button
+						className={styles.section__addBtn}
+						onClick={() => setIsAdding(true)}
+					>
+						<Plus size={18} />
+						Dodaj członka zarządu
+					</button>
+				)}
+			</div>
+
+			{board.length === 0 ? (
+				<div className={styles.accessEmpty}>
+					<Crown size={48} />
+					<h3>Brak członków zarządu</h3>
+					<p>Kliknij „Dodaj członka zarządu", żeby zacząć.</p>
+				</div>
+			) : (
+				<div className={styles.teamsGrid}>
+					{board.map((b) => (
+						<div key={b.id} className={styles.teamCard}>
+							<div className={styles.teamCard__header}>
+								<div className={styles.teamCard__icon}>
+									<Crown size={20} />
+								</div>
+								<div className={styles.teamCard__info}>
+									<h3 className={styles.teamCard__name}>
+										{b.user.first_name} {b.user.last_name}
+									</h3>
+									<p className={styles.teamCard__description}>{b.role_title}</p>
+								</div>
+								{canManage && (
+									<div className={styles.teamCard__actions}>
+										<button
+											className={styles.teamCard__editBtn}
+											onClick={() => startEdit(b)}
+											title="Edytuj"
+										>
+											<Edit size={16} />
+										</button>
+										<button
+											className={styles.teamCard__deleteBtn}
+											onClick={() => handleDelete(b.id)}
+											title="Usuń"
+										>
+											<Trash2 size={16} />
+										</button>
+									</div>
+								)}
+							</div>
+							<div className={styles.teamCard__body}>
+								{b.responsibilities && (
+									<p
+										style={{
+											fontSize: "13px",
+											color: "#4b5563",
+											lineHeight: 1.5,
+											whiteSpace: "pre-line",
+											margin: 0,
+										}}
+									>
+										{b.responsibilities}
+									</p>
+								)}
+								<div className={styles.teamCard__meta} style={{ marginTop: 8 }}>
+									{b.user.email && (
+										<a
+											href={`mailto:${b.user.email}`}
+											className={styles.teamCard__email}
+										>
+											<Mail size={14} />
+											{b.user.email}
+										</a>
+									)}
+								</div>
+							</div>
+						</div>
+					))}
+				</div>
+			)}
+
+			{isAdding && (
+				<div className={styles.modalOverlay} onClick={resetForm}>
+					<div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+						<div className={styles.modal__header}>
+							<h2 className={styles.modal__title}>
+								{editing ? "Edytuj członka zarządu" : "Dodaj członka zarządu"}
+							</h2>
+							<button className={styles.modal__close} onClick={resetForm}>
+								<X size={20} />
+							</button>
+						</div>
+						<div className={styles.modal__body}>
+							{!editing && (
+								<div className={styles.modal__field}>
+									<label>Użytkownik *</label>
+									<select
+										value={form.user_id}
+										onChange={(e) =>
+											setForm({ ...form, user_id: e.target.value })
+										}
+									>
+										<option value="">— wybierz —</option>
+										{availableUsers.map((u) => (
+											<option key={u.id} value={u.id}>
+												{u.first_name} {u.last_name} ({u.email})
+											</option>
+										))}
+									</select>
+								</div>
+							)}
+							<div className={styles.modal__field}>
+								<label>Funkcja * (np. Prezes, Wiceprezes ds. rekrutacji)</label>
+								<input
+									type="text"
+									value={form.role_title}
+									onChange={(e) =>
+										setForm({ ...form, role_title: e.target.value })
+									}
+									placeholder="Prezes"
+								/>
+							</div>
+							<div className={styles.modal__field}>
+								<label>Zakres obowiązków</label>
+								<textarea
+									rows={5}
+									value={form.responsibilities}
+									onChange={(e) =>
+										setForm({ ...form, responsibilities: e.target.value })
+									}
+									placeholder="Za co odpowiada ta osoba..."
+									style={{ resize: "vertical", fontFamily: "inherit" }}
+								/>
+							</div>
+							<div className={styles.modal__field}>
+								<label>Kolejność (mniejsza = wyżej)</label>
+								<input
+									type="number"
+									value={form.order}
+									onChange={(e) =>
+										setForm({ ...form, order: parseInt(e.target.value) || 0 })
+									}
+								/>
+							</div>
+						</div>
+						<div className={styles.modal__actions}>
+							<button className={styles.modal__btnCancel} onClick={resetForm}>
+								Anuluj
+							</button>
+							<button className={styles.modal__btnSave} onClick={handleSave}>
+								<Save size={16} />
+								{editing ? "Zapisz" : "Dodaj"}
+							</button>
+						</div>
+					</div>
+				</div>
+			)}
+		</section>
+	);
+}
 function AttendanceRanking() {
 	const [loading, setLoading] = useState(true);
 	const [data, setData] = useState<AttendanceRankingData | null>(null);
@@ -3216,7 +3537,9 @@ export default function Admin({ title }: { title?: string }) {
 	const accessRef = useRef<HTMLDivElement>(null);
 	const logsRef = useRef<HTMLDivElement>(null);
 	const inactiveRef = useRef<HTMLDivElement>(null);
-
+	const teamAttendanceRef = useRef<HTMLDivElement>(null);
+	const stableMembersRef = useRef<HTMLDivElement>(null);
+	const boardRef = useRef<HTMLDivElement>(null);
 	const scrollToSection = (
 		sectionRef: React.RefObject<HTMLDivElement | null>,
 		tabId: string,
@@ -3424,6 +3747,13 @@ export default function Admin({ title }: { title?: string }) {
 			<div className={styles.tabsNav}>
 				<div className={styles.tabsNav__list}>
 					<button
+						className={`${styles.tabsNav__tab} ${activeTab === "board" ? styles.tabsNav__tabActive : ""}`}
+						onClick={() => scrollToSection(boardRef, "board")}
+					>
+						<Crown size={16} />
+						Zarząd
+					</button>
+					<button
 						className={`${styles.tabsNav__tab} ${activeTab === "roles" ? styles.tabsNav__tabActive : ""}`}
 						onClick={() => scrollToSection(rolesRef, "roles")}
 					>
@@ -3443,6 +3773,22 @@ export default function Admin({ title }: { title?: string }) {
 					>
 						<UserCog size={16} />
 						Dostępy i zasoby
+					</button>
+					<button
+						className={`${styles.tabsNav__tab} ${activeTab === "team-attendance" ? styles.tabsNav__tabActive : ""}`}
+						onClick={() =>
+							scrollToSection(teamAttendanceRef, "team-attendance")
+						}
+					>
+						<TrendingUp size={16} />
+						Frekwencja filarów
+					</button>
+					<button
+						className={`${styles.tabsNav__tab} ${activeTab === "stable-members" ? styles.tabsNav__tabActive : ""}`}
+						onClick={() => scrollToSection(stableMembersRef, "stable-members")}
+					>
+						<IdCard size={16} />
+						Stali członkowie
 					</button>
 					<button
 						className={`${styles.tabsNav__tab} ${activeTab === "logs" ? styles.tabsNav__tabActive : ""}`}
@@ -3480,7 +3826,12 @@ export default function Admin({ title }: { title?: string }) {
 				<div style={{ marginBottom: "32px" }}>
 					<MeetingsChart year={2026} title="Spotkania w SM" />
 				</div>
-
+				<div ref={boardRef}>
+					<BoardManagement
+						canManage={canManage}
+						availableUsers={availableUsers}
+					/>
+				</div>
 				<div ref={rolesRef}>
 					<RolesManagement
 						roles={roles}
@@ -3506,6 +3857,13 @@ export default function Admin({ title }: { title?: string }) {
 				</div>
 
 				<AttendanceRanking />
+
+				<div ref={teamAttendanceRef}>
+					<TeamAttendanceSection />
+				</div>
+				<div ref={stableMembersRef}>
+					<StableMembersSection />
+				</div>
 				<div ref={inactiveRef}>
 					<InactiveUsersManagement />
 				</div>

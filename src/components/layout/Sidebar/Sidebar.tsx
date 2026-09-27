@@ -8,6 +8,7 @@ interface SidebarProps {
 	collapsed?: boolean;
 	isSocialMember?: boolean;
 	userRole?: string;
+	isLeader?: boolean;
 	onToggleCollapse?: () => void;
 	pageTitle?: string;
 	isMobileMenuOpen?: boolean;
@@ -20,11 +21,13 @@ export default function Sidebar({
 	collapsed = false,
 	isSocialMember = false,
 	userRole,
+	isLeader = false,
 	isMobileMenuOpen = false,
 	onMobileMenuToggle,
 }: SidebarProps) {
 	const isAdminOrBoard =
 		userRole === "admin" || userRole === "board" || userRole === "zarząd";
+	const isCoordinator = userRole === "coordinator";
 
 	const filteredNavItems = NAV_ITEMS.filter((item) => {
 		if (item.key === "social") {
@@ -33,9 +36,11 @@ export default function Sidebar({
 		if (item.key === "admin") {
 			return isAdminOrBoard;
 		}
+		if (item.key === "myTeam") {
+			return isAdminOrBoard || isCoordinator || isLeader;
+		}
 		return true;
 	});
-
 	const handleLogout = () => {
 		localStorage.removeItem("user");
 		window.location.href = "/login";

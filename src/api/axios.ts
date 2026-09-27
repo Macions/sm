@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const API_URL = "";
+const API_URL = "/api";
 const api = axios.create({
 	baseURL: API_URL,
 	headers: {
@@ -99,9 +99,10 @@ api.interceptors.response.use(
 			if (isRefreshing) {
 				return new Promise((resolve, reject) => {
 					failedQueue.push({ resolve, reject, config: originalRequest });
-				}).then((newToken: string) => {
+				}).then((newToken) => {
+					const token = newToken as string;
 					originalRequest.headers = originalRequest.headers || {};
-					originalRequest.headers.Authorization = `Bearer ${newToken}`;
+					originalRequest.headers.Authorization = `Bearer ${token}`;
 					return api(originalRequest);
 				});
 			}

@@ -16,9 +16,14 @@ import { syncAttendance } from "./jobs/syncAttendance";
 import cron from "node-cron";
 import dashboardRoutes from "./routes/dashboard.routes";
 import { updateLeaveStatus } from "./jobs/updateLeaveStatus";
+import { checkMonthlyMeetings } from "./jobs/checkMonthlyMeetings";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import path from "path";
+// src/server.ts — dopisz do istniejących importów
+import { verifyMailer } from "./lib/mailer";
+import { enqueueMail } from "./lib/mailQueue";
+import { newTaskEmail, leaveDecisionEmail } from "./emails/templates";
 import fs from "fs";
 import multer from "multer";
 import { logger } from "./utils/logger";
@@ -26,21 +31,34 @@ import { syncMembers } from "./jobs/syncMembers";
 import dotenv from "dotenv";
 dotenv.config();
 
-// updateLeaveStatus();
+updateLeaveStatus();
 
-// cron.schedule("0 7,14,21 * * *", async () => {
-// 	try {
-// 		await syncAttendance();
-// 	} catch (error) { }
-// });
+cron.schedule("0 7,14,21 * * *", async () => {
+	try {
+		await syncAttendance();
+	} catch (error) {}
+});
 
-// cron.schedule("1 0 * * *", async () => {
-// 	await updateLeaveStatus();
-// });
+cron.schedule("1 0 * * *", async () => {
+	await updateLeaveStatus();
+});
+// 19. dnia każdego miesiąca o 2:00
+cron.schedule("0 2 19 * *", async () => {
+	try {
+		await checkMonthlyMeetings();
+	} catch (error) {
+		logger.error("[CRON] Błąd checkMonthlyMeetings:", error);
+	}
+});
 const googleClient = new OAuth2Client(process.env.VITE_GOOGLE_CLIENT_ID);
-// cron.schedule("0 3 */2 * *", async () => {
-// 	await syncMembers();
-// });
+cron.schedule("0 3 */2 * *", async () => {
+	await syncMembers();
+});
+// setTimeout(async () => {
+// 	try {
+// 		await checkMonthlyMeetings();
+// 	} catch (error) {}
+// }, 20000);
 const PUBLIC_ENDPOINTS = [
 	"/api/auth/login",
 	"/api/auth/google",
@@ -1232,6 +1250,22 @@ app.get("/api/ideas/:id", authMiddleware, async (req: any, res) => {
 		});
 	} catch (error) {
 		res.status(500).json({ error: "Nie udało się pobrać pomysłu" });
+	}
+});
+app.get("/api/members/badges-counts", authMiddleware, async (req: any, res) => {
+	try {
+		const grouped = await prisma.memberBadge.groupBy({
+			by: ["user_id"],
+			_count: { _all: true },
+		});
+		const counts: Record<string, number> = {};
+		grouped.forEach((g: any) => {
+			counts[g.user_id.toString()] = g._count._all;
+		});
+		res.json({ counts });
+	} catch (error) {
+		logger.error("[BADGES] Błąd zbiorczych liczników:", error);
+		res.status(500).json({ error: "Nie udało się pobrać liczników" });
 	}
 });
 
@@ -3456,12 +3490,7 @@ app.get("/api/structure", authMiddleware, async (req: any, res) => {
 				role: true,
 				is_leader: true,
 				created_at: true,
-				team: {
-					select: {
-						id: true,
-						name: true,
-					},
-				},
+				team: { select: { id: true, name: true } },
 				user: {
 					select: {
 						id: true,
@@ -3471,6 +3500,12 @@ app.get("/api/structure", authMiddleware, async (req: any, res) => {
 						phone: true,
 						province: true,
 						functional_role: true,
+						boardMember: {
+							select: {
+								role_title: true,
+								responsibilities: true,
+							},
+						},
 					},
 				},
 			},
@@ -3518,6 +3553,8 @@ app.get("/api/structure", authMiddleware, async (req: any, res) => {
 					phone: tm.user.phone || undefined,
 					province: tm.user.province || undefined,
 					is_leader: tm.is_leader || false,
+					responsibilities: tm.user.boardMember?.responsibilities || null,
+					boardRoleTitle: tm.user.boardMember?.role_title || null,
 				});
 			}
 		});
@@ -4053,6 +4090,37 @@ app.put("/api/leaves/:id", authMiddleware, async (req: any, res) => {
 					created_at: new Date(),
 				},
 			});
+		}
+
+		// 📧 Mail do właściciela wniosku o decyzji
+		try {
+			if (
+				(status === "approved" ||
+					status === "rejected" ||
+					status === "cancelled") &&
+				existingLeave.user?.email
+			) {
+				const { subject, html } = leaveDecisionEmail({
+					memberName: existingLeave.user.first_name || "Członku",
+					startDate: new Date(existingLeave.start_date).toLocaleDateString(
+						"pl-PL",
+					),
+					endDate: new Date(existingLeave.end_date).toLocaleDateString("pl-PL"),
+					status: status as "approved" | "rejected" | "cancelled",
+					reviewerName:
+						`${currentUser?.first_name || ""} ${currentUser?.last_name || ""}`.trim() ||
+						"Zarząd",
+					comment: req.body.comment || req.body.review_comment,
+				});
+
+				enqueueMail({
+					to: existingLeave.user.email,
+					subject,
+					html,
+				});
+			}
+		} catch (mailError) {
+			logger.error("[LEAVES] Błąd wysyłki maila:", mailError);
 		}
 
 		const userEmail = req.user?.email || "Nieznany";
@@ -6313,6 +6381,7 @@ app.post("/api/tasks", authMiddleware, async (req: any, res) => {
 				.json({ error: "Wszystkie wymagane pola muszą być wypełnione" });
 		}
 
+		// 1. Utwórz zadanie
 		const task = await prisma.task.create({
 			data: {
 				title,
@@ -6344,6 +6413,43 @@ app.post("/api/tasks", authMiddleware, async (req: any, res) => {
 			});
 		}
 
+		// 2. Wyślij maile do wszystkich przypisanych (w tle)
+		try {
+			const uniqueUserIds = Array.from(
+				new Set(allUserIds.map((id: string) => parseInt(id))),
+			);
+
+			const recipients = await prisma.user.findMany({
+				where: { id: { in: uniqueUserIds } },
+				select: { id: true, first_name: true, email: true },
+			});
+
+			const dueDateFormatted = new Date(dueDate).toLocaleDateString("pl-PL", {
+				day: "numeric",
+				month: "long",
+				year: "numeric",
+			});
+
+			for (const recipient of recipients) {
+				if (!recipient.email) continue;
+
+				const { subject, html } = newTaskEmail({
+					memberName: recipient.first_name || "Członku",
+					taskTitle: title,
+					taskDescription: description,
+					taskPriority: priority,
+					taskDueDate: dueDateFormatted,
+					taskUrl: `${process.env.APP_URL || "https://panel.silamlodych.pl"}/tasks/${task.id}`,
+				});
+
+				enqueueMail({ to: recipient.email, subject, html });
+			}
+		} catch (mailError) {
+			// Nie przerywamy requestu jeśli mail padnie
+			logger.error("[TASKS] Błąd przygotowania maila:", mailError);
+		}
+
+		// 3. Odpowiedz od razu
 		res.status(201).json({
 			id: task.id.toString(),
 			title: task.title,
@@ -9075,7 +9181,126 @@ app.get("/api/search", authMiddleware, async (req: any, res) => {
 		});
 	}
 });
+app.post("/api/admin/check-meetings", authMiddleware, async (req: any, res) => {
+	try {
+		const userRole = req.user?.role;
+		if (userRole !== "admin" && userRole !== "board") {
+			return res.status(403).json({ error: "Brak uprawnień" });
+		}
+		const result = await checkMonthlyMeetings();
+		res.json({ success: true, ...result });
+	} catch (error) {
+		logger.error("Błąd:", error);
+		res.status(500).json({ error: "Nie udało się sprawdzić" });
+	}
+});
+app.get("/api/admin/meetings-report", authMiddleware, async (req: any, res) => {
+	try {
+		const userRole = req.user?.role;
+		if (userRole !== "admin" && userRole !== "board" && userRole !== "Zarząd") {
+			return res.status(403).json({ error: "Brak uprawnień" });
+		}
 
+		// Domyślnie: poprzedni miesiąc
+		const now = new Date();
+		const defaultDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+
+		const year = parseInt(
+			(req.query.year as string) || String(defaultDate.getFullYear()),
+		);
+		const month = parseInt(
+			(req.query.month as string) || String(defaultDate.getMonth() + 1),
+		);
+
+		if (
+			isNaN(year) ||
+			isNaN(month) ||
+			month < 1 ||
+			month > 12 ||
+			year < 2000 ||
+			year > 2100
+		) {
+			return res.status(400).json({ error: "Nieprawidłowy rok/miesiąc" });
+		}
+
+		const MIN_MEETINGS = 2;
+
+		const PILLAR_LABEL_MAP: Record<string, string> = {
+			Projektowy: "Filar Projektowy",
+			Konferencyjny: "Filar Konferencyjny",
+			Rzeczniczy: "Filar Rzeczniczy",
+			Symulacyjny: "Filar Symulacyjny",
+			OSOM: "Projekt OSOM",
+			"Forum Młodych": "Projekt Forum Młodych",
+		};
+
+		let connection;
+		try {
+			connection = await mysql.createConnection({
+				host: process.env.FREKWENCJA_DB_HOST || "57.128.253.89",
+				user: process.env.FREKWENCJA_DB_USER || "czarnecki",
+				password: process.env.FREKWENCJA_DB_PASSWORD || "",
+				database: process.env.FREKWENCJA_DB_NAME || "SM_Frekwencja",
+				port: parseInt(process.env.FREKWENCJA_DB_PORT || "3306"),
+			});
+
+			const [pillarRows] = await connection.execute(
+				`SELECT id, name FROM att_pillars WHERE name <> 'Wszyscy' ORDER BY name ASC`,
+			);
+
+			const pillars = pillarRows as Array<{ id: number; name: string }>;
+
+			const results: Array<{
+				pillarId: number;
+				pillarName: string;
+				pillarLabel: string;
+				meetingsCount: number;
+				status: "ok" | "warning" | "critical";
+			}> = [];
+
+			for (const pillar of pillars) {
+				const [meetingRows] = await connection.execute(
+					`
+						SELECT COUNT(*) AS count
+						FROM att_meetings
+						WHERE pillar_id = ?
+							AND YEAR(meeting_date) = ?
+							AND MONTH(meeting_date) = ?
+						`,
+					[pillar.id, year, month],
+				);
+
+				const count = Number((meetingRows as any[])[0]?.count ?? 0);
+
+				let status: "ok" | "warning" | "critical" = "ok";
+				if (count === 0) status = "critical";
+				else if (count < MIN_MEETINGS) status = "warning";
+
+				results.push({
+					pillarId: pillar.id,
+					pillarName: pillar.name,
+					pillarLabel: PILLAR_LABEL_MAP[pillar.name] || `Filar ${pillar.name}`,
+					meetingsCount: count,
+					status,
+				});
+			}
+
+			res.json({
+				year,
+				month,
+				minRequired: MIN_MEETINGS,
+				total: results.length,
+				belowMin: results.filter((r) => r.meetingsCount < MIN_MEETINGS).length,
+				pillars: results,
+			});
+		} finally {
+			if (connection) await connection.end();
+		}
+	} catch (error) {
+		logger.error("[MEETINGS-REPORT] Błąd:", error);
+		res.status(500).json({ error: "Nie udało się pobrać raportu" });
+	}
+});
 app.get("/api/user-groups", authMiddleware, async (req: any, res) => {
 	try {
 		const userId = req.user?.id;
@@ -9593,6 +9818,7 @@ app.get("/api/admin/meetings-stats", authMiddleware, async (req: any, res) => {
 		});
 	}
 });
+
 app.get(
 	"/api/admin/inactive-users",
 	authMiddleware,
@@ -9787,6 +10013,2668 @@ app.get(
 		}
 	},
 );
+/* ═══════════════════════════════════════════════════════════
+   FREKWENCJA FILARÓW – helpery + endpointy
+   ═══════════════════════════════════════════════════════════ */
 
+const PILLAR_LABEL_MAP: Record<string, string> = {
+	Projektowy: "Filar Projektowy",
+	Konferencyjny: "Filar Konferencyjny",
+	Rzeczniczy: "Filar Rzeczniczy",
+	Symulacyjny: "Filar Symulacyjny",
+	OSOM: "Projekt OSOM",
+	"Forum Młodych": "Projekt Forum Młodych",
+};
+
+function pillarLabel(name: string): string {
+	return PILLAR_LABEL_MAP[name] ?? name;
+}
+
+async function getFrekwencjaConnection() {
+	return mysql.createConnection({
+		host: process.env.FREKWENCJA_DB_HOST || "57.128.253.89",
+		user: process.env.FREKWENCJA_DB_USER || "czarnecki",
+		password: process.env.FREKWENCJA_DB_PASSWORD || "",
+		database: process.env.FREKWENCJA_DB_NAME || "SM_Frekwencja",
+		port: parseInt(process.env.FREKWENCJA_DB_PORT || "3306"),
+	});
+}
+async function getEwidencjaConnection() {
+	return mysql.createConnection({
+		host: process.env.EWIDENCJA_DB_HOST || "127.0.0.1",
+		port: parseInt(process.env.EWIDENCJA_DB_PORT || "13307"),
+		user: process.env.EWIDENCJA_DB_USER || "maciej_legacy_ro",
+		password: process.env.EWIDENCJA_DB_PASSWORD || "",
+		database: process.env.EWIDENCJA_DB_NAME || "SM_Ewidencja",
+	});
+}
+/* ─── 1. Podsumowanie filarów ─── */
+app.get(
+	"/api/admin/attendance/pillars",
+	authMiddleware,
+	async (req: any, res) => {
+		const userRole = req.user?.role;
+		if (userRole !== "admin" && userRole !== "board" && userRole !== "Zarząd") {
+			return res.status(403).json({ error: "Brak uprawnień" });
+		}
+
+		let connection;
+		try {
+			connection = await getFrekwencjaConnection();
+
+			const [rows] = await connection.execute(`
+			SELECT
+				p.id,
+				p.name AS pillar_name,
+				COUNT(DISTINCT m.id) AS members_count,
+				COUNT(DISTINCT mt.id) AS meetings_count,
+				SUM(CASE WHEN a.status = 'present' THEN 1 ELSE 0 END) AS present_count,
+				SUM(CASE WHEN a.status = 'absent'  THEN 1 ELSE 0 END) AS absent_count,
+				SUM(CASE WHEN a.status = 'excused' THEN 1 ELSE 0 END) AS excused_count,
+				ROUND(
+					SUM(CASE WHEN a.status = 'present' THEN 1 ELSE 0 END)
+					/ NULLIF(COUNT(a.id), 0) * 100,
+					2
+				) AS attendance_percentage
+			FROM att_pillars p
+			LEFT JOIN att_meetings mt     ON mt.pillar_id = p.id
+			LEFT JOIN att_attendance a    ON a.meeting_id = mt.id
+			LEFT JOIN att_members m       ON m.id = a.member_id
+			WHERE p.name <> 'Wszyscy'
+			GROUP BY p.id, p.name
+			ORDER BY attendance_percentage DESC
+		`);
+
+			const pillars = (rows as any[]).map((r) => ({
+				pillar_id: r.id,
+				pillar_name: r.pillar_name,
+				pillar_label: pillarLabel(r.pillar_name),
+				members_count: Number(r.members_count),
+				meetings_count: Number(r.meetings_count),
+				present_count: Number(r.present_count ?? 0),
+				absent_count: Number(r.absent_count ?? 0),
+				excused_count: Number(r.excused_count ?? 0),
+				attendance_percentage: Number(r.attendance_percentage ?? 0),
+			}));
+
+			res.json({ pillars, total: pillars.length });
+		} catch (error) {
+			logger.error("Błąd pobierania frekwencji filarów:", error);
+			res
+				.status(500)
+				.json({ error: "Nie udało się pobrać frekwencji filarów" });
+		} finally {
+			if (connection) await connection.end();
+		}
+	},
+);
+
+/* ─── 2. Członkowie filaru ─── */
+app.get(
+	"/api/admin/attendance/pillars/:pillarName/members",
+	authMiddleware,
+	async (req: any, res) => {
+		const userRole = req.user?.role;
+		const userId = req.user?.id ? parseInt(req.user.id) : null;
+
+		// Admin/board/Zarząd – pełny dostęp
+		// Koordynator/lider – tylko własny filar
+		if (userRole !== "admin" && userRole !== "board" && userRole !== "Zarząd") {
+			if (!userId) {
+				return res.status(401).json({ error: "Brak autoryzacji" });
+			}
+			const leaderTeams = await prisma.teamMember.findMany({
+				where: { user_id: userId, is_leader: true },
+				include: { team: { select: { name: true } } },
+			});
+			const allowedPillars = leaderTeams
+				.map((tm: any) => tm.team?.name?.replace("Filar ", ""))
+				.filter(Boolean);
+			const requestedPillar = decodeURIComponent(req.params.pillarName);
+			if (!allowedPillars.includes(requestedPillar)) {
+				return res.status(403).json({ error: "Brak uprawnień do tego filaru" });
+			}
+		}
+
+		const pillarName = decodeURIComponent(req.params.pillarName);
+		if (pillarName === "Wszyscy") {
+			return res
+				.status(400)
+				.json({ error: "Filar 'Wszyscy' nie jest obsługiwany" });
+		}
+
+		let connection;
+		try {
+			connection = await getFrekwencjaConnection();
+
+			const [rows] = await connection.execute(
+				`
+			SELECT
+				m.id,
+				m.first_name,
+				m.last_name,
+				m.email,
+				COUNT(a.id) AS total_meetings,
+				SUM(CASE WHEN a.status = 'present' THEN 1 ELSE 0 END) AS present_count,
+				SUM(CASE WHEN a.status = 'absent'  THEN 1 ELSE 0 END) AS absent_count,
+				SUM(CASE WHEN a.status = 'excused' THEN 1 ELSE 0 END) AS excused_count,
+				ROUND(
+					SUM(CASE WHEN a.status = 'present' THEN 1 ELSE 0 END)
+					/ NULLIF(COUNT(a.id), 0) * 100,
+					2
+				) AS attendance_percentage
+			FROM att_pillars p
+			JOIN att_meetings mt        ON mt.pillar_id = p.id
+			LEFT JOIN att_attendance a  ON a.meeting_id = mt.id
+			LEFT JOIN att_members m     ON m.id = a.member_id
+			WHERE p.name = ?
+			GROUP BY m.id, m.first_name, m.last_name, m.email
+			ORDER BY attendance_percentage DESC
+		`,
+				[pillarName],
+			);
+
+			const members = (rows as any[]).map((r) => ({
+				id: r.id,
+				first_name: r.first_name ?? "",
+				last_name: r.last_name ?? "",
+				email: r.email ?? "",
+				total_meetings: Number(r.total_meetings ?? 0),
+				present_count: Number(r.present_count ?? 0),
+				absent_count: Number(r.absent_count ?? 0),
+				excused_count: Number(r.excused_count ?? 0),
+				attendance_percentage: Number(r.attendance_percentage ?? 0),
+			}));
+
+			res.json({
+				pillar_name: pillarName,
+				pillar_label: pillarLabel(pillarName),
+				members,
+				total: members.length,
+			});
+		} catch (error) {
+			logger.error("Błąd pobierania członków filaru:", error);
+			res.status(500).json({ error: "Nie udało się pobrać członków filaru" });
+		} finally {
+			if (connection) await connection.end();
+		}
+	},
+);
+// Normalizacja nazwisk/imion do porównania (usuwa polskie znaki, spacje, kropki)
+function normalizeName(s: string | null | undefined): string {
+	if (!s) return "";
+	return s
+		.toLowerCase()
+		.normalize("NFD")
+		.replace(/[\u0300-\u036f]/g, "")
+		.replace(/ł/g, "l")
+		.replace(/Ł/g, "l")
+		.replace(/[^a-z0-9]/g, "")
+		.trim();
+}
+
+// Bierze tylko pierwszy token z imienia (np. "Kasper Dorian" → "kasper")
+function firstNameToken(s: string | null | undefined): string {
+	if (!s) return "";
+	return normalizeName(s.split(/\s+/)[0]);
+}
+
+/* ─── Import adresów z ewidencji do SM ─── */
+app.post(
+	"/api/admin/import-addresses-from-ewidencja",
+	authMiddleware,
+	async (req: any, res) => {
+		try {
+			const userRole = req.user?.role;
+			if (userRole !== "admin" && userRole !== "board") {
+				return res.status(403).json({ error: "Brak uprawnień" });
+			}
+
+			// 1. Pobierz userów z Prisma
+			const prismaUsers = await prisma.user.findMany({
+				where: { is_active: true },
+				select: {
+					id: true,
+					first_name: true,
+					last_name: true,
+					email: true,
+					address: true,
+				},
+			});
+
+			// 2. Pobierz członków ewidencji
+			let connection;
+			let ewidencjaMembers: Array<{
+				id: number;
+				firstname: string;
+				lastname: string;
+				email: string | null;
+				homeaddress: string | null;
+			}> = [];
+
+			try {
+				connection = await getEwidencjaConnection();
+				const [rows] = await connection.execute(
+					`SELECT id, firstname, lastname, email, homeaddress
+					 FROM members
+					 WHERE homeaddress IS NOT NULL AND homeaddress <> ''`,
+				);
+				ewidencjaMembers = rows as any[];
+			} finally {
+				if (connection) await connection.end();
+			}
+
+			// 3. Dopasuj po imieniu + nazwisku (z normalizacją)
+			let updated = 0;
+			let skipped = 0;
+			const unmatched: string[] = [];
+
+			for (const user of prismaUsers) {
+				// Jeśli już ma adres — pomijamy
+				if (user.address && user.address.trim() !== "") {
+					skipped++;
+					continue;
+				}
+
+				const fnToken = firstNameToken(user.first_name);
+				const lnToken = normalizeName(user.last_name);
+
+				const match = ewidencjaMembers.find((m) => {
+					const mFn = firstNameToken(m.firstname);
+					const mLn = normalizeName(m.lastname);
+					return mFn === fnToken && mLn === lnToken;
+				});
+
+				if (match && match.homeaddress) {
+					await prisma.user.update({
+						where: { id: user.id },
+						data: {
+							address: match.homeaddress.trim(),
+							address_source: "SM_Ewidencja",
+						},
+					});
+					updated++;
+				} else {
+					unmatched.push(
+						`${user.first_name} ${user.last_name} (${user.email || "brak emaila"})`,
+					);
+				}
+			}
+
+			res.json({
+				success: true,
+				checked: prismaUsers.length,
+				updated,
+				skipped,
+				unmatchedCount: unmatched.length,
+				unmatchedSample: unmatched.slice(0, 30),
+			});
+		} catch (error) {
+			logger.error("[IMPORT-ADDRESSES] Błąd:", error);
+			res.status(500).json({ error: "Nie udało się zaimportować adresów" });
+		}
+	},
+);
+
+/* ─── Geokodowanie adresu przez Nominatim (OpenStreetMap) ─── */
+async function geocodeAddress(
+	address: string,
+): Promise<{ lat: number; lng: number } | null> {
+	try {
+		const url = new URL("https://nominatim.openstreetmap.org/search");
+		url.searchParams.set("q", address);
+		url.searchParams.set("format", "json");
+		url.searchParams.set("limit", "1");
+		url.searchParams.set("countrycodes", "pl");
+
+		const res = await fetch(url.toString(), {
+			headers: {
+				// Nominatim wymaga User-Agent z kontaktem
+				"User-Agent": "SilaMlodychPanel/1.0 (kontakt@silamlodych.pl)",
+				"Accept-Language": "pl",
+			},
+		});
+
+		if (!res.ok) return null;
+
+		const data = (await res.json()) as Array<{
+			lat: string;
+			lon: string;
+		}>;
+
+		if (data.length === 0) return null;
+
+		return {
+			lat: parseFloat(data[0].lat),
+			lng: parseFloat(data[0].lon),
+		};
+	} catch (error) {
+		logger.error("[GEOCODE] Błąd:", error);
+		return null;
+	}
+}
+
+/* ─── Geokoduj brakujące adresy (admin) ─── */
+app.post(
+	"/api/admin/geocode-members",
+	authMiddleware,
+	async (req: any, res) => {
+		try {
+			const userRole = req.user?.role;
+			if (userRole !== "admin" && userRole !== "board") {
+				return res.status(403).json({ error: "Brak uprawnień" });
+			}
+
+			const limit = Math.min(parseInt(req.query.limit as string) || 30, 100);
+
+			// Bierzemy userów, którzy mają adres, ale nie mają lat/lng
+			const users = await prisma.user.findMany({
+				where: {
+					is_active: true,
+					address: { not: null },
+					OR: [{ lat: null }, { lng: null }],
+				},
+				select: { id: true, address: true, first_name: true, last_name: true },
+				take: limit,
+			});
+
+			let geocoded = 0;
+			let failed = 0;
+			const details: Array<{
+				name: string;
+				address: string;
+				success: boolean;
+			}> = [];
+
+			for (const user of users) {
+				if (!user.address) continue;
+
+				const coords = await geocodeAddress(user.address);
+
+				if (coords) {
+					await prisma.user.update({
+						where: { id: user.id },
+						data: {
+							lat: coords.lat,
+							lng: coords.lng,
+							geocoded_at: new Date(),
+						},
+					});
+					geocoded++;
+					details.push({
+						name: `${user.first_name} ${user.last_name}`,
+						address: user.address,
+						success: true,
+					});
+				} else {
+					failed++;
+					details.push({
+						name: `${user.first_name} ${user.last_name}`,
+						address: user.address,
+						success: false,
+					});
+				}
+
+				// Rate limit Nominatim: min. 1 sekunda między zapytaniami
+				await new Promise((r) => setTimeout(r, 1100));
+			}
+
+			res.json({
+				success: true,
+				processed: users.length,
+				geocoded,
+				failed,
+				details,
+			});
+		} catch (error) {
+			logger.error("[GEOCODE-MEMBERS] Błąd:", error);
+			res.status(500).json({ error: "Nie udało się geokodować" });
+		}
+	},
+);
+
+/* ─── Mapa członków – lokalizacje ─── */
+app.get("/api/map/locations", authMiddleware, async (req: any, res) => {
+	try {
+		const userRole = req.user?.role;
+		if (userRole !== "admin" && userRole !== "board" && userRole !== "Zarząd") {
+			return res.status(403).json({ error: "Brak uprawnień" });
+		}
+
+		const users = await prisma.user.findMany({
+			where: {
+				is_active: true,
+				lat: { not: null },
+				lng: { not: null },
+			},
+			select: {
+				id: true,
+				first_name: true,
+				last_name: true,
+				email: true,
+				phone: true,
+				address: true,
+				lat: true,
+				lng: true,
+				team: true,
+				pillars: true,
+				functional_role: true,
+				status: true,
+				avatar: true,
+			},
+		});
+
+		const locations = users.map((u: any) => ({
+			id: u.id.toString(),
+			firstName: u.first_name,
+			lastName: u.last_name,
+			email: u.email,
+			phone: u.phone,
+			address: u.address,
+			lat: u.lat,
+			lng: u.lng,
+			team: u.team,
+			pillars: u.pillars,
+			function: u.functional_role,
+			status: u.status,
+			avatar: u.avatar,
+		}));
+
+		res.json({
+			total: locations.length,
+			locations,
+		});
+	} catch (error) {
+		logger.error("[MAP] Błąd:", error);
+		res.status(500).json({ error: "Nie udało się pobrać lokalizacji" });
+	}
+});
+// Codziennie o 3:00 — geokoduj nowe adresy
+cron.schedule("0 3 * * *", async () => {
+	try {
+		const token = "";
+		const users = await prisma.user.findMany({
+			where: {
+				is_active: true,
+				address: { not: null },
+				OR: [{ lat: null }, { lng: null }],
+			},
+			select: { id: true, address: true, first_name: true, last_name: true },
+			take: 50,
+		});
+
+		logger.info(`[CRON-GEOCODE] Do geokodowania: ${users.length}`);
+		for (const user of users) {
+			if (!user.address) continue;
+			const coords = await geocodeAddress(user.address);
+			if (coords) {
+				await prisma.user.update({
+					where: { id: user.id },
+					data: {
+						lat: coords.lat,
+						lng: coords.lng,
+						geocoded_at: new Date(),
+					},
+				});
+			}
+			await new Promise((r) => setTimeout(r, 1100));
+		}
+	} catch (error) {
+		logger.error("[CRON-GEOCODE] Błąd:", error);
+	}
+});
+/* ─── 3. Trend miesięczny filaru ─── */
+app.get(
+	"/api/admin/attendance/pillars/:pillarName/chart",
+	authMiddleware,
+	async (req: any, res) => {
+		const userRole = req.user?.role;
+		if (userRole !== "admin" && userRole !== "board" && userRole !== "Zarząd") {
+			return res.status(403).json({ error: "Brak uprawnień" });
+		}
+
+		const pillarName = decodeURIComponent(req.params.pillarName);
+		if (pillarName === "Wszyscy") {
+			return res
+				.status(400)
+				.json({ error: "Filar 'Wszyscy' nie jest obsługiwany" });
+		}
+
+		const months = Math.min(
+			Math.max(parseInt((req.query.months as string) || "12", 10), 1),
+			36,
+		);
+
+		let connection;
+		try {
+			connection = await getFrekwencjaConnection();
+
+			const [rows] = await connection.execute(
+				`
+			SELECT
+				YEAR(mt.meeting_date)  AS year,
+				MONTH(mt.meeting_date) AS month,
+				COUNT(a.id) AS total,
+				SUM(CASE WHEN a.status = 'present' THEN 1 ELSE 0 END) AS present,
+				ROUND(
+					SUM(CASE WHEN a.status = 'present' THEN 1 ELSE 0 END)
+					/ NULLIF(COUNT(a.id), 0) * 100,
+					2
+				) AS percentage
+			FROM att_pillars p
+			JOIN att_meetings mt        ON mt.pillar_id = p.id
+			LEFT JOIN att_attendance a  ON a.meeting_id = mt.id
+			WHERE p.name = ?
+				AND mt.meeting_date >= DATE_SUB(CURDATE(), INTERVAL ? MONTH)
+			GROUP BY YEAR(mt.meeting_date), MONTH(mt.meeting_date)
+			ORDER BY year ASC, month ASC
+		`,
+				[pillarName, months],
+			);
+
+			const chart = (rows as any[]).map((r) => ({
+				year: Number(r.year),
+				month: Number(r.month),
+				label: `${String(r.month).padStart(2, "0")}/${r.year}`,
+				total: Number(r.total ?? 0),
+				present: Number(r.present ?? 0),
+				percentage: Number(r.percentage ?? 0),
+			}));
+
+			res.json({
+				pillar_name: pillarName,
+				pillar_label: pillarLabel(pillarName),
+				months,
+				chart,
+			});
+		} catch (error) {
+			logger.error("Błąd pobierania wykresu filaru:", error);
+			res.status(500).json({ error: "Nie udało się pobrać wykresu" });
+		} finally {
+			if (connection) await connection.end();
+		}
+	},
+);
+
+/* ─── 4. Ogólny trend (wszystkie filary razem) ─── */
+app.get(
+	"/api/admin/attendance/overview",
+	authMiddleware,
+	async (req: any, res) => {
+		const userRole = req.user?.role;
+		if (userRole !== "admin" && userRole !== "board" && userRole !== "Zarząd") {
+			return res.status(403).json({ error: "Brak uprawnień" });
+		}
+
+		const months = Math.min(
+			Math.max(parseInt((req.query.months as string) || "12", 10), 1),
+			36,
+		);
+
+		let connection;
+		try {
+			connection = await getFrekwencjaConnection();
+
+			const [overallRows] = await connection.execute(`
+			SELECT
+				COUNT(*) AS total_records,
+				COUNT(DISTINCT a.member_id) AS total_members,
+				COUNT(DISTINCT a.meeting_id) AS total_meetings,
+				ROUND(
+					SUM(CASE WHEN a.status = 'present' THEN 1 ELSE 0 END)
+					/ NULLIF(COUNT(a.id), 0) * 100,
+					2
+				) AS overall_percentage
+			FROM att_attendance a
+		`);
+
+			const [trendRows] = await connection.execute(
+				`
+			SELECT
+				YEAR(mt.meeting_date)  AS year,
+				MONTH(mt.meeting_date) AS month,
+				ROUND(
+					SUM(CASE WHEN a.status = 'present' THEN 1 ELSE 0 END)
+					/ NULLIF(COUNT(a.id), 0) * 100,
+					2
+				) AS percentage
+			FROM att_meetings mt
+			LEFT JOIN att_attendance a ON a.meeting_id = mt.id
+			WHERE mt.meeting_date >= DATE_SUB(CURDATE(), INTERVAL ? MONTH)
+			GROUP BY YEAR(mt.meeting_date), MONTH(mt.meeting_date)
+			ORDER BY year ASC, month ASC
+		`,
+				[months],
+			);
+
+			const overall = (overallRows as any[])[0] ?? {};
+			const trend = (trendRows as any[]).map((r) => ({
+				year: Number(r.year),
+				month: Number(r.month),
+				label: `${String(r.month).padStart(2, "0")}/${r.year}`,
+				percentage: Number(r.percentage ?? 0),
+			}));
+
+			res.json({
+				overall: {
+					total_records: Number(overall.total_records ?? 0),
+					total_members: Number(overall.total_members ?? 0),
+					total_meetings: Number(overall.total_meetings ?? 0),
+					overall_percentage: Number(overall.overall_percentage ?? 0),
+				},
+				months,
+				trend,
+			});
+		} catch (error) {
+			logger.error("Błąd pobierania ogólnego trendu:", error);
+			res.status(500).json({ error: "Nie udało się pobrać ogólnego trendu" });
+		} finally {
+			if (connection) await connection.end();
+		}
+	},
+);
+
+/* ─── 5. Subteamy w filarze ─── */
+app.get(
+	"/api/admin/attendance/pillars/:pillarName/subteams",
+	authMiddleware,
+	async (req: any, res) => {
+		const userRole = req.user?.role;
+		if (userRole !== "admin" && userRole !== "board" && userRole !== "Zarząd") {
+			return res.status(403).json({ error: "Brak uprawnień" });
+		}
+
+		const pillarName = decodeURIComponent(req.params.pillarName);
+		if (pillarName === "Wszyscy") {
+			return res
+				.status(400)
+				.json({ error: "Filar 'Wszyscy' nie jest obsługiwany" });
+		}
+
+		let connection;
+		try {
+			connection = await getFrekwencjaConnection();
+
+			const [rows] = await connection.execute(
+				`
+				SELECT
+					st.id                              AS subteam_id,
+					st.name                            AS subteam_name,
+					COUNT(DISTINCT stm.member_id)      AS members_count,
+					COUNT(DISTINCT a.meeting_id)       AS meetings_count,
+					ROUND(
+						SUM(CASE WHEN a.status = 'present' THEN 1 ELSE 0 END)
+						/ NULLIF(COUNT(a.id), 0) * 100,
+						2
+					)                                  AS attendance_percentage
+				FROM att_subteams st
+				JOIN att_pillars p              ON p.id = st.pillar_id
+				LEFT JOIN att_subteam_members stm ON stm.subteam_id = st.id
+				LEFT JOIN att_attendance a      ON a.member_id = stm.member_id
+				LEFT JOIN att_meetings mt       ON mt.id = a.meeting_id AND mt.pillar_id = p.id
+				WHERE p.name = ?
+				GROUP BY st.id, st.name
+				ORDER BY attendance_percentage DESC
+			`,
+				[pillarName],
+			);
+
+			const subteams = (rows as any[]).map((r) => ({
+				subteam_id: r.subteam_id,
+				subteam_name: r.subteam_name,
+				members_count: Number(r.members_count ?? 0),
+				meetings_count: Number(r.meetings_count ?? 0),
+				attendance_percentage: Number(r.attendance_percentage ?? 0),
+			}));
+
+			res.json({
+				pillar_name: pillarName,
+				pillar_label: pillarLabel(pillarName),
+				subteams,
+			});
+		} catch (error) {
+			logger.error("Błąd pobierania subteamów:", error);
+			res.status(500).json({ error: "Nie udało się pobrać subteamów" });
+		} finally {
+			if (connection) await connection.end();
+		}
+	},
+);
+
+/* ─── 6. Członkowie subteamu ─── */
+app.get(
+	"/api/admin/attendance/subteams/:subteamId/members",
+	authMiddleware,
+	async (req: any, res) => {
+		const userRole = req.user?.role;
+		if (userRole !== "admin" && userRole !== "board" && userRole !== "Zarząd") {
+			return res.status(403).json({ error: "Brak uprawnień" });
+		}
+
+		const subteamId = parseInt(req.params.subteamId);
+		if (isNaN(subteamId))
+			return res.status(400).json({ error: "Nieprawidłowe ID subteamu" });
+
+		let connection;
+		try {
+			connection = await getFrekwencjaConnection();
+
+			const [rows] = await connection.execute(
+				`
+				SELECT
+					m.id,
+					m.first_name,
+					m.last_name,
+					m.email,
+					COUNT(a.id) AS total_meetings,
+					SUM(CASE WHEN a.status = 'present' THEN 1 ELSE 0 END) AS present_count,
+					SUM(CASE WHEN a.status = 'absent'  THEN 1 ELSE 0 END) AS absent_count,
+					SUM(CASE WHEN a.status = 'excused' THEN 1 ELSE 0 END) AS excused_count,
+					ROUND(
+						SUM(CASE WHEN a.status = 'present' THEN 1 ELSE 0 END)
+						/ NULLIF(COUNT(a.id), 0) * 100,
+						2
+					) AS attendance_percentage
+				FROM att_subteam_members stm
+				JOIN att_members m          ON m.id = stm.member_id
+				LEFT JOIN att_attendance a  ON a.member_id = m.id
+				WHERE stm.subteam_id = ?
+				GROUP BY m.id, m.first_name, m.last_name, m.email
+				ORDER BY attendance_percentage DESC
+			`,
+				[subteamId],
+			);
+
+			const members = (rows as any[]).map((r) => ({
+				id: r.id,
+				first_name: r.first_name ?? "",
+				last_name: r.last_name ?? "",
+				email: r.email ?? "",
+				total_meetings: Number(r.total_meetings ?? 0),
+				present_count: Number(r.present_count ?? 0),
+				absent_count: Number(r.absent_count ?? 0),
+				excused_count: Number(r.excused_count ?? 0),
+				attendance_percentage: Number(r.attendance_percentage ?? 0),
+			}));
+
+			res.json({ subteam_id: subteamId, members, total: members.length });
+		} catch (error) {
+			logger.error("Błąd pobierania członków subteamu:", error);
+			res.status(500).json({ error: "Nie udało się pobrać członków subteamu" });
+		} finally {
+			if (connection) await connection.end();
+		}
+	},
+);
+
+async function getSmConnection() {
+	return mysql.createConnection({
+		host: process.env.EWIDENCJA_DB_HOST || "57.128.253.89",
+		user: process.env.EWIDENCJA_DB_USER || "czarnecki",
+		password: process.env.EWIDENCJA_DB_PASSWORD || "",
+		database: "SM",
+		port: parseInt(process.env.EWIDENCJA_DB_PORT || "3306"),
+	});
+}
+/**
+ * GET /api/my-team/attendance?teamId=...
+ * Zwraca członków zespołu + frekwencję (obecny/nieobecny/usprawiedliwiony)
+ * + dane kontaktowe (telefon, województwo).
+ * Dostęp: admin/board/coordinator (koordynator tylko swój filar).
+ */
+app.get("/api/my-team/attendance", authMiddleware, async (req: any, res) => {
+	try {
+		const userId = req.user?.id ? parseInt(req.user.id) : null;
+		const userRole = req.user?.role;
+		const queryTeamId = req.query.teamId
+			? parseInt(req.query.teamId as string)
+			: null;
+
+		if (!userId) return res.status(401).json({ error: "Brak autoryzacji" });
+
+		const isAdmin = userRole === "admin";
+		const isBoard = userRole === "board";
+		const leaderPillars = await getLeaderPillars(userId);
+		const isLeader = leaderPillars.length > 0;
+		const isCoordinator = userRole === "coordinator" || isLeader;
+
+		if (!isAdmin && !isBoard && !isCoordinator) {
+			return res.status(403).json({ error: "Brak uprawnień" });
+		}
+
+		// Wybierz zespół
+		let teamIdToUse: number | null = null;
+		if (isAdmin || isBoard) {
+			teamIdToUse = queryTeamId;
+			if (!teamIdToUse) {
+				const firstTeam = await prisma.team.findFirst({
+					where: { status: "active" },
+					orderBy: { name: "asc" },
+					select: { id: true },
+				});
+				teamIdToUse = firstTeam?.id ?? null;
+			}
+		} else {
+			const leaderTeams = await prisma.teamMember.findMany({
+				where: { user_id: userId, is_leader: true },
+				include: { team: { select: { id: true, name: true } } },
+			});
+			const allowedTeams = leaderTeams
+				.map((tm: any) => tm.team)
+				.filter(Boolean);
+			teamIdToUse =
+				queryTeamId && allowedTeams.some((t: any) => t.id === queryTeamId)
+					? queryTeamId
+					: (allowedTeams[0]?.id ?? null);
+		}
+
+		if (!teamIdToUse) {
+			return res.json({ team: null, members: [] });
+		}
+
+		const team = await prisma.team.findUnique({
+			where: { id: teamIdToUse },
+			select: { id: true, name: true },
+		});
+		if (!team) return res.status(404).json({ error: "Nie znaleziono zespołu" });
+
+		// 1. Członkowie zespołu z bazy SM (Prisma)
+		const teamMembers = await prisma.teamMember.findMany({
+			where: { team_id: teamIdToUse },
+			include: {
+				user: {
+					select: {
+						id: true,
+						first_name: true,
+						last_name: true,
+						email: true,
+						phone: true,
+						province: true,
+						functional_role: true,
+						status: true,
+						is_active: true,
+					},
+				},
+			},
+		});
+
+		// 2. Frekwencja z bazy SM_Frekwencja (mysql2)
+		// Tylko jeśli to filar (zawiera "Filar") – inne zespoły nie mają frekwencji
+		let attendanceByEmail: Record<string, any> = {};
+
+		if (team.name.startsWith("Filar ")) {
+			const pillarName = team.name.replace("Filar ", "").trim();
+			let connection;
+			try {
+				connection = await getFrekwencjaConnection();
+
+				const [rows] = await connection.execute(
+					`
+					SELECT
+						m.id,
+						m.email,
+						COUNT(a.id) AS total_meetings,
+						SUM(CASE WHEN a.status = 'present' THEN 1 ELSE 0 END) AS present_count,
+						SUM(CASE WHEN a.status = 'absent'  THEN 1 ELSE 0 END) AS absent_count,
+						SUM(CASE WHEN a.status = 'excused' THEN 1 ELSE 0 END) AS excused_count,
+						ROUND(
+							SUM(CASE WHEN a.status = 'present' THEN 1 ELSE 0 END)
+							/ NULLIF(COUNT(a.id), 0) * 100,
+							2
+						) AS attendance_percentage
+					FROM att_pillars p
+					JOIN att_meetings mt        ON mt.pillar_id = p.id
+					LEFT JOIN att_attendance a  ON a.meeting_id = mt.id
+					LEFT JOIN att_members m     ON m.id = a.member_id
+					WHERE p.name = ?
+					GROUP BY m.id, m.email
+					`,
+					[pillarName],
+				);
+
+				(rows as any[]).forEach((r) => {
+					if (r.email) {
+						attendanceByEmail[r.email.toLowerCase().trim()] = {
+							total_meetings: Number(r.total_meetings ?? 0),
+							present_count: Number(r.present_count ?? 0),
+							absent_count: Number(r.absent_count ?? 0),
+							excused_count: Number(r.excused_count ?? 0),
+							attendance_percentage: Number(r.attendance_percentage ?? 0),
+						};
+					}
+				});
+			} catch (dbError) {
+				logger.error("[MY-TEAM] Błąd frekwencji:", dbError);
+			} finally {
+				if (connection) await connection.end();
+			}
+		}
+
+		// 3. Złącz
+		const members = teamMembers
+			.filter((tm: any) => tm.user)
+			.map((tm: any) => {
+				const u = tm.user;
+				const emailKey = (u.email || "").toLowerCase().trim();
+				const att = attendanceByEmail[emailKey] || null;
+
+				return {
+					id: u.id,
+					first_name: u.first_name,
+					last_name: u.last_name,
+					email: u.email,
+					phone: u.phone || null,
+					province: u.province || null,
+					functional_role: u.functional_role || null,
+					status: u.status || null,
+					role_in_team: tm.role || null,
+					is_leader: tm.is_leader || false,
+					attendance: att
+						? {
+								total_meetings: att.total_meetings,
+								present_count: att.present_count,
+								absent_count: att.absent_count,
+								excused_count: att.excused_count,
+								attendance_percentage: att.attendance_percentage,
+							}
+						: null,
+				};
+			})
+			.sort((a: any, b: any) => {
+				if (a.is_leader && !b.is_leader) return -1;
+				if (!a.is_leader && b.is_leader) return 1;
+				return (a.last_name || "").localeCompare(b.last_name || "");
+			});
+
+		res.json({
+			team: { id: team.id, name: team.name },
+			members,
+			has_attendance: team.name.startsWith("Filar "),
+		});
+	} catch (error) {
+		logger.error("[MY-TEAM-ATTENDANCE] Błąd:", error);
+		res.status(500).json({ error: "Nie udało się pobrać frekwencji zespołu" });
+	}
+});
+app.get(
+	"/api/admin/members-with-card",
+	authMiddleware,
+	async (req: any, res) => {
+		const userRole = req.user?.role;
+		if (userRole !== "admin" && userRole !== "board" && userRole !== "Zarząd") {
+			return res.status(403).json({ error: "Brak uprawnień" });
+		}
+
+		let connection;
+		try {
+			connection = await getSmConnection();
+
+			const [rows] = await connection.execute(`
+			SELECT COUNT(*) AS total
+			FROM members
+			WHERE Legitymacja IS NOT NULL AND Legitymacja > 0
+		`);
+
+			const total = Number((rows as any[])[0]?.total ?? 0);
+			res.json({ total });
+		} catch (error) {
+			logger.error("Błąd pobierania stałych członków:", error);
+			res.status(500).json({ error: "Nie udało się pobrać danych" });
+		} finally {
+			if (connection) await connection.end();
+		}
+	},
+);
+
+app.get("/api/admin/stable-members", authMiddleware, async (req: any, res) => {
+	const userRole = req.user?.role;
+	if (userRole !== "admin" && userRole !== "board" && userRole !== "Zarząd") {
+		return res.status(403).json({ error: "Brak uprawnień" });
+	}
+
+	let connection;
+	try {
+		connection = await getSmConnection();
+
+		const [rows] = await connection.execute(`
+			SELECT
+				id,
+				Legitymacja,
+				full_name,
+				email,
+				pay_from,
+				suspended_until,
+				suspended_months
+			FROM members
+			WHERE Legitymacja IS NOT NULL AND Legitymacja > 0
+			ORDER BY Legitymacja ASC
+		`);
+
+		const members = (rows as any[]).map((r) => ({
+			id: r.id,
+			legitymacja: Number(r.Legitymacja),
+			full_name: r.full_name ?? "",
+			email: r.email ?? "",
+			pay_from: r.pay_from
+				? new Date(r.pay_from).toISOString().split("T")[0]
+				: null,
+			suspended_until: r.suspended_until
+				? new Date(r.suspended_until).toISOString().split("T")[0]
+				: null,
+			suspended_months: r.suspended_months ?? null,
+		}));
+
+		res.json({ members, total: members.length });
+	} catch (error) {
+		logger.error("Błąd pobierania stałych członków:", error);
+		res.status(500).json({ error: "Nie udało się pobrać danych" });
+	} finally {
+		if (connection) await connection.end();
+	}
+});
 app.use("/api", revenueRoutes);
-app.listen(port, () => {});
+
+/* ═══ MY TEAM ═══ */
+async function getLeaderPillars(userId: number): Promise<string[]> {
+	const rows = await prisma.teamMember.findMany({
+		where: {
+			user_id: userId,
+			is_leader: true,
+			team: { name: { contains: "Filar" } },
+		},
+		include: { team: true },
+	});
+	return rows
+		.map((tm: any) => tm.team?.name?.replace("Filar ", ""))
+		.filter(Boolean) as string[];
+}
+
+app.get("/api/my-team", authMiddleware, async (req: any, res) => {
+	try {
+		const userId = req.user?.id ? parseInt(req.user.id) : null;
+		const userRole = req.user?.role;
+		const queryTeamId = req.query.teamId
+			? parseInt(req.query.teamId as string)
+			: null;
+		if (!userId) return res.status(401).json({ error: "Brak autoryzacji" });
+
+		const leaderPillars = await getLeaderPillars(userId);
+		const isLeader = leaderPillars.length > 0;
+		const isAdmin = userRole === "admin";
+		const isBoard = userRole === "board";
+		const isCoordinator = userRole === "coordinator" || isLeader;
+
+		if (!isAdmin && !isBoard && !isCoordinator) {
+			return res.status(403).json({ error: "Brak uprawnień" });
+		}
+
+		let availableTeams: { id: number; name: string }[] = [];
+		let teamIdToUse: number | null = null;
+
+		if (isAdmin || isBoard) {
+			availableTeams = await prisma.team.findMany({
+				where: { status: "active" },
+				select: { id: true, name: true },
+				orderBy: { name: "asc" },
+			});
+			teamIdToUse = queryTeamId ?? availableTeams[0]?.id ?? null;
+		} else {
+			const leaderTeams = await prisma.teamMember.findMany({
+				where: {
+					user_id: userId,
+					is_leader: true,
+					team: { name: { contains: "Filar" } },
+				},
+				include: { team: { select: { id: true, name: true } } },
+			});
+			availableTeams = leaderTeams
+				.map((tm: any) => tm.team)
+				.filter(Boolean) as { id: number; name: string }[];
+			teamIdToUse = queryTeamId ?? availableTeams[0]?.id ?? null;
+		}
+
+		if (!teamIdToUse) {
+			return res.json({
+				team: null,
+				isCoordinator,
+				isBoard,
+				isAdmin,
+				availableTeams: [],
+				coordinators: [],
+				members: [],
+				projects: [],
+				team_stats: {
+					members_count: 0,
+					projects_count: 0,
+					tasks_total: 0,
+					tasks_completed: 0,
+					average_rating: null,
+					average_difficulty: null,
+					total_rated: 0,
+				},
+			});
+		}
+
+		const team = await prisma.team.findUnique({
+			where: { id: teamIdToUse },
+			select: { id: true, name: true },
+		});
+		if (!team) return res.status(404).json({ error: "Nie znaleziono zespołu" });
+
+		const teamMembers = await prisma.teamMember.findMany({
+			where: { team_id: teamIdToUse },
+			include: {
+				user: {
+					select: {
+						id: true,
+						first_name: true,
+						last_name: true,
+						email: true,
+						functional_role: true,
+						is_active: true,
+					},
+				},
+			},
+		});
+
+		const memberIds = teamMembers
+			.map((tm: any) => tm.user?.id)
+			.filter(Boolean) as number[];
+		const pillarNameForTasks = team.name.replace("Filar ", "").trim();
+		const taskWhereOR: any[] = [];
+		memberIds.forEach((id) => {
+			taskWhereOR.push({ assigned_to: id });
+			taskWhereOR.push({ assigned_users: { contains: `"${id}"` } });
+		});
+		if (team.name.startsWith("Filar "))
+			taskWhereOR.push({ pillar: { contains: pillarNameForTasks } });
+
+		const tasks = await prisma.task.findMany({
+			where: taskWhereOR.length > 0 ? { OR: taskWhereOR } : { id: -1 },
+			select: {
+				id: true,
+				title: true,
+				status: true,
+				priority: true,
+				rating: true,
+				difficulty: true,
+				rating_comment: true,
+				rated_at: true,
+				rated_by: true,
+				rated_by_name: true,
+				assigned_to: true,
+				assigned_users: true,
+				pillar: true,
+				project_id: true,
+				due_date: true,
+				created_at: true,
+				updated_at: true,
+				project: { select: { id: true, name: true, pillar: true } },
+			},
+		});
+
+		const userTasksMap: Record<number, any[]> = {};
+		memberIds.forEach((id) => (userTasksMap[id] = []));
+		tasks.forEach((task: any) => {
+			const ids: number[] = [];
+			if (task.assigned_to) ids.push(task.assigned_to);
+			if (task.assigned_users) {
+				try {
+					const parsed = JSON.parse(task.assigned_users);
+					if (Array.isArray(parsed))
+						parsed.forEach((uid: any) => {
+							const n = parseInt(uid);
+							if (!isNaN(n) && !ids.includes(n)) ids.push(n);
+						});
+				} catch {}
+			}
+			ids.forEach((uid) => {
+				if (userTasksMap[uid]) userTasksMap[uid].push(task);
+			});
+		});
+
+		const members = teamMembers
+			.filter((tm: any) => tm.user)
+			.map((tm: any) => {
+				const u = tm.user;
+				const userTasks = userTasksMap[u.id] || [];
+				const total = userTasks.length;
+				const completed = userTasks.filter(
+					(t: any) => t.status === "done",
+				).length;
+				const in_progress = userTasks.filter(
+					(t: any) => t.status === "in_progress",
+				).length;
+				const todo = userTasks.filter((t: any) => t.status === "todo").length;
+				const ratedTasks = userTasks.filter(
+					(t: any) => t.rating !== null && t.rating !== undefined,
+				);
+				const diffTasks = userTasks.filter(
+					(t: any) => t.difficulty !== null && t.difficulty !== undefined,
+				);
+				const avgRating =
+					ratedTasks.length > 0
+						? ratedTasks.reduce((s: number, t: any) => s + t.rating, 0) /
+							ratedTasks.length
+						: null;
+				const avgDifficulty =
+					diffTasks.length > 0
+						? diffTasks.reduce((s: number, t: any) => s + t.difficulty, 0) /
+							diffTasks.length
+						: null;
+				return {
+					id: u.id,
+					first_name: u.first_name,
+					last_name: u.last_name,
+					email: u.email,
+					functional_role: u.functional_role,
+					role_in_team: tm.role,
+					is_leader: tm.is_leader || false,
+					tasks: {
+						total,
+						completed,
+						in_progress,
+						todo,
+						completion_rate:
+							total > 0 ? Math.round((completed / total) * 100) : 0,
+						average_rating: avgRating,
+						average_difficulty: avgDifficulty,
+						total_rated: ratedTasks.length,
+					},
+				};
+			})
+			.sort((a: any, b: any) => {
+				if (a.is_leader && !b.is_leader) return -1;
+				if (!a.is_leader && b.is_leader) return 1;
+				return (a.last_name || "").localeCompare(b.last_name || "");
+			});
+
+		const coordinators = members
+			.filter((m: any) => m.is_leader)
+			.map((m: any) => ({
+				id: m.id,
+				first_name: m.first_name,
+				last_name: m.last_name,
+				email: m.email,
+			}));
+
+		const projectIds = Array.from(
+			new Set(
+				tasks
+					.map((t: any) => t.project_id)
+					.filter((id: any) => id !== null && id !== undefined),
+			),
+		) as number[];
+		let projects: any[] = [];
+		if (projectIds.length > 0) {
+			const projectRows = await prisma.project.findMany({
+				where: { id: { in: projectIds } },
+				select: { id: true, name: true, pillar: true, status: true },
+			});
+			projects = projectRows.map((p: any) => {
+				const projectTasks = tasks.filter((t: any) => t.project_id === p.id);
+				const completed = projectTasks.filter(
+					(t: any) => t.status === "done",
+				).length;
+				return {
+					id: p.id,
+					name: p.name,
+					pillar: p.pillar,
+					status: p.status,
+					tasks_count: projectTasks.length,
+					completed_tasks: completed,
+				};
+			});
+		}
+
+		const allRated = tasks.filter(
+			(t: any) => t.rating !== null && t.rating !== undefined,
+		);
+		const allDiff = tasks.filter(
+			(t: any) => t.difficulty !== null && t.difficulty !== undefined,
+		);
+		const team_stats = {
+			members_count: members.length,
+			projects_count: projects.length,
+			tasks_total: tasks.length,
+			tasks_completed: tasks.filter((t: any) => t.status === "done").length,
+			average_rating:
+				allRated.length > 0
+					? allRated.reduce((s: number, t: any) => s + t.rating, 0) /
+						allRated.length
+					: null,
+			average_difficulty:
+				allDiff.length > 0
+					? allDiff.reduce((s: number, t: any) => s + t.difficulty, 0) /
+						allDiff.length
+					: null,
+			total_rated: allRated.length,
+		};
+
+		res.json({
+			team: { id: team.id, name: team.name },
+			isCoordinator,
+			isBoard,
+			isAdmin,
+			availableTeams,
+			coordinators,
+			members,
+			projects,
+			team_stats,
+		});
+	} catch (error) {
+		logger.error("[MY-TEAM] Błąd:", error);
+		res.status(500).json({ error: "Nie udało się pobrać danych zespołu" });
+	}
+});
+
+app.get(
+	"/api/my-team/member/:userId/tasks",
+	authMiddleware,
+	async (req: any, res) => {
+		try {
+			const userRole = req.user?.role;
+			const targetUserId = parseInt(req.params.userId);
+			if (isNaN(targetUserId))
+				return res.status(400).json({ error: "Nieprawidłowe ID użytkownika" });
+
+			if (
+				userRole !== "admin" &&
+				userRole !== "board" &&
+				userRole !== "coordinator"
+			) {
+				const userId = req.user?.id ? parseInt(req.user.id) : null;
+				const leaderPillars = userId ? await getLeaderPillars(userId) : [];
+				if (leaderPillars.length === 0)
+					return res.status(403).json({ error: "Brak uprawnień" });
+			}
+
+			const tasks = await prisma.task.findMany({
+				where: {
+					OR: [
+						{ assigned_to: targetUserId },
+						{ assigned_users: { contains: `"${targetUserId}"` } },
+					],
+				},
+				include: {
+					project: { select: { id: true, name: true, pillar: true } },
+					ratedBy: { select: { id: true, first_name: true, last_name: true } },
+				},
+				orderBy: { updated_at: "desc" },
+				take: 200,
+			});
+
+			const mappedTasks = tasks.map((t: any) => {
+				const createdAt = new Date(t.created_at);
+				const updatedAt = new Date(t.updated_at);
+				const daysToComplete = Math.max(
+					0,
+					Math.ceil(
+						(updatedAt.getTime() - createdAt.getTime()) / (1000 * 60 * 60 * 24),
+					),
+				);
+				const ratedByName = t.rated_by_name
+					? t.rated_by_name
+					: t.ratedBy
+						? `${t.ratedBy.first_name || ""} ${t.ratedBy.last_name || ""}`.trim()
+						: null;
+				return {
+					id: t.id,
+					title: t.title,
+					project_name: t.project?.name || null,
+					pillar: t.pillar || t.project?.pillar || null,
+					priority: t.priority || "medium",
+					difficulty: t.difficulty ?? null,
+					rating: t.rating ?? null,
+					rating_comment: t.rating_comment ?? null,
+					completed_at: t.status === "done" ? t.updated_at.toISOString() : null,
+					days_to_complete: daysToComplete,
+					rated_by_name: ratedByName,
+				};
+			});
+
+			const completed = mappedTasks.filter((t: any) => t.completed_at);
+			const rated = mappedTasks.filter(
+				(t: any) => t.rating !== null && t.rating !== undefined,
+			);
+			const diff = mappedTasks.filter(
+				(t: any) => t.difficulty !== null && t.difficulty !== undefined,
+			);
+
+			res.json({
+				tasks: mappedTasks,
+				stats: {
+					total: mappedTasks.length,
+					completed: completed.length,
+					average_rating:
+						rated.length > 0
+							? rated.reduce((s: number, t: any) => s + t.rating, 0) /
+								rated.length
+							: null,
+					average_difficulty:
+						diff.length > 0
+							? diff.reduce((s: number, t: any) => s + t.difficulty, 0) /
+								diff.length
+							: null,
+				},
+			});
+		} catch (error) {
+			logger.error("[MY-TEAM] Błąd historii:", error);
+			res.status(500).json({ error: "Nie udało się pobrać historii zadań" });
+		}
+	},
+);
+/* ═══════════════════════════════════════════════════════════
+   ZMIANA FILARU – wnioski
+   ═══════════════════════════════════════════════════════════ */
+
+/**
+ * POST /api/pillar-requests
+ * Zgłoszenie zmiany filaru (przez usera).
+ */
+app.post("/api/pillar-requests", authMiddleware, async (req: any, res) => {
+	try {
+		const userId = req.user?.id ? parseInt(req.user.id) : null;
+		const { toPillarId, reason } = req.body;
+
+		if (!userId) return res.status(401).json({ error: "Brak autoryzacji" });
+		if (!toPillarId)
+			return res.status(400).json({ error: "Wybierz filar docelowy" });
+
+		const existing = await prisma.pillarChangeRequest.findFirst({
+			where: { user_id: userId, status: "pending" },
+		});
+		if (existing) {
+			return res.status(400).json({
+				error: "Masz już wniosek o zmianę filaru w trakcie rozpatrywania.",
+			});
+		}
+
+		const currentLeader = await prisma.teamMember.findFirst({
+			where: {
+				user_id: userId,
+				team: { name: { contains: "Filar" } },
+			},
+			include: { team: { select: { id: true, name: true } } },
+		});
+
+		const toPillar = await prisma.team.findUnique({
+			where: { id: parseInt(toPillarId) },
+			select: { id: true, name: true },
+		});
+		if (!toPillar)
+			return res.status(404).json({ error: "Filar docelowy nie istnieje" });
+
+		const request = await prisma.pillarChangeRequest.create({
+			data: {
+				user_id: userId,
+				from_pillar_id: currentLeader?.team?.id ?? null,
+				to_pillar_id: parseInt(toPillarId),
+				reason: reason?.trim() || null,
+				status: "pending",
+			},
+		});
+
+		try {
+			const boardMembers = await prisma.user.findMany({
+				where: { role_id: { in: [1, 2] }, is_active: true },
+				select: { id: true },
+			});
+
+			const me = await prisma.user.findUnique({
+				where: { id: userId },
+				select: { first_name: true, last_name: true },
+			});
+			const userName =
+				`${me?.first_name || ""} ${me?.last_name || ""}`.trim() || "Użytkownik";
+
+			if (boardMembers.length > 0) {
+				await prisma.notification.createMany({
+					data: boardMembers.map((b: any) => ({
+						user_id: b.id,
+						title: "Wniosek o zmianę filaru",
+						message: `${userName} chce zmienić filar na „${toPillar.name}".`,
+						type: "info",
+						read: false,
+						link: `/requests`,
+						target: "board",
+						created_at: new Date(),
+					})),
+				});
+			}
+		} catch (e) {
+			logger.error("[PILLAR-REQ] Błąd powiadomień:", e);
+		}
+
+		res.status(201).json({ success: true, id: request.id });
+	} catch (error) {
+		logger.error("[PILLAR-REQ] Błąd:", error);
+		res.status(500).json({ error: "Nie udało się złożyć wniosku" });
+	}
+});
+
+/**
+ * GET /api/pillar-requests
+ */
+app.get("/api/pillar-requests", authMiddleware, async (req: any, res) => {
+	try {
+		const userId = req.user?.id ? parseInt(req.user.id) : null;
+		const userRole = req.user?.role;
+		if (!userId) return res.status(401).json({ error: "Brak autoryzacji" });
+
+		const isAdminOrBoard = userRole === "admin" || userRole === "board";
+
+		const where = isAdminOrBoard ? {} : { user_id: userId };
+
+		const requests = await prisma.pillarChangeRequest.findMany({
+			where,
+			orderBy: { created_at: "desc" },
+			include: {
+				user: {
+					select: { id: true, first_name: true, last_name: true, email: true },
+				},
+				fromPillar: { select: { id: true, name: true } },
+				toPillar: { select: { id: true, name: true } },
+				reviewer: { select: { id: true, first_name: true, last_name: true } },
+			},
+		});
+
+		res.json(
+			requests.map((r: any) => ({
+				id: r.id,
+				user: r.user,
+				fromPillar: r.fromPillar,
+				toPillar: r.toPillar,
+				reason: r.reason,
+				status: r.status,
+				reviewer: r.reviewer,
+				reviewed_at: r.reviewed_at,
+				review_comment: r.review_comment,
+				created_at: r.created_at,
+			})),
+		);
+	} catch (error) {
+		logger.error("[PILLAR-REQ] Błąd listy:", error);
+		res.status(500).json({ error: "Nie udało się pobrać wniosków" });
+	}
+});
+
+/**
+ * PUT /api/pillar-requests/:id
+ */
+app.put("/api/pillar-requests/:id", authMiddleware, async (req: any, res) => {
+	try {
+		const userRole = req.user?.role;
+		const reviewerId = req.user?.id ? parseInt(req.user.id) : null;
+		const requestId = parseInt(req.params.id);
+		const { status, comment } = req.body;
+
+		if (userRole !== "admin" && userRole !== "board") {
+			return res
+				.status(403)
+				.json({ error: "Tylko zarząd może rozpatrywać wnioski" });
+		}
+		if (!["approved", "rejected", "cancelled"].includes(status)) {
+			return res.status(400).json({ error: "Nieprawidłowy status" });
+		}
+
+		const request = await prisma.pillarChangeRequest.findUnique({
+			where: { id: requestId },
+			include: {
+				user: {
+					select: { id: true, first_name: true, last_name: true, email: true },
+				},
+				toPillar: { select: { id: true, name: true } },
+				fromPillar: { select: { id: true, name: true } },
+			},
+		});
+		if (!request)
+			return res.status(404).json({ error: "Wniosek nie istnieje" });
+		if (request.status !== "pending") {
+			return res.status(400).json({ error: "Wniosek został już rozpatrzony" });
+		}
+
+		await prisma.pillarChangeRequest.update({
+			where: { id: requestId },
+			data: {
+				status,
+				reviewed_by: reviewerId,
+				reviewed_at: new Date(),
+				review_comment: comment?.trim() || null,
+			},
+		});
+
+		if (status === "approved") {
+			if (request.from_pillar_id) {
+				await prisma.teamMember.deleteMany({
+					where: {
+						user_id: request.user_id,
+						team_id: request.from_pillar_id,
+					},
+				});
+			}
+
+			const existingMembership = await prisma.teamMember.findFirst({
+				where: {
+					user_id: request.user_id,
+					team_id: request.to_pillar_id,
+				},
+			});
+			if (!existingMembership) {
+				await prisma.teamMember.create({
+					data: {
+						user_id: request.user_id,
+						team_id: request.to_pillar_id,
+						role: "Członek",
+						is_leader: false,
+					},
+				});
+			}
+
+			const allPillars = await prisma.teamMember.findMany({
+				where: {
+					user_id: request.user_id,
+					team: { name: { contains: "Filar" } },
+				},
+				include: { team: { select: { name: true } } },
+			});
+			const pillarNames = allPillars
+				.map((tm: any) => tm.team?.name?.replace("Filar ", ""))
+				.filter(Boolean)
+				.join(", ");
+
+			await prisma.user.update({
+				where: { id: request.user_id },
+				data: { pillars: pillarNames || null },
+			});
+		}
+
+		const reviewer =
+			reviewerId === null
+				? null
+				: await prisma.user.findUnique({
+						where: { id: reviewerId },
+						select: { first_name: true, last_name: true },
+					});
+		const reviewerName =
+			`${reviewer?.first_name || ""} ${reviewer?.last_name || ""}`.trim() ||
+			"Zarząd";
+
+		const statusText =
+			status === "approved"
+				? "zatwierdzony"
+				: status === "rejected"
+					? "odrzucony"
+					: "anulowany";
+		const type = status === "approved" ? "success" : "warning";
+
+		await prisma.notification.create({
+			data: {
+				user_id: request.user_id,
+				title: `Wniosek o zmianę filaru ${statusText}`,
+				message: `Twój wniosek o zmianę filaru na „${request.toPillar?.name || "—"}" został ${statusText} przez ${reviewerName}.`,
+				type,
+				read: false,
+				link: `/requests`,
+				target: "user",
+				created_at: new Date(),
+			},
+		});
+
+		if (status === "approved") {
+			const newPillarLeaders = await prisma.teamMember.findMany({
+				where: {
+					team_id: request.to_pillar_id,
+					is_leader: true,
+					user_id: { not: request.user_id },
+				},
+				select: { user_id: true },
+			});
+
+			if (newPillarLeaders.length > 0) {
+				await prisma.notification.createMany({
+					data: newPillarLeaders.map((l: any) => ({
+						user_id: l.user_id,
+						title: "Nowy członek w filarze",
+						message: `${request.user.first_name} ${request.user.last_name} dołączył/a do filaru „${request.toPillar?.name}".`,
+						type: "info",
+						read: false,
+						link: `/myTeam`,
+						target: "user",
+						created_at: new Date(),
+					})),
+				});
+			}
+
+			if (request.from_pillar_id) {
+				const oldPillarLeaders = await prisma.teamMember.findMany({
+					where: { team_id: request.from_pillar_id, is_leader: true },
+					select: { user_id: true },
+				});
+				if (oldPillarLeaders.length > 0) {
+					await prisma.notification.createMany({
+						data: oldPillarLeaders.map((l: any) => ({
+							user_id: l.user_id,
+							title: "Zmiana filaru członka",
+							message: `${request.user.first_name} ${request.user.last_name} opuścił/a filar.`,
+							type: "warning",
+							read: false,
+							link: `/myTeam`,
+							target: "user",
+							created_at: new Date(),
+						})),
+					});
+				}
+			}
+		}
+
+		res.json({ success: true });
+	} catch (error) {
+		logger.error("[PILLAR-REQ] Błąd rozpatrzenia:", error);
+		res.status(500).json({ error: "Nie udało się rozpatrzyć wniosku" });
+	}
+});
+/* ═══════════════════════════════════════════════════════════
+   ZARZĄD – kto za co odpowiada
+   ═══════════════════════════════════════════════════════════ */
+
+app.get("/api/board", authMiddleware, async (req: any, res) => {
+	try {
+		const board = await prisma.boardMember.findMany({
+			where: { is_active: true },
+			orderBy: { order: "asc" },
+			include: {
+				user: {
+					select: {
+						id: true,
+						first_name: true,
+						last_name: true,
+						email: true,
+						phone: true,
+						avatar: true,
+						province: true,
+						functional_role: true,
+					},
+				},
+			},
+		});
+
+		res.json(
+			board.map((b: any) => ({
+				id: b.id,
+				role_title: b.role_title,
+				responsibilities: b.responsibilities,
+				order: b.order,
+				user: b.user,
+			})),
+		);
+	} catch (error) {
+		logger.error("[BOARD] Błąd:", error);
+		res.status(500).json({ error: "Nie udało się pobrać zarządu" });
+	}
+});
+
+app.post("/api/board", authMiddleware, async (req: any, res) => {
+	try {
+		const userRole = req.user?.role;
+		if (userRole !== "admin" && userRole !== "board") {
+			return res.status(403).json({ error: "Brak uprawnień" });
+		}
+
+		const { user_id, role_title, responsibilities, order } = req.body;
+
+		if (!user_id || !role_title) {
+			return res
+				.status(400)
+				.json({ error: "user_id i role_title są wymagane" });
+		}
+
+		const existing = await prisma.boardMember.findUnique({
+			where: { user_id: parseInt(user_id) },
+		});
+		if (existing) {
+			return res
+				.status(400)
+				.json({ error: "Ten użytkownik już jest w zarządzie" });
+		}
+
+		const created = await prisma.boardMember.create({
+			data: {
+				user_id: parseInt(user_id),
+				role_title,
+				responsibilities: responsibilities || null,
+				order: order ?? 0,
+				is_active: true,
+			},
+			include: {
+				user: {
+					select: {
+						id: true,
+						first_name: true,
+						last_name: true,
+						email: true,
+						phone: true,
+						avatar: true,
+						province: true,
+						functional_role: true,
+					},
+				},
+			},
+		});
+
+		res.status(201).json({
+			id: created.id,
+			role_title: created.role_title,
+			responsibilities: created.responsibilities,
+			order: created.order,
+			user: created.user,
+		});
+	} catch (error) {
+		logger.error("[BOARD] Błąd dodawania:", error);
+		res.status(500).json({ error: "Nie udało się dodać członka zarządu" });
+	}
+});
+
+app.put("/api/board/:id", authMiddleware, async (req: any, res) => {
+	try {
+		const userRole = req.user?.role;
+		if (userRole !== "admin" && userRole !== "board") {
+			return res.status(403).json({ error: "Brak uprawnień" });
+		}
+
+		const id = parseInt(req.params.id);
+		const { role_title, responsibilities, order, is_active } = req.body;
+
+		const updated = await prisma.boardMember.update({
+			where: { id },
+			data: {
+				...(role_title !== undefined && { role_title }),
+				...(responsibilities !== undefined && { responsibilities }),
+				...(order !== undefined && { order }),
+				...(is_active !== undefined && { is_active }),
+			},
+			include: {
+				user: {
+					select: {
+						id: true,
+						first_name: true,
+						last_name: true,
+						email: true,
+						phone: true,
+						avatar: true,
+						province: true,
+						functional_role: true,
+					},
+				},
+			},
+		});
+
+		res.json({
+			id: updated.id,
+			role_title: updated.role_title,
+			responsibilities: updated.responsibilities,
+			order: updated.order,
+			user: updated.user,
+		});
+	} catch (error) {
+		logger.error("[BOARD] Błąd edycji:", error);
+		res.status(500).json({ error: "Nie udało się zapisać" });
+	}
+});
+
+app.delete("/api/board/:id", authMiddleware, async (req: any, res) => {
+	try {
+		const userRole = req.user?.role;
+		if (userRole !== "admin" && userRole !== "board") {
+			return res.status(403).json({ error: "Brak uprawnień" });
+		}
+
+		const id = parseInt(req.params.id);
+		await prisma.boardMember.delete({ where: { id } });
+		res.json({ success: true });
+	} catch (error) {
+		logger.error("[BOARD] Błąd usuwania:", error);
+		res.status(500).json({ error: "Nie udało się usunąć" });
+	}
+});
+/**
+ * POST /api/tasks/check-availability
+ * Sprawdza, czy wybrani użytkownicy mają zatwierdzony urlop w dacie zadania.
+ * Body: { userIds: number[], dueDate: string }
+ * Response: { conflicts: [{ userId, userName, reason, details }] }
+ */
+app.post(
+	"/api/tasks/check-availability",
+	authMiddleware,
+	async (req: any, res) => {
+		try {
+			const { userIds, dueDate } = req.body;
+
+			if (!userIds || !Array.isArray(userIds) || userIds.length === 0) {
+				return res.json({ conflicts: [] });
+			}
+			if (!dueDate) {
+				return res.json({ conflicts: [] });
+			}
+
+			const targetDate = new Date(dueDate);
+			if (isNaN(targetDate.getTime())) {
+				return res.status(400).json({ error: "Nieprawidłowa data" });
+			}
+
+			// Zakres dnia zadania – od 00:00 do 23:59
+			const dayStart = new Date(targetDate);
+			dayStart.setHours(0, 0, 0, 0);
+			const dayEnd = new Date(targetDate);
+			dayEnd.setHours(23, 59, 59, 999);
+
+			const ids = userIds
+				.map((id: any) => parseInt(id))
+				.filter((n) => !isNaN(n));
+
+			const leaves = await prisma.leave.findMany({
+				where: {
+					user_id: { in: ids },
+					status: "approved",
+					start_date: { lte: dayEnd },
+					end_date: { gte: dayStart },
+				},
+				include: {
+					user: {
+						select: { id: true, first_name: true, last_name: true },
+					},
+				},
+			});
+
+			const conflicts = leaves.map((leave: any) => ({
+				userId: leave.user.id,
+				userName:
+					`${leave.user.first_name || ""} ${leave.user.last_name || ""}`.trim(),
+				reason: "leave",
+				details: `Urlop od ${new Date(leave.start_date).toLocaleDateString("pl-PL")} do ${new Date(leave.end_date).toLocaleDateString("pl-PL")}`,
+			}));
+
+			res.json({ conflicts });
+		} catch (error) {
+			logger.error("[CHECK-AVAILABILITY] Błąd:", error);
+			res.status(500).json({ error: "Nie udało się sprawdzić dostępności" });
+		}
+	},
+);
+/* ═══════════════════════════════════════════════════════════
+   GREEN SCREEN – kto ma zrobione zdjęcie
+   ═══════════════════════════════════════════════════════════ */
+
+app.get("/api/social/green-screen", authMiddleware, async (req: any, res) => {
+	try {
+		const photos = await prisma.greenScreenPhoto.findMany({
+			where: {
+				is_active: true,
+				// taken_at: { not: null },
+			},
+			orderBy: { created_at: "desc" },
+			include: {
+				user: {
+					select: {
+						id: true,
+						first_name: true,
+						last_name: true,
+						email: true,
+						province: true,
+						team: true,
+					},
+				},
+			},
+		});
+
+		res.json(
+			photos.map((p: any) => ({
+				id: p.id,
+				userId: p.user.id,
+				firstName: p.user.first_name,
+				lastName: p.user.last_name,
+				email: p.user.email,
+				province: p.user.province,
+				team: p.user.team,
+				photo_url: p.photo_url,
+				taken_at: p.taken_at,
+				notes: p.notes,
+				created_at: p.created_at,
+			})),
+		);
+	} catch (error) {
+		logger.error("[GREEN-SCREEN] Błąd listy:", error);
+		res.status(500).json({ error: "Nie udało się pobrać listy" });
+	}
+});
+
+app.post("/api/social/green-screen", authMiddleware, async (req: any, res) => {
+	try {
+		const userRole = req.user?.role;
+		if (
+			userRole !== "admin" &&
+			userRole !== "board" &&
+			userRole !== "coordinator"
+		) {
+			return res.status(403).json({ error: "Brak uprawnień" });
+		}
+
+		const { userId, takenAt, notes, photoUrl } = req.body;
+		console.log("[GREEN-SCREEN POST] body:", {
+			userId,
+			takenAt,
+			notes,
+			photoUrl,
+		});
+		if (!userId) return res.status(400).json({ error: "Wybierz osobę" });
+
+		const existing = await prisma.greenScreenPhoto.findUnique({
+			where: { user_id: parseInt(userId) },
+		});
+		if (existing) {
+			return res.status(400).json({ error: "Ta osoba ma już wpis" });
+		}
+
+		const created = await prisma.greenScreenPhoto.create({
+			data: {
+				user_id: parseInt(userId),
+				taken_at: takenAt ? new Date(takenAt) : null,
+				notes: notes?.trim() || null,
+				photo_url: photoUrl?.trim() || null,
+				is_active: true,
+			},
+			include: {
+				user: {
+					select: {
+						id: true,
+						first_name: true,
+						last_name: true,
+						email: true,
+						province: true,
+						team: true,
+					},
+				},
+			},
+		});
+
+		res.status(201).json({
+			id: created.id,
+			userId: created.user.id,
+			firstName: created.user.first_name,
+			lastName: created.user.last_name,
+			email: created.user.email,
+			province: created.user.province,
+			team: created.user.team,
+			photo_url: created.photo_url,
+			taken_at: created.taken_at,
+			notes: created.notes,
+			created_at: created.created_at,
+		});
+	} catch (error) {
+		logger.error("[GREEN-SCREEN] Błąd dodawania:", error);
+		res.status(500).json({ error: "Nie udało się dodać" });
+	}
+});
+
+app.put(
+	"/api/social/green-screen/:id",
+	authMiddleware,
+	async (req: any, res) => {
+		try {
+			const userRole = req.user?.role;
+			if (
+				userRole !== "admin" &&
+				userRole !== "board" &&
+				userRole !== "coordinator"
+			) {
+				return res.status(403).json({ error: "Brak uprawnień" });
+			}
+
+			const id = parseInt(req.params.id);
+			const { takenAt, notes, photoUrl, isActive } = req.body;
+
+			const updated = await prisma.greenScreenPhoto.update({
+				where: { id },
+				data: {
+					...(takenAt !== undefined && {
+						taken_at: takenAt ? new Date(takenAt) : null,
+					}),
+					...(notes !== undefined && { notes: notes?.trim() || null }),
+					...(photoUrl !== undefined && {
+						photo_url: photoUrl?.trim() || null,
+					}),
+					...(isActive !== undefined && { is_active: isActive }),
+				},
+				include: {
+					user: {
+						select: {
+							id: true,
+							first_name: true,
+							last_name: true,
+							email: true,
+							province: true,
+							team: true,
+						},
+					},
+				},
+			});
+
+			res.json({
+				id: updated.id,
+				userId: updated.user.id,
+				firstName: updated.user.first_name,
+				lastName: updated.user.last_name,
+				email: updated.user.email,
+				province: updated.user.province,
+				team: updated.user.team,
+				photo_url: updated.photo_url,
+				taken_at: updated.taken_at,
+				notes: updated.notes,
+				created_at: updated.created_at,
+			});
+		} catch (error) {
+			logger.error("[GREEN-SCREEN] Błąd edycji:", error);
+			res.status(500).json({ error: "Nie udało się zapisać" });
+		}
+	},
+);
+
+app.delete(
+	"/api/social/green-screen/:id",
+	authMiddleware,
+	async (req: any, res) => {
+		try {
+			const userRole = req.user?.role;
+			if (
+				userRole !== "admin" &&
+				userRole !== "board" &&
+				userRole !== "coordinator"
+			) {
+				return res.status(403).json({ error: "Brak uprawnień" });
+			}
+
+			const id = parseInt(req.params.id);
+			await prisma.greenScreenPhoto.delete({ where: { id } });
+			res.json({ success: true });
+		} catch (error) {
+			logger.error("[GREEN-SCREEN] Błąd usuwania:", error);
+			res.status(500).json({ error: "Nie udało się usunąć" });
+		}
+	},
+);
+/* ═══════════════════════════════════════════════════════════
+   ODZNAKI / WYRÓŻNIENIA CZŁONKÓW
+   ═══════════════════════════════════════════════════════════ */
+
+/* ─── Lista odznak użytkownika (widoczna dla wszystkich) ─── */
+app.get("/api/members/:id/badges", authMiddleware, async (req: any, res) => {
+	try {
+		const userId = parseInt(req.params.id);
+		if (isNaN(userId)) {
+			return res.status(400).json({ error: "Nieprawidłowe ID" });
+		}
+
+		const badges = await prisma.memberBadge.findMany({
+			where: { user_id: userId },
+			orderBy: [{ year: "desc" }, { month: "desc" }],
+			include: {
+				awardedBy: {
+					select: { id: true, first_name: true, last_name: true },
+				},
+			},
+		});
+
+		// Grupowanie po miesiącu/roku do statystyk
+		const grouped: Record<string, number> = {};
+		badges.forEach((b: any) => {
+			const key = `${b.year}-${String(b.month).padStart(2, "0")}`;
+			grouped[key] = (grouped[key] || 0) + 1;
+		});
+
+		res.json({
+			badges: badges.map((b: any) => ({
+				id: b.id,
+				title: b.title,
+				description: b.description,
+				month: b.month,
+				year: b.year,
+				awarded_at: b.awarded_at,
+				awarded_by_name: b.awardedBy
+					? `${b.awardedBy.first_name || ""} ${b.awardedBy.last_name || ""}`.trim()
+					: null,
+			})),
+			total: badges.length,
+			byMonth: grouped,
+		});
+	} catch (error) {
+		logger.error("[BADGES] Błąd pobierania:", error);
+		res.status(500).json({ error: "Nie udało się pobrać odznak" });
+	}
+});
+
+/* ─── Dodanie odznaki (admin/board) ─── */
+app.post("/api/members/:id/badges", authMiddleware, async (req: any, res) => {
+	try {
+		const userRole = req.user?.role;
+		if (userRole !== "admin" && userRole !== "board") {
+			return res.status(403).json({ error: "Brak uprawnień" });
+		}
+
+		const userId = parseInt(req.params.id);
+		const { title, description, month, year } = req.body;
+
+		if (!title?.trim()) {
+			return res.status(400).json({ error: "Tytuł odznaki jest wymagany" });
+		}
+		if (!month || month < 1 || month > 12) {
+			return res.status(400).json({ error: "Nieprawidłowy miesiąc" });
+		}
+		if (!year || year < 2000 || year > 2100) {
+			return res.status(400).json({ error: "Nieprawidłowy rok" });
+		}
+
+		const user = await prisma.user.findUnique({ where: { id: userId } });
+		if (!user) {
+			return res.status(404).json({ error: "Użytkownik nie istnieje" });
+		}
+
+		const badge = await prisma.memberBadge.create({
+			data: {
+				user_id: userId,
+				title: title.trim(),
+				description: description?.trim() || null,
+				month: parseInt(month),
+				year: parseInt(year),
+				awarded_by: req.user?.id || null,
+			},
+			include: {
+				awardedBy: {
+					select: { id: true, first_name: true, last_name: true },
+				},
+			},
+		});
+
+		res.status(201).json({
+			id: badge.id,
+			title: badge.title,
+			description: badge.description,
+			month: badge.month,
+			year: badge.year,
+			awarded_at: badge.awarded_at,
+			awarded_by_name: badge.awardedBy
+				? `${badge.awardedBy.first_name || ""} ${badge.awardedBy.last_name || ""}`.trim()
+				: null,
+		});
+	} catch (error) {
+		logger.error("[BADGES] Błąd dodawania:", error);
+		res.status(500).json({ error: "Nie udało się dodać odznaki" });
+	}
+});
+
+/* ─── Edycja odznaki (admin/board) ─── */
+app.put("/api/badges/:id", authMiddleware, async (req: any, res) => {
+	try {
+		const userRole = req.user?.role;
+		if (userRole !== "admin" && userRole !== "board") {
+			return res.status(403).json({ error: "Brak uprawnień" });
+		}
+
+		const badgeId = parseInt(req.params.id);
+		const { title, description, month, year } = req.body;
+
+		const existing = await prisma.memberBadge.findUnique({
+			where: { id: badgeId },
+		});
+		if (!existing) {
+			return res.status(404).json({ error: "Nie znaleziono odznaki" });
+		}
+
+		const updated = await prisma.memberBadge.update({
+			where: { id: badgeId },
+			data: {
+				title: title?.trim() || existing.title,
+				description:
+					description !== undefined
+						? description?.trim() || null
+						: existing.description,
+				month: month !== undefined ? parseInt(month) : existing.month,
+				year: year !== undefined ? parseInt(year) : existing.year,
+			},
+		});
+
+		res.json({ success: true, badge: updated });
+	} catch (error) {
+		logger.error("[BADGES] Błąd edycji:", error);
+		res.status(500).json({ error: "Nie udało się zapisać" });
+	}
+});
+
+/* ─── Usunięcie odznaki (admin/board) ─── */
+app.delete("/api/badges/:id", authMiddleware, async (req: any, res) => {
+	try {
+		const userRole = req.user?.role;
+		if (userRole !== "admin" && userRole !== "board") {
+			return res.status(403).json({ error: "Brak uprawnień" });
+		}
+
+		const badgeId = parseInt(req.params.id);
+		await prisma.memberBadge.delete({ where: { id: badgeId } });
+		res.json({ success: true });
+	} catch (error) {
+		logger.error("[BADGES] Błąd usuwania:", error);
+		res.status(500).json({ error: "Nie udało się usunąć" });
+	}
+});
+app.get(
+	"/api/members/:id/change-history",
+	authMiddleware,
+	async (req: any, res) => {
+		try {
+			const userRole = req.user?.role;
+			if (
+				userRole !== "admin" &&
+				userRole !== "board" &&
+				userRole !== "Zarząd" &&
+				userRole !== "coordinator"
+			) {
+				return res.status(403).json({ error: "Brak uprawnień" });
+			}
+
+			const userId = parseInt(req.params.id);
+			if (isNaN(userId)) {
+				return res.status(400).json({ error: "Nieprawidłowe ID" });
+			}
+
+			const history = await prisma.memberChangeHistory.findMany({
+				where: { user_id: userId },
+				orderBy: { changed_at: "desc" },
+				include: {
+					changedBy: {
+						select: { id: true, first_name: true, last_name: true },
+					},
+				},
+			});
+
+			res.json({
+				history: history.map((h: any) => ({
+					id: h.id,
+					field: h.field,
+					old_value: h.old_value,
+					new_value: h.new_value,
+					changed_at: h.changed_at.toISOString(),
+					changed_by_name: h.changedBy
+						? `${h.changedBy.first_name || ""} ${h.changedBy.last_name || ""}`.trim()
+						: "System",
+				})),
+				total: history.length,
+			});
+		} catch (error) {
+			logger.error("[CHANGE-HISTORY] Błąd:", error);
+			res.status(500).json({ error: "Nie udało się pobrać historii" });
+		}
+	},
+);
+app.get("/api/badges/recent", authMiddleware, async (req: any, res) => {
+	try {
+		const limit = parseInt(req.query.limit as string) || 5;
+
+		// Opcjonalnie: ?year=2026&month=9 — do testowania innych miesięcy
+		const now = new Date();
+		const currentMonth = parseInt(
+			(req.query.month as string) || String(now.getMonth() + 1),
+		);
+		const currentYear = parseInt(
+			(req.query.year as string) || String(now.getFullYear()),
+		);
+
+		const badges = await prisma.memberBadge.findMany({
+			where: {
+				month: currentMonth,
+				year: currentYear,
+			},
+			orderBy: { awarded_at: "desc" },
+			take: limit,
+			include: {
+				user: {
+					select: {
+						id: true,
+						first_name: true,
+						last_name: true,
+						email: true,
+						avatar: true,
+					},
+				},
+			},
+		});
+
+		res.json({
+			currentMonth,
+			currentYear,
+			monthName: now.toLocaleDateString("pl-PL", { month: "long" }),
+			badges: badges.map((b: any) => ({
+				id: b.id,
+				title: b.title,
+				description: b.description,
+				month: b.month,
+				year: b.year,
+				awarded_at: b.awarded_at,
+				user: {
+					id: b.user.id.toString(),
+					firstName: b.user.first_name,
+					lastName: b.user.last_name,
+					email: b.user.email,
+					avatar: b.user.avatar,
+				},
+			})),
+		});
+	} catch (error) {
+		logger.error("[BADGES] Błąd recent:", error);
+		res.status(500).json({ error: "Nie udało się pobrać wyróżnień" });
+	}
+});
+/* ═══════════════════════════════════════════════════════════
+   UMIEJĘTNOŚCI POTWIERDZONE PRZEZ STOWARZYSZENIE
+   ═══════════════════════════════════════════════════════════ */
+
+/* ─── Lista umiejętności użytkownika (widoczna dla wszystkich) ─── */
+app.get(
+	"/api/members/:id/verified-skills",
+	authMiddleware,
+	async (req: any, res) => {
+		try {
+			const userId = parseInt(req.params.id);
+			if (isNaN(userId)) {
+				return res.status(400).json({ error: "Nieprawidłowe ID" });
+			}
+
+			const skills = await prisma.verifiedSkill.findMany({
+				where: { user_id: userId },
+				orderBy: { awarded_at: "desc" },
+				include: {
+					awardedBy: {
+						select: { id: true, first_name: true, last_name: true },
+					},
+				},
+			});
+
+			res.json({
+				skills: skills.map((s: any) => ({
+					id: s.id,
+					skill_name: s.skill_name,
+					category: s.category,
+					description: s.description,
+					awarded_at: s.awarded_at,
+					awarded_by_name: s.awardedBy
+						? `${s.awardedBy.first_name || ""} ${s.awardedBy.last_name || ""}`.trim()
+						: "System",
+				})),
+				total: skills.length,
+			});
+		} catch (error) {
+			logger.error("[VERIFIED-SKILLS] Błąd pobierania:", error);
+			res.status(500).json({ error: "Nie udało się pobrać umiejętności" });
+		}
+	},
+);
+
+/* ─── Dodanie umiejętności (admin/board) ─── */
+app.post(
+	"/api/members/:id/verified-skills",
+	authMiddleware,
+	async (req: any, res) => {
+		try {
+			const userRole = req.user?.role;
+			if (userRole !== "admin" && userRole !== "board") {
+				return res.status(403).json({ error: "Brak uprawnień" });
+			}
+
+			const userId = parseInt(req.params.id);
+			const { skill_name, category, description } = req.body;
+
+			if (!skill_name?.trim()) {
+				return res
+					.status(400)
+					.json({ error: "Nazwa umiejętności jest wymagana" });
+			}
+			if (!category?.trim()) {
+				return res.status(400).json({ error: "Kategoria jest wymagana" });
+			}
+
+			const user = await prisma.user.findUnique({ where: { id: userId } });
+			if (!user) {
+				return res.status(404).json({ error: "Użytkownik nie istnieje" });
+			}
+
+			const skill = await prisma.verifiedSkill.create({
+				data: {
+					user_id: userId,
+					skill_name: skill_name.trim(),
+					category: category.trim(),
+					description: description?.trim() || null,
+					awarded_by: req.user?.id || null,
+				},
+				include: {
+					awardedBy: {
+						select: { id: true, first_name: true, last_name: true },
+					},
+				},
+			});
+
+			res.status(201).json({
+				id: skill.id,
+				skill_name: skill.skill_name,
+				category: skill.category,
+				description: skill.description,
+				awarded_at: skill.awarded_at,
+				awarded_by_name: skill.awardedBy
+					? `${skill.awardedBy.first_name || ""} ${skill.awardedBy.last_name || ""}`.trim()
+					: "System",
+			});
+		} catch (error) {
+			logger.error("[VERIFIED-SKILLS] Błąd dodawania:", error);
+			res.status(500).json({ error: "Nie udało się dodać umiejętności" });
+		}
+	},
+);
+
+/* ─── Usunięcie umiejętności (admin/board) ─── */
+app.delete(
+	"/api/verified-skills/:id",
+	authMiddleware,
+	async (req: any, res) => {
+		try {
+			const userRole = req.user?.role;
+			if (userRole !== "admin" && userRole !== "board") {
+				return res.status(403).json({ error: "Brak uprawnień" });
+			}
+
+			const id = parseInt(req.params.id);
+			await prisma.verifiedSkill.delete({ where: { id } });
+			res.json({ success: true });
+		} catch (error) {
+			logger.error("[VERIFIED-SKILLS] Błąd usuwania:", error);
+			res.status(500).json({ error: "Nie udało się usunąć" });
+		}
+	},
+);
+
+/* ─── Lista wszystkich potwierdzonych umiejętności (z filtrami) ─── */
+app.get("/api/verified-skills", authMiddleware, async (req: any, res) => {
+	try {
+		const { category, search, userId } = req.query;
+
+		const where: any = {};
+
+		if (category && category !== "all") {
+			where.category = category as string;
+		}
+		if (search) {
+			where.OR = [
+				{ skill_name: { contains: search as string } },
+				{ description: { contains: search as string } },
+			];
+		}
+		if (userId) {
+			where.user_id = parseInt(userId as string);
+		}
+
+		const skills = await prisma.verifiedSkill.findMany({
+			where,
+			orderBy: { awarded_at: "desc" },
+			include: {
+				user: {
+					select: {
+						id: true,
+						first_name: true,
+						last_name: true,
+						email: true,
+						avatar: true,
+						pillars: true,
+					},
+				},
+				awardedBy: {
+					select: { id: true, first_name: true, last_name: true },
+				},
+			},
+		});
+
+		// Grupowanie po kategorii do statystyk
+		const categories = await prisma.verifiedSkill.groupBy({
+			by: ["category"],
+			_count: { _all: true },
+		});
+
+		res.json({
+			skills: skills.map((s: any) => ({
+				id: s.id,
+				skill_name: s.skill_name,
+				category: s.category,
+				description: s.description,
+				awarded_at: s.awarded_at,
+				awarded_by_name: s.awardedBy
+					? `${s.awardedBy.first_name || ""} ${s.awardedBy.last_name || ""}`.trim()
+					: "System",
+				user: {
+					id: s.user.id.toString(),
+					firstName: s.user.first_name,
+					lastName: s.user.last_name,
+					email: s.user.email,
+					avatar: s.user.avatar,
+					pillars: s.user.pillars,
+				},
+			})),
+			categories: categories.map((c: any) => ({
+				name: c.category,
+				count: c._count._all,
+			})),
+			total: skills.length,
+		});
+	} catch (error) {
+		logger.error("[VERIFIED-SKILLS] Błąd listy:", error);
+		res.status(500).json({ error: "Nie udało się pobrać listy" });
+	}
+});
+app.listen(port, () => {
+	console.log(`🚀 Serwer uruchomiony na porcie ${port}`);
+	verifyMailer();
+});

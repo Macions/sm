@@ -8,37 +8,42 @@ datasource db {
 }
 
 model User {
-  id                        Int                  @id @default(autoincrement())
-  username                  String               @unique(map: "username") @db.VarChar(50)
-  email                     String?              @unique(map: "email") @db.VarChar(100)
-  password_hash             String               @db.VarChar(255)
-  first_name                String               @db.VarChar(50)
-  last_name                 String               @db.VarChar(50)
-  is_active                 Boolean?             @default(true)
-  created_at                DateTime             @default(now()) @db.Timestamp(0)
-  team                      String?              @db.VarChar(100)
-  status                    String?              @default("active") @db.VarChar(50)
-  previous_status           String?              @default("active") @db.VarChar(50)
-  province                  String?              @db.VarChar(100)
-  phone                     String?              @db.VarChar(20)
-  avatar                    String?              @db.VarChar(255)
-  functional_role           String?              @db.VarChar(100)
+  id                        Int                   @id @default(autoincrement())
+  username                  String                @unique(map: "username") @db.VarChar(50)
+  email                     String?               @unique(map: "email") @db.VarChar(100)
+  password_hash             String                @db.VarChar(255)
+  first_name                String                @db.VarChar(50)
+  last_name                 String                @db.VarChar(50)
+  is_active                 Boolean?              @default(true)
+  created_at                DateTime              @default(now()) @db.Timestamp(0)
+  team                      String?               @db.VarChar(100)
+  status                    String?               @default("active") @db.VarChar(50)
+  previous_status           String?               @default("active") @db.VarChar(50)
+  province                  String?               @db.VarChar(100)
+  phone                     String?               @db.VarChar(20)
+  avatar                    String?               @db.VarChar(255)
+  functional_role           String?               @db.VarChar(100)
   role_id                   Int?
-  birthday                  DateTime?            @db.Date
-  join_date                 DateTime?            @db.Date
-  is_trial                  Boolean?             @default(false)
-  attendance_percentage     Decimal?             @default(92.00) @db.Decimal(5, 2)
-  form_data                 String?              @db.LongText
+  birthday                  DateTime?             @db.Date
+  join_date                 DateTime?             @db.Date
+  is_trial                  Boolean?              @default(false)
+  attendance_percentage     Decimal?              @default(92.00) @db.Decimal(5, 2)
+  form_data                 String?               @db.LongText
   lastContributionPaidAt    DateTime?
-  contributionStatus        ContributionStatus?  @default(PENDING)
-  contributionOverdueMonths Int                  @default(0)
-  pillars                   String?              @db.VarChar(255)
-  google_calendar_token     String?              @db.Text
-  ratedTasks                Task[]               @relation("TaskRatedBy")
+  contributionStatus        ContributionStatus?   @default(PENDING)
+  contributionOverdueMonths Int                   @default(0)
+  pillars                   String?               @db.VarChar(255)
+  google_calendar_token     String?               @db.Text
+  ratedTasks                Task[]                @relation("TaskRatedBy")
   contributions             Contribution[]
   contentCreator            ContentCreator?
   guides                    guide[]
   ideaVotes                 IdeaVote[]
+  address                   String?               @db.Text
+  lat                       Float?
+  lng                       Float?
+  geocoded_at               DateTime?
+  address_source            String?               @db.VarChar(50) // "SM_Ewidencja" | "manual"
   leaveComments             LeaveComment[]
   leaves                    Leave[]
   materials                 Material[]
@@ -57,11 +62,11 @@ model User {
   taskAssignees             TaskAssignee[]
   task_attachments          task_attachments[]
   taskComments              TaskComment[]
-  assignedTasks             Task[]               @relation("assignedTasks")
-  createdTasks              Task[]               @relation("createdTasks")
+  assignedTasks             Task[]                @relation("assignedTasks")
+  createdTasks              Task[]                @relation("createdTasks")
   team_members              TeamMember[]
   user_notifications        user_notifications[]
-  roles                     roles?               @relation(fields: [role_id], references: [id], onUpdate: Restrict, map: "users_ibfk_1")
+  roles                     roles?                @relation(fields: [role_id], references: [id], onUpdate: Restrict, map: "users_ibfk_1")
   vacancies                 Vacancy[]
   vacancyApplications       VacancyApplication[]
   userGroups                UserGroup[]
@@ -69,7 +74,17 @@ model User {
   googleToken               GoogleToken?
   taskAbsences              TaskAbsence[]
   eventAbsences             EventAbsence[]
-  eventAbsencesApproved     EventAbsence[]       @relation("EventAbsenceApprover")
+  eventAbsencesApproved     EventAbsence[]        @relation("EventAbsenceApprover")
+  pillarRequestsCreated     PillarChangeRequest[] @relation("UserPillarRequests")
+  pillarRequestsReviewed    PillarChangeRequest[] @relation("ReviewerPillarRequests")
+  boardMember               BoardMember?
+  greenScreenPhoto          GreenScreenPhoto?
+  badges                    MemberBadge[]         @relation("UserBadges")
+  badgesAwarded             MemberBadge[]         @relation("BadgeAwardedBy")
+  changeHistory             MemberChangeHistory[] @relation("UserChangeHistory")
+  changeHistoryMade         MemberChangeHistory[] @relation("ChangeHistoryAuthor")
+  verifiedSkills            VerifiedSkill[]       @relation("UserVerifiedSkills")
+  verifiedSkillsAwarded     VerifiedSkill[]       @relation("VerifiedSkillAwardedBy")
 
   @@index([role_id], map: "idx_users_role_id")
   @@index([status], map: "idx_users_status")
@@ -211,18 +226,20 @@ model TaskComment {
 }
 
 model Team {
-  id          Int          @id @default(autoincrement())
-  name        String       @db.VarChar(100)
-  role        String       @db.VarChar(100)
-  description String?      @db.Text
-  icon        String?      @default("Users") @db.VarChar(50)
-  status      String?      @default("active") @db.VarChar(20)
-  parent_id   Int?
-  email       String?      @db.VarChar(255)
-  created_at  DateTime     @default(now()) @db.Timestamp(0)
-  members     TeamMember[]
-  parent      Team?        @relation("TeamParent", fields: [parent_id], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "teams_ibfk_1")
-  childTeams  Team[]       @relation("TeamParent")
+  id                       Int                   @id @default(autoincrement())
+  name                     String                @db.VarChar(100)
+  role                     String                @db.VarChar(100)
+  description              String?               @db.Text
+  icon                     String?               @default("Users") @db.VarChar(50)
+  status                   String?               @default("active") @db.VarChar(20)
+  parent_id                Int?
+  email                    String?               @db.VarChar(255)
+  created_at               DateTime              @default(now()) @db.Timestamp(0)
+  members                  TeamMember[]
+  parent                   Team?                 @relation("TeamParent", fields: [parent_id], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "teams_ibfk_1")
+  childTeams               Team[]                @relation("TeamParent")
+  pillarChangeRequestsFrom PillarChangeRequest[] @relation("FromPillar")
+  pillarChangeRequestsTo   PillarChangeRequest[] @relation("ToPillar")
 
   @@index([parent_id], map: "parent_id")
   @@map("teams")
@@ -843,4 +860,115 @@ model FaqItem {
 
   @@index([category_id])
   @@map("faq_items")
+}
+
+model PillarChangeRequest {
+  id             Int       @id @default(autoincrement())
+  user_id        Int
+  from_pillar_id Int?
+  to_pillar_id   Int
+  reason         String?   @db.Text
+  status         String    @default("pending")
+  reviewed_by    Int?
+  reviewed_at    DateTime?
+  review_comment String?   @db.Text
+  created_at     DateTime  @default(now())
+  updated_at     DateTime  @updatedAt
+
+  user       User  @relation("UserPillarRequests", fields: [user_id], references: [id])
+  reviewer   User? @relation("ReviewerPillarRequests", fields: [reviewed_by], references: [id])
+  fromPillar Team? @relation("FromPillar", fields: [from_pillar_id], references: [id])
+  toPillar   Team  @relation("ToPillar", fields: [to_pillar_id], references: [id])
+
+  @@map("pillar_change_requests")
+}
+
+model BoardMember {
+  id               Int      @id @default(autoincrement())
+  user_id          Int      @unique
+  role_title       String   @db.VarChar(100)
+  responsibilities String?  @db.Text
+  order            Int      @default(0)
+  is_active        Boolean  @default(true)
+  created_at       DateTime @default(now())
+  updated_at       DateTime @updatedAt
+
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([order])
+  @@map("board_members")
+}
+
+model GreenScreenPhoto {
+  id         Int       @id @default(autoincrement())
+  user_id    Int
+  photo_url  String?   @db.VarChar(500)
+  taken_at   DateTime? @db.DateTime(0)
+  notes      String?   @db.Text
+  is_active  Boolean   @default(true)
+  created_at DateTime  @default(now())
+  updated_at DateTime  @updatedAt
+
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@unique([user_id], map: "unique_green_screen_user")
+  @@index([is_active])
+  @@map("green_screen_photos")
+}
+
+model MemberBadge {
+  id          Int      @id @default(autoincrement())
+  user_id     Int
+  title       String   @db.VarChar(255)
+  description String?  @db.Text
+  month       Int
+  year        Int
+  awarded_by  Int?
+  awarded_at  DateTime @default(now()) @db.DateTime(0)
+  created_at  DateTime @default(now()) @db.DateTime(0)
+  updated_at  DateTime @updatedAt @db.DateTime(0)
+
+  user      User  @relation("UserBadges", fields: [user_id], references: [id], onDelete: Cascade)
+  awardedBy User? @relation("BadgeAwardedBy", fields: [awarded_by], references: [id], onDelete: SetNull)
+
+  @@index([user_id])
+  @@index([year, month])
+  @@map("member_badges")
+}
+
+model MemberChangeHistory {
+  id         Int      @id @default(autoincrement())
+  user_id    Int
+  field      String   @db.VarChar(50)
+  old_value  String?  @db.Text
+  new_value  String?  @db.Text
+  changed_by Int?
+  changed_at DateTime @default(now()) @db.DateTime(0)
+
+  user      User  @relation("UserChangeHistory", fields: [user_id], references: [id], onDelete: Cascade)
+  changedBy User? @relation("ChangeHistoryAuthor", fields: [changed_by], references: [id], onDelete: SetNull)
+
+  @@index([user_id])
+  @@index([field])
+  @@index([changed_at])
+  @@map("member_change_history")
+}
+
+model VerifiedSkill {
+  id          Int      @id @default(autoincrement())
+  user_id     Int
+  skill_name  String   @db.VarChar(255)
+  category    String   @db.VarChar(100)
+  description String?  @db.Text
+  awarded_by  Int?
+  awarded_at  DateTime @default(now()) @db.DateTime(0)
+  created_at  DateTime @default(now()) @db.DateTime(0)
+  updated_at  DateTime @updatedAt @db.DateTime(0)
+
+  user      User  @relation("UserVerifiedSkills", fields: [user_id], references: [id], onDelete: Cascade)
+  awardedBy User? @relation("VerifiedSkillAwardedBy", fields: [awarded_by], references: [id], onDelete: SetNull)
+
+  @@index([user_id])
+  @@index([category])
+  @@map("verified_skills")
 }

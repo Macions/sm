@@ -1004,3 +1004,84 @@
 		font-size: 11px;
 	}
 }
+
+/* ─── OSOBY WYRÓŻNIONE ─── */
+.badges {
+	background: #ffffff;
+	border-radius: 12px;
+	padding: 20px;
+	box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.badges__list {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	margin-top: 12px;
+}
+
+.badge {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	padding: 10px 12px;
+	background: linear-gradient(135deg, #fffbeb, #fef3c7);
+	border: 1px solid #fde68a;
+	border-radius: 10px;
+	transition: all 0.2s ease;
+}
+
+.badge:hover {
+	transform: translateY(-1px);
+	box-shadow: 0 4px 12px rgba(245, 158, 11, 0.2);
+}
+
+.badge__avatar {
+	width: 40px;
+	height: 40px;
+	border-radius: 50%;
+	background: linear-gradient(135deg, #f59e0b, #fcd34d);
+	color: #fff;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-weight: 600;
+	font-size: 14px;
+	flex-shrink: 0;
+	overflow: hidden;
+}
+
+.badge__avatar img {
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+}
+
+.badge__content {
+	flex: 1;
+	min-width: 0;
+}
+
+.badge__name {
+	font-weight: 600;
+	color: #92400e;
+	font-size: 14px;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.badge__title {
+	display: flex;
+	align-items: center;
+	gap: 4px;
+	color: #b45309;
+	font-size: 12px;
+	margin-top: 2px;
+}
+
+.badge__meta {
+	color: #a16207;
+	font-size: 11px;
+	margin-top: 2px;
+}

@@ -129,6 +129,7 @@ function AppRoutes() {
 					<Route path="/" element={<Dashboard />} />
 					<Route path="/dashboard" element={<Dashboard />} />
 					<Route path="/structure" element={<Structure />} />
+					<Route path="/myteam" element={<Admin title="Mój zespół" />} />
 					<Route path="/projects" element={<Projects />} />
 					<Route path="/guides" element={<Tutorials />} />
 					<Route path="/members" element={<Members title="Członkowie" />} />

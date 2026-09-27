@@ -18,6 +18,8 @@ import {
 	Wallet,
 	CreditCard,
 	Gift,
+	Award, // ← DODAJ
+	Star, // ← DODAJ
 } from "lucide-react";
 import styles from "./Dashboard.module.css";
 function getMonthName(month: number): string {
@@ -101,7 +103,21 @@ type ContributionStats = {
 		monthsPaid: number;
 	}>;
 };
-
+type RecentBadge = {
+	id: number;
+	title: string;
+	description?: string | null;
+	month: number;
+	year: number;
+	awarded_at: string;
+	user: {
+		id: string;
+		firstName: string;
+		lastName: string;
+		email: string;
+		avatar?: string | null;
+	};
+};
 const PILLAR_MAP: Record<string, string> = {
 	Konferencyjny: "Filar Konferencyjny",
 	Projektowy: "Filar Projektowy",
@@ -194,7 +210,8 @@ export default function Dashboard() {
 	const { user, loading: userLoading } = useUser();
 
 	const displayName = user?.firstName || "Użytkowniku";
-
+	const [recentBadges, setRecentBadges] = useState<RecentBadge[]>([]);
+	const [loadingBadges, setLoadingBadges] = useState(true);
 	const [checkingOnboarding, setCheckingOnboarding] = useState(true);
 	const [error, setError] = useState<string | null>(null);
 
@@ -370,12 +387,36 @@ export default function Dashboard() {
 				setLoadingNotifs(false);
 			}
 		};
+		const fetchRecentBadges = async () => {
+			try {
+				setLoadingBadges(true);
+				const token = localStorage.getItem("accessToken");
+
+				const res = await fetch("/api/badges/recent?limit=5", {
+					signal: controller.signal,
+					headers: {
+						Authorization: `Bearer ${token}`,
+						"Content-Type": "application/json",
+					},
+				});
+
+				if (!res.ok) throw new Error("Nie udało się pobrać wyróżnień");
+				const data = await res.json();
+				setRecentBadges(data.badges || []);
+			} catch (err) {
+				if (err instanceof Error && err.name === "AbortError") return;
+				console.error(" [Dashboard] Błąd wyróżnień:", err);
+			} finally {
+				setLoadingBadges(false);
+			}
+		};
 
 		Promise.all([
 			fetchStats(),
 			fetchContributions(),
 			fetchNotifs(),
 			fetchBirthdays(),
+			fetchRecentBadges(), // ← DODAJ
 		]);
 
 		return () => {
@@ -843,7 +884,47 @@ export default function Dashboard() {
 						)}
 					</div>
 				</div>
-
+				{/* ─── OSOBY WYRÓŻNIONE ─── */}
+				{!loadingBadges && recentBadges.length > 0 && (
+					<div className={styles.badges}>
+						<h2 className={styles.sectionTitle}>
+							<Award size={20} />
+							Osoby wyróżnione
+						</h2>
+						<div className={styles.badges__list}>
+							{recentBadges.map((badge) => (
+								<div
+									key={badge.id}
+									className={styles.badge}
+									onClick={() =>
+										safeNavigate(`/members/${badge.user.id}`, navigate)
+									}
+									style={{ cursor: "pointer" }}
+								>
+									<div className={styles.badge__avatar}>
+										{badge.user.avatar ? (
+											<img src={badge.user.avatar} alt={badge.user.firstName} />
+										) : (
+											`${(badge.user.firstName || "")[0] || ""}${(badge.user.lastName || "")[0] || ""}`
+										)}
+									</div>
+									<div className={styles.badge__content}>
+										<div className={styles.badge__name}>
+											{badge.user.firstName} {badge.user.lastName}
+										</div>
+										<div className={styles.badge__title}>
+											<Star size={12} />
+											{badge.title}
+										</div>
+										<div className={styles.badge__meta}>
+											{getMonthName(badge.month)} {badge.year}
+										</div>
+									</div>
+								</div>
+							))}
+						</div>
+					</div>
+				)}
 				<div className={styles.quickActions}>
 					<h2 className={styles.sectionTitle}>Szybkie akcje</h2>
 					<div className={styles.quickActions__grid}>

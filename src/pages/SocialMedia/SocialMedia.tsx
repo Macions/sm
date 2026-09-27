@@ -1199,7 +1199,19 @@ interface MediaContact {
 	notes?: string;
 	createdAt: string;
 }
-
+interface GreenScreenEntry {
+	id: string;
+	userId: string;
+	firstName: string;
+	lastName: string;
+	email: string;
+	province?: string;
+	team?: string;
+	photo_url: string | null;
+	taken_at: string | null;
+	notes: string | null;
+	created_at: string;
+}
 interface MemberFormData {
 	user_id: string;
 	role: SocialRole;
@@ -2949,6 +2961,163 @@ function ContactsSection({
 		</section>
 	);
 }
+
+function GreenScreenSection({
+	entries,
+	canManage,
+	onAdd,
+	onEdit,
+	onDelete,
+}: {
+	entries: GreenScreenEntry[];
+	canManage: boolean;
+	onAdd: () => void;
+	onEdit: (entry: GreenScreenEntry) => void;
+	onDelete: (id: string) => void;
+}) {
+	const [searchTerm, setSearchTerm] = useState("");
+
+	const filteredEntries = useMemo(() => {
+		return entries.filter((e) => {
+			const term = searchTerm.toLowerCase();
+			return (
+				`${e.firstName} ${e.lastName}`.toLowerCase().includes(term) ||
+				e.email.toLowerCase().includes(term)
+			);
+		});
+	}, [entries, searchTerm]);
+
+	const fmtDate = (d: string | null) => {
+		if (!d) return "nie podano daty";
+		return new Date(d).toLocaleDateString("pl-PL", {
+			day: "2-digit",
+			month: "2-digit",
+			year: "numeric",
+		});
+	};
+
+	return (
+		<section className={styles.section}>
+			<div className={styles.section__header}>
+				<div className={styles.section__headerLeft}>
+					<h2 className={styles.section__title}>
+						Zdjęcia na green screenie
+						<span className={styles.section__badge}>{entries.length}</span>
+					</h2>
+					<p className={styles.section__subtitle}>
+						Osoby, które mają już zrobione zdjęcie na green screenie.
+					</p>
+				</div>
+				{canManage && (
+					<button className={styles.section__addBtn} onClick={onAdd}>
+						<Plus size={18} />
+						Dodaj osobę
+					</button>
+				)}
+			</div>
+
+			{entries.length > 0 && (
+				<div className={styles.section__filters}>
+					<div className={styles.section__search}>
+						<Search size={18} className={styles.section__searchIcon} />
+						<input
+							type="text"
+							className={styles.section__searchInput}
+							placeholder="Szukaj po imieniu, nazwisku, emailu..."
+							value={searchTerm}
+							onChange={(e) => setSearchTerm(e.target.value)}
+						/>
+						{searchTerm && (
+							<button
+								className={styles.searchClear}
+								onClick={() => setSearchTerm("")}
+							>
+								<X size={14} />
+							</button>
+						)}
+					</div>
+				</div>
+			)}
+
+			{filteredEntries.length === 0 ? (
+				<div className={styles.emptyState}>
+					<Camera size={48} className={styles.emptyState__icon} />
+					<h3 className={styles.emptyState__title}>
+						{searchTerm ? "Brak wyników" : "Lista jest pusta"}
+					</h3>
+					<p className={styles.emptyState__description}>
+						{searchTerm
+							? "Nie znaleziono osób spełniających kryteria."
+							: "Dodaj pierwszą osobę, żeby zacząć."}
+					</p>
+				</div>
+			) : (
+				<div className={styles.greenScreenGrid}>
+					{filteredEntries.map((entry) => (
+						<div key={entry.id} className={styles.greenScreenCard}>
+							<div className={styles.greenScreenCard__header}>
+								<div className={styles.greenScreenCard__avatar}>
+									{entry.firstName[0]}
+									{entry.lastName[0]}
+								</div>
+								<div className={styles.greenScreenCard__info}>
+									<h3 className={styles.greenScreenCard__name}>
+										{entry.firstName} {entry.lastName}
+									</h3>
+									<span className={styles.greenScreenCard__email}>
+										{entry.email}
+									</span>
+								</div>
+							</div>
+
+							<div className={styles.greenScreenCard__body}>
+								<div className={styles.greenScreenCard__row}>
+									<Calendar size={14} />
+									<span>Zdjęcie: {fmtDate(entry.taken_at)}</span>
+								</div>
+								{entry.photo_url && (
+									<a
+										href={entry.photo_url}
+										target="_blank"
+										rel="noopener noreferrer"
+										className={styles.greenScreenCard__link}
+									>
+										<Camera size={14} />
+										<span>Zobacz zdjęcie</span>
+									</a>
+								)}
+								{entry.notes && (
+									<div className={styles.greenScreenCard__notes}>
+										{entry.notes}
+									</div>
+								)}
+							</div>
+
+							{canManage && (
+								<div className={styles.greenScreenCard__actions}>
+									<button
+										className={styles.greenScreenCard__editBtn}
+										onClick={() => onEdit(entry)}
+										title="Edytuj"
+									>
+										<Edit size={14} />
+									</button>
+									<button
+										className={styles.greenScreenCard__deleteBtn}
+										onClick={() => onDelete(entry.id)}
+										title="Usuń"
+									>
+										<Trash2 size={14} />
+									</button>
+								</div>
+							)}
+						</div>
+					))}
+				</div>
+			)}
+		</section>
+	);
+}
 interface EditMemberModalProps {
 	isOpen: boolean;
 	member: TeamMember | null;
@@ -3110,7 +3279,291 @@ function EditCreatorModal({
 		</div>
 	);
 }
+function AddGreenScreenModal({
+	isOpen,
+	onClose,
+	onSave,
+	availableUsers,
+}: {
+	isOpen: boolean;
+	onClose: () => void;
+	onSave: (data: {
+		userId: string;
+		takenAt: string;
+		notes: string;
+		photoUrl: string;
+	}) => void;
+	availableUsers: any[];
+}) {
+	const [userId, setUserId] = useState("");
+	const [takenAt, setTakenAt] = useState("");
+	const [notes, setNotes] = useState("");
+	const [photoUrl, setPhotoUrl] = useState("");
+	const [searchTerm, setSearchTerm] = useState("");
+	const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+	const dropdownRef = useRef<HTMLDivElement>(null);
 
+	const filteredUsers = useMemo(() => {
+		if (!searchTerm.trim()) return availableUsers;
+		const term = searchTerm.toLowerCase();
+		return availableUsers.filter(
+			(u) =>
+				(u.name || "").toLowerCase().includes(term) ||
+				(u.email || "").toLowerCase().includes(term),
+		);
+	}, [availableUsers, searchTerm]);
+
+	const selectedUser = availableUsers.find((u) => u.id === userId);
+	const inputValue = selectedUser
+		? `${selectedUser.name} (${selectedUser.email})`
+		: searchTerm;
+
+	useEffect(() => {
+		const handleClickOutside = (e: MouseEvent) => {
+			if (
+				dropdownRef.current &&
+				!dropdownRef.current.contains(e.target as Node)
+			) {
+				setIsDropdownOpen(false);
+			}
+		};
+		document.addEventListener("mousedown", handleClickOutside);
+		return () => document.removeEventListener("mousedown", handleClickOutside);
+	}, []);
+
+	useEffect(() => {
+		if (!isOpen) {
+			setUserId("");
+			setTakenAt("");
+			setNotes("");
+			setPhotoUrl("");
+			setSearchTerm("");
+		}
+	}, [isOpen]);
+
+	if (!isOpen) return null;
+
+	const handleSubmit = (e: React.FormEvent) => {
+		e.preventDefault();
+		if (!userId) {
+			toast.error("Wybierz osobę");
+			return;
+		}
+		onSave({ userId, takenAt, notes, photoUrl });
+		onClose();
+	};
+
+	return (
+		<div className={styles.modalOverlay} onClick={onClose}>
+			<div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+				<div className={styles.modal__header}>
+					<h2 className={styles.modal__title}>Dodaj osobę</h2>
+					<button className={styles.modal__close} onClick={onClose}>
+						<X size={20} />
+					</button>
+				</div>
+				<form onSubmit={handleSubmit} className={styles.modal__form}>
+					<div className={styles.modal__field}>
+						<label className={styles.modal__label}>Osoba *</label>
+						<div className={styles.searchableSelect} ref={dropdownRef}>
+							<div className={styles.searchableSelect__inputWrapper}>
+								<input
+									type="text"
+									className={styles.searchableSelect__input}
+									placeholder="Szukaj użytkownika..."
+									value={inputValue}
+									onChange={(e) => {
+										setSearchTerm(e.target.value);
+										setIsDropdownOpen(true);
+										if (userId) setUserId("");
+									}}
+									onFocus={() => {
+										if (!userId) setIsDropdownOpen(true);
+									}}
+								/>
+								{selectedUser && (
+									<button
+										type="button"
+										className={styles.searchableSelect__clear}
+										onClick={() => {
+											setUserId("");
+											setSearchTerm("");
+										}}
+									>
+										<X size={14} />
+									</button>
+								)}
+							</div>
+							{isDropdownOpen && !selectedUser && (
+								<div className={styles.searchableSelect__dropdown}>
+									{filteredUsers.length === 0 ? (
+										<div className={styles.searchableSelect__empty}>
+											Brak wyników
+										</div>
+									) : (
+										filteredUsers.map((user) => (
+											<div
+												key={user.id}
+												className={styles.searchableSelect__item}
+												onClick={() => {
+													setUserId(user.id);
+													setSearchTerm("");
+													setIsDropdownOpen(false);
+												}}
+											>
+												<span className={styles.searchableSelect__itemName}>
+													{user.name} ({user.email})
+												</span>
+											</div>
+										))
+									)}
+								</div>
+							)}
+						</div>
+					</div>
+
+					<div className={styles.modal__field}>
+						<label className={styles.modal__label}>Data zdjęcia</label>
+						<input
+							type="date"
+							className={styles.modal__input}
+							value={takenAt}
+							onChange={(e) => setTakenAt(e.target.value)}
+						/>
+						<span className={styles.modal__helper}>
+							Zostaw puste, jeśli jeszcze nie zrobione
+						</span>
+					</div>
+
+					<div className={styles.modal__field}>
+						<label className={styles.modal__label}>Link do zdjęcia</label>
+						<input
+							type="text"
+							className={styles.modal__input}
+							value={photoUrl}
+							onChange={(e) => setPhotoUrl(e.target.value)}
+							placeholder="np. https://drive.google.com/..."
+						/>
+					</div>
+
+					<div className={styles.modal__field}>
+						<label className={styles.modal__label}>Notatki</label>
+						<textarea
+							className={`${styles.modal__input} ${styles.modal__textarea}`}
+							value={notes}
+							onChange={(e) => setNotes(e.target.value)}
+							rows={3}
+							placeholder="np. Zdjęcie zrobione na evencie 15.10..."
+						/>
+					</div>
+
+					<div className={styles.modal__actions}>
+						<button
+							type="button"
+							className={styles.modal__btnCancel}
+							onClick={onClose}
+						>
+							Anuluj
+						</button>
+						<button type="submit" className={styles.modal__btnSave}>
+							Dodaj
+						</button>
+					</div>
+				</form>
+			</div>
+		</div>
+	);
+}
+function EditGreenScreenModal({
+	isOpen,
+	entry,
+	onClose,
+	onSave,
+}: {
+	isOpen: boolean;
+	entry: GreenScreenEntry | null;
+	onClose: () => void;
+	onSave: (
+		id: string,
+		data: { takenAt: string; notes: string; photoUrl: string },
+	) => void;
+}) {
+	const [takenAt, setTakenAt] = useState("");
+	const [notes, setNotes] = useState("");
+	const [photoUrl, setPhotoUrl] = useState("");
+
+	useEffect(() => {
+		if (entry) {
+			setTakenAt(entry.taken_at ? entry.taken_at.split("T")[0] : "");
+			setNotes(entry.notes || "");
+			setPhotoUrl(entry.photo_url || "");
+		}
+	}, [entry]);
+
+	if (!isOpen || !entry) return null;
+
+	const handleSubmit = (e: React.FormEvent) => {
+		e.preventDefault();
+		onSave(entry.id, { takenAt, notes, photoUrl });
+		onClose();
+	};
+
+	return (
+		<div className={styles.modalOverlay} onClick={onClose}>
+			<div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+				<div className={styles.modal__header}>
+					<h2 className={styles.modal__title}>
+						Edytuj: {entry.firstName} {entry.lastName}
+					</h2>
+					<button className={styles.modal__close} onClick={onClose}>
+						<X size={20} />
+					</button>
+				</div>
+				<form onSubmit={handleSubmit} className={styles.modal__form}>
+					<div className={styles.modal__field}>
+						<label className={styles.modal__label}>Data zdjęcia</label>
+						<input
+							type="date"
+							className={styles.modal__input}
+							value={takenAt}
+							onChange={(e) => setTakenAt(e.target.value)}
+						/>
+					</div>
+					<div className={styles.modal__field}>
+						<label className={styles.modal__label}>Link do zdjęcia</label>
+						<input
+							type="text"
+							className={styles.modal__input}
+							value={photoUrl}
+							onChange={(e) => setPhotoUrl(e.target.value)}
+						/>
+					</div>
+					<div className={styles.modal__field}>
+						<label className={styles.modal__label}>Notatki</label>
+						<textarea
+							className={`${styles.modal__input} ${styles.modal__textarea}`}
+							value={notes}
+							onChange={(e) => setNotes(e.target.value)}
+							rows={3}
+						/>
+					</div>
+					<div className={styles.modal__actions}>
+						<button
+							type="button"
+							className={styles.modal__btnCancel}
+							onClick={onClose}
+						>
+							Anuluj
+						</button>
+						<button type="submit" className={styles.modal__btnSave}>
+							Zapisz zmiany
+						</button>
+					</div>
+				</form>
+			</div>
+		</div>
+	);
+}
 export default function SocialMedia({ title }: { title?: string }) {
 	const [members, setMembers] = useState<TeamMember[]>([]);
 	const [creators, setCreators] = useState<ContentCreator[]>([]);
@@ -3119,6 +3572,14 @@ export default function SocialMedia({ title }: { title?: string }) {
 	const [onboardingContacts, setOnboardingContacts] = useState<
 		OnboardingContact[]
 	>([]);
+	const [greenScreenEntries, setGreenScreenEntries] = useState<
+		GreenScreenEntry[]
+	>([]);
+	const [isGreenScreenModalOpen, setIsGreenScreenModalOpen] = useState(false);
+	const [editingGreenScreen, setEditingGreenScreen] =
+		useState<GreenScreenEntry | null>(null);
+	const [isEditGreenScreenModalOpen, setIsEditGreenScreenModalOpen] =
+		useState(false);
 	const [tasks, setTasks] = useState<Task[]>([]);
 
 	const [editingMember, setEditingMember] = useState<TeamMember | null>(null);
@@ -3396,6 +3857,7 @@ export default function SocialMedia({ title }: { title?: string }) {
 					tasksRes,
 					contactsRes,
 					usersRes,
+					greenScreenRes,
 				] = await Promise.all([
 					fetch("/api/social/members", {
 						headers: { Authorization: `Bearer ${token}` },
@@ -3418,6 +3880,9 @@ export default function SocialMedia({ title }: { title?: string }) {
 					fetch("/api/users", {
 						headers: { Authorization: `Bearer ${token}` },
 					}),
+					fetch("/api/social/green-screen", {
+						headers: { Authorization: `Bearer ${token}` },
+					}),
 				]);
 
 				if (membersRes.ok) setMembers(await membersRes.json());
@@ -3427,6 +3892,8 @@ export default function SocialMedia({ title }: { title?: string }) {
 				if (tasksRes.ok) setTasks(await tasksRes.json());
 				if (contactsRes.ok) setContacts(await contactsRes.json());
 				if (usersRes.ok) setAvailableUsers(await usersRes.json());
+				if (greenScreenRes.ok)
+					setGreenScreenEntries(await greenScreenRes.json());
 				await fetchOnboardingContacts();
 			} catch (error) {
 				logger.error(" Błąd pobierania danych:", error);
@@ -3710,7 +4177,81 @@ export default function SocialMedia({ title }: { title?: string }) {
 			toast.error("Nie udało się dodać kontaktu");
 		}
 	};
+	const handleAddGreenScreen = async (data: {
+		userId: string;
+		takenAt: string;
+		notes: string;
+		photoUrl: string;
+	}) => {
+		try {
+			const token = localStorage.getItem("accessToken");
+			const res = await fetch("/api/social/green-screen", {
+				method: "POST",
+				headers: {
+					Authorization: `Bearer ${token}`,
+					"Content-Type": "application/json",
+				},
+				body: JSON.stringify(data),
+			});
+			if (!res.ok) {
+				const err = await res.json();
+				throw new Error(err.error || "Błąd dodawania");
+			}
+			const created = await res.json();
+			setGreenScreenEntries([created, ...greenScreenEntries]);
+			toast.success("Dodano!");
+		} catch (error) {
+			logger.error(error);
+			toast.error(error instanceof Error ? error.message : "Błąd");
+		}
+	};
 
+	const handleUpdateGreenScreen = async (
+		id: string,
+		data: { takenAt: string; notes: string; photoUrl: string },
+	) => {
+		try {
+			const token = localStorage.getItem("accessToken");
+			const res = await fetch(`/api/social/green-screen/${id}`, {
+				method: "PUT",
+				headers: {
+					Authorization: `Bearer ${token}`,
+					"Content-Type": "application/json",
+				},
+				body: JSON.stringify(data),
+			});
+			if (!res.ok) throw new Error("Błąd zapisu");
+			const updated = await res.json();
+			setGreenScreenEntries(
+				greenScreenEntries.map((e) => (e.id === id ? updated : e)),
+			);
+			toast.success("Zapisano!");
+		} catch (error) {
+			toast.error("Nie udało się zapisać");
+		}
+	};
+
+	const handleDeleteGreenScreen = (id: string) => {
+		showConfirm(
+			"Usuń wpis",
+			"Czy na pewno chcesz usunąć tę osobę z listy?",
+			"Usuń",
+			async () => {
+				try {
+					const token = localStorage.getItem("accessToken");
+					const res = await fetch(`/api/social/green-screen/${id}`, {
+						method: "DELETE",
+						headers: { Authorization: `Bearer ${token}` },
+					});
+					if (!res.ok) throw new Error("Błąd");
+					setGreenScreenEntries(greenScreenEntries.filter((e) => e.id !== id));
+					toast.success("Usunięto");
+				} catch (error) {
+					toast.error("Nie udało się usunąć");
+				}
+			},
+		);
+	};
 	if (loading) {
 		return (
 			<div className={styles.loadingContainer}>
@@ -3800,6 +4341,16 @@ export default function SocialMedia({ title }: { title?: string }) {
 				onAddContact={() => setIsContactModalOpen(true)}
 				onEditContact={handleEditContact}
 				onDeleteContact={handleDeleteContact}
+			/>
+			<GreenScreenSection
+				entries={greenScreenEntries}
+				canManage={canManage}
+				onAdd={() => setIsGreenScreenModalOpen(true)}
+				onEdit={(entry) => {
+					setEditingGreenScreen(entry);
+					setIsEditGreenScreenModalOpen(true);
+				}}
+				onDelete={handleDeleteGreenScreen}
 			/>
 			<OnboardingContactsSection
 				contacts={onboardingContacts}
@@ -3909,6 +4460,22 @@ export default function SocialMedia({ title }: { title?: string }) {
 				}}
 				onSave={handleUpdateContact}
 				teamMembers={members}
+			/>
+			<AddGreenScreenModal
+				isOpen={isGreenScreenModalOpen}
+				onClose={() => setIsGreenScreenModalOpen(false)}
+				onSave={handleAddGreenScreen}
+				availableUsers={availableUsers}
+			/>
+
+			<EditGreenScreenModal
+				isOpen={isEditGreenScreenModalOpen}
+				entry={editingGreenScreen}
+				onClose={() => {
+					setIsEditGreenScreenModalOpen(false);
+					setEditingGreenScreen(null);
+				}}
+				onSave={handleUpdateGreenScreen}
 			/>
 		</div>
 	);

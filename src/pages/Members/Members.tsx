@@ -26,6 +26,8 @@ import {
 	Trash2,
 	AlertCircle,
 	Coins,
+	Calendar,
+	Award,
 } from "lucide-react";
 import styles from "./Members.module.css";
 
@@ -101,7 +103,31 @@ type Member = {
 	};
 	formData?: Record<string, any>;
 };
-
+type VerifiedSkill = {
+	id: number;
+	skill_name: string;
+	category: string;
+	description?: string | null;
+	awarded_at: string;
+	awarded_by_name: string;
+};
+type MemberBadge = {
+	id: number;
+	title: string;
+	description?: string | null;
+	month: number;
+	year: number;
+	awarded_at: string;
+	awarded_by_name?: string | null;
+};
+type MemberChange = {
+	id: number;
+	field: "team" | "function" | "pillars";
+	old_value: string | null;
+	new_value: string | null;
+	changed_at: string;
+	changed_by_name: string;
+};
 type User = {
 	id: string;
 	name: string;
@@ -132,7 +158,20 @@ interface ApiUser {
 		other_contacts?: string;
 	};
 }
-
+const SKILL_CATEGORIES = [
+	"Prezentacja",
+	"Negocjacje",
+	"Debata",
+	"Moderacja",
+	"Social Media",
+	"Grafika",
+	"IT / Programowanie",
+	"Organizacja wydarzeń",
+	"Rzecznictwo",
+	"Zarządzanie projektami",
+	"Mentalność",
+	"Inne",
+] as const;
 const mapApiUserToMember = (user: ApiUser): Member => {
 	const onboarding = user.onboarding_data || {};
 	const teamString = user.team || "Brak zespołu";
@@ -286,6 +325,7 @@ interface MemberCardProps {
 	onDelete: (member: Member) => void;
 	viewMode: "grid" | "list";
 	contributionBadge?: "paid" | "pending" | "none";
+	badgesCount?: number;
 }
 
 function MemberCard({
@@ -296,6 +336,7 @@ function MemberCard({
 	onDelete,
 	viewMode,
 	contributionBadge,
+	badgesCount,
 }: MemberCardProps) {
 	const getInitials = () => {
 		return (
@@ -341,6 +382,15 @@ function MemberCard({
 							{STATUS_ICONS[member.status || "trial"]}
 							{STATUS_LABELS[member.status || "trial"]}
 						</span>
+						{badgesCount !== undefined && badgesCount > 0 && (
+							<span
+								className={styles.memberCard__badge}
+								title={`${badgesCount} ${badgesCount === 1 ? "wyróżnienie" : "wyróżnienia"}`}
+							>
+								<Star size={14} />
+								{badgesCount}
+							</span>
+						)}
 					</div>
 					<div className={styles.memberCard__details}>
 						{member.pillars && (
@@ -437,6 +487,17 @@ function MemberCard({
 				)}
 			</h3>
 			<p className={styles.memberCard__function}>{member.function}</p>
+			{badgesCount !== undefined && badgesCount > 0 && (
+				<div
+					className={styles.memberCard__badgeRow}
+					title={`${badgesCount} ${badgesCount === 1 ? "wyróżnienie" : "wyróżnienia"}`}
+				>
+					<Star size={14} />
+					<span>
+						{badgesCount} {badgesCount === 1 ? "wyróżnienie" : "wyróżnienia"}
+					</span>
+				</div>
+			)}
 
 			{member.pillars && (
 				<p className={styles.memberCard__team}>
@@ -602,7 +663,249 @@ function ProfileModal({
 	const [newMpContact, setNewMpContact] = useState("");
 	const [newOtherContact, setNewOtherContact] = useState("");
 	const [newTrainingArea, setNewTrainingArea] = useState("");
+	// ─── ODZNAKI ───
+	const [badges, setBadges] = useState<MemberBadge[]>([]);
+	const [badgesByMonth, setBadgesByMonth] = useState<Record<string, number>>(
+		{},
+	);
+	const [loadingBadges, setLoadingBadges] = useState(false);
+	const [newBadgeTitle, setNewBadgeTitle] = useState("");
+	const [newBadgeDesc, setNewBadgeDesc] = useState("");
+	const [newBadgeMonth, setNewBadgeMonth] = useState<number>(
+		new Date().getMonth() + 1,
+	);
+	const [newBadgeYear, setNewBadgeYear] = useState<number>(
+		new Date().getFullYear(),
+	);
 
+	const MONTHS_PL = [
+		"Styczeń",
+		"Luty",
+		"Marzec",
+		"Kwiecień",
+		"Maj",
+		"Czerwiec",
+		"Lipiec",
+		"Sierpień",
+		"Wrzesień",
+		"Październik",
+		"Listopad",
+		"Grudzień",
+	];
+
+	const fetchBadges = async (memberId: string) => {
+		if (!memberId) return;
+		try {
+			setLoadingBadges(true);
+			const token = localStorage.getItem("accessToken");
+			const res = await fetch(`/api/members/${memberId}/badges`, {
+				headers: { Authorization: `Bearer ${token}` },
+			});
+			if (res.ok) {
+				const data = await res.json();
+				setBadges(data.badges || []);
+				setBadgesByMonth(data.byMonth || {});
+			}
+		} catch (e) {
+			console.error("Błąd pobierania odznak:", e);
+		} finally {
+			setLoadingBadges(false);
+		}
+	};
+
+	useEffect(() => {
+		if (isOpen && member?.id) {
+			fetchBadges(member.id);
+		}
+	}, [isOpen, member?.id]);
+
+	const canManageBadges =
+		hasPermission(currentUser?.role, "canEditUsers") ||
+		currentUser?.role === "admin" ||
+		currentUser?.role === "board";
+
+	const handleAddBadge = async () => {
+		if (!member?.id) return;
+		if (!newBadgeTitle.trim()) {
+			toast.error("Podaj tytuł odznaki");
+			return;
+		}
+		try {
+			const token = localStorage.getItem("accessToken");
+			const res = await fetch(`/api/members/${member.id}/badges`, {
+				method: "POST",
+				headers: {
+					Authorization: `Bearer ${token}`,
+					"Content-Type": "application/json",
+				},
+				body: JSON.stringify({
+					title: newBadgeTitle.trim(),
+					description: newBadgeDesc.trim() || null,
+					month: newBadgeMonth,
+					year: newBadgeYear,
+				}),
+			});
+			if (!res.ok) throw new Error("Błąd zapisu");
+			toast.success("Odznaka dodana!");
+			setNewBadgeTitle("");
+			setNewBadgeDesc("");
+			await fetchBadges(member.id);
+		} catch (e) {
+			toast.error("Nie udało się dodać odznaki");
+		}
+	};
+
+	const handleDeleteBadge = async (badgeId: number) => {
+		if (!member?.id) return;
+		try {
+			const token = localStorage.getItem("accessToken");
+			const res = await fetch(`/api/badges/${badgeId}`, {
+				method: "DELETE",
+				headers: { Authorization: `Bearer ${token}` },
+			});
+			if (!res.ok) throw new Error();
+			toast.success("Odznaka usunięta");
+			await fetchBadges(member.id);
+		} catch {
+			toast.error("Nie udało się usunąć");
+		}
+	};
+
+	// ─── UMIEJĘTNOŚCI POTWIERDZONE ───
+	const [verifiedSkills, setVerifiedSkills] = useState<VerifiedSkill[]>([]);
+	const [loadingVerifiedSkills, setLoadingVerifiedSkills] = useState(false);
+	const [newSkillName, setNewSkillName] = useState("");
+	const [newSkillCategory, setNewSkillCategory] = useState<string>(
+		SKILL_CATEGORIES[0],
+	);
+	const [newSkillDesc, setNewSkillDesc] = useState("");
+	const [skillFilter, setSkillFilter] = useState<string>("all");
+
+	const fetchVerifiedSkills = async (memberId: string) => {
+		if (!memberId) return;
+		try {
+			setLoadingVerifiedSkills(true);
+			const token = localStorage.getItem("accessToken");
+			const res = await fetch(`/api/members/${memberId}/verified-skills`, {
+				headers: { Authorization: `Bearer ${token}` },
+			});
+			if (res.ok) {
+				const data = await res.json();
+				setVerifiedSkills(data.skills || []);
+			}
+		} catch (e) {
+			console.error("Błąd pobierania umiejętności:", e);
+		} finally {
+			setLoadingVerifiedSkills(false);
+		}
+	};
+
+	useEffect(() => {
+		if (isOpen && member?.id) {
+			fetchVerifiedSkills(member.id);
+		}
+	}, [isOpen, member?.id]);
+
+	const canManageVerifiedSkills =
+		hasPermission(currentUser?.role, "canEditUsers") ||
+		currentUser?.role === "admin" ||
+		currentUser?.role === "board";
+
+	const handleAddVerifiedSkill = async () => {
+		if (!member?.id) return;
+		if (!newSkillName.trim()) {
+			toast.error("Podaj nazwę umiejętności");
+			return;
+		}
+		try {
+			const token = localStorage.getItem("accessToken");
+			const res = await fetch(`/api/members/${member.id}/verified-skills`, {
+				method: "POST",
+				headers: {
+					Authorization: `Bearer ${token}`,
+					"Content-Type": "application/json",
+				},
+				body: JSON.stringify({
+					skill_name: newSkillName.trim(),
+					category: newSkillCategory,
+					description: newSkillDesc.trim() || null,
+				}),
+			});
+			if (!res.ok) throw new Error("Błąd zapisu");
+			toast.success("Umiejętność dodana!");
+			setNewSkillName("");
+			setNewSkillDesc("");
+			await fetchVerifiedSkills(member.id);
+		} catch {
+			toast.error("Nie udało się dodać umiejętności");
+		}
+	};
+
+	const handleDeleteVerifiedSkill = async (skillId: number) => {
+		if (!member?.id) return;
+		try {
+			const token = localStorage.getItem("accessToken");
+			const res = await fetch(`/api/verified-skills/${skillId}`, {
+				method: "DELETE",
+				headers: { Authorization: `Bearer ${token}` },
+			});
+			if (!res.ok) throw new Error();
+			toast.success("Umiejętność usunięta");
+			await fetchVerifiedSkills(member.id);
+		} catch {
+			toast.error("Nie udało się usunąć");
+		}
+	};
+	// ─── HISTORIA ZMIAN ───
+	const [changeHistory, setChangeHistory] = useState<MemberChange[]>([]);
+	const [loadingHistory, setLoadingHistory] = useState(false);
+	const [showAllHistory, setShowAllHistory] = useState(false);
+
+	const fetchChangeHistory = async (memberId: string) => {
+		if (!memberId) return;
+		try {
+			setLoadingHistory(true);
+			const token = localStorage.getItem("accessToken");
+			const res = await fetch(`/api/members/${memberId}/change-history`, {
+				headers: { Authorization: `Bearer ${token}` },
+			});
+			if (res.ok) {
+				const data = await res.json();
+				setChangeHistory(data.history || []);
+			}
+		} catch (e) {
+			console.error("Błąd pobierania historii:", e);
+		} finally {
+			setLoadingHistory(false);
+		}
+	};
+
+	useEffect(() => {
+		if (isOpen && member?.id) {
+			fetchChangeHistory(member.id);
+		}
+	}, [isOpen, member?.id]);
+
+	const canViewHistory =
+		currentUser?.role === "admin" ||
+		currentUser?.role === "board" ||
+		currentUser?.role === "coordinator";
+
+	const FIELD_LABELS: Record<string, string> = {
+		team: "Zespół",
+		function: "Stanowisko",
+		pillars: "Filary",
+	};
+
+	const formatHistoryDate = (iso: string) => {
+		return new Date(iso).toLocaleDateString("pl-PL", {
+			day: "numeric",
+			month: "short",
+			year: "numeric",
+			hour: "2-digit",
+			minute: "2-digit",
+		});
+	};
 	useEffect(() => {
 		if (member) {
 			const newFormData = {
@@ -1398,7 +1701,670 @@ function ProfileModal({
 							</div>
 						);
 					})()}
+					{/* ─── ODZNAKI / WYRÓŻNIENIA ─── */}
+					{(() => {
+						const hasBadges = badges.length > 0;
+						if (!hasBadges && !canManageBadges) return null;
 
+						return (
+							<div className={styles.modal__section}>
+								<h3 className={styles.modal__sectionTitle}>
+									<Star size={18} />
+									Wyróżnienia i odznaki
+									{hasBadges && (
+										<span
+											style={{
+												marginLeft: 8,
+												background: "#e5ac00",
+												color: "#fff",
+												borderRadius: 12,
+												padding: "2px 10px",
+												fontSize: 12,
+												fontWeight: 600,
+											}}
+										>
+											{badges.length}
+										</span>
+									)}
+								</h3>
+
+								{loadingBadges ? (
+									<div
+										className={styles.loadingSpinner}
+										style={{ padding: 20 }}
+									/>
+								) : (
+									<>
+										{hasBadges && (
+											<div
+												style={{
+													display: "flex",
+													flexWrap: "wrap",
+													gap: 8,
+													marginBottom: 16,
+												}}
+											>
+												{Object.entries(badgesByMonth).map(([key, count]) => {
+													const [y, m] = key.split("-");
+													const monthName = MONTHS_PL[parseInt(m) - 1];
+													return (
+														<span
+															key={key}
+															style={{
+																background: "#FEF3C7",
+																color: "#92400E",
+																borderRadius: 8,
+																padding: "4px 12px",
+																fontSize: 13,
+																fontWeight: 600,
+															}}
+														>
+															{monthName} {y}: {count}{" "}
+															{count === 1 ? "wyróżnienie" : "wyróżnienia"}
+														</span>
+													);
+												})}
+											</div>
+										)}
+
+										{hasBadges ? (
+											<div
+												style={{
+													display: "flex",
+													flexDirection: "column",
+													gap: 8,
+												}}
+											>
+												{badges.map((badge) => (
+													<div
+														key={badge.id}
+														style={{
+															display: "flex",
+															alignItems: "flex-start",
+															gap: 12,
+															padding: 12,
+															background: "#FFFBEB",
+															border: "1px solid #FDE68A",
+															borderRadius: 10,
+														}}
+													>
+														<div
+															style={{
+																width: 36,
+																height: 36,
+																borderRadius: "50%",
+																background:
+																	"linear-gradient(135deg,#F59E0B,#FCD34D)",
+																display: "flex",
+																alignItems: "center",
+																justifyContent: "center",
+																color: "#fff",
+																flexShrink: 0,
+															}}
+														>
+															<Star size={18} />
+														</div>
+														<div style={{ flex: 1 }}>
+															<div
+																style={{
+																	fontWeight: 600,
+																	color: "#92400E",
+																	marginBottom: 2,
+																}}
+															>
+																{badge.title}
+															</div>
+															<div
+																style={{
+																	fontSize: 12,
+																	color: "#78716C",
+																}}
+															>
+																{MONTHS_PL[badge.month - 1]} {badge.year}
+																{badge.awarded_by_name &&
+																	` • przyznał: ${badge.awarded_by_name}`}
+															</div>
+															{badge.description && (
+																<div
+																	style={{
+																		fontSize: 13,
+																		color: "#57534E",
+																		marginTop: 4,
+																	}}
+																>
+																	{badge.description}
+																</div>
+															)}
+														</div>
+														{canManageBadges && (
+															<button
+																type="button"
+																onClick={() => handleDeleteBadge(badge.id)}
+																style={{
+																	background: "none",
+																	border: "none",
+																	cursor: "pointer",
+																	color: "#EF4444",
+																	padding: 4,
+																}}
+																title="Usuń odznakę"
+															>
+																<X size={16} />
+															</button>
+														)}
+													</div>
+												))}
+											</div>
+										) : (
+											<p className={styles.contributionEmpty}>Brak wyróżnień</p>
+										)}
+
+										{canManageBadges && (
+											<div
+												style={{
+													marginTop: 16,
+													padding: 12,
+													background: "#F9FAFB",
+													borderRadius: 10,
+													border: "1px dashed #D1D5DB",
+												}}
+											>
+												<div
+													style={{
+														fontWeight: 600,
+														marginBottom: 8,
+														fontSize: 14,
+													}}
+												>
+													<Plus size={14} style={{ marginRight: 6 }} />
+													Dodaj wyróżnienie
+												</div>
+												<div className={styles.modal__field}>
+													<input
+														type="text"
+														className={styles.modal__input}
+														placeholder="Tytuł (np. Wyróżnienie miesiąca)"
+														value={newBadgeTitle}
+														onChange={(e) => setNewBadgeTitle(e.target.value)}
+													/>
+												</div>
+												<div className={styles.modal__field}>
+													<textarea
+														className={styles.modal__input}
+														placeholder="Opis (opcjonalnie)"
+														value={newBadgeDesc}
+														onChange={(e) => setNewBadgeDesc(e.target.value)}
+														rows={2}
+													/>
+												</div>
+												<div className={styles.modal__row}>
+													<div className={styles.modal__field}>
+														<label className={styles.modal__label}>
+															Miesiąc
+														</label>
+														<select
+															className={styles.modal__select}
+															value={newBadgeMonth}
+															onChange={(e) =>
+																setNewBadgeMonth(parseInt(e.target.value))
+															}
+														>
+															{MONTHS_PL.map((m, i) => (
+																<option key={m} value={i + 1}>
+																	{m}
+																</option>
+															))}
+														</select>
+													</div>
+													<div className={styles.modal__field}>
+														<label className={styles.modal__label}>Rok</label>
+														<input
+															type="number"
+															className={styles.modal__input}
+															value={newBadgeYear}
+															onChange={(e) =>
+																setNewBadgeYear(parseInt(e.target.value))
+															}
+															min={2000}
+															max={2100}
+														/>
+													</div>
+												</div>
+												<button
+													type="button"
+													onClick={handleAddBadge}
+													style={{
+														marginTop: 8,
+														background: "#F59E0B",
+														color: "#fff",
+														border: "none",
+														borderRadius: 8,
+														padding: "8px 16px",
+														cursor: "pointer",
+														fontWeight: 600,
+														display: "flex",
+														alignItems: "center",
+														gap: 6,
+													}}
+												>
+													<Plus size={14} />
+													Dodaj odznakę
+												</button>
+											</div>
+										)}
+									</>
+								)}
+							</div>
+						);
+					})()}
+					{/* ─── UMIEJĘTNOŚCI POTWIERDZONE ─── */}
+					{(() => {
+						const filtered = verifiedSkills.filter(
+							(s) => skillFilter === "all" || s.category === skillFilter,
+						);
+						const usedCategories = Array.from(
+							new Set(verifiedSkills.map((s) => s.category)),
+						);
+						const hasSkills = verifiedSkills.length > 0;
+
+						if (!hasSkills && !canManageVerifiedSkills) return null;
+
+						return (
+							<div className={styles.modal__section}>
+								<h3 className={styles.modal__sectionTitle}>
+									<Award size={18} />
+									Umiejętności potwierdzone
+									{hasSkills && (
+										<span
+											style={{
+												marginLeft: 8,
+												background: "#10B981",
+												color: "#fff",
+												borderRadius: 12,
+												padding: "2px 10px",
+												fontSize: 12,
+												fontWeight: 600,
+											}}
+										>
+											{verifiedSkills.length}
+										</span>
+									)}
+								</h3>
+
+								{loadingVerifiedSkills ? (
+									<div
+										className={styles.loadingSpinner}
+										style={{ padding: 20 }}
+									/>
+								) : (
+									<>
+										{hasSkills && usedCategories.length > 1 && (
+											<div
+												style={{
+													display: "flex",
+													flexWrap: "wrap",
+													gap: 6,
+													marginBottom: 12,
+												}}
+											>
+												<button
+													type="button"
+													onClick={() => setSkillFilter("all")}
+													style={{
+														padding: "4px 12px",
+														borderRadius: 20,
+														border: "1px solid #D1D5DB",
+														background:
+															skillFilter === "all" ? "#10B981" : "#fff",
+														color: skillFilter === "all" ? "#fff" : "#374151",
+														fontSize: 12,
+														cursor: "pointer",
+													}}
+												>
+													Wszystkie ({verifiedSkills.length})
+												</button>
+												{usedCategories.map((cat) => {
+													const count = verifiedSkills.filter(
+														(s) => s.category === cat,
+													).length;
+													return (
+														<button
+															key={cat}
+															type="button"
+															onClick={() => setSkillFilter(cat)}
+															style={{
+																padding: "4px 12px",
+																borderRadius: 20,
+																border: "1px solid #D1D5DB",
+																background:
+																	skillFilter === cat ? "#10B981" : "#fff",
+																color: skillFilter === cat ? "#fff" : "#374151",
+																fontSize: 12,
+																cursor: "pointer",
+															}}
+														>
+															{cat} ({count})
+														</button>
+													);
+												})}
+											</div>
+										)}
+
+										{filtered.length > 0 ? (
+											<div
+												style={{
+													display: "flex",
+													flexWrap: "wrap",
+													gap: 8,
+													marginBottom: 16,
+												}}
+											>
+												{filtered.map((skill) => (
+													<div
+														key={skill.id}
+														style={{
+															display: "flex",
+															alignItems: "flex-start",
+															gap: 10,
+															padding: 12,
+															background: "#ECFDF5",
+															border: "1px solid #A7F3D0",
+															borderRadius: 10,
+															flex: "1 1 calc(50% - 8px)",
+															minWidth: 240,
+														}}
+													>
+														<div
+															style={{
+																width: 32,
+																height: 32,
+																borderRadius: "50%",
+																background:
+																	"linear-gradient(135deg,#10B981,#34D399)",
+																display: "flex",
+																alignItems: "center",
+																justifyContent: "center",
+																color: "#fff",
+																flexShrink: 0,
+															}}
+														>
+															<Award size={16} />
+														</div>
+														<div style={{ flex: 1 }}>
+															<div
+																style={{
+																	fontWeight: 600,
+																	color: "#065F46",
+																	marginBottom: 2,
+																}}
+															>
+																{skill.skill_name}
+															</div>
+															<div
+																style={{
+																	fontSize: 12,
+																	color: "#047857",
+																	fontWeight: 500,
+																}}
+															>
+																{skill.category}
+															</div>
+															{skill.description && (
+																<div
+																	style={{
+																		fontSize: 12,
+																		color: "#6B7280",
+																		marginTop: 4,
+																	}}
+																>
+																	{skill.description}
+																</div>
+															)}
+															<div
+																style={{
+																	fontSize: 11,
+																	color: "#9CA3AF",
+																	marginTop: 4,
+																}}
+															>
+																przyznał: {skill.awarded_by_name}
+															</div>
+														</div>
+														{canManageVerifiedSkills && (
+															<button
+																type="button"
+																onClick={() =>
+																	handleDeleteVerifiedSkill(skill.id)
+																}
+																style={{
+																	background: "none",
+																	border: "none",
+																	cursor: "pointer",
+																	color: "#EF4444",
+																	padding: 4,
+																}}
+																title="Usuń"
+															>
+																<X size={16} />
+															</button>
+														)}
+													</div>
+												))}
+											</div>
+										) : (
+											<p className={styles.contributionEmpty}>
+												Brak umiejętności w tej kategorii
+											</p>
+										)}
+
+										{canManageVerifiedSkills && (
+											<div
+												style={{
+													marginTop: 16,
+													padding: 12,
+													background: "#F0FDF4",
+													borderRadius: 10,
+													border: "1px dashed #6EE7B7",
+												}}
+											>
+												<div
+													style={{
+														fontWeight: 600,
+														marginBottom: 8,
+														fontSize: 14,
+													}}
+												>
+													<Plus size={14} style={{ marginRight: 6 }} />
+													Dodaj potwierdzoną umiejętność
+												</div>
+												<div className={styles.modal__field}>
+													<input
+														type="text"
+														className={styles.modal__input}
+														placeholder="Nazwa umiejętności (np. Prowadzenie panelu)"
+														value={newSkillName}
+														onChange={(e) => setNewSkillName(e.target.value)}
+													/>
+												</div>
+												<div className={styles.modal__field}>
+													<label className={styles.modal__label}>
+														Kategoria
+													</label>
+													<select
+														className={styles.modal__select}
+														value={newSkillCategory}
+														onChange={(e) =>
+															setNewSkillCategory(e.target.value)
+														}
+													>
+														{SKILL_CATEGORIES.map((cat) => (
+															<option key={cat} value={cat}>
+																{cat}
+															</option>
+														))}
+													</select>
+												</div>
+												<div className={styles.modal__field}>
+													<textarea
+														className={styles.modal__input}
+														placeholder="Opis (opcjonalnie)"
+														value={newSkillDesc}
+														onChange={(e) => setNewSkillDesc(e.target.value)}
+														rows={2}
+													/>
+												</div>
+												<button
+													type="button"
+													onClick={handleAddVerifiedSkill}
+													style={{
+														marginTop: 8,
+														background: "#10B981",
+														color: "#fff",
+														border: "none",
+														borderRadius: 8,
+														padding: "8px 16px",
+														cursor: "pointer",
+														fontWeight: 600,
+														display: "flex",
+														alignItems: "center",
+														gap: 6,
+													}}
+												>
+													<Plus size={14} />
+													Dodaj umiejętność
+												</button>
+											</div>
+										)}
+									</>
+								)}
+							</div>
+						);
+					})()}
+					{/* ─── HISTORIA ZMIAN ─── */}
+					{canViewHistory &&
+						member?.id &&
+						(() => {
+							const visibleHistory = showAllHistory
+								? changeHistory
+								: changeHistory.slice(0, 3);
+
+							return (
+								<div className={styles.modal__section}>
+									<h3 className={styles.modal__sectionTitle}>
+										<Calendar size={18} />
+										Historia zmian
+										{changeHistory.length > 0 && (
+											<span
+												style={{
+													marginLeft: 8,
+													background: "#60A5FA",
+													color: "#fff",
+													borderRadius: 12,
+													padding: "2px 10px",
+													fontSize: 12,
+													fontWeight: 600,
+												}}
+											>
+												{changeHistory.length}
+											</span>
+										)}
+									</h3>
+
+									{loadingHistory ? (
+										<div
+											className={styles.loadingSpinner}
+											style={{ padding: 20 }}
+										/>
+									) : changeHistory.length === 0 ? (
+										<p className={styles.contributionEmpty}>
+											Brak historii zmian
+										</p>
+									) : (
+										<>
+											<div
+												style={{
+													display: "flex",
+													flexDirection: "column",
+													gap: 8,
+												}}
+											>
+												{visibleHistory.map((change) => (
+													<div
+														key={change.id}
+														style={{
+															padding: 10,
+															background: "#F9FAFB",
+															border: "1px solid #E5E7EB",
+															borderRadius: 8,
+															fontSize: 13,
+														}}
+													>
+														<div
+															style={{
+																display: "flex",
+																justifyContent: "space-between",
+																marginBottom: 4,
+															}}
+														>
+															<strong style={{ color: "#374151" }}>
+																{FIELD_LABELS[change.field] || change.field}
+															</strong>
+															<span
+																style={{
+																	fontSize: 12,
+																	color: "#6B7280",
+																}}
+															>
+																{formatHistoryDate(change.changed_at)}
+															</span>
+														</div>
+														<div style={{ color: "#4B5563" }}>
+															<span style={{ color: "#9CA3AF" }}>
+																{change.old_value || "—"}
+															</span>
+															{" → "}
+															<strong style={{ color: "#059669" }}>
+																{change.new_value || "—"}
+															</strong>
+														</div>
+														<div
+															style={{
+																fontSize: 11,
+																color: "#9CA3AF",
+																marginTop: 4,
+															}}
+														>
+															przez: {change.changed_by_name}
+														</div>
+													</div>
+												))}
+											</div>
+
+											{changeHistory.length > 3 && (
+												<button
+													type="button"
+													onClick={() => setShowAllHistory(!showAllHistory)}
+													style={{
+														marginTop: 10,
+														background: "none",
+														border: "none",
+														color: "#2563EB",
+														cursor: "pointer",
+														fontSize: 13,
+														fontWeight: 600,
+														padding: 0,
+													}}
+												>
+													{showAllHistory
+														? "Pokaż mniej"
+														: `Pokaż wszystkie (${changeHistory.length})`}
+												</button>
+											)}
+										</>
+									)}
+								</div>
+							);
+						})()}
 					{canViewSensitive &&
 						(() => {
 							const hasSalaContacts = canEdit
@@ -1969,6 +2935,7 @@ export default function Members({ title }: { title?: string }) {
 	const [customTeamEmail, setCustomTeamEmail] = useState("");
 	const [contributionStats, setContributionStats] = useState<any>(null);
 	const [loadingContributions, setLoadingContributions] = useState(false);
+	const [badgesCounts, setBadgesCounts] = useState<Record<string, number>>({});
 	const [sortBy, setSortBy] = useState<
 		"name" | "function" | "province" | "status"
 	>("name");
@@ -2103,6 +3070,19 @@ export default function Members({ title }: { title?: string }) {
 					mappedMembers.map((m: any) => m.team),
 				);
 				setMembers(mappedMembers);
+
+				// ─── Pobierz liczniki odznak JEDNYM zapytaniem ───
+				try {
+					const badgesRes = await fetch("/api/members/badges-counts", {
+						headers: { Authorization: `Bearer ${token}` },
+					});
+					if (badgesRes.ok) {
+						const data = await badgesRes.json();
+						setBadgesCounts(data.counts || {});
+					}
+				} catch (e) {
+					logger.error("Błąd pobierania liczników odznak:", e);
+				}
 			} catch (error) {
 				logger.error("Błąd:", error);
 				setMembers([]);
@@ -2832,6 +3812,7 @@ export default function Members({ title }: { title?: string }) {
 							onDelete={handleDeleteMember}
 							viewMode={viewMode}
 							contributionBadge={member.contributionBadge}
+							badgesCount={badgesCounts[member.id]}
 						/>
 					))
 				)}

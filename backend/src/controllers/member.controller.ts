@@ -432,6 +432,61 @@ export const updateMember = async (req: Request, res: Response) => {
 			return res.status(404).json({ error: "Nie znaleziono użytkownika" });
 		}
 
+		// ─── HISTORIA ZMIAN: zapis zmian zespołu / stanowiska / filarów ───
+		try {
+			const changes: Array<{
+				field: string;
+				old_value: string | null;
+				new_value: string | null;
+			}> = [];
+
+			if (
+				team !== undefined &&
+				(team || null) !== (existingUser.team || null)
+			) {
+				changes.push({
+					field: "team",
+					old_value: existingUser.team || null,
+					new_value: team || null,
+				});
+			}
+			if (
+				func !== undefined &&
+				(func || null) !== (existingUser.functional_role || null)
+			) {
+				changes.push({
+					field: "function",
+					old_value: existingUser.functional_role || null,
+					new_value: func || null,
+				});
+			}
+			if (
+				pillars !== undefined &&
+				(pillars || null) !== (existingUser.pillars || null)
+			) {
+				changes.push({
+					field: "pillars",
+					old_value: existingUser.pillars || null,
+					new_value: pillars || null,
+				});
+			}
+
+			if (changes.length > 0) {
+				await prisma.memberChangeHistory.createMany({
+					data: changes.map((c) => ({
+						user_id: userId,
+						field: c.field,
+						old_value: c.old_value,
+						new_value: c.new_value,
+						changed_by: (req as any).user?.id || null,
+					})),
+				});
+			}
+		} catch (historyError) {
+			logger.error("[updateMember] Błąd zapisu historii:", historyError);
+		}
+		// ─── KONIEC HISTORII ───
+
 		const user = await prisma.user.update({
 			where: { id: userId },
 			data: {

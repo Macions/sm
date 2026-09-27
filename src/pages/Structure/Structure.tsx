@@ -25,6 +25,8 @@ type Person = {
 	email: string;
 	avatar?: string;
 	province?: string;
+	responsibilities?: string | null;
+	boardRoleTitle?: string | null;
 };
 
 type Node = {
@@ -271,6 +273,11 @@ function TreeNode({
 										{person.firstName} {person.lastName}
 									</h4>
 									<p className={styles.personCard__role}>{person.role}</p>
+									{person.responsibilities && (
+										<p className={styles.personCard__responsibilities}>
+											{person.responsibilities}
+										</p>
+									)}
 								</div>
 								<div className={styles.personCard__details}>
 									{person.email && (

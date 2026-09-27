@@ -3,6 +3,7 @@ import { lazy, Suspense, useEffect, useState } from "react";
 import Onboarding from "@/pages/Onboarding/Onboarding";
 import { logger } from "@/utils/logger";
 import api from "@/api/axios";
+import MyTeam from "./pages/myTeam/MyTeam";
 
 const DashboardLayout = lazy(() => import("@/layouts/DashboardLayout"));
 const Login = lazy(() => import("@/pages/Login/Login"));
@@ -14,11 +15,11 @@ const Tutorials = lazy(() => import("@/pages/Tutorials/Tutorials"));
 const FAQ = lazy(() => import("@/pages/FAQ/Faq"));
 const Members = lazy(() => import("@/pages/Members/Members"));
 const Vacancies = lazy(() => import("@/pages/Vacancies/Vacancies"));
-const Leave = lazy(() => import("@/pages/Leave/Leave"));
 const SocialMedia = lazy(() => import("@/pages/SocialMedia/SocialMedia"));
 const Profile = lazy(() => import("@/pages/Profile/Profile"));
 const Calendar = lazy(() => import("@/pages/Calendar/Calendar"));
 const Tasks = lazy(() => import("@/pages/Tasks/Tasks"));
+import Requests from "./pages/Requests/Requests";
 const Maintenance = lazy(() => import("@/pages/Maintenance/Maintenance"));
 import NotFound from "@/pages/404";
 
@@ -140,11 +141,16 @@ function AppRoutes() {
 					<Route path="/admin" element={<Admin />} />
 					<Route path="/structure" element={<Structure />} />
 					<Route path="/projects" element={<Projects />} />
+					<Route path="/myTeam" element={<MyTeam />} />
 					<Route path="/guides" element={<Tutorials />} />
 					<Route path="/faq" element={<FAQ title="Najczęstsze pytania" />} />
 					<Route path="/members" element={<Members />} />
 					<Route path="/vacancies" element={<Vacancies />} />
-					<Route path="/leave" element={<Leave />} />
+					<Route path="/requests" element={<Requests />} />
+					<Route
+						path="/leave"
+						element={<Navigate to="/requests?tab=leave" replace />}
+					/>
 					<Route path="/social" element={<SocialMedia />} />
 					<Route path="/profile" element={<Profile />} />
 					<Route path="/calendar" element={<Calendar />} />
