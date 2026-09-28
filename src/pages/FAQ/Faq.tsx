@@ -86,7 +86,7 @@ const CategoriesModal = ({
 		setError("");
 		setSaving(true);
 		try {
-			const res = await api.post<FAQCategory>("/api/faq/categories", {
+			const res = await api.post<FAQCategory>("/faq/categories", {
 				name: newName.trim(),
 			});
 			onCreated(res.data);
@@ -107,7 +107,8 @@ const CategoriesModal = ({
 		)
 			return;
 		try {
-			await api.delete(`/api/faq/categories/${id}`);
+			await api.delete(`/faq/categories/${id}`);
+
 			onDeleted(id);
 		} catch (e: any) {
 			logger.error("[FAQ] Błąd usuwania kategorii", e);
@@ -266,7 +267,7 @@ const FormModal = ({
 		if (!newCategoryName.trim()) return;
 		setCreatingCategory(true);
 		try {
-			const res = await api.post<FAQCategory>("/api/faq/categories", {
+			const res = await api.post<FAQCategory>("/faq/categories", {
 				name: newCategoryName.trim(),
 			});
 			onCategoryCreated(res.data);
@@ -468,7 +469,8 @@ const FAQ = ({ title = "Najczęstsze pytania", userRole }: FAQProps) => {
 	/* ─── FETCH: kategorie ─── */
 	const fetchCategories = async () => {
 		try {
-			const res = await api.get<FAQCategory[]>("/api/faq/categories");
+			const res = await api.get<FAQCategory[]>("/faq/categories");
+
 			const data = res.data;
 			if (Array.isArray(data)) {
 				setCategories(data);
@@ -489,7 +491,8 @@ const FAQ = ({ title = "Najczęstsze pytania", userRole }: FAQProps) => {
 		setLoading(true);
 		setError(null);
 		try {
-			const res = await api.get<FAQItem[]>("/api/faq");
+			const res = await api.get<FAQItem[]>("/faq");
+
 			const data = res.data;
 
 			if (Array.isArray(data)) {
@@ -548,7 +551,8 @@ const FAQ = ({ title = "Najczęstsze pytania", userRole }: FAQProps) => {
 	const handleDelete = async (id: string) => {
 		if (!confirm("Czy na pewno usunąć to pytanie?")) return;
 		try {
-			await api.delete(`/api/faq/${id}`);
+			await api.delete(`/faq/${id}`);
+
 			setItems((prev) => prev.filter((i) => i.id !== id));
 		} catch (e: any) {
 			logger.error("[FAQ] Błąd usuwania", e);
@@ -560,11 +564,13 @@ const FAQ = ({ title = "Najczęstsze pytania", userRole }: FAQProps) => {
 		data: Omit<FAQItem, "id" | "createdAt" | "updatedAt">,
 	) => {
 		if (editing) {
-			const res = await api.put<FAQItem>(`/api/faq/${editing.id}`, data);
+			const res = await api.put<FAQItem>(`/faq/${editing.id}`, data);
+
 			const updated = res.data;
 			setItems((prev) => prev.map((i) => (i.id === editing.id ? updated : i)));
 		} else {
-			const res = await api.post<FAQItem>("/api/faq", data);
+			const res = await api.post<FAQItem>("/faq", data);
+
 			const created = res.data;
 			setItems((prev) => [created, ...prev]);
 		}
