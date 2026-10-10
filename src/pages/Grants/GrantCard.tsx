@@ -1,12 +1,12 @@
 ﻿// src/pages/Grants/GrantCard.tsx
-import { Calendar, Eye, Edit2, Trash2, User, Euro } from "lucide-react";
+import { Calendar, ExternalLink, Plus, Edit2, Trash2, Eye } from "lucide-react";
 import styles from "./Grants.module.css";
 
 export interface Grant {
 	id: string;
 	name: string;
 	description: string | null;
-	category: string;
+	category: "upcoming" | "current" | "archived";
 	workStatus: string;
 	amountMin: number | null;
 	amountMax: number | null;
@@ -44,7 +44,22 @@ export interface Grant {
 	};
 	createdAt: string;
 	updatedAt: string;
-	recruitments?: any[];
+	recruitments?: Array<{
+		id: string;
+		projectTitle: string;
+		status: "preparing" | "open" | "closed";
+		deadline: string | null;
+		formUrl: string | null;
+	}>;
+}
+
+interface Props {
+	grant: Grant;
+	canManage: boolean;
+	onView: (grant: Grant) => void;
+	onEdit: (grant: Grant) => void;
+	onDelete: (grant: Grant) => void;
+	onAddRecruitment?: (grant: Grant) => void;
 }
 
 const WORK_STATUS_LABELS: Record<string, string> = {
@@ -56,135 +71,151 @@ const WORK_STATUS_LABELS: Record<string, string> = {
 	no_application: "Bez aplikacji",
 };
 
-const WORK_STATUS_COLORS: Record<string, string> = {
-	analyzed: "#6b7280",
-	in_preparation: "#d97706",
-	submitted: "#2563eb",
-	accepted: "#059669",
-	rejected: "#dc2626",
-	no_application: "#9ca3af",
-};
-
-interface Props {
-	grant: Grant;
-	canManage: boolean;
-	onView: (grant: Grant) => void;
-	onEdit: (grant: Grant) => void;
-	onDelete: (grant: Grant) => void;
-}
-
-function formatDate(iso: string | null): string {
-	if (!iso) return "—";
-	return new Date(iso).toLocaleDateString("pl-PL");
-}
-
-function formatAmount(g: Grant): string {
-	if (g.amountMin == null && g.amountMax == null) return "—";
-	if (g.amountMin != null && g.amountMax != null) {
-		return `${g.amountMin.toLocaleString("pl-PL")} – ${g.amountMax.toLocaleString("pl-PL")} zł`;
-	}
-	if (g.amountMin != null)
-		return `od ${g.amountMin.toLocaleString("pl-PL")} zł`;
-	return `do ${g.amountMax!.toLocaleString("pl-PL")} zł`;
-}
-
 export function GrantCard({
 	grant,
 	canManage,
 	onView,
 	onEdit,
 	onDelete,
+	onAddRecruitment,
 }: Props) {
-	const openRecruitments =
-		grant.recruitments?.filter((r) => r.status === "open") ?? [];
+	const recruitments = grant.recruitments || [];
 
 	return (
-		<div className={styles.card}>
+		<div className={styles.card} onClick={() => onView(grant)}>
 			<div className={styles.cardHeader}>
-				<div className={styles.cardTitleRow}>
-					<h3 className={styles.cardTitle}>{grant.name}</h3>
-					<span
-						className={styles.badge}
-						style={{
-							backgroundColor:
-								WORK_STATUS_COLORS[grant.workStatus] || "#6b7280",
-						}}
-					>
-						{WORK_STATUS_LABELS[grant.workStatus] || grant.workStatus}
-					</span>
-				</div>
-				{grant.thematicArea && (
-					<span className={styles.themeTag}>{grant.thematicArea}</span>
-				)}
+				<h3 className={styles.cardTitle}>{grant.name}</h3>
+				<span className={styles.badge}>
+					{WORK_STATUS_LABELS[grant.workStatus] || grant.workStatus}
+				</span>
 			</div>
 
 			{grant.description && (
 				<p className={styles.cardDescription}>{grant.description}</p>
 			)}
 
-			<div className={styles.metaGrid}>
-				<div className={styles.metaItem}>
-					<Euro size={14} />
-					<span>{formatAmount(grant)}</span>
-				</div>
-				<div className={styles.metaItem}>
-					<Calendar size={14} />
-					<span>
-						Termin naboru:{" "}
-						<strong>{formatDate(grant.submissionDeadline)}</strong>
+			<div className={styles.cardMeta}>
+				{grant.amountMin != null || grant.amountMax != null ? (
+					<span className={styles.metaItem}>
+						{grant.amountMin?.toLocaleString("pl-PL") || "0"} –{" "}
+						{grant.amountMax?.toLocaleString("pl-PL") || "?"} zł
 					</span>
-				</div>
-				{grant.responsibleUser && (
-					<div className={styles.metaItem}>
-						<User size={14} />
-						<span>
-							Odpowiedzialny: {grant.responsibleUser.firstName}{" "}
-							{grant.responsibleUser.lastName}
-						</span>
-					</div>
+				) : null}
+
+				{grant.submissionDeadline && (
+					<span className={styles.metaItem}>
+						<Calendar size={12} />
+						{new Date(grant.submissionDeadline).toLocaleDateString("pl-PL")}
+					</span>
 				)}
 			</div>
 
-			{openRecruitments.length > 0 && (
-				<div className={styles.recruitmentsBadge}>
-					Otwarte rekrutacje na Project Leadera: {openRecruitments.length}
+			{/* Rekrutacje na Project Leadera – widoczne od razu na karcie */}
+			{recruitments.length > 0 && (
+				<div className={styles.recruitmentsBox} onClick={(e) => e.stopPropagation()}>
+					<div className={styles.recruitmentsBox__header}>
+						<span>Rekrutacje na Project Leadera</span>
+						<span className={styles.recruitmentsBox__count}>
+							{recruitments.length}
+						</span>
+					</div>
+					<div className={styles.recruitmentsBox__list}>
+						{recruitments.map((r) => (
+							<div key={r.id} className={styles.recruitmentItem}>
+								<div className={styles.recruitmentItem__row}>
+									<strong className={styles.recruitmentItem__title}>
+										{r.projectTitle}
+									</strong>
+									<span
+										className={styles.recruitmentItem__badge}
+										style={{
+											backgroundColor:
+												r.status === "open"
+													? "#059669"
+													: r.status === "closed"
+														? "#6b7280"
+														: "#d97706",
+										}}
+									>
+										{r.status === "open"
+											? "Otwarta"
+											: r.status === "closed"
+												? "Zamknięta"
+												: "W przygotowaniu"}
+									</span>
+								</div>
+								{r.deadline && (
+									<div className={styles.recruitmentItem__meta}>
+										<Calendar size={11} />
+										Termin:{" "}
+										{new Date(r.deadline).toLocaleDateString("pl-PL")}
+									</div>
+								)}
+								{r.formUrl && (
+									<a
+										href={r.formUrl}
+										target="_blank"
+										rel="noreferrer"
+										className={styles.recruitmentItem__link}
+										onClick={(e) => e.stopPropagation()}
+									>
+										<ExternalLink size={11} />
+										Formularz zgłoszeniowy
+									</a>
+								)}
+							</div>
+						))}
+					</div>
 				</div>
 			)}
 
-			<div className={styles.cardFooter}>
-				<span className={styles.verifiedLine}>
-					{grant.lastVerifiedAt
-						? `Zweryfikowano: ${formatDate(grant.lastVerifiedAt)}`
-						: "Niezweryfikowany"}
-				</span>
-				<div className={styles.cardActions}>
-					<button
-						className={styles.actionBtn}
-						onClick={() => onView(grant)}
-						title="Szczegóły"
-					>
-						<Eye size={14} />
-						Szczegóły
-					</button>
-					{canManage && (
-						<>
-							<button
-								className={styles.actionBtn}
-								onClick={() => onEdit(grant)}
-								title="Edytuj"
-							>
-								<Edit2 size={14} />
-							</button>
-							<button
-								className={`${styles.actionBtn} ${styles.danger}`}
-								onClick={() => onDelete(grant)}
-								title="Usuń"
-							>
-								<Trash2 size={14} />
-							</button>
-						</>
-					)}
-				</div>
+			{/* Przycisk dodania rekrutacji – tylko dla canManage */}
+			{canManage && onAddRecruitment && (
+				<button
+					type="button"
+					className={styles.addRecruitmentBtn}
+					onClick={(e) => {
+						e.stopPropagation();
+						onAddRecruitment(grant);
+					}}
+				>
+					<Plus size={12} />
+					Dodaj rekrutację
+				</button>
+			)}
+
+			<div
+				className={styles.cardActions}
+				onClick={(e) => e.stopPropagation()}
+			>
+				<button
+					type="button"
+					className={styles.iconBtn}
+					onClick={() => onView(grant)}
+					title="Szczegóły"
+				>
+					<Eye size={14} />
+				</button>
+				{canManage && (
+					<>
+						<button
+							type="button"
+							className={styles.iconBtn}
+							onClick={() => onEdit(grant)}
+							title="Edytuj"
+						>
+							<Edit2 size={14} />
+						</button>
+						<button
+							type="button"
+							className={`${styles.iconBtn} ${styles.danger}`}
+							onClick={() => onDelete(grant)}
+							title="Usuń"
+						>
+							<Trash2 size={14} />
+						</button>
+					</>
+				)}
 			</div>
 		</div>
 	);

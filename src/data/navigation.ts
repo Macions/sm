@@ -24,6 +24,7 @@ export const NAV_ITEMS = [
 
 	{ key: "tasks", label: "Zadania", icon: CheckSquare },
 	{ key: "ideas", label: "Pomysły", icon: Lightbulb },
+	{ key: "grants", label: "Granty", icon: Award },
 	{ key: "trial-periods", label: "Okresy próbne", icon: ClipboardCheck },
 	{ key: "guides", label: "Poradniki", icon: BookOpen },
 	{ key: "faq", label: "Najczęstsze pytania", icon: BookOpen },
@@ -33,5 +34,4 @@ export const NAV_ITEMS = [
 	{ key: "requests", label: "Wnioski", icon: FileText },
 	{ key: "social", label: "Social Media", icon: Megaphone },
 	{ key: "admin", label: "Administracja", icon: Settings },
-	{ key: "grants", label: "Granty", icon: Award },
 ];

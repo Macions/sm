@@ -1,7 +1,6 @@
 .page {
-	max-width: 1100px;
+	width: 100%;
 	margin: 0 auto;
-	padding: 32px 24px;
 }
 
 .header {
@@ -12,23 +11,27 @@
 	margin-bottom: 28px;
 	flex-wrap: wrap;
 }
+
 .headerLeft {
 	display: flex;
 	flex-direction: column;
 	gap: 4px;
 }
+
 .titleRow {
 	display: flex;
 	align-items: center;
 	gap: 10px;
 	color: #46169d;
 }
+
 .title {
 	margin: 0;
 	font-size: 22px;
 	font-weight: 700;
 	color: #111827;
 }
+
 .subtitle {
 	margin: 0;
 	font-size: 14px;
@@ -49,6 +52,7 @@
 	cursor: pointer;
 	transition: background 0.15s;
 }
+
 .addBtn:hover {
 	background: #37127a;
 }
@@ -62,6 +66,7 @@
 	animation: spin 0.8s linear infinite;
 	margin: 80px auto;
 }
+
 @keyframes spin {
 	to {
 		transform: rotate(360deg);
@@ -80,14 +85,17 @@
 	align-items: center;
 	gap: 10px;
 }
+
 .empty svg {
 	color: #46169d;
 }
+
 .empty h3 {
 	margin: 6px 0 0 0;
 	font-size: 16px;
 	color: #111827;
 }
+
 .empty p {
 	margin: 0 0 8px 0;
 	font-size: 14px;
@@ -105,6 +113,7 @@
 	padding: 18px 20px;
 	transition: box-shadow 0.15s;
 }
+
 .card:hover {
 	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 }
@@ -112,6 +121,7 @@
 .cardHeader {
 	margin-bottom: 10px;
 }
+
 .cardTitleRow {
 	display: flex;
 	justify-content: space-between;
@@ -119,12 +129,14 @@
 	gap: 12px;
 	flex-wrap: wrap;
 }
+
 .cardTitle {
 	margin: 0;
 	font-size: 16px;
 	font-weight: 700;
 	color: #111827;
 }
+
 .authorLine {
 	margin-top: 6px;
 	font-size: 12px;
@@ -155,7 +167,6 @@
 
 .adminNote {
 	background: #f5f3ff;
-	border-left: 3px solid #46169d;
 	padding: 10px 12px;
 	border-radius: 6px;
 	font-size: 13px;
@@ -176,6 +187,7 @@
 	gap: 6px;
 	flex-wrap: wrap;
 }
+
 .tag {
 	background: #f3f4f6;
 	color: #4b5563;
@@ -189,6 +201,7 @@
 	display: flex;
 	gap: 6px;
 }
+
 .actionBtn {
 	display: inline-flex;
 	align-items: center;
@@ -203,11 +216,13 @@
 	cursor: pointer;
 	transition: all 0.15s;
 }
+
 .actionBtn:hover {
 	background: #f9fafb;
 	border-color: #46169d;
 	color: #46169d;
 }
+
 .danger:hover {
 	border-color: #dc2626;
 	color: #dc2626;
@@ -234,6 +249,7 @@
 	display: flex;
 	flex-direction: column;
 }
+
 .modalHeader {
 	display: flex;
 	justify-content: space-between;
@@ -241,12 +257,14 @@
 	padding: 18px 22px;
 	border-bottom: 1px solid #e5e7eb;
 }
+
 .modalHeader h2 {
 	margin: 0;
 	font-size: 16px;
 	font-weight: 700;
 	color: #111827;
 }
+
 .closeBtn {
 	background: none;
 	border: none;
@@ -255,6 +273,7 @@
 	padding: 4px;
 	border-radius: 6px;
 }
+
 .closeBtn:hover {
 	background: #f3f4f6;
 }
@@ -271,11 +290,13 @@
 	flex-direction: column;
 	gap: 6px;
 }
+
 .field span {
 	font-size: 13px;
 	font-weight: 600;
 	color: #374151;
 }
+
 .field input,
 .field textarea,
 .field select {
@@ -289,12 +310,14 @@
 		border 0.15s,
 		box-shadow 0.15s;
 }
+
 .field input:focus,
 .field textarea:focus,
 .field select:focus {
 	border-color: #46169d;
 	box-shadow: 0 0 0 3px rgba(70, 22, 157, 0.1);
 }
+
 .field textarea {
 	resize: vertical;
 	min-height: 80px;
@@ -314,6 +337,7 @@
 	border-top: 1px solid #e5e7eb;
 	background: #f9fafb;
 }
+
 .cancelBtn {
 	padding: 10px 18px;
 	border: 1px solid #e5e7eb;
@@ -325,9 +349,11 @@
 	cursor: pointer;
 	transition: background 0.15s;
 }
+
 .cancelBtn:hover {
 	background: #f3f4f6;
 }
+
 .saveBtn {
 	display: inline-flex;
 	align-items: center;
@@ -342,9 +368,11 @@
 	cursor: pointer;
 	transition: background 0.15s;
 }
+
 .saveBtn:hover:not(:disabled) {
 	background: #37127a;
 }
+
 .saveBtn:disabled,
 .cancelBtn:disabled {
 	opacity: 0.6;
@@ -357,12 +385,14 @@
 	border-radius: 8px;
 	padding: 14px;
 }
+
 .ideaPreview strong {
 	display: block;
 	font-size: 14px;
 	color: #111827;
 	margin-bottom: 6px;
 }
+
 .ideaPreview p {
 	margin: 0 0 8px 0;
 	font-size: 13px;
@@ -370,7 +400,76 @@
 	line-height: 1.55;
 	white-space: pre-line;
 }
+
 .ideaPreview small {
 	font-size: 12px;
 	color: #9ca3af;
+}
+
+.statsRow {
+	display: flex;
+	gap: 12px;
+	flex-wrap: wrap;
+	margin-bottom: 16px;
+}
+
+.statChip {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	padding: 6px 12px;
+	border-radius: 999px;
+	background: rgba(255, 255, 255, 0.06);
+	font-size: 13px;
+}
+
+.modalHint {
+	margin: 0 0 12px;
+	padding: 10px 12px;
+	background: rgba(37, 99, 235, 0.08);
+	border-radius: 6px;
+	font-size: 13px;
+}
+
+/* ── Modal potwierdzenia ── */
+.confirmModal {
+	max-width: 420px;
+}
+
+.confirmTitle {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	margin: 0;
+	font-size: 16px;
+	font-weight: 600;
+}
+
+.confirmIcon {
+	color: #f59e0b;
+	/* bursztynowy — akcje neutralne */
+}
+
+.confirmIconDanger {
+	color: #dc2626;
+	/* czerwony — destrukcyjne */
+}
+
+.confirmMessage {
+	margin: 0;
+	line-height: 1.5;
+	color: #cbd5e1;
+	font-size: 14px;
+}
+
+/* Przycisk danger w stopce (ten sam styl co saveBtn, tylko czerwony) */
+.saveBtn.danger {
+	background: #dc2626;
+	border-color: #dc2626;
+	color: #fff;
+}
+
+.saveBtn.danger:hover:not(:disabled) {
+	background: #b91c1c;
+	border-color: #b91c1c;
 }

@@ -14,7 +14,7 @@ const prisma = new PrismaClient();
  * Dokładna nazwa zespołu grantowego w tabeli `teams`.
  * Jeśli w bazie nazywa się inaczej — zmień tutaj.
  */
-const GRANT_TEAM_NAME = "Zespół grantowy";
+const GRANT_TEAM_NAME = "Granty";
 
 const GRANT_CATEGORIES = ["upcoming", "current", "archived"] as const;
 const GRANT_WORK_STATUSES = [
@@ -41,7 +41,23 @@ async function isGrantTeamMember(userId: number): Promise<boolean> {
 	});
 	return !!row;
 }
+function isManager(role?: string) {
+	return (
+		role === "admin" ||
+		role === "board" ||
+		role === "Zarząd" ||
+		role === "coordinator"
+	);
+}
 
+/** Admin/board/coordinator LUB członek zespołu grantowego */
+async function canManageGrants(
+	userId: number,
+	role?: string,
+): Promise<boolean> {
+	if (isManager(role)) return true;
+	return isGrantTeamMember(userId);
+}
 function userSelect() {
 	return {
 		id: true,
@@ -65,10 +81,10 @@ function mapRecruitment(r: any) {
 		status: r.status,
 		createdBy: r.created_by_user
 			? {
-					id: r.created_by_user.id.toString(),
-					firstName: r.created_by_user.first_name,
-					lastName: r.created_by_user.last_name,
-				}
+				id: r.created_by_user.id.toString(),
+				firstName: r.created_by_user.first_name,
+				lastName: r.created_by_user.last_name,
+			}
 			: null,
 		createdAt: r.created_at.toISOString(),
 		updatedAt: r.updated_at.toISOString(),
@@ -101,19 +117,19 @@ function mapGrant(g: any) {
 		projectResults: g.project_results,
 		responsibleUser: g.responsible_user
 			? {
-					id: g.responsible_user.id.toString(),
-					firstName: g.responsible_user.first_name,
-					lastName: g.responsible_user.last_name,
-					email: g.responsible_user.email,
-				}
+				id: g.responsible_user.id.toString(),
+				firstName: g.responsible_user.first_name,
+				lastName: g.responsible_user.last_name,
+				email: g.responsible_user.email,
+			}
 			: null,
 		lastVerifiedAt: g.last_verified_at?.toISOString() ?? null,
 		lastVerifiedBy: g.last_verified_by_user
 			? {
-					id: g.last_verified_by_user.id.toString(),
-					firstName: g.last_verified_by_user.first_name,
-					lastName: g.last_verified_by_user.last_name,
-				}
+				id: g.last_verified_by_user.id.toString(),
+				firstName: g.last_verified_by_user.first_name,
+				lastName: g.last_verified_by_user.last_name,
+			}
 			: null,
 		createdBy: {
 			id: g.created_by_user.id.toString(),
@@ -136,8 +152,8 @@ router.get(
 		try {
 			const user = req.user;
 			if (!user?.id) return res.status(401).json({ error: "Brak autoryzacji" });
-			const isMember = await isGrantTeamMember(user.id);
-			res.json({ isMember });
+			const canManage = await canManageGrants(user.id, user.role);
+			res.json({ isMember: canManage });
 		} catch (error) {
 			logger.error("[GRANT-TEAM-CHECK] Błąd:", error);
 			res.status(500).json({ error: "Błąd serwera" });
@@ -227,12 +243,12 @@ router.get(
 				},
 			});
 
-			const isMember = await isGrantTeamMember(user.id);
+			const canManage = await canManageGrants(user.id, user.role);
 
 			res.json({
 				grants: grants.map(mapGrant),
 				total: grants.length,
-				canManage: isMember,
+				canManage,
 			});
 		} catch (error) {
 			logger.error("[GRANTS-LIST] Błąd:", error);
@@ -269,8 +285,8 @@ router.get(
 
 			if (!grant)
 				return res.status(404).json({ error: "Nie znaleziono grantu" });
-			const isMember = await isGrantTeamMember(user.id);
-			res.json({ grant: mapGrant(grant), canManage: isMember });
+			const canManage = await canManageGrants(user.id, user.role);
+			res.json({ grant: mapGrant(grant), canManage });
 		} catch (error) {
 			logger.error("[GRANTS-DETAIL] Błąd:", error);
 			res.status(500).json({ error: "Nie udało się pobrać grantu" });
@@ -286,9 +302,10 @@ router.post(
 		try {
 			const user = req.user;
 			if (!user?.id) return res.status(401).json({ error: "Brak autoryzacji" });
-			if (!(await isGrantTeamMember(user.id))) {
+			if (!(await canManageGrants(user.id, user.role))) {
 				return res.status(403).json({
-					error: "Tylko członkowie zespołu grantowego mogą dodawać granty",
+					error:
+						"Tylko członkowie zespołu grantowego oraz admin/zarząd mogą dodawać granty",
 				});
 			}
 
@@ -375,12 +392,12 @@ router.put(
 		try {
 			const user = req.user;
 			if (!user?.id) return res.status(401).json({ error: "Brak autoryzacji" });
-			if (!(await isGrantTeamMember(user.id))) {
+			if (!(await canManageGrants(user.id, user.role))) {
 				return res.status(403).json({
-					error: "Tylko członkowie zespołu grantowego mogą edytować granty",
+					error:
+						"Tylko członkowie zespołu grantowego oraz admin/zarząd mogą edytować granty",
 				});
 			}
-
 			const id = parseInt(String(req.params.id));
 			if (isNaN(id)) return res.status(400).json({ error: "Złe ID" });
 
@@ -489,9 +506,10 @@ router.delete(
 		try {
 			const user = req.user;
 			if (!user?.id) return res.status(401).json({ error: "Brak autoryzacji" });
-			if (!(await isGrantTeamMember(user.id))) {
+			if (!(await canManageGrants(user.id, user.role))) {
 				return res.status(403).json({
-					error: "Tylko członkowie zespołu grantowego mogą usuwać granty",
+					error:
+						"Tylko członkowie zespołu grantowego oraz admin/zarząd mogą usuwać granty",
 				});
 			}
 			const id = parseInt(String(req.params.id));
@@ -513,9 +531,10 @@ router.post(
 		try {
 			const user = req.user;
 			if (!user?.id) return res.status(401).json({ error: "Brak autoryzacji" });
-			if (!(await isGrantTeamMember(user.id))) {
+			if (!(await canManageGrants(user.id, user.role))) {
 				return res.status(403).json({
-					error: "Tylko członkowie zespołu grantowego mogą dodawać rekrutacje",
+					error:
+						"Tylko członkowie zespołu grantowego oraz admin/zarząd mogą dodawać rekrutacje",
 				});
 			}
 			const grantId = parseInt(String(req.params.grantId));
@@ -567,9 +586,10 @@ router.put(
 		try {
 			const user = req.user;
 			if (!user?.id) return res.status(401).json({ error: "Brak autoryzacji" });
-			if (!(await isGrantTeamMember(user.id))) {
+			if (!(await canManageGrants(user.id, user.role))) {
 				return res.status(403).json({
-					error: "Tylko członkowie zespołu grantowego mogą edytować rekrutacje",
+					error:
+						"Tylko członkowie zespołu grantowego oraz admin/zarząd mogą edytować rekrutacje",
 				});
 			}
 			const id = parseInt(String(req.params.id));
@@ -617,9 +637,10 @@ router.delete(
 		try {
 			const user = req.user;
 			if (!user?.id) return res.status(401).json({ error: "Brak autoryzacji" });
-			if (!(await isGrantTeamMember(user.id))) {
+			if (!(await canManageGrants(user.id, user.role))) {
 				return res.status(403).json({
-					error: "Tylko członkowie zespołu grantowego mogą usuwać rekrutacje",
+					error:
+						"Tylko członkowie zespołu grantowego oraz admin/zarząd mogą usuwać rekrutacje",
 				});
 			}
 			const id = parseInt(String(req.params.id));

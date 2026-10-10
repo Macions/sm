@@ -5,7 +5,9 @@ import toast from "react-hot-toast";
 import styles from "./Grants.module.css";
 import { GrantCard, type Grant } from "./GrantCard";
 import { GrantModal } from "./GrantModal";
+import { GrantTeamSection } from "./GrantTeamSection";
 import { GrantDetailModal } from "./GrantDetailModal";
+import { RecruitmentModal } from "./RecruitmentModal";
 
 const CATEGORY_LABELS: Record<string, string> = {
 	upcoming: "Przyszłe",
@@ -26,6 +28,9 @@ export default function Grants() {
 	const [isCreateOpen, setIsCreateOpen] = useState(false);
 	const [editingGrant, setEditingGrant] = useState<Grant | null>(null);
 	const [detailGrantId, setDetailGrantId] = useState<string | null>(null);
+	const [recruitmentGrantId, setRecruitmentGrantId] = useState<string | null>(
+		null,
+	);
 
 	const fetchGrants = async () => {
 		try {
@@ -59,7 +64,7 @@ export default function Grants() {
 	}, [search, filterCategory, filterWorkStatus, onlyWithOpenRecruitment]);
 
 	const handleDelete = async (grant: Grant) => {
-		if (!confirm(`Usunąć grant „${grant.name}"?`)) return;
+		if (!confirm(`Usunąć grant „${grant.name}”?`)) return;
 		try {
 			const token = localStorage.getItem("accessToken");
 			const res = await fetch(`/api/grants/${grant.id}`, {
@@ -123,6 +128,8 @@ export default function Grants() {
 					)}
 				</div>
 			</div>
+
+			<GrantTeamSection />
 
 			<div className={styles.filters}>
 				<div className={styles.searchWrap}>
@@ -208,6 +215,7 @@ export default function Grants() {
 										onView={(g) => setDetailGrantId(g.id)}
 										onEdit={(g) => setEditingGrant(g)}
 										onDelete={handleDelete}
+										onAddRecruitment={(g) => setRecruitmentGrantId(g.id)}
 									/>
 								))}
 							</div>
@@ -237,6 +245,17 @@ export default function Grants() {
 					canManage={canManage}
 					onClose={() => setDetailGrantId(null)}
 					onChanged={fetchGrants}
+				/>
+			)}
+			{recruitmentGrantId && (
+				<RecruitmentModal
+					isOpen={true}
+					grantId={recruitmentGrantId}
+					onClose={() => setRecruitmentGrantId(null)}
+					onSaved={async () => {
+						setRecruitmentGrantId(null);
+						await fetchGrants();
+					}}
 				/>
 			)}
 		</div>

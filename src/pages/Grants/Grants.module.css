@@ -1,7 +1,6 @@
 ﻿.page {
-	max-width: 1200px;
+	width: 100%;
 	margin: 0 auto;
-	padding: 32px 24px;
 }
 
 .header {
@@ -12,28 +11,33 @@
 	margin-bottom: 24px;
 	flex-wrap: wrap;
 }
+
 .headerLeft {
 	display: flex;
 	flex-direction: column;
 	gap: 4px;
 }
+
 .headerRight {
 	display: flex;
 	gap: 8px;
 	align-items: center;
 }
+
 .titleRow {
 	display: flex;
 	align-items: center;
 	gap: 10px;
 	color: #46169d;
 }
+
 .title {
 	margin: 0;
 	font-size: 22px;
 	font-weight: 700;
 	color: #111827;
 }
+
 .subtitle {
 	margin: 0;
 	font-size: 14px;
@@ -52,6 +56,7 @@
 	color: #4b5563;
 	cursor: pointer;
 }
+
 .refreshBtn:hover {
 	background: #f9fafb;
 }
@@ -69,6 +74,7 @@
 	font-weight: 600;
 	cursor: pointer;
 }
+
 .addBtn:hover {
 	background: #37127a;
 }
@@ -84,11 +90,13 @@
 	border: 1px solid #e5e7eb;
 	border-radius: 10px;
 }
+
 .searchWrap {
 	position: relative;
 	flex: 1;
 	min-width: 240px;
 }
+
 .searchIcon {
 	position: absolute;
 	left: 12px;
@@ -96,6 +104,7 @@
 	transform: translateY(-50%);
 	color: #9ca3af;
 }
+
 .searchInput {
 	width: 100%;
 	padding: 9px 36px 9px 36px;
@@ -104,6 +113,7 @@
 	font-size: 14px;
 	font-family: inherit;
 }
+
 .searchClear {
 	position: absolute;
 	right: 10px;
@@ -115,6 +125,7 @@
 	cursor: pointer;
 	padding: 4px;
 }
+
 .select {
 	padding: 9px 12px;
 	border: 1px solid #e5e7eb;
@@ -123,6 +134,7 @@
 	font-family: inherit;
 	background: #fff;
 }
+
 .checkbox {
 	display: flex;
 	align-items: center;
@@ -144,14 +156,17 @@
 	align-items: center;
 	gap: 10px;
 }
+
 .empty svg {
 	color: #46169d;
 }
+
 .empty h3 {
 	margin: 6px 0 0 0;
 	font-size: 16px;
 	color: #111827;
 }
+
 .empty p {
 	margin: 0;
 	font-size: 14px;
@@ -160,6 +175,7 @@
 .section {
 	margin-bottom: 32px;
 }
+
 .sectionTitle {
 	display: flex;
 	align-items: center;
@@ -171,6 +187,7 @@
 	text-transform: uppercase;
 	letter-spacing: 0.4px;
 }
+
 .sectionCount {
 	background: #ede9fe;
 	color: #46169d;
@@ -191,6 +208,7 @@
 	padding: 18px 20px;
 	transition: box-shadow 0.15s;
 }
+
 .card:hover {
 	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 }
@@ -198,6 +216,7 @@
 .cardHeader {
 	margin-bottom: 10px;
 }
+
 .cardTitleRow {
 	display: flex;
 	justify-content: space-between;
@@ -206,12 +225,14 @@
 	flex-wrap: wrap;
 	margin-bottom: 6px;
 }
+
 .cardTitle {
 	margin: 0;
 	font-size: 16px;
 	font-weight: 700;
 	color: #111827;
 }
+
 .themeTag {
 	display: inline-block;
 	background: #f3f4f6;
@@ -221,6 +242,7 @@
 	font-size: 11px;
 	font-weight: 600;
 }
+
 .cardDescription {
 	margin: 0 0 12px 0;
 	font-size: 14px;
@@ -235,6 +257,7 @@
 	gap: 6px;
 	margin-bottom: 12px;
 }
+
 .metaItem {
 	display: flex;
 	align-items: center;
@@ -242,10 +265,12 @@
 	font-size: 13px;
 	color: #4b5563;
 }
+
 .metaItem svg {
 	color: #6b7280;
 	flex-shrink: 0;
 }
+
 .metaItem strong {
 	color: #111827;
 }
@@ -270,10 +295,12 @@
 	padding-top: 12px;
 	border-top: 1px solid #f3f4f6;
 }
+
 .verifiedLine {
 	font-size: 12px;
 	color: #9ca3af;
 }
+
 .cardActions {
 	display: flex;
 	gap: 6px;
@@ -293,11 +320,13 @@
 	cursor: pointer;
 	transition: all 0.15s;
 }
+
 .actionBtn:hover {
 	background: #f9fafb;
 	border-color: #46169d;
 	color: #46169d;
 }
+
 .danger:hover {
 	border-color: #dc2626;
 	color: #dc2626;
@@ -324,6 +353,7 @@
 	padding: 20px;
 	z-index: 1000;
 }
+
 .modal {
 	background: #fff;
 	border-radius: 12px;
@@ -334,6 +364,7 @@
 	display: flex;
 	flex-direction: column;
 }
+
 .modalWide {
 	max-width: 800px;
 }
@@ -349,12 +380,14 @@
 	background: #fff;
 	z-index: 2;
 }
+
 .modalHeader h2 {
 	margin: 0;
 	font-size: 16px;
 	font-weight: 700;
 	color: #111827;
 }
+
 .closeBtn {
 	background: none;
 	border: none;
@@ -363,6 +396,7 @@
 	padding: 4px;
 	border-radius: 6px;
 }
+
 .closeBtn:hover {
 	background: #f3f4f6;
 }
@@ -379,11 +413,13 @@
 	flex-direction: column;
 	gap: 6px;
 }
+
 .field span {
 	font-size: 13px;
 	font-weight: 600;
 	color: #374151;
 }
+
 .field input,
 .field textarea,
 .field select {
@@ -397,12 +433,14 @@
 		border 0.15s,
 		box-shadow 0.15s;
 }
+
 .field input:focus,
 .field textarea:focus,
 .field select:focus {
 	border-color: #46169d;
 	box-shadow: 0 0 0 3px rgba(70, 22, 157, 0.1);
 }
+
 .field textarea {
 	resize: vertical;
 }
@@ -436,10 +474,12 @@
 	bottom: 0;
 	z-index: 2;
 }
+
 .footerLeft {
 	font-size: 12px;
 	color: #9ca3af;
 }
+
 .footerRight {
 	display: flex;
 	gap: 8px;
@@ -456,9 +496,11 @@
 	color: #4b5563;
 	cursor: pointer;
 }
+
 .cancelBtn:hover {
 	background: #f3f4f6;
 }
+
 .cancelBtn:disabled {
 	opacity: 0.6;
 	cursor: not-allowed;
@@ -477,9 +519,11 @@
 	font-weight: 600;
 	cursor: pointer;
 }
+
 .saveBtn:hover:not(:disabled) {
 	background: #37127a;
 }
+
 .saveBtn:disabled {
 	opacity: 0.6;
 	cursor: not-allowed;
@@ -494,6 +538,7 @@
 	animation: spin 0.8s linear infinite;
 	margin: 80px auto;
 }
+
 @keyframes spin {
 	to {
 		transform: rotate(360deg);
@@ -508,6 +553,7 @@
 	color: #374151;
 	white-space: pre-line;
 }
+
 .detailGrid {
 	display: grid;
 	grid-template-columns: 1fr 1fr;
@@ -517,16 +563,19 @@
 	background: #f9fafb;
 	border-radius: 8px;
 }
+
 .detailItem {
 	display: flex;
 	gap: 10px;
 	align-items: flex-start;
 }
+
 .detailItem svg {
 	color: #46169d;
 	flex-shrink: 0;
 	margin-top: 2px;
 }
+
 .detailLabel {
 	display: block;
 	font-size: 11px;
@@ -535,6 +584,7 @@
 	letter-spacing: 0.4px;
 	font-weight: 600;
 }
+
 .detailValue {
 	display: block;
 	font-size: 14px;
@@ -548,6 +598,7 @@
 	flex-wrap: wrap;
 	margin-bottom: 16px;
 }
+
 .link {
 	display: inline-flex;
 	align-items: center;
@@ -560,6 +611,7 @@
 	border-radius: 6px;
 	font-weight: 600;
 }
+
 .link:hover {
 	background: #ede9fe;
 	text-decoration: underline;
@@ -568,6 +620,7 @@
 .detailSection {
 	margin-bottom: 14px;
 }
+
 .detailSection h4 {
 	margin: 0 0 6px 0;
 	font-size: 13px;
@@ -576,6 +629,7 @@
 	text-transform: uppercase;
 	letter-spacing: 0.4px;
 }
+
 .detailSection p {
 	margin: 0;
 	font-size: 14px;
@@ -598,6 +652,7 @@
 	padding-top: 16px;
 	border-top: 1px solid #e5e7eb;
 }
+
 .recruitmentsTitle {
 	margin: 0;
 	font-size: 14px;
@@ -606,6 +661,7 @@
 	text-transform: uppercase;
 	letter-spacing: 0.4px;
 }
+
 .addSmallBtn {
 	display: inline-flex;
 	align-items: center;
@@ -619,9 +675,11 @@
 	font-weight: 600;
 	cursor: pointer;
 }
+
 .addSmallBtn:hover {
 	background: #37127a;
 }
+
 .emptyText {
 	font-size: 13px;
 	color: #9ca3af;
@@ -634,12 +692,14 @@
 	flex-direction: column;
 	gap: 10px;
 }
+
 .recruitmentItem {
 	background: #f9fafb;
 	border: 1px solid #e5e7eb;
 	border-radius: 8px;
 	padding: 14px;
 }
+
 .recruitmentHeader {
 	display: flex;
 	justify-content: space-between;
@@ -648,10 +708,12 @@
 	margin-bottom: 6px;
 	flex-wrap: wrap;
 }
+
 .recruitmentHeader strong {
 	font-size: 14px;
 	color: #111827;
 }
+
 .recruitmentDesc {
 	margin: 0 0 8px 0;
 	font-size: 13px;
@@ -659,6 +721,7 @@
 	line-height: 1.5;
 	white-space: pre-line;
 }
+
 .recruitmentMeta {
 	display: flex;
 	gap: 12px;
@@ -667,8 +730,597 @@
 	color: #6b7280;
 	flex-wrap: wrap;
 }
+
 .recruitmentActions {
 	display: flex;
 	gap: 6px;
 	margin-top: 8px;
+}
+
+/* ─── Sekcja zespołu grantowego ─── */
+.teamSection {
+	margin-bottom: 20px;
+	padding: 18px 20px 20px;
+	background: linear-gradient(180deg, #fafbff 0%, #ffffff 60%);
+	border: 1px solid var(--gray-200, #e2e8f0);
+	border-radius: 16px;
+	box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03);
+}
+
+.teamSection__header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px;
+	margin-bottom: 14px;
+	padding-bottom: 14px;
+	border-bottom: 1px solid var(--gray-100, #f1f5f9);
+}
+
+.teamSection__titleWrap {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+}
+
+.teamSection__icon {
+	width: 38px;
+	height: 38px;
+	border-radius: 11px;
+	background: linear-gradient(135deg, #ede9fe, #ddd6fe);
+	color: var(--purple-700, #6d28d9);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	flex-shrink: 0;
+	box-shadow: 0 2px 6px rgba(124, 58, 237, 0.15);
+}
+
+.teamSection__title {
+	margin: 0;
+	font-size: 16px;
+	font-weight: 700;
+	color: var(--gray-900, #0f172a);
+	letter-spacing: -0.01em;
+}
+
+.teamSection__subtitle {
+	margin: 2px 0 0;
+	font-size: 13px;
+	color: var(--gray-500, #64748b);
+}
+
+.teamSection__count {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	min-width: 30px;
+	height: 30px;
+	padding: 0 10px;
+	background: linear-gradient(135deg, #7c3aed, #6d28d9);
+	color: #fff;
+	border-radius: 999px;
+	font-size: 13px;
+	font-weight: 700;
+	box-shadow: 0 2px 8px rgba(124, 58, 237, 0.3);
+}
+
+.teamSection__grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+	gap: 10px;
+}
+
+/* ─── Karta członka zespołu ─── */
+.teamMember {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	padding: 10px 14px 10px 10px;
+	background: #fff;
+	border: 1px solid var(--gray-200, #e2e8f0);
+	border-radius: 12px;
+	cursor: pointer;
+	text-align: left;
+	font-family: inherit;
+	transition: all 0.18s ease;
+	width: 100%;
+}
+
+.teamMember:hover {
+	border-color: #c4b5fd;
+	background: #faf5ff;
+	transform: translateY(-2px);
+	box-shadow: 0 6px 18px rgba(124, 58, 237, 0.12);
+}
+
+.teamMember__avatar {
+	position: relative;
+	width: 42px;
+	height: 42px;
+	border-radius: 50%;
+	background: linear-gradient(135deg, #ede9fe, #c4b5fd);
+	color: var(--purple-700, #6d28d9);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-size: 15px;
+	font-weight: 700;
+	flex-shrink: 0;
+	border: 2px solid #fff;
+	box-shadow: 0 2px 6px rgba(124, 58, 237, 0.2);
+	letter-spacing: -0.02em;
+}
+
+.teamMember__crown {
+	position: absolute;
+	bottom: -3px;
+	right: -3px;
+	width: 18px;
+	height: 18px;
+	border-radius: 50%;
+	background: linear-gradient(135deg, #f59e0b, #fcd34d);
+	color: #fff;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	border: 2px solid #fff;
+	box-shadow: 0 1px 4px rgba(245, 158, 11, 0.4);
+}
+
+.teamMember__body {
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+	min-width: 0;
+	flex: 1;
+}
+
+.teamMember__name {
+	font-size: 13px;
+	font-weight: 600;
+	color: var(--gray-900, #0f172a);
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.teamMember__role {
+	font-size: 11px;
+	font-weight: 500;
+	color: var(--purple-600, #7c3aed);
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+}
+
+.teamMember__email {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+	font-size: 11px;
+	color: var(--gray-500, #64748b);
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.teamMember__email svg {
+	flex-shrink: 0;
+	color: var(--gray-400, #94a3b8);
+}
+
+/* ─── Responsywność ─── */
+@media (max-width: 640px) {
+	.teamSection {
+		padding: 14px 14px 16px;
+	}
+
+	.teamSection__grid {
+		grid-template-columns: 1fr;
+	}
+
+	.teamSection__title {
+		font-size: 15px;
+	}
+}
+
+/* ═══════════════════════════════════════════════════════════
+   KARTA GRANTU – brakujące klasy
+   ═══════════════════════════════════════════════════════════ */
+
+.card {
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+	cursor: pointer;
+	background: #fff;
+	border: 1px solid #e5e7eb;
+	border-radius: 12px;
+	padding: 18px 20px;
+	transition: box-shadow 0.15s, transform 0.15s, border-color 0.15s;
+}
+
+.card:hover {
+	box-shadow: 0 8px 24px rgba(70, 22, 157, 0.08);
+	border-color: #c4b5fd;
+	transform: translateY(-2px);
+}
+
+.cardHeader {
+	display: flex;
+	align-items: flex-start;
+	justify-content: space-between;
+	gap: 12px;
+	margin-bottom: 0;
+}
+
+.cardTitle {
+	margin: 0;
+	font-size: 16px;
+	font-weight: 700;
+	color: #111827;
+	line-height: 1.3;
+}
+
+.badge {
+	display: inline-block;
+	padding: 3px 10px;
+	border-radius: 999px;
+	background: #ede9fe;
+	color: #6d28d9;
+	font-size: 11px;
+	font-weight: 700;
+	text-transform: uppercase;
+	letter-spacing: 0.3px;
+	white-space: nowrap;
+	flex-shrink: 0;
+}
+
+.cardDescription {
+	margin: 0;
+	font-size: 14px;
+	line-height: 1.6;
+	color: #374151;
+	display: -webkit-box;
+	-webkit-line-clamp: 3;
+	line-clamp: 3;
+	-webkit-box-orient: vertical;
+	overflow: hidden;
+}
+
+.cardMeta {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px 14px;
+	font-size: 13px;
+	color: #4b5563;
+}
+
+.metaItem {
+	display: inline-flex;
+	align-items: center;
+	gap: 5px;
+}
+
+.cardActions {
+	display: flex;
+	gap: 6px;
+	padding-top: 12px;
+	border-top: 1px solid #f3f4f6;
+	margin-top: auto;
+	justify-content: flex-end;
+}
+
+.iconBtn {
+	width: 34px;
+	height: 34px;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	background: #f9fafb;
+	border: 1px solid #e5e7eb;
+	border-radius: 8px;
+	color: #4b5563;
+	cursor: pointer;
+	transition: all 0.15s;
+	font-family: inherit;
+}
+
+.iconBtn:hover {
+	background: #f3f4f6;
+	border-color: #c4b5fd;
+	color: #46169d;
+}
+
+.iconBtn.danger:hover {
+	background: #fef2f2;
+	border-color: #fecaca;
+	color: #dc2626;
+}
+
+/* ─── Rekrutacje na karcie ─── */
+.recruitmentsBox {
+	margin-top: 8px;
+	padding: 10px 12px;
+	background: #f9fafb;
+	border: 1px solid #e5e7eb;
+	border-radius: 10px;
+}
+
+.recruitmentsBox__header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	margin-bottom: 8px;
+	font-size: 11px;
+	font-weight: 700;
+	color: #4b5563;
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+}
+
+.recruitmentsBox__count {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	min-width: 22px;
+	height: 22px;
+	padding: 0 7px;
+	background: #ede9fe;
+	color: #46169d;
+	border-radius: 999px;
+	font-size: 11px;
+	font-weight: 700;
+}
+
+.recruitmentsBox__list {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+
+.recruitmentItem__row {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 8px;
+}
+
+.recruitmentItem__title {
+	font-size: 13px;
+	font-weight: 600;
+	color: #111827;
+}
+
+.recruitmentItem__badge {
+	font-size: 10px;
+	font-weight: 700;
+	color: #fff;
+	padding: 2px 8px;
+	border-radius: 999px;
+	text-transform: uppercase;
+	letter-spacing: 0.03em;
+	flex-shrink: 0;
+}
+
+.recruitmentItem__meta {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+	margin-top: 4px;
+	font-size: 11px;
+	color: #6b7280;
+}
+
+.recruitmentItem__link {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+	margin-top: 6px;
+	font-size: 11px;
+	color: #46169d;
+	text-decoration: none;
+	font-weight: 600;
+}
+
+.recruitmentItem__link:hover {
+	text-decoration: underline;
+}
+
+.addRecruitmentBtn {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 5px;
+	width: 100%;
+	margin-top: 6px;
+	padding: 8px 10px;
+	background: transparent;
+	border: 1px dashed #c4b5fd;
+	border-radius: 8px;
+	color: #46169d;
+	font-size: 12px;
+	font-weight: 600;
+	cursor: pointer;
+	font-family: inherit;
+	transition: all 0.15s ease;
+}
+
+.addRecruitmentBtn:hover {
+	background: #f5f3ff;
+	border-color: #7c3aed;
+}
+
+.sectionTitleModal {
+	font-size: 13px;
+	font-weight: 700;
+	color: #46169d;
+	text-transform: uppercase;
+	letter-spacing: 0.5px;
+	margin: 12px 0 4px 0;
+	border-bottom: 1px solid #ede9fe;
+	padding-bottom: 6px;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   REKRUTACJE NA PROJECT LEADERA – sekcja na karcie grantu
+   ═══════════════════════════════════════════════════════════ */
+
+.recruitmentsBox {
+	margin-top: 12px;
+	padding: 14px 14px 12px;
+	background: linear-gradient(180deg, #fafbff 0%, #ffffff 100%);
+	border: 1px solid #e5e7eb;
+	border-radius: 12px;
+}
+
+.recruitmentsBox__header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 10px;
+	margin-bottom: 10px;
+	padding-bottom: 10px;
+	border-bottom: 1px solid #f3f4f6;
+}
+
+.recruitmentsBox__header>span:first-child {
+	font-size: 11px;
+	font-weight: 700;
+	color: #46169d;
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
+}
+
+.recruitmentsBox__count {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	min-width: 22px;
+	height: 22px;
+	padding: 0 8px;
+	background: #46169d;
+	color: #fff;
+	border-radius: 999px;
+	font-size: 11px;
+	font-weight: 700;
+}
+
+.recruitmentsBox__list {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+
+/* ─── Pojedyncza rekrutacja ─── */
+.recruitmentItem {
+	position: relative;
+	padding: 12px 14px;
+	background: #fff;
+	border: 1px solid #e5e7eb;
+	border-left: 3px solid #46169d;
+	border-radius: 10px;
+	transition: all 0.15s ease;
+}
+
+.recruitmentItem:hover {
+	border-left-color: #7c3aed;
+	box-shadow: 0 2px 8px rgba(70, 22, 157, 0.06);
+	transform: translateX(2px);
+}
+
+.recruitmentItem__row {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 10px;
+	margin-bottom: 6px;
+}
+
+.recruitmentItem__title {
+	font-size: 13px;
+	font-weight: 700;
+	color: #111827;
+	line-height: 1.3;
+}
+
+.recruitmentItem__badge {
+	display: inline-flex;
+	align-items: center;
+	padding: 3px 10px;
+	border-radius: 999px;
+	color: #fff;
+	font-size: 10px;
+	font-weight: 700;
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+	white-space: nowrap;
+	flex-shrink: 0;
+	box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.recruitmentItem__meta {
+	display: inline-flex;
+	align-items: center;
+	gap: 5px;
+	margin-top: 4px;
+	font-size: 12px;
+	color: #6b7280;
+}
+
+.recruitmentItem__meta svg {
+	color: #9ca3af;
+}
+
+.recruitmentItem__link {
+	display: inline-flex;
+	align-items: center;
+	gap: 5px;
+	margin-top: 8px;
+	padding: 5px 10px;
+	background: #f5f3ff;
+	color: #46169d;
+	border-radius: 6px;
+	font-size: 11px;
+	font-weight: 600;
+	text-decoration: none;
+	transition: all 0.15s;
+}
+
+.recruitmentItem__link:hover {
+	background: #ede9fe;
+	color: #37127a;
+}
+
+/* ─── Przycisk „+ Dodaj rekrutację” ─── */
+.addRecruitmentBtn {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 6px;
+	width: 100%;
+	margin-top: 10px;
+	padding: 9px 12px;
+	background: #faf5ff;
+	border: 1px dashed #c4b5fd;
+	border-radius: 9px;
+	color: #46169d;
+	font-size: 12px;
+	font-weight: 700;
+	cursor: pointer;
+	font-family: inherit;
+	letter-spacing: 0.02em;
+	transition: all 0.18s ease;
+}
+
+.addRecruitmentBtn:hover {
+	background: #f5f3ff;
+	border-color: #7c3aed;
+	border-style: solid;
+	transform: translateY(-1px);
+	box-shadow: 0 4px 12px rgba(124, 58, 237, 0.12);
+}
+
+.addRecruitmentBtn:active {
+	transform: translateY(0);
 }

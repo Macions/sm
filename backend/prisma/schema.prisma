@@ -990,11 +990,8 @@ model SystemIdea {
   title       String  @db.VarChar(200)
   description String  @db.Text
   category    String? @db.VarChar(100)
-  status      String  @default("new") @db.VarChar(50)
-  // new | in_review | planned | in_progress | done | rejected
-
-  priority String? @db.VarChar(20)
-  // low | medium | high
+  status      String  @default("pending") @db.VarChar(50)
+  // pending | planned | in_progress | done | rejected
 
   author_id Int
   author    User @relation("UserSystemIdeas", fields: [author_id], references: [id], onDelete: Cascade)
@@ -1002,6 +999,9 @@ model SystemIdea {
   admin_note  String?   @db.Text
   reviewed_by Int?
   reviewed_at DateTime? @db.DateTime(0)
+
+  completed_at DateTime? @db.DateTime(0) // ⬅️ NOWE
+  completed_by Int? // ⬅️ NOWE (opcjonalnie)
 
   created_at DateTime @default(now()) @db.DateTime(0)
   updated_at DateTime @updatedAt @db.DateTime(0)

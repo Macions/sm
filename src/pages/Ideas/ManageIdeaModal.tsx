@@ -71,17 +71,16 @@ export function ManageIdeaModal({ idea, onClose, onSaved }: Props) {
 					<label className={styles.field}>
 						<span>Status</span>
 						<select value={status} onChange={(e) => setStatus(e.target.value)}>
-							<option value="new">Nowy</option>
-							<option value="in_review">W analizie</option>
-							<option value="planned">Zaplanowany</option>
-							<option value="in_progress">W realizacji</option>
-							<option value="done">Zrealizowany</option>
+							<option value="pending">Oczekuje</option>
+							<option value="planned">W planach</option>
+							<option value="in_progress">W trakcie</option>
+							<option value="done">Wykonany</option>
 							<option value="rejected">Odrzucony</option>
 						</select>
 					</label>
 
 					<label className={styles.field}>
-						<span>Notatka od zarządu (widoczna dla autora)</span>
+						<span>Notatka od IT (widoczna dla autora)</span>
 						<textarea
 							value={adminNote}
 							onChange={(e) => setAdminNote(e.target.value)}

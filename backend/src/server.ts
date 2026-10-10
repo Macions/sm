@@ -52,7 +52,7 @@ updateLeaveStatus();
 cron.schedule("0 7,14,21 * * *", async () => {
 	try {
 		await syncAttendance();
-	} catch (error) {}
+	} catch (error) { }
 });
 
 cron.schedule("1 0 * * *", async () => {
@@ -1072,7 +1072,7 @@ app.post("/api/ideas", authMiddleware, async (req: any, res) => {
 					vote_type: "up",
 				},
 			});
-		} catch (voteError) {}
+		} catch (voteError) { }
 
 		const voteCounts = await getVoteCounts(idea.id);
 
@@ -1630,7 +1630,7 @@ app.get("/api/dashboard/stats", authMiddleware, async (req: any, res) => {
 					) {
 						attendance = `${Number(user.attendance_percentage).toFixed(1)}%`;
 					}
-				} catch (fallbackError) {}
+				} catch (fallbackError) { }
 			}
 		}
 
@@ -2812,7 +2812,7 @@ app.get("/api/applications", authMiddleware, async (req: any, res) => {
 				userId: app.user_id.toString(),
 				userName: app.user
 					? `${app.user.first_name || ""} ${app.user.last_name || ""}`.trim() ||
-						"Nieznany"
+					"Nieznany"
 					: "Nieznany",
 				userEmail: app.user?.email || "",
 				message: app.message || "",
@@ -2923,7 +2923,7 @@ app.get(
 					userId: app.user_id.toString(),
 					userName: app.user
 						? `${app.user.first_name || ""} ${app.user.last_name || ""}`.trim() ||
-							"Nieznany"
+						"Nieznany"
 						: "Nieznany",
 					userEmail: app.user?.email || "",
 					message: app.message || "",
@@ -4103,14 +4103,14 @@ app.put("/api/leaves/:id", authMiddleware, async (req: any, res) => {
 					: existingLeave.attachments,
 				status: status || existingLeave.status,
 				...(status === "approved" ||
-				status === "rejected" ||
-				status === "cancelled"
+					status === "rejected" ||
+					status === "cancelled"
 					? {
-							approved_by:
-								`${currentUser?.first_name || ""} ${currentUser?.last_name || ""}`.trim() ||
-								"Nieznany",
-							approved_at: new Date(),
-						}
+						approved_by:
+							`${currentUser?.first_name || ""} ${currentUser?.last_name || ""}`.trim() ||
+							"Nieznany",
+						approved_at: new Date(),
+					}
 					: {}),
 			},
 			include: { user: true },
@@ -5203,7 +5203,7 @@ app.post("/api/onboarding/save", authMiddleware, async (req: any, res) => {
 					},
 				});
 			}
-		} catch (notificationError) {}
+		} catch (notificationError) { }
 
 		res.status(200).json({
 			success: true,
@@ -6685,12 +6685,12 @@ app.get(
 					is_active: true,
 					...(search
 						? {
-								OR: [
-									{ first_name: { contains: search as string } },
-									{ last_name: { contains: search as string } },
-									{ email: { contains: search as string } },
-								],
-							}
+							OR: [
+								{ first_name: { contains: search as string } },
+								{ last_name: { contains: search as string } },
+								{ email: { contains: search as string } },
+							],
+						}
 						: {}),
 				},
 				select: {
@@ -6764,7 +6764,7 @@ app.get(
 							) {
 								attendance = Number(result[0].attendance_percentage);
 							}
-						} catch (dbError) {}
+						} catch (dbError) { }
 					}
 
 					const teams = user.team_members
@@ -7179,23 +7179,23 @@ app.get("/api/admin/logs", authMiddleware, async (req: any, res) => {
 cron.schedule("0 1,17 * * *", async () => {
 	try {
 		await syncContributions();
-	} catch (error) {}
+	} catch (error) { }
 });
 
 setTimeout(async () => {
 	try {
 		await syncContributions();
-	} catch (error) {}
+	} catch (error) { }
 }, 15000);
 setTimeout(async () => {
 	try {
 		await syncAttendance();
-	} catch (error) {}
+	} catch (error) { }
 }, 10000);
 setTimeout(async () => {
 	try {
 		await syncMembers();
-	} catch (error) {}
+	} catch (error) { }
 }, 5000);
 
 app.get(
@@ -11037,12 +11037,12 @@ app.get("/api/my-team/attendance", authMiddleware, async (req: any, res) => {
 					is_leader: tm.is_leader || false,
 					attendance: att
 						? {
-								total_meetings: att.total_meetings,
-								present_count: att.present_count,
-								absent_count: att.absent_count,
-								excused_count: att.excused_count,
-								attendance_percentage: att.attendance_percentage,
-							}
+							total_meetings: att.total_meetings,
+							present_count: att.present_count,
+							absent_count: att.absent_count,
+							excused_count: att.excused_count,
+							attendance_percentage: att.attendance_percentage,
+						}
 						: null,
 				};
 			})
@@ -11334,7 +11334,7 @@ app.get("/api/my-team", authMiddleware, async (req: any, res) => {
 							const n = parseInt(uid);
 							if (!isNaN(n) && !ids.includes(n)) ids.push(n);
 						});
-				} catch {}
+				} catch { }
 			}
 			ids.forEach((uid) => {
 				if (userTasksMap[uid]) userTasksMap[uid].push(task);
@@ -11363,12 +11363,12 @@ app.get("/api/my-team", authMiddleware, async (req: any, res) => {
 				const avgRating =
 					ratedTasks.length > 0
 						? ratedTasks.reduce((s: number, t: any) => s + t.rating, 0) /
-							ratedTasks.length
+						ratedTasks.length
 						: null;
 				const avgDifficulty =
 					diffTasks.length > 0
 						? diffTasks.reduce((s: number, t: any) => s + t.difficulty, 0) /
-							diffTasks.length
+						diffTasks.length
 						: null;
 				return {
 					id: u.id,
@@ -11449,12 +11449,12 @@ app.get("/api/my-team", authMiddleware, async (req: any, res) => {
 			average_rating:
 				allRated.length > 0
 					? allRated.reduce((s: number, t: any) => s + t.rating, 0) /
-						allRated.length
+					allRated.length
 					: null,
 			average_difficulty:
 				allDiff.length > 0
 					? allDiff.reduce((s: number, t: any) => s + t.difficulty, 0) /
-						allDiff.length
+					allDiff.length
 					: null,
 			total_rated: allRated.length,
 		};
@@ -11604,12 +11604,12 @@ app.get(
 					average_rating:
 						rated.length > 0
 							? rated.reduce((s: number, t: any) => s + t.rating, 0) /
-								rated.length
+							rated.length
 							: null,
 					average_difficulty:
 						diff.length > 0
 							? diff.reduce((s: number, t: any) => s + t.difficulty, 0) /
-								diff.length
+							diff.length
 							: null,
 				},
 			});
@@ -11848,9 +11848,9 @@ app.put("/api/pillar-requests/:id", authMiddleware, async (req: any, res) => {
 			reviewerId === null
 				? null
 				: await prisma.user.findUnique({
-						where: { id: reviewerId },
-						select: { first_name: true, last_name: true },
-					});
+					where: { id: reviewerId },
+					select: { first_name: true, last_name: true },
+				});
 		const reviewerName =
 			`${reviewer?.first_name || ""} ${reviewer?.last_name || ""}`.trim() ||
 			"Zarząd";
@@ -13386,6 +13386,46 @@ app.put(
 				error: "Nie udało się zakończyć okresu próbnego",
 				details: error instanceof Error ? error.message : "Unknown error",
 			});
+		}
+	},
+);
+app.patch(
+	"/api/system-ideas/:id/status",
+	authMiddleware,
+	async (req: any, res) => {
+		try {
+			const userRole = req.user?.role;
+			if (
+				userRole !== "admin" &&
+				userRole !== "board" &&
+				userRole !== "Zarząd"
+			) {
+				return res.status(403).json({ error: "Brak uprawnień" });
+			}
+
+			const id = parseInt(req.params.id);
+			const { status } = req.body;
+			const allowed = ["pending", "planned", "in_progress", "done", "rejected"];
+
+			if (!allowed.includes(status)) {
+				return res.status(400).json({ error: "Nieprawidłowy status" });
+			}
+
+			const idea = await prisma.systemIdea.update({
+				where: { id },
+				data: {
+					status,
+					reviewed_at: new Date(),
+					reviewed_by: req.user?.id || null,
+					completed_at: status === "done" ? new Date() : null,
+					completed_by: status === "done" ? req.user?.id || null : null,
+				},
+			});
+
+			res.json({ idea });
+		} catch (error) {
+			logger.error("[SYSTEM-IDEAS] Błąd statusu:", error);
+			res.status(500).json({ error: "Nie udało się zmienić statusu" });
 		}
 	},
 );

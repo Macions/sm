@@ -2,9 +2,6 @@
 import { useEffect, useState } from "react";
 import {
 	X,
-	Edit2,
-	Trash2,
-	Plus,
 	ExternalLink,
 	Calendar,
 	Euro,
@@ -13,35 +10,7 @@ import {
 } from "lucide-react";
 import toast from "react-hot-toast";
 import type { Grant } from "./GrantCard";
-import { RecruitmentModal } from "./RecruitmentModal";
 import styles from "./Grants.module.css";
-
-interface Recruitment {
-	id: string;
-	grantId: string;
-	projectTitle: string;
-	projectDescription: string | null;
-	responsibilities: string | null;
-	requiredSkills: string | null;
-	deadline: string | null;
-	formUrl: string | null;
-	status: "preparing" | "open" | "closed";
-	createdBy: any;
-	createdAt: string;
-	updatedAt: string;
-}
-
-const RECRUITMENT_LABELS: Record<string, string> = {
-	preparing: "W przygotowaniu",
-	open: "Otwarta",
-	closed: "Zamknięta",
-};
-
-const RECRUITMENT_COLORS: Record<string, string> = {
-	preparing: "#d97706",
-	open: "#059669",
-	closed: "#6b7280",
-};
 
 const WORK_STATUS_LABELS: Record<string, string> = {
 	analyzed: "Analizowany",
@@ -80,9 +49,6 @@ export function GrantDetailModal({
 }: Props) {
 	const [grant, setGrant] = useState<Grant | null>(null);
 	const [loading, setLoading] = useState(true);
-	const [editingRecruitment, setEditingRecruitment] =
-		useState<Recruitment | null>(null);
-	const [isAddingRecruitment, setIsAddingRecruitment] = useState(false);
 
 	const fetchGrant = async () => {
 		try {
@@ -106,26 +72,6 @@ export function GrantDetailModal({
 		fetchGrant();
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [grantId]);
-
-	const handleDeleteRecruitment = async (rec: Recruitment) => {
-		if (!confirm(`Usunąć rekrutację „${rec.projectTitle}"?`)) return;
-		try {
-			const token = localStorage.getItem("accessToken");
-			const res = await fetch(`/api/grants/${grantId}/recruitments/${rec.id}`, {
-				method: "DELETE",
-				headers: { Authorization: `Bearer ${token}` },
-			});
-			if (!res.ok) {
-				const err = await res.json();
-				throw new Error(err.error || "Błąd usuwania");
-			}
-			toast.success("Rekrutacja usunięta");
-			await fetchGrant();
-			onChanged();
-		} catch (err) {
-			toast.error(err instanceof Error ? err.message : "Nie udało się usunąć");
-		}
-	};
 
 	const handleMarkVerified = async () => {
 		try {
@@ -162,8 +108,6 @@ export function GrantDetailModal({
 			</div>
 		);
 	}
-
-	const recruitments = (grant.recruitments || []) as Recruitment[];
 
 	return (
 		<div className={styles.overlay} onClick={onClose}>
@@ -260,7 +204,6 @@ export function GrantDetailModal({
 						)}
 					</div>
 
-					{/* Sekcje szczegółowe */}
 					{grant.requirements && (
 						<div className={styles.detailSection}>
 							<h4>Wymagania</h4>
@@ -309,80 +252,6 @@ export function GrantDetailModal({
 							<p>{grant.projectResults}</p>
 						</div>
 					)}
-
-					{/* Rekrutacje */}
-					<div className={styles.recruitmentsHeader}>
-						<h4 className={styles.recruitmentsTitle}>
-							Rekrutacje na Project Leadera ({recruitments.length})
-						</h4>
-						{canManage && (
-							<button
-								className={styles.addSmallBtn}
-								onClick={() => setIsAddingRecruitment(true)}
-							>
-								<Plus size={14} />
-								Dodaj
-							</button>
-						)}
-					</div>
-
-					{recruitments.length === 0 ? (
-						<p className={styles.emptyText}>Brak rekrutacji.</p>
-					) : (
-						<div className={styles.recruitmentsList}>
-							{recruitments.map((r) => (
-								<div key={r.id} className={styles.recruitmentItem}>
-									<div className={styles.recruitmentHeader}>
-										<strong>{r.projectTitle}</strong>
-										<span
-											className={styles.badge}
-											style={{
-												backgroundColor:
-													RECRUITMENT_COLORS[r.status] || "#6b7280",
-											}}
-										>
-											{RECRUITMENT_LABELS[r.status] || r.status}
-										</span>
-									</div>
-									{r.projectDescription && (
-										<p className={styles.recruitmentDesc}>
-											{r.projectDescription}
-										</p>
-									)}
-									<div className={styles.recruitmentMeta}>
-										<span>Termin: {fmt(r.deadline)}</span>
-										{r.formUrl && (
-											<a
-												href={r.formUrl}
-												target="_blank"
-												rel="noreferrer"
-												className={styles.link}
-											>
-												<ExternalLink size={12} />
-												Formularz
-											</a>
-										)}
-									</div>
-									{canManage && (
-										<div className={styles.recruitmentActions}>
-											<button
-												className={styles.actionBtn}
-												onClick={() => setEditingRecruitment(r)}
-											>
-												<Edit2 size={12} />
-											</button>
-											<button
-												className={`${styles.actionBtn} ${styles.danger}`}
-												onClick={() => handleDeleteRecruitment(r)}
-											>
-												<Trash2 size={12} />
-											</button>
-										</div>
-									)}
-								</div>
-							))}
-						</div>
-					)}
 				</div>
 
 				<div className={styles.modalFooter}>
@@ -411,24 +280,6 @@ export function GrantDetailModal({
 					</div>
 				</div>
 			</div>
-
-			{(isAddingRecruitment || editingRecruitment) && (
-				<RecruitmentModal
-					isOpen={true}
-					grantId={grantId}
-					recruitment={editingRecruitment ?? undefined}
-					onClose={() => {
-						setIsAddingRecruitment(false);
-						setEditingRecruitment(null);
-					}}
-					onSaved={async () => {
-						setIsAddingRecruitment(false);
-						setEditingRecruitment(null);
-						await fetchGrant();
-						onChanged();
-					}}
-				/>
-			)}
 		</div>
 	);
 }

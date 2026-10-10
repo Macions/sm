@@ -8,13 +8,13 @@ import {
 	Trash2,
 	Send,
 	Lightbulb,
+	Loader2,
 } from "lucide-react";
 import type { SystemIdea } from "./Ideas";
 import styles from "./Ideas.module.css";
 
 const STATUS_COLORS: Record<string, string> = {
-	new: "#2563eb",
-	in_review: "#d97706",
+	pending: "#2563eb",
 	planned: "#7c3aed",
 	in_progress: "#0891b2",
 	done: "#059669",
@@ -22,39 +22,39 @@ const STATUS_COLORS: Record<string, string> = {
 };
 
 const STATUS_ICONS: Record<string, React.ReactNode> = {
-	new: <Lightbulb size={13} />,
-	in_review: <Clock size={13} />,
+	pending: <Lightbulb size={13} />,
 	planned: <AlertCircle size={13} />,
 	in_progress: <Clock size={13} />,
 	done: <CheckCircle2 size={13} />,
 	rejected: <XCircle size={13} />,
 };
 
-const PRIORITY_LABELS: Record<string, string> = {
-	low: "Niski",
-	medium: "Średni",
-	high: "Wysoki",
-};
-
 interface Props {
 	idea: SystemIdea;
 	canManage: boolean;
+	busy?: boolean;
 	onEdit: (idea: SystemIdea) => void;
 	onManage: (idea: SystemIdea) => void;
 	onDelete: (idea: SystemIdea) => void;
+	onQuickDone?: (idea: SystemIdea) => void;
+	onQuickReject?: (idea: SystemIdea) => void;
 }
 
 export function IdeaCard({
 	idea,
 	canManage,
+	busy = false,
 	onEdit,
 	onManage,
 	onDelete,
+	onQuickDone,
+	onQuickReject,
 }: Props) {
-	const canEdit = !canManage && idea.status === "new";
+	// Autor może edytować tylko swój pomysł, dopóki jest w statusie "pending"
+	const canEdit = !canManage && idea.status === "pending";
 
 	return (
-		<div className={styles.card}>
+		<div className={`${styles.card} ${busy ? styles.cardBusy : ""}`}>
 			<div className={styles.cardHeader}>
 				<div className={styles.cardTitleRow}>
 					<h3 className={styles.cardTitle}>{idea.title}</h3>
@@ -76,6 +76,12 @@ export function IdeaCard({
 						</>
 					)}
 					Dodano {new Date(idea.createdAt).toLocaleDateString("pl-PL")}
+					{idea.status === "done" && idea.completedAt && (
+						<>
+							{" "}• Wykonano{" "}
+							{new Date(idea.completedAt).toLocaleDateString("pl-PL")}
+						</>
+					)}
 				</div>
 			</div>
 
@@ -83,30 +89,71 @@ export function IdeaCard({
 
 			{idea.adminNote && (
 				<div className={styles.adminNote}>
-					<strong>Notatka od zarządu:</strong> {idea.adminNote}
+					<strong>Notatka od IT:</strong> {idea.adminNote}
 				</div>
 			)}
 
 			<div className={styles.cardFooter}>
 				<div className={styles.meta}>
-					{idea.category && <span className={styles.tag}>{idea.category}</span>}
-					{idea.priority && (
-						<span className={styles.tag}>
-							Priorytet: {PRIORITY_LABELS[idea.priority] || idea.priority}
-						</span>
+					{idea.category && (
+						<span className={styles.tag}>{idea.category}</span>
 					)}
 				</div>
 
 				<div className={styles.actions}>
 					{canManage ? (
-						<button
-							className={styles.actionBtn}
-							onClick={() => onManage(idea)}
-							title="Zarządzaj"
-						>
-							<Send size={14} />
-							Zarządzaj
-						</button>
+						<>
+							{/* Szybkie akcje – tylko admin/board */}
+							{onQuickDone && idea.status !== "done" && (
+								<button
+									className={`${styles.actionBtn} ${styles.success}`}
+									onClick={() => onQuickDone(idea)}
+									disabled={busy}
+									title="Oznacz jako wykonany"
+								>
+									{busy ? (
+										<Loader2 size={14} className={styles.spin} />
+									) : (
+										<CheckCircle2 size={14} />
+									)}
+									Wykonany
+								</button>
+							)}
+							{onQuickReject && idea.status !== "rejected" && (
+								<button
+									className={`${styles.actionBtn} ${styles.danger}`}
+									onClick={() => onQuickReject(idea)}
+									disabled={busy}
+									title="Odrzuć pomysł"
+								>
+									{busy ? (
+										<Loader2 size={14} className={styles.spin} />
+									) : (
+										<XCircle size={14} />
+									)}
+									Odrzuć
+								</button>
+							)}
+
+							<button
+								className={styles.actionBtn}
+								onClick={() => onManage(idea)}
+								disabled={busy}
+								title="Zarządzaj"
+							>
+								<Send size={14} />
+								Zarządzaj
+							</button>
+
+							<button
+								className={`${styles.actionBtn} ${styles.danger}`}
+								onClick={() => onDelete(idea)}
+								disabled={busy}
+								title="Usuń"
+							>
+								<Trash2 size={14} />
+							</button>
+						</>
 					) : canEdit ? (
 						<>
 							<button
@@ -125,16 +172,6 @@ export function IdeaCard({
 							</button>
 						</>
 					) : null}
-
-					{canManage && (
-						<button
-							className={`${styles.actionBtn} ${styles.danger}`}
-							onClick={() => onDelete(idea)}
-							title="Usuń"
-						>
-							<Trash2 size={14} />
-						</button>
-					)}
 				</div>
 			</div>
 		</div>

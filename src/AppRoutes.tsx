@@ -61,7 +61,7 @@ function AppRoutes() {
 
 	useEffect(() => {
 		const checkMaintenance = () => {
-			const maintenance = false;
+			const maintenance = true;
 			setIsMaintenance(maintenance);
 		};
 
@@ -134,7 +134,7 @@ function AppRoutes() {
 				<Route path="/login" element={<Navigate to="/dashboard" replace />} />
 				<Route
 					path="/onboarding"
-					element={<Onboarding onComplete={() => {}} />}
+					element={<Onboarding onComplete={() => { }} />}
 				/>
 				<Route path="/404" element={<NotFound />} />
 				<Route path="*" element={<NotFound />} />

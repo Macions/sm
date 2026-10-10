@@ -11,8 +11,7 @@ const router = Router();
 const prisma = new PrismaClient();
 
 const STATUSES = [
-	"new",
-	"in_review",
+	"pending",
 	"planned",
 	"in_progress",
 	"done",
@@ -21,11 +20,10 @@ const STATUSES = [
 type IdeaStatus = (typeof STATUSES)[number];
 
 const STATUS_LABELS: Record<IdeaStatus, string> = {
-	new: "Nowy",
-	in_review: "W analizie",
-	planned: "Zaplanowany",
-	in_progress: "W realizacji",
-	done: "Zrealizowany",
+	pending: "Oczekuje",
+	planned: "W planach",
+	in_progress: "W trakcie",
+	done: "Wykonany",
 	rejected: "Odrzucony",
 };
 
@@ -62,11 +60,11 @@ router.get(
 					category: i.category,
 					status: i.status,
 					statusLabel: STATUS_LABELS[i.status as IdeaStatus] ?? i.status,
-					priority: i.priority,
 					adminNote: i.admin_note,
 					createdAt: i.created_at.toISOString(),
 					updatedAt: i.updated_at.toISOString(),
 					reviewedAt: i.reviewed_at?.toISOString() ?? null,
+					completedAt: i.completed_at?.toISOString() ?? null,
 					author: {
 						id: i.author.id.toString(),
 						firstName: i.author.first_name,
@@ -92,7 +90,7 @@ router.post(
 			const user = req.user;
 			if (!user?.id) return res.status(401).json({ error: "Brak autoryzacji" });
 
-			const { title, description, category, priority } = req.body ?? {};
+			const { title, description, category } = req.body ?? {};
 
 			if (!title?.trim() || !description?.trim()) {
 				return res.status(400).json({ error: "Tytuł i opis są wymagane" });
@@ -100,12 +98,11 @@ router.post(
 
 			const idea = await prisma.systemIdea.create({
 				data: {
-					title: title.trim(),
-					description: description.trim(),
-					category: category?.trim() || null,
-					priority: priority || "medium",
+					title,
+					description,
+					category: category || null,
 					author_id: user.id,
-					status: "new",
+					status: "pending",
 				},
 				include: {
 					author: {
@@ -124,7 +121,7 @@ router.post(
 					await prisma.notification.createMany({
 						data: admins.map((a) => ({
 							user_id: a.id,
-							title: "Nowy pomysł na system",
+							title: "Nowy pomysł na rozwój strony",
 							message: `${user.first_name ?? ""} ${user.last_name ?? ""} dodał pomysł: "${idea.title}"`,
 							type: "info",
 							read: false,
@@ -145,7 +142,6 @@ router.post(
 				category: idea.category,
 				status: idea.status,
 				statusLabel: STATUS_LABELS[idea.status as IdeaStatus] ?? idea.status,
-				priority: idea.priority,
 				createdAt: idea.created_at.toISOString(),
 				updatedAt: idea.updated_at.toISOString(),
 				author: {
@@ -183,7 +179,7 @@ router.put(
 				return res.status(403).json({ error: "Brak uprawnień" });
 			}
 
-			const { title, description, category, priority, status, adminNote } =
+			const { title, description, category, status, adminNote } =
 				req.body ?? {};
 
 			const updateData: any = {};
@@ -192,7 +188,6 @@ router.put(
 				updateData.description = description.trim();
 			if (category !== undefined)
 				updateData.category = category?.trim() || null;
-			if (priority !== undefined) updateData.priority = priority;
 
 			if (isManager) {
 				if (status !== undefined) {
@@ -202,6 +197,8 @@ router.put(
 					updateData.status = status;
 					updateData.reviewed_by = user.id;
 					updateData.reviewed_at = new Date();
+					updateData.completed_at = status === "done" ? new Date() : null;
+					updateData.completed_by = status === "done" ? user.id : null;
 				}
 				if (adminNote !== undefined) updateData.admin_note = adminNote;
 			}
@@ -224,11 +221,11 @@ router.put(
 				status: updated.status,
 				statusLabel:
 					STATUS_LABELS[updated.status as IdeaStatus] ?? updated.status,
-				priority: updated.priority,
 				adminNote: updated.admin_note,
 				createdAt: updated.created_at.toISOString(),
 				updatedAt: updated.updated_at.toISOString(),
 				reviewedAt: updated.reviewed_at?.toISOString() ?? null,
+				completedAt: updated.completed_at?.toISOString() ?? null,
 				author: {
 					id: updated.author.id.toString(),
 					firstName: updated.author.first_name,
@@ -238,6 +235,68 @@ router.put(
 		} catch (error) {
 			logger.error("[SYSTEM-IDEAS] Błąd edycji:", error);
 			res.status(500).json({ error: "Nie udało się zapisać" });
+		}
+	},
+);
+
+/* ─── PATCH /system-ideas/:id/status ─── */
+router.patch(
+	"/system-ideas/:id/status",
+	authMiddleware,
+	async (req: AuthRequest, res: Response) => {
+		try {
+			const user = req.user;
+			if (!user?.id) return res.status(401).json({ error: "Brak autoryzacji" });
+			if (!isAdminOrBoard(user.role)) {
+				return res.status(403).json({ error: "Brak uprawnień" });
+			}
+
+			const id = parseInt(String(req.params.id));
+			if (isNaN(id)) return res.status(400).json({ error: "Złe ID" });
+
+			const { status } = req.body ?? {};
+			if (!STATUSES.includes(status)) {
+				return res.status(400).json({ error: "Nieprawidłowy status" });
+			}
+
+			const updated = await prisma.systemIdea.update({
+				where: { id },
+				data: {
+					status,
+					reviewed_by: user.id,
+					reviewed_at: new Date(),
+					completed_at: status === "done" ? new Date() : null,
+					completed_by: status === "done" ? user.id : null,
+				},
+				include: {
+					author: {
+						select: { id: true, first_name: true, last_name: true },
+					},
+				},
+			});
+
+			res.json({
+				id: updated.id.toString(),
+				title: updated.title,
+				description: updated.description,
+				category: updated.category,
+				status: updated.status,
+				statusLabel:
+					STATUS_LABELS[updated.status as IdeaStatus] ?? updated.status,
+				adminNote: updated.admin_note,
+				createdAt: updated.created_at.toISOString(),
+				updatedAt: updated.updated_at.toISOString(),
+				reviewedAt: updated.reviewed_at?.toISOString() ?? null,
+				completedAt: updated.completed_at?.toISOString() ?? null,
+				author: {
+					id: updated.author.id.toString(),
+					firstName: updated.author.first_name,
+					lastName: updated.author.last_name,
+				},
+			});
+		} catch (error) {
+			logger.error("[SYSTEM-IDEAS] Błąd statusu:", error);
+			res.status(500).json({ error: "Nie udało się zmienić statusu" });
 		}
 	},
 );
@@ -262,7 +321,7 @@ router.delete(
 				if (!isOwner) {
 					return res.status(403).json({ error: "Brak uprawnień" });
 				}
-				if (idea.status !== "new") {
+				if (idea.status !== "pending") {
 					return res.status(400).json({
 						error: "Nie można usunąć pomysłu, który jest już w analizie",
 					});

@@ -12,13 +12,26 @@ interface Props {
 	onSaved: () => void;
 }
 
+const SUGGESTED_CATEGORIES = [
+	"UI / Wygląd",
+	"UX / Nawigacja",
+	"Funkcjonalność",
+	"Wydajność",
+	"Dostępność",
+	"SEO",
+	"Integracje / API",
+	"Treści",
+	"Bezpieczeństwo",
+	"Mobilne",
+	"Inne",
+];
+
 export function IdeaModal({ isOpen, idea, onClose, onSaved }: Props) {
 	const isEdit = !!idea;
 	const [form, setForm] = useState({
 		title: "",
 		description: "",
 		category: "",
-		priority: "medium",
 	});
 	const [saving, setSaving] = useState(false);
 
@@ -28,7 +41,6 @@ export function IdeaModal({ isOpen, idea, onClose, onSaved }: Props) {
 				title: idea?.title ?? "",
 				description: idea?.description ?? "",
 				category: idea?.category ?? "",
-				priority: idea?.priority ?? "medium",
 			});
 		}
 	}, [isOpen, idea]);
@@ -63,11 +75,15 @@ export function IdeaModal({ isOpen, idea, onClose, onSaved }: Props) {
 				throw new Error(err.error || "Błąd zapisu");
 			}
 
-			toast.success(isEdit ? "Zapisano zmiany" : "Pomysł dodany");
+			toast.success(
+				isEdit ? "Zapisano zmiany" : "Pomysł na rozwój strony dodany",
+			);
 			onClose();
 			onSaved();
 		} catch (err) {
-			toast.error(err instanceof Error ? err.message : "Nie udało się zapisać");
+			toast.error(
+				err instanceof Error ? err.message : "Nie udało się zapisać",
+			);
 		} finally {
 			setSaving(false);
 		}
@@ -77,20 +93,33 @@ export function IdeaModal({ isOpen, idea, onClose, onSaved }: Props) {
 		<div className={styles.overlay} onClick={onClose}>
 			<div className={styles.modal} onClick={(e) => e.stopPropagation()}>
 				<div className={styles.modalHeader}>
-					<h2>{isEdit ? "Edytuj pomysł" : "Dodaj nowy pomysł"}</h2>
+					<h2>
+						{isEdit
+							? "Edytuj pomysł na rozwój strony"
+							: "Zaproponuj rozwój strony"}
+					</h2>
 					<button className={styles.closeBtn} onClick={onClose}>
 						<X size={20} />
 					</button>
 				</div>
 
 				<div className={styles.modalBody}>
+					{!isEdit && (
+						<p className={styles.modalHint}>
+							Opisz dodatek lub zmianę, którą chciałbyś zobaczyć na
+							stronie.
+						</p>
+					)}
+
 					<label className={styles.field}>
 						<span>Tytuł *</span>
 						<input
 							type="text"
 							value={form.title}
-							onChange={(e) => setForm({ ...form, title: e.target.value })}
-							placeholder="Krótki tytuł pomysłu"
+							onChange={(e) =>
+								setForm({ ...form, title: e.target.value })
+							}
+							placeholder="np. Dodanie trybu ciemnego"
 							maxLength={200}
 						/>
 					</label>
@@ -102,33 +131,28 @@ export function IdeaModal({ isOpen, idea, onClose, onSaved }: Props) {
 							onChange={(e) =>
 								setForm({ ...form, description: e.target.value })
 							}
-							placeholder="Opisz szczegółowo swój pomysł..."
+							placeholder="Co dodać / zmienić na stronie i po co?"
 							rows={6}
 						/>
 					</label>
 
-					<div className={styles.row}>
-						<label className={styles.field}>
-							<span>Kategoria</span>
-							<input
-								type="text"
-								value={form.category}
-								onChange={(e) => setForm({ ...form, category: e.target.value })}
-								placeholder="np. Social media, Wydarzenia"
-							/>
-						</label>
-						<label className={styles.field}>
-							<span>Priorytet</span>
-							<select
-								value={form.priority}
-								onChange={(e) => setForm({ ...form, priority: e.target.value })}
-							>
-								<option value="low">Niski</option>
-								<option value="medium">Średni</option>
-								<option value="high">Wysoki</option>
-							</select>
-						</label>
-					</div>
+					<label className={styles.field}>
+						<span>Kategoria</span>
+						<input
+							type="text"
+							list="idea-categories"
+							value={form.category}
+							onChange={(e) =>
+								setForm({ ...form, category: e.target.value })
+							}
+							placeholder="np. UI / Wygląd"
+						/>
+						<datalist id="idea-categories">
+							{SUGGESTED_CATEGORIES.map((c) => (
+								<option key={c} value={c} />
+							))}
+						</datalist>
+					</label>
 				</div>
 
 				<div className={styles.modalFooter}>
@@ -145,7 +169,7 @@ export function IdeaModal({ isOpen, idea, onClose, onSaved }: Props) {
 						disabled={saving}
 					>
 						<Save size={14} />
-						{saving ? "Zapisywanie..." : "Zapisz"}
+						{saving ? "Zapisywanie..." : isEdit ? "Zapisz" : "Dodaj"}
 					</button>
 				</div>
 			</div>
