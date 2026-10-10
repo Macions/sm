@@ -95,7 +95,42 @@ interface MemberTasksResponse {
 		average_difficulty: number | null;
 	};
 }
+interface MemberLeave {
+	id: string;
+	type: string;
+	startDate: string;
+	endDate: string;
+	reason: string;
+	reasonVisibility: string;
+	status: string;
+	isActive: boolean;
+	approvedBy: string | null;
+	createdAt: string;
+}
 
+interface MemberLeavesResponse {
+	active: MemberLeave[];
+	history: MemberLeave[];
+	total: number;
+}
+interface TeamLeave {
+	id: string;
+	userId: string;
+	userName: string;
+	type: string;
+	startDate: string;
+	endDate: string;
+	reason: string;
+	reasonVisibility: string;
+	isActive: boolean;
+	isUpcoming: boolean;
+}
+
+interface TeamLeavesResponse {
+	active: TeamLeave[];
+	upcoming: TeamLeave[];
+	total: number;
+}
 /* -------- FREKWENCJA -------- */
 
 interface MemberAttendance {
@@ -175,6 +210,37 @@ function fmtNumber(v: number | null | undefined, digits = 1): string {
 	return v.toFixed(digits);
 }
 
+function fmtLeaveType(type: string): string {
+	const map: Record<string, string> = {
+		vacation: "Urlop wypoczynkowy",
+		sick: "Zwolnienie lekarskie",
+		personal: "Urlop osobisty",
+		other: "Inny",
+	};
+	return map[type] || type;
+}
+
+function fmtLeaveStatus(status: string): string {
+	const map: Record<string, string> = {
+		approved: "Zatwierdzony",
+		pending: "Oczekujący",
+		rejected: "Odrzucony",
+		cancelled: "Anulowany",
+	};
+	return map[status] || status;
+}
+function fmtProjectStatus(status: string): string {
+	const map: Record<string, string> = {
+		planning: "Planowany",
+		in_progress: "W trakcie",
+		completed: "Ukończony",
+		done: "Ukończony",
+		on_hold: "Wstrzymany",
+		cancelled: "Anulowany",
+		archived: "Zarchiwizowany",
+	};
+	return map[status] || status;
+}
 function fmtDate(v?: string | null): string {
 	if (!v) return "—";
 	const d = new Date(v);
@@ -215,6 +281,7 @@ export default function MyTeam() {
 	const [attendanceData, setAttendanceData] = useState<MemberWithAttendance[]>(
 		[],
 	);
+	const [teamLeaves, setTeamLeaves] = useState<TeamLeavesResponse | null>(null);
 	const [attendanceLoading, setAttendanceLoading] = useState(false);
 	const [hasAttendance, setHasAttendance] = useState(false);
 
@@ -242,6 +309,7 @@ export default function MyTeam() {
 	const [historyData, setHistoryData] = useState<MemberTasksResponse | null>(
 		null,
 	);
+	const [leavesData, setLeavesData] = useState<MemberLeavesResponse | null>(null);
 
 	/* -------- ładowanie danych zespołu -------- */
 	const loadTeam = useCallback(async (teamId?: number | null) => {
@@ -288,7 +356,22 @@ export default function MyTeam() {
 			cancelled = true;
 		};
 	}, [selectedTeamId]);
-
+	useEffect(() => {
+		if (!selectedTeamId) return;
+		let cancelled = false;
+		apiFetch<TeamLeavesResponse>(`${API_BASE}/my-team/${selectedTeamId}/leaves`)
+			.then((json) => {
+				if (cancelled) return;
+				setTeamLeaves(json);
+			})
+			.catch(() => {
+				if (cancelled) return;
+				setTeamLeaves(null);
+			});
+		return () => {
+			cancelled = true;
+		};
+	}, [selectedTeamId]);
 	/* -------- zmiana zespołu (board/admin) -------- */
 	const handleTeamChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
 		const id = Number(e.target.value);
@@ -304,22 +387,29 @@ export default function MyTeam() {
 		setHistoryLoading(true);
 		setHistoryError(null);
 		setHistoryData(null);
+		setLeavesData(null);
 		try {
-			const json = await apiFetch<MemberTasksResponse>(
-				`${API_BASE}/my-team/member/${member.id}/tasks`,
-			);
-			setHistoryData(json);
+			const [tasksJson, leavesJson] = await Promise.all([
+				apiFetch<MemberTasksResponse>(
+					`${API_BASE}/my-team/member/${member.id}/tasks?teamId=${selectedTeamId}`,
+				),
+				apiFetch<MemberLeavesResponse>(
+					`${API_BASE}/my-team/member/${member.id}/leaves`,
+				).catch(() => ({ active: [], history: [], total: 0 })),
+			]);
+			setHistoryData(tasksJson);
+			setLeavesData(leavesJson);
 		} catch (e: any) {
 			setHistoryError(e?.message || "Nie udało się załadować historii zadań.");
 		} finally {
 			setHistoryLoading(false);
 		}
 	};
-
 	const closeHistory = () => {
 		setHistoryOpen(false);
 		setHistoryMember(null);
 		setHistoryData(null);
+		setLeavesData(null);
 		setHistoryError(null);
 	};
 
@@ -364,8 +454,19 @@ export default function MyTeam() {
 				? "Koordynator"
 				: "Członek";
 
+	const FILAR_TEAMS = [
+		"Filar Konferencyjny",
+		"Filar Projektowy",
+		"Filar Rzeczniczy",
+		"Filar Symulacyjny",
+	];
+
+	const filteredTeams = data.availableTeams.filter((t) =>
+		FILAR_TEAMS.includes(t.name),
+	);
+
 	const canSwitch =
-		(data.isBoard || data.isAdmin) && data.availableTeams.length > 0;
+		(data.isBoard || data.isAdmin) && filteredTeams.length > 0;
 
 	const { team_stats } = data;
 
@@ -376,9 +477,9 @@ export default function MyTeam() {
 	const avgAttendance =
 		attendanceWithData.length > 0
 			? attendanceWithData.reduce(
-					(s, m) => s + (m.attendance?.attendance_percentage ?? 0),
-					0,
-				) / attendanceWithData.length
+				(s, m) => s + (m.attendance?.attendance_percentage ?? 0),
+				0,
+			) / attendanceWithData.length
 			: null;
 	const totalMeetingsCount =
 		attendanceWithData[0]?.attendance?.total_meetings ?? 0;
@@ -401,7 +502,7 @@ export default function MyTeam() {
 								value={selectedTeamId ?? ""}
 								onChange={handleTeamChange}
 							>
-								{data.availableTeams.map((t) => (
+								{filteredTeams.map((t) => (
 									<option key={t.id} value={t.id}>
 										{t.name}
 									</option>
@@ -422,8 +523,8 @@ export default function MyTeam() {
 					sub={
 						team_stats.tasks_total > 0
 							? `${Math.round(
-									(team_stats.tasks_completed / team_stats.tasks_total) * 100,
-								)}%`
+								(team_stats.tasks_completed / team_stats.tasks_total) * 100,
+							)}%`
 							: "0%"
 					}
 				/>
@@ -457,7 +558,66 @@ export default function MyTeam() {
 					/>
 				)}
 			</div>
+			{/* ---------- URLOPY ZESPOŁU ---------- */}
+			{teamLeaves && (teamLeaves.active.length > 0 || teamLeaves.upcoming.length > 0) && (
+				<section className={styles.section}>
+					<h2 className={styles.sectionTitle}>
+						Urlopy zespołu{" "}
+						{teamLeaves.active.length > 0 && (
+							<span className={styles.sectionCount}>
+								({teamLeaves.active.length} obecnie)
+							</span>
+						)}
+					</h2>
 
+					{teamLeaves.active.length > 0 && (
+						<div className={styles.teamLeavesBlock}>
+							<h3 className={styles.teamLeavesSubtitle}>Aktualnie na urlopie</h3>
+							<div className={styles.teamLeavesList}>
+								{teamLeaves.active.map((leave) => (
+									<div key={leave.id} className={styles.leaveActiveCard}>
+										<div className={styles.leaveHeader}>
+											<span className={styles.leaveType}>{leave.userName}</span>
+											<span className={styles.leaveBadgeActive}>Na urlopie</span>
+										</div>
+										<div className={styles.leaveDates}>
+											{fmtLeaveType(leave.type)} • {fmtDate(leave.startDate)} –{" "}
+											{fmtDate(leave.endDate)}
+										</div>
+										{leave.reason && (
+											<div className={styles.leaveReason}>
+												<b>Powód:</b> {leave.reason}
+											</div>
+										)}
+									</div>
+								))}
+							</div>
+						</div>
+					)}
+
+					{teamLeaves.upcoming.length > 0 && (
+						<div className={styles.teamLeavesBlock}>
+							<h3 className={styles.teamLeavesSubtitle}>
+								Nadchodzące (30 dni)
+							</h3>
+							<div className={styles.teamLeavesList}>
+								{teamLeaves.upcoming.map((leave) => (
+									<div key={leave.id} className={styles.leaveUpcomingCard}>
+										<div className={styles.leaveHeader}>
+											<span className={styles.leaveType}>{leave.userName}</span>
+											<span className={styles.leaveBadgeUpcoming}>Wkrótce</span>
+										</div>
+										<div className={styles.leaveDates}>
+											{fmtLeaveType(leave.type)} • {fmtDate(leave.startDate)} –{" "}
+											{fmtDate(leave.endDate)}
+										</div>
+									</div>
+								))}
+							</div>
+						</div>
+					)}
+				</section>
+			)}
 			{/* ---------- KOORDYNATORZY ---------- */}
 			{data.coordinators.length > 0 && (
 				<section className={styles.section}>
@@ -495,7 +655,9 @@ export default function MyTeam() {
 									<div className={styles.projectHeader}>
 										<span className={styles.projectName}>{p.name}</span>
 										{p.status && (
-											<span className={styles.projectStatus}>{p.status}</span>
+											<span className={styles.projectStatus}>
+												{fmtProjectStatus(p.status)}
+											</span>
 										)}
 									</div>
 									{p.pillar && (
@@ -808,6 +970,71 @@ export default function MyTeam() {
 													)}
 												</div>
 											))}
+										</div>
+									)}
+
+									{leavesData && leavesData.active.length > 0 && (
+										<div className={styles.leavesActiveSection}>
+											<h4 className={styles.leavesSectionTitle}>
+												Aktualny urlop
+											</h4>
+											{leavesData.active.map((leave) => (
+												<div key={leave.id} className={styles.leaveActiveCard}>
+													<div className={styles.leaveHeader}>
+														<span className={styles.leaveType}>
+															{fmtLeaveType(leave.type)}
+														</span>
+														<span className={styles.leaveBadgeActive}>
+															Aktywny
+														</span>
+													</div>
+													<div className={styles.leaveDates}>
+														{fmtDate(leave.startDate)} –{" "}
+														{fmtDate(leave.endDate)}
+													</div>
+													{leave.reason && (
+														<div className={styles.leaveReason}>
+															<b>Powód:</b> {leave.reason}
+														</div>
+													)}
+												</div>
+											))}
+										</div>
+									)}
+
+									{leavesData && leavesData.history.length > 0 && (
+										<div className={styles.leavesHistorySection}>
+											<h4 className={styles.leavesSectionTitle}>
+												Historia urlopów ({leavesData.history.length})
+											</h4>
+											<div className={styles.leavesHistoryList}>
+												{leavesData.history.map((leave) => (
+													<div
+														key={leave.id}
+														className={styles.leaveHistoryItem}
+													>
+														<div className={styles.leaveHistoryMain}>
+															<span className={styles.leaveType}>
+																{fmtLeaveType(leave.type)}
+															</span>
+															<span className={styles.leaveDates}>
+																{fmtDate(leave.startDate)} –{" "}
+																{fmtDate(leave.endDate)}
+															</span>
+														</div>
+														<span
+															className={
+																styles.leaveStatus +
+																" " +
+																(styles[`leaveStatus_${leave.status}`] ||
+																	"")
+															}
+														>
+															{fmtLeaveStatus(leave.status)}
+														</span>
+													</div>
+												))}
+											</div>
 										</div>
 									)}
 								</>

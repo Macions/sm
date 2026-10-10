@@ -36,7 +36,7 @@ updateLeaveStatus();
 cron.schedule("0 7,14,21 * * *", async () => {
 	try {
 		await syncAttendance();
-	} catch (error) {}
+	} catch (error) { }
 });
 
 cron.schedule("1 0 * * *", async () => {
@@ -1010,7 +1010,7 @@ app.post("/api/ideas", authMiddleware, async (req: any, res) => {
 					vote_type: "up",
 				},
 			});
-		} catch (voteError) {}
+		} catch (voteError) { }
 
 		const voteCounts = await getVoteCounts(idea.id);
 
@@ -1568,7 +1568,7 @@ app.get("/api/dashboard/stats", authMiddleware, async (req: any, res) => {
 					) {
 						attendance = `${Number(user.attendance_percentage).toFixed(1)}%`;
 					}
-				} catch (fallbackError) {}
+				} catch (fallbackError) { }
 			}
 		}
 
@@ -2749,7 +2749,7 @@ app.get("/api/applications", authMiddleware, async (req: any, res) => {
 				userId: app.user_id.toString(),
 				userName: app.user
 					? `${app.user.first_name || ""} ${app.user.last_name || ""}`.trim() ||
-						"Nieznany"
+					"Nieznany"
 					: "Nieznany",
 				userEmail: app.user?.email || "",
 				message: app.message || "",
@@ -2860,7 +2860,7 @@ app.get(
 					userId: app.user_id.toString(),
 					userName: app.user
 						? `${app.user.first_name || ""} ${app.user.last_name || ""}`.trim() ||
-							"Nieznany"
+						"Nieznany"
 						: "Nieznany",
 					userEmail: app.user?.email || "",
 					message: app.message || "",
@@ -4039,14 +4039,14 @@ app.put("/api/leaves/:id", authMiddleware, async (req: any, res) => {
 					: existingLeave.attachments,
 				status: status || existingLeave.status,
 				...(status === "approved" ||
-				status === "rejected" ||
-				status === "cancelled"
+					status === "rejected" ||
+					status === "cancelled"
 					? {
-							approved_by:
-								`${currentUser?.first_name || ""} ${currentUser?.last_name || ""}`.trim() ||
-								"Nieznany",
-							approved_at: new Date(),
-						}
+						approved_by:
+							`${currentUser?.first_name || ""} ${currentUser?.last_name || ""}`.trim() ||
+							"Nieznany",
+						approved_at: new Date(),
+					}
 					: {}),
 			},
 			include: { user: true },
@@ -5139,7 +5139,7 @@ app.post("/api/onboarding/save", authMiddleware, async (req: any, res) => {
 					},
 				});
 			}
-		} catch (notificationError) {}
+		} catch (notificationError) { }
 
 		res.status(200).json({
 			success: true,
@@ -6623,12 +6623,12 @@ app.get(
 					is_active: true,
 					...(search
 						? {
-								OR: [
-									{ first_name: { contains: search as string } },
-									{ last_name: { contains: search as string } },
-									{ email: { contains: search as string } },
-								],
-							}
+							OR: [
+								{ first_name: { contains: search as string } },
+								{ last_name: { contains: search as string } },
+								{ email: { contains: search as string } },
+							],
+						}
 						: {}),
 				},
 				select: {
@@ -6702,7 +6702,7 @@ app.get(
 							) {
 								attendance = Number(result[0].attendance_percentage);
 							}
-						} catch (dbError) {}
+						} catch (dbError) { }
 					}
 
 					const teams = user.team_members
@@ -7117,23 +7117,23 @@ app.get("/api/admin/logs", authMiddleware, async (req: any, res) => {
 cron.schedule("0 1,17 * * *", async () => {
 	try {
 		await syncContributions();
-	} catch (error) {}
+	} catch (error) { }
 });
 
 setTimeout(async () => {
 	try {
 		await syncContributions();
-	} catch (error) {}
+	} catch (error) { }
 }, 15000);
 setTimeout(async () => {
 	try {
 		await syncAttendance();
-	} catch (error) {}
+	} catch (error) { }
 }, 10000);
 setTimeout(async () => {
 	try {
 		await syncMembers();
-	} catch (error) {}
+	} catch (error) { }
 }, 5000);
 
 app.get(
@@ -10971,12 +10971,12 @@ app.get("/api/my-team/attendance", authMiddleware, async (req: any, res) => {
 					is_leader: tm.is_leader || false,
 					attendance: att
 						? {
-								total_meetings: att.total_meetings,
-								present_count: att.present_count,
-								absent_count: att.absent_count,
-								excused_count: att.excused_count,
-								attendance_percentage: att.attendance_percentage,
-							}
+							total_meetings: att.total_meetings,
+							present_count: att.present_count,
+							absent_count: att.absent_count,
+							excused_count: att.excused_count,
+							attendance_percentage: att.attendance_percentage,
+						}
 						: null,
 				};
 			})
@@ -11180,14 +11180,52 @@ app.get("/api/my-team", authMiddleware, async (req: any, res) => {
 		const memberIds = teamMembers
 			.map((tm: any) => tm.user?.id)
 			.filter(Boolean) as number[];
-		const pillarNameForTasks = team.name.replace("Filar ", "").trim();
+
+		const isFilar = team.name.startsWith("Filar ");
+		const pillarNameForTasks = isFilar
+			? team.name.replace("Filar ", "").trim()
+			: null;
+
 		const taskWhereOR: any[] = [];
 		memberIds.forEach((id) => {
-			taskWhereOR.push({ assigned_to: id });
-			taskWhereOR.push({ assigned_users: { contains: `"${id}"` } });
+			if (isFilar && pillarNameForTasks) {
+				// Zadania usera przez assigned_to LUB assigned_users
+				// ORAZ pillar (bezpośrednio lub przez projekt) pasuje do filaru
+				taskWhereOR.push({
+					AND: [
+						{ assigned_to: id },
+						{ pillar: { not: null } },
+						{ pillar: { not: "" } },
+						{ pillar: { contains: pillarNameForTasks } },
+					],
+				});
+				taskWhereOR.push({
+					AND: [
+						{ assigned_to: id },
+						{ project: { is: { pillar: { not: null } } } },
+						{ project: { is: { pillar: { contains: pillarNameForTasks } } } },
+					],
+				});
+				taskWhereOR.push({
+					AND: [
+						{ assigned_users: { contains: `"${id}"` } },
+						{ pillar: { not: null } },
+						{ pillar: { not: "" } },
+						{ pillar: { contains: pillarNameForTasks } },
+					],
+				});
+				taskWhereOR.push({
+					AND: [
+						{ assigned_users: { contains: `"${id}"` } },
+						{ project: { is: { pillar: { not: null } } } },
+						{ project: { is: { pillar: { contains: pillarNameForTasks } } } },
+					],
+				});
+			} else {
+				taskWhereOR.push({ assigned_to: id });
+				taskWhereOR.push({ assigned_users: { contains: `"${id}"` } });
+			}
 		});
-		if (team.name.startsWith("Filar "))
-			taskWhereOR.push({ pillar: { contains: pillarNameForTasks } });
 
 		const tasks = await prisma.task.findMany({
 			where: taskWhereOR.length > 0 ? { OR: taskWhereOR } : { id: -1 },
@@ -11226,7 +11264,7 @@ app.get("/api/my-team", authMiddleware, async (req: any, res) => {
 							const n = parseInt(uid);
 							if (!isNaN(n) && !ids.includes(n)) ids.push(n);
 						});
-				} catch {}
+				} catch { }
 			}
 			ids.forEach((uid) => {
 				if (userTasksMap[uid]) userTasksMap[uid].push(task);
@@ -11255,12 +11293,12 @@ app.get("/api/my-team", authMiddleware, async (req: any, res) => {
 				const avgRating =
 					ratedTasks.length > 0
 						? ratedTasks.reduce((s: number, t: any) => s + t.rating, 0) /
-							ratedTasks.length
+						ratedTasks.length
 						: null;
 				const avgDifficulty =
 					diffTasks.length > 0
 						? diffTasks.reduce((s: number, t: any) => s + t.difficulty, 0) /
-							diffTasks.length
+						diffTasks.length
 						: null;
 				return {
 					id: u.id,
@@ -11341,12 +11379,12 @@ app.get("/api/my-team", authMiddleware, async (req: any, res) => {
 			average_rating:
 				allRated.length > 0
 					? allRated.reduce((s: number, t: any) => s + t.rating, 0) /
-						allRated.length
+					allRated.length
 					: null,
 			average_difficulty:
 				allDiff.length > 0
 					? allDiff.reduce((s: number, t: any) => s + t.difficulty, 0) /
-						allDiff.length
+					allDiff.length
 					: null,
 			total_rated: allRated.length,
 		};
@@ -11389,13 +11427,60 @@ app.get(
 					return res.status(403).json({ error: "Brak uprawnień" });
 			}
 
-			const tasks = await prisma.task.findMany({
-				where: {
-					OR: [
+			const teamIdParam = req.query.teamId
+				? parseInt(req.query.teamId as string)
+				: null;
+
+			let pillarNameForTasks: string | null = null;
+			if (teamIdParam) {
+				const team = await prisma.team.findUnique({
+					where: { id: teamIdParam },
+					select: { name: true },
+				});
+				if (team?.name.startsWith("Filar ")) {
+					pillarNameForTasks = team.name.replace("Filar ", "").trim();
+				}
+			}
+
+			const taskWhereOR: any[] = [];
+			if (pillarNameForTasks) {
+				taskWhereOR.push({
+					AND: [
 						{ assigned_to: targetUserId },
-						{ assigned_users: { contains: `"${targetUserId}"` } },
+						{ pillar: { not: null } },
+						{ pillar: { not: "" } },
+						{ pillar: { contains: pillarNameForTasks } },
 					],
-				},
+				});
+				taskWhereOR.push({
+					AND: [
+						{ assigned_to: targetUserId },
+						{ project: { is: { pillar: { not: null } } } },
+						{ project: { is: { pillar: { contains: pillarNameForTasks } } } },
+					],
+				});
+				taskWhereOR.push({
+					AND: [
+						{ assigned_users: { contains: `"${targetUserId}"` } },
+						{ pillar: { not: null } },
+						{ pillar: { not: "" } },
+						{ pillar: { contains: pillarNameForTasks } },
+					],
+				});
+				taskWhereOR.push({
+					AND: [
+						{ assigned_users: { contains: `"${targetUserId}"` } },
+						{ project: { is: { pillar: { not: null } } } },
+						{ project: { is: { pillar: { contains: pillarNameForTasks } } } },
+					],
+				});
+			} else {
+				taskWhereOR.push({ assigned_to: targetUserId });
+				taskWhereOR.push({ assigned_users: { contains: `"${targetUserId}"` } });
+			}
+
+			const tasks = await prisma.task.findMany({
+				where: taskWhereOR.length > 0 ? { OR: taskWhereOR } : { id: -1 },
 				include: {
 					project: { select: { id: true, name: true, pillar: true } },
 					ratedBy: { select: { id: true, first_name: true, last_name: true } },
@@ -11449,12 +11534,12 @@ app.get(
 					average_rating:
 						rated.length > 0
 							? rated.reduce((s: number, t: any) => s + t.rating, 0) /
-								rated.length
+							rated.length
 							: null,
 					average_difficulty:
 						diff.length > 0
 							? diff.reduce((s: number, t: any) => s + t.difficulty, 0) /
-								diff.length
+							diff.length
 							: null,
 				},
 			});
@@ -11693,9 +11778,9 @@ app.put("/api/pillar-requests/:id", authMiddleware, async (req: any, res) => {
 			reviewerId === null
 				? null
 				: await prisma.user.findUnique({
-						where: { id: reviewerId },
-						select: { first_name: true, last_name: true },
-					});
+					where: { id: reviewerId },
+					select: { first_name: true, last_name: true },
+				});
 		const reviewerName =
 			`${reviewer?.first_name || ""} ${reviewer?.last_name || ""}`.trim() ||
 			"Zarząd";
@@ -12674,6 +12759,181 @@ app.get("/api/verified-skills", authMiddleware, async (req: any, res) => {
 		res.status(500).json({ error: "Nie udało się pobrać listy" });
 	}
 });
+app.get(
+	"/api/my-team/:teamId/leaves",
+	authMiddleware,
+	async (req: any, res) => {
+		try {
+			const requesterId = req.user?.id ? parseInt(req.user.id) : null;
+			const userRole = req.user?.role;
+			const teamId = parseInt(req.params.teamId);
+
+			if (!requesterId)
+				return res.status(401).json({ error: "Brak autoryzacji" });
+			if (isNaN(teamId))
+				return res.status(400).json({ error: "Nieprawidłowe ID zespołu" });
+
+			const isAdminOrBoard = userRole === "admin" || userRole === "board";
+			let hasAccess = isAdminOrBoard;
+
+			if (!hasAccess) {
+				const requesterPillars = await getLeaderPillars(requesterId);
+				const team = await prisma.team.findUnique({
+					where: { id: teamId },
+					select: { name: true },
+				});
+				if (team?.name?.startsWith("Filar ")) {
+					const teamPillar = team.name.replace("Filar ", "").trim();
+					hasAccess = requesterPillars.includes(teamPillar);
+				}
+			}
+
+			if (!hasAccess) return res.status(403).json({ error: "Brak uprawnień" });
+
+			const teamMembers = await prisma.teamMember.findMany({
+				where: { team_id: teamId },
+				select: { user_id: true },
+			});
+			const userIds = teamMembers.map((tm: any) => tm.user_id);
+
+			if (userIds.length === 0) {
+				return res.json({ active: [], upcoming: [], total: 0 });
+			}
+
+			const leaves = await prisma.leave.findMany({
+				where: {
+					user_id: { in: userIds },
+					status: "approved",
+				},
+				include: {
+					user: {
+						select: {
+							id: true,
+							first_name: true,
+							last_name: true,
+							email: true,
+						},
+					},
+				},
+				orderBy: { start_date: "desc" },
+			});
+
+			const today = new Date();
+			today.setHours(0, 0, 0, 0);
+			const in30Days = new Date(today);
+			in30Days.setDate(in30Days.getDate() + 30);
+
+			const formatted = leaves.map((l: any) => {
+				const start = new Date(l.start_date);
+				const end = new Date(l.end_date);
+				return {
+					id: l.id.toString(),
+					userId: l.user.id.toString(),
+					userName:
+						`${l.user.first_name || ""} ${l.user.last_name || ""}`.trim() ||
+						l.user.email ||
+						"Nieznany",
+					type: l.type || "vacation",
+					startDate: start.toISOString().split("T")[0],
+					endDate: end.toISOString().split("T")[0],
+					reason: l.reason || "",
+					reasonVisibility: l.reason_visibility || "private",
+					isActive: start <= today && end >= today,
+					isUpcoming: start > today && start <= in30Days,
+				};
+			});
+
+			res.json({
+				active: formatted.filter((l: any) => l.isActive),
+				upcoming: formatted.filter((l: any) => l.isUpcoming),
+				total: formatted.length,
+			});
+		} catch (error) {
+			logger.error("[MY-TEAM-LEAVES-LIST] Błąd:", error);
+			res.status(500).json({ error: "Nie udało się pobrać urlopów zespołu" });
+		}
+	},
+);
+app.get(
+	"/api/my-team/member/:userId/leaves",
+	authMiddleware,
+	async (req: any, res) => {
+		try {
+			const requesterId = req.user?.id ? parseInt(req.user.id) : null;
+			const userRole = req.user?.role;
+			const targetUserId = parseInt(req.params.userId);
+
+			if (!requesterId)
+				return res.status(401).json({ error: "Brak autoryzacji" });
+			if (isNaN(targetUserId))
+				return res.status(400).json({ error: "Nieprawidłowe ID" });
+
+			const isAdminOrBoard = userRole === "admin" || userRole === "board";
+			let hasAccess = isAdminOrBoard;
+
+			if (!hasAccess) {
+				const [requesterPillars, targetPillars] = await Promise.all([
+					getLeaderPillars(requesterId),
+					prisma.teamMember
+						.findMany({
+							where: {
+								user_id: targetUserId,
+								team: { name: { contains: "Filar" } },
+							},
+							include: { team: { select: { name: true } } },
+						})
+						.then((rows: any[]) =>
+							rows
+								.map((tm: any) => tm.team?.name?.replace("Filar ", ""))
+								.filter(Boolean),
+						),
+				]);
+
+				hasAccess =
+					requesterId === targetUserId ||
+					requesterPillars.some((p) => targetPillars.includes(p));
+			}
+
+			if (!hasAccess) return res.status(403).json({ error: "Brak uprawnień" });
+
+			const leaves = await prisma.leave.findMany({
+				where: { user_id: targetUserId },
+				orderBy: { start_date: "desc" },
+			});
+
+			const today = new Date();
+			today.setHours(0, 0, 0, 0);
+
+			const formatted = leaves.map((l: any) => {
+				const start = new Date(l.start_date);
+				const end = new Date(l.end_date);
+				const isActive =
+					l.status === "approved" && start <= today && end >= today;
+				return {
+					id: l.id.toString(),
+					type: l.type || "vacation",
+					startDate: start.toISOString().split("T")[0],
+					endDate: end.toISOString().split("T")[0],
+					reason: l.reason || "",
+					reasonVisibility: l.reason_visibility || "private",
+					status: l.status || "pending",
+					isActive,
+					approvedBy: l.approved_by || null,
+					createdAt: l.created_at.toISOString(),
+				};
+			});
+
+			res.json({
+				active: formatted.filter((l: any) => l.isActive),
+				history: formatted.filter((l: any) => !l.isActive),
+				total: formatted.length,
+			});
+		} catch (error) {
+			logger.error("[MY-TEAM-MEMBER-LEAVES] Błąd:", error);
+			res.status(500).json({ error: "Nie udało się pobrać urlopów" });
+		}
+	},
+);
 app.listen(port, () => {
 	console.log(`🚀 Serwer uruchomiony na porcie ${port}`);
 	verifyMailer();

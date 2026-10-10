@@ -12,11 +12,9 @@ body {
 .loginContainer {
 	height: 100vh;
 	width: 100vw;
-	background: linear-gradient(
-		to bottom right,
-		rgb(69 22 156 / 40.6%) 0%,
-		rgb(87 29 119 / 40.6%) 100%
-	);
+	background: linear-gradient(to bottom right,
+			rgb(69 22 156 / 40.6%) 0%,
+			rgb(87 29 119 / 40.6%) 100%);
 	display: flex;
 	align-items: center;
 	justify-content: center;
@@ -216,9 +214,8 @@ body {
 
 .formOptions {
 	display: flex;
-	justify-content: space-between;
-	align-items: center;
-	margin-bottom: 20px;
+	justify-content: flex-end;
+	margin: 8px 0 16px;
 	font-size: 13px;
 }
 
@@ -228,12 +225,14 @@ body {
 }
 
 .forgot {
-	color: #0078d4;
+	color: var(--text-secondary, #888);
+	font-size: 14px;
 	text-decoration: none;
-	font-size: 13px;
+	transition: color 0.2s;
 }
 
 .forgot:hover {
+	color: var(--primary, #6c3b6c);
 	text-decoration: underline;
 }
 
@@ -252,201 +251,6 @@ body {
 
 .signInBtn:hover {
 	background: #106ebe;
-}
-
-@media (width <=1024px) {
-	.loginCard {
-		width: 92vw;
-		height: 560px;
-	}
-
-	.leftPanel,
-	.rightPanel {
-		padding: 32px;
-	}
-
-	.welcomeText h1 {
-		font-size: 26px;
-	}
-
-	.clipboardImg {
-		width: 190px;
-	}
-
-	.formContainer h2 {
-		font-size: 24px;
-	}
-}
-
-@media (width <=768px) {
-	html,
-	body {
-		overflow: auto;
-	}
-
-	.loginContainer {
-		min-height: 100vh;
-		height: auto;
-		padding: 20px;
-	}
-
-	.loginCard {
-		flex-direction: column;
-		width: 100%;
-		max-width: 420px;
-		height: auto;
-		max-height: none;
-		border-radius: 18px;
-	}
-
-	.leftPanel {
-		width: 100%;
-		height: auto;
-		padding: 32px 24px;
-		border-radius: 18px 18px 0 0;
-		text-align: center;
-	}
-
-	.rightPanel {
-		width: 100%;
-		height: auto;
-		padding: 32px 24px;
-	}
-
-	.logo {
-		justify-content: center;
-		margin-bottom: 15px;
-	}
-
-	.logoText {
-		font-size: 22px;
-	}
-
-	.logoIcon {
-		width: 30px;
-		height: 30px;
-		font-size: 18px;
-	}
-
-	.clipboardImg {
-		width: 160px;
-	}
-
-	.welcomeText h1 {
-		font-size: 24px;
-	}
-
-	.welcomeText p {
-		font-size: 14px;
-	}
-
-	.dots {
-		justify-content: center;
-		margin-top: 18px;
-	}
-
-	.formContainer h2 {
-		font-size: 24px;
-	}
-
-	.createAccount {
-		font-size: 14px;
-	}
-
-	.subtitle {
-		font-size: 13px;
-		margin-bottom: 18px;
-	}
-
-	.inputGroup {
-		margin: 18px 0;
-	}
-
-	.inputGroup input {
-		font-size: 16px;
-		padding: 12px 40px 12px 10px;
-	}
-
-	.formOptions {
-		font-size: 13px;
-		margin-bottom: 20px;
-	}
-
-	.signInBtn {
-		padding: 13px;
-		font-size: 16px;
-	}
-}
-
-@media (width <=420px) {
-	.loginContainer {
-		padding: 12px;
-	}
-
-	.leftPanel,
-	.rightPanel {
-		padding: 24px 18px;
-	}
-
-	.logoText {
-		font-size: 20px;
-	}
-
-	.clipboardImg {
-		width: 135px;
-	}
-
-	.welcomeText h1 {
-		font-size: 21px;
-	}
-
-	.welcomeText p {
-		font-size: 13px;
-	}
-
-	.formContainer h2 {
-		font-size: 22px;
-	}
-
-	.inputGroup input {
-		font-size: 15px;
-	}
-
-	.formOptions {
-		flex-direction: column;
-		align-items: flex-start;
-		gap: 10px;
-	}
-}
-
-@media (height <=650px) and (width <=768px) {
-	.loginContainer {
-		padding: 10px;
-	}
-
-	.leftPanel {
-		padding: 20px;
-	}
-
-	.rightPanel {
-		padding: 20px;
-	}
-
-	.clipboardImg {
-		width: 70px;
-	}
-
-	.welcomeText h1 {
-		font-size: 19px;
-	}
-
-	.welcomeText p {
-		display: none;
-	}
-
-	.dots {
-		display: none;
-	}
 }
 
 .divider {
@@ -476,7 +280,7 @@ body {
 	width: 100% !important;
 }
 
-.googleButtonWrapper > div {
+.googleButtonWrapper>div {
 	width: 100% !important;
 }
 
@@ -586,20 +390,265 @@ body {
 	opacity: 1;
 }
 
-.formOptions {
-	display: flex;
-	justify-content: flex-end;
-	margin: 8px 0 16px;
+@media (width <=1024px) {
+	.loginCard {
+		width: 92vw;
+		height: 560px;
+	}
+
+	.leftPanel,
+	.rightPanel {
+		padding: 32px;
+	}
+
+	.welcomeText h1 {
+		font-size: 26px;
+	}
+
+	.clipboardImg {
+		width: 190px;
+	}
+
+	.formContainer h2 {
+		font-size: 24px;
+	}
 }
 
-.forgot {
-	color: var(--text-secondary, #888);
-	font-size: 14px;
-	text-decoration: none;
-	transition: color 0.2s;
+@media (width <=768px) {
+
+	html,
+	body {
+		overflow: auto;
+	}
+
+	.loginContainer {
+		min-height: 100vh;
+		height: auto;
+		padding: 12px;
+		align-items: flex-start;
+	}
+
+	.loginCard {
+		flex-direction: column;
+		width: 100%;
+		max-width: 440px;
+		height: auto;
+		max-height: none;
+		border-radius: 16px;
+		margin: auto;
+	}
+
+	.leftPanel {
+		width: 100%;
+		height: auto;
+		padding: 20px 20px 18px;
+		border-radius: 16px 16px 0 0;
+		justify-content: flex-start;
+		text-align: center;
+	}
+
+	.logo {
+		display: flex;
+		justify-content: center;
+		margin-bottom: 0;
+	}
+
+	.logoText {
+		font-size: 18px;
+	}
+
+	.logoIcon {
+		width: 26px;
+		height: 26px;
+		font-size: 15px;
+		border-radius: 6px;
+	}
+
+	.welcomeText {
+		margin-top: 8px;
+	}
+
+	.welcomeText h1 {
+		font-size: 18px;
+		margin: 0 0 4px;
+		font-weight: 600;
+	}
+
+	.welcomeText p {
+		font-size: 12px;
+		line-height: 1.35;
+		opacity: 0.9;
+	}
+
+	.rightPanel {
+		width: 100%;
+		height: auto;
+		padding: 22px 20px 24px;
+		justify-content: flex-start;
+	}
+
+	.formContainer h2 {
+		font-size: 22px;
+	}
+
+	.createAccount {
+		font-size: 13px;
+	}
+
+	.subtitle {
+		font-size: 12px;
+		margin-bottom: 14px;
+	}
+
+	.inputGroup {
+		margin: 12px 0;
+	}
+
+	.inputGroup input {
+		font-size: 16px;
+		padding: 12px 40px 12px 10px;
+	}
+
+	.formOptions {
+		margin: 4px 0 14px;
+		font-size: 13px;
+	}
+
+	.signInBtn {
+		padding: 13px;
+		font-size: 16px;
+	}
+
+	.divider {
+		margin: 16px 0;
+	}
+
+	.googleBtn {
+		height: 50px;
+		font-size: 15px;
+		padding: 12px 16px;
+	}
+
+	.calendarScopeWrapper {
+		margin-top: 10px;
+	}
+
+	.calendarScopeBtn {
+		padding: 10px 14px;
+		font-size: 13px;
+	}
+
+	.calendarScopeInfo {
+		font-size: 11px;
+	}
+
+	.devHint {
+		margin-top: 10px;
+		padding: 6px 10px;
+	}
+
+	.devHintText {
+		font-size: 11px;
+	}
 }
 
-.forgot:hover {
-	color: var(--primary, #6c3b6c);
-	text-decoration: underline;
+@media (width <=420px) {
+	.loginContainer {
+		padding: 8px;
+	}
+
+	.loginCard {
+		border-radius: 14px;
+	}
+
+	.leftPanel {
+		padding: 16px 16px 14px;
+		border-radius: 14px 14px 0 0;
+	}
+
+	.logoText {
+		font-size: 16px;
+	}
+
+	.logoIcon {
+		width: 24px;
+		height: 24px;
+		font-size: 14px;
+	}
+
+	.welcomeText h1 {
+		font-size: 16px;
+	}
+
+	.welcomeText p {
+		font-size: 11px;
+	}
+
+	.rightPanel {
+		padding: 18px 16px 20px;
+	}
+
+	.formContainer h2 {
+		font-size: 20px;
+	}
+
+	.subtitle {
+		margin-bottom: 12px;
+	}
+
+	.inputGroup {
+		margin: 10px 0;
+	}
+
+	.inputGroup input {
+		font-size: 16px;
+		padding: 11px 38px 11px 8px;
+	}
+
+	.formOptions {
+		flex-direction: column;
+		align-items: flex-start;
+		gap: 8px;
+		margin: 4px 0 12px;
+	}
+
+	.signInBtn {
+		padding: 12px;
+		font-size: 15px;
+	}
+
+	.googleBtn {
+		height: 46px;
+		font-size: 14px;
+	}
+}
+
+@media (height <=650px) and (width <=768px) {
+	.leftPanel {
+		padding: 12px 16px;
+	}
+
+	.welcomeText p {
+		display: none;
+	}
+
+	.rightPanel {
+		padding: 16px;
+	}
+
+	.formContainer h2 {
+		font-size: 19px;
+	}
+
+	.inputGroup {
+		margin: 8px 0;
+	}
+
+	.signInBtn {
+		padding: 11px;
+	}
+
+	.googleBtn {
+		height: 44px;
+	}
 }

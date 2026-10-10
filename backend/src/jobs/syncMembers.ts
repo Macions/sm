@@ -436,6 +436,7 @@ export async function syncMembers() {
 						phone: userData.phone,
 						is_active: userData.is_active,
 						team: userData.team,
+						birthday: existing.birthday ?? null,
 					};
 
 					const hasExistingRole = existing.role_id && existing.role_id !== 4;
@@ -502,22 +503,27 @@ export async function syncMembers() {
 					} else {
 						if (!hasExistingBirthday) {
 							dataToUpdate.birthday = null;
+						} else {
+							dataToUpdate.birthday = existing.birthday;  // <-- ZACHOWAJ istniejącą datę
 						}
 					}
+
+					const normalize = (v: any) => (v === "" || v === undefined ? null : v);
 
 					const hasChanges =
 						existing.first_name !== dataToUpdate.first_name ||
 						existing.last_name !== dataToUpdate.last_name ||
-						existing.phone !== dataToUpdate.phone ||
+						normalize(existing.phone) !== normalize(dataToUpdate.phone) ||
 						(hasExistingFunctionalRole
 							? existing.functional_role !== dataToUpdate.functional_role
 							: false) ||
 						(!hasExistingPillars &&
-							existing.pillars !== dataToUpdate.pillars) ||
+							normalize(existing.pillars) !== normalize(dataToUpdate.pillars)) ||
 						(!hasExistingStatus && existing.status !== dataToUpdate.status) ||
 						(!hasExistingStatus &&
 							existing.is_trial !== dataToUpdate.is_trial) ||
-						existing.birthday !== dataToUpdate.birthday;
+						(existing.birthday?.getTime() ?? null) !==
+						(dataToUpdate.birthday?.getTime() ?? null);
 
 					if (hasChanges) {
 						const updatedUser = await prisma.user.update({
