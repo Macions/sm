@@ -18,7 +18,10 @@ const Vacancies = lazy(() => import("@/pages/Vacancies/Vacancies"));
 const SocialMedia = lazy(() => import("@/pages/SocialMedia/SocialMedia"));
 const Profile = lazy(() => import("@/pages/Profile/Profile"));
 const Calendar = lazy(() => import("@/pages/Calendar/Calendar"));
+const Grants = lazy(() => import("@/pages/Grants/Grants"));
 const Tasks = lazy(() => import("@/pages/Tasks/Tasks"));
+const TrialPeriods = lazy(() => import("@/pages/TrialPeriods/TrialPeriods"));
+const Ideas = lazy(() => import("@/pages/Ideas/Ideas"));
 import Requests from "./pages/Requests/Requests";
 const Maintenance = lazy(() => import("@/pages/Maintenance/Maintenance"));
 import NotFound from "@/pages/404";
@@ -155,6 +158,9 @@ function AppRoutes() {
 					<Route path="/profile" element={<Profile />} />
 					<Route path="/calendar" element={<Calendar />} />
 					<Route path="/tasks" element={<Tasks />} />
+					<Route path="/trial-periods" element={<TrialPeriods />} />
+					<Route path="/ideas" element={<Ideas />} />
+					<Route path="/grants" element={<Grants />} />
 				</Route>
 			</Routes>
 		</Suspense>

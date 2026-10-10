@@ -29,6 +29,16 @@ export default function Sidebar({
 		userRole === "admin" || userRole === "board" || userRole === "zarząd";
 	const isCoordinator = userRole === "coordinator";
 
+	// Sprawdzenie czy to pełnomocnik ds. okresów próbnych (Maja Melerska, id=294)
+	const isTrialCoordinator = (() => {
+		try {
+			const u = JSON.parse(localStorage.getItem("user") || "{}");
+			return String(u.id) === "294";
+		} catch {
+			return false;
+		}
+	})();
+
 	const filteredNavItems = NAV_ITEMS.filter((item) => {
 		if (item.key === "social") {
 			return isSocialMember || isAdminOrBoard;
@@ -38,6 +48,9 @@ export default function Sidebar({
 		}
 		if (item.key === "myTeam") {
 			return isAdminOrBoard || isCoordinator || isLeader;
+		}
+		if (item.key === "trial-periods") {
+			return isAdminOrBoard || isTrialCoordinator;
 		}
 		return true;
 	});

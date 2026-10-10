@@ -1,0 +1,401 @@
+.trialPeriods {
+	margin: 0 auto;
+	width: 100%;
+}
+
+.header {
+	margin-bottom: 24px;
+}
+
+.header__title {
+	font-size: 28px;
+	font-weight: 700;
+	color: #1f2937;
+	margin: 0 0 8px 0;
+	display: flex;
+	align-items: center;
+	gap: 12px;
+}
+
+.header__subtitle {
+	font-size: 14px;
+	color: #6b7280;
+	margin: 0;
+}
+
+/* Statystyki */
+.stats {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+	gap: 16px;
+	margin-bottom: 24px;
+}
+
+.statCard {
+	display: flex;
+	align-items: center;
+	gap: 16px;
+	padding: 20px;
+	background: #fff;
+	border-radius: 12px;
+	border: 1px solid #e5e7eb;
+	transition: all 0.2s;
+}
+
+.statCard__icon {
+	color: #7c3aed;
+	flex-shrink: 0;
+}
+
+.statCard__value {
+	font-size: 24px;
+	font-weight: 700;
+	color: #1f2937;
+}
+
+.statCard__label {
+	font-size: 13px;
+	color: #6b7280;
+	margin-top: 2px;
+}
+
+.statCardWarning .statCard__icon {
+	color: #dc2626;
+}
+
+.statCardInfo .statCard__icon {
+	color: #2563eb;
+}
+
+.statCardNeutral .statCard__icon {
+	color: #f59e0b;
+}
+
+/* Filtry */
+.filters {
+	display: flex;
+	gap: 12px;
+	margin-bottom: 20px;
+	flex-wrap: wrap;
+}
+
+.filters__search {
+	position: relative;
+	flex: 1;
+	min-width: 280px;
+}
+
+.filters__searchIcon {
+	position: absolute;
+	left: 12px;
+	top: 50%;
+	transform: translateY(-50%);
+	color: #9ca3af;
+	pointer-events: none;
+}
+
+.filters__searchInput {
+	width: 100%;
+	padding: 10px 36px 10px 40px;
+	border: 1px solid #e5e7eb;
+	border-radius: 8px;
+	font-size: 14px;
+	outline: none;
+	transition: border-color 0.2s;
+}
+
+.filters__searchInput:focus {
+	border-color: #7c3aed;
+}
+
+.filters__clear {
+	position: absolute;
+	right: 10px;
+	top: 50%;
+	transform: translateY(-50%);
+	background: none;
+	border: none;
+	cursor: pointer;
+	color: #9ca3af;
+	padding: 4px;
+	border-radius: 4px;
+	display: flex;
+}
+
+.filters__clear:hover {
+	background: #f3f4f6;
+}
+
+.filters__group {
+	display: flex;
+	gap: 8px;
+}
+
+.filters__select {
+	padding: 10px 14px;
+	border: 1px solid #e5e7eb;
+	border-radius: 8px;
+	font-size: 14px;
+	background: #fff;
+	cursor: pointer;
+	outline: none;
+}
+
+.filters__select:focus {
+	border-color: #7c3aed;
+}
+
+/* Tabela */
+.tableWrapper {
+	background: #fff;
+	border-radius: 12px;
+	border: 1px solid #e5e7eb;
+	overflow: hidden;
+}
+
+.table {
+	width: 100%;
+	border-collapse: collapse;
+	font-size: 14px;
+}
+
+.table thead {
+	background: #f9fafb;
+}
+
+.table th {
+	padding: 12px 16px;
+	text-align: left;
+	font-weight: 600;
+	color: #374151;
+	font-size: 12px;
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
+	border-bottom: 1px solid #e5e7eb;
+}
+
+.table td {
+	padding: 14px 16px;
+	border-bottom: 1px solid #f3f4f6;
+	vertical-align: middle;
+}
+
+.tableRow:hover {
+	background: #fafafa;
+}
+
+/* Osoba */
+.personCell {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+}
+
+.personAvatar {
+	width: 36px;
+	height: 36px;
+	border-radius: 50%;
+	background: linear-gradient(135deg, #7c3aed, #a78bfa);
+	color: white;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-weight: 600;
+	font-size: 13px;
+	flex-shrink: 0;
+}
+
+.personName {
+	font-weight: 600;
+	color: #1f2937;
+}
+
+.personEmail {
+	font-size: 12px;
+	color: #6b7280;
+}
+
+/* Zespoły */
+.teamsList {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 4px;
+	max-width: 260px;
+}
+
+.teamTag {
+	font-size: 11px;
+	background: rgba(124, 58, 237, 0.1);
+	color: #7c3aed;
+	padding: 3px 8px;
+	border-radius: 6px;
+	font-weight: 500;
+}
+
+.noTeams {
+	color: #9ca3af;
+}
+
+/* Data papierów - edycja inline */
+.dateCell {
+	background: none;
+	border: 1px dashed transparent;
+	padding: 6px 10px;
+	border-radius: 6px;
+	cursor: pointer;
+	font-size: 13px;
+	color: #1f2937;
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	transition: all 0.2s;
+}
+
+.dateCell:hover {
+	border-color: #7c3aed;
+	background: rgba(124, 58, 237, 0.05);
+}
+
+.dateCellOverdue {
+	color: #dc2626;
+	font-weight: 600;
+}
+
+.dateEdit {
+	display: flex;
+	align-items: center;
+	gap: 4px;
+}
+
+.dateInput {
+	padding: 6px 8px;
+	border: 1px solid #7c3aed;
+	border-radius: 6px;
+	font-size: 13px;
+	outline: none;
+}
+
+.dateSave,
+.dateCancel {
+	background: none;
+	border: none;
+	padding: 6px;
+	border-radius: 6px;
+	cursor: pointer;
+	display: flex;
+	align-items: center;
+}
+
+.dateSave {
+	color: #16a34a;
+}
+
+.dateSave:hover {
+	background: rgba(22, 163, 74, 0.1);
+}
+
+.dateCancel {
+	color: #dc2626;
+}
+
+.dateCancel:hover {
+	background: rgba(220, 38, 38, 0.1);
+}
+
+/* Checkbox */
+.checkboxLabel {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	cursor: pointer;
+	user-select: none;
+}
+
+.checkbox {
+	width: 18px;
+	height: 18px;
+	cursor: pointer;
+	accent-color: #7c3aed;
+}
+
+.checkboxText {
+	font-size: 13px;
+	color: #374151;
+}
+
+/* Przycisk zakończ */
+.finishBtn {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	padding: 8px 12px;
+	background: #7c3aed;
+	color: white;
+	border: none;
+	border-radius: 6px;
+	font-size: 13px;
+	font-weight: 500;
+	cursor: pointer;
+	transition: background 0.2s;
+}
+
+.finishBtn:hover {
+	background: #6d28d9;
+}
+
+.finishBtn:disabled {
+	opacity: 0.5;
+	cursor: not-allowed;
+}
+
+/* Empty state */
+.emptyState {
+	text-align: center;
+	padding: 60px 20px;
+	background: #fff;
+	border-radius: 12px;
+	border: 1px solid #e5e7eb;
+}
+
+.emptyState__icon {
+	color: #d1d5db;
+	margin-bottom: 16px;
+}
+
+.emptyState__title {
+	font-size: 18px;
+	font-weight: 600;
+	color: #374151;
+	margin: 0 0 8px 0;
+}
+
+.emptyState__description {
+	font-size: 14px;
+	color: #6b7280;
+	margin: 0;
+}
+
+/* Loading */
+.loading {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	height: 60vh;
+	gap: 16px;
+}
+
+.loading__spinner {
+	width: 48px;
+	height: 48px;
+	border: 4px solid #e5e7eb;
+	border-top-color: #7c3aed;
+	border-radius: 50%;
+	animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+	to {
+		transform: rotate(360deg);
+	}
+}

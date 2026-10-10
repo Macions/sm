@@ -34,6 +34,7 @@ import {
 	UserX,
 	TrendingUp,
 	IdCard,
+	Calendar,
 } from "lucide-react";
 import type { Permission } from "../../utils/permissions";
 import {
@@ -3540,6 +3541,10 @@ export default function Admin({ title }: { title?: string }) {
 	const teamAttendanceRef = useRef<HTMLDivElement>(null);
 	const stableMembersRef = useRef<HTMLDivElement>(null);
 	const boardRef = useRef<HTMLDivElement>(null);
+
+	const revenueRef = useRef<HTMLDivElement>(null);
+	const meetingsRef = useRef<HTMLDivElement>(null);
+	const attendanceRef = useRef<HTMLDivElement>(null);
 	const scrollToSection = (
 		sectionRef: React.RefObject<HTMLDivElement | null>,
 		tabId: string,
@@ -3548,17 +3553,30 @@ export default function Admin({ title }: { title?: string }) {
 
 		if (sectionRef.current) {
 			const element = sectionRef.current;
-			const originalMarginTop = element.style.scrollMarginTop;
-			element.style.scrollMarginTop = "100px";
+			const headerOffset = 140;
 
-			element.scrollIntoView({
-				behavior: "smooth",
-				block: "start",
-			});
+			// Znajdź kontener scrolla (main)
+			const mainElement = document.querySelector("main") as HTMLElement;
+			if (mainElement) {
+				const mainRect = mainElement.getBoundingClientRect();
+				const elementRect = element.getBoundingClientRect();
+				// Pozycja elementu względem kontenera main + aktualny scroll
+				const offsetPosition =
+					elementRect.top - mainRect.top + mainElement.scrollTop - headerOffset;
 
-			setTimeout(() => {
-				element.style.scrollMarginTop = originalMarginTop || "";
-			}, 500);
+				mainElement.scrollTo({
+					top: offsetPosition,
+					behavior: "smooth",
+				});
+			} else {
+				// Fallback na window, gdyby main nie istniał
+				const elementPosition = element.getBoundingClientRect().top;
+				const offsetPosition = elementPosition + window.scrollY - headerOffset;
+				window.scrollTo({
+					top: offsetPosition,
+					behavior: "smooth",
+				});
+			}
 		}
 	};
 
@@ -3668,9 +3686,7 @@ export default function Admin({ title }: { title?: string }) {
 	};
 
 	const scrollToTop = () => {
-		const mainElement = document.querySelector(
-			"main._main_xe2ra_67",
-		) as HTMLElement;
+		const mainElement = document.querySelector("main") as HTMLElement;
 		if (mainElement) {
 			mainElement.scrollTo({
 				top: 0,
@@ -3680,25 +3696,57 @@ export default function Admin({ title }: { title?: string }) {
 	};
 
 	useEffect(() => {
-		const mainElement = document.querySelector(
-			"main._main_xe2ra_67",
-		) as HTMLElement;
+		const mainElement = document.querySelector("main") as HTMLElement;
 		if (!mainElement) {
 			return;
 		}
 
+		const sections: {
+			id: string;
+			ref: React.RefObject<HTMLDivElement | null>;
+		}[] = [
+			{ id: "revenue", ref: revenueRef },
+			{ id: "meetings", ref: meetingsRef },
+			{ id: "board", ref: boardRef },
+			{ id: "roles", ref: rolesRef },
+			{ id: "teams", ref: teamsRef },
+			{ id: "access", ref: accessRef },
+			{ id: "attendance", ref: attendanceRef },
+			{ id: "team-attendance", ref: teamAttendanceRef },
+			{ id: "stable-members", ref: stableMembersRef },
+			{ id: "inactive", ref: inactiveRef },
+			{ id: "logs", ref: logsRef },
+		];
+
 		const handleScroll = () => {
 			const scrollTop = mainElement.scrollTop;
 			setShowScrollTop(scrollTop > 20);
+
+			// Scroll spy — offset od góry (header + zakładki)
+			const offset = 140;
+			let activeSection = sections[0].id;
+
+			for (const section of sections) {
+				if (!section.ref.current) continue;
+				const rect = section.ref.current.getBoundingClientRect();
+				if (rect.top <= offset) {
+					activeSection = section.id;
+				} else {
+					// Sekcje są w kolejności DOM — można przerwać
+					break;
+				}
+			}
+
+			setActiveTab(activeSection);
 		};
 
-		mainElement.addEventListener("scroll", handleScroll);
+		mainElement.addEventListener("scroll", handleScroll, { passive: true });
 		handleScroll();
 
 		return () => {
 			mainElement.removeEventListener("scroll", handleScroll);
 		};
-	}, []);
+	}, [teams]); // dodaj teams, żeby spy działał po załadowaniu sekcji
 
 	useEffect(() => {
 		if (scrollToTeamId) {
@@ -3747,11 +3795,18 @@ export default function Admin({ title }: { title?: string }) {
 			<div className={styles.tabsNav}>
 				<div className={styles.tabsNav__list}>
 					<button
-						className={`${styles.tabsNav__tab} ${activeTab === "board" ? styles.tabsNav__tabActive : ""}`}
-						onClick={() => scrollToSection(boardRef, "board")}
+						className={`${styles.tabsNav__tab} ${activeTab === "revenue" ? styles.tabsNav__tabActive : ""}`}
+						onClick={() => scrollToSection(revenueRef, "revenue")}
 					>
-						<Crown size={16} />
-						Zarząd
+						<TrendingUp size={16} />
+						Przychody
+					</button>
+					<button
+						className={`${styles.tabsNav__tab} ${activeTab === "meetings" ? styles.tabsNav__tabActive : ""}`}
+						onClick={() => scrollToSection(meetingsRef, "meetings")}
+					>
+						<Calendar size={16} />
+						Spotkania
 					</button>
 					<button
 						className={`${styles.tabsNav__tab} ${activeTab === "roles" ? styles.tabsNav__tabActive : ""}`}
@@ -3775,6 +3830,13 @@ export default function Admin({ title }: { title?: string }) {
 						Dostępy i zasoby
 					</button>
 					<button
+						className={`${styles.tabsNav__tab} ${activeTab === "attendance" ? styles.tabsNav__tabActive : ""}`}
+						onClick={() => scrollToSection(attendanceRef, "attendance")}
+					>
+						<TrendingUp size={16} />
+						Ranking frekwencji
+					</button>
+					<button
 						className={`${styles.tabsNav__tab} ${activeTab === "team-attendance" ? styles.tabsNav__tabActive : ""}`}
 						onClick={() =>
 							scrollToSection(teamAttendanceRef, "team-attendance")
@@ -3791,18 +3853,18 @@ export default function Admin({ title }: { title?: string }) {
 						Stali członkowie
 					</button>
 					<button
-						className={`${styles.tabsNav__tab} ${activeTab === "logs" ? styles.tabsNav__tabActive : ""}`}
-						onClick={() => scrollToSection(logsRef, "logs")}
-					>
-						<RefreshCw size={16} />
-						Historia działań
-					</button>
-					<button
 						className={`${styles.tabsNav__tab} ${activeTab === "inactive" ? styles.tabsNav__tabActive : ""}`}
 						onClick={() => scrollToSection(inactiveRef, "inactive")}
 					>
 						<UserX size={16} /> {}
 						Nieaktywni
+					</button>
+					<button
+						className={`${styles.tabsNav__tab} ${activeTab === "logs" ? styles.tabsNav__tabActive : ""}`}
+						onClick={() => scrollToSection(logsRef, "logs")}
+					>
+						<RefreshCw size={16} />
+						Historia działań
 					</button>
 				</div>
 			</div>
@@ -3819,11 +3881,10 @@ export default function Admin({ title }: { title?: string }) {
 					</div>
 				</div>
 
-				<div style={{ marginBottom: "32px" }}>
+				<div ref={revenueRef} style={{ marginBottom: "32px" }}>
 					<RevenueChart year={2026} title="Przychody i wydatki" />
 				</div>
-
-				<div style={{ marginBottom: "32px" }}>
+				<div ref={meetingsRef} style={{ marginBottom: "32px" }}>
 					<MeetingsChart year={2026} title="Spotkania w SM" />
 				</div>
 				<div ref={boardRef}>
@@ -3856,7 +3917,9 @@ export default function Admin({ title }: { title?: string }) {
 					<AccessManagement />
 				</div>
 
-				<AttendanceRanking />
+				<div ref={attendanceRef}>
+					<AttendanceRanking />
+				</div>
 
 				<div ref={teamAttendanceRef}>
 					<TeamAttendanceSection />

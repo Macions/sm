@@ -12,8 +12,8 @@ export interface LayoutOptions {
 }
 
 const BRAND = {
-	primary: "#43169C",
-	secondary: "#632290",
+	primary: "#46169D",
+	secondary: "#46169D",
 	text: "#111827",
 	textMuted: "#6b7280",
 	textLight: "#9ca3af",
@@ -27,7 +27,6 @@ const BRAND = {
 	logoWidth: 150,
 	siteUrl: "https://silamlodych.pl",
 };
-
 export function layout({
 	title,
 	subtitle,

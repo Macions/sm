@@ -107,6 +107,8 @@ export default function DashboardLayout() {
 				return "Poradniki";
 			case "tasks":
 				return "Zadania";
+			case "trial-periods":
+				return "Okresy próbne";
 			case "vacancies":
 				return "Aktualne wakaty";
 			case "structure":

@@ -1,8 +1,8 @@
 // src/emails/components.ts
 
 const BRAND = {
-	primary: "#43169C",
-	secondary: "#632290",
+	primary: "#46169D",
+	secondary: "#46169D",
 	bg: "#f9fafb",
 	border: "#e5e7eb",
 };

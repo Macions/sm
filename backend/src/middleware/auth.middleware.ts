@@ -12,6 +12,8 @@ export interface AuthRequest extends Request {
 		id: number;
 		email: string | null;
 		role: string;
+		first_name?: string;
+		last_name?: string;
 		isLeader?: boolean;
 		pillarName?: string | null;
 		leaderPillarNames?: string[];

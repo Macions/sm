@@ -13,16 +13,22 @@ import calendarRoutes from "./routes/calendar.routes";
 import { syncContributions } from "./jobs/syncContributions";
 import cookieParser from "cookie-parser";
 import { syncAttendance } from "./jobs/syncAttendance";
+import { inactiveReminderTemplate } from "./emails/inactiveReminderTemplate";
+import { sendMail } from "./lib/sendMail";
 import cron from "node-cron";
 import dashboardRoutes from "./routes/dashboard.routes";
 import { updateLeaveStatus } from "./jobs/updateLeaveStatus";
 import { checkMonthlyMeetings } from "./jobs/checkMonthlyMeetings";
 import bcrypt from "bcrypt";
+import systemIdeaRoutes from "./routes/systemIdeas.routes";
 import jwt from "jsonwebtoken";
 import path from "path";
 // src/server.ts — dopisz do istniejących importów
 import { verifyMailer } from "./lib/mailer";
 import { enqueueMail } from "./lib/mailQueue";
+import { notifyInactiveUsers } from "./jobs/notifyInactiveUsers";
+import grantRoutes from "./routes/grants.routes";
+
 import { newTaskEmail, leaveDecisionEmail } from "./emails/templates";
 import fs from "fs";
 import multer from "multer";
@@ -32,11 +38,21 @@ import dotenv from "dotenv";
 dotenv.config();
 
 updateLeaveStatus();
-
+// cron.schedule("0 9 */5 * *", async () => {
+// 	try {
+// 		logger.info("[CRON] Start notifyInactiveUsers");
+// 		const result = await notifyInactiveUsers();
+// 		logger.info(
+// 			`[CRON] notifyInactiveUsers: wysłano ${result.sent}, błędy ${result.failed}, pominięto ${result.skippedRecent}`,
+// 		);
+// 	} catch (error) {
+// 		logger.error("[CRON] Błąd notifyInactiveUsers:", error);
+// 	}
+// });
 cron.schedule("0 7,14,21 * * *", async () => {
 	try {
 		await syncAttendance();
-	} catch (error) { }
+	} catch (error) {}
 });
 
 cron.schedule("1 0 * * *", async () => {
@@ -195,30 +211,39 @@ app.post("/api/auth/google", async (req, res) => {
 			where: { email: payload.email },
 		});
 
-		if (!user) {
+		if (!user || !user.is_active) {
 			try {
 				await prisma.systemLog.create({
 					data: {
-						user_id: 0,
+						user_id: user?.id || 0,
 						user_name: payload.email || "Nieznany",
 						user_role: "unknown",
 						action_type: "LOGIN",
 						category: "AUTH",
 						endpoint: "/api/auth/google",
 						method: "POST",
-						entity_name: `Nieudane logowanie przez Google: ${payload.email}`,
-						changes: JSON.stringify({ email: payload.email, success: false }),
+						entity_name: user
+							? `Nieudane logowanie (konto nieaktywne): ${payload.email}`
+							: `Nieudane logowanie przez Google: ${payload.email}`,
+						changes: JSON.stringify({
+							email: payload.email,
+							success: false,
+							reason: user ? "inactive" : "not_found",
+						}),
 						status: "error",
-						error_message: "Użytkownik nie istnieje w systemie",
+						error_message: user
+							? "Konto zostało dezaktywowane"
+							: "Użytkownik nie istnieje w systemie",
 					},
 				});
 			} catch (logError) {
-				logger.error("âťŚ Błąd zapisu logu:", logError);
+				logger.error("Błąd zapisu logu:", logError);
 			}
 
 			return res.status(403).json({
-				error:
-					"To konto Google nie jest zarejestrowane w systemie Siły Młodych. Użyj innego.",
+				error: user
+					? "Twoje konto zostało dezaktywowane. Skontaktuj się z zarządem."
+					: "To konto Google nie jest zarejestrowane w systemie Siły Młodych. Użyj innego.",
 			});
 		}
 
@@ -496,21 +521,24 @@ app.post("/api/auth/google-token", async (req: any, res: any) => {
 			where: { email: userInfo.email },
 		});
 
-		if (!user) {
+		if (!user || !user.is_active) {
 			try {
 				await prisma.systemLog.create({
 					data: {
-						user_id: 0,
+						user_id: user?.id || 0,
 						user_name: userInfo.email || "Nieznany",
 						user_role: "unknown",
 						action_type: "LOGIN",
 						category: "AUTH",
 						endpoint: "/api/auth/google-token",
 						method: "POST",
-						entity_name: `Nieudane logowanie przez Google: ${userInfo.email}`,
+						entity_name: user
+							? `Nieudane logowanie (konto nieaktywne): ${userInfo.email}`
+							: `Nieudane logowanie przez Google: ${userInfo.email}`,
 						changes: JSON.stringify({
 							email: userInfo.email,
 							success: false,
+							reason: user ? "inactive" : "not_found",
 						}),
 						ip_address:
 							req.headers["x-forwarded-for"]?.split(",")[0]?.trim() ||
@@ -518,15 +546,19 @@ app.post("/api/auth/google-token", async (req: any, res: any) => {
 							null,
 						user_agent: req.headers["user-agent"] || null,
 						status: "error",
-						error_message: "Użytkownik nie istnieje w systemie",
+						error_message: user
+							? "Konto zostało dezaktywowane"
+							: "Użytkownik nie istnieje w systemie",
 					},
 				});
 			} catch (logError) {
 				console.error(" [GOOGLE-TOKEN] Błąd zapisu logu:", logError);
 			}
 
-			return res.status(404).json({
-				error: "Użytkownik nie istnieje w systemie",
+			return res.status(403).json({
+				error: user
+					? "Twoje konto zostało dezaktywowane. Skontaktuj się z zarządem."
+					: "Użytkownik nie istnieje w systemie",
 			});
 		}
 		try {
@@ -798,6 +830,36 @@ app.post("/api/auth/login", async (req, res) => {
 			return res.status(401).json({ error: "Nieprawidłowy email lub hasło" });
 		}
 
+		if (!user.is_active) {
+			try {
+				await prisma.systemLog.create({
+					data: {
+						user_id: user.id,
+						user_name: user.email || "Nieznany",
+						user_role: mapRoleId(user.role_id),
+						action_type: "LOGIN",
+						category: "AUTH",
+						endpoint: "/api/auth/login",
+						method: "POST",
+						entity_name: `Nieudane logowanie (konto nieaktywne): ${user.email}`,
+						changes: JSON.stringify({
+							email: user.email,
+							success: false,
+							reason: "inactive",
+						}),
+						status: "error",
+						error_message: "Konto zostało dezaktywowane",
+					},
+				});
+			} catch (logError) {
+				logger.error("Błąd zapisu logu:", logError);
+			}
+
+			return res.status(403).json({
+				error: "Twoje konto zostało dezaktywowane. Skontaktuj się z zarządem.",
+			});
+		}
+
 		const token = jwt.sign(
 			{
 				id: user.id,
@@ -1010,7 +1072,7 @@ app.post("/api/ideas", authMiddleware, async (req: any, res) => {
 					vote_type: "up",
 				},
 			});
-		} catch (voteError) { }
+		} catch (voteError) {}
 
 		const voteCounts = await getVoteCounts(idea.id);
 
@@ -1568,7 +1630,7 @@ app.get("/api/dashboard/stats", authMiddleware, async (req: any, res) => {
 					) {
 						attendance = `${Number(user.attendance_percentage).toFixed(1)}%`;
 					}
-				} catch (fallbackError) { }
+				} catch (fallbackError) {}
 			}
 		}
 
@@ -1846,12 +1908,12 @@ app.get("/api/tasks", authMiddleware, async (req: any, res) => {
 							assigned_group: { in: pillarNames },
 						},
 						{ assigned_to: parseInt(userId) },
-
 						{
 							assigned_users: {
 								contains: `"${userId}"`,
 							},
 						},
+						{ created_by: parseInt(userId) },
 					],
 				};
 
@@ -1879,7 +1941,7 @@ app.get("/api/tasks", authMiddleware, async (req: any, res) => {
 				);
 			}
 		} else {
-			console.log(" [TASKS] Regular member - only own tasks");
+			console.log(" [TASKS] Regular member - own + created tasks");
 
 			whereCondition = {
 				OR: [
@@ -1894,6 +1956,7 @@ app.get("/api/tasks", authMiddleware, async (req: any, res) => {
 							contains: `${userId}`,
 						},
 					},
+					{ created_by: parseInt(userId) },
 				],
 			};
 
@@ -2749,7 +2812,7 @@ app.get("/api/applications", authMiddleware, async (req: any, res) => {
 				userId: app.user_id.toString(),
 				userName: app.user
 					? `${app.user.first_name || ""} ${app.user.last_name || ""}`.trim() ||
-					"Nieznany"
+						"Nieznany"
 					: "Nieznany",
 				userEmail: app.user?.email || "",
 				message: app.message || "",
@@ -2860,7 +2923,7 @@ app.get(
 					userId: app.user_id.toString(),
 					userName: app.user
 						? `${app.user.first_name || ""} ${app.user.last_name || ""}`.trim() ||
-						"Nieznany"
+							"Nieznany"
 						: "Nieznany",
 					userEmail: app.user?.email || "",
 					message: app.message || "",
@@ -3619,7 +3682,8 @@ app.get("/api/structure", authMiddleware, async (req: any, res) => {
 app.use("/api", memberRoutes);
 app.use("/api/contributions", contributionRoutes);
 app.use("/api/dashboard", dashboardRoutes);
-
+app.use("/api", systemIdeaRoutes);
+app.use("/api", grantRoutes);
 app.get("/api/profile", authMiddleware, async (req: any, res) => {
 	try {
 		const userId = req.user?.id;
@@ -4039,14 +4103,14 @@ app.put("/api/leaves/:id", authMiddleware, async (req: any, res) => {
 					: existingLeave.attachments,
 				status: status || existingLeave.status,
 				...(status === "approved" ||
-					status === "rejected" ||
-					status === "cancelled"
+				status === "rejected" ||
+				status === "cancelled"
 					? {
-						approved_by:
-							`${currentUser?.first_name || ""} ${currentUser?.last_name || ""}`.trim() ||
-							"Nieznany",
-						approved_at: new Date(),
-					}
+							approved_by:
+								`${currentUser?.first_name || ""} ${currentUser?.last_name || ""}`.trim() ||
+								"Nieznany",
+							approved_at: new Date(),
+						}
 					: {}),
 			},
 			include: { user: true },
@@ -5139,7 +5203,7 @@ app.post("/api/onboarding/save", authMiddleware, async (req: any, res) => {
 					},
 				});
 			}
-		} catch (notificationError) { }
+		} catch (notificationError) {}
 
 		res.status(200).json({
 			success: true,
@@ -6400,25 +6464,25 @@ app.post("/api/tasks", authMiddleware, async (req: any, res) => {
 			},
 		});
 
-		const allUserIds =
-			assignedUsers && assignedUsers.length > 0 ? assignedUsers : [assignedTo];
+		const allUserIds: (string | number)[] =
+			assignedUsers && assignedUsers.length > 0
+				? (assignedUsers as (string | number)[])
+				: [assignedTo];
 
 		if (allUserIds.length > 1) {
 			await prisma.taskAssignee.createMany({
-				data: allUserIds.map((uid: string) => ({
+				data: allUserIds.map((uid) => ({
 					task_id: task.id,
-					user_id: parseInt(uid),
+					user_id: parseInt(String(uid)),
 					status: "todo",
 				})),
 			});
 		}
-
 		// 2. Wyślij maile do wszystkich przypisanych (w tle)
 		try {
-			const uniqueUserIds = Array.from(
-				new Set(allUserIds.map((id: string) => parseInt(id))),
+			const uniqueUserIds: number[] = Array.from(
+				new Set(allUserIds.map((id) => parseInt(String(id)))),
 			);
-
 			const recipients = await prisma.user.findMany({
 				where: { id: { in: uniqueUserIds } },
 				select: { id: true, first_name: true, email: true },
@@ -6445,10 +6509,8 @@ app.post("/api/tasks", authMiddleware, async (req: any, res) => {
 				enqueueMail({ to: recipient.email, subject, html });
 			}
 		} catch (mailError) {
-			// Nie przerywamy requestu jeśli mail padnie
 			logger.error("[TASKS] Błąd przygotowania maila:", mailError);
 		}
-
 		// 3. Odpowiedz od razu
 		res.status(201).json({
 			id: task.id.toString(),
@@ -6623,12 +6685,12 @@ app.get(
 					is_active: true,
 					...(search
 						? {
-							OR: [
-								{ first_name: { contains: search as string } },
-								{ last_name: { contains: search as string } },
-								{ email: { contains: search as string } },
-							],
-						}
+								OR: [
+									{ first_name: { contains: search as string } },
+									{ last_name: { contains: search as string } },
+									{ email: { contains: search as string } },
+								],
+							}
 						: {}),
 				},
 				select: {
@@ -6702,7 +6764,7 @@ app.get(
 							) {
 								attendance = Number(result[0].attendance_percentage);
 							}
-						} catch (dbError) { }
+						} catch (dbError) {}
 					}
 
 					const teams = user.team_members
@@ -7117,23 +7179,23 @@ app.get("/api/admin/logs", authMiddleware, async (req: any, res) => {
 cron.schedule("0 1,17 * * *", async () => {
 	try {
 		await syncContributions();
-	} catch (error) { }
+	} catch (error) {}
 });
 
 setTimeout(async () => {
 	try {
 		await syncContributions();
-	} catch (error) { }
+	} catch (error) {}
 }, 15000);
 setTimeout(async () => {
 	try {
 		await syncAttendance();
-	} catch (error) { }
+	} catch (error) {}
 }, 10000);
 setTimeout(async () => {
 	try {
 		await syncMembers();
-	} catch (error) { }
+	} catch (error) {}
 }, 5000);
 
 app.get(
@@ -8727,8 +8789,12 @@ app.post("/api/auth/refresh-token", async (req, res) => {
 				where: { id: decoded.id },
 			});
 
-			if (!user) {
-				return res.status(401).json({ error: "Użytkownik nie istnieje" });
+			if (!user || !user.is_active) {
+				return res.status(401).json({
+					error: user
+						? "Konto zostało dezaktywowane"
+						: "Użytkownik nie istnieje",
+				});
 			}
 
 			const newAccessToken = jwt.sign(
@@ -10971,12 +11037,12 @@ app.get("/api/my-team/attendance", authMiddleware, async (req: any, res) => {
 					is_leader: tm.is_leader || false,
 					attendance: att
 						? {
-							total_meetings: att.total_meetings,
-							present_count: att.present_count,
-							absent_count: att.absent_count,
-							excused_count: att.excused_count,
-							attendance_percentage: att.attendance_percentage,
-						}
+								total_meetings: att.total_meetings,
+								present_count: att.present_count,
+								absent_count: att.absent_count,
+								excused_count: att.excused_count,
+								attendance_percentage: att.attendance_percentage,
+							}
 						: null,
 				};
 			})
@@ -11084,9 +11150,13 @@ async function getLeaderPillars(userId: number): Promise<string[]> {
 		},
 		include: { team: true },
 	});
-	return rows
-		.map((tm: any) => tm.team?.name?.replace("Filar ", ""))
-		.filter(Boolean) as string[];
+
+	const pillars: string[] = [];
+	for (const tm of rows) {
+		const name = tm.team?.name?.replace("Filar ", "");
+		if (name) pillars.push(name);
+	}
+	return pillars;
 }
 
 app.get("/api/my-team", authMiddleware, async (req: any, res) => {
@@ -11264,7 +11334,7 @@ app.get("/api/my-team", authMiddleware, async (req: any, res) => {
 							const n = parseInt(uid);
 							if (!isNaN(n) && !ids.includes(n)) ids.push(n);
 						});
-				} catch { }
+				} catch {}
 			}
 			ids.forEach((uid) => {
 				if (userTasksMap[uid]) userTasksMap[uid].push(task);
@@ -11293,12 +11363,12 @@ app.get("/api/my-team", authMiddleware, async (req: any, res) => {
 				const avgRating =
 					ratedTasks.length > 0
 						? ratedTasks.reduce((s: number, t: any) => s + t.rating, 0) /
-						ratedTasks.length
+							ratedTasks.length
 						: null;
 				const avgDifficulty =
 					diffTasks.length > 0
 						? diffTasks.reduce((s: number, t: any) => s + t.difficulty, 0) /
-						diffTasks.length
+							diffTasks.length
 						: null;
 				return {
 					id: u.id,
@@ -11379,12 +11449,12 @@ app.get("/api/my-team", authMiddleware, async (req: any, res) => {
 			average_rating:
 				allRated.length > 0
 					? allRated.reduce((s: number, t: any) => s + t.rating, 0) /
-					allRated.length
+						allRated.length
 					: null,
 			average_difficulty:
 				allDiff.length > 0
 					? allDiff.reduce((s: number, t: any) => s + t.difficulty, 0) /
-					allDiff.length
+						allDiff.length
 					: null,
 			total_rated: allRated.length,
 		};
@@ -11534,12 +11604,12 @@ app.get(
 					average_rating:
 						rated.length > 0
 							? rated.reduce((s: number, t: any) => s + t.rating, 0) /
-							rated.length
+								rated.length
 							: null,
 					average_difficulty:
 						diff.length > 0
 							? diff.reduce((s: number, t: any) => s + t.difficulty, 0) /
-							diff.length
+								diff.length
 							: null,
 				},
 			});
@@ -11778,9 +11848,9 @@ app.put("/api/pillar-requests/:id", authMiddleware, async (req: any, res) => {
 			reviewerId === null
 				? null
 				: await prisma.user.findUnique({
-					where: { id: reviewerId },
-					select: { first_name: true, last_name: true },
-				});
+						where: { id: reviewerId },
+						select: { first_name: true, last_name: true },
+					});
 		const reviewerName =
 			`${reviewer?.first_name || ""} ${reviewer?.last_name || ""}`.trim() ||
 			"Zarząd";
@@ -12759,6 +12829,53 @@ app.get("/api/verified-skills", authMiddleware, async (req: any, res) => {
 		res.status(500).json({ error: "Nie udało się pobrać listy" });
 	}
 });
+app.post(
+	"/api/admin/test-inactive-email",
+	authMiddleware,
+	async (req: any, res) => {
+		try {
+			if (req.user?.role !== "admin") {
+				return res.status(403).json({ error: "Brak uprawnień" });
+			}
+
+			const { to, userName, message } = req.body ?? {};
+
+			if (!to || typeof to !== "string" || !to.includes("@")) {
+				return res.status(400).json({ error: "Podaj poprawny adres email" });
+			}
+
+			const baseUrl = process.env.APP_URL || "http://localhost:5173";
+			const loginUrl = `${baseUrl}/login`;
+
+			const html = inactiveReminderTemplate({
+				userName: userName || "Maciej",
+				loginUrl,
+				adminName: "Zarząd Siły Młodych",
+				message: message || "To jest wiadomość testowa — możesz ją zignorować.",
+			});
+
+			await sendMail({
+				to,
+				subject: "👋 [TEST] Zapraszamy do panelu Siły Młodych",
+				html,
+			});
+
+			logger.info(`[TEST-EMAIL] Wysłano testowy mail do ${to}`);
+
+			res.json({
+				success: true,
+				to,
+				subject: "👋 [TEST] Zapraszamy do panelu Siły Młodych",
+			});
+		} catch (err) {
+			logger.error("[TEST-EMAIL] Błąd:", err);
+			res.status(500).json({
+				error: "Nie udało się wysłać maila",
+				details: err instanceof Error ? err.message : "Unknown error",
+			});
+		}
+	},
+);
 app.get(
 	"/api/my-team/:teamId/leaves",
 	authMiddleware,
@@ -12934,7 +13051,345 @@ app.get(
 		}
 	},
 );
+/* ═══════════════════════════════════════════════════════════
+   OKRESY PRÓBNE
+   ═══════════════════════════════════════════════════════════ */
+
+const TRIAL_COORDINATOR_ID = 294; // Maja Melerska
+
+function canManageTrialPeriods(req: any): boolean {
+	const userId = req.user?.id ? parseInt(req.user.id) : null;
+	const userRole = req.user?.role;
+
+	if (!userId) return false;
+	if (userRole === "admin" || userRole === "board" || userRole === "Zarząd") {
+		return true;
+	}
+	return userId === TRIAL_COORDINATOR_ID;
+}
+
+/**
+ * GET /api/trial-periods
+ * Lista wszystkich użytkowników na okresie próbnym (is_trial = true)
+ */
+app.get("/api/trial-periods", authMiddleware, async (req: any, res) => {
+	try {
+		if (!canManageTrialPeriods(req)) {
+			return res.status(403).json({ error: "Brak uprawnień" });
+		}
+
+		// 1. Pobierz wszystkich próbnych
+		const trialUsers = await prisma.user.findMany({
+			where: {
+				is_trial: true,
+				is_active: true,
+			},
+			select: {
+				id: true,
+				first_name: true,
+				last_name: true,
+				email: true,
+				join_date: true,
+				status: true,
+				papers_due_date: true,
+				papers_submitted: true,
+				papers_submitted_at: true,
+				trial_end_date: true,
+				trial_notes: true,
+				team_members: {
+					include: {
+						team: {
+							select: { id: true, name: true },
+						},
+					},
+				},
+			},
+			orderBy: [{ join_date: "desc" }, { id: "desc" }],
+		});
+
+		// 2. Zmapuj do formatu dla frontendu
+		const mapped = trialUsers.map((u: any) => {
+			const teams = (u.team_members || [])
+				.map((tm: any) => tm.team?.name)
+				.filter(Boolean)
+				.filter((name: string) => name !== "Mentorzy");
+
+			return {
+				id: u.id.toString(),
+				firstName: u.first_name || "",
+				lastName: u.last_name || "",
+				email: u.email || "",
+				joinDate: u.join_date ? u.join_date.toISOString().split("T")[0] : null,
+				teams,
+				papersDueDate: u.papers_due_date
+					? u.papers_due_date.toISOString().split("T")[0]
+					: null,
+				papersSubmitted: u.papers_submitted || false,
+				papersSubmittedAt: u.papers_submitted_at
+					? u.papers_submitted_at.toISOString()
+					: null,
+				trialEndDate: u.trial_end_date
+					? u.trial_end_date.toISOString().split("T")[0]
+					: null,
+				trialNotes: u.trial_notes || null,
+			};
+		});
+
+		res.json(mapped);
+	} catch (error) {
+		logger.error("[TRIAL-PERIODS] Błąd pobierania:", error);
+		res.status(500).json({
+			error: "Nie udało się pobrać listy okresów próbnych",
+			details: error instanceof Error ? error.message : "Unknown error",
+		});
+	}
+});
+
+/**
+ * PUT /api/trial-periods/:userId/papers
+ * Aktualizacja daty papierów i/lub statusu wysłania
+ * Body: { papersDueDate?: string | null, papersSubmitted?: boolean }
+ */
+app.put(
+	"/api/trial-periods/:userId/papers",
+	authMiddleware,
+	async (req: any, res) => {
+		try {
+			if (!canManageTrialPeriods(req)) {
+				return res.status(403).json({ error: "Brak uprawnień" });
+			}
+
+			const userId = parseInt(req.params.userId);
+			if (isNaN(userId)) {
+				return res.status(400).json({ error: "Nieprawidłowe ID użytkownika" });
+			}
+
+			const { papersDueDate, papersSubmitted } = req.body;
+
+			// Sprawdź czy user istnieje i jest próbny
+			const user = await prisma.user.findUnique({
+				where: { id: userId },
+				select: { id: true, is_trial: true, first_name: true, last_name: true },
+			});
+
+			if (!user) {
+				return res.status(404).json({ error: "Użytkownik nie istnieje" });
+			}
+
+			if (!user.is_trial) {
+				return res
+					.status(400)
+					.json({ error: "Ten użytkownik nie jest na okresie próbnym" });
+			}
+
+			// Zbuduj dane do aktualizacji
+			const updateData: any = {};
+
+			if ("papersDueDate" in req.body) {
+				updateData.papers_due_date = papersDueDate
+					? new Date(papersDueDate)
+					: null;
+			}
+
+			if ("papersSubmitted" in req.body) {
+				updateData.papers_submitted = papersSubmitted === true;
+				updateData.papers_submitted_at =
+					papersSubmitted === true ? new Date() : null;
+			}
+
+			if (Object.keys(updateData).length === 0) {
+				return res.status(400).json({ error: "Brak danych do aktualizacji" });
+			}
+
+			const updated = await prisma.user.update({
+				where: { id: userId },
+				data: updateData,
+				select: {
+					id: true,
+					papers_due_date: true,
+					papers_submitted: true,
+					papers_submitted_at: true,
+				},
+			});
+
+			// Log
+			try {
+				await logAction(
+					req,
+					"UPDATE",
+					"USER",
+					userId.toString(),
+					`${user.first_name} ${user.last_name} - papiery`,
+					{ papersDueDate, papersSubmitted },
+					"success",
+					null,
+				);
+			} catch (e) {
+				/* ignore */
+			}
+
+			res.json({
+				id: updated.id.toString(),
+				papersDueDate: updated.papers_due_date
+					? updated.papers_due_date.toISOString().split("T")[0]
+					: null,
+				papersSubmitted: updated.papers_submitted || false,
+				papersSubmittedAt: updated.papers_submitted_at
+					? updated.papers_submitted_at.toISOString()
+					: null,
+			});
+		} catch (error) {
+			logger.error("[TRIAL-PERIODS] Błąd zapisu papierów:", error);
+			res.status(500).json({
+				error: "Nie udało się zapisać",
+				details: error instanceof Error ? error.message : "Unknown error",
+			});
+		}
+	},
+);
+
+/**
+ * PUT /api/trial-periods/:userId/trial-end
+ * Ustawienie daty końca okresu próbnego
+ * Body: { trialEndDate: string | null }
+ */
+app.put(
+	"/api/trial-periods/:userId/trial-end",
+	authMiddleware,
+	async (req: any, res) => {
+		try {
+			if (!canManageTrialPeriods(req)) {
+				return res.status(403).json({ error: "Brak uprawnień" });
+			}
+
+			const userId = parseInt(req.params.userId);
+			if (isNaN(userId)) {
+				return res.status(400).json({ error: "Nieprawidłowe ID użytkownika" });
+			}
+
+			const { trialEndDate } = req.body;
+
+			const user = await prisma.user.findUnique({
+				where: { id: userId },
+				select: { id: true, is_trial: true, first_name: true, last_name: true },
+			});
+
+			if (!user) {
+				return res.status(404).json({ error: "Użytkownik nie istnieje" });
+			}
+
+			if (!user.is_trial) {
+				return res
+					.status(400)
+					.json({ error: "Ten użytkownik nie jest na okresie próbnym" });
+			}
+
+			const updated = await prisma.user.update({
+				where: { id: userId },
+				data: {
+					trial_end_date: trialEndDate ? new Date(trialEndDate) : null,
+				},
+				select: {
+					id: true,
+					trial_end_date: true,
+				},
+			});
+
+			res.json({
+				id: updated.id.toString(),
+				trialEndDate: updated.trial_end_date
+					? updated.trial_end_date.toISOString().split("T")[0]
+					: null,
+			});
+		} catch (error) {
+			logger.error("[TRIAL-PERIODS] Błąd zapisu końca okresu:", error);
+			res.status(500).json({
+				error: "Nie udało się zapisać",
+				details: error instanceof Error ? error.message : "Unknown error",
+			});
+		}
+	},
+);
+
+/**
+ * PUT /api/trial-periods/:userId/finish
+ * Zakończenie okresu próbnego (is_trial = false, status = active)
+ */
+app.put(
+	"/api/trial-periods/:userId/finish",
+	authMiddleware,
+	async (req: any, res) => {
+		try {
+			if (!canManageTrialPeriods(req)) {
+				return res.status(403).json({ error: "Brak uprawnień" });
+			}
+
+			const userId = parseInt(req.params.userId);
+			if (isNaN(userId)) {
+				return res.status(400).json({ error: "Nieprawidłowe ID użytkownika" });
+			}
+
+			const user = await prisma.user.findUnique({
+				where: { id: userId },
+				select: { id: true, is_trial: true, first_name: true, last_name: true },
+			});
+
+			if (!user) {
+				return res.status(404).json({ error: "Użytkownik nie istnieje" });
+			}
+
+			if (!user.is_trial) {
+				return res
+					.status(400)
+					.json({ error: "Ten użytkownik nie jest na okresie próbnym" });
+			}
+
+			// Kończymy okres próbny
+			const updated = await prisma.user.update({
+				where: { id: userId },
+				data: {
+					is_trial: false,
+					status: "active",
+				},
+				select: {
+					id: true,
+					is_trial: true,
+					status: true,
+				},
+			});
+
+			// Log
+			try {
+				await logAction(
+					req,
+					"UPDATE",
+					"USER",
+					userId.toString(),
+					`${user.first_name} ${user.last_name} - zakończenie okresu próbnego`,
+					{ is_trial: false, status: "active" },
+					"success",
+					null,
+				);
+			} catch (e) {
+				/* ignore */
+			}
+
+			res.json({
+				success: true,
+				id: updated.id.toString(),
+				isTrial: updated.is_trial,
+				status: updated.status,
+			});
+		} catch (error) {
+			logger.error("[TRIAL-PERIODS] Błąd zakończenia okresu:", error);
+			res.status(500).json({
+				error: "Nie udało się zakończyć okresu próbnego",
+				details: error instanceof Error ? error.message : "Unknown error",
+			});
+		}
+	},
+);
 app.listen(port, () => {
-	console.log(`🚀 Serwer uruchomiony na porcie ${port}`);
+	console.log(`Serwer uruchomiony na porcie ${port}`);
 	verifyMailer();
 });

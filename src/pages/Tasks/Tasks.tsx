@@ -2182,6 +2182,9 @@ export default function Tasks() {
 		currentUser.role === "Wiceprezes" ||
 		currentUser.isLeader === true;
 	const canViewTask = (task: Task, user: User): boolean => {
+		const userId = String(user.id);
+		const taskCreatedBy = String(task.createdBy);
+
 		if (user.role === "admin" || user.role === "board") {
 			return true;
 		}
@@ -2190,11 +2193,15 @@ export default function Tasks() {
 			return true;
 		}
 
-		if (user.id === task.createdBy) {
+		if (userId === taskCreatedBy) {
 			return true;
 		}
 
 		if (user.isLeader === true) {
+			if (userId === taskCreatedBy) {
+				return true;
+			}
+
 			if (task.pillar && user.pillarName) {
 				if (
 					task.pillar === user.pillarName ||
@@ -2205,21 +2212,20 @@ export default function Tasks() {
 				}
 			}
 
-			if (
-				task.assignedTo === user.id ||
-				(task.assignedUsers && task.assignedUsers.includes(user.id))
-			) {
+			const assignedTo = String(task.assignedTo || "");
+			const assignedUsers = (task.assignedUsers || []).map((id) => String(id));
+
+			if (assignedTo === userId || assignedUsers.includes(userId)) {
 				return true;
 			}
 
 			return false;
 		}
 
-		return (
-			task.assignedTo === user.id ||
-			(Array.isArray(task.assignedUsers) &&
-				task.assignedUsers.includes(user.id))
-		);
+		const assignedTo = String(task.assignedTo || "");
+		const assignedUsers = (task.assignedUsers || []).map((id) => String(id));
+
+		return assignedTo === userId || assignedUsers.includes(userId);
 	};
 	const fetchData = useCallback(async () => {
 		try {
@@ -2246,7 +2252,10 @@ export default function Tasks() {
 					pillarId: userData.pillarId?.toString(),
 					pillarName: userData.pillarName,
 					isLeader: userData.isLeader === true,
-					isPillarCoordinator: userData.isLeader === true,
+					isPillarCoordinator:
+						userData.isPillarCoordinator === true ||
+						userData.is_pillar_coordinator === true ||
+						userData.isLeader === true,
 				});
 			}
 
@@ -2285,6 +2294,17 @@ export default function Tasks() {
 
 			if (tasksRes.ok) {
 				const data = await tasksRes.json();
+				console.log(
+					"RAW TASKS FROM API:",
+					data.map((t: any) => ({
+						id: t.id,
+						title: t.title,
+						created_by: t.created_by,
+						createdBy: t.createdBy,
+						created_by_name: t.created_by_name,
+						createdByName: t.createdByName,
+					})),
+				);
 				const mappedTasks = data.map((task: any) => {
 					let assignedUsers = task.assigned_users || task.assignedUsers || [];
 
@@ -2326,13 +2346,21 @@ export default function Tasks() {
 							task.assigned_to_name || task.assignedToName || "Nieznany",
 						assignedUsers: assignedUsers,
 						projectName: task.project?.name || task.projectName || undefined,
-						createdBy: String(task.created_by || task.createdBy || ""),
+						createdBy: String(task.created_by ?? task.createdBy ?? ""),
 						createdByName:
 							task.created_by_name || task.createdByName || "Nieznany",
 						assignees: assignees,
 					};
 				});
-
+				console.log(
+					"MAPPED TASKS:",
+					mappedTasks.map((t: Task) => ({
+						id: t.id,
+						title: t.title,
+						createdBy: t.createdBy,
+						createdByType: typeof t.createdBy,
+					})),
+				);
 				const visibleTasks = mappedTasks.filter((task: Task) =>
 					canViewTask(task, {
 						id: userData.id?.toString() || "",
@@ -2344,6 +2372,11 @@ export default function Tasks() {
 						teamName: userData.teamName,
 						isLeader: userData.isLeader === true,
 					} as User),
+				);
+
+				console.log(
+					"VISIBLE:",
+					visibleTasks.map((t: Task) => t.title),
 				);
 
 				const threeDaysAgo = new Date();
@@ -2535,14 +2568,6 @@ export default function Tasks() {
 	};
 
 	useEffect(() => {
-		if (currentUser.id) {
-			setTasks((prevTasks) =>
-				prevTasks.filter((task) => canViewTask(task, currentUser)),
-			);
-		}
-	}, [currentUser]);
-
-	useEffect(() => {
 		const fetchProjects = async () => {
 			try {
 				const token = localStorage.getItem("accessToken");
@@ -2695,13 +2720,13 @@ export default function Tasks() {
 			});
 
 			if (response.ok) {
+				setIsModalOpen(false);
+				setEditingTask(null);
 				await fetchData();
 
 				toast.success(
 					`Zadanie "${task.title}" zostało ${isEdit ? "zaktualizowane" : "dodane"}`,
 				);
-				setIsModalOpen(false);
-				setEditingTask(null);
 			} else {
 				const errorText = await response.text();
 				console.error("Błąd response:", response.status, errorText);
@@ -2905,7 +2930,10 @@ export default function Tasks() {
 						<option value="low">Niski</option>
 					</select>
 
-					{(currentUser.role === "admin" || currentUser.role === "board") && (
+					{(currentUser.role === "admin" ||
+						currentUser.role === "board" ||
+						currentUser.isLeader === true ||
+						currentUser.isPillarCoordinator === true) && (
 						<button
 							className={`${styles.archivedToggleBtn} ${showArchived ? styles.archivedToggleBtnActive : ""}`}
 							onClick={() => setShowArchived(!showArchived)}
@@ -2993,13 +3021,55 @@ export default function Tasks() {
 						})()}
 
 						{(() => {
+							const createdByMe = filteredTasks.filter(
+								(task) =>
+									String(task.createdBy) === String(currentUser.id) &&
+									task.assignedTo !== currentUser.id &&
+									!(
+										task.assignedUsers &&
+										task.assignedUsers.includes(currentUser.id)
+									),
+							);
+							if (createdByMe.length > 0) {
+								return (
+									<div className={styles.tasksSection}>
+										<div className={styles.tasksSectionHeader}>
+											<h2 className={styles.tasksSectionTitle}>
+												Utworzone przez Ciebie
+												<span className={styles.tasksSectionCount}>
+													{createdByMe.length}
+												</span>
+											</h2>
+										</div>
+										<div className={styles.tasksGrid}>
+											{createdByMe.map((task) => (
+												<TaskCard
+													key={task.id}
+													task={task}
+													currentUser={currentUser}
+													onView={handleViewTask}
+													onEdit={canManage ? handleEditTask : undefined}
+													onDelete={canManage ? handleDeleteTask : undefined}
+													onStatusChange={handleStatusChange}
+													onFeedback={handleOpenFeedback}
+												/>
+											))}
+										</div>
+									</div>
+								);
+							}
+							return null;
+						})()}
+
+						{(() => {
 							const otherTasks = filteredTasks.filter(
 								(task) =>
 									task.assignedTo !== currentUser.id &&
 									!(
 										task.assignedUsers &&
 										task.assignedUsers.includes(currentUser.id)
-									),
+									) &&
+									String(task.createdBy) !== String(currentUser.id),
 							);
 							if (otherTasks.length > 0) {
 								return (
