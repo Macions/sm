@@ -1,0 +1,1993 @@
+/* ═══════════════════════════════════════════════════════════
+   FREKWENCJA — nowoczesny design
+   ═══════════════════════════════════════════════════════════ */
+
+.container {
+    width: 100%;
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 32px 24px 60px;
+    box-sizing: border-box;
+}
+
+/* ═══ Nagłówek ═══ */
+.title {
+    margin: 0 0 4px;
+    font-size: 28px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: #0f172a;
+}
+
+.title+.subtitle {
+    margin: 0 0 28px;
+    font-size: 14px;
+    color: #64748b;
+}
+
+/* ═══ Loading / Empty / Error ═══ */
+.loading {
+    color: #64748b;
+    font-size: 14px;
+    padding: 32px 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.loading::before {
+    content: "";
+    width: 16px;
+    height: 16px;
+    border: 2px solid #e2e8f0;
+    border-top-color: #6366f1;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.empty {
+    color: #64748b;
+    font-size: 14px;
+    padding: 56px 24px;
+    text-align: center;
+    background: #f8fafc;
+    border: 1px dashed #cbd5e1;
+    border-radius: 12px;
+}
+
+.error {
+    color: #b91c1c;
+    font-size: 13px;
+    margin-top: 12px;
+    padding: 12px 16px;
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    border-radius: 10px;
+    font-weight: 500;
+}
+
+.success {
+    color: #15803d;
+    font-size: 13px;
+    margin-top: 12px;
+    padding: 12px 16px;
+    background: #f0fdf4;
+    border: 1px solid #bbf7d0;
+    border-radius: 10px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    animation: slideIn 0.2s ease-out;
+}
+
+.success::before {
+    content: "✓";
+    font-weight: 700;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-4px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* ═══ Zakładki główne (Spotkania / Raporty) ═══ */
+.tabs {
+    display: inline-flex;
+    gap: 4px;
+    margin-bottom: 28px;
+    padding: 4px;
+    background: #f1f5f9;
+    border-radius: 12px;
+}
+
+.tab,
+.tabActive {
+    padding: 9px 22px;
+    background: transparent;
+    border: none;
+    border-radius: 9px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    color: #64748b;
+    transition: all 0.18s ease;
+    font-family: inherit;
+}
+
+.tab:hover {
+    color: #0f172a;
+}
+
+.tabActive {
+    background: #ffffff;
+    color: #4f46e5;
+    box-shadow:
+        0 1px 3px rgba(15, 23, 42, 0.06),
+        0 1px 2px rgba(15, 23, 42, 0.04);
+    font-weight: 600;
+}
+
+/* ═══ Pasek filarów ═══ */
+.pillarTabs {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 24px;
+}
+
+.pillar,
+.pillarActive {
+    padding: 10px 16px;
+    border-radius: 10px;
+    border: 1px solid #e2e8f0;
+    background: #ffffff;
+    cursor: pointer;
+    display: inline-flex;
+    gap: 10px;
+    align-items: center;
+    font-size: 13px;
+    font-weight: 500;
+    color: #334155;
+    transition: all 0.18s ease;
+    font-family: inherit;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03);
+}
+
+.pillar:hover {
+    border-color: #c7d2fe;
+    background: #f8faff;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(79, 70, 229, 0.08);
+}
+
+.pillarActive {
+    background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+    color: #ffffff;
+    border-color: transparent;
+    box-shadow:
+        0 4px 14px rgba(79, 70, 229, 0.3),
+        0 2px 4px rgba(79, 70, 229, 0.15);
+}
+
+.pillarActive:hover {
+    background: linear-gradient(135deg, #4f46e5 0%, #4338ca 100%);
+    transform: translateY(-1px);
+}
+
+.pillarPercent {
+    font-weight: 700;
+    font-size: 12px;
+    opacity: 0.9;
+    padding: 2px 7px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 6px;
+    font-variant-numeric: tabular-nums;
+}
+
+.pillar .pillarPercent {
+    background: #eef2ff;
+    color: #4f46e5;
+}
+
+/* ═══ Lista spotkań ═══ */
+.meetingsList {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.meetingRow {
+    padding: 16px 20px;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    background: #ffffff;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: all 0.18s ease;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03);
+}
+
+.meetingRow:hover {
+    background: #ffffff;
+    border-color: #c7d2fe;
+    transform: translateY(-1px);
+    box-shadow:
+        0 8px 20px rgba(79, 70, 229, 0.08),
+        0 2px 4px rgba(15, 23, 42, 0.04);
+}
+
+.meetingLeft {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    min-width: 0;
+    flex: 1;
+}
+
+.meetingTitle {
+    font-weight: 600;
+    font-size: 14px;
+    color: #0f172a;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.meetingDate {
+    font-size: 12px;
+    color: #64748b;
+    font-variant-numeric: tabular-nums;
+}
+
+.meetingStats {
+    display: flex;
+    gap: 8px;
+    font-size: 12px;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+.statPresent,
+.statAbsent,
+.statExcused {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    font-weight: 600;
+    padding: 4px 9px;
+    border-radius: 6px;
+    font-variant-numeric: tabular-nums;
+}
+
+.statPresent {
+    color: #15803d;
+    background: #f0fdf4;
+}
+
+.statAbsent {
+    color: #b91c1c;
+    background: #fef2f2;
+}
+
+.statExcused {
+    color: #a16207;
+    background: #fefce8;
+}
+
+.chevron {
+    color: #94a3b8;
+    font-size: 20px;
+    margin-left: 4px;
+    transition: transform 0.18s ease;
+}
+
+.meetingRow:hover .chevron {
+    transform: translateX(3px);
+    color: #4f46e5;
+}
+
+/* ═══ Szczegóły spotkania ═══ */
+.details {
+    margin-top: 8px;
+    animation: fadeIn 0.2s ease-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(6px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.backBtn {
+    background: transparent;
+    border: none;
+    color: #4f46e5;
+    cursor: pointer;
+    margin-bottom: 20px;
+    font-size: 14px;
+    padding: 6px 0;
+    font-weight: 500;
+    font-family: inherit;
+    transition: all 0.15s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.backBtn:hover {
+    color: #4338ca;
+    transform: translateX(-2px);
+}
+
+.detailsHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 24px;
+    margin-bottom: 24px;
+    padding: 20px 24px;
+    background: linear-gradient(135deg, #f8faff 0%, #eef2ff 100%);
+    border: 1px solid #e0e7ff;
+    border-radius: 14px;
+}
+
+.detailsTitle {
+    margin: 0 0 8px;
+    font-size: 18px;
+    font-weight: 700;
+    color: #0f172a;
+    letter-spacing: -0.01em;
+}
+
+.detailsMeta {
+    display: flex;
+    gap: 8px;
+    color: #64748b;
+    font-size: 13px;
+    align-items: center;
+}
+
+.detailsMeta span:nth-child(2) {
+    color: #cbd5e1;
+}
+
+.detailsSummary {
+    display: flex;
+    gap: 8px;
+    font-size: 14px;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+.detailsSummary span {
+    padding: 5px 11px;
+    border-radius: 8px;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+}
+
+/* ═══ Tabela rekordów ═══ */
+.recordsHeader {
+    display: grid;
+    grid-template-columns: 220px 1fr 140px 1fr;
+    gap: 14px;
+    padding: 10px 16px;
+    font-size: 11px;
+    font-weight: 600;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    border-bottom: 1px solid #e2e8f0;
+    margin-bottom: 8px;
+}
+
+.recordsList {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.recordRow {
+    display: grid;
+    grid-template-columns: 220px 1fr 140px 1fr;
+    gap: 14px;
+    padding: 12px 16px;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    align-items: center;
+    background: #ffffff;
+    transition: all 0.15s ease;
+}
+
+.recordRow:hover {
+    background: #fafbff;
+    border-color: #c7d2fe;
+}
+
+.recordDirty {
+    background: #fffbeb;
+    border-color: #fde68a;
+    box-shadow: 0 0 0 1px rgba(251, 191, 36, 0.15);
+}
+
+.recordDirty:hover {
+    background: #fef9c3;
+    border-color: #fbbf24;
+}
+
+.recordName {
+    font-weight: 500;
+    font-size: 14px;
+    color: #0f172a;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.dirtyDot {
+    color: #f59e0b;
+    font-size: 10px;
+    flex-shrink: 0;
+    animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.4;
+    }
+}
+
+.recordStatus {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.statusLabel,
+.statusActive {
+    display: inline-flex;
+    align-items: center;
+    padding: 5px 12px;
+    border-radius: 7px;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    border: 1px solid #e2e8f0;
+    background: #ffffff;
+    color: #475569;
+    transition: all 0.15s ease;
+    user-select: none;
+    font-family: inherit;
+}
+
+.statusLabel:hover {
+    border-color: #c7d2fe;
+    background: #f8faff;
+    color: #4f46e5;
+}
+
+.statusLabel input,
+.statusActive input {
+    display: none;
+}
+
+.statusActive {
+    background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+    color: #ffffff;
+    border-color: transparent;
+    box-shadow: 0 2px 6px rgba(79, 70, 229, 0.25);
+}
+
+.statusActive:hover {
+    background: linear-gradient(135deg, #4f46e5 0%, #4338ca 100%);
+}
+
+.recordLate {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 12px;
+    color: #475569;
+    cursor: pointer;
+    user-select: none;
+    font-weight: 500;
+}
+
+.recordLate input[type="checkbox"] {
+    cursor: pointer;
+    width: 15px;
+    height: 15px;
+    accent-color: #6366f1;
+}
+
+.recordLate input[type="checkbox"]:disabled {
+    cursor: not-allowed;
+    opacity: 0.4;
+}
+
+.recordNote {
+    padding: 7px 11px;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: 13px;
+    color: #0f172a;
+    width: 100%;
+    box-sizing: border-box;
+    font-family: inherit;
+    background: #ffffff;
+    transition: all 0.15s ease;
+}
+
+.recordNote::placeholder {
+    color: #94a3b8;
+}
+
+.recordNote:hover {
+    border-color: #cbd5e1;
+}
+
+.recordNote:focus {
+    outline: none;
+    border-color: #6366f1;
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12);
+}
+
+/* ═══ Akcje na dole ═══ */
+.actions {
+    margin-top: 28px;
+    display: flex;
+    justify-content: flex-end;
+    position: sticky;
+    bottom: 16px;
+    z-index: 10;
+    padding: 16px 0;
+}
+
+.saveBtn {
+    padding: 11px 30px;
+    background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+    color: #ffffff;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 14px;
+    font-family: inherit;
+    transition: all 0.18s ease;
+    box-shadow:
+        0 4px 14px rgba(79, 70, 229, 0.3),
+        0 2px 4px rgba(79, 70, 229, 0.15);
+    letter-spacing: 0.01em;
+}
+
+.saveBtn:hover:not(:disabled) {
+    background: linear-gradient(135deg, #4f46e5 0%, #4338ca 100%);
+    transform: translateY(-1px);
+    box-shadow:
+        0 6px 20px rgba(79, 70, 229, 0.35),
+        0 3px 6px rgba(79, 70, 229, 0.2);
+}
+
+.saveBtn:active:not(:disabled) {
+    transform: translateY(0);
+    box-shadow:
+        0 2px 6px rgba(79, 70, 229, 0.25),
+        0 1px 2px rgba(79, 70, 229, 0.15);
+}
+
+.saveBtn:disabled {
+    background: #cbd5e1;
+    cursor: not-allowed;
+    box-shadow: none;
+    color: #ffffff;
+}
+
+/* ═══ Raporty ═══ */
+.reportControls {
+    margin-bottom: 24px;
+    font-size: 14px;
+    color: #334155;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 500;
+}
+
+.reportControls label {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.reportControls select {
+    padding: 8px 14px;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: 14px;
+    font-family: inherit;
+    background: #ffffff;
+    cursor: pointer;
+    color: #0f172a;
+    transition: all 0.15s ease;
+    font-weight: 500;
+}
+
+.reportControls select:hover {
+    border-color: #cbd5e1;
+}
+
+.reportControls select:focus {
+    outline: none;
+    border-color: #6366f1;
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12);
+}
+
+.tableWrap {
+    overflow-x: auto;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    background: #ffffff;
+    box-shadow:
+        0 1px 3px rgba(15, 23, 42, 0.04),
+        0 1px 2px rgba(15, 23, 42, 0.02);
+}
+
+.reportTable {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.reportTable th,
+.reportTable td {
+    padding: 14px 20px;
+    text-align: left;
+    border-bottom: 1px solid #f1f5f9;
+    font-size: 14px;
+}
+
+.reportTable th {
+    background: #f8fafc;
+    font-weight: 600;
+    font-size: 11px;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+
+.reportTable tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.reportTable tbody tr {
+    transition: background 0.15s ease;
+}
+
+.reportTable tbody tr:hover {
+    background: #f8faff;
+}
+
+.cellPillar {
+    font-weight: 600;
+    color: #0f172a;
+}
+
+.cellNumber {
+    color: #334155;
+    font-variant-numeric: tabular-nums;
+    font-weight: 500;
+}
+
+.barWrap {
+    position: relative;
+    height: 24px;
+    background: #f1f5f9;
+    border-radius: 8px;
+    min-width: 200px;
+    overflow: hidden;
+}
+
+.bar {
+    height: 100%;
+    transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    border-radius: 8px;
+}
+
+.barLabel {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 700;
+    color: #0f172a;
+    text-shadow: 0 1px 2px rgba(255, 255, 255, 0.9);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.02em;
+}
+
+/* ═══ Mobile ═══ */
+@media (max-width: 900px) {
+    .detailsHeader {
+        flex-direction: column;
+        gap: 14px;
+    }
+
+    .recordsHeader {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .recordRow {
+        grid-template-columns: 1fr;
+        gap: 10px;
+        padding: 14px;
+    }
+
+    .recordsHeader {
+        display: none;
+    }
+}
+
+@media (max-width: 768px) {
+    .container {
+        padding: 20px 16px 40px;
+    }
+
+    .title {
+        font-size: 22px;
+    }
+
+    .tabs {
+        width: 100%;
+    }
+
+    .tab,
+    .tabActive {
+        flex: 1;
+        text-align: center;
+        padding: 9px 12px;
+    }
+
+    .pillarTabs {
+        gap: 8px;
+    }
+
+    .pillar,
+    .pillarActive {
+        font-size: 12px;
+        padding: 8px 12px;
+    }
+
+    .meetingRow {
+        padding: 14px 16px;
+    }
+
+    .meetingStats {
+        gap: 4px;
+    }
+
+    .meetingStats span {
+        padding: 3px 7px;
+        font-size: 11px;
+    }
+
+    .actions {
+        justify-content: stretch;
+        position: static;
+        background: none;
+        padding: 16px 0 0;
+    }
+
+    .saveBtn {
+        width: 100%;
+    }
+
+    .barWrap {
+        min-width: 120px;
+    }
+}
+
+/* ═══ Nagłówek listy spotkań + przycisk dodawania ═══ */
+.meetingsHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.meetingsHeaderTitle {
+    font-size: 14px;
+    font-weight: 600;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.addMeetingBtn {
+    padding: 9px 18px;
+    background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+    color: #ffffff;
+    border: none;
+    border-radius: 9px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 13px;
+    font-family: inherit;
+    transition: all 0.18s ease;
+    box-shadow:
+        0 3px 10px rgba(79, 70, 229, 0.25),
+        0 1px 2px rgba(79, 70, 229, 0.15);
+}
+
+.addMeetingBtn:hover:not(:disabled) {
+    background: linear-gradient(135deg, #4f46e5 0%, #4338ca 100%);
+    transform: translateY(-1px);
+    box-shadow:
+        0 5px 16px rgba(79, 70, 229, 0.32),
+        0 2px 4px rgba(79, 70, 229, 0.2);
+}
+
+.addMeetingBtn:disabled {
+    background: #cbd5e1;
+    cursor: not-allowed;
+    box-shadow: none;
+}
+
+/* ═══ Modal ═══ */
+.modalOverlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.5);
+    backdrop-filter: blur(3px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    padding: 24px;
+    animation: fadeIn 0.15s ease-out;
+}
+
+.modal {
+    background: #ffffff;
+    border-radius: 16px;
+    padding: 28px 28px 24px;
+    width: 100%;
+    max-width: 460px;
+    box-shadow:
+        0 24px 60px rgba(15, 23, 42, 0.25),
+        0 8px 20px rgba(15, 23, 42, 0.15);
+    animation: slideUp 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(14px) scale(0.98);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.modalTitle {
+    margin: 0 0 20px;
+    font-size: 19px;
+    font-weight: 700;
+    color: #0f172a;
+    letter-spacing: -0.01em;
+}
+
+.modalForm {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.modalField {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.modalField span {
+    font-size: 12px;
+    font-weight: 600;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.modalField input {
+    padding: 10px 14px;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    font-size: 14px;
+    font-family: inherit;
+    color: #0f172a;
+    background: #ffffff;
+    transition: all 0.15s ease;
+}
+
+.modalField input:hover {
+    border-color: #cbd5e1;
+}
+
+.modalField input:focus {
+    outline: none;
+    border-color: #6366f1;
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12);
+}
+
+.modalActions {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+    margin-top: 8px;
+}
+
+.cancelBtn {
+    padding: 10px 22px;
+    background: #ffffff;
+    color: #475569;
+    border: 1px solid #e2e8f0;
+    border-radius: 9px;
+    cursor: pointer;
+    font-weight: 500;
+    font-size: 13px;
+    font-family: inherit;
+    transition: all 0.15s ease;
+}
+
+.cancelBtn:hover:not(:disabled) {
+    background: #f8fafc;
+    border-color: #cbd5e1;
+}
+
+.cancelBtn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   PRAWA STRONA WIERSZA SPOTKANIA (badge + stats + przycisk)
+   ═══════════════════════════════════════════════════════════ */
+.meetingRight {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    flex-shrink: 0;
+}
+
+.meetingStats {
+    display: flex;
+    gap: 10px;
+    font-size: 12px;
+    font-weight: 600;
+    align-items: center;
+}
+
+.statPresent {
+    color: #16a34a;
+}
+
+.statAbsent {
+    color: #dc2626;
+}
+
+.statExcused {
+    color: #f59e0b;
+}
+
+/* ═══ Badge statusu sprawdzenia ═══ */
+.statusBadgePending,
+.statusBadgeChecked {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    white-space: nowrap;
+}
+
+.statusBadgePending {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.statusBadgePending::before {
+    content: "";
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #f59e0b;
+}
+
+.statusBadgeChecked {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.statusBadgeChecked::before {
+    content: "";
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #22c55e;
+}
+
+/* ═══ Przyciski akcji w wierszu ═══ */
+.actionBtnPrimary,
+.actionBtnSecondary {
+    padding: 7px 16px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    border: 1px solid transparent;
+    transition: all 0.15s ease;
+    white-space: nowrap;
+}
+
+.actionBtnPrimary {
+    background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+    color: #ffffff;
+    box-shadow: 0 2px 8px rgba(79, 70, 229, 0.25);
+}
+
+.actionBtnPrimary:hover {
+    background: linear-gradient(135deg, #4f46e5 0%, #4338ca 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(79, 70, 229, 0.32);
+}
+
+.actionBtnSecondary {
+    background: #ffffff;
+    color: #4f46e5;
+    border-color: #c7d2fe;
+}
+
+.actionBtnSecondary:hover {
+    background: #f8faff;
+    border-color: #a5b4fc;
+    transform: translateY(-1px);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   SZCZEGÓŁY SPOTKANIA (MeetingDetails)
+   ═══════════════════════════════════════════════════════════ */
+.detailsHeader {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    margin-bottom: 20px;
+}
+
+.detailsTitleBlock {
+    flex: 1;
+}
+
+.detailsTitle {
+    font-size: 20px;
+    font-weight: 700;
+    margin: 0 0 6px;
+    color: #111827;
+}
+
+.detailsMeta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: #6b7280;
+    flex-wrap: wrap;
+}
+
+.bulkActions {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 16px;
+}
+
+.bulkBtn {
+    padding: 7px 14px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    border: 1px solid #d1d5db;
+    background: #ffffff;
+    color: #374151;
+    transition: all 0.15s;
+}
+
+.bulkBtn:hover {
+    background: #f9fafb;
+    border-color: #9ca3af;
+}
+
+/* ═══ Tabela rekordów ═══ */
+.recordsHeader {
+    display: grid;
+    grid-template-columns: 2fr 2fr 1fr 2fr;
+    gap: 12px;
+    padding: 10px 14px;
+    background: #f9fafb;
+    border-radius: 8px 8px 0 0;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #6b7280;
+}
+
+.recordsList {
+    border: 1px solid #e5e7eb;
+    border-radius: 0 0 8px 8px;
+    overflow: hidden;
+}
+
+.recordRow {
+    display: grid;
+    grid-template-columns: 2fr 2fr 1fr 2fr;
+    gap: 12px;
+    align-items: center;
+    padding: 12px 14px;
+    border-bottom: 1px solid #f3f4f6;
+    background: #ffffff;
+    transition: background 0.15s;
+}
+
+.recordRow:last-child {
+    border-bottom: none;
+}
+
+.recordDirty {
+    background: #fefce8;
+}
+
+.recordName {
+    font-size: 13px;
+    font-weight: 600;
+    color: #111827;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.dirtyDot {
+    color: #f59e0b;
+    font-size: 10px;
+}
+
+.recordStatus {
+    display: flex;
+    gap: 6px;
+}
+
+.statusLabel,
+.statusActive {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 5px 10px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+    border: 1px solid #e5e7eb;
+    background: #ffffff;
+    color: #6b7280;
+    transition: all 0.15s;
+}
+
+.statusLabel input,
+.statusActive input {
+    display: none;
+}
+
+.statusActive {
+    background: #eef2ff;
+    border-color: #c7d2fe;
+    color: #4f46e5;
+}
+
+.recordLate {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: #374151;
+    cursor: pointer;
+}
+
+.recordLate input[type="checkbox"] {
+    cursor: pointer;
+}
+
+.recordNote {
+    padding: 6px 10px;
+    border-radius: 6px;
+    border: 1px solid #e5e7eb;
+    font-size: 12px;
+    font-family: inherit;
+    width: 100%;
+    transition: border-color 0.15s;
+}
+
+.recordNote:focus {
+    outline: none;
+    border-color: #6366f1;
+}
+
+.saveBar {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 20px;
+}
+
+.saveBtn {
+    padding: 10px 22px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    border: none;
+    background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+    color: #ffffff;
+    box-shadow: 0 2px 8px rgba(79, 70, 229, 0.25);
+    transition: all 0.15s;
+}
+
+.saveBtn:hover:not(:disabled) {
+    background: linear-gradient(135deg, #4f46e5 0%, #4338ca 100%);
+    transform: translateY(-1px);
+}
+
+.saveBtn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.backBtn {
+    padding: 7px 14px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    border: 1px solid #e5e7eb;
+    background: #ffffff;
+    color: #374151;
+    transition: all 0.15s;
+    white-space: nowrap;
+}
+
+.backBtn:hover {
+    background: #f9fafb;
+    border-color: #9ca3af;
+}
+
+.success {
+    padding: 10px 14px;
+    border-radius: 8px;
+    background: #dcfce7;
+    color: #166534;
+    font-size: 13px;
+    margin-bottom: 14px;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   MODAL (CreateMeetingModal)
+   ═══════════════════════════════════════════════════════════ */
+.modalOverlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.45);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    padding: 20px;
+}
+
+.modal {
+    background: #ffffff;
+    border-radius: 12px;
+    padding: 24px;
+    width: 100%;
+    max-width: 440px;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.2);
+}
+
+.modalTitle {
+    font-size: 18px;
+    font-weight: 700;
+    margin: 0 0 18px;
+    color: #111827;
+}
+
+.modalForm {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.modalField {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #374151;
+}
+
+.modalField input {
+    padding: 9px 12px;
+    border-radius: 8px;
+    border: 1px solid #d1d5db;
+    font-size: 13px;
+    font-family: inherit;
+}
+
+.modalField input:focus {
+    outline: none;
+    border-color: #6366f1;
+}
+
+.modalActions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 8px;
+}
+
+.cancelBtn {
+    padding: 9px 18px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    border: 1px solid #d1d5db;
+    background: #ffffff;
+    color: #374151;
+    transition: all 0.15s;
+}
+
+.cancelBtn:hover {
+    background: #f9fafb;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   RAPORTY (Reports)
+   ═══════════════════════════════════════════════════════════ */
+.reportsContainer {
+    padding: 8px 0;
+}
+
+.reportsHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 18px;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.reportsTitle {
+    font-size: 18px;
+    font-weight: 700;
+    margin: 0;
+    color: #111827;
+}
+
+.monthsSelect {
+    padding: 7px 12px;
+    border-radius: 8px;
+    border: 1px solid #d1d5db;
+    font-size: 13px;
+    font-family: inherit;
+    background: #ffffff;
+    cursor: pointer;
+}
+
+.monthsSelect:focus {
+    outline: none;
+    border-color: #6366f1;
+}
+
+.reportsTable {
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.reportsRowHeader,
+.reportsRow {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr 1fr;
+    gap: 12px;
+    padding: 12px 16px;
+    align-items: center;
+}
+
+.reportsRowHeader {
+    background: #f9fafb;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #6b7280;
+}
+
+.reportsRow {
+    border-top: 1px solid #f3f4f6;
+    font-size: 13px;
+}
+
+.reportsPillar {
+    font-weight: 600;
+    color: #111827;
+}
+
+.reportGood {
+    color: #16a34a;
+    font-weight: 700;
+}
+
+.reportMid {
+    color: #f59e0b;
+    font-weight: 700;
+}
+
+.reportBad {
+    color: #dc2626;
+    font-weight: 700;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   RESPONSYWNOŚĆ
+   ═══════════════════════════════════════════════════════════ */
+@media (max-width: 900px) {
+    .meetingRight {
+        gap: 8px;
+    }
+
+    .statusBadgePending,
+    .statusBadgeChecked {
+        font-size: 10px;
+        padding: 3px 8px;
+    }
+
+    .actionBtnPrimary,
+    .actionBtnSecondary {
+        padding: 6px 12px;
+        font-size: 11px;
+    }
+
+    .meetingStats {
+        display: none;
+    }
+
+    .recordsHeader,
+    .recordRow {
+        grid-template-columns: 2fr 2fr;
+    }
+
+    .recordLate,
+    .recordNote {
+        display: none;
+    }
+}
+
+@media (max-width: 640px) {
+    .meetingRow {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 10px;
+    }
+
+    .meetingRight {
+        justify-content: space-between;
+        flex-wrap: wrap;
+    }
+
+    .meetingStats {
+        display: flex;
+    }
+
+    .recordsHeader {
+        display: none;
+    }
+
+    .recordRow {
+        grid-template-columns: 1fr;
+        gap: 8px;
+    }
+
+    .reportsRowHeader,
+    .reportsRow {
+        grid-template-columns: 2fr 1fr;
+        font-size: 11px;
+    }
+
+    .reportsRowHeader span:nth-child(3),
+    .reportsRow span:nth-child(3) {
+        display: none;
+    }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   PODZESPOŁY (subteams) — NOWE
+   ═══════════════════════════════════════════════════════════ */
+
+.subteamTabs {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+    padding: 10px 14px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+}
+
+.subteam,
+.subteamActive {
+    padding: 7px 14px;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+    background: #ffffff;
+    cursor: pointer;
+    display: inline-flex;
+    gap: 8px;
+    align-items: center;
+    font-size: 12px;
+    font-weight: 500;
+    color: #475569;
+    transition: all 0.15s ease;
+    font-family: inherit;
+    white-space: nowrap;
+}
+
+.subteam:hover {
+    border-color: #c7d2fe;
+    background: #f8faff;
+    color: #4f46e5;
+    transform: translateY(-1px);
+}
+
+.subteamActive {
+    background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+    color: #ffffff;
+    border-color: transparent;
+    box-shadow: 0 3px 10px rgba(124, 58, 237, 0.28);
+    font-weight: 600;
+}
+
+.subteamActive:hover {
+    background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
+    transform: translateY(-1px);
+}
+
+.subteamCount {
+    font-size: 11px;
+    font-weight: 700;
+    padding: 2px 6px;
+    border-radius: 5px;
+    background: rgba(255, 255, 255, 0.25);
+    font-variant-numeric: tabular-nums;
+}
+
+.subteam .subteamCount {
+    background: #eef2ff;
+    color: #6366f1;
+}
+
+/* Badge podzespołu w nagłówku szczegółów */
+.subteamBadge {
+    display: inline-flex;
+    align-items: center;
+    padding: 3px 10px;
+    border-radius: 6px;
+    background: #ede9fe;
+    color: #7c3aed;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+}
+
+/* Badge podzespołu w wierszu spotkania */
+.meetingSubteamBadge {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 8px;
+    margin-left: 8px;
+    border-radius: 5px;
+    background: #ede9fe;
+    color: #7c3aed;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    vertical-align: middle;
+}
+
+/* Dropdown podzespołu w modalu */
+.modalField select {
+    padding: 10px 14px;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    font-size: 14px;
+    font-family: inherit;
+    color: #0f172a;
+    background: #ffffff;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.modalField select:hover {
+    border-color: #cbd5e1;
+}
+
+.modalField select:focus {
+    outline: none;
+    border-color: #6366f1;
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12);
+}
+
+/* Mobile */
+@media (max-width: 768px) {
+    .subteamTabs {
+        padding: 8px 10px;
+        gap: 6px;
+    }
+
+    .subteam,
+    .subteamActive {
+        font-size: 11px;
+        padding: 6px 10px;
+    }
+
+    .subteamCount {
+        font-size: 10px;
+        padding: 1px 5px;
+    }
+}
+/* ═══════════════════════════════════════════════════════════
+   PODGLĄD vs EDYCJA — nowe
+   ═══════════════════════════════════════════════════════════ */
+
+.previewActions {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 16px;
+}
+
+/* Badge statusu w podglądzie (read-only) */
+.statusBadgePresent,
+.statusBadgeAbsent,
+.statusBadgeExcused {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.statusBadgePresent {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.statusBadgePresent::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #22c55e;
+}
+
+.statusBadgeAbsent {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.statusBadgeAbsent::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #ef4444;
+}
+
+.statusBadgeExcused {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.statusBadgeExcused::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #f59e0b;
+}
+
+/* Spóźnienie w podglądzie */
+.recordRow .recordLate {
+  font-size: 13px;
+  color: #6b7280;
+  font-weight: 500;
+}
+
+/* Notatka read-only */
+.recordNoteReadonly {
+  font-size: 13px;
+  color: #374151;
+  padding: 6px 10px;
+  background: #f9fafb;
+  border-radius: 6px;
+  border: 1px solid #f3f4f6;
+  min-height: 30px;
+  display: flex;
+  align-items: center;
+  font-style: italic;
+}
+
+/* Przycisk anuluj w edycji */
+.cancelBtn {
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  border: 1px solid #d1d5db;
+  background: #ffffff;
+  color: #374151;
+  transition: all 0.15s;
+}
+
+.cancelBtn:hover:not(:disabled) {
+  background: #f9fafb;
+  border-color: #9ca3af;
+}
+
+.cancelBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Akcje masowe */
+.bulkActions {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.bulkBtn,
+.bulkBtnClear {
+  padding: 0.4rem 0.8rem;
+  border-radius: 6px;
+  border: 1px solid #d1d5db;
+  background: #fff;
+  cursor: pointer;
+  font-size: 0.85rem;
+  transition: background 0.15s;
+}
+
+.bulkBtn:hover {
+  background: #f3f4f6;
+}
+
+.bulkBtnClear {
+  border-color: #ef4444;
+  color: #ef4444;
+}
+
+.bulkBtnClear:hover {
+  background: #fef2f2;
+}
+
+/* Neutralny wskaźnik */
+.statusEmpty {
+  color: #9ca3af;
+  font-style: italic;
+  font-size: 0.8rem;
+  margin-left: 0.5rem;
+}
+
+/* Info o wybranych */
+.actionsInfo {
+  flex: 1;
+  font-size: 0.85rem;
+  color: #4b5563;
+}
+
+.dirtyInfo {
+  color: #f59e0b;
+}
+/* ═══════════════════════════════════════════════════════════
+   NEUTRALNE STANY (nowe spotkanie / nie wybrano)
+   ═══════════════════════════════════════════════════════════ */
+
+/* W podglądzie, gdy spotkanie nie zostało jeszcze sprawdzone */
+.statusNotChecked {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: #9ca3af;
+  font-style: italic;
+  font-size: 0.85rem;
+}
+
+/* W trybie edycji, gdy user jeszcze nie kliknął statusu */
+.statusEmpty {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: #9ca3af;
+  font-style: italic;
+  font-size: 0.8rem;
+  margin-left: 0.5rem;
+}
+
+/* Info w headerze, gdy attendance_checked = false */
+.statNotChecked {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #9ca3af;
+  font-size: 0.85rem;
+  font-style: italic;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   AKCJE MASOWE (tryb edycji — nad tabelą)
+   ═══════════════════════════════════════════════════════════ */
+
+.bulkActions {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.bulkBtn,
+.bulkBtnClear {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0.4rem 0.8rem;
+  border-radius: 6px;
+  border: 1px solid #d1d5db;
+  background: #fff;
+  color: #374151;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 500;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.bulkBtn:hover:not(:disabled) {
+  background: #f3f4f6;
+}
+
+.bulkBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.bulkBtnClear {
+  border-color: #ef4444;
+  color: #ef4444;
+}
+
+.bulkBtnClear:hover:not(:disabled) {
+  background: #fef2f2;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   STOPKA AKCJI (info + przyciski Anuluj/Zapisz)
+   ═══════════════════════════════════════════════════════════ */
+
+.actionsInfo {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.85rem;
+  color: #4b5563;
+}
+
+.dirtyInfo {
+  color: #f59e0b;
+  font-weight: 500;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   IKONY LUCIDE — wyrównanie z tekstem wewnątrz istniejących klas
+   ═══════════════════════════════════════════════════════════ */
+
+/* Przycisk "← Wróć do listy" */
+.backBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Główny przycisk akcji (Edytuj / Sprawdź frekwencję) */
+.actionBtnPrimary {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Statystyki w headerze: ✓ ✗ ⊘ */
+.statPresent,
+.statAbsent,
+.statExcused {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* Badge'y statusu w podglądzie: Obecny / Nieobecny / Usprawiedliwiony */
+.statusBadgePresent,
+.statusBadgeAbsent,
+.statusBadgeExcused {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* Kolumna "Spóźnienie" w tabeli */
+.recordLate {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}

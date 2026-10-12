@@ -13,12 +13,14 @@ import {
 	ClipboardCheck,
 	Lightbulb,
 	Award,
+	CalendarCheck,
 } from "lucide-react";
 
 export const NAV_ITEMS = [
 	{ key: "dashboard", label: "Panel główny", icon: Home },
 	{ key: "structure", label: "Struktura SM", icon: Users },
 	{ key: "myTeam", label: "Mój zespół", icon: UsersRound },
+	{ key: "attendance", label: "Frekwencja", icon: CalendarCheck },
 	{ key: "projects", label: "Projekty", icon: FolderKanban },
 	{ key: "calendar", label: "Kalendarz", icon: Calendar },
 

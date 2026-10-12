@@ -4410,3 +4410,49 @@
 		font-size: 14px !important;
 	}
 }
+
+/* ═══════════════════════════════════════════════════════════
+   PRZYCISK MAINTENANCE (w nagłówku Admina)
+   ═══════════════════════════════════════════════════════════ */
+
+.header__right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.maintenanceBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 16px;
+  border-radius: 8px;
+  border: 1px solid #d1d5db;
+  background: #fff;
+  color: #374151;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+
+.maintenanceBtn:hover:not(:disabled) {
+  background: #f3f4f6;
+}
+
+.maintenanceBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.maintenanceBtnActive {
+  background: #dc2626;
+  border-color: #dc2626;
+  color: #fff;
+}
+
+.maintenanceBtnActive:hover:not(:disabled) {
+  background: #b91c1c;
+  border-color: #b91c1c;
+}

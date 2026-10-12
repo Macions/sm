@@ -9,6 +9,7 @@ interface SidebarProps {
 	isSocialMember?: boolean;
 	userRole?: string;
 	isLeader?: boolean;
+	isAttendanceCoordinator?: boolean;
 	onToggleCollapse?: () => void;
 	pageTitle?: string;
 	isMobileMenuOpen?: boolean;
@@ -22,6 +23,7 @@ export default function Sidebar({
 	isSocialMember = false,
 	userRole,
 	isLeader = false,
+	isAttendanceCoordinator = false,
 	isMobileMenuOpen = false,
 	onMobileMenuToggle,
 }: SidebarProps) {
@@ -52,6 +54,9 @@ export default function Sidebar({
 		if (item.key === "trial-periods") {
 			return isAdminOrBoard || isTrialCoordinator;
 		}
+		if (item.key === "attendance") {                    // ⬅️ DODAJ
+			return isAdminOrBoard || isAttendanceCoordinator;
+		}
 		return true;
 	});
 	const handleLogout = () => {
@@ -67,9 +72,8 @@ export default function Sidebar({
 	return (
 		<>
 			<div
-				className={`${styles.mobileMenu} ${
-					isMobileMenuOpen ? styles.mobileMenuOpen : ""
-				}`}
+				className={`${styles.mobileMenu} ${isMobileMenuOpen ? styles.mobileMenuOpen : ""
+					}`}
 			>
 				<div className={styles.mobileMenuHeader}>
 					<div className={styles.mobileMenuHeaderLeft}>
@@ -90,9 +94,8 @@ export default function Sidebar({
 						{filteredNavItems.map(({ key, label, icon: Icon }) => (
 							<button
 								key={key}
-								className={`${styles.mobileNav__item} ${
-									activeKey === key ? styles.active : ""
-								}`}
+								className={`${styles.mobileNav__item} ${activeKey === key ? styles.active : ""
+									}`}
 								onClick={() => handleMobileNav(key)}
 							>
 								<Icon size={20} />
@@ -115,18 +118,16 @@ export default function Sidebar({
 			)}
 
 			<aside
-				className={`${styles.sidebar} ${
-					collapsed ? styles.sidebarCollapsed : ""
-				}`}
+				className={`${styles.sidebar} ${collapsed ? styles.sidebarCollapsed : ""
+					}`}
 			>
 				<div
 					className={`${styles.logo} ${collapsed ? styles.logoCollapsed : ""}`}
 				>
 					<div className={styles.logo__mark}>SM</div>
 					<span
-						className={`${styles.logo__text} ${
-							collapsed ? styles.logo__textHidden : ""
-						}`}
+						className={`${styles.logo__text} ${collapsed ? styles.logo__textHidden : ""
+							}`}
 					>
 						Siła Młodych
 					</span>
@@ -136,17 +137,15 @@ export default function Sidebar({
 					{filteredNavItems.map(({ key, label, icon: Icon }) => (
 						<button
 							key={key}
-							className={`${styles.nav__item} ${
-								activeKey === key ? styles.active : ""
-							} ${collapsed ? styles.nav__itemCollapsed : ""}`}
+							className={`${styles.nav__item} ${activeKey === key ? styles.active : ""
+								} ${collapsed ? styles.nav__itemCollapsed : ""}`}
 							onClick={() => onSelect(key)}
 							title={collapsed ? label : ""}
 						>
 							<Icon size={18} />
 							<span
-								className={`${styles.nav__label} ${
-									collapsed ? styles.nav__labelHidden : ""
-								}`}
+								className={`${styles.nav__label} ${collapsed ? styles.nav__labelHidden : ""
+									}`}
 							>
 								{label}
 							</span>
@@ -156,17 +155,15 @@ export default function Sidebar({
 
 				<div className={styles.logout}>
 					<button
-						className={`${styles.nav__item} ${
-							collapsed ? styles.nav__itemCollapsed : ""
-						}`}
+						className={`${styles.nav__item} ${collapsed ? styles.nav__itemCollapsed : ""
+							}`}
 						onClick={handleLogout}
 						title={collapsed ? "Wyloguj" : ""}
 					>
 						<LogOut size={18} />
 						<span
-							className={`${styles.nav__label} ${
-								collapsed ? styles.nav__labelHidden : ""
-							}`}
+							className={`${styles.nav__label} ${collapsed ? styles.nav__labelHidden : ""
+								}`}
 						>
 							Wyloguj
 						</span>
@@ -174,9 +171,8 @@ export default function Sidebar({
 				</div>
 
 				<div
-					className={`${styles.footer} ${
-						collapsed ? styles.footerCollapsed : ""
-					}`}
+					className={`${styles.footer} ${collapsed ? styles.footerCollapsed : ""
+						}`}
 				>
 					{collapsed ? (
 						<>

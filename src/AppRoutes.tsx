@@ -1,4 +1,4 @@
-﻿import { Routes, Route, Navigate } from "react-router-dom";
+﻿import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { lazy, Suspense, useEffect, useState } from "react";
 import Onboarding from "@/pages/Onboarding/Onboarding";
 import { logger } from "@/utils/logger";
@@ -22,6 +22,7 @@ const Grants = lazy(() => import("@/pages/Grants/Grants"));
 const Tasks = lazy(() => import("@/pages/Tasks/Tasks"));
 const TrialPeriods = lazy(() => import("@/pages/TrialPeriods/TrialPeriods"));
 const Ideas = lazy(() => import("@/pages/Ideas/Ideas"));
+const Attendance = lazy(() => import("@/pages/Attendance/AttendancePage"));
 import Requests from "./pages/Requests/Requests";
 const Maintenance = lazy(() => import("@/pages/Maintenance/Maintenance"));
 import NotFound from "@/pages/404";
@@ -58,22 +59,47 @@ function AppRoutes() {
 	const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
 	const [isLoading, setIsLoading] = useState(true);
 	const [isMaintenance, setIsMaintenance] = useState(false);
+	const [isAdmin, setIsAdmin] = useState(false);
+	const location = useLocation();
 
+	// ⬇️⬇️⬇️ JEDEN poprawny useEffect od maintenance + isAdmin ⬇️⬇️⬇️
 	useEffect(() => {
-		const checkMaintenance = () => {
-			const maintenance = true;
-			setIsMaintenance(maintenance);
+		const refreshAuthAndMaintenance = () => {
+			// odczytaj rolę usera
+			try {
+				const u = JSON.parse(localStorage.getItem("user") || "{}");
+				setIsAdmin(u?.role === "admin");
+			} catch {
+				setIsAdmin(false);
+			}
+			// odczytaj stan maintenance
+			api
+				.get("/status/maintenance")
+				.then(({ data }) => setIsMaintenance(data.enabled === true))
+				.catch(() => setIsMaintenance(false));
 		};
 
-		checkMaintenance();
+		// wywołaj raz na starcie
+		refreshAuthAndMaintenance();
 
 		const handleStorageChange = (e: StorageEvent) => {
-			if (e.key === "maintenance") {
-				checkMaintenance();
+			if (e.key === "user" || e.key === "maintenance") {
+				refreshAuthAndMaintenance();
 			}
 		};
+		const handleCustom = () => refreshAuthAndMaintenance();
+
 		window.addEventListener("storage", handleStorageChange);
-		return () => window.removeEventListener("storage", handleStorageChange);
+		window.addEventListener("maintenance-change", handleCustom);
+
+		// refresh co 30 s — łapie zmiany z innych urządzeń
+		const interval = setInterval(refreshAuthAndMaintenance, 30_000);
+
+		return () => {
+			window.removeEventListener("storage", handleStorageChange);
+			window.removeEventListener("maintenance-change", handleCustom);
+			clearInterval(interval);
+		};
 	}, []);
 
 	useEffect(() => {
@@ -107,15 +133,24 @@ function AppRoutes() {
 
 	if (isLoading) return <LoadingSpinner />;
 
-	if (isMaintenance) {
-		return (
-			<Suspense fallback={<LoadingSpinner />}>
-				<Routes>
-					<Route path="*" element={<Maintenance />} />
-				</Routes>
-			</Suspense>
-		);
-	}
+if (isMaintenance && !isAdmin) {
+    // Pokaż Login TYLKO gdy user kliknął "Zaloguj się jako administrator"
+    const showLogin =
+        location.pathname === "/login" &&
+        location.search.includes("admin=1");
+
+    return (
+        <Suspense fallback={<LoadingSpinner />}>
+            <Routes>
+                <Route
+                    path="/login"
+                    element={showLogin ? <Login /> : <Maintenance />}
+                />
+                <Route path="*" element={<Maintenance />} />
+            </Routes>
+        </Suspense>
+    );
+}
 
 	if (!isAuthenticated) {
 		return (
@@ -159,6 +194,7 @@ function AppRoutes() {
 					<Route path="/calendar" element={<Calendar />} />
 					<Route path="/tasks" element={<Tasks />} />
 					<Route path="/trial-periods" element={<TrialPeriods />} />
+					<Route path="/attendance" element={<Attendance />} />
 					<Route path="/ideas" element={<Ideas />} />
 					<Route path="/grants" element={<Grants />} />
 				</Route>

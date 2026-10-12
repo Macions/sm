@@ -1,4 +1,5 @@
 import { Wrench } from "lucide-react";
+import { Link } from "react-router-dom";
 import styles from "./Maintenance.module.css";
 
 export default function Maintenance() {
@@ -15,11 +16,17 @@ export default function Maintenance() {
                     <h1 className={styles.maintenance__title}>
                         Prace serwisowe
                     </h1>
-                    
+
                     <div className={styles.maintenance__progress}>
                         <div className={styles.maintenance__progressBar}>
                             <div className={styles.maintenance__progressFill}></div>
                         </div>
+                    </div>
+
+                    <div className={styles.maintenance__loginLink}>
+                        <Link to="/login?admin=1">
+                            Zaloguj się jako administrator
+                        </Link>
                     </div>
                 </div>
             </div>

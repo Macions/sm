@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import { logger } from "@/utils/logger";
 import { RevenueChart } from "@/components/RevenueChart";
+import api from "@/api/axios";
 import { StableMembersSection } from "@/components/StableMembersSection";
 import { MeetingsChart } from "@/components/MeetingsChart";
 import styles from "./Admin.module.css";
@@ -35,6 +36,8 @@ import {
 	TrendingUp,
 	IdCard,
 	Calendar,
+	Wrench,      // ⬅️ DODAJ
+	Power,       // ⬅️ DODAJ
 } from "lucide-react";
 import type { Permission } from "../../utils/permissions";
 import {
@@ -50,25 +53,25 @@ interface SystemLog {
 	user_name: string;
 	user_role: string;
 	action_type:
-		| "CREATE"
-		| "UPDATE"
-		| "DELETE"
-		| "LOGIN"
-		| "LOGOUT"
-		| "APPROVE"
-		| "REJECT";
+	| "CREATE"
+	| "UPDATE"
+	| "DELETE"
+	| "LOGIN"
+	| "LOGOUT"
+	| "APPROVE"
+	| "REJECT";
 	category:
-		| "USER"
-		| "TEAM"
-		| "LEAVE"
-		| "PROJECT"
-		| "VACANCY"
-		| "TUTORIAL"
-		| "SOCIAL_MEDIA"
-		| "PERMISSION"
-		| "STRUCTURE"
-		| "NOTIFICATION"
-		| "AUTH";
+	| "USER"
+	| "TEAM"
+	| "LEAVE"
+	| "PROJECT"
+	| "VACANCY"
+	| "TUTORIAL"
+	| "SOCIAL_MEDIA"
+	| "PERMISSION"
+	| "STRUCTURE"
+	| "NOTIFICATION"
+	| "AUTH";
 	endpoint: string;
 	method: string;
 	entity_id: string | null;
@@ -1026,8 +1029,8 @@ function StructureManagement({
 		title: "",
 		message: "",
 		confirmText: "Potwierdź",
-		onConfirm: () => {},
-		onCancel: () => {},
+		onConfirm: () => { },
+		onCancel: () => { },
 	});
 	const [expandedTeams, setExpandedTeams] = useState<Record<string, boolean>>(
 		{},
@@ -3044,16 +3047,16 @@ function BoardManagement({
 			const method = editing ? "PUT" : "POST";
 			const body = editing
 				? {
-						role_title: form.role_title,
-						responsibilities: form.responsibilities,
-						order: form.order,
-					}
+					role_title: form.role_title,
+					responsibilities: form.responsibilities,
+					order: form.order,
+				}
 				: {
-						user_id: form.user_id,
-						role_title: form.role_title,
-						responsibilities: form.responsibilities,
-						order: form.order,
-					};
+					user_id: form.user_id,
+					role_title: form.role_title,
+					responsibilities: form.responsibilities,
+					order: form.order,
+				};
 
 			const res = await fetch(url, {
 				method,
@@ -3545,6 +3548,47 @@ export default function Admin({ title }: { title?: string }) {
 	const revenueRef = useRef<HTMLDivElement>(null);
 	const meetingsRef = useRef<HTMLDivElement>(null);
 	const attendanceRef = useRef<HTMLDivElement>(null);
+	const [maintenance, setMaintenance] = useState(false);
+	const [maintenanceLoading, setMaintenanceLoading] = useState(false);
+
+	const fetchMaintenance = async () => {
+		try {
+			const { data } = await api.get("/status/maintenance");
+			setMaintenance(data.enabled === true);
+		} catch {
+			// fallback — jeśli endpoint nie istnieje, zostaw false
+		}
+	};
+
+	const toggleMaintenance = async () => {
+		const next = !maintenance;
+		if (
+			!confirm(
+				next
+					? "Włączyć tryb serwisowy? Wszyscy nie-admini zobaczą stronę przerwy technicznej."
+					: "Wyłączyć tryb serwisowy?",
+			)
+		) {
+			return;
+		}
+
+		try {
+			setMaintenanceLoading(true);
+			await api.put("/admin/maintenance", { enabled: next });
+			setMaintenance(next);
+			// poinformuj inne karty/komponenty
+			window.dispatchEvent(new Event("maintenance-change"));
+			toast.success(
+				next ? "Tryb serwisowy włączony" : "Tryb serwisowy wyłączony",
+			);
+		} catch (e: any) {
+			toast.error(
+				e?.response?.data?.error || "Nie udało się zmienić trybu serwisowego",
+			);
+		} finally {
+			setMaintenanceLoading(false);
+		}
+	};
 	const scrollToSection = (
 		sectionRef: React.RefObject<HTMLDivElement | null>,
 		tabId: string,
@@ -3705,18 +3749,18 @@ export default function Admin({ title }: { title?: string }) {
 			id: string;
 			ref: React.RefObject<HTMLDivElement | null>;
 		}[] = [
-			{ id: "revenue", ref: revenueRef },
-			{ id: "meetings", ref: meetingsRef },
-			{ id: "board", ref: boardRef },
-			{ id: "roles", ref: rolesRef },
-			{ id: "teams", ref: teamsRef },
-			{ id: "access", ref: accessRef },
-			{ id: "attendance", ref: attendanceRef },
-			{ id: "team-attendance", ref: teamAttendanceRef },
-			{ id: "stable-members", ref: stableMembersRef },
-			{ id: "inactive", ref: inactiveRef },
-			{ id: "logs", ref: logsRef },
-		];
+				{ id: "revenue", ref: revenueRef },
+				{ id: "meetings", ref: meetingsRef },
+				{ id: "board", ref: boardRef },
+				{ id: "roles", ref: rolesRef },
+				{ id: "teams", ref: teamsRef },
+				{ id: "access", ref: accessRef },
+				{ id: "attendance", ref: attendanceRef },
+				{ id: "team-attendance", ref: teamAttendanceRef },
+				{ id: "stable-members", ref: stableMembersRef },
+				{ id: "inactive", ref: inactiveRef },
+				{ id: "logs", ref: logsRef },
+			];
 
 		const handleScroll = () => {
 			const scrollTop = mainElement.scrollTop;
@@ -3766,6 +3810,11 @@ export default function Admin({ title }: { title?: string }) {
 
 	useEffect(() => {
 		fetchData();
+		fetchMaintenance();
+
+		// odświeżaj co 30 s
+		const interval = setInterval(fetchMaintenance, 30_000);
+		return () => clearInterval(interval);
 	}, []);
 
 	if (loading) {
@@ -3856,7 +3905,7 @@ export default function Admin({ title }: { title?: string }) {
 						className={`${styles.tabsNav__tab} ${activeTab === "inactive" ? styles.tabsNav__tabActive : ""}`}
 						onClick={() => scrollToSection(inactiveRef, "inactive")}
 					>
-						<UserX size={16} /> {}
+						<UserX size={16} /> { }
 						Nieaktywni
 					</button>
 					<button
@@ -3879,8 +3928,35 @@ export default function Admin({ title }: { title?: string }) {
 							Panel zarządzania rolami, uprawnieniami, zespołami i członkami.
 						</p>
 					</div>
-				</div>
 
+					{canManage && (
+						<div className={styles.header__right}>
+							<button
+								className={`${styles.maintenanceBtn} ${maintenance ? styles.maintenanceBtnActive : ""
+									}`}
+								onClick={toggleMaintenance}
+								disabled={maintenanceLoading}
+								title={
+									maintenance
+										? "Wyłącz tryb serwisowy"
+										: "Włącz tryb serwisowy (przerwa techniczna)"
+								}
+							>
+								{maintenance ? (
+									<>
+										<Power size={16} />
+										<span>Wyłącz maintenance</span>
+									</>
+								) : (
+									<>
+										<Wrench size={16} />
+										<span>Włącz maintenance</span>
+									</>
+								)}
+							</button>
+						</div>
+					)}
+				</div>
 				<div ref={revenueRef} style={{ marginBottom: "32px" }}>
 					<RevenueChart year={2026} title="Przychody i wydatki" />
 				</div>

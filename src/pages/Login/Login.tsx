@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useUser } from "@/context/UserContext";
 import { useGoogleLogin } from "@react-oauth/google";
+import { AlertCircle, X } from "lucide-react";
 import styles from "./Login.module.css";
 import { logger } from "@/utils/logger";
 
@@ -67,7 +68,7 @@ const Login: React.FC = () => {
 					localStorage.setItem("refreshToken", data.refreshToken);
 				}
 				localStorage.setItem("user", JSON.stringify(data.user));
-
+				window.dispatchEvent(new Event("maintenance-change"));
 				logger.debug(" Dane użytkownika i tokeny zapisane");
 				logger.debug(" accessToken:", data.accessToken ? "Jest" : "BRAK");
 				logger.debug(" refreshToken:", data.refreshToken ? "Jest" : "BRAK");
@@ -129,7 +130,7 @@ const Login: React.FC = () => {
 				localStorage.setItem("refreshToken", data.refreshToken);
 			}
 			localStorage.setItem("user", JSON.stringify(data.user));
-
+			window.dispatchEvent(new Event("maintenance-change"));
 			logger.debug(" Dane użytkownika i tokeny zapisane");
 			logger.debug(" accessToken:", data.accessToken ? "Jest" : "BRAK");
 			logger.debug(" refreshToken:", data.refreshToken ? "Jest" : "BRAK");
@@ -184,7 +185,20 @@ const Login: React.FC = () => {
 							<span className={styles.link}>Skontaktuj się z zespołem IT</span>
 						</p>
 
-						{error && <div className={styles.errorMessage}>{error}</div>}
+{error && (
+    <div className={styles.errorMessage} role="alert">
+        <AlertCircle size={18} className={styles.errorIcon} />
+        <span className={styles.errorText}>{error}</span>
+        <button
+            type="button"
+            className={styles.errorClose}
+            onClick={() => setError(null)}
+            aria-label="Zamknij"
+        >
+            <X size={16} />
+        </button>
+    </div>
+)}
 
 						{showEmailForm && (
 							<form onSubmit={handleSubmit}>

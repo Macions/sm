@@ -37,6 +37,44 @@ import { syncMembers } from "./jobs/syncMembers";
 import dotenv from "dotenv";
 dotenv.config();
 
+/* ═══════════════════════════════════════════════════════════
+   FREKWENCJA — helpery (definicje muszą być PRZED użyciem)
+   ═══════════════════════════════════════════════════════════ */
+
+const PILLAR_LABEL_MAP: Record<string, string> = {
+	Projektowy: "Filar Projektowy",
+	Konferencyjny: "Filar Konferencyjny",
+	Rzeczniczy: "Filar Rzeczniczy",
+	Symulacyjny: "Filar Symulacyjny",
+	OSOM: "Projekt OSOM",
+	"Forum Młodych": "Projekt Forum Młodych",
+};
+
+function pillarLabel(name: string): string {
+	return PILLAR_LABEL_MAP[name] ?? name;
+}
+
+async function getFrekwencjaConnection() {
+	return mysql.createConnection({
+		host: process.env.FREKWENCJA_DB_HOST || "57.128.253.89",
+		user: process.env.FREKWENCJA_DB_USER || "czarnecki",
+		password: process.env.FREKWENCJA_DB_PASSWORD || "",
+		database: process.env.FREKWENCJA_DB_NAME || "SM_Frekwencja",
+		port: parseInt(process.env.FREKWENCJA_DB_PORT || "3306"),
+	});
+}
+
+async function getEwidencjaConnection() {
+	return mysql.createConnection({
+		host: process.env.EWIDENCJA_DB_HOST || "127.0.0.1",
+		port: parseInt(process.env.EWIDENCJA_DB_PORT || "13307"),
+		user: process.env.EWIDENCJA_DB_USER || "maciej_legacy_ro",
+		password: process.env.EWIDENCJA_DB_PASSWORD || "",
+		database: process.env.EWIDENCJA_DB_NAME || "SM_Ewidencja",
+	});
+}
+
+/* ═══════════════════════════════════════════════════════════ */
 updateLeaveStatus();
 // cron.schedule("0 9 */5 * *", async () => {
 // 	try {
@@ -142,12 +180,25 @@ const JWT_SECRET =
 
 const prisma = new PrismaClient();
 
+// ⬇️⬇️⬇️ DODAJ TO — publiczny endpoint stanu maintenance ⬇️⬇️⬇️
+app.get("/api/status/maintenance", async (_req, res) => {
+  try {
+    const setting = await prisma.appSetting.findUnique({
+      where: { key: "maintenance" },
+    });
+    res.json({ enabled: setting?.value === "true" });
+  } catch {
+    res.json({ enabled: false });
+  }
+});
+// ⬆️⬆️⬆️ KONIEC DODANEGO ⬆️⬆️⬆️
+
 app.get("/api/health", (req, res) => {
-	res.status(200).json({
-		status: "ok",
-		timestamp: new Date().toISOString(),
-		uptime: process.uptime(),
-	});
+  res.status(200).json({
+    status: "ok",
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime(),
+  });
 });
 
 app.use(
@@ -10079,101 +10130,6 @@ app.get(
 		}
 	},
 );
-/* ═══════════════════════════════════════════════════════════
-   FREKWENCJA FILARÓW – helpery + endpointy
-   ═══════════════════════════════════════════════════════════ */
-
-const PILLAR_LABEL_MAP: Record<string, string> = {
-	Projektowy: "Filar Projektowy",
-	Konferencyjny: "Filar Konferencyjny",
-	Rzeczniczy: "Filar Rzeczniczy",
-	Symulacyjny: "Filar Symulacyjny",
-	OSOM: "Projekt OSOM",
-	"Forum Młodych": "Projekt Forum Młodych",
-};
-
-function pillarLabel(name: string): string {
-	return PILLAR_LABEL_MAP[name] ?? name;
-}
-
-async function getFrekwencjaConnection() {
-	return mysql.createConnection({
-		host: process.env.FREKWENCJA_DB_HOST || "57.128.253.89",
-		user: process.env.FREKWENCJA_DB_USER || "czarnecki",
-		password: process.env.FREKWENCJA_DB_PASSWORD || "",
-		database: process.env.FREKWENCJA_DB_NAME || "SM_Frekwencja",
-		port: parseInt(process.env.FREKWENCJA_DB_PORT || "3306"),
-	});
-}
-async function getEwidencjaConnection() {
-	return mysql.createConnection({
-		host: process.env.EWIDENCJA_DB_HOST || "127.0.0.1",
-		port: parseInt(process.env.EWIDENCJA_DB_PORT || "13307"),
-		user: process.env.EWIDENCJA_DB_USER || "maciej_legacy_ro",
-		password: process.env.EWIDENCJA_DB_PASSWORD || "",
-		database: process.env.EWIDENCJA_DB_NAME || "SM_Ewidencja",
-	});
-}
-/* ─── 1. Podsumowanie filarów ─── */
-app.get(
-	"/api/admin/attendance/pillars",
-	authMiddleware,
-	async (req: any, res) => {
-		const userRole = req.user?.role;
-		if (userRole !== "admin" && userRole !== "board" && userRole !== "Zarząd") {
-			return res.status(403).json({ error: "Brak uprawnień" });
-		}
-
-		let connection;
-		try {
-			connection = await getFrekwencjaConnection();
-
-			const [rows] = await connection.execute(`
-			SELECT
-				p.id,
-				p.name AS pillar_name,
-				COUNT(DISTINCT m.id) AS members_count,
-				COUNT(DISTINCT mt.id) AS meetings_count,
-				SUM(CASE WHEN a.status = 'present' THEN 1 ELSE 0 END) AS present_count,
-				SUM(CASE WHEN a.status = 'absent'  THEN 1 ELSE 0 END) AS absent_count,
-				SUM(CASE WHEN a.status = 'excused' THEN 1 ELSE 0 END) AS excused_count,
-				ROUND(
-					SUM(CASE WHEN a.status = 'present' THEN 1 ELSE 0 END)
-					/ NULLIF(COUNT(a.id), 0) * 100,
-					2
-				) AS attendance_percentage
-			FROM att_pillars p
-			LEFT JOIN att_meetings mt     ON mt.pillar_id = p.id
-			LEFT JOIN att_attendance a    ON a.meeting_id = mt.id
-			LEFT JOIN att_members m       ON m.id = a.member_id
-			WHERE p.name <> 'Wszyscy'
-			GROUP BY p.id, p.name
-			ORDER BY attendance_percentage DESC
-		`);
-
-			const pillars = (rows as any[]).map((r) => ({
-				pillar_id: r.id,
-				pillar_name: r.pillar_name,
-				pillar_label: pillarLabel(r.pillar_name),
-				members_count: Number(r.members_count),
-				meetings_count: Number(r.meetings_count),
-				present_count: Number(r.present_count ?? 0),
-				absent_count: Number(r.absent_count ?? 0),
-				excused_count: Number(r.excused_count ?? 0),
-				attendance_percentage: Number(r.attendance_percentage ?? 0),
-			}));
-
-			res.json({ pillars, total: pillars.length });
-		} catch (error) {
-			logger.error("Błąd pobierania frekwencji filarów:", error);
-			res
-				.status(500)
-				.json({ error: "Nie udało się pobrać frekwencji filarów" });
-		} finally {
-			if (connection) await connection.end();
-		}
-	},
-);
 
 /* ─── 2. Członkowie filaru ─── */
 app.get(
@@ -13429,6 +13385,873 @@ app.patch(
 		}
 	},
 );
+
+
+/* ═══════════════════════════════════════════════════════════
+   FREKWENCJA — endpointy (Prisma, nowa struktura)
+   ═══════════════════════════════════════════════════════════ */
+
+async function checkAttendanceAccess(req: any): Promise<{
+	allowed: boolean;
+	isAdminOrBoard: boolean;
+	leaderPillars: string[];
+	userId: number | null;
+}> {
+	const userId = req.user?.id ? parseInt(req.user.id) : null;
+	const role = req.user?.role;
+
+	if (!userId)
+		return {
+			allowed: false,
+			isAdminOrBoard: false,
+			leaderPillars: [],
+			userId: null,
+		};
+
+	if (role === "admin" || role === "board" || role === "Zarząd") {
+		return { allowed: true, isAdminOrBoard: true, leaderPillars: [], userId };
+	}
+
+	const leaderPillars = await getLeaderPillars(userId);
+	if (leaderPillars.length === 0) {
+		return {
+			allowed: false,
+			isAdminOrBoard: false,
+			leaderPillars: [],
+			userId,
+		};
+	}
+
+	return { allowed: true, isAdminOrBoard: false, leaderPillars, userId };
+}
+
+/* 1. Lista filarów */
+app.get("/api/attendance/pillars", authMiddleware, async (req: any, res) => {
+	const access = await checkAttendanceAccess(req);
+	if (!access.allowed) return res.status(403).json({ error: "Brak uprawnień" });
+
+	try {
+		const where: any = {};
+		if (!access.isAdminOrBoard && access.leaderPillars.length > 0) {
+			where.name = { in: access.leaderPillars };
+		}
+
+		const pillars = await prisma.attendancePillar.findMany({
+			where,
+			include: {
+				meetings: {
+					select: {
+						id: true,
+						records: { select: { status: true } },
+					},
+				},
+			},
+			orderBy: { name: "asc" },
+		});
+
+		const mapped = pillars.map((p) => {
+			const meetingIds = new Set<number>();
+			let present = 0;
+			let total = 0;
+
+			p.meetings.forEach((m) => {
+				meetingIds.add(m.id);
+				m.records.forEach((r) => {
+					if (r.status === "PRESENT") present++;
+					total++;
+				});
+			});
+
+			const attendance_percentage =
+				total > 0 ? Math.round((present / total) * 10000) / 100 : 0;
+
+			return {
+				pillar_id: p.id,
+				pillar_name: p.name,
+				pillar_label: pillarLabel(p.name),
+				members_count: 0,
+				meetings_count: meetingIds.size,
+				attendance_percentage,
+			};
+		});
+
+		mapped.sort((a, b) => b.attendance_percentage - a.attendance_percentage);
+
+		res.json({ pillars: mapped, total: mapped.length });
+	} catch (error) {
+		logger.error("[ATTENDANCE] Błąd pillars:", error);
+		res.status(500).json({ error: "Nie udało się pobrać filarów" });
+	}
+});
+
+/* 3. Szczegóły spotkania + lista obecności */
+app.get(
+	"/api/attendance/meetings/:id",
+	authMiddleware,
+	async (req: any, res) => {
+		const access = await checkAttendanceAccess(req);
+		if (!access.allowed)
+			return res.status(403).json({ error: "Brak uprawnień" });
+
+		try {
+			const meetingId = parseInt(req.params.id);
+			if (isNaN(meetingId))
+				return res.status(400).json({ error: "Nieprawidłowe ID" });
+
+			const meeting = await prisma.attendanceMeeting.findUnique({
+				where: { id: meetingId },
+				include: {
+					pillar: { select: { id: true, name: true } },
+					records: {
+						include: {
+							user: {
+								select: {
+									id: true,
+									first_name: true,
+									last_name: true,
+									email: true,
+								},
+							},
+						},
+						orderBy: [
+							{ user: { last_name: "asc" } },
+							{ user: { first_name: "asc" } },
+						],
+					},
+				},
+			});
+
+			if (!meeting)
+				return res.status(404).json({ error: "Nie znaleziono spotkania" });
+
+			if (
+				!access.isAdminOrBoard &&
+				!access.leaderPillars.includes(meeting.pillar.name)
+			) {
+				return res.status(403).json({ error: "Brak uprawnień do tego filaru" });
+			}
+
+			res.json({
+				meeting: {
+					id: meeting.id,
+					pillar_id: meeting.pillarId,
+					pillar_name: meeting.pillar.name,
+					pillar_label: pillarLabel(meeting.pillar.name),
+					title: meeting.title,
+					meeting_date: meeting.meetingDate.toISOString().split("T")[0],
+					attendance_checked: meeting.attendanceChecked,
+					description: null,
+				},
+				records: meeting.records.map((r) => ({
+					id: r.id,
+					member_id: r.userId,
+					first_name: r.user.first_name,
+					last_name: r.user.last_name,
+					email: r.user.email || "",
+					status: r.status.toLowerCase() as "present" | "absent" | "excused",
+					is_late: r.isLate,
+					note: r.note || "",
+				})),
+			});
+		} catch (error) {
+			logger.error("[ATTENDANCE] Błąd meeting details:", error);
+			res.status(500).json({ error: "Nie udało się pobrać szczegółów" });
+		}
+	},
+);
+/* 2. Lista spotkań */
+app.get("/api/attendance/meetings", authMiddleware, async (req: any, res) => {
+	const access = await checkAttendanceAccess(req);
+	if (!access.allowed) return res.status(403).json({ error: "Brak uprawnień" });
+
+	try {
+		const { pillarId, subteamId, scope } = req.query;
+		const today = new Date();
+		today.setHours(0, 0, 0, 0);
+
+		const where: any = {};
+
+		if (pillarId) {
+			where.pillarId = parseInt(pillarId as string);
+		} else if (!access.isAdminOrBoard && access.leaderPillars.length > 0) {
+			where.pillar = { name: { in: access.leaderPillars } };
+		}
+
+		if (subteamId) {
+			where.subteamId = parseInt(subteamId as string);
+		}
+
+		if (scope === "current") {
+			where.OR = [{ meetingDate: { gte: today } }, { attendanceChecked: false }];
+		} else if (scope === "archive") {
+			where.meetingDate = { lt: today };
+			where.attendanceChecked = true;
+		}
+
+		const meetings = await prisma.attendanceMeeting.findMany({
+			where,
+			include: {
+				pillar: { select: { id: true, name: true } },
+				subteam: { select: { id: true, name: true } },
+				records: { select: { status: true } },
+			},
+			orderBy:
+				scope === "archive" ? { meetingDate: "desc" } : { meetingDate: "asc" },
+			take: 200,
+		});
+
+		const mapped = meetings.map((m) => {
+			let present = 0;
+			let absent = 0;
+			let excused = 0;
+			m.records.forEach((r) => {
+				if (r.status === "PRESENT") present++;
+				else if (r.status === "ABSENT") absent++;
+				else if (r.status === "EXCUSED") excused++;
+			});
+
+			return {
+				id: m.id,
+				pillar_id: m.pillarId,
+				pillar_name: m.pillar.name,
+				pillar_label: pillarLabel(m.pillar.name),
+				subteam_id: m.subteamId,
+				subteam_name: m.subteam?.name ?? null,
+				title: m.title,
+				meeting_date: m.meetingDate.toISOString().split("T")[0],
+				attendance_checked: m.attendanceChecked,
+				description: null,
+				records_count: m.records.length,
+				present_count: present,
+				absent_count: absent,
+				excused_count: excused,
+			};
+		});
+
+		res.json({ meetings: mapped, total: mapped.length });
+	} catch (error) {
+		logger.error("[ATTENDANCE] Błąd meetings:", error);
+		res.status(500).json({ error: "Nie udało się pobrać spotkań" });
+	}
+});
+/* 4. Bulk update obecności */
+app.put(
+	"/api/attendance/meetings/:id/records",
+	authMiddleware,
+	async (req: any, res) => {
+		const access = await checkAttendanceAccess(req);
+		if (!access.allowed)
+			return res.status(403).json({ error: "Brak uprawnień" });
+
+		try {
+			const meetingId = parseInt(req.params.id);
+			if (isNaN(meetingId))
+				return res.status(400).json({ error: "Nieprawidłowe ID" });
+
+			const meeting = await prisma.attendanceMeeting.findUnique({
+				where: { id: meetingId },
+				include: {
+					pillar: { select: { name: true } },
+					subteam: { select: { name: true } },
+				},
+			});
+
+			if (!meeting)
+				return res.status(404).json({ error: "Nie znaleziono spotkania" });
+
+			if (
+				!access.isAdminOrBoard &&
+				!access.leaderPillars.includes(meeting.pillar.name)
+			) {
+				return res.status(403).json({ error: "Brak uprawnień" });
+			}
+
+			const { records } = req.body;
+			if (!Array.isArray(records))
+				return res.status(400).json({ error: "Brak tablicy records" });
+
+			// ✅ Logowanie PO deklaracji records
+			logger.info(`[ATTENDANCE-DEBUG] === START ===`);
+			logger.info(`[ATTENDANCE-DEBUG] meetingId=${meetingId}`);
+			logger.info(
+				`[ATTENDANCE-DEBUG] records w body=${JSON.stringify(
+					records.map((r: any) => ({ id: r.id, status: r.status }))
+				)}`
+			);
+
+			const statusMap: Record<string, "PRESENT" | "ABSENT" | "EXCUSED"> = {
+				present: "PRESENT",
+				absent: "ABSENT",
+				excused: "EXCUSED",
+				PRESENT: "PRESENT",
+				ABSENT: "ABSENT",
+				EXCUSED: "EXCUSED",
+			};
+
+			// ⬇️⬇️⬇️ 1. Pobierz STARE statusy PRZED update ⬇️⬇️⬇️
+			const recordIds = records
+				.filter((r: any) => r.id)
+				.map((r: any) => parseInt(r.id));
+
+			const oldRecords = await prisma.attendanceRecord.findMany({
+				where: { id: { in: recordIds } },
+				select: {
+					id: true,
+					userId: true,
+					status: true,
+				},
+			});
+			logger.info(`[ATTENDANCE-DEBUG] recordIds=${JSON.stringify(recordIds)}`);
+			logger.info(`[ATTENDANCE-DEBUG] oldRecords=${JSON.stringify(oldRecords)}`);
+			const oldStatusMap = new Map<number, "PRESENT" | "ABSENT" | "EXCUSED">();
+			oldRecords.forEach((r) => {
+				oldStatusMap.set(r.id, r.status);
+			});
+
+			// ⬇️⬇️⬇️ 2. UPDATE w transakcji ⬇️⬇️⬇️
+			await prisma.$transaction([
+				...records
+					.filter((r: any) => r.id)
+					.map((r: any) =>
+						prisma.attendanceRecord.update({
+							where: { id: parseInt(r.id) },
+							data: {
+								status: statusMap[r.status] || "ABSENT",
+								isLate: !!r.is_late,
+								note: r.note || null,
+							},
+						}),
+					),
+				prisma.attendanceMeeting.update({
+					where: { id: meetingId },
+					data: { attendanceChecked: true },
+				}),
+			]);
+
+			// ⬇️⬇️⬇️ 3. Powiadomienia TYLKO dla zmienionych na ABSENT ⬇️⬇️⬇️
+			const meetingDateStr = meeting.meetingDate
+				.toISOString()
+				.split("T")[0];
+
+			const notifications: Array<{
+				user_id: number;
+				title: string;
+				message: string;
+				type: string;
+				read: boolean;
+				link: string;
+				target: string;
+				created_at: Date;
+			}> = [];
+
+			for (const rec of records) {
+				if (!rec.id) continue;
+
+				const recordId = parseInt(rec.id);
+				const oldStatus = oldStatusMap.get(recordId);
+				const newStatus = statusMap[rec.status] || "ABSENT";
+
+				if (oldStatus !== newStatus && newStatus === "ABSENT") {
+					const record = oldRecords.find((r) => r.id === recordId);
+					if (!record) continue;
+
+					// ⬇️⬇️⬇️ TYMCZASOWA BLOKADA — tylko do user 1 ⬇️⬇️⬇️
+					if (record.userId !== 1) continue;
+
+					notifications.push({
+						user_id: record.userId,
+						title: "Nieobecność na spotkaniu",
+						message: `Zostałeś oznaczony jako nieobecny na spotkaniu "${meeting.title}" (${meetingDateStr})${meeting.subteam?.name ? ` – ${meeting.subteam.name}` : ""} w filarze ${meeting.pillar.name}.`,
+						type: "warning",
+						read: false,
+						link: "/attendance",
+						target: "user",
+						created_at: new Date(),
+					});
+				}
+			}
+
+			// ⬇️⬇️⬇️ 4. Wstaw wszystkie powiadomienia ⬇️⬇️⬇️
+			if (notifications.length > 0) {
+				try {
+					await prisma.notification.createMany({
+						data: notifications,
+					});
+					logger.info(
+						`[ATTENDANCE] Wysłano ${notifications.length} powiadomień o nieobecności (spotkanie ${meetingId})`,
+					);
+				} catch (notifError) {
+					logger.error(
+						"[ATTENDANCE] Błąd wysyłki powiadomień:",
+						notifError,
+					);
+				}
+			}
+
+			res.json({
+				success: true,
+				updated: records.length,
+				notifications_sent: notifications.length,
+			});
+		} catch (error) {
+			logger.error("[ATTENDANCE] Błąd bulk update:", error);
+			res.status(500).json({ error: "Nie udało się zapisać" });
+		}
+	},
+);
+
+/* 5. Utworzenie nowego spotkania */
+app.post("/api/attendance/meetings", authMiddleware, async (req: any, res) => {
+	const access = await checkAttendanceAccess(req);
+	if (!access.allowed) return res.status(403).json({ error: "Brak uprawnień" });
+
+	try {
+		const { pillarId, subteamId, title, meetingDate } = req.body;
+
+		if (!pillarId || !title || !meetingDate) {
+			return res.status(400).json({
+				error: "pillarId, title i meetingDate są wymagane",
+			});
+		}
+
+		const pillar = await prisma.attendancePillar.findUnique({
+			where: { id: parseInt(pillarId) },
+		});
+
+		if (!pillar) return res.status(404).json({ error: "Filar nie istnieje" });
+
+		if (!access.isAdminOrBoard && !access.leaderPillars.includes(pillar.name)) {
+			return res.status(403).json({ error: "Brak uprawnień do tego filaru" });
+		}
+
+		// ⬇️⬇️⬇️ NOWE — walidacja subteam ⬇️⬇️⬇️
+		let subteamIdInt: number | null = null;
+		if (subteamId) {
+			const subteam = await prisma.team.findUnique({
+				where: { id: parseInt(subteamId) },
+				select: { parent_id: true },
+			});
+			if (!subteam || subteam.parent_id !== pillar.teamId) {
+				return res
+					.status(400)
+					.json({ error: "Podzespół nie należy do tego filaru" });
+			}
+			subteamIdInt = parseInt(subteamId);
+		}
+
+		const meeting = await prisma.attendanceMeeting.create({
+			data: {
+				pillarId: parseInt(pillarId),
+				subteamId: subteamIdInt,   // ⬅️ NOWE
+				title: title.trim(),
+				meetingDate: new Date(meetingDate),
+				createdBy: access.userId,
+			},
+		});
+
+		let membersAdded = 0;
+
+		if (pillar.teamId) {
+			const teamMembers = await prisma.teamMember.findMany({
+				where: { team_id: pillar.teamId },
+				select: { user_id: true },
+			});
+
+			if (teamMembers.length > 0) {
+				await prisma.attendanceRecord.createMany({
+					data: teamMembers.map((tm) => ({
+						meetingId: meeting.id,
+						userId: tm.user_id,
+						status: "ABSENT" as const,
+						isLate: false,
+					})),
+					skipDuplicates: true,
+				});
+				membersAdded = teamMembers.length;
+			}
+		}
+
+		res.status(201).json({
+			success: true,
+			id: meeting.id,
+			pillar_id: meeting.pillarId,
+			subteam_id: meeting.subteamId,   // ⬅️ NOWE
+			title: meeting.title,
+			meeting_date: meeting.meetingDate.toISOString().split("T")[0],
+			records_created: membersAdded,
+		});
+	} catch (error) {
+		logger.error("[ATTENDANCE] Błąd tworzenia spotkania:", error);
+		res.status(500).json({ error: "Nie udało się utworzyć spotkania" });
+	}
+});
+
+/* 6. Raport zbiorczy */
+app.get(
+	"/api/attendance/reports/summary",
+	authMiddleware,
+	async (req: any, res) => {
+		const access = await checkAttendanceAccess(req);
+		if (!access.allowed)
+			return res.status(403).json({ error: "Brak uprawnień" });
+
+		try {
+			const months = Math.min(
+				Math.max(parseInt((req.query.months as string) || "12", 10), 1),
+				36,
+			);
+
+			const dateFrom = new Date();
+			dateFrom.setMonth(dateFrom.getMonth() - months);
+
+			const where: any = {
+				meetingDate: { gte: dateFrom },
+			};
+
+			if (!access.isAdminOrBoard && access.leaderPillars.length > 0) {
+				where.pillar = { name: { in: access.leaderPillars } };
+			}
+
+			const meetings = await prisma.attendanceMeeting.findMany({
+				where,
+				include: {
+					pillar: { select: { id: true, name: true } },
+					records: { select: { status: true, userId: true } },
+				},
+			});
+
+			const byPillar: Record<
+				number,
+				{
+					pillar_id: number;
+					pillar_name: string;
+					present: number;
+					total: number;
+					meetings_count: number;
+					membersSet: Set<number>;
+				}
+			> = {};
+
+			meetings.forEach((m) => {
+				const pid = m.pillar.id;
+				if (!byPillar[pid]) {
+					byPillar[pid] = {
+						pillar_id: pid,
+						pillar_name: m.pillar.name,
+						present: 0,
+						total: 0,
+						meetings_count: 0,
+						membersSet: new Set(),
+					};
+				}
+				byPillar[pid].meetings_count++;
+				m.records.forEach((r) => {
+					byPillar[pid].total++;
+					if (r.status === "PRESENT") byPillar[pid].present++;
+					byPillar[pid].membersSet.add(r.userId);
+				});
+			});
+
+			const summary = Object.values(byPillar)
+				.map((p) => ({
+					pillar_id: p.pillar_id,
+					pillar_name: p.pillar_name,
+					pillar_label: pillarLabel(p.pillar_name),
+					attendance_percentage:
+						p.total > 0 ? Math.round((p.present / p.total) * 10000) / 100 : 0,
+					meetings_count: p.meetings_count,
+					members_count: p.membersSet.size,
+				}))
+				.sort((a, b) => b.attendance_percentage - a.attendance_percentage);
+
+			res.json({ months, summary });
+		} catch (error) {
+			logger.error("[ATTENDANCE] Błąd raportu:", error);
+			res.status(500).json({ error: "Nie udało się pobrać raportu" });
+		}
+	},
+);
+/* ═══════════════════════════════════════════════════════════
+   PODZESPOŁY (subteams) — Filar Projektowy i inne
+   ═══════════════════════════════════════════════════════════ */
+
+/* 1. Lista podzespołów (opcjonalnie filtrowana po pillarId) */
+app.get(
+	"/api/attendance/subteams",
+	authMiddleware,
+	async (req: any, res) => {
+		const access = await checkAttendanceAccess(req);
+		if (!access.allowed) return res.status(403).json({ error: "Brak uprawnień" });
+
+		try {
+			const { pillarId } = req.query;
+
+			// Buduj filtr
+			const where: any = {
+				role: "Podzespół", // ⬅️ tylko teamy z rolą "Podzespół"
+			};
+
+			if (pillarId) {
+				// Znajdź team_id filaru
+				const pillar = await prisma.attendancePillar.findUnique({
+					where: { id: parseInt(pillarId as string) },
+					select: { teamId: true },
+				});
+				if (!pillar || !pillar.teamId) {
+					return res.json({ subteams: [], total: 0 });
+				}
+				where.parent_id = pillar.teamId;
+			}
+
+			const subteams = await prisma.team.findMany({
+				where,
+				select: {
+					id: true,
+					name: true,
+					description: true,
+					parent_id: true,
+					parent: { select: { id: true, name: true } },
+					_count: {
+						select: {
+							meetings: true,
+						},
+					},
+				},
+				orderBy: { name: "asc" },
+			});
+
+			// Pobierz też liczbę spotkań per podzespół
+			const mapped = await Promise.all(
+				subteams.map(async (st) => {
+					const meetingsCount = await prisma.attendanceMeeting.count({
+						where: { subteamId: st.id },
+					});
+					return {
+						id: st.id,
+						name: st.name,
+						description: st.description,
+						pillar_id: st.parent?.id ?? null,
+						pillar_name: st.parent?.name ?? null,
+						meetings_count: meetingsCount,
+					};
+				}),
+			);
+
+			res.json({ subteams: mapped, total: mapped.length });
+		} catch (error) {
+			logger.error("[ATTENDANCE] Błąd subteams:", error);
+			res.status(500).json({ error: "Nie udało się pobrać podzespołów" });
+		}
+	},
+);
+
+/* 2. Utworzenie podzespołu (tylko admin/board) */
+app.post(
+	"/api/attendance/subteams",
+	authMiddleware,
+	async (req: any, res) => {
+		const access = await checkAttendanceAccess(req);
+		if (!access.allowed) return res.status(403).json({ error: "Brak uprawnień" });
+		if (!access.isAdminOrBoard) {
+			return res.status(403).json({ error: "Tylko admin/zarząd" });
+		}
+
+		try {
+			const { pillarId, name, description } = req.body;
+			if (!pillarId || !name) {
+				return res.status(400).json({ error: "pillarId i name są wymagane" });
+			}
+
+			const pillar = await prisma.attendancePillar.findUnique({
+				where: { id: parseInt(pillarId) },
+				select: { teamId: true },
+			});
+			if (!pillar || !pillar.teamId) {
+				return res.status(404).json({ error: "Filar nie ma teamu" });
+			}
+
+			const subteam = await prisma.team.create({
+				data: {
+					name: name.trim(),
+					role: "Podzespół",
+					description: description?.trim() || null,
+					parent_id: pillar.teamId,
+					status: "active",
+				},
+			});
+
+			res.status(201).json({
+				id: subteam.id,
+				name: subteam.name,
+				description: subteam.description,
+				pillar_id: pillar.teamId,
+			});
+		} catch (error) {
+			logger.error("[ATTENDANCE] Błąd tworzenia podzespołu:", error);
+			res.status(500).json({ error: "Nie udało się utworzyć podzespołu" });
+		}
+	},
+);
+
+/* 3. Edycja podzespołu (tylko admin/board) */
+app.put(
+	"/api/attendance/subteams/:id",
+	authMiddleware,
+	async (req: any, res) => {
+		const access = await checkAttendanceAccess(req);
+		if (!access.allowed) return res.status(403).json({ error: "Brak uprawnień" });
+		if (!access.isAdminOrBoard) {
+			return res.status(403).json({ error: "Tylko admin/zarząd" });
+		}
+
+		try {
+			const id = parseInt(req.params.id);
+			if (isNaN(id)) return res.status(400).json({ error: "Nieprawidłowe ID" });
+
+			const { name, description } = req.body;
+
+			const subteam = await prisma.team.update({
+				where: { id },
+				data: {
+					...(name && { name: name.trim() }),
+					...(description !== undefined && { description: description?.trim() || null }),
+				},
+			});
+
+			res.json({ id: subteam.id, name: subteam.name, description: subteam.description });
+		} catch (error) {
+			logger.error("[ATTENDANCE] Błąd edycji podzespołu:", error);
+			res.status(500).json({ error: "Nie udało się zapisać" });
+		}
+	},
+);
+
+/* 4. Usunięcie podzespołu (tylko admin/board) */
+app.delete(
+	"/api/attendance/subteams/:id",
+	authMiddleware,
+	async (req: any, res) => {
+		const access = await checkAttendanceAccess(req);
+		if (!access.allowed) return res.status(403).json({ error: "Brak uprawnień" });
+		if (!access.isAdminOrBoard) {
+			return res.status(403).json({ error: "Tylko admin/zarząd" });
+		}
+
+		try {
+			const id = parseInt(req.params.id);
+			if (isNaN(id)) return res.status(400).json({ error: "Nieprawidłowe ID" });
+
+			// Sprawdź czy są spotkania powiązane
+			const meetingsCount = await prisma.attendanceMeeting.count({
+				where: { subteamId: id },
+			});
+			if (meetingsCount > 0) {
+				return res.status(400).json({
+					error: `Nie można usunąć — ${meetingsCount} spotkań powiązanych`,
+				});
+			}
+
+			await prisma.team.delete({ where: { id } });
+			res.json({ success: true });
+		} catch (error) {
+			logger.error("[ATTENDANCE] Błąd usuwania podzespołu:", error);
+			res.status(500).json({ error: "Nie udało się usunąć" });
+		}
+	},
+);
+
+/* 5. Przypisanie podzespołu do spotkania */
+app.put(
+	"/api/attendance/meetings/:id/subteam",
+	authMiddleware,
+	async (req: any, res) => {
+		const access = await checkAttendanceAccess(req);
+		if (!access.allowed) return res.status(403).json({ error: "Brak uprawnień" });
+
+		try {
+			const meetingId = parseInt(req.params.id);
+			if (isNaN(meetingId)) return res.status(400).json({ error: "Nieprawidłowe ID" });
+
+			const { subteamId } = req.body; // null = usuń przypisanie
+
+			const meeting = await prisma.attendanceMeeting.findUnique({
+				where: { id: meetingId },
+				include: { pillar: { select: { name: true } } },
+			});
+			if (!meeting) return res.status(404).json({ error: "Nie znaleziono spotkania" });
+
+			if (
+				!access.isAdminOrBoard &&
+				!access.leaderPillars.includes(meeting.pillar.name)
+			) {
+				return res.status(403).json({ error: "Brak uprawnień" });
+			}
+
+			// Walidacja: subteam musi należeć do tego samego filaru
+			if (subteamId) {
+				const pillar = await prisma.attendancePillar.findUnique({
+					where: { id: meeting.pillarId },
+					select: { teamId: true },
+				});
+				const subteam = await prisma.team.findUnique({
+					where: { id: parseInt(subteamId) },
+					select: { parent_id: true },
+				});
+				if (!subteam || !pillar || subteam.parent_id !== pillar.teamId) {
+					return res.status(400).json({ error: "Podzespół nie należy do tego filaru" });
+				}
+			}
+
+			const updated = await prisma.attendanceMeeting.update({
+				where: { id: meetingId },
+				data: { subteamId: subteamId ? parseInt(subteamId) : null },
+			});
+
+			res.json({
+				success: true,
+				meeting_id: updated.id,
+				subteam_id: updated.subteamId,
+			});
+		} catch (error) {
+			logger.error("[ATTENDANCE] Błąd przypisania podzespołu:", error);
+			res.status(500).json({ error: "Nie udało się zapisać" });
+		}
+	},
+);
+// Publiczny — frontend sprawdza stan
+app.get("/api/status/maintenance", async (_req, res) => {
+  try {
+    const setting = await prisma.appSetting.findUnique({
+      where: { key: "maintenance" },
+    });
+    res.json({ enabled: setting?.value === "true" });
+  } catch {
+    res.json({ enabled: false });
+  }
+});
+
+// Admin — przełącza
+app.put("/api/admin/maintenance", authMiddleware, async (req: any, res) => {
+  try {
+    if (req.user?.role !== "admin") {
+      return res.status(403).json({ error: "Brak uprawnień" });
+    }
+    const { enabled } = req.body;
+    await prisma.appSetting.upsert({
+      where: { key: "maintenance" },
+      update: { value: String(!!enabled) },
+      create: { key: "maintenance", value: String(!!enabled) },
+    });
+    logger.info(
+      `[MAINTENANCE] ${enabled ? "WŁĄCZONY" : "WYŁĄCZONY"} przez ${req.user.email}`,
+    );
+    res.json({ success: true, enabled: !!enabled });
+  } catch (error) {
+    logger.error("[MAINTENANCE] Błąd:", error);
+    res.status(500).json({ error: "Nie udało się zmienić trybu" });
+  }
+});
+/* 6. Rozszerzenie GET /meetings o subteamId i filtr subteamId */
 app.listen(port, () => {
 	console.log(`Serwer uruchomiony na porcie ${port}`);
 	verifyMailer();

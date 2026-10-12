@@ -96,6 +96,8 @@ model User {
   grantsVerified            Grant[]               @relation("GrantVerifiedBy")
   grantsCreated             Grant[]               @relation("GrantCreatedBy")
   recruitmentsCreated       GrantRecruitment[]    @relation("RecruitmentCreatedBy")
+  attendanceRecords         AttendanceRecord[]    @relation("UserAttendanceRecords")
+  attendanceMeetingsMade    AttendanceMeeting[]   @relation("AttendanceMeetingCreator")
 
   @@index([role_id], map: "idx_users_role_id")
   @@index([status], map: "idx_users_status")
@@ -251,6 +253,8 @@ model Team {
   childTeams               Team[]                @relation("TeamParent")
   pillarChangeRequestsFrom PillarChangeRequest[] @relation("FromPillar")
   pillarChangeRequestsTo   PillarChangeRequest[] @relation("ToPillar")
+  attendancePillars        AttendancePillar[]
+  meetings                 AttendanceMeeting[]   @relation("MeetingSubteam") // ⬅️ NOWE
 
   @@index([parent_id], map: "parent_id")
   @@map("teams")
@@ -1103,4 +1107,79 @@ model GrantRecruitment {
   @@index([status])
   @@index([deadline])
   @@map("grant_recruitments")
+}
+
+// ============================================
+// MODUŁ FREKWENCJI — integracja z SM_Frekwencja
+// ============================================
+
+model AttendancePillar {
+  id             Int      @id @default(autoincrement())
+  name           String   @db.VarChar(255)
+  teamId         Int?     @map("team_id")
+  sourcePillarId Int?     @unique @map("source_pillar_id")
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  team     Team?               @relation(fields: [teamId], references: [id], onDelete: SetNull)
+  meetings AttendanceMeeting[]
+
+  @@index([teamId])
+  @@map("attendance_pillars")
+}
+
+model AttendanceMeeting {
+  id                   Int      @id @default(autoincrement())
+  title                String   @db.VarChar(255)
+  meetingDate          DateTime @map("meeting_date") @db.Date
+  pillarId             Int      @map("pillar_id")
+  subteamId            Int?     @map("subteam_id") // ⬅️ NOWE
+  createdBy            Int?     @map("created_by")
+  sourceMeetingId      Int?     @unique @map("source_meeting_id")
+  sourceCreatedByEmail String?  @map("source_created_by_email") @db.VarChar(255)
+  attendanceChecked    Boolean  @default(false) @map("attendance_checked")
+  createdAt            DateTime @default(now()) @map("created_at")
+
+  pillar  AttendancePillar   @relation(fields: [pillarId], references: [id])
+  subteam Team?              @relation("MeetingSubteam", fields: [subteamId], references: [id], onDelete: SetNull) // ⬅️ NOWE
+  creator User?              @relation("AttendanceMeetingCreator", fields: [createdBy], references: [id], onDelete: SetNull)
+  records AttendanceRecord[]
+
+  @@index([pillarId])
+  @@index([subteamId]) // ⬅️ NOWE
+  @@index([createdBy])
+  @@index([meetingDate])
+  @@map("attendance_meetings")
+}
+
+enum AttendanceStatus {
+  PRESENT
+  ABSENT
+  EXCUSED
+}
+
+model AttendanceRecord {
+  id              Int              @id @default(autoincrement())
+  meetingId       Int              @map("meeting_id")
+  userId          Int              @map("user_id")
+  status          AttendanceStatus
+  isLate          Boolean          @default(false) @map("is_late") // ← DODAJ TĘ LINIĘ
+  note            String?          @map("note") @db.Text
+  sourceRecordId  Int?             @unique @map("source_record_id")
+  sourceUpdatedAt DateTime?        @map("source_updated_at")
+  updatedAt       DateTime         @default(now()) @updatedAt @map("updated_at")
+
+  meeting AttendanceMeeting @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+  user    User              @relation("UserAttendanceRecords", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([meetingId, userId])
+  @@index([meetingId])
+  @@index([userId])
+  @@index([status])
+  @@map("attendance_records")
+}
+
+model AppSetting {
+  key       String   @id
+  value     String
+  updatedAt DateTime @updatedAt
 }

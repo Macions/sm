@@ -1,0 +1,1440 @@
+﻿===== 1. AUTH MIDDLEWARE =====
+import { Request, Response, NextFunction } from "express";
+import jwt from "jsonwebtoken";
+import { logger } from "../utils/logger";
+import { PrismaClient } from "@prisma/client";
+
+const prisma = new PrismaClient();
+const JWT_SECRET =
+	process.env.JWT_SECRET || "your-secret-key-here-change-in-production";
+
+export interface AuthRequest extends Request {
+	user?: {
+		id: number;
+		email: string | null;
+		role: string;
+		first_name?: string;
+		last_name?: string;
+		isLeader?: boolean;
+		pillarName?: string | null;
+		leaderPillarNames?: string[];
+	};
+}
+
+const PUBLIC_ENDPOINTS = [
+	"/api/auth/login",
+	"/api/auth/google",
+	"/api/auth/google-token",
+	"/api/auth/register",
+	"/api/auth/refresh-token",
+	"/api/auth/forgot-password",
+	"/api/auth/reset-password",
+	"/api/health",
+	"/api/status",
+	"/api/calendar/auth",
+	"/api/calendar/callback",
+	"/calendar/auth",
+	"/calendar/callback",
+	"/auth",
+	"/callback",
+	"/uploads",
+];
+
+const isPublicPath = (path: string): boolean => {
+	return PUBLIC_ENDPOINTS.some(
+		(endpoint) => path === endpoint || path.startsWith(endpoint),
+	);
+};
+
+export const authMiddleware = async (
+	req: AuthRequest,
+	res: Response,
+	next: NextFunction,
+) => {
+	if (isPublicPath(req.path)) {
+		logger.debug(
+			`Publiczny endpoint: ${req.method} ${req.path} - pomijam autoryzacjÄ™`,
+		);
+		return next();
+	}
+
+	let token = null;
+
+	const authHeader = req.headers.authorization;
+	if (authHeader && authHeader.startsWith("Bearer ")) {
+		token = authHeader.split(" ")[1];
+		logger.debug(` Token pobrany z header`);
+	}
+
+	if (!token) {
+		token = req.cookies?.accessToken;
+		if (token) {
+			logger.debug(` Token pobrany z cookie`);
+		}
+	}
+
+	if (!token) {
+		logger.warn(` Brak tokena dla: ${req.method} ${req.path}`);
+		return res.status(401).json({ error: "Brak tokenu autoryzacyjnego" });
+	}
+
+	try {
+		const decoded = jwt.verify(token, JWT_SECRET) as any;
+		logger.debug(` Token zweryfikowany dla uĹĽytkownika: ${decoded.id}`);
+
+		const user = await prisma.user.findUnique({
+			where: { id: decoded.id },
+			include: {
+				team_members: {
+					where: { is_leader: true },
+					include: {
+						team: true,
+					},
+				},
+			},
+		});
+
+		if (!user) {
+			logger.warn(` UĹĽytkownik ${decoded.id} nie znaleziony`);
+			return res.status(401).json({ error: "UĹĽytkownik nie znaleziony" });
+		}
+
+		const isLeader = user.team_members.length > 0;
+
+		const leaderPillarNames = user.team_members
+			.filter((tm: any) => tm.team?.name?.includes("Filar"))
+			.map((tm: any) => tm.team?.name?.replace("Filar ", ""))
+			.filter(Boolean);
+
+		const pillarName =
+			leaderPillarNames.length > 0 ? leaderPillarNames[0] : null;
+
+		const roleMap: Record<number, string> = {
+			1: "admin",
+			2: "board",
+			3: "coordinator",
+			4: "member",
+		};
+
+		req.user = {
+			id: user.id,
+			email: user.email,
+			role: roleMap[user.role_id || 4] || "member",
+			isLeader: isLeader,
+			pillarName: pillarName,
+			leaderPillarNames: leaderPillarNames,
+		};
+
+		(req as any).user.first_name = user.first_name;
+		(req as any).user.last_name = user.last_name;
+		(req as any).user.team = user.team;
+		(req as any).user.pillars = user.pillars;
+		(req as any).user.status = user.status;
+		(req as any).user.isLeader = isLeader;
+
+		next();
+	} catch (error: any) {
+		logger.error(` BĹ‚Ä…d autoryzacji: ${error.message}`);
+
+		if (error.name === "TokenExpiredError") {
+			return res.status(401).json({ error: "Token wygasĹ‚" });
+		}
+		if (error.name === "JsonWebTokenError") {
+			return res.status(401).json({ error: "NieprawidĹ‚owy token" });
+		}
+
+		return res.status(401).json({ error: "NieprawidĹ‚owy token" });
+	}
+};
+
+export const authenticateToken = authMiddleware;
+
+===== 2. SERVER.TS (80 linii) =====
+import revenueRoutes from "./routes/revenue.routes";
+import express from "express";
+import cors from "cors";
+import { OAuth2Client } from "google-auth-library";
+import { PrismaClient } from "@prisma/client";
+import { ProjectController } from "./controllers/project.controller";
+import { UserController } from "./controllers/user.controller";
+import { authMiddleware } from "./middleware/auth.middleware";
+import mysql from "mysql2/promise";
+import memberRoutes from "./routes/member.routes";
+import contributionRoutes from "./routes/contribution.routes";
+import calendarRoutes from "./routes/calendar.routes";
+import { syncContributions } from "./jobs/syncContributions";
+import cookieParser from "cookie-parser";
+import { syncAttendance } from "./jobs/syncAttendance";
+import { inactiveReminderTemplate } from "./emails/inactiveReminderTemplate";
+import { sendMail } from "./lib/sendMail";
+import cron from "node-cron";
+import dashboardRoutes from "./routes/dashboard.routes";
+import { updateLeaveStatus } from "./jobs/updateLeaveStatus";
+import { checkMonthlyMeetings } from "./jobs/checkMonthlyMeetings";
+import bcrypt from "bcrypt";
+import systemIdeaRoutes from "./routes/systemIdeas.routes";
+import jwt from "jsonwebtoken";
+import path from "path";
+// src/server.ts — dopisz do istniejących importów
+import { verifyMailer } from "./lib/mailer";
+import { enqueueMail } from "./lib/mailQueue";
+import { notifyInactiveUsers } from "./jobs/notifyInactiveUsers";
+import grantRoutes from "./routes/grants.routes";
+
+import { newTaskEmail, leaveDecisionEmail } from "./emails/templates";
+import fs from "fs";
+import multer from "multer";
+import { logger } from "./utils/logger";
+import { syncMembers } from "./jobs/syncMembers";
+import dotenv from "dotenv";
+dotenv.config();
+
+updateLeaveStatus();
+// cron.schedule("0 9 */5 * *", async () => {
+// 	try {
+// 		logger.info("[CRON] Start notifyInactiveUsers");
+// 		const result = await notifyInactiveUsers();
+// 		logger.info(
+// 			`[CRON] notifyInactiveUsers: wysłano ${result.sent}, błędy ${result.failed}, pominięto ${result.skippedRecent}`,
+// 		);
+// 	} catch (error) {
+// 		logger.error("[CRON] Błąd notifyInactiveUsers:", error);
+// 	}
+// });
+cron.schedule("0 7,14,21 * * *", async () => {
+	try {
+		await syncAttendance();
+	} catch (error) { }
+});
+
+cron.schedule("1 0 * * *", async () => {
+	await updateLeaveStatus();
+});
+// 19. dnia każdego miesiąca o 2:00
+cron.schedule("0 2 19 * *", async () => {
+	try {
+		await checkMonthlyMeetings();
+	} catch (error) {
+		logger.error("[CRON] Błąd checkMonthlyMeetings:", error);
+	}
+});
+const googleClient = new OAuth2Client(process.env.VITE_GOOGLE_CLIENT_ID);
+cron.schedule("0 3 */2 * *", async () => {
+	await syncMembers();
+});
+// setTimeout(async () => {
+// 	try {
+// 		await checkMonthlyMeetings();
+// 	} catch (error) {}
+// }, 20000);
+const PUBLIC_ENDPOINTS = [
+	"/api/auth/login",
+	"/api/auth/google",
+
+===== 3. APP ROUTES =====
+import { Routes, Route, Navigate } from "react-router-dom";
+import { lazy, Suspense, useEffect, useState } from "react";
+import Onboarding from "@/pages/Onboarding/Onboarding";
+import { logger } from "@/utils/logger";
+import api from "@/api/axios";
+import MyTeam from "./pages/myTeam/MyTeam";
+
+const DashboardLayout = lazy(() => import("@/layouts/DashboardLayout"));
+const Login = lazy(() => import("@/pages/Login/Login"));
+const Dashboard = lazy(() => import("@/pages/Dashboard/Dashboard"));
+const Admin = lazy(() => import("@/pages/Admin/Admin"));
+const Structure = lazy(() => import("@/pages/Structure/Structure"));
+const Projects = lazy(() => import("@/pages/Projects/Projects"));
+const Tutorials = lazy(() => import("@/pages/Tutorials/Tutorials"));
+const FAQ = lazy(() => import("@/pages/FAQ/Faq"));
+const Members = lazy(() => import("@/pages/Members/Members"));
+const Vacancies = lazy(() => import("@/pages/Vacancies/Vacancies"));
+const SocialMedia = lazy(() => import("@/pages/SocialMedia/SocialMedia"));
+const Profile = lazy(() => import("@/pages/Profile/Profile"));
+const Calendar = lazy(() => import("@/pages/Calendar/Calendar"));
+const Grants = lazy(() => import("@/pages/Grants/Grants"));
+const Tasks = lazy(() => import("@/pages/Tasks/Tasks"));
+const TrialPeriods = lazy(() => import("@/pages/TrialPeriods/TrialPeriods"));
+const Ideas = lazy(() => import("@/pages/Ideas/Ideas"));
+import Requests from "./pages/Requests/Requests";
+const Maintenance = lazy(() => import("@/pages/Maintenance/Maintenance"));
+import NotFound from "@/pages/404";
+
+const LoadingSpinner = () => (
+	<div
+		style={{
+			display: "flex",
+			justifyContent: "center",
+			alignItems: "center",
+			height: "100vh",
+			background: "#f8f9fa",
+		}}
+	>
+		<div
+			style={{
+				width: "48px",
+				height: "48px",
+				border: "4px solid #e5e7eb",
+				borderTopColor: "#4A6FE8",
+				borderRadius: "50%",
+				animation: "spin 0.8s linear infinite",
+			}}
+		/>
+		<style>{`
+            @keyframes spin {
+                to { transform: rotate(360deg); }
+            }
+        `}</style>
+	</div>
+);
+
+function AppRoutes() {
+	const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+	const [isLoading, setIsLoading] = useState(true);
+	const [isMaintenance, setIsMaintenance] = useState(false);
+
+	useEffect(() => {
+		const checkMaintenance = () => {
+			const maintenance = true;
+			setIsMaintenance(maintenance);
+		};
+
+		checkMaintenance();
+
+		const handleStorageChange = (e: StorageEvent) => {
+			if (e.key === "maintenance") {
+				checkMaintenance();
+			}
+		};
+		window.addEventListener("storage", handleStorageChange);
+		return () => window.removeEventListener("storage", handleStorageChange);
+	}, []);
+
+	useEffect(() => {
+		const verifyToken = async () => {
+			const user = localStorage.getItem("user");
+			if (!user) {
+				logger.debug(" [Auth] Brak użytkownika");
+				setIsAuthenticated(false);
+				setIsLoading(false);
+				return;
+			}
+
+			try {
+				logger.debug(" [Auth] Weryfikacja tokena...");
+				await api.get("/auth/me");
+				logger.debug(" [Auth] Token ważny");
+				setIsAuthenticated(true);
+			} catch (error: any) {
+				logger.warn(
+					" [Auth] Token wygasł lub jest nieprawidłowy",
+					error?.response?.status,
+				);
+				localStorage.removeItem("user");
+				setIsAuthenticated(false);
+			} finally {
+				setIsLoading(false);
+			}
+		};
+		verifyToken();
+	}, []);
+
+	if (isLoading) return <LoadingSpinner />;
+
+	if (isMaintenance) {
+		return (
+			<Suspense fallback={<LoadingSpinner />}>
+				<Routes>
+					<Route path="*" element={<Maintenance />} />
+				</Routes>
+			</Suspense>
+		);
+	}
+
+	if (!isAuthenticated) {
+		return (
+			<Suspense fallback={<LoadingSpinner />}>
+				<Routes>
+					<Route path="/login" element={<Login />} />
+					<Route path="*" element={<Navigate to="/login" replace />} />
+				</Routes>
+			</Suspense>
+		);
+	}
+
+	return (
+		<Suspense fallback={<LoadingSpinner />}>
+			<Routes>
+				<Route path="/login" element={<Navigate to="/dashboard" replace />} />
+				<Route
+					path="/onboarding"
+					element={<Onboarding onComplete={() => { }} />}
+				/>
+				<Route path="/404" element={<NotFound />} />
+				<Route path="*" element={<NotFound />} />
+				<Route element={<DashboardLayout />}>
+					<Route path="/" element={<Dashboard />} />
+					<Route path="/dashboard" element={<Dashboard />} />
+					<Route path="/admin" element={<Admin />} />
+					<Route path="/structure" element={<Structure />} />
+					<Route path="/projects" element={<Projects />} />
+					<Route path="/myTeam" element={<MyTeam />} />
+					<Route path="/guides" element={<Tutorials />} />
+					<Route path="/faq" element={<FAQ title="Najczęstsze pytania" />} />
+					<Route path="/members" element={<Members />} />
+					<Route path="/vacancies" element={<Vacancies />} />
+					<Route path="/requests" element={<Requests />} />
+					<Route
+						path="/leave"
+						element={<Navigate to="/requests?tab=leave" replace />}
+					/>
+					<Route path="/social" element={<SocialMedia />} />
+					<Route path="/profile" element={<Profile />} />
+					<Route path="/calendar" element={<Calendar />} />
+					<Route path="/tasks" element={<Tasks />} />
+					<Route path="/trial-periods" element={<TrialPeriods />} />
+					<Route path="/ideas" element={<Ideas />} />
+					<Route path="/grants" element={<Grants />} />
+				</Route>
+			</Routes>
+		</Suspense>
+	);
+}
+
+export default AppRoutes;
+
+===== 4. ROUTER =====
+import { Routes, Route, Navigate } from "react-router-dom";
+import { lazy, Suspense, useEffect, useState } from "react";
+import { logger } from "@/utils/logger";
+import api from "@/api/axios";
+import Tasks from "../pages/Tasks/Tasks";
+
+const DashboardLayout = lazy(() => import("../layouts/DashboardLayout"));
+const Login = lazy(() => import("../pages/Login/Login"));
+const Dashboard = lazy(() => import("../pages/Dashboard/Dashboard"));
+const Structure = lazy(() => import("../pages/Structure/Structure"));
+const Projects = lazy(() => import("../pages/Projects/Projects"));
+const Tutorials = lazy(() => import("../pages/Tutorials/Tutorials"));
+const Members = lazy(() => import("../pages/Members/Members"));
+const Vacancies = lazy(() => import("../pages/Vacancies/Vacancies"));
+const Leave = lazy(() => import("../pages/Leave/Leave"));
+const SocialMedia = lazy(() => import("../pages/SocialMedia/SocialMedia"));
+const Admin = lazy(() => import("../pages/Admin/Admin"));
+const Onboarding = lazy(() => import("../pages/Onboarding/Onboarding"));
+const Profile = lazy(() => import("../pages/Profile/Profile"));
+const Calendar = lazy(() => import("../pages/Calendar/Calendar"));
+
+const Loading = () => (
+	<div
+		style={{
+			display: "flex",
+			justifyContent: "center",
+			alignItems: "center",
+			height: "100vh",
+			background: "#f8f9fa",
+		}}
+	>
+		<div
+			style={{
+				display: "flex",
+				flexDirection: "column",
+				alignItems: "center",
+				gap: "16px",
+			}}
+		>
+			<div
+				style={{
+					width: "48px",
+					height: "48px",
+					border: "4px solid #e5e7eb",
+					borderTopColor: "#4A6FE8",
+					borderRadius: "50%",
+					animation: "spin 0.8s linear infinite",
+				}}
+			/>
+			<span style={{ color: "#6B7280", fontSize: "0.9rem" }}>Ĺadowanie...</span>
+		</div>
+	</div>
+);
+
+function AppRoutes() {
+	const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+	const [isLoading, setIsLoading] = useState(true);
+
+	useEffect(() => {
+		const verifyToken = async () => {
+			const user = localStorage.getItem("user");
+
+			if (!user) {
+				logger.debug(" [Auth] Brak uĹĽytkownika");
+				setIsAuthenticated(false);
+				setIsLoading(false);
+				return;
+			}
+
+			try {
+				logger.debug(" [Auth] Weryfikacja tokena...");
+
+				await api.get("/auth/me");
+				logger.debug(" [Auth] Token waĹĽny");
+				setIsAuthenticated(true);
+			} catch (error: any) {
+				logger.warn(
+					" [Auth] Token wygasĹ‚ lub jest nieprawidĹ‚owy",
+					error?.response?.status,
+				);
+				localStorage.removeItem("user");
+				setIsAuthenticated(false);
+			} finally {
+				setIsLoading(false);
+			}
+		};
+
+		verifyToken();
+	}, []);
+
+	if (isLoading) {
+		return <Loading />;
+	}
+
+	logger.debug("â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•");
+	logger.debug(" [Router] START RENDER");
+	logger.debug(" PATH:", window.location.pathname);
+	logger.debug(" USER:", localStorage.getItem("user") ? "Jest" : "BRAK");
+	logger.debug(" AUTH:", isAuthenticated ? "ZALOGOWANY" : "NIEZALOGOWANY");
+	logger.debug("â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•");
+
+	if (!isAuthenticated) {
+		logger.debug(" [Router] NIEZALOGOWANY -> /login");
+		return (
+			<Suspense fallback={<Loading />}>
+				<Routes>
+					<Route path="/login" element={<Login />} />
+					<Route path="*" element={<Navigate to="/login" replace />} />
+				</Routes>
+			</Suspense>
+		);
+	}
+
+	logger.debug(" [Router] ZALOGOWANY -> Dashboard");
+	return (
+		<Suspense fallback={<Loading />}>
+			<Routes>
+				<Route
+					path="/login"
+					element={
+						isAuthenticated ? <Navigate to="/dashboard" replace /> : <Login />
+					}
+				/>
+				<Route
+					path="/onboarding"
+					element={<Onboarding onComplete={() => {}} />}
+				/>
+				<Route element={<DashboardLayout />}>
+					<Route path="/" element={<Dashboard />} />
+					<Route path="/dashboard" element={<Dashboard />} />
+					<Route path="/structure" element={<Structure />} />
+					<Route path="/myteam" element={<Admin title="MĂłj zespĂłĹ‚" />} />
+					<Route path="/projects" element={<Projects />} />
+					<Route path="/guides" element={<Tutorials />} />
+					<Route path="/members" element={<Members title="CzĹ‚onkowie" />} />
+					<Route path="/vacancies" element={<Vacancies title="Wakaty" />} />
+					<Route path="/profile" element={<Profile title="MĂłj profil" />} />
+					<Route path="/leave" element={<Leave title="Urlop" />} />
+					<Route
+						path="/social"
+						element={<SocialMedia title="Social Media" />}
+					/>
+					<Route path="/admin" element={<Admin title="Administracja" />} />
+					<Route path="/tasks" element={<Tasks />} />
+					<Route path="/calendar" element={<Calendar />} />
+				</Route>
+			</Routes>
+		</Suspense>
+	);
+}
+
+export default AppRoutes;
+
+===== 5. SIDEBAR =====
+import { NAV_ITEMS } from "../../../data/navigation";
+import styles from "./Sidebar.module.css";
+import { LogOut, X } from "lucide-react";
+
+interface SidebarProps {
+	activeKey: string;
+	onSelect: (key: string) => void;
+	collapsed?: boolean;
+	isSocialMember?: boolean;
+	userRole?: string;
+	isLeader?: boolean;
+	onToggleCollapse?: () => void;
+	pageTitle?: string;
+	isMobileMenuOpen?: boolean;
+	onMobileMenuToggle?: () => void;
+}
+
+export default function Sidebar({
+	activeKey,
+	onSelect,
+	collapsed = false,
+	isSocialMember = false,
+	userRole,
+	isLeader = false,
+	isMobileMenuOpen = false,
+	onMobileMenuToggle,
+}: SidebarProps) {
+	const isAdminOrBoard =
+		userRole === "admin" || userRole === "board" || userRole === "zarzÄ…d";
+	const isCoordinator = userRole === "coordinator";
+
+	// Sprawdzenie czy to peĹ‚nomocnik ds. okresĂłw prĂłbnych (Maja Melerska, id=294)
+	const isTrialCoordinator = (() => {
+		try {
+			const u = JSON.parse(localStorage.getItem("user") || "{}");
+			return String(u.id) === "294";
+		} catch {
+			return false;
+		}
+	})();
+
+	const filteredNavItems = NAV_ITEMS.filter((item) => {
+		if (item.key === "social") {
+			return isSocialMember || isAdminOrBoard;
+		}
+		if (item.key === "admin") {
+			return isAdminOrBoard;
+		}
+		if (item.key === "myTeam") {
+			return isAdminOrBoard || isCoordinator || isLeader;
+		}
+		if (item.key === "trial-periods") {
+			return isAdminOrBoard || isTrialCoordinator;
+		}
+		return true;
+	});
+	const handleLogout = () => {
+		localStorage.removeItem("user");
+		window.location.href = "/login";
+	};
+
+	const handleMobileNav = (key: string) => {
+		onSelect(key);
+		if (onMobileMenuToggle) onMobileMenuToggle();
+	};
+
+	return (
+		<>
+			<div
+				className={`${styles.mobileMenu} ${
+					isMobileMenuOpen ? styles.mobileMenuOpen : ""
+				}`}
+			>
+				<div className={styles.mobileMenuHeader}>
+					<div className={styles.mobileMenuHeaderLeft}>
+						<div className={styles.logo__mark}>SM</div>
+						<span className={styles.logo__text}>SiĹ‚a MĹ‚odych</span>
+					</div>
+					<button
+						className={styles.mobileMenuClose}
+						onClick={onMobileMenuToggle}
+						aria-label="Zamknij menu"
+					>
+						<X size={24} />
+					</button>
+				</div>
+
+				<div className={styles.mobileNavWrapper}>
+					<nav className={styles.mobileNav}>
+						{filteredNavItems.map(({ key, label, icon: Icon }) => (
+							<button
+								key={key}
+								className={`${styles.mobileNav__item} ${
+									activeKey === key ? styles.active : ""
+								}`}
+								onClick={() => handleMobileNav(key)}
+							>
+								<Icon size={20} />
+								<span className={styles.mobileNav__label}>{label}</span>
+							</button>
+						))}
+					</nav>
+				</div>
+
+				<div className={styles.mobileLogout}>
+					<button className={styles.mobileNav__item} onClick={handleLogout}>
+						<LogOut size={20} />
+						<span className={styles.mobileNav__label}>Wyloguj</span>
+					</button>
+				</div>
+			</div>
+
+			{isMobileMenuOpen && (
+				<div className={styles.overlay} onClick={onMobileMenuToggle} />
+			)}
+
+			<aside
+				className={`${styles.sidebar} ${
+					collapsed ? styles.sidebarCollapsed : ""
+				}`}
+			>
+				<div
+					className={`${styles.logo} ${collapsed ? styles.logoCollapsed : ""}`}
+				>
+					<div className={styles.logo__mark}>SM</div>
+					<span
+						className={`${styles.logo__text} ${
+							collapsed ? styles.logo__textHidden : ""
+						}`}
+					>
+						SiĹ‚a MĹ‚odych
+					</span>
+				</div>
+
+				<nav className={styles.nav}>
+					{filteredNavItems.map(({ key, label, icon: Icon }) => (
+						<button
+							key={key}
+							className={`${styles.nav__item} ${
+								activeKey === key ? styles.active : ""
+							} ${collapsed ? styles.nav__itemCollapsed : ""}`}
+							onClick={() => onSelect(key)}
+							title={collapsed ? label : ""}
+						>
+							<Icon size={18} />
+							<span
+								className={`${styles.nav__label} ${
+									collapsed ? styles.nav__labelHidden : ""
+								}`}
+							>
+								{label}
+							</span>
+						</button>
+					))}
+				</nav>
+
+				<div className={styles.logout}>
+					<button
+						className={`${styles.nav__item} ${
+							collapsed ? styles.nav__itemCollapsed : ""
+						}`}
+						onClick={handleLogout}
+						title={collapsed ? "Wyloguj" : ""}
+					>
+						<LogOut size={18} />
+						<span
+							className={`${styles.nav__label} ${
+								collapsed ? styles.nav__labelHidden : ""
+							}`}
+						>
+							Wyloguj
+						</span>
+					</button>
+				</div>
+
+				<div
+					className={`${styles.footer} ${
+						collapsed ? styles.footerCollapsed : ""
+					}`}
+				>
+					{collapsed ? (
+						<>
+							<span className={styles.footer__line}>SM</span>
+							<span className={styles.footer__line}>Â© 2026</span>
+						</>
+					) : (
+						<>
+							<span className={styles.footer__line}>SiĹ‚a MĹ‚odych</span>
+							<span className={styles.footer__line}>
+								Â© 2026 Wszelkie prawa zastrzeĹĽone
+							</span>
+						</>
+					)}
+				</div>
+			</aside>
+		</>
+	);
+}
+
+===== 6. AUTH CONTEXT =====
+import {
+	createContext,
+	useContext,
+	useState,
+	useEffect,
+	useCallback,
+} from "react";
+import type { ReactNode } from "react";
+import { logger } from "@/utils/logger";
+import api from "@/api/axios";
+
+export interface User {
+	id: string;
+	name: string;
+	email?: string;
+	role: "admin" | "board" | "coordinator" | "member";
+	teamId?: string;
+	avatar?: string;
+	first_name?: string;
+	last_name?: string;
+	isLeader?: boolean;
+}
+
+interface AuthState {
+	user: User | null;
+	loading: boolean;
+	isAuthenticated: boolean;
+}
+
+interface AuthContextValue extends AuthState {
+	login: (
+		email: string,
+		password: string,
+	) => Promise<{ success: boolean; user?: User; error?: string }>;
+	logout: () => void;
+	updateUser: (data: Partial<User>) => void;
+	verifyToken: () => Promise<boolean>;
+	hasRole: (roles: string | string[]) => boolean;
+	isAdmin: () => boolean;
+	isBoard: () => boolean;
+	isCoordinator: () => boolean;
+}
+
+const AuthContext = createContext<AuthContextValue | null>(null);
+
+export function AuthProvider({ children }: { children: ReactNode }) {
+	const [state, setState] = useState<AuthState>({
+		user: null,
+		loading: true,
+		isAuthenticated: false,
+	});
+
+	const verifyToken = useCallback(async () => {
+		const user = localStorage.getItem("user");
+
+		if (!user) {
+			setState({ user: null, loading: false, isAuthenticated: false });
+			return false;
+		}
+
+		try {
+			const response = await api.get("/auth/me");
+			const userData = response.data;
+			console.log(
+				"[AuthContext] /auth/me response:",
+				response.status,
+				userData,
+			);
+			console.log(
+				"[AuthContext] accessToken:",
+				localStorage.getItem("accessToken")?.slice(0, 20),
+			);
+			console.log(
+				"[AuthContext] localStorage user:",
+				localStorage.getItem("user")?.slice(0, 100),
+			);
+			const newUser: User = {
+				id: userData.id,
+				name:
+					userData.first_name && userData.last_name
+						? `${userData.first_name} ${userData.last_name}`
+						: userData.name || userData.email || "UĹĽytkownik",
+				email: userData.email,
+				role: userData.role as "admin" | "board" | "coordinator" | "member",
+				teamId: userData.teamId || userData.team || undefined,
+				avatar: userData.avatar,
+				first_name: userData.first_name,
+				last_name: userData.last_name,
+			};
+
+			try {
+				const coordRes = await api.get("/user/is-coordinator");
+				newUser.isLeader = coordRes.data?.isLeader === true;
+			} catch {
+				newUser.isLeader = false;
+			}
+
+			setState({ user: newUser, loading: false, isAuthenticated: true });
+			return true;
+		} catch (error: any) {
+			logger.warn("[AuthContext] Token niewaĹĽny:", error?.response?.status);
+			localStorage.removeItem("user");
+			setState({ user: null, loading: false, isAuthenticated: false });
+			return false;
+		}
+	}, []);
+
+	useEffect(() => {
+		verifyToken();
+	}, [verifyToken]);
+
+	const login = useCallback(async (email: string, password: string) => {
+		try {
+			setState((prev) => ({ ...prev, loading: true }));
+
+			const response = await api.post("/auth/login", { email, password });
+			const { user: userData } = response.data;
+
+			const newUser: User = {
+				id: userData.id,
+				name:
+					userData.first_name && userData.last_name
+						? `${userData.first_name} ${userData.last_name}`
+						: userData.name || userData.email || "UĹĽytkownik",
+				email: userData.email,
+				role: userData.role as "admin" | "board" | "coordinator" | "member",
+				teamId: userData.teamId || userData.team || undefined,
+				avatar: userData.avatar,
+				first_name: userData.first_name,
+				last_name: userData.last_name,
+			};
+
+			localStorage.setItem("user", JSON.stringify(userData));
+
+			try {
+				const coordRes = await api.get("/user/is-coordinator");
+				newUser.isLeader = coordRes.data?.isLeader === true;
+			} catch {
+				newUser.isLeader = false;
+			}
+
+			setState({ user: newUser, loading: false, isAuthenticated: true });
+			return { success: true, user: newUser };
+		} catch (error: any) {
+			setState((prev) => ({ ...prev, loading: false }));
+			return {
+				success: false,
+				error:
+					error?.response?.data?.message || "NieprawidĹ‚owy email lub hasĹ‚o",
+			};
+		}
+	}, []);
+
+	const logout = useCallback(() => {
+		try {
+			api.post("/auth/logout").catch(() => {});
+		} catch {}
+		localStorage.removeItem("user");
+		setState({ user: null, loading: false, isAuthenticated: false });
+	}, []);
+
+	const updateUser = useCallback((data: Partial<User>) => {
+		setState((prev) => ({
+			...prev,
+			user: prev.user ? { ...prev.user, ...data } : null,
+		}));
+	}, []);
+
+	const hasRole = useCallback(
+		(roles: string | string[]) => {
+			if (!state.user) return false;
+			const arr = Array.isArray(roles) ? roles : [roles];
+			return arr.includes(state.user.role);
+		},
+		[state.user],
+	);
+
+	const isAdmin = useCallback(() => state.user?.role === "admin", [state.user]);
+	const isBoard = useCallback(() => state.user?.role === "board", [state.user]);
+	const isCoordinator = useCallback(
+		() => state.user?.role === "coordinator" || state.user?.role === "admin",
+		[state.user],
+	);
+
+	return (
+		<AuthContext.Provider
+			value={{
+				...state,
+				login,
+				logout,
+				updateUser,
+				verifyToken,
+				hasRole,
+				isAdmin,
+				isBoard,
+				isCoordinator,
+			}}
+		>
+			{children}
+		</AuthContext.Provider>
+	);
+}
+
+export function useAuth() {
+	const ctx = useContext(AuthContext);
+	if (!ctx) {
+		throw new Error("useAuth must be used within <AuthProvider>");
+	}
+	return ctx;
+}
+import { createContext, useContext, ReactNode } from "react";
+import { useAuth } from "@/hooks/useAuth";
+
+interface AuthContextType {
+    isAuthenticated: boolean;
+    loading: boolean;
+    user: any | null;
+    logout: () => void;
+}
+
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+export function AuthProvider({ children }: { children: ReactNode }) {
+    const { user, loading, isAuthenticated, logout } = useAuth();
+    return (
+        <AuthContext.Provider value={{ user, loading, isAuthenticated, logout }}>
+            {children}
+        </AuthContext.Provider>
+    );
+}
+
+export function useAuthContext() {
+    const context = useContext(AuthContext);
+    if (!context) throw new Error("useAuthContext must be used within AuthProvider");
+    return context;
+}
+
+===== 7. USEAUTH HOOK =====
+export { useAuth } from "@/context/AuthContext";
+export type { User } from "@/context/AuthContext";
+
+===== 8. AXIOS =====
+import axios from "axios";
+
+const API_URL = "/api";
+const api = axios.create({
+	baseURL: API_URL,
+	headers: {
+		"Content-Type": "application/json",
+	},
+	withCredentials: true,
+});
+
+// ============================================================
+// REQUEST INTERCEPTOR
+// ============================================================
+api.interceptors.request.use(
+	(config) => {
+		const token = localStorage.getItem("accessToken");
+		if (token) {
+			config.headers.Authorization = `Bearer ${token}`;
+		}
+		return config;
+	},
+	(error) => Promise.reject(error),
+);
+
+// ============================================================
+// LOGOUT
+// ============================================================
+const handleLogout = () => {
+	localStorage.removeItem("accessToken");
+	localStorage.removeItem("refreshToken");
+	localStorage.removeItem("user");
+
+	document.cookie =
+		"accessToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+	document.cookie =
+		"refreshToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+
+	if (logoutTimer) {
+		clearTimeout(logoutTimer);
+		logoutTimer = null;
+	}
+
+	if (
+		window.location.pathname !== "/login" &&
+		window.location.pathname !== "/"
+	) {
+		window.location.href = "/login";
+	}
+};
+
+// ============================================================
+// REFRESH TOKEN QUEUE
+// ============================================================
+let isRefreshing = false;
+let failedQueue: Array<{
+	resolve: (token: string) => void;
+	reject: (reason?: any) => void;
+	config: any;
+}> = [];
+
+const processQueue = (error: any | null, token: string | null = null) => {
+	failedQueue.forEach((prom) => {
+		if (error) {
+			prom.reject(error);
+		} else {
+			prom.resolve(token!);
+		}
+	});
+	failedQueue = [];
+};
+
+const isRefreshUrl = (url?: string) =>
+	typeof url === "string" && url.includes("/api/auth/refresh-token");
+
+// ============================================================
+// RESPONSE INTERCEPTOR
+// ============================================================
+api.interceptors.response.use(
+	(response) => response,
+	async (error) => {
+		const originalRequest = error.config;
+		const status = error.response?.status;
+
+		// Brak configu (np. bĹ‚Ä…d sieci) - przepuĹ›Ä‡ dalej
+		if (!originalRequest) {
+			return Promise.reject(error);
+		}
+
+		// ---- 401: prĂłba odĹ›wieĹĽenia tokenu (tylko raz na ĹĽÄ…danie) ----
+		if (status === 401 && !originalRequest._retry) {
+			// 401 na samym refreshu -> twardy logout, koniec zabawy
+			if (isRefreshUrl(originalRequest.url)) {
+				handleLogout();
+				return Promise.reject(error);
+			}
+
+			// KtoĹ› juĹĽ odĹ›wieĹĽa -> czekamy w kolejce
+			if (isRefreshing) {
+				return new Promise((resolve, reject) => {
+					failedQueue.push({ resolve, reject, config: originalRequest });
+				}).then((newToken) => {
+					const token = newToken as string;
+					originalRequest.headers = originalRequest.headers || {};
+					originalRequest.headers.Authorization = `Bearer ${token}`;
+					return api(originalRequest);
+				});
+			}
+
+			originalRequest._retry = true;
+			isRefreshing = true;
+
+			try {
+				const refreshToken = localStorage.getItem("refreshToken");
+				if (!refreshToken) {
+					throw new Error("Brak refresh token");
+				}
+
+				const response = await axios.post(
+					`${API_URL}/api/auth/refresh-token`,
+					{ refreshToken },
+					{ withCredentials: true },
+				);
+
+				const { accessToken } = response.data;
+				if (!accessToken) {
+					throw new Error("Brak nowego access token");
+				}
+
+				localStorage.setItem("accessToken", accessToken);
+				api.defaults.headers.common.Authorization = `Bearer ${accessToken}`;
+
+				// Odblokuj kolejkÄ™ z nowym tokenem
+				processQueue(null, accessToken);
+
+				// PonĂłw oryginalne ĹĽÄ…danie
+				originalRequest.headers = originalRequest.headers || {};
+				originalRequest.headers.Authorization = `Bearer ${accessToken}`;
+
+				// Zrestartuj timer auto-logout z nowym czasem wygaĹ›niÄ™cia
+				startAutoLogoutTimer(accessToken);
+
+				return api(originalRequest);
+			} catch (refreshError) {
+				processQueue(refreshError, null);
+				handleLogout();
+				return Promise.reject(refreshError);
+			} finally {
+				isRefreshing = false;
+			}
+		}
+
+		// ---- 401 po nieudanej prĂłbie retry -> twardy logout ----
+		// UWAGA: 403 NIE wylogowuje. 403 = brak uprawnieĹ„, nie brak sesji.
+		if (status === 401 && originalRequest._retry) {
+			handleLogout();
+		}
+
+		return Promise.reject(error);
+	},
+);
+
+// ============================================================
+// AUTO LOGOUT TIMER (oparty na exp z JWT, nie na bezczynnoĹ›ci)
+// ============================================================
+let logoutTimer: ReturnType<typeof setTimeout> | null = null;
+
+const decodeJwtExp = (token: string): number | null => {
+	try {
+		const payload = JSON.parse(atob(token.split(".")[1]));
+		if (typeof payload.exp !== "number") return null;
+		return payload.exp * 1000; // ms
+	} catch {
+		return null;
+	}
+};
+
+export const startAutoLogoutTimer = (accessToken?: string) => {
+	if (logoutTimer) {
+		clearTimeout(logoutTimer);
+		logoutTimer = null;
+	}
+
+	const token = accessToken ?? localStorage.getItem("accessToken");
+	if (!token) return;
+
+	const exp = decodeJwtExp(token);
+	if (!exp) return;
+
+	// 30 sekund zapasu, ĹĽeby zdÄ…ĹĽyÄ‡ odĹ›wieĹĽyÄ‡ przed wygaĹ›niÄ™ciem
+	const ms = exp - Date.now() - 30_000;
+
+	if (ms <= 0) {
+		// Token juĹĽ wygasĹ‚ - nie wylogowuj od razu na siĹ‚Ä™,
+		// pozwĂłl interceptorowi obsĹ‚uĹĽyÄ‡ 401 i odĹ›wieĹĽyÄ‡.
+		return;
+	}
+
+	logoutTimer = setTimeout(() => {
+		// Timer minÄ…Ĺ‚, ale nie wylogowujemy na Ĺ›lepo -
+		// sprawdzamy czy token faktycznie wygasĹ‚.
+		const current = localStorage.getItem("accessToken");
+		const currentExp = current ? decodeJwtExp(current) : null;
+		if (!currentExp || currentExp - 30_000 <= Date.now()) {
+			handleLogout();
+		} else {
+			// Token zostaĹ‚ odĹ›wieĹĽony w miÄ™dzyczasie - restart
+			startAutoLogoutTimer(current!);
+		}
+	}, ms);
+};
+
+// ============================================================
+// FETCH WRAPPER
+// ============================================================
+const originalFetch = window.fetch;
+window.fetch = function (...args) {
+	const url = args[0];
+	const options: RequestInit = args[1] || {};
+
+	const publicPaths = [
+		"/api/auth/login",
+		"/api/auth/google",
+		"/api/auth/register",
+		"/api/health",
+		"/api/auth/refresh-token",
+	];
+	const isPublic =
+		typeof url === "string" && publicPaths.some((p) => url.includes(p));
+
+	if (!isPublic) {
+		const token = localStorage.getItem("accessToken");
+		if (token) {
+			options.headers = {
+				...options.headers,
+				Authorization: `Bearer ${token}`,
+			};
+		}
+	}
+
+	return originalFetch.call(this, url, options).then(async (response) => {
+		// 401 -> prĂłba refreshu (403 NIE - to brak uprawnieĹ„)
+		if (response.status === 401) {
+			// 401 na samym refreshu -> logout
+			if (typeof url === "string" && url.includes("/api/auth/refresh-token")) {
+				handleLogout();
+				throw new Error("Unauthorized");
+			}
+
+			try {
+				const refreshToken = localStorage.getItem("refreshToken");
+				if (refreshToken) {
+					const refreshResponse = await originalFetch.call(
+						this,
+						"/api/auth/refresh-token",
+						{
+							method: "POST",
+							headers: { "Content-Type": "application/json" },
+							body: JSON.stringify({ refreshToken }),
+						},
+					);
+
+					if (refreshResponse.ok) {
+						const data = await refreshResponse.json();
+						if (data.accessToken) {
+							localStorage.setItem("accessToken", data.accessToken);
+
+							const headers = (options.headers as Record<string, string>) || {};
+							headers.Authorization = `Bearer ${data.accessToken}`;
+							options.headers = headers;
+
+							startAutoLogoutTimer(data.accessToken);
+
+							return originalFetch.call(this, url, options);
+						}
+					}
+				}
+			} catch (e) {
+				console.error("Refresh failed:", e);
+			}
+
+			handleLogout();
+			throw new Error("Unauthorized");
+		}
+
+		// 304 Not Modified -> wymuĹ› ponowne pobranie
+		if (response.status === 304) {
+			const headers = options.headers as Record<string, string> | undefined;
+			options.headers = {
+				...(headers || {}),
+				"Cache-Control": "no-cache",
+			};
+			options.cache = "no-store";
+			return originalFetch.call(this, url, options);
+		}
+
+		return response;
+	});
+};
+
+export default api;
+
+===== 9. API =====
+import axios from "axios";
+import { logger } from "@/utils/logger";
+
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
+const API_VERSION = "1.0.0";
+
+const api = axios.create({
+	baseURL: API_URL,
+	headers: {
+		"Content-Type": "application/json",
+		"X-API-Version": API_VERSION,
+	},
+	timeout: 30000,
+});
+
+api.interceptors.request.use(
+	(config) => {
+		return config;
+	},
+	(error) => Promise.reject(error),
+);
+
+api.interceptors.response.use(
+	(response) => {
+		const apiVersion = response.headers["x-api-version"];
+		if (apiVersion && apiVersion !== API_VERSION) {
+			logger.warn("Nowa wersja API - wylogowywanie...");
+			localStorage.removeItem("user");
+			window.location.href = "/login";
+			return Promise.reject(new Error("Nowa wersja API"));
+		}
+		return response;
+	},
+	async (error) => {
+		const originalRequest = error.config;
+
+		if (error.response?.status === 401) {
+			logger.warn("401 - Brak autoryzacji, wylogowywanie...");
+			localStorage.removeItem("user");
+			window.location.href = "/login";
+			return Promise.reject(error);
+		}
+
+		if (error.response?.status === 403) {
+			logger.warn("403 - Brak uprawnień, wylogowywanie...");
+			localStorage.removeItem("user");
+			window.location.href = "/login";
+			return Promise.reject(error);
+		}
+
+		if (error.response?.status === 401 && !originalRequest._retry) {
+			originalRequest._retry = true;
+			try {
+				const response = await axios.post(`${API_URL}/api/auth/refresh`, {});
+				const { accessToken } = response.data;
+				originalRequest.headers.Authorization = `Bearer ${accessToken}`;
+				return api(originalRequest);
+			} catch (refreshError) {
+				logger.error("Błąd odświeżania tokenu:", refreshError);
+				localStorage.removeItem("user");
+				window.location.href = "/login";
+				return Promise.reject(refreshError);
+			}
+		}
+
+		return Promise.reject(error);
+	},
+);
+
+export const checkUserVersion = async () => {
+	try {
+		const response = await api.get("/api/user/version");
+
+		if (response.status === 200) {
+			const data = response.data;
+			const savedVersion = localStorage.getItem("userVersion");
+
+			if (savedVersion && data.version !== savedVersion) {
+				logger.warn("Zmiana wersji użytkownika - wylogowywanie...");
+				localStorage.removeItem("user");
+				window.location.href = "/login";
+				return;
+			}
+
+			localStorage.setItem("userVersion", data.version);
+		}
+	} catch (error) {
+		logger.error("Błąd sprawdzania wersji:", error);
+	}
+};
+
+export default api;
+
+===== 10. AUTH API =====
+
+===== 11. NAVIGATION =====
+import {
+	Home,
+	Users,
+	FolderKanban,
+	BookOpen,
+	User,
+	FileText,
+	Megaphone,
+	Settings,
+	UsersRound,
+	CheckSquare,
+	Calendar,
+	ClipboardCheck,
+	Lightbulb,
+	Award,
+} from "lucide-react";
+
+export const NAV_ITEMS = [
+	{ key: "dashboard", label: "Panel gĹ‚Ăłwny", icon: Home },
+	{ key: "structure", label: "Struktura SM", icon: Users },
+	{ key: "myTeam", label: "MĂłj zespĂłĹ‚", icon: UsersRound },
+	{ key: "projects", label: "Projekty", icon: FolderKanban },
+	{ key: "calendar", label: "Kalendarz", icon: Calendar },
+
+	{ key: "tasks", label: "Zadania", icon: CheckSquare },
+	{ key: "ideas", label: "PomysĹ‚y", icon: Lightbulb },
+	{ key: "grants", label: "Granty", icon: Award },
+	{ key: "trial-periods", label: "Okresy prĂłbne", icon: ClipboardCheck },
+	{ key: "guides", label: "Poradniki", icon: BookOpen },
+	{ key: "faq", label: "NajczÄ™stsze pytania", icon: BookOpen },
+	{ key: "members", label: "CzĹ‚onkowie", icon: Users },
+	{ key: "vacancies", label: "Wakaty", icon: Megaphone },
+	{ key: "profile", label: "MĂłj profil", icon: User },
+	{ key: "requests", label: "Wnioski", icon: FileText },
+	{ key: "social", label: "Social Media", icon: Megaphone },
+	{ key: "admin", label: "Administracja", icon: Settings },
+];
+
+===== 12. NAVIGATION TYPES =====

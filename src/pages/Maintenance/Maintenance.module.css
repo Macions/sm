@@ -165,3 +165,66 @@
         font-size: 14px;
     }
 }
+.maintenance__loginLink {
+    margin-top: 32px;
+}
+
+.maintenance__loginLink a {
+    color: #4A6FE8;
+    text-decoration: underline;
+    font-size: 14px;
+    transition: opacity 0.15s;
+}
+
+.maintenance__loginLink a:hover {
+    opacity: 0.8;
+}
+/* ═══════════════════════════════════════════════════════════
+   LINK „Zaloguj się jako administrator"
+   ═══════════════════════════════════════════════════════════ */
+
+.maintenance__loginLink {
+    margin-top: 32px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+}
+
+.maintenance__loginLink a {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 24px;
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 8px;
+    color: #9ca3af;
+    font-size: 14px;
+    font-weight: 500;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+.maintenance__loginLink a:hover {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.4);
+    color: #000000;
+}
+
+.maintenance__loginLink a:active {
+    transform: translateY(1px);
+}
+
+.maintenance__loginLink a:focus-visible {
+    outline: 2px solid #4A6FE8;
+    outline-offset: 2px;
+}
+
+/* Opcjonalnie: ikona przy linku */
+.maintenance__loginLink a svg {
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+}

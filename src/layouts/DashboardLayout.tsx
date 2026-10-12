@@ -4,6 +4,7 @@ import { safeNavigate } from "@/utils/safeNavigation";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import Sidebar from "../components/layout/Sidebar/Sidebar";
 import Header from "../components/layout/Header/Header";
+import { useAttendanceAccess } from "@/hooks/useAttendanceAccess";
 import { useAuth } from "@/hooks/useAuth";
 import styles from "./DashboardLayout.module.css";
 
@@ -11,6 +12,7 @@ export default function DashboardLayout() {
 	const location = useLocation();
 	const navigate = useNavigate();
 	const { user } = useAuth();
+	const { isAttendanceCoordinator } = useAttendanceAccess();
 	const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 	const [activeNav, setActiveNav] = useState("dashboard");
 	const [isSocialMember, setIsSocialMember] = useState(false);
@@ -115,6 +117,8 @@ export default function DashboardLayout() {
 				return "Struktura SM";
 			case "myTeam":
 				return "Mój zespół";
+			case "attendance":
+				return "Frekwencja";
 			case "requests":
 				return "Wnioski";
 			case "social":
@@ -176,6 +180,7 @@ export default function DashboardLayout() {
 					isSocialMember={isSocialMember}
 					userRole={userData?.role || null}
 					isLeader={user?.isLeader === true}
+					isAttendanceCoordinator={isAttendanceCoordinator}
 					onToggleCollapse={toggleSidebar}
 					pageTitle={getPageTitle()}
 					isMobileMenuOpen={isMobileMenuOpen}
