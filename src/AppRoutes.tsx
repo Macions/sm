@@ -63,23 +63,24 @@ function AppRoutes() {
 	const location = useLocation();
 
 	// ⬇️⬇️⬇️ JEDEN poprawny useEffect od maintenance + isAdmin ⬇️⬇️⬇️
+	const MAINTENANCE_BYPASS_EMAILS = ["maksym.marczak@silamlodych.pl"];
+
 	useEffect(() => {
 		const refreshAuthAndMaintenance = () => {
-			// odczytaj rolę usera
 			try {
 				const u = JSON.parse(localStorage.getItem("user") || "{}");
-				setIsAdmin(u?.role === "admin");
+				const email = (u?.email || "").toLowerCase().trim();
+				const bypassByEmail = MAINTENANCE_BYPASS_EMAILS.includes(email);
+				setIsAdmin(u?.role === "admin" || bypassByEmail);
 			} catch {
 				setIsAdmin(false);
 			}
-			// odczytaj stan maintenance
 			api
 				.get("/status/maintenance")
 				.then(({ data }) => setIsMaintenance(data.enabled === true))
 				.catch(() => setIsMaintenance(false));
 		};
 
-		// wywołaj raz na starcie
 		refreshAuthAndMaintenance();
 
 		const handleStorageChange = (e: StorageEvent) => {
@@ -92,7 +93,6 @@ function AppRoutes() {
 		window.addEventListener("storage", handleStorageChange);
 		window.addEventListener("maintenance-change", handleCustom);
 
-		// refresh co 30 s — łapie zmiany z innych urządzeń
 		const interval = setInterval(refreshAuthAndMaintenance, 30_000);
 
 		return () => {
@@ -133,24 +133,23 @@ function AppRoutes() {
 
 	if (isLoading) return <LoadingSpinner />;
 
-if (isMaintenance && !isAdmin) {
-    // Pokaż Login TYLKO gdy user kliknął "Zaloguj się jako administrator"
-    const showLogin =
-        location.pathname === "/login" &&
-        location.search.includes("admin=1");
+	if (isMaintenance && !isAdmin) {
+		// Pokaż Login TYLKO gdy user kliknął "Zaloguj się jako administrator"
+		const showLogin =
+			location.pathname === "/login" && location.search.includes("admin=1");
 
-    return (
-        <Suspense fallback={<LoadingSpinner />}>
-            <Routes>
-                <Route
-                    path="/login"
-                    element={showLogin ? <Login /> : <Maintenance />}
-                />
-                <Route path="*" element={<Maintenance />} />
-            </Routes>
-        </Suspense>
-    );
-}
+		return (
+			<Suspense fallback={<LoadingSpinner />}>
+				<Routes>
+					<Route
+						path="/login"
+						element={showLogin ? <Login /> : <Maintenance />}
+					/>
+					<Route path="*" element={<Maintenance />} />
+				</Routes>
+			</Suspense>
+		);
+	}
 
 	if (!isAuthenticated) {
 		return (
@@ -169,7 +168,7 @@ if (isMaintenance && !isAdmin) {
 				<Route path="/login" element={<Navigate to="/dashboard" replace />} />
 				<Route
 					path="/onboarding"
-					element={<Onboarding onComplete={() => { }} />}
+					element={<Onboarding onComplete={() => {}} />}
 				/>
 				<Route path="/404" element={<NotFound />} />
 				<Route path="*" element={<NotFound />} />

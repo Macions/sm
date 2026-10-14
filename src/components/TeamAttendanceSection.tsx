@@ -98,7 +98,7 @@ export function TeamAttendanceSection() {
 	const fetchPillars = async () => {
 		try {
 			setLoading(true);
-			const res = await fetch("/api/admin/attendance/pillars", {
+			const res = await fetch("/api/attendance/pillars", {
 				headers: { Authorization: `Bearer ${token()}` },
 			});
 			if (!res.ok) throw new Error("Błąd pobierania filarów");
