@@ -1,11 +1,8 @@
 services:
   backend:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile
-      no_cache: true
+    image: ghcr.io/macions/sm-backend:latest
     ports:
-      - "127.0.0.1:3000:3000" # ZMIENIONE - TYLKO LOCALHOST!
+      - "127.0.0.1:3000:3000"
     environment:
       PORT: ${PORT}
       JWT_SECRET: ${JWT_SECRET}
@@ -40,15 +37,7 @@ services:
       - app-network
 
   frontend:
-    build:
-      context: .
-      dockerfile: Dockerfile
-      args:
-        - VITE_GOOGLE_CLIENT_ID=${VITE_GOOGLE_CLIENT_ID}
-        - VITE_API_URL=https://panel.silamlodych.pl
-        - VITE_HOST=0.0.0.0
-        - DOCKER_ENV=true
-        - VITE_ALLOWED_HOSTS=turbine-protector-aluminum.ngrok-free.dev
+    image: ghcr.io/macions/sm-frontend:latest
     ports:
       - "8090:80"
     environment:
