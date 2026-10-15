@@ -27,6 +27,10 @@ import Requests from "./pages/Requests/Requests";
 const Maintenance = lazy(() => import("@/pages/Maintenance/Maintenance"));
 import NotFound from "@/pages/404";
 
+// ⬇️⬇️⬇️ BYPASS MAINTENANCE — emaile, które mogą wejść mimo trybu serwisowego
+const MAINTENANCE_BYPASS_EMAILS = ["maksym.marczak@silamlodych.pl"];
+// ⬆️⬆️⬆️ KONIEC BYPASS
+
 const LoadingSpinner = () => (
 	<div
 		style={{
@@ -65,10 +69,12 @@ function AppRoutes() {
 	// ⬇️⬇️⬇️ JEDEN poprawny useEffect od maintenance + isAdmin ⬇️⬇️⬇️
 	useEffect(() => {
 		const refreshAuthAndMaintenance = () => {
-			// odczytaj rolę usera
+			// odczytaj rolę usera + bypass po emailu
 			try {
 				const u = JSON.parse(localStorage.getItem("user") || "{}");
-				setIsAdmin(u?.role === "admin");
+				const email = (u?.email || "").toLowerCase().trim();
+				const bypassByEmail = MAINTENANCE_BYPASS_EMAILS.includes(email);
+				setIsAdmin(u?.role === "admin" || bypassByEmail);
 			} catch {
 				setIsAdmin(false);
 			}
@@ -133,24 +139,23 @@ function AppRoutes() {
 
 	if (isLoading) return <LoadingSpinner />;
 
-if (isMaintenance && !isAdmin) {
-    // Pokaż Login TYLKO gdy user kliknął "Zaloguj się jako administrator"
-    const showLogin =
-        location.pathname === "/login" &&
-        location.search.includes("admin=1");
+	if (isMaintenance && !isAdmin) {
+		// Pokaż Login TYLKO gdy user kliknął "Zaloguj się jako administrator"
+		const showLogin =
+			location.pathname === "/login" && location.search.includes("admin=1");
 
-    return (
-        <Suspense fallback={<LoadingSpinner />}>
-            <Routes>
-                <Route
-                    path="/login"
-                    element={showLogin ? <Login /> : <Maintenance />}
-                />
-                <Route path="*" element={<Maintenance />} />
-            </Routes>
-        </Suspense>
-    );
-}
+		return (
+			<Suspense fallback={<LoadingSpinner />}>
+				<Routes>
+					<Route
+						path="/login"
+						element={showLogin ? <Login /> : <Maintenance />}
+					/>
+					<Route path="*" element={<Maintenance />} />
+				</Routes>
+			</Suspense>
+		);
+	}
 
 	if (!isAuthenticated) {
 		return (
@@ -169,7 +174,7 @@ if (isMaintenance && !isAdmin) {
 				<Route path="/login" element={<Navigate to="/dashboard" replace />} />
 				<Route
 					path="/onboarding"
-					element={<Onboarding onComplete={() => { }} />}
+					element={<Onboarding onComplete={() => {}} />}
 				/>
 				<Route path="/404" element={<NotFound />} />
 				<Route path="*" element={<NotFound />} />
