@@ -35,6 +35,8 @@ services:
     restart: unless-stopped
     networks:
       - app-network
+      - sm_mysql_backend
+      - sm_legacy_backend
 
   frontend:
     image: ghcr.io/macions/sm-frontend:latest
@@ -54,3 +56,7 @@ services:
 networks:
   app-network:
     driver: bridge
+  sm_mysql_backend:
+    external: true
+  sm_legacy_backend:
+    external: true
