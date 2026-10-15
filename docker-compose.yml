@@ -35,6 +35,14 @@ services:
       CONTRIBUTIONS_DB_NAME: ${CONTRIBUTIONS_DB_NAME}
       CONTRIBUTIONS_DB_PORT: ${CONTRIBUTIONS_DB_PORT}
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
+      SMTP_HOST: ${SMTP_HOST}
+      SMTP_PORT: ${SMTP_PORT}
+      SMTP_SECURE: ${SMTP_SECURE}
+      SMTP_USER: ${SMTP_USER}
+      SMTP_PASS: ${SMTP_PASS}
+      MAIL_FROM: "${MAIL_FROM}"
+      MAIL_REPLY_TO: "${MAIL_REPLY_TO}"
+      APP_URL: ${APP_URL}
     restart: unless-stopped
     networks:
       - app-network
