@@ -1,6 +1,6 @@
 services:
   backend:
-    image: ghcr.io/macions/sm-backend:latest
+    image: ghcr.io/macions/sm-backend:63ce8a8c4587fab0c473e0519291ba473ea9d034
     ports:
       - "127.0.0.1:3000:3000"
     environment:
@@ -51,7 +51,7 @@ services:
       - sm_mysql_data
 
   frontend:
-    image: ghcr.io/macions/sm-frontend:latest
+    image: ghcr.io/macions/sm-frontend:63ce8a8c4587fab0c473e0519291ba473ea9d034
     ports:
       - "8090:80"
     environment:
