@@ -37,6 +37,7 @@ services:
       - app-network
       - sm_mysql_backend
       - sm_legacy_backend
+      - sm_mysql_data
 
   frontend:
     image: ghcr.io/macions/sm-frontend:latest
@@ -59,4 +60,6 @@ networks:
   sm_mysql_backend:
     external: true
   sm_legacy_backend:
+    external: true
+  sm_mysql_data:
     external: true
