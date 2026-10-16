@@ -79,7 +79,7 @@
 @media (width <=768px) {
 	.layout {
 
-		padding-bottom: 50px;
+		padding-bottom: 5px;
 		flex-direction: column;
 		height: 100vh;
 		height: 100dvh;
