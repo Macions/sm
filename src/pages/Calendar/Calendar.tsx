@@ -14,7 +14,7 @@ import {
 	Link2,
 	AlertCircle,
 } from "lucide-react";
-
+import { logger } from "@/utils/logger";
 type TaskStatus = "todo" | "in_progress" | "review" | "done";
 type TaskPriority = "low" | "medium" | "high" | "urgent";
 
@@ -112,24 +112,24 @@ export default function Calendar() {
 			});
 
 			if (res.status === 401) {
-				console.log(" [Google] Brak autoryzacji - kontynuuję bez Google");
+				logger.debug(" [Google] Brak autoryzacji - kontynuuję bez Google");
 				setIsGoogleAuth(false);
 				return;
 			}
 
 			if (res.ok) {
 				const data = await res.json();
-				console.log("[Google] status data:", data);
+				logger.debug("[Google] status data:", data);
 				setIsGoogleAuth(data.authenticated);
 				if (data.authenticated) {
 					await fetchGoogleEvents();
 				}
 			} else {
-				console.warn("[Google] status HTTP:", res.status);
+				logger.warn("[Google] status HTTP:", res.status);
 				setIsGoogleAuth(false);
 			}
 		} catch (error) {
-			console.log(" [Google] Błąd sprawdzania autoryzacji:", error);
+			logger.debug(" [Google] Błąd sprawdzania autoryzacji:", error);
 			setIsGoogleAuth(false);
 		}
 	};
@@ -149,23 +149,23 @@ export default function Calendar() {
 			});
 
 			if (res.status === 401) {
-				console.log(" [Google] 401 - wyłączam Google");
+				logger.debug(" [Google] 401 - wyłączam Google");
 				setIsGoogleAuth(false);
 				return;
 			}
 
 			if (res.ok) {
 				const data = await res.json();
-				console.log(
+				logger.debug(
 					"[Google] events:",
 					Array.isArray(data) ? data.length : data,
 				);
 				setGoogleEvents(data);
 			} else {
-				console.warn("[Google] events HTTP:", res.status);
+				logger.warn("[Google] events HTTP:", res.status);
 			}
 		} catch (error) {
-			console.log(" [Google] Błąd pobierania wydarzeń:", error);
+			logger.debug(" [Google] Błąd pobierania wydarzeń:", error);
 		} finally {
 			setIsGoogleLoading(false);
 		}
@@ -177,7 +177,7 @@ export default function Calendar() {
 			const token = localStorage.getItem("accessToken");
 
 			if (!token) {
-				console.warn(" [Calendar] Brak tokena - pokazuję puste zadania");
+				logger.warn(" [Calendar] Brak tokena - pokazuję puste zadania");
 				setTasks([]);
 				setLoading(false);
 				return;
@@ -188,7 +188,7 @@ export default function Calendar() {
 			});
 
 			if (tasksRes.status === 401) {
-				console.warn(" [Calendar] 401 - pokazuję puste zadania");
+				logger.warn(" [Calendar] 401 - pokazuję puste zadania");
 				setTasks([]);
 				setLoading(false);
 				return;
@@ -201,7 +201,7 @@ export default function Calendar() {
 				setTasks([]);
 			}
 		} catch (error) {
-			console.error(" [Calendar] Błąd:", error);
+			logger.error(" [Calendar] Błąd:", error);
 			setTasks([]);
 		} finally {
 			setLoading(false);
@@ -209,7 +209,7 @@ export default function Calendar() {
 	};
 
 	useEffect(() => {
-		console.log(" [Calendar] Montowanie");
+		logger.debug(" [Calendar] Montowanie");
 		fetchTasks();
 		checkGoogleAuth();
 	}, []);
@@ -337,22 +337,6 @@ export default function Calendar() {
 		return [...taskEvents, ...googleEventsForDay];
 	};
 
-	const isToday = (day: number) => {
-		const today = new Date();
-		return (
-			day === today.getDate() &&
-			currentMonth === today.getMonth() &&
-			currentYear === today.getFullYear()
-		);
-	};
-
-	const isPast = (day: number) => {
-		const date = new Date(currentYear, currentMonth, day);
-		const today = new Date();
-		today.setHours(0, 0, 0, 0);
-		return date < today;
-	};
-
 	const formatDate = (dateStr: string) => {
 		const date = new Date(dateStr);
 		return date.toLocaleDateString("pl-PL", {
@@ -370,7 +354,7 @@ export default function Calendar() {
 		});
 	};
 
-	// Funkcja sprawdzająca czy można zgłosić nieobecność (minimum 24h przed)
+
 	const canReportAbsence = (eventDate: string): boolean => {
 		if (!eventDate) return false;
 		const now = new Date();
@@ -392,7 +376,7 @@ export default function Calendar() {
 		return diffDays >= 1;
 	};
 
-	// Zgłaszanie nieobecności na wydarzeniu Google Calendar
+
 	const handleReportGoogleAbsence = async (
 		eventId: string,
 		eventTitle: string,
@@ -406,10 +390,10 @@ export default function Calendar() {
 				return;
 			}
 
-			// Usuń prefiks "google-" jeśli jest
+
 			const cleanId = eventId.replace(/^google-/, "");
 			const url = `${API_URL}/api/calendar/events/${cleanId}/absence`;
-			console.log("[DEBUG] POST", url);
+			logger.debug("[DEBUG] POST", url);
 
 			const res = await fetch(url, {
 				method: "POST",
@@ -423,7 +407,7 @@ export default function Calendar() {
 				}),
 			});
 
-			console.log("[DEBUG] Response status:", res.status);
+			logger.debug("[DEBUG] Response status:", res.status);
 
 			if (res.ok) {
 				toast.success("Zgłoszono nieobecność!");
@@ -434,7 +418,7 @@ export default function Calendar() {
 				toast.error(error.message || "Nie udało się zgłosić nieobecności");
 			}
 		} catch (error) {
-			console.error("Błąd zgłaszania nieobecności:", error);
+			logger.error("Błąd zgłaszania nieobecności:", error);
 			toast.error("Wystąpił błąd podczas zgłaszania nieobecności");
 		} finally {
 			setIsReportingAbsence(false);
@@ -455,7 +439,7 @@ export default function Calendar() {
 	};
 
 	const handleTaskClick = (task: any) => {
-		console.log("[DEBUG] Kliknięte zadanie:", {
+		logger.debug("[DEBUG] Kliknięte zadanie:", {
 			id: task.id,
 			title: task.title,
 			source: task.source,
@@ -516,9 +500,6 @@ export default function Calendar() {
 		const dateMidnight = new Date(date);
 		dateMidnight.setHours(0, 0, 0, 0);
 		const isPastDate = dateMidnight < today;
-
-		const hasGoogleEvent = dayEvents.some((e) => e.source === "google");
-		const hasSystemTask = dayEvents.some((e) => e.source === "system");
 
 		return (
 			<div
@@ -739,7 +720,7 @@ export default function Calendar() {
 													<span>Spotkanie Google Meet</span>
 												</div>
 											)}
-										{/* Lista nieobecności — tylko dla organizatora */}
+
 										{selectedTask.source === "google" &&
 											selectedTask.isOrganizer &&
 											selectedTask.absentees &&
@@ -807,8 +788,8 @@ export default function Calendar() {
 										</div>
 									)}
 
-									{/* Przycisk dołącz do Meet (tylko dla Google) */}
-									{/* Przycisk dołącz do Meet (tylko dla Google) */}
+
+
 									{selectedTask.source === "google" &&
 										selectedTask.hangoutLink && (
 											<a
@@ -823,7 +804,7 @@ export default function Calendar() {
 											</a>
 										)}
 
-									{/* Przycisk zgłaszania nieobecności (tylko dla wydarzeń Google) */}
+
 									{selectedTask.source === "google" && (
 										<>
 											{selectedTask.absenceReported ? (
@@ -900,8 +881,8 @@ export default function Calendar() {
 																				? "#0b57d0"
 																				: "#4285f4"
 																			: STATUS_COLORS[
-																					event.status as TaskStatus
-																				],
+																			event.status as TaskStatus
+																			],
 																}}
 															/>
 															<div className={styles.taskInfo}>
@@ -939,13 +920,13 @@ export default function Calendar() {
 																	style={{
 																		color:
 																			PRIORITY_COLORS[
-																				event.priority as TaskPriority
+																			event.priority as TaskPriority
 																			],
 																	}}
 																>
 																	{
 																		PRIORITY_LABELS[
-																			event.priority as TaskPriority
+																		event.priority as TaskPriority
 																		]
 																	}
 																</span>

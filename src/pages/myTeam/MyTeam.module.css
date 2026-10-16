@@ -1,15 +1,6 @@
-/* =========================================================
-   MY TEAM – style 2026 (monochromatyczny minimalizm)
-   Bez gradientów, bez kolorów akcentowych.
-   Tylko szarości + bordery + subtelne tła.
-   ========================================================= */
-
-/* ---------- GLOBALNY RESET LAYOUTU ---------- */
 .page {
 	width: 100%;
 	min-height: 100vh;
-	padding: 32px 40px 64px;
-	background: #fafafa;
 	color: #111827;
 	font-size: 14px;
 	box-sizing: border-box;
@@ -27,7 +18,7 @@
 	}
 }
 
-/* ---------- STANY ---------- */
+
 .stateBox {
 	padding: 32px 24px;
 	background: #ffffff;
@@ -714,7 +705,7 @@
 	letter-spacing: 0.4px;
 }
 
-/* Priorytety – tylko odcienie szarości, różnią się kontrastem */
+
 .priority_low {
 	background: #ffffff;
 	color: #6b7280;
@@ -824,7 +815,7 @@
 	color: #111827;
 }
 
-/* Frekwencja – rozróżnienie przez wagę/kontrast, nie kolor */
+
 .cellPresent {
 	color: #111827;
 	font-weight: 800;

@@ -131,7 +131,7 @@ interface TeamLeavesResponse {
 	upcoming: TeamLeave[];
 	total: number;
 }
-/* -------- FREKWENCJA -------- */
+
 
 interface MemberAttendance {
 	total_meetings: number;
@@ -277,7 +277,7 @@ export default function MyTeam() {
 	const { user, loading: authLoading } = useAuth();
 	const navigate = useNavigate();
 
-	// frekwencja
+
 	const [attendanceData, setAttendanceData] = useState<MemberWithAttendance[]>(
 		[],
 	);
@@ -301,7 +301,7 @@ export default function MyTeam() {
 		}
 	}, [user, authLoading, navigate]);
 
-	// modal historii
+
 	const [historyOpen, setHistoryOpen] = useState(false);
 	const [historyLoading, setHistoryLoading] = useState(false);
 	const [historyError, setHistoryError] = useState<string | null>(null);
@@ -311,7 +311,7 @@ export default function MyTeam() {
 	);
 	const [leavesData, setLeavesData] = useState<MemberLeavesResponse | null>(null);
 
-	/* -------- ładowanie danych zespołu -------- */
+
 	const loadTeam = useCallback(async (teamId?: number | null) => {
 		setLoading(true);
 		setError(null);
@@ -331,7 +331,7 @@ export default function MyTeam() {
 		loadTeam();
 	}, [loadTeam]);
 
-	/* -------- ładowanie frekwencji -------- */
+
 	useEffect(() => {
 		if (!selectedTeamId) return;
 		let cancelled = false;
@@ -372,7 +372,7 @@ export default function MyTeam() {
 			cancelled = true;
 		};
 	}, [selectedTeamId]);
-	/* -------- zmiana zespołu (board/admin) -------- */
+
 	const handleTeamChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
 		const id = Number(e.target.value);
 		if (!Number.isNaN(id)) {
@@ -380,7 +380,7 @@ export default function MyTeam() {
 		}
 	};
 
-	/* -------- historia członka -------- */
+
 	const openHistory = async (member: Member) => {
 		setHistoryMember(member);
 		setHistoryOpen(true);
@@ -421,7 +421,7 @@ export default function MyTeam() {
 		);
 	}
 
-	/* -------- stany brzegowe -------- */
+
 	if (loading && !data) {
 		return (
 			<div className={styles.page}>
@@ -470,7 +470,7 @@ export default function MyTeam() {
 
 	const { team_stats } = data;
 
-	// ── Średnia frekwencja zespołu ──
+
 	const attendanceWithData = attendanceData.filter(
 		(m) => m.attendance && m.attendance.total_meetings > 0,
 	);
@@ -486,7 +486,7 @@ export default function MyTeam() {
 
 	return (
 		<div className={styles.page}>
-			{/* ---------- HEADER ---------- */}
+
 			<div className={styles.header}>
 				<div className={styles.headerLeft}>
 					<h1 className={styles.title}>{data.team?.name || "My Team"}</h1>
@@ -513,7 +513,7 @@ export default function MyTeam() {
 				)}
 			</div>
 
-			{/* ---------- KAFELKI STATYSTYK ---------- */}
+
 			<div className={styles.statsGrid}>
 				<StatCard label="Członkowie" value={String(team_stats.members_count)} />
 				<StatCard label="Projekty" value={String(team_stats.projects_count)} />
@@ -558,7 +558,7 @@ export default function MyTeam() {
 					/>
 				)}
 			</div>
-			{/* ---------- URLOPY ZESPOŁU ---------- */}
+
 			{teamLeaves && (teamLeaves.active.length > 0 || teamLeaves.upcoming.length > 0) && (
 				<section className={styles.section}>
 					<h2 className={styles.sectionTitle}>
@@ -618,7 +618,7 @@ export default function MyTeam() {
 					)}
 				</section>
 			)}
-			{/* ---------- KOORDYNATORZY ---------- */}
+
 			{data.coordinators.length > 0 && (
 				<section className={styles.section}>
 					<h2 className={styles.sectionTitle}>Koordynatorzy</h2>
@@ -640,7 +640,7 @@ export default function MyTeam() {
 				</section>
 			)}
 
-			{/* ---------- PROJEKTY ---------- */}
+
 			{data.projects.length > 0 && (
 				<section className={styles.section}>
 					<h2 className={styles.sectionTitle}>Projekty zespołu</h2>
@@ -682,7 +682,7 @@ export default function MyTeam() {
 				</section>
 			)}
 
-			{/* ---------- FREKWENCJA ZESPOŁU ---------- */}
+
 			{hasAttendance && (
 				<section className={styles.section}>
 					<h2 className={styles.sectionTitle}>
@@ -761,7 +761,7 @@ export default function MyTeam() {
 				</section>
 			)}
 
-			{/* ---------- CZŁONKOWIE (zadania) ---------- */}
+
 			<section className={styles.section}>
 				<h2 className={styles.sectionTitle}>
 					Członkowie{" "}
@@ -837,7 +837,7 @@ export default function MyTeam() {
 				)}
 			</section>
 
-			{/* ---------- MODAL HISTORII ---------- */}
+
 			{historyOpen && (
 				<div className={styles.modalOverlay} onClick={closeHistory}>
 					<div className={styles.modal} onClick={(e) => e.stopPropagation()}>

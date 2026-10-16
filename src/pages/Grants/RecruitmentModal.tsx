@@ -1,5 +1,4 @@
-﻿// src/pages/Grants/RecruitmentModal.tsx
-import { useEffect, useState } from "react";
+﻿import { useEffect, useState } from "react";
 import { X, Save } from "lucide-react";
 import toast from "react-hot-toast";
 import styles from "./Grants.module.css";

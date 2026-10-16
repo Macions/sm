@@ -42,7 +42,6 @@ export default function TrialPeriods() {
 	const [savingId, setSavingId] = useState<string | null>(null);
 	const [currentUser, setCurrentUser] = useState<any>(null);
 
-	// ── Sprawdzenie uprawnień ──
 	useEffect(() => {
 		const checkAccess = async () => {
 			try {
@@ -71,7 +70,7 @@ export default function TrialPeriods() {
 		checkAccess();
 	}, [navigate]);
 
-	// ── Fetch listy ──
+
 	const fetchUsers = async () => {
 		try {
 			setLoading(true);
@@ -94,7 +93,7 @@ export default function TrialPeriods() {
 		if (currentUser) fetchUsers();
 	}, [currentUser]);
 
-	// ── Zapis daty papierów ──
+
 	const savePapersDate = async (userId: string, date: string | null) => {
 		try {
 			setSavingId(userId);
@@ -125,7 +124,7 @@ export default function TrialPeriods() {
 		}
 	};
 
-	// ── Oznacz papiery jako wysłane ──
+
 	const togglePapersSubmitted = async (userId: string, current: boolean) => {
 		try {
 			setSavingId(userId);
@@ -144,10 +143,10 @@ export default function TrialPeriods() {
 				prev.map((u) =>
 					u.id === userId
 						? {
-								...u,
-								papersSubmitted: updated.papersSubmitted,
-								papersSubmittedAt: updated.papersSubmittedAt,
-							}
+							...u,
+							papersSubmitted: updated.papersSubmitted,
+							papersSubmittedAt: updated.papersSubmittedAt,
+						}
 						: u,
 				),
 			);
@@ -164,7 +163,7 @@ export default function TrialPeriods() {
 		}
 	};
 
-	// ── Zakończ okres próbny ──
+
 	const finishTrial = async (userId: string, name: string) => {
 		if (!confirm(`Zakończyć okres próbny dla ${name}?`)) return;
 		try {
@@ -185,7 +184,7 @@ export default function TrialPeriods() {
 		}
 	};
 
-	// ── Filtrowanie ──
+
 	const filteredUsers = useMemo(() => {
 		const today = new Date();
 		today.setHours(0, 0, 0, 0);
@@ -222,7 +221,7 @@ export default function TrialPeriods() {
 		});
 	}, [users, searchTerm, filter]);
 
-	// ── Statystyki ──
+
 	const stats = useMemo(() => {
 		const today = new Date();
 		today.setHours(0, 0, 0, 0);
@@ -284,7 +283,7 @@ export default function TrialPeriods() {
 				</div>
 			</div>
 
-			{/* Statystyki */}
+
 			<div className={styles.stats}>
 				<div className={styles.statCard}>
 					<Users size={20} className={styles.statCard__icon} />
@@ -320,7 +319,7 @@ export default function TrialPeriods() {
 				</div>
 			</div>
 
-			{/* Filtry */}
+
 			<div className={styles.filters}>
 				<div className={styles.filters__search}>
 					<Search size={18} className={styles.filters__searchIcon} />
@@ -355,7 +354,7 @@ export default function TrialPeriods() {
 				</div>
 			</div>
 
-			{/* Tabela */}
+
 			{filteredUsers.length === 0 ? (
 				<div className={styles.emptyState}>
 					<ClipboardCheck size={48} className={styles.emptyState__icon} />

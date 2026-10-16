@@ -98,10 +98,27 @@ export function TeamAttendanceSection() {
 	const fetchPillars = async () => {
 		try {
 			setLoading(true);
-			const res = await fetch("/api/admin/attendance/pillars", {
+			const res = await fetch("/api/attendance/pillars", {
 				headers: { Authorization: `Bearer ${token()}` },
 			});
-			if (!res.ok) throw new Error("Błąd pobierania filarów");
+
+			console.log("[fetchPillars] status:", res.status, res.statusText);
+			console.log("[fetchPillars] ok:", res.ok);
+			console.log("[fetchPillars] token:", token() ? "jest" : "brak");
+
+			if (!res.ok) {
+
+				let errorBody = "";
+				try {
+					errorBody = await res.text();
+					console.error("[fetchPillars] body:", errorBody);
+				} catch { }
+
+				throw new Error(
+					`Błąd pobierania filarów: ${res.status} ${res.statusText} — ${errorBody}`,
+				);
+			}
+
 			const data = await res.json();
 			setPillars(data.pillars || []);
 		} catch (err) {
@@ -130,7 +147,7 @@ export function TeamAttendanceSection() {
 		setMembersLoading(pillarName);
 		try {
 			const res = await fetch(
-				`/api/admin/attendance/pillars/${encodeURIComponent(pillarName)}/members`,
+				`/api/attendance/pillars/${encodeURIComponent(pillarName)}/members`,
 				{ headers: { Authorization: `Bearer ${token()}` } },
 			);
 			if (!res.ok) throw new Error("Błąd pobierania członków");
@@ -149,7 +166,7 @@ export function TeamAttendanceSection() {
 		setSubteamsLoading(pillarName);
 		try {
 			const res = await fetch(
-				`/api/admin/attendance/pillars/${encodeURIComponent(pillarName)}/subteams`,
+				`/api/attendance/pillars/${encodeURIComponent(pillarName)}/subteams`,
 				{ headers: { Authorization: `Bearer ${token()}` } },
 			);
 			if (!res.ok) throw new Error("Błąd pobierania subteamów");
@@ -171,7 +188,7 @@ export function TeamAttendanceSection() {
 		setSubteamMembersLoading(subteamId);
 		try {
 			const res = await fetch(
-				`/api/admin/attendance/subteams/${subteamId}/members`,
+				`/api/attendance/subteams/${subteamId}/members`,
 				{ headers: { Authorization: `Bearer ${token()}` } },
 			);
 			if (!res.ok) throw new Error("Błąd pobierania członków subteamu");
@@ -193,7 +210,7 @@ export function TeamAttendanceSection() {
 		setChartLoading(true);
 		try {
 			const res = await fetch(
-				`/api/admin/attendance/pillars/${encodeURIComponent(pillarName)}/chart?months=12`,
+				`/api/attendance/pillars/${encodeURIComponent(pillarName)}/chart?months=12`,
 				{ headers: { Authorization: `Bearer ${token()}` } },
 			);
 			if (!res.ok) throw new Error("Błąd pobierania wykresu");
@@ -238,14 +255,14 @@ export function TeamAttendanceSection() {
 		setExpandedPillar(null);
 		setExpandedSubteam(null);
 
-		// DODAJ TO:
+
 		const token = localStorage.getItem("accessToken") || "";
 		fetch("/api/admin/members-with-card", {
 			headers: { Authorization: `Bearer ${token}` },
 		})
 			.then((r) => (r.ok ? r.json() : null))
 			.then((d) => setWithCard(d?.total ?? null))
-			.catch(() => {});
+			.catch(() => { });
 
 		fetchPillars();
 	};
@@ -295,7 +312,7 @@ export function TeamAttendanceSection() {
 				</div>
 			)}
 
-			{/* Wykres słupkowy filarów */}
+
 			<div className={styles.chartWrapper}>
 				<ResponsiveContainer width="100%" height={320}>
 					<BarChart
@@ -333,7 +350,7 @@ export function TeamAttendanceSection() {
 				</ResponsiveContainer>
 			</div>
 
-			{/* Lista filarów */}
+
 			<div className={styles.list}>
 				{pillars.map((pillar) => {
 					const isExpanded = expandedPillar === pillar.pillar_name;
@@ -398,7 +415,7 @@ export function TeamAttendanceSection() {
 										))
 									)}
 
-									{/* Subteamy w tym filarze */}
+
 									{stLoading ? (
 										<div className={styles.subteamsBlock}>
 											<div className={styles.membersLoading}>
@@ -496,7 +513,7 @@ export function TeamAttendanceSection() {
 				})}
 			</div>
 
-			{/* Wykres trendu wybranego filaru */}
+
 			{chartPillar && (
 				<div className={styles.trendSection}>
 					<h3 className={styles.trendTitle}>

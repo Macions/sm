@@ -244,11 +244,13 @@ body {
 }
 
 @keyframes pulse {
+
 	0%,
 	100% {
 		opacity: 1;
 		transform: scale(1);
 	}
+
 	50% {
 		opacity: 0.6;
 		transform: scale(0.8);
@@ -347,11 +349,9 @@ body {
 }
 
 .nodeRoot {
-	background: linear-gradient(
-		135deg,
-		var(--purple-700, #4c2cc7),
-		var(--purple-900, #2e1a6b)
-	) !important;
+	background: linear-gradient(135deg,
+			var(--purple-700, #4c2cc7),
+			var(--purple-900, #2e1a6b)) !important;
 	color: #fff !important;
 	border: none !important;
 
@@ -414,12 +414,14 @@ body {
 }
 
 @keyframes highlightPulse {
+
 	0%,
 	100% {
 		box-shadow:
 			0 0 0 4px rgb(92 58 232 / 20%),
 			var(--shadow-card);
 	}
+
 	50% {
 		box-shadow:
 			0 0 0 8px rgb(92 58 232 / 15%),
@@ -445,6 +447,7 @@ body {
 		opacity: 0;
 		transform: translateY(-12px);
 	}
+
 	to {
 		opacity: 1;
 		transform: translateY(0);
@@ -472,11 +475,9 @@ body {
 	width: 32px;
 	height: 32px;
 	border-radius: 50%;
-	background: linear-gradient(
-		135deg,
-		var(--purple-600, #5c3ae8),
-		var(--purple-800, #3b2196)
-	);
+	background: linear-gradient(135deg,
+			var(--purple-600, #5c3ae8),
+			var(--purple-800, #3b2196));
 	color: #fff;
 	display: flex;
 	align-items: center;
@@ -595,11 +596,9 @@ body {
 .promptLine {
 	width: 2px;
 	height: 30px;
-	background: linear-gradient(
-		to bottom,
-		rgb(124 58 237 / 40%),
-		rgb(124 58 237 / 80%)
-	);
+	background: linear-gradient(to bottom,
+			rgb(124 58 237 / 40%),
+			rgb(124 58 237 / 80%));
 	position: relative;
 }
 
@@ -611,11 +610,9 @@ body {
 	transform: translateX(-50%);
 	width: 2px;
 	height: 20px;
-	background: linear-gradient(
-		to bottom,
-		rgb(124 58 237 / 80%),
-		rgb(124 58 237 / 20%)
-	);
+	background: linear-gradient(to bottom,
+			rgb(124 58 237 / 80%),
+			rgb(124 58 237 / 20%));
 }
 
 .promptArrowHead {
@@ -624,21 +621,25 @@ body {
 }
 
 @keyframes promptFloat {
+
 	0%,
 	100% {
 		transform: translateY(0);
 	}
+
 	50% {
 		transform: translateY(-4px);
 	}
 }
 
 @keyframes arrowPulse {
+
 	0%,
 	100% {
 		transform: translateY(0);
 		opacity: 0.7;
 	}
+
 	50% {
 		transform: translateY(6px);
 		opacity: 1;
@@ -668,11 +669,13 @@ body {
 		transform: rotate(360deg);
 	}
 }
+
 .childrenContainer .treeNode {
 	width: 100%;
 	max-width: 100%;
 	align-items: center;
 }
+
 .error {
 	display: flex;
 	flex-direction: column;
@@ -1189,6 +1192,7 @@ a {
 		padding-left: 8px;
 	}
 }
+
 .personCardHighlighted {
 	background: linear-gradient(135deg, #ede9fe44, #c3b5fd27) !important;
 	border-color: var(--purple-600, #5c3ae8) !important;
@@ -1234,11 +1238,7 @@ a {
 	max-width: 400px;
 }
 
-.childrenContainer
-	.childrenContainer
-	.childrenContainer
-	.childrenContainer
-	.nodeCard {
+.childrenContainer .childrenContainer .childrenContainer .childrenContainer .nodeCard {
 	width: 70%;
 	max-width: 360px;
 }
@@ -1274,15 +1274,12 @@ a {
 }
 
 @media (max-width: 768px) {
+
 	.nodeCard,
 	.childrenContainer .nodeCard,
 	.childrenContainer .childrenContainer .nodeCard,
 	.childrenContainer .childrenContainer .childrenContainer .nodeCard,
-	.childrenContainer
-		.childrenContainer
-		.childrenContainer
-		.childrenContainer
-		.nodeCard {
+	.childrenContainer .childrenContainer .childrenContainer .childrenContainer .nodeCard {
 		width: 100% !important;
 		max-width: 100% !important;
 	}
@@ -1296,9 +1293,9 @@ a {
 		padding-left: 0 !important;
 	}
 }
-/* Structure.module.css - kompletny plik */
 
-/* ===== GŁÓWNE STYLE ===== */
+
+
 .structure {
 	max-width: 1400px;
 	margin: 0 auto;
@@ -1308,7 +1305,7 @@ a {
 		Arial, sans-serif;
 }
 
-/* ===== HEADER ===== */
+
 .header {
 	display: flex;
 	align-items: flex-start;
@@ -1348,7 +1345,7 @@ a {
 	flex-wrap: wrap;
 }
 
-/* ===== STATYSTYKI ===== */
+
 .header__stats {
 	display: flex;
 	align-items: center;
@@ -1387,7 +1384,7 @@ a {
 	font-weight: 500;
 }
 
-/* ===== PRZYCISK PRZEŁĄCZANIA WIDOKU ===== */
+
 .viewToggle {
 	display: flex;
 	background: var(--gray-100);
@@ -1427,7 +1424,7 @@ a {
 	color: var(--purple-700);
 }
 
-/* ===== WYSZUKIWANIE ===== */
+
 .searchWrapper {
 	margin-bottom: 32px;
 }
@@ -1489,12 +1486,12 @@ a {
 	color: var(--gray-700);
 }
 
-/* ===== DRZEWO ===== */
+
 .treeContainer {
 	margin-top: 8px;
 }
 
-/* ===== WĘZŁY DRZEWA ===== */
+
 .treeNode {
 	position: relative;
 }
@@ -1715,7 +1712,7 @@ a {
 	background: rgba(255, 255, 255, 0.25);
 }
 
-/* ===== LISTA OSÓB ===== */
+
 .peopleList {
 	padding: 12px 0 8px 64px;
 	display: grid;
@@ -1801,14 +1798,14 @@ a {
 	color: var(--purple-600);
 }
 
-/* ===== KONTENER DZIECI ===== */
+
 .childrenContainer {
 	padding-left: 32px;
 	border-left: 2px solid var(--gray-200);
 	margin-left: 16px;
 }
 
-/* ===== WIDOK TEKSTOWY ===== */
+
 .textView {
 	padding: 0;
 }
@@ -1903,7 +1900,7 @@ a {
 	color: inherit;
 }
 
-/* Custom scrollbar dla textViewBox */
+
 .textViewBox::-webkit-scrollbar {
 	width: 8px;
 }
@@ -1923,7 +1920,7 @@ a {
 	background: var(--gray-400);
 }
 
-/* ===== ŁADOWANIE I BŁĘDY ===== */
+
 .loading {
 	display: flex;
 	flex-direction: column;
@@ -1987,7 +1984,7 @@ a {
 	transform: translateY(-2px);
 }
 
-/* ===== PROMPT ===== */
+
 .promptWrapper {
 	display: flex;
 	justify-content: center;
@@ -2027,7 +2024,7 @@ a {
 	margin-top: -4px;
 }
 
-/* ===== RESPONSYWNOŚĆ ===== */
+
 @media (max-width: 1200px) {
 	.structure {
 		padding: 24px 16px;
@@ -2197,28 +2194,28 @@ a {
 	}
 }
 
-/* ===== DODATKOWE ULEPSZENIA ===== */
-/* Smooth transitions dla wszystkich elementów */
+
+
 * {
 	transition-property: background, border-color, color, box-shadow, transform;
 	transition-duration: 0.2s;
 	transition-timing-function: ease;
 }
 
-/* Lepsze style dla focus */
+
 button:focus-visible,
 input:focus-visible {
 	outline: 2px solid var(--purple-400);
 	outline-offset: 2px;
 }
 
-/* Style dla zaznaczania tekstu w boxie */
+
 .textViewPre::selection {
 	background: var(--purple-200);
 	color: var(--gray-900);
 }
 
-/* Style dla drukowania */
+
 @media print {
 	.structure {
 		padding: 0;

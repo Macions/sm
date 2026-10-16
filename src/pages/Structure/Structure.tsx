@@ -312,7 +312,7 @@ function TreeNode({
 	);
 }
 function TextView({ structureData }: { structureData: Node }) {
-	// Grupujemy osoby po ID, żeby zebrać wszystkie ich role z kontekstem
+
 	const peopleWithAllRoles = useMemo(() => {
 		const peopleMap = new Map<
 			string,
@@ -324,56 +324,56 @@ function TextView({ structureData }: { structureData: Node }) {
 				node.people.forEach((person) => {
 					let contextualRole = person.role;
 
-					// SPECJALNE PRZYPADKI - ważniejsze od reszty
-					// Wiceprezesi - bez "Zarząd"
+
+
 					if (person.role === "Wiceprezes ds. dokumentów i składek") {
 						contextualRole = "Wiceprezes ds. dokumentów i składek";
 					} else if (person.role === "Wiceprezes ds. rekrutacji") {
 						contextualRole = "Wiceprezes ds. rekrutacji";
 					}
-					// Prezes
+
 					else if (person.role === "Prezes") {
 						contextualRole = "Prezes Zarządu";
 					}
-					// Członek zarządu
+
 					else if (person.role === "Członek zarządu") {
 						contextualRole = "Członek Zarządu";
 					}
-					// Dyrektor Operacyjny
+
 					else if (person.role === "Dyrektor Operacyjny") {
 						contextualRole = "Dyrektor Operacyjny";
 					}
-					// Rzecznik organizacji
+
 					else if (person.role === "Rzecznik organizacji") {
 						contextualRole = "Rzecznik organizacji";
 					}
-					// Koordynator
+
 					else if (person.role === "Koordynator") {
 						contextualRole = `Koordynator ${node.name}`;
 					}
-					// Pełnomocnicy - pomijamy nazwę węzła i zamieniamy na "Pełnomocnik"
+
 					else if (
 						person.role.startsWith("Peł.") ||
 						person.role.startsWith("peł.") ||
 						person.role.includes("Peł. ") ||
 						person.role.includes("peł. ")
 					) {
-						// Zamieniamy "Peł." lub "peł." na "Pełnomocnik"
+
 						contextualRole = person.role
 							.replace(/Peł\.\s*/g, "Pełnomocnik ")
 							.replace(/pe?eł\.\s*/g, "Pełnomocnik ")
 							.replace(/Peł\s/g, "Pełnomocnik ")
 							.replace(/pe?eł\s/g, "Pełnomocnik ");
 					}
-					// Jeśli ktoś jest w grupie "Pełnomocnicy" i ma rolę "Członek"
+
 					else if (person.role === "Członek" && node.name === "Pełnomocnicy") {
 						contextualRole = "Pełnomocnik";
 					}
-					// Mentorzy - zamieniamy na "Mentor"
+
 					else if (person.role === "Członek" && node.name === "Mentorzy") {
 						contextualRole = "Mentor";
 					}
-					// Inne przypadki - dodajemy kontekst
+
 					else if (
 						person.role === "Przewodniczący" ||
 						person.role === "Przewodnicząca"
@@ -387,12 +387,12 @@ function TextView({ structureData }: { structureData: Node }) {
 					} else if (person.role === "Sekretarz") {
 						contextualRole = `${node.name} (${person.role})`;
 					} else if (person.role === "Członek") {
-						// Dla zwykłego członka - pokazujemy kontekst
+
 						contextualRole = `${node.name} (Członek)`;
 					} else if (person.role.startsWith("Członek ")) {
 						contextualRole = person.role;
 					} else {
-						// Dla innych ról
+
 						contextualRole = `${node.name} (${person.role})`;
 					}
 
@@ -419,23 +419,23 @@ function TextView({ structureData }: { structureData: Node }) {
 		return Array.from(peopleMap.values());
 	}, [structureData]);
 
-	// Funkcja do filtrowania i czyszczenia ról
+
 	const cleanAndFilterRoles = (roleContexts: string[]): string[] => {
-		// 1. Najpierw sprawdzamy czy są jakieś ważne role
+
 		const importantRoles = roleContexts.filter((role) => {
-			// Pomijamy samego "Członka"
+
 			if (role === "Członek") return false;
-			// Pomijamy "Nazwa (Członek)" jeśli jest inna ważniejsza rola
+
 			if (role.includes("(Członek)")) return false;
 			return true;
 		});
 
-		// 2. Jeśli są ważne role, zwracamy tylko je
+
 		if (importantRoles.length > 0) {
 			return importantRoles;
 		}
 
-		// 3. Jeśli nie ma ważnych ról, ale jest "Członek" z kontekstem
+
 		const memberRoles = roleContexts.filter((role) => {
 			if (role === "Członek") return false;
 			if (role.includes("(Członek)")) return true;
@@ -446,11 +446,11 @@ function TextView({ structureData }: { structureData: Node }) {
 			return memberRoles;
 		}
 
-		// 4. Jeśli nie ma żadnej roli
+
 		return ["Brak funkcji"];
 	};
 
-	// Funkcja do generowania tekstu listy
+
 	const generateListText = useMemo(() => {
 		return peopleWithAllRoles
 			.map((person, index) => {
@@ -461,7 +461,7 @@ function TextView({ structureData }: { structureData: Node }) {
 			.join("\n");
 	}, [peopleWithAllRoles]);
 
-	// Funkcja do kopiowania całego tekstu
+
 	const copyAllToClipboard = () => {
 		navigator.clipboard
 			.writeText(generateListText)
@@ -493,9 +493,9 @@ function TextView({ structureData }: { structureData: Node }) {
 						{peopleWithAllRoles.length === 1
 							? "osoba"
 							: peopleWithAllRoles.length % 10 >= 2 &&
-								  peopleWithAllRoles.length % 10 <= 4 &&
-								  (peopleWithAllRoles.length % 100 < 10 ||
-										peopleWithAllRoles.length % 100 >= 20)
+								peopleWithAllRoles.length % 10 <= 4 &&
+								(peopleWithAllRoles.length % 100 < 10 ||
+									peopleWithAllRoles.length % 100 >= 20)
 								? "osoby"
 								: "osób"}
 					</p>
@@ -515,8 +515,8 @@ function TextView({ structureData }: { structureData: Node }) {
 		</div>
 	);
 }
-// Znajdź linię: export default function Structure() {
-// ZMIEŃ całą funkcję Structure na poniższą:
+
+
 
 export default function Structure() {
 	const [searchTerm, setSearchTerm] = useState("");
@@ -524,7 +524,7 @@ export default function Structure() {
 	const [loading, setLoading] = useState(true);
 	const [viewMode, setViewMode] = useState<"tree" | "text">("tree");
 
-	// DODAJ tę sekcję:
+
 	const currentUser = useMemo(() => {
 		try {
 			const userStr = localStorage.getItem("user");
@@ -539,7 +539,7 @@ export default function Structure() {
 
 	const isKasperBrudniewicz = useMemo(() => {
 		if (!currentUser) return false;
-		// Sprawdzamy po emailu - to bezpieczniejsze
+
 		return currentUser.email === "kasper.brudniewicz@silamlodych.pl";
 	}, [currentUser]);
 
@@ -672,7 +672,7 @@ export default function Structure() {
 		);
 	}
 
-	// ZMIEŃ sekcję return na poniższą:
+
 	return (
 		<div className={styles.structure}>
 			<div className={styles.header}>
@@ -705,7 +705,7 @@ export default function Structure() {
 						</div>
 					</div>
 
-					{/* DODAJ ten przycisk - tylko dla Kaspera Brudniewicza */}
+
 					{isKasperBrudniewicz && (
 						<div className={styles.viewToggle}>
 							<button
@@ -727,7 +727,7 @@ export default function Structure() {
 				</div>
 			</div>
 
-			{/* Ukryj wyszukiwarkę gdy widok tekstowy jest aktywny */}
+
 			{viewMode === "tree" && (
 				<div className={styles.searchWrapper}>
 					<div className={styles.searchBox}>
@@ -752,7 +752,7 @@ export default function Structure() {
 			)}
 
 			<div className={styles.treeContainer}>
-				{/* ZMIEŃ to: */}
+
 				{viewMode === "tree" ? (
 					<TreeNode node={structureData} isRoot searchTerm={searchTerm} />
 				) : (

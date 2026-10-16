@@ -264,7 +264,7 @@ function ArchivedTasksList({
 							onView={onView}
 							onEdit={undefined}
 							onDelete={onDelete}
-							onStatusChange={() => {}}
+							onStatusChange={() => { }}
 							onFeedback={undefined}
 						/>
 					))}
@@ -289,7 +289,7 @@ function Comments({ taskId }: { taskId: string; currentUser: User }) {
 				setComments(data);
 			}
 		} catch (error) {
-			console.error("Błąd pobierania komentarzy:", error);
+			logger.error("Błąd pobierania komentarzy:", error);
 		} finally {
 			setLoading(false);
 		}
@@ -316,7 +316,7 @@ function Comments({ taskId }: { taskId: string; currentUser: User }) {
 				toast.success("Komentarz dodany!");
 			}
 		} catch (error) {
-			console.error("Błąd dodawania komentarza:", error);
+			logger.error("Błąd dodawania komentarza:", error);
 			toast.error("Nie udało się dodać komentarza");
 		}
 	};
@@ -658,7 +658,7 @@ function TaskDetailModal({
 
 			toast.success("Plik pobrany!");
 		} catch (error) {
-			console.error("Błąd pobierania pliku:", error);
+			logger.error("Błąd pobierania pliku:", error);
 			toast.error("Nie udało się pobrać pliku");
 		}
 	};
@@ -793,10 +793,10 @@ function TaskDetailModal({
 							<div className={styles.detailValue}>
 								{task.assignedUsers && task.assignedUsers.length > 0 ? (
 									currentUser.role === "admin" ||
-									currentUser.role === "board" ||
-									currentUser.role === "Prezes" ||
-									currentUser.role === "Wiceprezes" ||
-									currentUser.id === task.createdBy ? (
+										currentUser.role === "board" ||
+										currentUser.role === "Prezes" ||
+										currentUser.role === "Wiceprezes" ||
+										currentUser.id === task.createdBy ? (
 										<div className={styles.detailAssigneesWrapper}>
 											<div className={styles.detailAssigneesSummary}>
 												<Users size={16} />
@@ -1028,13 +1028,13 @@ function TaskCard({
 
 	const currentUserStatus = isMultiUser
 		? task.assignees?.find((a) => a.userId === currentUser.id)?.status ||
-			task.status
+		task.status
 		: task.status;
 
 	const canChangeStatus = isMultiUser
 		? task.assignedUsers?.includes(currentUser.id) || false
 		: task.assignedTo === currentUser.id ||
-			(task.assignedUsers && task.assignedUsers.includes(currentUser.id));
+		(task.assignedUsers && task.assignedUsers.includes(currentUser.id));
 
 	const getAssignedNames = () => {
 		if (isMultiUser && task.assignees && task.assignees.length > 0) {
@@ -1249,7 +1249,7 @@ function TaskCard({
 								if (onDelete) {
 									onDelete(task);
 								} else {
-									console.error("onDelete jest undefined!");
+									logger.error("onDelete jest undefined!");
 								}
 							}}
 							title="Usuń"
@@ -1354,7 +1354,7 @@ function TaskModal({
 					setGroups(data);
 				}
 			} catch (error) {
-				console.error("Błąd pobierania grup:", error);
+				logger.error("Błąd pobierania grup:", error);
 			}
 		};
 		if (isOpen) {
@@ -1388,7 +1388,7 @@ function TaskModal({
 					setAvailabilityConflicts(data.conflicts || []);
 				}
 			} catch (e) {
-				console.error("Błąd sprawdzania dostępności:", e);
+				logger.error("Błąd sprawdzania dostępności:", e);
 			}
 		};
 
@@ -2133,7 +2133,7 @@ export default function Tasks() {
 				setArchivedTasks(archived);
 			}
 		} catch (error) {
-			console.error("Błąd pobierania zarchiwizowanych:", error);
+			logger.error("Błąd pobierania zarchiwizowanych:", error);
 		} finally {
 			setLoadingArchived(false);
 		}
@@ -2169,7 +2169,7 @@ export default function Tasks() {
 					setPillars(pillarNames);
 				}
 			} catch (error) {
-				console.error("Błąd pobierania:", error);
+				logger.error("Błąd pobierania:", error);
 			}
 		};
 		fetchTeamsAndPillars();
@@ -2294,7 +2294,7 @@ export default function Tasks() {
 
 			if (tasksRes.ok) {
 				const data = await tasksRes.json();
-				console.log(
+				logger.debug(
 					"RAW TASKS FROM API:",
 					data.map((t: any) => ({
 						id: t.id,
@@ -2352,7 +2352,7 @@ export default function Tasks() {
 						assignees: assignees,
 					};
 				});
-				console.log(
+				logger.debug(
 					"MAPPED TASKS:",
 					mappedTasks.map((t: Task) => ({
 						id: t.id,
@@ -2374,7 +2374,7 @@ export default function Tasks() {
 					} as User),
 				);
 
-				console.log(
+				logger.debug(
 					"VISIBLE:",
 					visibleTasks.map((t: Task) => t.title),
 				);
@@ -2454,7 +2454,7 @@ export default function Tasks() {
 			setIsRatingModalOpen(false);
 			setRatingTask(null);
 		} catch (error) {
-			console.error("Błąd zapisu oceny:", error);
+			logger.error("Błąd zapisu oceny:", error);
 			toast.error("Nie udało się zapisać oceny");
 		}
 	};
@@ -2475,7 +2475,7 @@ export default function Tasks() {
 				}),
 			});
 		} catch (error) {
-			console.error("Błąd wysyłki powiadomienia:", error);
+			logger.error("Błąd wysyłki powiadomienia:", error);
 		}
 	};
 
@@ -2529,13 +2529,13 @@ export default function Tasks() {
 					tasks.map((t) =>
 						t.id === task.id
 							? {
-									...t,
-									feedbackText: data.feedbackText || feedbackText,
-									feedbackFile: data.feedbackFile,
-									feedbackFileName: data.feedbackFileName,
-									feedbackSubmittedAt:
-										data.feedbackSubmittedAt || new Date().toISOString(),
-								}
+								...t,
+								feedbackText: data.feedbackText || feedbackText,
+								feedbackFile: data.feedbackFile,
+								feedbackFileName: data.feedbackFileName,
+								feedbackSubmittedAt:
+									data.feedbackSubmittedAt || new Date().toISOString(),
+							}
 							: t,
 					),
 				);
@@ -2548,7 +2548,7 @@ export default function Tasks() {
 				throw new Error(error.error || "Błąd zapisu");
 			}
 		} catch (error) {
-			console.error("Błąd wysyłania odpowiedzi:", error);
+			logger.error("Błąd wysyłania odpowiedzi:", error);
 			toast.error(
 				error instanceof Error
 					? error.message
@@ -2581,7 +2581,7 @@ export default function Tasks() {
 					);
 				}
 			} catch (error) {
-				console.error("Błąd pobierania projektów:", error);
+				logger.error("Błąd pobierania projektów:", error);
 			}
 		};
 		fetchProjects();
@@ -2626,7 +2626,7 @@ export default function Tasks() {
 				toast.error(`Nie udało się usunąć: ${error}`);
 			}
 		} catch (error) {
-			console.error("Błąd usuwania:", error);
+			logger.error("Błąd usuwania:", error);
 
 			setTasks((prev) => prev.filter((t) => t.id !== taskToDelete.id));
 			setArchivedTasks((prev) => prev.filter((t) => t.id !== taskToDelete.id));
@@ -2729,11 +2729,11 @@ export default function Tasks() {
 				);
 			} else {
 				const errorText = await response.text();
-				console.error("Błąd response:", response.status, errorText);
+				logger.error("Błąd response:", response.status, errorText);
 				throw new Error(`Błąd zapisu: ${response.status}`);
 			}
 		} catch (error) {
-			console.error("Błąd zapisywania zadania:", error);
+			logger.error("Błąd zapisywania zadania:", error);
 			toast.error("Nie udało się zapisać zadania");
 		}
 	};
@@ -2789,7 +2789,7 @@ export default function Tasks() {
 						toast.error(error.error || "Nie udało się zmienić statusu");
 					}
 				} catch (error) {
-					console.error("Błąd zmiany statusu:", error);
+					logger.error("Błąd zmiany statusu:", error);
 					toast.error("Nie udało się zmienić statusu");
 				}
 				return;
@@ -2832,7 +2832,7 @@ export default function Tasks() {
 					}
 				}
 			} catch (error) {
-				console.error("Błąd zmiany statusu:", error);
+				logger.error("Błąd zmiany statusu:", error);
 				toast.error("Nie udało się zmienić statusu");
 			} finally {
 				setIsUpdating(false);
@@ -2934,13 +2934,13 @@ export default function Tasks() {
 						currentUser.role === "board" ||
 						currentUser.isLeader === true ||
 						currentUser.isPillarCoordinator === true) && (
-						<button
-							className={`${styles.archivedToggleBtn} ${showArchived ? styles.archivedToggleBtnActive : ""}`}
-							onClick={() => setShowArchived(!showArchived)}
-						>
-							{showArchived ? "Pokaż aktywne" : "Zarchiwizowane"}
-						</button>
-					)}
+							<button
+								className={`${styles.archivedToggleBtn} ${showArchived ? styles.archivedToggleBtnActive : ""}`}
+								onClick={() => setShowArchived(!showArchived)}
+							>
+								{showArchived ? "Pokaż aktywne" : "Zarchiwizowane"}
+							</button>
+						)}
 				</div>
 			</div>
 

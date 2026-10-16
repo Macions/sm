@@ -9,9 +9,6 @@ const api = axios.create({
 	withCredentials: true,
 });
 
-// ============================================================
-// REQUEST INTERCEPTOR
-// ============================================================
 api.interceptors.request.use(
 	(config) => {
 		const token = localStorage.getItem("accessToken");
@@ -23,9 +20,9 @@ api.interceptors.request.use(
 	(error) => Promise.reject(error),
 );
 
-// ============================================================
-// LOGOUT
-// ============================================================
+
+
+
 const handleLogout = () => {
 	localStorage.removeItem("accessToken");
 	localStorage.removeItem("refreshToken");
@@ -49,9 +46,9 @@ const handleLogout = () => {
 	}
 };
 
-// ============================================================
-// REFRESH TOKEN QUEUE
-// ============================================================
+
+
+
 let isRefreshing = false;
 let failedQueue: Array<{
 	resolve: (token: string) => void;
@@ -73,29 +70,29 @@ const processQueue = (error: any | null, token: string | null = null) => {
 const isRefreshUrl = (url?: string) =>
 	typeof url === "string" && url.includes("/api/auth/refresh-token");
 
-// ============================================================
-// RESPONSE INTERCEPTOR
-// ============================================================
+
+
+
 api.interceptors.response.use(
 	(response) => response,
 	async (error) => {
 		const originalRequest = error.config;
 		const status = error.response?.status;
 
-		// Brak configu (np. błąd sieci) - przepuść dalej
+
 		if (!originalRequest) {
 			return Promise.reject(error);
 		}
 
-		// ---- 401: próba odświeżenia tokenu (tylko raz na żądanie) ----
+
 		if (status === 401 && !originalRequest._retry) {
-			// 401 na samym refreshu -> twardy logout, koniec zabawy
+
 			if (isRefreshUrl(originalRequest.url)) {
 				handleLogout();
 				return Promise.reject(error);
 			}
 
-			// Ktoś już odświeża -> czekamy w kolejce
+
 			if (isRefreshing) {
 				return new Promise((resolve, reject) => {
 					failedQueue.push({ resolve, reject, config: originalRequest });
@@ -130,14 +127,14 @@ api.interceptors.response.use(
 				localStorage.setItem("accessToken", accessToken);
 				api.defaults.headers.common.Authorization = `Bearer ${accessToken}`;
 
-				// Odblokuj kolejkę z nowym tokenem
+
 				processQueue(null, accessToken);
 
-				// Ponów oryginalne żądanie
+
 				originalRequest.headers = originalRequest.headers || {};
 				originalRequest.headers.Authorization = `Bearer ${accessToken}`;
 
-				// Zrestartuj timer auto-logout z nowym czasem wygaśnięcia
+
 				startAutoLogoutTimer(accessToken);
 
 				return api(originalRequest);
@@ -150,8 +147,8 @@ api.interceptors.response.use(
 			}
 		}
 
-		// ---- 401 po nieudanej próbie retry -> twardy logout ----
-		// UWAGA: 403 NIE wylogowuje. 403 = brak uprawnień, nie brak sesji.
+
+
 		if (status === 401 && originalRequest._retry) {
 			handleLogout();
 		}
@@ -160,16 +157,16 @@ api.interceptors.response.use(
 	},
 );
 
-// ============================================================
-// AUTO LOGOUT TIMER (oparty na exp z JWT, nie na bezczynności)
-// ============================================================
+
+
+
 let logoutTimer: ReturnType<typeof setTimeout> | null = null;
 
 const decodeJwtExp = (token: string): number | null => {
 	try {
 		const payload = JSON.parse(atob(token.split(".")[1]));
 		if (typeof payload.exp !== "number") return null;
-		return payload.exp * 1000; // ms
+		return payload.exp * 1000;
 	} catch {
 		return null;
 	}
@@ -187,32 +184,32 @@ export const startAutoLogoutTimer = (accessToken?: string) => {
 	const exp = decodeJwtExp(token);
 	if (!exp) return;
 
-	// 30 sekund zapasu, żeby zdążyć odświeżyć przed wygaśnięciem
+
 	const ms = exp - Date.now() - 30_000;
 
 	if (ms <= 0) {
-		// Token już wygasł - nie wylogowuj od razu na siłę,
-		// pozwól interceptorowi obsłużyć 401 i odświeżyć.
+
+
 		return;
 	}
 
 	logoutTimer = setTimeout(() => {
-		// Timer minął, ale nie wylogowujemy na ślepo -
-		// sprawdzamy czy token faktycznie wygasł.
+
+
 		const current = localStorage.getItem("accessToken");
 		const currentExp = current ? decodeJwtExp(current) : null;
 		if (!currentExp || currentExp - 30_000 <= Date.now()) {
 			handleLogout();
 		} else {
-			// Token został odświeżony w międzyczasie - restart
+
 			startAutoLogoutTimer(current!);
 		}
 	}, ms);
 };
 
-// ============================================================
-// FETCH WRAPPER
-// ============================================================
+
+
+
 const originalFetch = window.fetch;
 window.fetch = function (...args) {
 	const url = args[0];
@@ -239,9 +236,9 @@ window.fetch = function (...args) {
 	}
 
 	return originalFetch.call(this, url, options).then(async (response) => {
-		// 401 -> próba refreshu (403 NIE - to brak uprawnień)
+
 		if (response.status === 401) {
-			// 401 na samym refreshu -> logout
+
 			if (typeof url === "string" && url.includes("/api/auth/refresh-token")) {
 				handleLogout();
 				throw new Error("Unauthorized");
@@ -283,7 +280,7 @@ window.fetch = function (...args) {
 			throw new Error("Unauthorized");
 		}
 
-		// 304 Not Modified -> wymuś ponowne pobranie
+
 		if (response.status === 304) {
 			const headers = options.headers as Record<string, string> | undefined;
 			options.headers = {

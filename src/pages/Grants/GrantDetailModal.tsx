@@ -1,5 +1,4 @@
-﻿// src/pages/Grants/GrantDetailModal.tsx
-import { useEffect, useState } from "react";
+﻿import { useEffect, useState } from "react";
 import {
 	X,
 	ExternalLink,
@@ -70,7 +69,7 @@ export function GrantDetailModal({
 
 	useEffect(() => {
 		fetchGrant();
-		// eslint-disable-next-line react-hooks/exhaustive-deps
+
 	}, [grantId]);
 
 	const handleMarkVerified = async () => {

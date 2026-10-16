@@ -1,5 +1,4 @@
-﻿// src/pages/Grants/GrantCard.tsx
-import { Calendar, ExternalLink, Plus, Edit2, Trash2, Eye } from "lucide-react";
+﻿import { Calendar, ExternalLink, Plus, Edit2, Trash2, Eye } from "lucide-react";
 import styles from "./Grants.module.css";
 
 export interface Grant {
@@ -110,7 +109,7 @@ export function GrantCard({
 				)}
 			</div>
 
-			{/* Rekrutacje na Project Leadera – widoczne od razu na karcie */}
+
 			{recruitments.length > 0 && (
 				<div className={styles.recruitmentsBox} onClick={(e) => e.stopPropagation()}>
 					<div className={styles.recruitmentsBox__header}>
@@ -169,7 +168,7 @@ export function GrantCard({
 				</div>
 			)}
 
-			{/* Przycisk dodania rekrutacji – tylko dla canManage */}
+
 			{canManage && onAddRecruitment && (
 				<button
 					type="button"

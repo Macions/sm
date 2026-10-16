@@ -19,6 +19,7 @@ interface MeetingsChartProps {
 interface MeetingData {
 	year: number;
 	month: number;
+	monthName: string;
 	count: number;
 }
 
@@ -110,7 +111,6 @@ export function MeetingsChart({
 				throw new Error("Nieoczekiwany format danych");
 			}
 
-			// Mapuj na pełny rok — 12 miesięcy, brakujące = 0
 			const byMonth = new Map<number, number>();
 			result
 				.filter((r: any) => r.year === selectedYear)
@@ -118,7 +118,7 @@ export function MeetingsChart({
 					byMonth.set(r.month, r.count);
 				});
 
-			const mappedData: (MeetingData & { monthName: string })[] = [];
+			const mappedData: MeetingData[] = [];
 			for (let m = 1; m <= 12; m++) {
 				mappedData.push({
 					year: selectedYear,
@@ -128,7 +128,7 @@ export function MeetingsChart({
 				});
 			}
 
-			setData(mappedData as any);
+			setData(mappedData);
 		} catch (error) {
 			console.error("[MeetingsChart] Błąd:", error);
 			setError(

@@ -1,5 +1,4 @@
-﻿// src/pages/Grants/Grants.tsx
-import { useEffect, useState } from "react";
+﻿import { useEffect, useState } from "react";
 import { Award, Plus, RefreshCw, Search, X } from "lucide-react";
 import toast from "react-hot-toast";
 import styles from "./Grants.module.css";
@@ -60,7 +59,7 @@ export default function Grants() {
 
 	useEffect(() => {
 		fetchGrants();
-		// eslint-disable-next-line react-hooks/exhaustive-deps
+
 	}, [search, filterCategory, filterWorkStatus, onlyWithOpenRecruitment]);
 
 	const handleDelete = async (grant: Grant) => {

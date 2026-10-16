@@ -182,23 +182,23 @@ const prisma = new PrismaClient();
 
 // ⬇️⬇️⬇️ DODAJ TO — publiczny endpoint stanu maintenance ⬇️⬇️⬇️
 app.get("/api/status/maintenance", async (_req, res) => {
-  try {
-    const setting = await prisma.appSetting.findUnique({
-      where: { key: "maintenance" },
-    });
-    res.json({ enabled: setting?.value === "true" });
-  } catch {
-    res.json({ enabled: false });
-  }
+	try {
+		const setting = await prisma.appSetting.findUnique({
+			where: { key: "maintenance" },
+		});
+		res.json({ enabled: setting?.value === "true" });
+	} catch {
+		res.json({ enabled: false });
+	}
 });
 // ⬆️⬆️⬆️ KONIEC DODANEGO ⬆️⬆️⬆️
 
 app.get("/api/health", (req, res) => {
-  res.status(200).json({
-    status: "ok",
-    timestamp: new Date().toISOString(),
-    uptime: process.uptime(),
-  });
+	res.status(200).json({
+		status: "ok",
+		timestamp: new Date().toISOString(),
+		uptime: process.uptime(),
+	});
 });
 
 app.use(
@@ -11143,7 +11143,13 @@ app.get("/api/my-team", authMiddleware, async (req: any, res) => {
 				select: { id: true, name: true },
 				orderBy: { name: "asc" },
 			});
-			teamIdToUse = queryTeamId ?? availableTeams[0]?.id ?? null;
+
+			// ⬅️ NOWE: preferuj filar jako domyślny zespół
+			const preferredTeam =
+				availableTeams.find((t) => t.name.startsWith("Filar ")) ??
+				availableTeams[0];
+
+			teamIdToUse = queryTeamId ?? preferredTeam?.id ?? null;
 		} else {
 			const leaderTeams = await prisma.teamMember.findMany({
 				where: {
@@ -11212,49 +11218,36 @@ app.get("/api/my-team", authMiddleware, async (req: any, res) => {
 			? team.name.replace("Filar ", "").trim()
 			: null;
 
-		const taskWhereOR: any[] = [];
-		memberIds.forEach((id) => {
-			if (isFilar && pillarNameForTasks) {
-				// Zadania usera przez assigned_to LUB assigned_users
-				// ORAZ pillar (bezpośrednio lub przez projekt) pasuje do filaru
-				taskWhereOR.push({
-					AND: [
-						{ assigned_to: id },
-						{ pillar: { not: null } },
-						{ pillar: { not: "" } },
-						{ pillar: { contains: pillarNameForTasks } },
-					],
-				});
-				taskWhereOR.push({
-					AND: [
-						{ assigned_to: id },
-						{ project: { is: { pillar: { not: null } } } },
-						{ project: { is: { pillar: { contains: pillarNameForTasks } } } },
-					],
-				});
-				taskWhereOR.push({
-					AND: [
-						{ assigned_users: { contains: `"${id}"` } },
-						{ pillar: { not: null } },
-						{ pillar: { not: "" } },
-						{ pillar: { contains: pillarNameForTasks } },
-					],
-				});
-				taskWhereOR.push({
-					AND: [
-						{ assigned_users: { contains: `"${id}"` } },
-						{ project: { is: { pillar: { not: null } } } },
-						{ project: { is: { pillar: { contains: pillarNameForTasks } } } },
-					],
-				});
-			} else {
-				taskWhereOR.push({ assigned_to: id });
-				taskWhereOR.push({ assigned_users: { contains: `"${id}"` } });
-			}
-		});
+		// ═══ KROK 1: Taski przypisane bezpośrednio (assigned_to) ═══
+		const tasksByAssignedTo =
+			memberIds.length > 0
+				? await prisma.task.findMany({
+					where: { assigned_to: { in: memberIds } },
+					select: {
+						id: true,
+						title: true,
+						status: true,
+						priority: true,
+						rating: true,
+						difficulty: true,
+						rating_comment: true,
+						rated_at: true,
+						rated_by: true,
+						rated_by_name: true,
+						assigned_to: true,
+						assigned_users: true,
+						pillar: true,
+						project_id: true,
+						due_date: true,
+						created_at: true,
+						updated_at: true,
+					},
+				})
+				: [];
 
-		const tasks = await prisma.task.findMany({
-			where: taskWhereOR.length > 0 ? { OR: taskWhereOR } : { id: -1 },
+		// ═══ KROK 2: Taski przez assigned_users (JSON string) ═══
+		const allTasksWithAssignedUsers = await prisma.task.findMany({
+			where: { assigned_users: { not: null } },
 			select: {
 				id: true,
 				title: true,
@@ -11273,9 +11266,84 @@ app.get("/api/my-team", authMiddleware, async (req: any, res) => {
 				due_date: true,
 				created_at: true,
 				updated_at: true,
-				project: { select: { id: true, name: true, pillar: true } },
 			},
 		});
+
+		const tasksByAssignedUsers = allTasksWithAssignedUsers.filter((t) => {
+			if (!t.assigned_users) return false;
+			try {
+				const ids = JSON.parse(t.assigned_users);
+				return (
+					Array.isArray(ids) &&
+					ids.some((id: any) => memberIds.includes(parseInt(id)))
+				);
+			} catch {
+				return false;
+			}
+		});
+
+		// ═══ KROK 3: Połącz i odduplikuj ═══
+		const tasksMap = new Map<number, any>();
+		[...tasksByAssignedTo, ...tasksByAssignedUsers].forEach((t) =>
+			tasksMap.set(t.id, t),
+		);
+		let tasks = [...tasksMap.values()];
+
+		// ═══ KROK 4: Filtr po filarze (jeśli to filar) ═══
+		if (isFilar && pillarNameForTasks) {
+			const projectIdsToCheck = [
+				...new Set(
+					tasks
+						.filter((t) => !t.pillar && t.project_id)
+						.map((t) => t.project_id as number),
+				),
+			];
+
+			const projectsForFilter =
+				projectIdsToCheck.length > 0
+					? await prisma.project.findMany({
+						where: { id: { in: projectIdsToCheck } },
+						select: { id: true, pillar: true },
+					})
+					: [];
+
+			const projectPillarMap = new Map(
+				projectsForFilter.map((p) => [p.id, p.pillar]),
+			);
+
+			tasks = tasks.filter((t) => {
+				if (t.pillar?.includes(pillarNameForTasks)) return true;
+				if (
+					t.project_id &&
+					projectPillarMap.get(t.project_id)?.includes(pillarNameForTasks)
+				) {
+					return true;
+				}
+				return false;
+			});
+		}
+
+		// ═══ KROK 5: Dociągnij projekty i dołącz do tasków ═══
+		const finalProjectIds = [
+			...new Set(
+				tasks
+					.map((t) => t.project_id)
+					.filter((id): id is number => id !== null && id !== undefined),
+			),
+		];
+		const finalProjects =
+			finalProjectIds.length > 0
+				? await prisma.project.findMany({
+					where: { id: { in: finalProjectIds } },
+					select: { id: true, name: true, pillar: true },
+				})
+				: [];
+		const finalProjectMap = new Map(finalProjects.map((p) => [p.id, p]));
+
+		tasks = tasks.map((t) => ({
+			...t,
+			project: t.project_id ? finalProjectMap.get(t.project_id) ?? null : null,
+		}));
 
 		const userTasksMap: Record<number, any[]> = {};
 		memberIds.forEach((id) => (userTasksMap[id] = []));
@@ -14220,36 +14288,36 @@ app.put(
 );
 // Publiczny — frontend sprawdza stan
 app.get("/api/status/maintenance", async (_req, res) => {
-  try {
-    const setting = await prisma.appSetting.findUnique({
-      where: { key: "maintenance" },
-    });
-    res.json({ enabled: setting?.value === "true" });
-  } catch {
-    res.json({ enabled: false });
-  }
+	try {
+		const setting = await prisma.appSetting.findUnique({
+			where: { key: "maintenance" },
+		});
+		res.json({ enabled: setting?.value === "true" });
+	} catch {
+		res.json({ enabled: false });
+	}
 });
 
 // Admin — przełącza
 app.put("/api/admin/maintenance", authMiddleware, async (req: any, res) => {
-  try {
-    if (req.user?.role !== "admin") {
-      return res.status(403).json({ error: "Brak uprawnień" });
-    }
-    const { enabled } = req.body;
-    await prisma.appSetting.upsert({
-      where: { key: "maintenance" },
-      update: { value: String(!!enabled) },
-      create: { key: "maintenance", value: String(!!enabled) },
-    });
-    logger.info(
-      `[MAINTENANCE] ${enabled ? "WŁĄCZONY" : "WYŁĄCZONY"} przez ${req.user.email}`,
-    );
-    res.json({ success: true, enabled: !!enabled });
-  } catch (error) {
-    logger.error("[MAINTENANCE] Błąd:", error);
-    res.status(500).json({ error: "Nie udało się zmienić trybu" });
-  }
+	try {
+		if (req.user?.role !== "admin") {
+			return res.status(403).json({ error: "Brak uprawnień" });
+		}
+		const { enabled } = req.body;
+		await prisma.appSetting.upsert({
+			where: { key: "maintenance" },
+			update: { value: String(!!enabled) },
+			create: { key: "maintenance", value: String(!!enabled) },
+		});
+		logger.info(
+			`[MAINTENANCE] ${enabled ? "WŁĄCZONY" : "WYŁĄCZONY"} przez ${req.user.email}`,
+		);
+		res.json({ success: true, enabled: !!enabled });
+	} catch (error) {
+		logger.error("[MAINTENANCE] Błąd:", error);
+		res.status(500).json({ error: "Nie udało się zmienić trybu" });
+	}
 });
 /* 6. Rozszerzenie GET /meetings o subteamId i filtr subteamId */
 app.listen(port, () => {

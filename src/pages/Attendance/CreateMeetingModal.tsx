@@ -76,7 +76,7 @@ export default function CreateMeetingModal({
             />
           </label>
 
-          {/* ⬇️ NOWE — dropdown podzespołów (jeśli są) */}
+
           {subteams.length > 0 && (
             <label className={styles.modalField}>
               <span>Podzespół (opcjonalnie)</span>

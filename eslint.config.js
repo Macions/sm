@@ -19,13 +19,13 @@ export default defineConfig([
 			globals: globals.browser,
 		},
 		rules: {
-			// Wyłączone bo nie ma sensu poprawiać w istniejącym kodzie:
+
 			"@typescript-eslint/no-explicit-any": "off",
 			"react-hooks/set-state-in-effect": "off",
 			"react-hooks/exhaustive-deps": "off",
 			"react-refresh/only-export-components": "off",
 
-			// ✅ ZMIEŃ TE REGUŁY:
+
 			"@typescript-eslint/no-unused-vars": [
 				"warn",
 				{

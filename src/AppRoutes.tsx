@@ -27,9 +27,7 @@ import Requests from "./pages/Requests/Requests";
 const Maintenance = lazy(() => import("@/pages/Maintenance/Maintenance"));
 import NotFound from "@/pages/404";
 
-// ⬇️⬇️⬇️ BYPASS MAINTENANCE — emaile, które mogą wejść mimo trybu serwisowego
 const MAINTENANCE_BYPASS_EMAILS = ["maksym.marczak@silamlodych.pl"];
-// ⬆️⬆️⬆️ KONIEC BYPASS
 
 const LoadingSpinner = () => (
 	<div
@@ -66,10 +64,8 @@ function AppRoutes() {
 	const [isAdmin, setIsAdmin] = useState(false);
 	const location = useLocation();
 
-	// ⬇️⬇️⬇️ JEDEN poprawny useEffect od maintenance + isAdmin ⬇️⬇️⬇️
 	useEffect(() => {
 		const refreshAuthAndMaintenance = () => {
-			// odczytaj rolę usera + bypass po emailu
 			try {
 				const u = JSON.parse(localStorage.getItem("user") || "{}");
 				const email = (u?.email || "").toLowerCase().trim();
@@ -78,14 +74,12 @@ function AppRoutes() {
 			} catch {
 				setIsAdmin(false);
 			}
-			// odczytaj stan maintenance
 			api
 				.get("/status/maintenance")
 				.then(({ data }) => setIsMaintenance(data.enabled === true))
 				.catch(() => setIsMaintenance(false));
 		};
 
-		// wywołaj raz na starcie
 		refreshAuthAndMaintenance();
 
 		const handleStorageChange = (e: StorageEvent) => {
@@ -98,7 +92,6 @@ function AppRoutes() {
 		window.addEventListener("storage", handleStorageChange);
 		window.addEventListener("maintenance-change", handleCustom);
 
-		// refresh co 30 s — łapie zmiany z innych urządzeń
 		const interval = setInterval(refreshAuthAndMaintenance, 30_000);
 
 		return () => {
@@ -140,7 +133,6 @@ function AppRoutes() {
 	if (isLoading) return <LoadingSpinner />;
 
 	if (isMaintenance && !isAdmin) {
-		// Pokaż Login TYLKO gdy user kliknął "Zaloguj się jako administrator"
 		const showLogin =
 			location.pathname === "/login" && location.search.includes("admin=1");
 
@@ -174,7 +166,7 @@ function AppRoutes() {
 				<Route path="/login" element={<Navigate to="/dashboard" replace />} />
 				<Route
 					path="/onboarding"
-					element={<Onboarding onComplete={() => {}} />}
+					element={<Onboarding onComplete={() => { }} />}
 				/>
 				<Route path="/404" element={<NotFound />} />
 				<Route path="*" element={<NotFound />} />

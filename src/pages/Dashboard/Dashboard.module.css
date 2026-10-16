@@ -59,6 +59,7 @@
 }
 
 @keyframes pulse {
+
 	0%,
 	100% {
 		opacity: 1;
@@ -250,11 +251,9 @@
 	inset: 0;
 	opacity: 0;
 	transition: opacity 0.25s ease;
-	background: linear-gradient(
-		135deg,
-		var(--purple-50, #f6f4fe) 0%,
-		transparent 100%
-	);
+	background: linear-gradient(135deg,
+			var(--purple-50, #f6f4fe) 0%,
+			transparent 100%);
 }
 
 .quickAction:hover::before {
@@ -598,6 +597,7 @@
 }
 
 @keyframes pulse {
+
 	0%,
 	100% {
 		opacity: 1;
@@ -1005,7 +1005,7 @@
 	}
 }
 
-/* ─── OSOBY WYRÓŻNIONE ─── */
+
 .badges {
 	background: #ffffff;
 	border-radius: 12px;

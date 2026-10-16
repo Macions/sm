@@ -175,7 +175,7 @@ import bcrypt from "bcrypt";
 import systemIdeaRoutes from "./routes/systemIdeas.routes";
 import jwt from "jsonwebtoken";
 import path from "path";
-// src/server.ts — dopisz do istniejących importów
+
 import { verifyMailer } from "./lib/mailer";
 import { enqueueMail } from "./lib/mailQueue";
 import { notifyInactiveUsers } from "./jobs/notifyInactiveUsers";
@@ -190,17 +190,17 @@ import dotenv from "dotenv";
 dotenv.config();
 
 updateLeaveStatus();
-// cron.schedule("0 9 */5 * *", async () => {
-// 	try {
-// 		logger.info("[CRON] Start notifyInactiveUsers");
-// 		const result = await notifyInactiveUsers();
-// 		logger.info(
-// 			`[CRON] notifyInactiveUsers: wysłano ${result.sent}, błędy ${result.failed}, pominięto ${result.skippedRecent}`,
-// 		);
-// 	} catch (error) {
-// 		logger.error("[CRON] Błąd notifyInactiveUsers:", error);
-// 	}
-// });
+
+
+
+
+
+
+
+
+
+
+
 cron.schedule("0 7,14,21 * * *", async () => {
 	try {
 		await syncAttendance();
@@ -210,7 +210,7 @@ cron.schedule("0 7,14,21 * * *", async () => {
 cron.schedule("1 0 * * *", async () => {
 	await updateLeaveStatus();
 });
-// 19. dnia każdego miesiąca o 2:00
+
 cron.schedule("0 2 19 * *", async () => {
 	try {
 		await checkMonthlyMeetings();
@@ -222,11 +222,11 @@ const googleClient = new OAuth2Client(process.env.VITE_GOOGLE_CLIENT_ID);
 cron.schedule("0 3 */2 * *", async () => {
 	await syncMembers();
 });
-// setTimeout(async () => {
-// 	try {
-// 		await checkMonthlyMeetings();
-// 	} catch (error) {}
-// }, 20000);
+
+
+
+
+
 const PUBLIC_ENDPOINTS = [
 	"/api/auth/login",
 	"/api/auth/google",
@@ -589,7 +589,7 @@ export default function Sidebar({
 		userRole === "admin" || userRole === "board" || userRole === "zarzÄ…d";
 	const isCoordinator = userRole === "coordinator";
 
-	// Sprawdzenie czy to peĹ‚nomocnik ds. okresĂłw prĂłbnych (Maja Melerska, id=294)
+
 	const isTrialCoordinator = (() => {
 		try {
 			const u = JSON.parse(localStorage.getItem("user") || "{}");
@@ -1011,9 +1011,9 @@ const api = axios.create({
 	withCredentials: true,
 });
 
-// ============================================================
-// REQUEST INTERCEPTOR
-// ============================================================
+
+
+
 api.interceptors.request.use(
 	(config) => {
 		const token = localStorage.getItem("accessToken");
@@ -1025,9 +1025,9 @@ api.interceptors.request.use(
 	(error) => Promise.reject(error),
 );
 
-// ============================================================
-// LOGOUT
-// ============================================================
+
+
+
 const handleLogout = () => {
 	localStorage.removeItem("accessToken");
 	localStorage.removeItem("refreshToken");
@@ -1051,9 +1051,9 @@ const handleLogout = () => {
 	}
 };
 
-// ============================================================
-// REFRESH TOKEN QUEUE
-// ============================================================
+
+
+
 let isRefreshing = false;
 let failedQueue: Array<{
 	resolve: (token: string) => void;
@@ -1075,29 +1075,29 @@ const processQueue = (error: any | null, token: string | null = null) => {
 const isRefreshUrl = (url?: string) =>
 	typeof url === "string" && url.includes("/api/auth/refresh-token");
 
-// ============================================================
-// RESPONSE INTERCEPTOR
-// ============================================================
+
+
+
 api.interceptors.response.use(
 	(response) => response,
 	async (error) => {
 		const originalRequest = error.config;
 		const status = error.response?.status;
 
-		// Brak configu (np. bĹ‚Ä…d sieci) - przepuĹ›Ä‡ dalej
+
 		if (!originalRequest) {
 			return Promise.reject(error);
 		}
 
-		// ---- 401: prĂłba odĹ›wieĹĽenia tokenu (tylko raz na ĹĽÄ…danie) ----
+
 		if (status === 401 && !originalRequest._retry) {
-			// 401 na samym refreshu -> twardy logout, koniec zabawy
+
 			if (isRefreshUrl(originalRequest.url)) {
 				handleLogout();
 				return Promise.reject(error);
 			}
 
-			// KtoĹ› juĹĽ odĹ›wieĹĽa -> czekamy w kolejce
+
 			if (isRefreshing) {
 				return new Promise((resolve, reject) => {
 					failedQueue.push({ resolve, reject, config: originalRequest });
@@ -1132,14 +1132,14 @@ api.interceptors.response.use(
 				localStorage.setItem("accessToken", accessToken);
 				api.defaults.headers.common.Authorization = `Bearer ${accessToken}`;
 
-				// Odblokuj kolejkÄ™ z nowym tokenem
+
 				processQueue(null, accessToken);
 
-				// PonĂłw oryginalne ĹĽÄ…danie
+
 				originalRequest.headers = originalRequest.headers || {};
 				originalRequest.headers.Authorization = `Bearer ${accessToken}`;
 
-				// Zrestartuj timer auto-logout z nowym czasem wygaĹ›niÄ™cia
+
 				startAutoLogoutTimer(accessToken);
 
 				return api(originalRequest);
@@ -1152,8 +1152,8 @@ api.interceptors.response.use(
 			}
 		}
 
-		// ---- 401 po nieudanej prĂłbie retry -> twardy logout ----
-		// UWAGA: 403 NIE wylogowuje. 403 = brak uprawnieĹ„, nie brak sesji.
+
+
 		if (status === 401 && originalRequest._retry) {
 			handleLogout();
 		}
@@ -1162,9 +1162,9 @@ api.interceptors.response.use(
 	},
 );
 
-// ============================================================
-// AUTO LOGOUT TIMER (oparty na exp z JWT, nie na bezczynnoĹ›ci)
-// ============================================================
+
+
+
 let logoutTimer: ReturnType<typeof setTimeout> | null = null;
 
 const decodeJwtExp = (token: string): number | null => {
@@ -1189,32 +1189,32 @@ export const startAutoLogoutTimer = (accessToken?: string) => {
 	const exp = decodeJwtExp(token);
 	if (!exp) return;
 
-	// 30 sekund zapasu, ĹĽeby zdÄ…ĹĽyÄ‡ odĹ›wieĹĽyÄ‡ przed wygaĹ›niÄ™ciem
+
 	const ms = exp - Date.now() - 30_000;
 
 	if (ms <= 0) {
-		// Token juĹĽ wygasĹ‚ - nie wylogowuj od razu na siĹ‚Ä™,
-		// pozwĂłl interceptorowi obsĹ‚uĹĽyÄ‡ 401 i odĹ›wieĹĽyÄ‡.
+
+
 		return;
 	}
 
 	logoutTimer = setTimeout(() => {
-		// Timer minÄ…Ĺ‚, ale nie wylogowujemy na Ĺ›lepo -
-		// sprawdzamy czy token faktycznie wygasĹ‚.
+
+
 		const current = localStorage.getItem("accessToken");
 		const currentExp = current ? decodeJwtExp(current) : null;
 		if (!currentExp || currentExp - 30_000 <= Date.now()) {
 			handleLogout();
 		} else {
-			// Token zostaĹ‚ odĹ›wieĹĽony w miÄ™dzyczasie - restart
+
 			startAutoLogoutTimer(current!);
 		}
 	}, ms);
 };
 
-// ============================================================
-// FETCH WRAPPER
-// ============================================================
+
+
+
 const originalFetch = window.fetch;
 window.fetch = function (...args) {
 	const url = args[0];
@@ -1241,9 +1241,9 @@ window.fetch = function (...args) {
 	}
 
 	return originalFetch.call(this, url, options).then(async (response) => {
-		// 401 -> prĂłba refreshu (403 NIE - to brak uprawnieĹ„)
+
 		if (response.status === 401) {
-			// 401 na samym refreshu -> logout
+
 			if (typeof url === "string" && url.includes("/api/auth/refresh-token")) {
 				handleLogout();
 				throw new Error("Unauthorized");
@@ -1285,7 +1285,7 @@ window.fetch = function (...args) {
 			throw new Error("Unauthorized");
 		}
 
-		// 304 Not Modified -> wymuĹ› ponowne pobranie
+
 		if (response.status === 304) {
 			const headers = options.headers as Record<string, string> | undefined;
 			options.headers = {

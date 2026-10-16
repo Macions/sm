@@ -1764,6 +1764,7 @@
 	transform: translateY(-2px);
 	border-color: #3b82f6;
 }
+
 .archivedCard__header {
 	display: flex;
 	justify-content: space-between;
@@ -1956,6 +1957,7 @@
 	cursor: not-allowed !important;
 	opacity: 0.8;
 }
+
 .modal__inputDisabled {
 	background-color: #f3f4f6 !important;
 	color: #6b7280 !important;
@@ -1970,7 +1972,7 @@
 	color: #2563eb;
 	font-weight: 500;
 }
-/* ---------- OSTRZEŻENIE O NIEDOSTĘPNOŚCI (urlop) ---------- */
+
 .availabilityWarning {
 	display: flex;
 	gap: 12px;

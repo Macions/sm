@@ -1,4 +1,3 @@
-// frontend/src/pages/Ideas/IdeaModal.tsx
 import { useEffect, useState } from "react";
 import { X, Save } from "lucide-react";
 import toast from "react-hot-toast";

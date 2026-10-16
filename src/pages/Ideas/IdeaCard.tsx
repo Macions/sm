@@ -1,4 +1,3 @@
-// frontend/src/pages/Ideas/IdeaCard.tsx
 import {
 	Clock,
 	CheckCircle2,
@@ -50,7 +49,7 @@ export function IdeaCard({
 	onQuickDone,
 	onQuickReject,
 }: Props) {
-	// Autor może edytować tylko swój pomysł, dopóki jest w statusie "pending"
+
 	const canEdit = !canManage && idea.status === "pending";
 
 	return (
@@ -103,7 +102,7 @@ export function IdeaCard({
 				<div className={styles.actions}>
 					{canManage ? (
 						<>
-							{/* Szybkie akcje – tylko admin/board */}
+
 							{onQuickDone && idea.status !== "done" && (
 								<button
 									className={`${styles.actionBtn} ${styles.success}`}

@@ -26,7 +26,6 @@
 }
 
 .mainWrapper {
-	padding: 10px 0;
 	display: flex;
 	flex-direction: column;
 	flex: 1;
@@ -69,13 +68,13 @@
 	}
 }
 
-@media (width <= 980px) {
+@media (width <=980px) {
 	.main {
 		padding: 20px;
 	}
 }
 
-@media (width <= 768px) {
+@media (width <=768px) {
 	.layout {
 		flex-direction: column;
 		height: 100vh;
@@ -97,7 +96,7 @@
 	}
 }
 
-@media (width <= 480px) {
+@media (width <=480px) {
 	.main {
 		padding: 12px;
 	}

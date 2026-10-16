@@ -1,4 +1,3 @@
-// frontend/src/pages/Grants/GrantTeamSection.tsx
 import { useEffect, useState } from "react";
 import { Users, Crown, Mail } from "lucide-react";
 import { useNavigate } from "react-router-dom";
@@ -39,7 +38,7 @@ export function GrantTeamSection() {
     const getInitials = (m: Member) =>
         ((m.firstName?.[0] || "") + (m.lastName?.[0] || "")).toUpperCase() || "?";
 
-    // Liderzy najpierw, potem alfabetycznie
+
     const sorted = [...members].sort((a, b) => {
         if (a.isLeader && !b.isLeader) return -1;
         if (!a.isLeader && b.isLeader) return 1;

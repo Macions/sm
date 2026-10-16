@@ -22,12 +22,12 @@ import {
 	Eye,
 	Umbrella,
 	Plus,
-	ArrowUpDown,
 	Trash2,
-	AlertCircle,
-	Coins,
 	Calendar,
 	Award,
+	Briefcase,
+	Mail,
+	Phone,
 } from "lucide-react";
 import styles from "./Members.module.css";
 
@@ -90,7 +90,6 @@ type Member = {
 	phone?: string;
 	joinDate: string;
 	vacation?: MemberVacation;
-
 	contacts?: {
 		salaContacts?: string[];
 		mpContacts?: string[];
@@ -103,6 +102,7 @@ type Member = {
 	};
 	formData?: Record<string, any>;
 };
+
 type VerifiedSkill = {
 	id: number;
 	skill_name: string;
@@ -111,6 +111,7 @@ type VerifiedSkill = {
 	awarded_at: string;
 	awarded_by_name: string;
 };
+
 type MemberBadge = {
 	id: number;
 	title: string;
@@ -120,6 +121,7 @@ type MemberBadge = {
 	awarded_at: string;
 	awarded_by_name?: string | null;
 };
+
 type MemberChange = {
 	id: number;
 	field: "team" | "function" | "pillars";
@@ -128,12 +130,14 @@ type MemberChange = {
 	changed_at: string;
 	changed_by_name: string;
 };
+
 type User = {
 	id: string;
 	name: string;
 	role: "admin" | "board" | "coordinator" | "member";
 	teamId?: string;
 };
+
 interface ApiUser {
 	id: string | number;
 	first_name: string;
@@ -158,6 +162,7 @@ interface ApiUser {
 		other_contacts?: string;
 	};
 }
+
 const SKILL_CATEGORIES = [
 	"Prezentacja",
 	"Negocjacje",
@@ -172,6 +177,7 @@ const SKILL_CATEGORIES = [
 	"Mentalność",
 	"Inne",
 ] as const;
+
 const mapApiUserToMember = (user: ApiUser): Member => {
 	const onboarding = user.onboarding_data || {};
 	const teamString = user.team || "Brak zespołu";
@@ -197,95 +203,94 @@ const mapApiUserToMember = (user: ApiUser): Member => {
 		teamId: user.team_id || (teams.length > 0 ? teams.join("-") : ""),
 		pillars: user.pillars || "",
 		province: user.province || "",
-
 		status: (user.status || "trial") as MemberStatus,
 		interests:
 			hasOnboardingData && onboarding.development_areas
 				? (() => {
-						try {
-							return JSON.parse(onboarding.development_areas);
-						} catch (e) {
-							return [];
-						}
-					})()
+					try {
+						return JSON.parse(onboarding.development_areas);
+					} catch (e) {
+						return [];
+					}
+				})()
 				: [],
 		skills:
 			hasOnboardingData && onboarding.skills
 				? (() => {
-						try {
-							return JSON.parse(onboarding.skills);
-						} catch (e) {
-							return [];
-						}
-					})()
+					try {
+						return JSON.parse(onboarding.skills);
+					} catch (e) {
+						return [];
+					}
+				})()
 				: [],
 		smAreas:
 			hasOnboardingData && onboarding.development_areas
 				? (() => {
-						try {
-							return JSON.parse(onboarding.development_areas);
-						} catch (e) {
-							return [];
-						}
-					})()
+					try {
+						return JSON.parse(onboarding.development_areas);
+					} catch (e) {
+						return [];
+					}
+				})()
 				: [],
 		email: user.email || "",
 		phone: user.phone || "",
 		joinDate: user.join_date
 			? new Date(user.join_date).toISOString().split("T")[0]
 			: user.created_at?.split("T")[0] ||
-				new Date().toISOString().split("T")[0],
+			new Date().toISOString().split("T")[0],
 		contacts: {
 			salaContacts:
 				hasOnboardingData && onboarding.sala_contacts
 					? (() => {
-							try {
-								return JSON.parse(onboarding.sala_contacts);
-							} catch (e) {
-								return [];
-							}
-						})()
+						try {
+							return JSON.parse(onboarding.sala_contacts);
+						} catch (e) {
+							return [];
+						}
+					})()
 					: [],
 			mpContacts:
 				hasOnboardingData && onboarding.mp_contacts
 					? (() => {
-							try {
-								return JSON.parse(onboarding.mp_contacts);
-							} catch (e) {
-								return [];
-							}
-						})()
+						try {
+							return JSON.parse(onboarding.mp_contacts);
+						} catch (e) {
+							return [];
+						}
+					})()
 					: [],
 			otherContacts: [
 				...(hasOnboardingData && onboarding.institution_contacts
 					? (() => {
-							try {
-								return JSON.parse(onboarding.institution_contacts);
-							} catch (e) {
-								return [];
-							}
-						})()
+						try {
+							return JSON.parse(onboarding.institution_contacts);
+						} catch (e) {
+							return [];
+						}
+					})()
 					: []),
 				...(hasOnboardingData && onboarding.other_contacts
 					? (() => {
-							try {
-								return JSON.parse(onboarding.other_contacts);
-							} catch (e) {
-								return [];
-							}
-						})()
+						try {
+							return JSON.parse(onboarding.other_contacts);
+						} catch (e) {
+							return [];
+						}
+					})()
 					: []),
 			],
 		},
 		trainingAreas:
 			hasOnboardingData && onboarding.skills
 				? (() => {
-						try {
-							return JSON.parse(onboarding.skills);
-						} catch (e) {
-							return [];
-						}
-					})()
+					try {
+						return JSON.parse(onboarding.skills);
+					} catch (e) {
+						return [];
+					}
+				})()
 				: [],
 		contributionInfo: {
 			status: "paid",
@@ -293,8 +298,9 @@ const mapApiUserToMember = (user: ApiUser): Member => {
 		},
 	};
 };
+
 const STATUS_LABELS: Record<MemberStatus, string> = {
-	active: "Pełnoprawny członek",
+	active: "Pełnoprawny",
 	trial: "Okres próbny",
 	mentor: "Mentor",
 	vacation: "Na urlopie",
@@ -316,6 +322,10 @@ const STATUS_ICONS: Record<MemberStatus, React.ReactNode> = {
 	vacation: <Umbrella size={14} />,
 	"": <Clock size={14} />,
 };
+
+/* ═══════════════════════════════════════════════════════════════
+   KARTA CZŁONKA — pozioma, kompaktowa
+   ═══════════════════════════════════════════════════════════════ */
 
 interface MemberCardProps {
 	member: Member;
@@ -346,249 +356,273 @@ function MemberCard({
 
 	const isOnVacation = member.status === "vacation";
 
+	const visibleTeams = useMemo(() => {
+		return member.team
+			.split(", ")
+			.filter((team) => team !== "Brak zespołu")
+			.filter((team) => team !== "Mentorzy")
+			.filter((team) => {
+				if (member.pillars) {
+					const pillars = member.pillars.split(", ");
+					return !pillars.some((p) => PILLAR_MAP[p] === team || p === team);
+				}
+				return true;
+			});
+	}, [member.team, member.pillars]);
+
+	const formatJoinDate = (date: string) => {
+		if (!date) return "";
+		const d = new Date(date);
+		return `od ${d.toLocaleDateString("pl-PL", { month: "short", year: "numeric" })}`;
+	};
+
+
 	if (viewMode === "list") {
 		return (
 			<div
-				className={`${styles.memberCard} ${styles.memberCardList} ${isOnVacation ? styles.memberCardOnVacation : ""}`}
+				className={`${styles.memberRow} ${isOnVacation ? styles.memberRowVacation : ""}`}
+				onClick={() => onView(member)}
 			>
-				<div className={styles.memberCard__avatar}>
+				<div className={styles.memberRow__avatar}>
 					{member.avatar || getInitials() || "?"}
 				</div>
-				<div className={styles.memberCard__info}>
-					<div className={styles.memberCard__nameRow}>
-						<h3 className={styles.memberCard__name}>
-							{member.firstName || ""} {member.lastName || ""}
-							{contributionBadge && contributionBadge !== "none" && (
-								<span
-									className={`${styles.contributionDot} ${
-										contributionBadge === "paid"
-											? styles.contributionDotPaid
-											: styles.contributionDotPending
-									}`}
-									title={
-										contributionBadge === "paid"
-											? "Opłacona składka"
-											: "Nieopłacona składka"
-									}
-								>
-									<Coins size={14} />
-								</span>
-							)}
-						</h3>
 
-						<span
-							className={`${styles.memberCard__status} ${STATUS_COLORS[member.status || "trial"]}`}
-						>
-							{STATUS_ICONS[member.status || "trial"]}
-							{STATUS_LABELS[member.status || "trial"]}
-						</span>
-						{badgesCount !== undefined && badgesCount > 0 && (
+				<div className={styles.memberRow__identity}>
+					<div className={styles.memberRow__name}>
+						{member.firstName} {member.lastName}
+						{contributionBadge && contributionBadge !== "none" && (
 							<span
-								className={styles.memberCard__badge}
-								title={`${badgesCount} ${badgesCount === 1 ? "wyróżnienie" : "wyróżnienia"}`}
-							>
-								<Star size={14} />
-								{badgesCount}
-							</span>
+								className={`${styles.memberRow__dot} ${contributionBadge === "paid"
+									? styles.memberRow__dotPaid
+									: styles.memberRow__dotPending
+									}`}
+								title={
+									contributionBadge === "paid"
+										? "Opłacona składka"
+										: "Nieopłacona składka"
+								}
+							/>
 						)}
 					</div>
-					<div className={styles.memberCard__details}>
-						{member.pillars && (
-							<span className={styles.memberCard__detail}>
-								<Users size={14} />
-								{transformPillars(member.pillars)}
-							</span>
-						)}
-
-						{member.team && member.team !== "Brak zespołu" && (
-							<span className={styles.memberCard__detail}>
-								<Users size={14} />
-								{member.team
-									.split(", ")
-									.filter((team) => team !== "Brak zespołu")
-
-									.filter((team) => team !== "Mentorzy")
-									.filter((team) => {
-										if (member.pillars) {
-											const pillars = member.pillars.split(", ");
-											return !pillars.some(
-												(p) => PILLAR_MAP[p] === team || p === team,
-											);
-										}
-										return true;
-									})
-									.join(", ")}
-							</span>
-						)}
-
-						{member.province &&
-							member.province !== "" &&
-							member.province !== "Brak" &&
-							member.province !== "Nieznane" && (
-								<span className={styles.memberCard__detail}>
-									<MapPin size={14} />
-									{member.province}
-								</span>
-							)}
-					</div>
+					<div className={styles.memberRow__email}>{member.email}</div>
 				</div>
-				<div className={styles.memberCard__actions}>
-					{isOnVacation && (
-						<span className={styles.memberCard__vacationBadge}>
-							<Umbrella size={14} />
-							Na urlopie
-						</span>
-					)}
+
+				<div className={styles.memberRow__col}>
+					<span className={styles.memberRow__colLabel}>Funkcja</span>
+					<span className={styles.memberRow__colValue}>{member.function}</span>
+				</div>
+
+				<div className={styles.memberRow__col}>
+					<span className={styles.memberRow__colLabel}>Zespół</span>
+					<span className={styles.memberRow__colValue}>
+						{visibleTeams.join(", ") || "—"}
+					</span>
+				</div>
+
+				<div className={styles.memberRow__col}>
+					<span className={styles.memberRow__colLabel}>Województwo</span>
+					<span className={styles.memberRow__colValue}>
+						{member.province || "—"}
+					</span>
+				</div>
+
+				<div className={styles.memberRow__col}>
+					<span className={styles.memberRow__colLabel}>Status</span>
+					<span
+						className={`${styles.memberRow__status} ${STATUS_COLORS[member.status || "trial"]}`}
+					>
+						{STATUS_ICONS[member.status || "trial"]}
+						{STATUS_LABELS[member.status || "trial"]}
+					</span>
+				</div>
+
+				{badgesCount !== undefined && badgesCount > 0 && (
+					<div className={styles.memberRow__badge} title={`${badgesCount} wyróżnień`}>
+						<Star size={14} />
+						{badgesCount}
+					</div>
+				)}
+
+				<div className={styles.memberRow__actions}>
 					<button
-						className={styles.memberCard__actionBtn}
-						onClick={() => onView(member)}
-						title="Podgląd profilu"
+						className={styles.memberRow__actionBtn}
+						onClick={(e) => {
+							e.stopPropagation();
+							onView(member);
+						}}
+						title="Podgląd"
 					>
 						<Eye size={16} />
 					</button>
 					{hasPermission(currentUser?.role, "canEditUsers") && (
 						<button
-							className={styles.memberCard__actionBtn}
-							onClick={() => onEdit(member)}
-							title="Edytuj profil"
+							className={styles.memberRow__actionBtn}
+							onClick={(e) => {
+								e.stopPropagation();
+								onEdit(member);
+							}}
+							title="Edytuj"
 						>
-							<Edit size={16} color="#60A5FA" />
+							<Edit size={16} />
 						</button>
 					)}
+					{hasPermission(currentUser?.role, "canDeleteUsers") &&
+						currentUser.id !== member.id && (
+							<button
+								className={`${styles.memberRow__actionBtn} ${styles.memberRow__actionBtnDanger}`}
+								onClick={(e) => {
+									e.stopPropagation();
+									onDelete(member);
+								}}
+								title="Usuń"
+							>
+								<Trash2 size={16} />
+							</button>
+						)}
 				</div>
 			</div>
 		);
 	}
 
+
 	return (
 		<div
-			className={`${styles.memberCard} ${isOnVacation ? styles.memberCardOnVacation : ""}`}
+			className={`${styles.memberCard} ${isOnVacation ? styles.memberCardVacation : ""}`}
+			onClick={() => onView(member)}
 		>
-			<div className={styles.memberCard__avatar}>
-				{member.avatar || getInitials() || "?"}
-			</div>
-			<h3 className={styles.memberCard__name}>
-				{member.firstName || ""} {member.lastName || ""}
-				{contributionBadge && contributionBadge !== "none" && (
-					<span
-						className={`${styles.contributionDot} ${
-							contributionBadge === "paid"
-								? styles.contributionDotPaid
-								: styles.contributionDotPending
-						}`}
-						title={
-							contributionBadge === "paid"
-								? "Opłacona składka"
-								: "Nieopłacona składka"
-						}
+			<div className={styles.memberCard__top}>
+				<div className={styles.memberCard__avatar}>
+					{member.avatar || getInitials() || "?"}
+				</div>
+				<div className={styles.memberCard__identity}>
+					<div className={styles.memberCard__name}>
+						{member.firstName} {member.lastName}
+						{contributionBadge && contributionBadge !== "none" && (
+							<span
+								className={`${styles.memberCard__dot} ${contributionBadge === "paid"
+									? styles.memberCard__dotPaid
+									: styles.memberCard__dotPending
+									}`}
+								title={
+									contributionBadge === "paid"
+										? "Opłacona składka"
+										: "Nieopłacona składka"
+								}
+							/>
+						)}
+					</div>
+					<div className={styles.memberCard__function}>{member.function}</div>
+				</div>
+				{badgesCount !== undefined && badgesCount > 0 && (
+					<div
+						className={styles.memberCard__badge}
+						title={`${badgesCount} wyróżnień`}
 					>
-						<Coins size={14} />
+						<Star size={13} />
+						{badgesCount}
+					</div>
+				)}
+			</div>
+
+			<div className={styles.memberCard__meta}>
+				{member.pillars && (
+					<span className={styles.memberCard__metaItem}>
+						<Users size={13} />
+						{transformPillars(member.pillars)}
 					</span>
 				)}
-			</h3>
-			<p className={styles.memberCard__function}>{member.function}</p>
-			{badgesCount !== undefined && badgesCount > 0 && (
-				<div
-					className={styles.memberCard__badgeRow}
-					title={`${badgesCount} ${badgesCount === 1 ? "wyróżnienie" : "wyróżnienia"}`}
-				>
-					<Star size={14} />
-					<span>
-						{badgesCount} {badgesCount === 1 ? "wyróżnienie" : "wyróżnienia"}
+				{visibleTeams.length > 0 && (
+					<span className={styles.memberCard__metaItem}>
+						<Briefcase size={13} />
+						{visibleTeams.join(", ")}
 					</span>
+				)}
+				{member.province &&
+					member.province !== "Brak" &&
+					member.province !== "Nieznane" && (
+						<span className={styles.memberCard__metaItem}>
+							<MapPin size={13} />
+							{member.province}
+						</span>
+					)}
+				{member.joinDate && (
+					<span className={styles.memberCard__metaItem}>
+						<Calendar size={13} />
+						{formatJoinDate(member.joinDate)}
+					</span>
+				)}
+			</div>
+
+			{member.skills && member.skills.length > 0 && (
+				<div className={styles.memberCard__skills}>
+					{member.skills.slice(0, 3).map((skill) => (
+						<span key={skill} className={styles.memberCard__skillTag}>
+							{skill}
+						</span>
+					))}
+					{member.skills.length > 3 && (
+						<span className={styles.memberCard__skillTag}>
+							+{member.skills.length - 3}
+						</span>
+					)}
 				</div>
 			)}
 
-			{member.pillars && (
-				<p className={styles.memberCard__team}>
-					<Users size={14} />
-					{transformPillars(member.pillars)}
-				</p>
-			)}
-
-			{member.team && member.team !== "Brak zespołu" && (
-				<div className={styles.memberCard__teams}>
-					{member.team
-						.split(", ")
-						.filter((team) => team !== "Brak zespołu")
-
-						.filter((team) => team !== "Mentorzy")
-						.filter((team) => {
-							if (member.pillars) {
-								const pillars = member.pillars.split(", ");
-								return !pillars.some(
-									(p) => PILLAR_MAP[p] === team || p === team,
-								);
-							}
-							return true;
-						})
-						.map((team) => (
-							<span key={team} className={styles.memberCard__teamBadge}>
-								{team}
-							</span>
-						))}
-				</div>
-			)}
-			{member.province &&
-				member.province !== "" &&
-				member.province !== "Brak" &&
-				member.province !== "Nieznane" && (
-					<p className={styles.memberCard__province}>
-						<MapPin size={14} />
-						{member.province}
-					</p>
-				)}
-			<div className={styles.memberCard__status}>
+			<div className={styles.memberCard__footer}>
 				<span
-					className={`${styles.memberCard__statusBadge} ${STATUS_COLORS[member.status]}`}
+					className={`${styles.memberCard__status} ${STATUS_COLORS[member.status || "trial"]}`}
 				>
-					{STATUS_ICONS[member.status]}
-					{STATUS_LABELS[member.status]}
+					{STATUS_ICONS[member.status || "trial"]}
+					{STATUS_LABELS[member.status || "trial"]}
 				</span>
-			</div>
-			<div className={styles.memberCard__skills}>
-				{(member.skills || []).slice(0, 3).map((skill) => (
-					<span key={skill} className={styles.memberCard__skillTag}>
-						{skill}
-					</span>
-				))}
-				{(member.skills || []).length > 3 && (
-					<span className={styles.memberCard__skillTag}>
-						+{(member.skills || []).length - 3}
-					</span>
-				)}
-			</div>
-			<div className={styles.memberCard__actions}>
-				<button
-					className={styles.memberCard__actionBtn}
-					onClick={() => onView(member)}
-					title="Podgląd profilu"
-				>
-					<Eye size={16} color="#e5ac00" />
-				</button>
-				{hasPermission(currentUser?.role, "canEditUsers") && (
+
+				<div className={styles.memberCard__actions}>
 					<button
 						className={styles.memberCard__actionBtn}
-						onClick={() => onEdit(member)}
-						title="Edytuj profil"
+						onClick={(e) => {
+							e.stopPropagation();
+							onView(member);
+						}}
+						title="Podgląd"
 					>
-						<Edit size={16} color="#60A5FA" />
+						<Eye size={15} />
 					</button>
-				)}
-				{hasPermission(currentUser?.role, "canDeleteUsers") &&
-					currentUser.id !== member.id && (
+					{hasPermission(currentUser?.role, "canEditUsers") && (
 						<button
-							className={`${styles.memberCard__actionBtn} ${styles.memberCard__deleteBtn}`}
-							onClick={() => onDelete(member)}
-							title="Usuń członka"
+							className={styles.memberCard__actionBtn}
+							onClick={(e) => {
+								e.stopPropagation();
+								onEdit(member);
+							}}
+							title="Edytuj"
 						>
-							<Trash2 size={16} color="#f86a6a" />
+							<Edit size={15} />
 						</button>
 					)}
+					{hasPermission(currentUser?.role, "canDeleteUsers") &&
+						currentUser.id !== member.id && (
+							<button
+								className={`${styles.memberCard__actionBtn} ${styles.memberCard__actionBtnDanger}`}
+								onClick={(e) => {
+									e.stopPropagation();
+									onDelete(member);
+								}}
+								title="Usuń"
+							>
+								<Trash2 size={15} />
+							</button>
+						)}
+				</div>
 			</div>
 		</div>
 	);
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   MODAL PROFILU — z zakładkami
+   ═══════════════════════════════════════════════════════════════ */
+
+type ProfileTab = "overview" | "achievements" | "contacts" | "history";
 
 interface ProfileModalProps {
 	isOpen: boolean;
@@ -597,22 +631,6 @@ interface ProfileModalProps {
 	isEdit?: boolean;
 	onClose: () => void;
 	onSave?: (member: Member) => void;
-	teamsList?: { id: number; name: string }[];
-	showCustomTeam?: boolean;
-	setShowCustomTeam?: (value: boolean) => void;
-	customTeamName?: string;
-	setCustomTeamName?: (value: string) => void;
-	customTeamRole?: string;
-	setCustomTeamRole?: (value: string) => void;
-	customTeamDescription?: string;
-	setCustomTeamDescription?: (value: string) => void;
-	customTeamIcon?: string;
-	setCustomTeamIcon?: (value: string) => void;
-	customTeamParent?: string;
-	setCustomTeamParent?: (value: string) => void;
-	customTeamEmail?: string;
-	setCustomTeamEmail?: (value: string) => void;
-	parentTeamsList?: { id: number; name: string; parent_id: number | null }[];
 	contributionStats?: any;
 	loadingContributions?: boolean;
 }
@@ -627,6 +645,7 @@ function ProfileModal({
 	contributionStats,
 	loadingContributions,
 }: ProfileModalProps) {
+	const [activeTab, setActiveTab] = useState<ProfileTab>("overview");
 	const [formData, setFormData] = useState<Partial<Member>>({
 		firstName: "",
 		lastName: "",
@@ -663,11 +682,9 @@ function ProfileModal({
 	const [newMpContact, setNewMpContact] = useState("");
 	const [newOtherContact, setNewOtherContact] = useState("");
 	const [newTrainingArea, setNewTrainingArea] = useState("");
-	// ─── ODZNAKI ───
+
 	const [badges, setBadges] = useState<MemberBadge[]>([]);
-	const [badgesByMonth, setBadgesByMonth] = useState<Record<string, number>>(
-		{},
-	);
+	const [badgesByMonth, setBadgesByMonth] = useState<Record<string, number>>({});
 	const [loadingBadges, setLoadingBadges] = useState(false);
 	const [newBadgeTitle, setNewBadgeTitle] = useState("");
 	const [newBadgeDesc, setNewBadgeDesc] = useState("");
@@ -771,7 +788,7 @@ function ProfileModal({
 		}
 	};
 
-	// ─── UMIEJĘTNOŚCI POTWIERDZONE ───
+
 	const [verifiedSkills, setVerifiedSkills] = useState<VerifiedSkill[]>([]);
 	const [loadingVerifiedSkills, setLoadingVerifiedSkills] = useState(false);
 	const [newSkillName, setNewSkillName] = useState("");
@@ -856,7 +873,8 @@ function ProfileModal({
 			toast.error("Nie udało się usunąć");
 		}
 	};
-	// ─── HISTORIA ZMIAN ───
+
+
 	const [changeHistory, setChangeHistory] = useState<MemberChange[]>([]);
 	const [loadingHistory, setLoadingHistory] = useState(false);
 	const [showAllHistory, setShowAllHistory] = useState(false);
@@ -906,6 +924,7 @@ function ProfileModal({
 			minute: "2-digit",
 		});
 	};
+
 	useEffect(() => {
 		if (member) {
 			const newFormData = {
@@ -917,7 +936,6 @@ function ProfileModal({
 				teamId: member.teamId || "",
 				pillars: member.pillars || "",
 				province: member.province || "",
-
 				status: (member.status as MemberStatus) || "trial",
 				interests: member.interests || [],
 				skills: member.skills || [],
@@ -973,6 +991,7 @@ function ProfileModal({
 			});
 		}
 	}, [member, isOpen]);
+
 	useEffect(() => {
 		if (isEdit) {
 			const firstName = formData.firstName?.trim() || "";
@@ -1003,7 +1022,6 @@ function ProfileModal({
 	}, [formData.firstName, formData.lastName, isEdit]);
 
 	if (!isOpen) return null;
-
 	if (!member && !isEdit) return null;
 
 	const currentMember = member || {
@@ -1046,6 +1064,7 @@ function ProfileModal({
 		(currentUser.role === "coordinator" &&
 			currentUser.teamId === currentMember.teamId) ||
 		currentUser.id === currentMember.id;
+
 	const canViewContributions =
 		!isEdit &&
 		(hasPermission(currentUser?.role, "canViewAllUsers") ||
@@ -1097,287 +1116,124 @@ function ProfileModal({
 		});
 	};
 
-	return (
-		<div className={styles.modalOverlay} onClick={onClose}>
-			<div
-				className={`${styles.modal} ${isEdit ? styles.modalEdit : styles.modalView}`}
-				onClick={(e) => e.stopPropagation()}
-			>
-				<div className={styles.modal__header}>
-					<h2 className={styles.modal__title}>
-						{!currentMember?.id
-							? "Dodaj nowego członka"
-							: isEdit
-								? "Edytuj profil"
-								: `Profil: ${currentMember.firstName} ${currentMember.lastName}`}
-					</h2>
-					<button className={styles.modal__close} onClick={onClose}>
-						<X size={20} />
-					</button>
-				</div>
 
-				<form onSubmit={handleSubmit} className={styles.modal__form}>
-					<div className={styles.modal__section}>
-						<h3 className={styles.modal__sectionTitle}>
-							Podstawowe informacje
-						</h3>
+	const renderOverviewTab = () => (
+		<div className={styles.tabContent}>
 
-						<div className={styles.modal__row}>
-							<div className={styles.modal__field}>
-								<label className={styles.modal__label}>Imię *</label>
+			<section className={styles.section}>
+				<h3 className={styles.sectionTitle}>Dane podstawowe</h3>
+				<div className={styles.sectionBody}>
+					<div className={styles.fieldRow}>
+						<div className={styles.field}>
+							<label className={styles.fieldLabel}>Imię</label>
+							{canEdit ? (
 								<input
 									type="text"
-									className={styles.modal__input}
+									className={styles.input}
 									value={formData.firstName || ""}
 									onChange={(e) =>
 										setFormData({ ...formData, firstName: e.target.value })
 									}
-									disabled={!canEdit}
 									required={isEdit}
 								/>
-							</div>
-							<div className={styles.modal__field}>
-								<label className={styles.modal__label}>Nazwisko *</label>
+							) : (
+								<span className={styles.fieldValue}>
+									{currentMember.firstName || "—"}
+								</span>
+							)}
+						</div>
+						<div className={styles.field}>
+							<label className={styles.fieldLabel}>Nazwisko</label>
+							{canEdit ? (
 								<input
 									type="text"
-									className={styles.modal__input}
+									className={styles.input}
 									value={formData.lastName || ""}
 									onChange={(e) =>
 										setFormData({ ...formData, lastName: e.target.value })
 									}
-									disabled={!canEdit}
 									required={isEdit}
 								/>
-							</div>
+							) : (
+								<span className={styles.fieldValue}>
+									{currentMember.lastName || "—"}
+								</span>
+							)}
 						</div>
+					</div>
 
-						{isEdit && (
-							<div className={styles.modal__row}>
-								<div className={styles.modal__field}>
-									<label className={styles.modal__label}>Email *</label>
-									<input
-										type="email"
-										className={styles.modal__input}
-										value={formData.email || ""}
-										onChange={(e) =>
-											setFormData({ ...formData, email: e.target.value })
-										}
-										disabled={!canEdit}
-										required
-									/>
-									{isEdit && !member?.id && formData.email && (
-										<small
-											style={{
-												color: "#6b7280",
-												fontSize: "12px",
-												display: "block",
-												marginTop: "4px",
-											}}
-										>
-											Email wygenerowany automatycznie z imienia i nazwiska
-										</small>
-									)}
-								</div>
-								<div className={styles.modal__field}>
-									<label className={styles.modal__label}>Telefon</label>
-									<input
-										type="text"
-										className={styles.modal__input}
-										value={formData.phone || ""}
-										onChange={(e) =>
-											setFormData({ ...formData, phone: e.target.value })
-										}
-										disabled={!canEdit}
-									/>
-								</div>
-							</div>
-						)}
-
-						<div className={styles.modal__row}>
-							<div className={styles.modal__field}>
-								<label className={styles.modal__label}>Funkcja</label>
+					<div className={styles.fieldRow}>
+						<div className={styles.field}>
+							<label className={styles.fieldLabel}>
+								<Mail size={14} /> Email
+							</label>
+							{canEdit ? (
+								<input
+									type="email"
+									className={styles.input}
+									value={formData.email || ""}
+									onChange={(e) =>
+										setFormData({ ...formData, email: e.target.value })
+									}
+									required
+								/>
+							) : (
+								<span className={styles.fieldValue}>
+									{currentMember.email || "—"}
+								</span>
+							)}
+						</div>
+						<div className={styles.field}>
+							<label className={styles.fieldLabel}>
+								<Phone size={14} /> Telefon
+							</label>
+							{canEdit ? (
 								<input
 									type="text"
-									className={styles.modal__input}
-									value={formData.function || currentMember.function}
+									className={styles.input}
+									value={formData.phone || ""}
+									onChange={(e) =>
+										setFormData({ ...formData, phone: e.target.value })
+									}
+								/>
+							) : (
+								<span className={styles.fieldValue}>
+									{currentMember.phone || "—"}
+								</span>
+							)}
+						</div>
+					</div>
+
+					<div className={styles.fieldRow}>
+						<div className={styles.field}>
+							<label className={styles.fieldLabel}>Funkcja</label>
+							{canEdit ? (
+								<input
+									type="text"
+									className={styles.input}
+									value={formData.function || ""}
 									onChange={(e) =>
 										setFormData({ ...formData, function: e.target.value })
 									}
-									disabled={!canEdit}
 								/>
-							</div>
-
-							<div className={styles.modal__field}>
-								<label className={styles.modal__label}>Filary</label>
-								{canEdit ? (
-									<>
-										<div className={styles.modal__tagInput}>
-											<select
-												className={styles.modal__select}
-												value=""
-												onChange={(e) => {
-													const value = e.target.value;
-													if (value) {
-														const currentPillars = formData.pillars
-															? formData.pillars.split(", ")
-															: [];
-
-														if (currentPillars.length >= 2) {
-															toast.error("Można dodać maksymalnie 2 filary");
-															e.target.value = "";
-															return;
-														}
-
-														if (!currentPillars.includes(value)) {
-															const newPillars = [...currentPillars, value];
-															setFormData({
-																...formData,
-																pillars: newPillars.join(", "),
-															});
-														}
-														e.target.value = "";
-													}
-												}}
-												disabled={!canEdit}
-											>
-												<option value="">Dodaj filar...</option>
-												<option value="Konferencyjny">
-													Filar Konferencyjny
-												</option>
-												<option value="Projektowy">Filar Projektowy</option>
-												<option value="Rzeczniczy">Filar Rzeczniczy</option>
-												<option value="Symulacyjny">Filar Symulacyjny</option>
-											</select>
-										</div>
-										<div className={styles.modal__tags}>
-											{(formData.pillars || "")
-												.split(", ")
-												.filter(Boolean)
-												.map((pillar) => (
-													<span key={pillar} className={styles.modal__tag}>
-														{PILLAR_MAP[pillar] || pillar}
-														<button
-															type="button"
-															className={styles.modal__removeTag}
-															onClick={() => {
-																const currentPillars = formData.pillars
-																	? formData.pillars.split(", ")
-																	: [];
-																const newPillars = currentPillars.filter(
-																	(p) => p !== pillar,
-																);
-
-																setFormData({
-																	...formData,
-																	pillars: newPillars.join(", "),
-																});
-															}}
-														>
-															<X size={12} />
-														</button>
-													</span>
-												))}
-										</div>
-									</>
-								) : (
-									<div className={styles.modal__tags}>
-										{(formData.pillars || "")
-											.split(", ")
-											.filter(Boolean)
-											.map((pillar) => (
-												<span key={pillar} className={styles.modal__tag}>
-													{PILLAR_MAP[pillar] || pillar}
-												</span>
-											))}
-									</div>
-								)}
-								<small
-									style={{
-										color: "#6b7280",
-										fontSize: "12px",
-										marginTop: "4px",
-										display: "block",
-									}}
-								>
-									Wymagany minimum 1 filar, maksymalnie 2 filary
-								</small>
-							</div>
+							) : (
+								<span className={styles.fieldValue}>
+									{currentMember.function || "—"}
+								</span>
+							)}
 						</div>
-
-						{canViewContributions && (
-							<div className={styles.modal__row}>
-								<div className={styles.modal__field}>
-									<label className={styles.modal__label}>Status składki</label>
-									<div className={styles.modal__value}>
-										{loadingContributions ? (
-											<span
-												className={styles.loadingSpinner}
-												style={{ width: 20, height: 20 }}
-											/>
-										) : contributionStats?.hasContributions ? (
-											<span
-												className={`${styles.contributionBadge} ${
-													contributionStats.currentMonth?.status === "paid"
-														? styles.contributionBadgePaid
-														: styles.contributionBadgePending
-												}`}
-											>
-												{contributionStats.currentMonth?.status === "paid" ? (
-													<Coins size={16} />
-												) : (
-													<AlertCircle size={16} />
-												)}
-												{contributionStats.currentMonth?.status === "paid"
-													? `Opłacona (${contributionStats.currentMonth?.amount?.toFixed(2)} zł)`
-													: contributionStats.currentMonth?.status === "pending"
-														? `Nieopłacona (${contributionStats.currentMonth?.amount?.toFixed(2)} zł)`
-														: "Brak danych"}
-											</span>
-										) : (
-											<span className={styles.contributionBadgeNone}>
-												<Coins size={16} />
-												Brak danych
-											</span>
-										)}
-									</div>
-								</div>
-							</div>
-						)}
-
-						<div className={styles.modal__row}>
-							<div className={styles.modal__field}>
-								<label className={styles.modal__label}>Województwo</label>
-								<input
-									type="text"
-									className={styles.modal__input}
-									value={formData.province || currentMember.province}
-									onChange={(e) =>
-										setFormData({ ...formData, province: e.target.value })
-									}
-									disabled={!canEdit}
-								/>
-							</div>
-							<div className={styles.modal__field}>
-								<label className={styles.modal__label}>Status *</label>
+						<div className={styles.field}>
+							<label className={styles.fieldLabel}>Status</label>
+							{canEdit ? (
 								<select
-									className={styles.modal__select}
+									className={styles.select}
 									value={formData.status || ""}
-									onChange={(e) => {
-										const value = e.target.value;
+									onChange={(e) =>
 										setFormData({
 											...formData,
-											status: value as MemberStatus,
-										});
-										(e.target as HTMLSelectElement).setCustomValidity(
-											value ? "" : "Wybierz status członka",
-										);
-									}}
-									onInvalid={(e) => {
-										(e.target as HTMLSelectElement).setCustomValidity(
-											"Wybierz status członka",
-										);
-									}}
-									disabled={!canEdit}
+											status: e.target.value as MemberStatus,
+										})
+									}
 									required={isEdit}
 								>
 									<option value="">Wybierz status</option>
@@ -1385,1501 +1241,1294 @@ function ProfileModal({
 									<option value="active">Pełnoprawny członek</option>
 									<option value="mentor">Mentor</option>
 								</select>
-								{isEdit && !formData.status && (
-									<small
-										style={{
-											color: "#a2a2a2",
-											fontSize: "12px",
-											display: "block",
-											marginTop: "4px",
-										}}
-									>
-										Wybierz status członka
-									</small>
-								)}
-							</div>
-						</div>
-
-						<div className={styles.modal__field}>
-							<label className={styles.modal__label}>Data dołączenia</label>
-							<input
-								type="date"
-								className={styles.modal__input}
-								value={formData.joinDate || ""}
-								onChange={(e) =>
-									setFormData({ ...formData, joinDate: e.target.value })
-								}
-								disabled={!canEdit}
-							/>
+							) : (
+								<span
+									className={`${styles.statusBadge} ${STATUS_COLORS[currentMember.status]}`}
+								>
+									{STATUS_ICONS[currentMember.status]}
+									{STATUS_LABELS[currentMember.status]}
+								</span>
+							)}
 						</div>
 					</div>
 
-					{currentMember.vacation && (
-						<div className={styles.modal__section}>
-							<h3 className={styles.modal__sectionTitle}>Aktualny urlop</h3>
-							<div className={styles.modal__vacationInfo}>
-								<Umbrella size={18} />
-								<span>
-									{formatDate(currentMember.vacation.startDate)} -{" "}
-									{formatDate(currentMember.vacation.endDate)}
+					<div className={styles.fieldRow}>
+						<div className={styles.field}>
+							<label className={styles.fieldLabel}>Data dołączenia</label>
+							{canEdit ? (
+								<input
+									type="date"
+									className={styles.input}
+									value={formData.joinDate || ""}
+									onChange={(e) =>
+										setFormData({ ...formData, joinDate: e.target.value })
+									}
+								/>
+							) : (
+								<span className={styles.fieldValue}>
+									{currentMember.joinDate
+										? formatDate(currentMember.joinDate)
+										: "—"}
 								</span>
-								<span className={styles.modal__vacationType}>
-									{currentMember.vacation.type === "team"
-										? "Urlop zespołowy"
-										: "Urlop organizacyjny"}
-								</span>
-							</div>
+							)}
 						</div>
-					)}
+						<div className={styles.field}>
+							<label className={styles.fieldLabel}>Województwo</label>
+							{canEdit ? (
+								<input
+									type="text"
+									className={styles.input}
+									value={formData.province || ""}
+									onChange={(e) =>
+										setFormData({ ...formData, province: e.target.value })
+									}
+								/>
+							) : (
+								<span className={styles.fieldValue}>
+									{currentMember.province || "—"}
+								</span>
+							)}
+						</div>
+					</div>
+				</div>
+			</section>
 
-					{(() => {
-						const hasInterests = canEdit
-							? (formData.interests || []).length > 0
-							: (currentMember.interests || []).length > 0;
-						const hasSkills = canEdit
-							? (formData.skills || []).length > 0
-							: (currentMember.skills || []).length > 0;
-						const hasSmAreas = canEdit
-							? (formData.smAreas || []).length > 0
-							: (currentMember.smAreas || []).length > 0;
-						const hasAnyData = hasInterests || hasSkills || hasSmAreas;
 
-						if (!hasAnyData && !canEdit) return null;
+			<section className={styles.section}>
+				<h3 className={styles.sectionTitle}>Przynależność</h3>
+				<div className={styles.sectionBody}>
+					<div className={styles.field}>
+						<label className={styles.fieldLabel}>Filary</label>
+						{canEdit ? (
+							<>
+								<select
+									className={styles.select}
+									value=""
+									onChange={(e) => {
+										const value = e.target.value;
+										if (value) {
+											const currentPillars = formData.pillars
+												? formData.pillars.split(", ")
+												: [];
+											if (currentPillars.length >= 2) {
+												toast.error("Można dodać maksymalnie 2 filary");
+												e.target.value = "";
+												return;
+											}
+											if (!currentPillars.includes(value)) {
+												const newPillars = [...currentPillars, value];
+												setFormData({
+													...formData,
+													pillars: newPillars.join(", "),
+												});
+											}
+											e.target.value = "";
+										}
+									}}
+								>
+									<option value="">Dodaj filar...</option>
+									<option value="Konferencyjny">Filar Konferencyjny</option>
+									<option value="Projektowy">Filar Projektowy</option>
+									<option value="Rzeczniczy">Filar Rzeczniczy</option>
+									<option value="Symulacyjny">Filar Symulacyjny</option>
+								</select>
+								<div className={styles.tags}>
+									{(formData.pillars || "")
+										.split(", ")
+										.filter(Boolean)
+										.map((pillar) => (
+											<span key={pillar} className={styles.tag}>
+												{PILLAR_MAP[pillar] || pillar}
+												<button
+													type="button"
+													className={styles.tagRemove}
+													onClick={() => {
+														const currentPillars = formData.pillars
+															? formData.pillars.split(", ")
+															: [];
+														const newPillars = currentPillars.filter(
+															(p) => p !== pillar,
+														);
+														setFormData({
+															...formData,
+															pillars: newPillars.join(", "),
+														});
+													}}
+												>
+													<X size={12} />
+												</button>
+											</span>
+										))}
+								</div>
+							</>
+						) : (
+							<div className={styles.tags}>
+								{(currentMember.pillars || "")
+									.split(", ")
+									.filter(Boolean)
+									.map((pillar) => (
+										<span key={pillar} className={styles.tag}>
+											{PILLAR_MAP[pillar] || pillar}
+										</span>
+									))}
+							</div>
+						)}
+						{canEdit && (
+							<small className={styles.hint}>
+								Wymagany minimum 1 filar, maksymalnie 2 filary
+							</small>
+						)}
+					</div>
+				</div>
+			</section>
 
-						return (
-							<div className={styles.modal__section}>
-								<h3 className={styles.modal__sectionTitle}>
-									Zainteresowania i umiejętności
-								</h3>
 
-								{(hasInterests || canEdit) && (
-									<div className={styles.modal__field}>
-										<label className={styles.modal__label}>
-											Zainteresowania
-										</label>
-										{canEdit ? (
-											<>
-												<div className={styles.modal__tagInput}>
-													<input
-														type="text"
-														className={styles.modal__input}
-														value={newInterest}
-														onChange={(e) => setNewInterest(e.target.value)}
-														placeholder="Dodaj zainteresowanie"
-														onKeyDown={(e) => {
-															if (e.key === "Enter") {
-																e.preventDefault();
-																addItem(
-																	formData.interests || [],
-																	(list) =>
-																		setFormData({
-																			...formData,
-																			interests: list,
-																		}),
-																	newInterest,
-																);
-																setNewInterest("");
-															}
-														}}
-													/>
+			{(currentMember.interests?.length > 0 ||
+				currentMember.skills?.length > 0 ||
+				currentMember.smAreas?.length > 0 ||
+				canEdit) && (
+					<section className={styles.section}>
+						<h3 className={styles.sectionTitle}>
+							Zainteresowania i umiejętności
+						</h3>
+						<div className={styles.sectionBody}>
+							<div className={styles.field}>
+								<label className={styles.fieldLabel}>Zainteresowania</label>
+								{canEdit ? (
+									<>
+										<div className={styles.tagInput}>
+											<input
+												type="text"
+												className={styles.input}
+												value={newInterest}
+												onChange={(e) => setNewInterest(e.target.value)}
+												placeholder="Dodaj zainteresowanie"
+												onKeyDown={(e) => {
+													if (e.key === "Enter") {
+														e.preventDefault();
+														addItem(
+															formData.interests || [],
+															(list) =>
+																setFormData({ ...formData, interests: list }),
+															newInterest,
+														);
+														setNewInterest("");
+													}
+												}}
+											/>
+											<button
+												type="button"
+												className={styles.addBtn}
+												onClick={() => {
+													addItem(
+														formData.interests || [],
+														(list) =>
+															setFormData({ ...formData, interests: list }),
+														newInterest,
+													);
+													setNewInterest("");
+												}}
+											>
+												<Plus size={16} />
+											</button>
+										</div>
+										<div className={styles.tags}>
+											{(formData.interests || []).map((item) => (
+												<span key={item} className={styles.tag}>
+													{AREA_LABELS[item] || item}
 													<button
 														type="button"
-														className={styles.modal__addBtn}
-														onClick={() => {
-															addItem(
+														className={styles.tagRemove}
+														onClick={() =>
+															removeItem(
 																formData.interests || [],
 																(list) =>
 																	setFormData({ ...formData, interests: list }),
-																newInterest,
-															);
-															setNewInterest("");
-														}}
+																item,
+															)
+														}
 													>
-														<Plus size={16} />
+														<X size={12} />
 													</button>
-												</div>
-												<div className={styles.modal__tags}>
-													{(formData.interests || currentMember.interests).map(
-														(item) => (
-															<span key={item} className={styles.modal__tag}>
-																{AREA_LABELS[item] || item}
-																<button
-																	type="button"
-																	className={styles.modal__removeTag}
-																	onClick={() =>
-																		removeItem(
-																			formData.interests || [],
-																			(list) =>
-																				setFormData({
-																					...formData,
-																					interests: list,
-																				}),
-																			item,
-																		)
-																	}
-																>
-																	<X size={12} />
-																</button>
-															</span>
-														),
-													)}
-												</div>
-											</>
-										) : (
-											<div className={styles.modal__tags}>
-												{mapAreas(currentMember.interests).map((item) => (
-													<span key={item} className={styles.modal__tag}>
-														{item}
-													</span>
-												))}
-											</div>
-										)}
+												</span>
+											))}
+										</div>
+									</>
+								) : (
+									<div className={styles.tags}>
+										{mapAreas(currentMember.interests).map((item) => (
+											<span key={item} className={styles.tag}>
+												{item}
+											</span>
+										))}
 									</div>
 								)}
+							</div>
 
-								{(hasSkills || canEdit) && (
-									<div className={styles.modal__field}>
-										<label className={styles.modal__label}>Umiejętności</label>
-										{canEdit ? (
-											<>
-												<div className={styles.modal__tagInput}>
-													<input
-														type="text"
-														className={styles.modal__input}
-														value={newSkill}
-														onChange={(e) => setNewSkill(e.target.value)}
-														placeholder="Dodaj umiejętność"
-														onKeyDown={(e) => {
-															if (e.key === "Enter") {
-																e.preventDefault();
-																addItem(
-																	formData.skills || [],
-																	(list) =>
-																		setFormData({ ...formData, skills: list }),
-																	newSkill,
-																);
-																setNewSkill("");
-															}
-														}}
-													/>
+							<div className={styles.field}>
+								<label className={styles.fieldLabel}>Umiejętności</label>
+								{canEdit ? (
+									<>
+										<div className={styles.tagInput}>
+											<input
+												type="text"
+												className={styles.input}
+												value={newSkill}
+												onChange={(e) => setNewSkill(e.target.value)}
+												placeholder="Dodaj umiejętność"
+												onKeyDown={(e) => {
+													if (e.key === "Enter") {
+														e.preventDefault();
+														addItem(
+															formData.skills || [],
+															(list) =>
+																setFormData({ ...formData, skills: list }),
+															newSkill,
+														);
+														setNewSkill("");
+													}
+												}}
+											/>
+											<button
+												type="button"
+												className={styles.addBtn}
+												onClick={() => {
+													addItem(
+														formData.skills || [],
+														(list) =>
+															setFormData({ ...formData, skills: list }),
+														newSkill,
+													);
+													setNewSkill("");
+												}}
+											>
+												<Plus size={16} />
+											</button>
+										</div>
+										<div className={styles.tags}>
+											{(formData.skills || []).map((item) => (
+												<span key={item} className={styles.tag}>
+													{item}
 													<button
 														type="button"
-														className={styles.modal__addBtn}
-														onClick={() => {
-															addItem(
+														className={styles.tagRemove}
+														onClick={() =>
+															removeItem(
 																formData.skills || [],
 																(list) =>
 																	setFormData({ ...formData, skills: list }),
-																newSkill,
-															);
-															setNewSkill("");
-														}}
+																item,
+															)
+														}
 													>
-														<Plus size={16} />
+														<X size={12} />
 													</button>
-												</div>
-												<div className={styles.modal__tags}>
-													{(formData.skills || currentMember.skills).map(
-														(item) => (
-															<span key={item} className={styles.modal__tag}>
-																{item}
-																<button
-																	type="button"
-																	className={styles.modal__removeTag}
-																	onClick={() =>
-																		removeItem(
-																			formData.skills || [],
-																			(list) =>
-																				setFormData({
-																					...formData,
-																					skills: list,
-																				}),
-																			item,
-																		)
-																	}
-																>
-																	<X size={12} />
-																</button>
-															</span>
-														),
-													)}
-												</div>
-											</>
-										) : (
-											<div className={styles.modal__tags}>
-												{currentMember.skills.map((item) => (
-													<span key={item} className={styles.modal__tag}>
-														{item}
-													</span>
-												))}
-											</div>
-										)}
+												</span>
+											))}
+										</div>
+									</>
+								) : (
+									<div className={styles.tags}>
+										{currentMember.skills.map((item) => (
+											<span key={item} className={styles.tag}>
+												{item}
+											</span>
+										))}
 									</div>
 								)}
+							</div>
 
-								{(hasSmAreas || canEdit) && (
-									<div className={styles.modal__field}>
-										<label className={styles.modal__label}>
-											Obszary działania w SM
-										</label>
-										{canEdit ? (
-											<>
-												<div className={styles.modal__tagInput}>
-													<input
-														type="text"
-														className={styles.modal__input}
-														value={newArea}
-														onChange={(e) => setNewArea(e.target.value)}
-														placeholder="Dodaj obszar"
-														onKeyDown={(e) => {
-															if (e.key === "Enter") {
-																e.preventDefault();
-																addItem(
-																	formData.smAreas || [],
-																	(list) =>
-																		setFormData({ ...formData, smAreas: list }),
-																	newArea,
-																);
-																setNewArea("");
-															}
-														}}
-													/>
+							<div className={styles.field}>
+								<label className={styles.fieldLabel}>
+									Obszary działania w SM
+								</label>
+								{canEdit ? (
+									<>
+										<div className={styles.tagInput}>
+											<input
+												type="text"
+												className={styles.input}
+												value={newArea}
+												onChange={(e) => setNewArea(e.target.value)}
+												placeholder="Dodaj obszar"
+												onKeyDown={(e) => {
+													if (e.key === "Enter") {
+														e.preventDefault();
+														addItem(
+															formData.smAreas || [],
+															(list) =>
+																setFormData({ ...formData, smAreas: list }),
+															newArea,
+														);
+														setNewArea("");
+													}
+												}}
+											/>
+											<button
+												type="button"
+												className={styles.addBtn}
+												onClick={() => {
+													addItem(
+														formData.smAreas || [],
+														(list) =>
+															setFormData({ ...formData, smAreas: list }),
+														newArea,
+													);
+													setNewArea("");
+												}}
+											>
+												<Plus size={16} />
+											</button>
+										</div>
+										<div className={styles.tags}>
+											{(formData.smAreas || []).map((item) => (
+												<span key={item} className={styles.tag}>
+													{AREA_LABELS[item] || item}
 													<button
 														type="button"
-														className={styles.modal__addBtn}
-														onClick={() => {
-															addItem(
+														className={styles.tagRemove}
+														onClick={() =>
+															removeItem(
 																formData.smAreas || [],
 																(list) =>
 																	setFormData({ ...formData, smAreas: list }),
-																newArea,
-															);
-															setNewArea("");
-														}}
+																item,
+															)
+														}
 													>
-														<Plus size={16} />
+														<X size={12} />
 													</button>
-												</div>
-												<div className={styles.modal__tags}>
-													{(formData.smAreas || currentMember.smAreas).map(
-														(item) => (
-															<span key={item} className={styles.modal__tag}>
-																{AREA_LABELS[item] || item}
-																<button
-																	type="button"
-																	className={styles.modal__removeTag}
-																	onClick={() =>
-																		removeItem(
-																			formData.smAreas || [],
-																			(list) =>
-																				setFormData({
-																					...formData,
-																					smAreas: list,
-																				}),
-																			item,
-																		)
-																	}
-																>
-																	<X size={12} />
-																</button>
-															</span>
-														),
-													)}
-												</div>
-											</>
-										) : (
-											<div className={styles.modal__tags}>
-												{mapAreas(currentMember.smAreas).map((item) => (
-													<span key={item} className={styles.modal__tag}>
-														{item}
-													</span>
-												))}
-											</div>
-										)}
+												</span>
+											))}
+										</div>
+									</>
+								) : (
+									<div className={styles.tags}>
+										{mapAreas(currentMember.smAreas).map((item) => (
+											<span key={item} className={styles.tag}>
+												{item}
+											</span>
+										))}
 									</div>
 								)}
 							</div>
-						);
-					})()}
-					{/* ─── ODZNAKI / WYRÓŻNIENIA ─── */}
-					{(() => {
-						const hasBadges = badges.length > 0;
-						if (!hasBadges && !canManageBadges) return null;
+						</div>
+					</section>
+				)}
 
-						return (
-							<div className={styles.modal__section}>
-								<h3 className={styles.modal__sectionTitle}>
-									<Star size={18} />
-									Wyróżnienia i odznaki
+
+			{currentMember.vacation && (
+				<section className={styles.section}>
+					<h3 className={styles.sectionTitle}>Aktualny urlop</h3>
+					<div className={styles.sectionBody}>
+						<div className={styles.vacationInfo}>
+							<Umbrella size={18} />
+							<span>
+								{formatDate(currentMember.vacation.startDate)} –{" "}
+								{formatDate(currentMember.vacation.endDate)}
+							</span>
+							<span className={styles.vacationType}>
+								{currentMember.vacation.type === "team"
+									? "Urlop zespołowy"
+									: "Urlop organizacyjny"}
+							</span>
+						</div>
+					</div>
+				</section>
+			)}
+		</div>
+	);
+
+
+	const renderAchievementsTab = () => {
+		const filtered = verifiedSkills.filter(
+			(s) => skillFilter === "all" || s.category === skillFilter,
+		);
+		const usedCategories = Array.from(
+			new Set(verifiedSkills.map((s) => s.category)),
+		);
+		const hasBadges = badges.length > 0;
+		const hasSkills = verifiedSkills.length > 0;
+
+		return (
+			<div className={styles.tabContent}>
+
+				{(hasBadges || canManageBadges) && (
+					<section className={styles.section}>
+						<h3 className={styles.sectionTitle}>
+							<Star size={18} />
+							Wyróżnienia i odznaki
+							{hasBadges && (
+								<span className={styles.sectionCount}>{badges.length}</span>
+							)}
+						</h3>
+						<div className={styles.sectionBody}>
+							{loadingBadges ? (
+								<div className={styles.loadingSpinner} />
+							) : (
+								<>
 									{hasBadges && (
-										<span
-											style={{
-												marginLeft: 8,
-												background: "#e5ac00",
-												color: "#fff",
-												borderRadius: 12,
-												padding: "2px 10px",
-												fontSize: 12,
-												fontWeight: 600,
-											}}
-										>
-											{badges.length}
-										</span>
+										<div className={styles.badgesSummary}>
+											{Object.entries(badgesByMonth).map(([key, count]) => {
+												const [y, m] = key.split("-");
+												const monthName = MONTHS_PL[parseInt(m) - 1];
+												return (
+													<span key={key} className={styles.badgeSummaryItem}>
+														{monthName} {y}: {count}{" "}
+														{count === 1 ? "wyróżnienie" : "wyróżnienia"}
+													</span>
+												);
+											})}
+										</div>
 									)}
-								</h3>
 
-								{loadingBadges ? (
-									<div
-										className={styles.loadingSpinner}
-										style={{ padding: 20 }}
-									/>
-								) : (
-									<>
-										{hasBadges && (
-											<div
-												style={{
-													display: "flex",
-													flexWrap: "wrap",
-													gap: 8,
-													marginBottom: 16,
-												}}
-											>
-												{Object.entries(badgesByMonth).map(([key, count]) => {
-													const [y, m] = key.split("-");
-													const monthName = MONTHS_PL[parseInt(m) - 1];
-													return (
-														<span
-															key={key}
-															style={{
-																background: "#FEF3C7",
-																color: "#92400E",
-																borderRadius: 8,
-																padding: "4px 12px",
-																fontSize: 13,
-																fontWeight: 600,
-															}}
-														>
-															{monthName} {y}: {count}{" "}
-															{count === 1 ? "wyróżnienie" : "wyróżnienia"}
-														</span>
-													);
-												})}
-											</div>
-										)}
-
-										{hasBadges ? (
-											<div
-												style={{
-													display: "flex",
-													flexDirection: "column",
-													gap: 8,
-												}}
-											>
-												{badges.map((badge) => (
-													<div
-														key={badge.id}
-														style={{
-															display: "flex",
-															alignItems: "flex-start",
-															gap: 12,
-															padding: 12,
-															background: "#FFFBEB",
-															border: "1px solid #FDE68A",
-															borderRadius: 10,
-														}}
-													>
-														<div
-															style={{
-																width: 36,
-																height: 36,
-																borderRadius: "50%",
-																background:
-																	"linear-gradient(135deg,#F59E0B,#FCD34D)",
-																display: "flex",
-																alignItems: "center",
-																justifyContent: "center",
-																color: "#fff",
-																flexShrink: 0,
-															}}
-														>
-															<Star size={18} />
+									{hasBadges ? (
+										<div className={styles.badgeList}>
+											{badges.map((badge) => (
+												<div key={badge.id} className={styles.badgeItem}>
+													<div className={styles.badgeIcon}>
+														<Star size={18} />
+													</div>
+													<div className={styles.badgeBody}>
+														<div className={styles.badgeTitle}>
+															{badge.title}
 														</div>
-														<div style={{ flex: 1 }}>
-															<div
-																style={{
-																	fontWeight: 600,
-																	color: "#92400E",
-																	marginBottom: 2,
-																}}
-															>
-																{badge.title}
-															</div>
-															<div
-																style={{
-																	fontSize: 12,
-																	color: "#78716C",
-																}}
-															>
-																{MONTHS_PL[badge.month - 1]} {badge.year}
-																{badge.awarded_by_name &&
-																	` • przyznał: ${badge.awarded_by_name}`}
-															</div>
-															{badge.description && (
-																<div
-																	style={{
-																		fontSize: 13,
-																		color: "#57534E",
-																		marginTop: 4,
-																	}}
-																>
-																	{badge.description}
-																</div>
-															)}
+														<div className={styles.badgeMeta}>
+															{MONTHS_PL[badge.month - 1]} {badge.year}
+															{badge.awarded_by_name &&
+																` • przyznał: ${badge.awarded_by_name}`}
 														</div>
-														{canManageBadges && (
-															<button
-																type="button"
-																onClick={() => handleDeleteBadge(badge.id)}
-																style={{
-																	background: "none",
-																	border: "none",
-																	cursor: "pointer",
-																	color: "#EF4444",
-																	padding: 4,
-																}}
-																title="Usuń odznakę"
-															>
-																<X size={16} />
-															</button>
+														{badge.description && (
+															<div className={styles.badgeDesc}>
+																{badge.description}
+															</div>
 														)}
 													</div>
-												))}
-											</div>
-										) : (
-											<p className={styles.contributionEmpty}>Brak wyróżnień</p>
-										)}
-
-										{canManageBadges && (
-											<div
-												style={{
-													marginTop: 16,
-													padding: 12,
-													background: "#F9FAFB",
-													borderRadius: 10,
-													border: "1px dashed #D1D5DB",
-												}}
-											>
-												<div
-													style={{
-														fontWeight: 600,
-														marginBottom: 8,
-														fontSize: 14,
-													}}
-												>
-													<Plus size={14} style={{ marginRight: 6 }} />
-													Dodaj wyróżnienie
-												</div>
-												<div className={styles.modal__field}>
-													<input
-														type="text"
-														className={styles.modal__input}
-														placeholder="Tytuł (np. Wyróżnienie miesiąca)"
-														value={newBadgeTitle}
-														onChange={(e) => setNewBadgeTitle(e.target.value)}
-													/>
-												</div>
-												<div className={styles.modal__field}>
-													<textarea
-														className={styles.modal__input}
-														placeholder="Opis (opcjonalnie)"
-														value={newBadgeDesc}
-														onChange={(e) => setNewBadgeDesc(e.target.value)}
-														rows={2}
-													/>
-												</div>
-												<div className={styles.modal__row}>
-													<div className={styles.modal__field}>
-														<label className={styles.modal__label}>
-															Miesiąc
-														</label>
-														<select
-															className={styles.modal__select}
-															value={newBadgeMonth}
-															onChange={(e) =>
-																setNewBadgeMonth(parseInt(e.target.value))
-															}
-														>
-															{MONTHS_PL.map((m, i) => (
-																<option key={m} value={i + 1}>
-																	{m}
-																</option>
-															))}
-														</select>
-													</div>
-													<div className={styles.modal__field}>
-														<label className={styles.modal__label}>Rok</label>
-														<input
-															type="number"
-															className={styles.modal__input}
-															value={newBadgeYear}
-															onChange={(e) =>
-																setNewBadgeYear(parseInt(e.target.value))
-															}
-															min={2000}
-															max={2100}
-														/>
-													</div>
-												</div>
-												<button
-													type="button"
-													onClick={handleAddBadge}
-													style={{
-														marginTop: 8,
-														background: "#F59E0B",
-														color: "#fff",
-														border: "none",
-														borderRadius: 8,
-														padding: "8px 16px",
-														cursor: "pointer",
-														fontWeight: 600,
-														display: "flex",
-														alignItems: "center",
-														gap: 6,
-													}}
-												>
-													<Plus size={14} />
-													Dodaj odznakę
-												</button>
-											</div>
-										)}
-									</>
-								)}
-							</div>
-						);
-					})()}
-					{/* ─── UMIEJĘTNOŚCI POTWIERDZONE ─── */}
-					{(() => {
-						const filtered = verifiedSkills.filter(
-							(s) => skillFilter === "all" || s.category === skillFilter,
-						);
-						const usedCategories = Array.from(
-							new Set(verifiedSkills.map((s) => s.category)),
-						);
-						const hasSkills = verifiedSkills.length > 0;
-
-						if (!hasSkills && !canManageVerifiedSkills) return null;
-
-						return (
-							<div className={styles.modal__section}>
-								<h3 className={styles.modal__sectionTitle}>
-									<Award size={18} />
-									Umiejętności potwierdzone
-									{hasSkills && (
-										<span
-											style={{
-												marginLeft: 8,
-												background: "#10B981",
-												color: "#fff",
-												borderRadius: 12,
-												padding: "2px 10px",
-												fontSize: 12,
-												fontWeight: 600,
-											}}
-										>
-											{verifiedSkills.length}
-										</span>
-									)}
-								</h3>
-
-								{loadingVerifiedSkills ? (
-									<div
-										className={styles.loadingSpinner}
-										style={{ padding: 20 }}
-									/>
-								) : (
-									<>
-										{hasSkills && usedCategories.length > 1 && (
-											<div
-												style={{
-													display: "flex",
-													flexWrap: "wrap",
-													gap: 6,
-													marginBottom: 12,
-												}}
-											>
-												<button
-													type="button"
-													onClick={() => setSkillFilter("all")}
-													style={{
-														padding: "4px 12px",
-														borderRadius: 20,
-														border: "1px solid #D1D5DB",
-														background:
-															skillFilter === "all" ? "#10B981" : "#fff",
-														color: skillFilter === "all" ? "#fff" : "#374151",
-														fontSize: 12,
-														cursor: "pointer",
-													}}
-												>
-													Wszystkie ({verifiedSkills.length})
-												</button>
-												{usedCategories.map((cat) => {
-													const count = verifiedSkills.filter(
-														(s) => s.category === cat,
-													).length;
-													return (
+													{canManageBadges && (
 														<button
-															key={cat}
 															type="button"
-															onClick={() => setSkillFilter(cat)}
-															style={{
-																padding: "4px 12px",
-																borderRadius: 20,
-																border: "1px solid #D1D5DB",
-																background:
-																	skillFilter === cat ? "#10B981" : "#fff",
-																color: skillFilter === cat ? "#fff" : "#374151",
-																fontSize: 12,
-																cursor: "pointer",
-															}}
+															className={styles.iconBtnDanger}
+															onClick={() => handleDeleteBadge(badge.id)}
+															title="Usuń odznakę"
 														>
-															{cat} ({count})
+															<X size={16} />
 														</button>
-													);
-												})}
-											</div>
-										)}
-
-										{filtered.length > 0 ? (
-											<div
-												style={{
-													display: "flex",
-													flexWrap: "wrap",
-													gap: 8,
-													marginBottom: 16,
-												}}
-											>
-												{filtered.map((skill) => (
-													<div
-														key={skill.id}
-														style={{
-															display: "flex",
-															alignItems: "flex-start",
-															gap: 10,
-															padding: 12,
-															background: "#ECFDF5",
-															border: "1px solid #A7F3D0",
-															borderRadius: 10,
-															flex: "1 1 calc(50% - 8px)",
-															minWidth: 240,
-														}}
-													>
-														<div
-															style={{
-																width: 32,
-																height: 32,
-																borderRadius: "50%",
-																background:
-																	"linear-gradient(135deg,#10B981,#34D399)",
-																display: "flex",
-																alignItems: "center",
-																justifyContent: "center",
-																color: "#fff",
-																flexShrink: 0,
-															}}
-														>
-															<Award size={16} />
-														</div>
-														<div style={{ flex: 1 }}>
-															<div
-																style={{
-																	fontWeight: 600,
-																	color: "#065F46",
-																	marginBottom: 2,
-																}}
-															>
-																{skill.skill_name}
-															</div>
-															<div
-																style={{
-																	fontSize: 12,
-																	color: "#047857",
-																	fontWeight: 500,
-																}}
-															>
-																{skill.category}
-															</div>
-															{skill.description && (
-																<div
-																	style={{
-																		fontSize: 12,
-																		color: "#6B7280",
-																		marginTop: 4,
-																	}}
-																>
-																	{skill.description}
-																</div>
-															)}
-															<div
-																style={{
-																	fontSize: 11,
-																	color: "#9CA3AF",
-																	marginTop: 4,
-																}}
-															>
-																przyznał: {skill.awarded_by_name}
-															</div>
-														</div>
-														{canManageVerifiedSkills && (
-															<button
-																type="button"
-																onClick={() =>
-																	handleDeleteVerifiedSkill(skill.id)
-																}
-																style={{
-																	background: "none",
-																	border: "none",
-																	cursor: "pointer",
-																	color: "#EF4444",
-																	padding: 4,
-																}}
-																title="Usuń"
-															>
-																<X size={16} />
-															</button>
-														)}
-													</div>
-												))}
-											</div>
-										) : (
-											<p className={styles.contributionEmpty}>
-												Brak umiejętności w tej kategorii
-											</p>
-										)}
-
-										{canManageVerifiedSkills && (
-											<div
-												style={{
-													marginTop: 16,
-													padding: 12,
-													background: "#F0FDF4",
-													borderRadius: 10,
-													border: "1px dashed #6EE7B7",
-												}}
-											>
-												<div
-													style={{
-														fontWeight: 600,
-														marginBottom: 8,
-														fontSize: 14,
-													}}
-												>
-													<Plus size={14} style={{ marginRight: 6 }} />
-													Dodaj potwierdzoną umiejętność
+													)}
 												</div>
-												<div className={styles.modal__field}>
-													<input
-														type="text"
-														className={styles.modal__input}
-														placeholder="Nazwa umiejętności (np. Prowadzenie panelu)"
-														value={newSkillName}
-														onChange={(e) => setNewSkillName(e.target.value)}
-													/>
-												</div>
-												<div className={styles.modal__field}>
-													<label className={styles.modal__label}>
-														Kategoria
-													</label>
+											))}
+										</div>
+									) : (
+										<p className={styles.emptyText}>Brak wyróżnień</p>
+									)}
+
+									{canManageBadges && (
+										<div className={styles.addPanel}>
+											<div className={styles.addPanelTitle}>
+												<Plus size={14} />
+												Dodaj wyróżnienie
+											</div>
+											<div className={styles.field}>
+												<input
+													type="text"
+													className={styles.input}
+													placeholder="Tytuł (np. Wyróżnienie miesiąca)"
+													value={newBadgeTitle}
+													onChange={(e) => setNewBadgeTitle(e.target.value)}
+												/>
+											</div>
+											<div className={styles.field}>
+												<textarea
+													className={styles.textarea}
+													placeholder="Opis (opcjonalnie)"
+													value={newBadgeDesc}
+													onChange={(e) => setNewBadgeDesc(e.target.value)}
+													rows={2}
+												/>
+											</div>
+											<div className={styles.fieldRow}>
+												<div className={styles.field}>
+													<label className={styles.fieldLabel}>Miesiąc</label>
 													<select
-														className={styles.modal__select}
-														value={newSkillCategory}
+														className={styles.select}
+														value={newBadgeMonth}
 														onChange={(e) =>
-															setNewSkillCategory(e.target.value)
+															setNewBadgeMonth(parseInt(e.target.value))
 														}
 													>
-														{SKILL_CATEGORIES.map((cat) => (
-															<option key={cat} value={cat}>
-																{cat}
+														{MONTHS_PL.map((m, i) => (
+															<option key={m} value={i + 1}>
+																{m}
 															</option>
 														))}
 													</select>
 												</div>
-												<div className={styles.modal__field}>
-													<textarea
-														className={styles.modal__input}
-														placeholder="Opis (opcjonalnie)"
-														value={newSkillDesc}
-														onChange={(e) => setNewSkillDesc(e.target.value)}
-														rows={2}
+												<div className={styles.field}>
+													<label className={styles.fieldLabel}>Rok</label>
+													<input
+														type="number"
+														className={styles.input}
+														value={newBadgeYear}
+														onChange={(e) =>
+															setNewBadgeYear(parseInt(e.target.value))
+														}
+														min={2000}
+														max={2100}
 													/>
 												</div>
-												<button
-													type="button"
-													onClick={handleAddVerifiedSkill}
-													style={{
-														marginTop: 8,
-														background: "#10B981",
-														color: "#fff",
-														border: "none",
-														borderRadius: 8,
-														padding: "8px 16px",
-														cursor: "pointer",
-														fontWeight: 600,
-														display: "flex",
-														alignItems: "center",
-														gap: 6,
-													}}
-												>
-													<Plus size={14} />
-													Dodaj umiejętność
-												</button>
 											</div>
-										)}
-									</>
-								)}
-							</div>
-						);
-					})()}
-					{/* ─── HISTORIA ZMIAN ─── */}
-					{canViewHistory &&
-						member?.id &&
-						(() => {
-							const visibleHistory = showAllHistory
-								? changeHistory
-								: changeHistory.slice(0, 3);
-
-							return (
-								<div className={styles.modal__section}>
-									<h3 className={styles.modal__sectionTitle}>
-										<Calendar size={18} />
-										Historia zmian
-										{changeHistory.length > 0 && (
-											<span
-												style={{
-													marginLeft: 8,
-													background: "#60A5FA",
-													color: "#fff",
-													borderRadius: 12,
-													padding: "2px 10px",
-													fontSize: 12,
-													fontWeight: 600,
-												}}
+											<button
+												type="button"
+												className={styles.primaryBtn}
+												onClick={handleAddBadge}
 											>
-												{changeHistory.length}
-											</span>
-										)}
-									</h3>
-
-									{loadingHistory ? (
-										<div
-											className={styles.loadingSpinner}
-											style={{ padding: 20 }}
-										/>
-									) : changeHistory.length === 0 ? (
-										<p className={styles.contributionEmpty}>
-											Brak historii zmian
-										</p>
-									) : (
-										<>
-											<div
-												style={{
-													display: "flex",
-													flexDirection: "column",
-													gap: 8,
-												}}
-											>
-												{visibleHistory.map((change) => (
-													<div
-														key={change.id}
-														style={{
-															padding: 10,
-															background: "#F9FAFB",
-															border: "1px solid #E5E7EB",
-															borderRadius: 8,
-															fontSize: 13,
-														}}
-													>
-														<div
-															style={{
-																display: "flex",
-																justifyContent: "space-between",
-																marginBottom: 4,
-															}}
-														>
-															<strong style={{ color: "#374151" }}>
-																{FIELD_LABELS[change.field] || change.field}
-															</strong>
-															<span
-																style={{
-																	fontSize: 12,
-																	color: "#6B7280",
-																}}
-															>
-																{formatHistoryDate(change.changed_at)}
-															</span>
-														</div>
-														<div style={{ color: "#4B5563" }}>
-															<span style={{ color: "#9CA3AF" }}>
-																{change.old_value || "—"}
-															</span>
-															{" → "}
-															<strong style={{ color: "#059669" }}>
-																{change.new_value || "—"}
-															</strong>
-														</div>
-														<div
-															style={{
-																fontSize: 11,
-																color: "#9CA3AF",
-																marginTop: 4,
-															}}
-														>
-															przez: {change.changed_by_name}
-														</div>
-													</div>
-												))}
-											</div>
-
-											{changeHistory.length > 3 && (
-												<button
-													type="button"
-													onClick={() => setShowAllHistory(!showAllHistory)}
-													style={{
-														marginTop: 10,
-														background: "none",
-														border: "none",
-														color: "#2563EB",
-														cursor: "pointer",
-														fontSize: 13,
-														fontWeight: 600,
-														padding: 0,
-													}}
-												>
-													{showAllHistory
-														? "Pokaż mniej"
-														: `Pokaż wszystkie (${changeHistory.length})`}
-												</button>
-											)}
-										</>
+												<Plus size={14} />
+												Dodaj odznakę
+											</button>
+										</div>
 									)}
-								</div>
-							);
-						})()}
-					{canViewSensitive &&
-						(() => {
-							const hasSalaContacts = canEdit
-								? (formData.contacts?.salaContacts || []).length > 0
-								: (currentMember.contacts?.salaContacts || []).length > 0;
-							const hasMpContacts = canEdit
-								? (formData.contacts?.mpContacts || []).length > 0
-								: (currentMember.contacts?.mpContacts || []).length > 0;
-							const hasOtherContacts = canEdit
-								? (formData.contacts?.otherContacts || []).length > 0
-								: (currentMember.contacts?.otherContacts || []).length > 0;
-							const hasTrainingAreas = canEdit
-								? (formData.trainingAreas || []).length > 0
-								: (currentMember.trainingAreas || []).length > 0;
-							const hasAnyContactData =
-								hasSalaContacts ||
-								hasMpContacts ||
-								hasOtherContacts ||
-								hasTrainingAreas;
+								</>
+							)}
+						</div>
+					</section>
+				)}
 
-							if (!hasAnyContactData && !canEdit) return null;
 
-							return (
+				{(hasSkills || canManageVerifiedSkills) && (
+					<section className={styles.section}>
+						<h3 className={styles.sectionTitle}>
+							<Award size={18} />
+							Umiejętności potwierdzone
+							{hasSkills && (
+								<span className={styles.sectionCount}>
+									{verifiedSkills.length}
+								</span>
+							)}
+						</h3>
+						<div className={styles.sectionBody}>
+							{loadingVerifiedSkills ? (
+								<div className={styles.loadingSpinner} />
+							) : (
 								<>
-									<div className={styles.modal__section}>
-										<h3 className={styles.modal__sectionTitle}>
-											Kontakty i znajomości
-										</h3>
+									{hasSkills && usedCategories.length > 1 && (
+										<div className={styles.filterChips}>
+											<button
+												type="button"
+												className={`${styles.chip} ${skillFilter === "all" ? styles.chipActive : ""}`}
+												onClick={() => setSkillFilter("all")}
+											>
+												Wszystkie ({verifiedSkills.length})
+											</button>
+											{usedCategories.map((cat) => {
+												const count = verifiedSkills.filter(
+													(s) => s.category === cat,
+												).length;
+												return (
+													<button
+														key={cat}
+														type="button"
+														className={`${styles.chip} ${skillFilter === cat ? styles.chipActive : ""}`}
+														onClick={() => setSkillFilter(cat)}
+													>
+														{cat} ({count})
+													</button>
+												);
+											})}
+										</div>
+									)}
 
-										{(hasSalaContacts || canEdit) && (
-											<div className={styles.modal__field}>
-												<label className={styles.modal__label}>
-													Kontakty z salami
-												</label>
-												{canEdit ? (
-													<>
-														<div className={styles.modal__tagInput}>
-															<input
-																type="text"
-																className={styles.modal__input}
-																value={newSalaContact}
-																onChange={(e) =>
-																	setNewSalaContact(e.target.value)
-																}
-																placeholder="Dodaj kontakt"
-																onKeyDown={(e) => {
-																	if (e.key === "Enter") {
-																		e.preventDefault();
-																		addItem(
-																			formData.contacts?.salaContacts || [],
-																			(list) =>
-																				setFormData({
-																					...formData,
-																					contacts: {
-																						...formData.contacts,
-																						salaContacts: list,
-																					},
-																				}),
-																			newSalaContact,
-																		);
-																		setNewSalaContact("");
-																	}
-																}}
-															/>
-															<button
-																type="button"
-																className={styles.modal__addBtn}
-																onClick={() => {
-																	addItem(
-																		formData.contacts?.salaContacts || [],
-																		(list) =>
-																			setFormData({
-																				...formData,
-																				contacts: {
-																					...formData.contacts,
-																					salaContacts: list,
-																				},
-																			}),
-																		newSalaContact,
-																	);
-																	setNewSalaContact("");
-																}}
-															>
-																<Plus size={16} />
-															</button>
+									{filtered.length > 0 ? (
+										<div className={styles.skillGrid}>
+											{filtered.map((skill) => (
+												<div key={skill.id} className={styles.skillItem}>
+													<div className={styles.skillIcon}>
+														<Award size={16} />
+													</div>
+													<div className={styles.skillBody}>
+														<div className={styles.skillName}>
+															{skill.skill_name}
 														</div>
-														<div className={styles.modal__tags}>
-															{(
-																formData.contacts?.salaContacts ||
-																currentMember.contacts?.salaContacts ||
-																[]
-															).map((item) => (
-																<span key={item} className={styles.modal__tag}>
-																	{item}
-																	<button
-																		type="button"
-																		className={styles.modal__removeTag}
-																		onClick={() =>
-																			removeItem(
-																				formData.contacts?.salaContacts || [],
-																				(list) =>
-																					setFormData({
-																						...formData,
-																						contacts: {
-																							...formData.contacts,
-																							salaContacts: list,
-																						},
-																					}),
-																				item,
-																			)
-																		}
-																	>
-																		<X size={12} />
-																	</button>
-																</span>
-															))}
+														<div className={styles.skillCategory}>
+															{skill.category}
 														</div>
-													</>
-												) : (
-													<div className={styles.modal__tags}>
-														{(currentMember.contacts?.salaContacts || []).map(
-															(item) => (
-																<span key={item} className={styles.modal__tag}>
-																	{item}
-																</span>
-															),
+														{skill.description && (
+															<div className={styles.skillDesc}>
+																{skill.description}
+															</div>
 														)}
+														<div className={styles.skillMeta}>
+															przyznał: {skill.awarded_by_name}
+														</div>
 													</div>
-												)}
-											</div>
-										)}
+													{canManageVerifiedSkills && (
+														<button
+															type="button"
+															className={styles.iconBtnDanger}
+															onClick={() =>
+																handleDeleteVerifiedSkill(skill.id)
+															}
+															title="Usuń"
+														>
+															<X size={16} />
+														</button>
+													)}
+												</div>
+											))}
+										</div>
+									) : (
+										<p className={styles.emptyText}>
+											Brak umiejętności w tej kategorii
+										</p>
+									)}
 
-										{(hasMpContacts || canEdit) && (
-											<div className={styles.modal__field}>
-												<label className={styles.modal__label}>
-													Kontakty z posłami
-												</label>
-												{canEdit ? (
-													<>
-														<div className={styles.modal__tagInput}>
-															<input
-																type="text"
-																className={styles.modal__input}
-																value={newMpContact}
-																onChange={(e) =>
-																	setNewMpContact(e.target.value)
-																}
-																placeholder="Dodaj kontakt"
-																onKeyDown={(e) => {
-																	if (e.key === "Enter") {
-																		e.preventDefault();
-																		addItem(
-																			formData.contacts?.mpContacts || [],
-																			(list) =>
-																				setFormData({
-																					...formData,
-																					contacts: {
-																						...formData.contacts,
-																						mpContacts: list,
-																					},
-																				}),
-																			newMpContact,
-																		);
-																		setNewMpContact("");
-																	}
-																}}
-															/>
-															<button
-																type="button"
-																className={styles.modal__addBtn}
-																onClick={() => {
-																	addItem(
-																		formData.contacts?.mpContacts || [],
-																		(list) =>
-																			setFormData({
-																				...formData,
-																				contacts: {
-																					...formData.contacts,
-																					mpContacts: list,
-																				},
-																			}),
-																		newMpContact,
-																	);
-																	setNewMpContact("");
-																}}
-															>
-																<Plus size={16} />
-															</button>
-														</div>
-														<div className={styles.modal__tags}>
-															{(
-																formData.contacts?.mpContacts ||
-																currentMember.contacts?.mpContacts ||
-																[]
-															).map((item) => (
-																<span key={item} className={styles.modal__tag}>
-																	{item}
-																	<button
-																		type="button"
-																		className={styles.modal__removeTag}
-																		onClick={() =>
-																			removeItem(
-																				formData.contacts?.mpContacts || [],
-																				(list) =>
-																					setFormData({
-																						...formData,
-																						contacts: {
-																							...formData.contacts,
-																							mpContacts: list,
-																						},
-																					}),
-																				item,
-																			)
-																		}
-																	>
-																		<X size={12} />
-																	</button>
-																</span>
-															))}
-														</div>
-													</>
-												) : (
-													<div className={styles.modal__tags}>
-														{(currentMember.contacts?.mpContacts || []).map(
-															(item) => (
-																<span key={item} className={styles.modal__tag}>
-																	{item}
-																</span>
-															),
-														)}
-													</div>
-												)}
+									{canManageVerifiedSkills && (
+										<div className={styles.addPanel}>
+											<div className={styles.addPanelTitle}>
+												<Plus size={14} />
+												Dodaj potwierdzoną umiejętność
 											</div>
-										)}
+											<div className={styles.field}>
+												<input
+													type="text"
+													className={styles.input}
+													placeholder="Nazwa umiejętności (np. Prowadzenie panelu)"
+													value={newSkillName}
+													onChange={(e) => setNewSkillName(e.target.value)}
+												/>
+											</div>
+											<div className={styles.field}>
+												<label className={styles.fieldLabel}>Kategoria</label>
+												<select
+													className={styles.select}
+													value={newSkillCategory}
+													onChange={(e) => setNewSkillCategory(e.target.value)}
+												>
+													{SKILL_CATEGORIES.map((cat) => (
+														<option key={cat} value={cat}>
+															{cat}
+														</option>
+													))}
+												</select>
+											</div>
+											<div className={styles.field}>
+												<textarea
+													className={styles.textarea}
+													placeholder="Opis (opcjonalnie)"
+													value={newSkillDesc}
+													onChange={(e) => setNewSkillDesc(e.target.value)}
+													rows={2}
+												/>
+											</div>
+											<button
+												type="button"
+												className={styles.primaryBtn}
+												onClick={handleAddVerifiedSkill}
+											>
+												<Plus size={14} />
+												Dodaj umiejętność
+											</button>
+										</div>
+									)}
+								</>
+							)}
+						</div>
+					</section>
+				)}
+			</div>
+		);
+	};
 
-										{(hasOtherContacts || canEdit) && (
-											<div className={styles.modal__field}>
-												<label className={styles.modal__label}>
-													Inne przydatne kontakty
-												</label>
-												{canEdit ? (
-													<>
-														<div className={styles.modal__tagInput}>
-															<input
-																type="text"
-																className={styles.modal__input}
-																value={newOtherContact}
-																onChange={(e) =>
-																	setNewOtherContact(e.target.value)
-																}
-																placeholder="Dodaj kontakt"
-																onKeyDown={(e) => {
-																	if (e.key === "Enter") {
-																		e.preventDefault();
-																		addItem(
-																			formData.contacts?.otherContacts || [],
-																			(list) =>
-																				setFormData({
-																					...formData,
-																					contacts: {
-																						...formData.contacts,
-																						otherContacts: list,
-																					},
-																				}),
-																			newOtherContact,
-																		);
-																		setNewOtherContact("");
-																	}
-																}}
-															/>
-															<button
-																type="button"
-																className={styles.modal__addBtn}
-																onClick={() => {
-																	addItem(
-																		formData.contacts?.otherContacts || [],
-																		(list) =>
-																			setFormData({
-																				...formData,
-																				contacts: {
-																					...formData.contacts,
-																					otherContacts: list,
-																				},
-																			}),
-																		newOtherContact,
-																	);
-																	setNewOtherContact("");
-																}}
-															>
-																<Plus size={16} />
-															</button>
-														</div>
-														<div className={styles.modal__tags}>
-															{(
-																formData.contacts?.otherContacts ||
-																currentMember.contacts?.otherContacts ||
-																[]
-															).map((item) => (
-																<span key={item} className={styles.modal__tag}>
-																	{item}
-																	<button
-																		type="button"
-																		className={styles.modal__removeTag}
-																		onClick={() =>
-																			removeItem(
-																				formData.contacts?.otherContacts || [],
-																				(list) =>
-																					setFormData({
-																						...formData,
-																						contacts: {
-																							...formData.contacts,
-																							otherContacts: list,
-																						},
-																					}),
-																				item,
-																			)
-																		}
-																	>
-																		<X size={12} />
-																	</button>
-																</span>
-															))}
-														</div>
-													</>
-												) : (
-													<div className={styles.modal__tags}>
-														{(currentMember.contacts?.otherContacts || []).map(
-															(item) => (
-																<span key={item} className={styles.modal__tag}>
-																	{item}
-																</span>
-															),
-														)}
-													</div>
-												)}
-											</div>
-										)}
 
-										{(hasTrainingAreas || canEdit) && (
-											<div className={styles.modal__field}>
-												<label className={styles.modal__label}>
-													Obszary szkoleniowe
-												</label>
-												{canEdit ? (
-													<>
-														<div className={styles.modal__tagInput}>
-															<input
-																type="text"
-																className={styles.modal__input}
-																value={newTrainingArea}
-																onChange={(e) =>
-																	setNewTrainingArea(e.target.value)
-																}
-																placeholder="Dodaj obszar szkoleniowy"
-																onKeyDown={(e) => {
-																	if (e.key === "Enter") {
-																		e.preventDefault();
-																		addItem(
-																			formData.trainingAreas || [],
-																			(list) =>
-																				setFormData({
-																					...formData,
-																					trainingAreas: list,
-																				}),
-																			newTrainingArea,
-																		);
-																		setNewTrainingArea("");
-																	}
-																}}
-															/>
-															<button
-																type="button"
-																className={styles.modal__addBtn}
-																onClick={() => {
-																	addItem(
-																		formData.trainingAreas || [],
-																		(list) =>
-																			setFormData({
-																				...formData,
-																				trainingAreas: list,
-																			}),
-																		newTrainingArea,
-																	);
-																	setNewTrainingArea("");
-																}}
-															>
-																<Plus size={16} />
-															</button>
-														</div>
-														<div className={styles.modal__tags}>
-															{(
-																formData.trainingAreas ||
-																currentMember.trainingAreas ||
-																[]
-															).map((item) => (
-																<span key={item} className={styles.modal__tag}>
-																	{item}
-																	<button
-																		type="button"
-																		className={styles.modal__removeTag}
-																		onClick={() =>
-																			removeItem(
-																				formData.trainingAreas || [],
-																				(list) =>
-																					setFormData({
-																						...formData,
-																						trainingAreas: list,
-																					}),
-																				item,
-																			)
-																		}
-																	>
-																		<X size={12} />
-																	</button>
-																</span>
-															))}
-														</div>
-													</>
-												) : (
-													<div className={styles.modal__tags}>
-														{(currentMember.trainingAreas || []).map((item) => (
-															<span key={item} className={styles.modal__tag}>
-																{item}
-															</span>
-														))}
-													</div>
-												)}
-											</div>
-										)}
+	const renderContactsTab = () => (
+		<div className={styles.tabContent}>
+			{canViewSensitive && (
+				<section className={styles.section}>
+					<h3 className={styles.sectionTitle}>Kontakty i znajomości</h3>
+					<div className={styles.sectionBody}>
+						<div className={styles.field}>
+							<label className={styles.fieldLabel}>Kontakty z salami</label>
+							{canEdit ? (
+								<>
+									<div className={styles.tagInput}>
+										<input
+											type="text"
+											className={styles.input}
+											value={newSalaContact}
+											onChange={(e) => setNewSalaContact(e.target.value)}
+											placeholder="Dodaj kontakt"
+											onKeyDown={(e) => {
+												if (e.key === "Enter") {
+													e.preventDefault();
+													addItem(
+														formData.contacts?.salaContacts || [],
+														(list) =>
+															setFormData({
+																...formData,
+																contacts: {
+																	...formData.contacts,
+																	salaContacts: list,
+																},
+															}),
+														newSalaContact,
+													);
+													setNewSalaContact("");
+												}
+											}}
+										/>
+										<button
+											type="button"
+											className={styles.addBtn}
+											onClick={() => {
+												addItem(
+													formData.contacts?.salaContacts || [],
+													(list) =>
+														setFormData({
+															...formData,
+															contacts: {
+																...formData.contacts,
+																salaContacts: list,
+															},
+														}),
+													newSalaContact,
+												);
+												setNewSalaContact("");
+											}}
+										>
+											<Plus size={16} />
+										</button>
 									</div>
-
-									<div className={styles.modal__section}>
-										<h3 className={styles.modal__sectionTitle}>
-											<CreditCard size={18} />
-											Statystyki składek
-										</h3>
-
-										{loadingContributions ? (
-											<div
-												className={styles.loadingSpinner}
-												style={{ padding: "20px" }}
-											/>
-										) : contributionStats ? (
-											<div className={styles.contributionStatsGrid}>
-												<div className={styles.contributionStatItem}>
-													<span className={styles.contributionStatLabel}>
-														Bieżący miesiąc
-													</span>
-													<span
-														className={`${styles.contributionStatValue} ${
-															contributionStats.currentMonth?.status === "paid"
-																? styles.statusPaid
-																: contributionStats.hasContributions === false
-																	? styles.statusNone
-																	: styles.statusPending
-														}`}
-													>
-														{contributionStats.currentMonth?.status === "paid"
-															? "Opłacona"
-															: contributionStats.hasContributions === false
-																? "Brak danych"
-																: "Nieopłacona"}
-													</span>
-												</div>
-												<div className={styles.contributionStatItem}>
-													<span className={styles.contributionStatLabel}>
-														Kwota
-													</span>
-													<span className={styles.contributionStatValue}>
-														{contributionStats.currentMonth?.amount > 0
-															? `${contributionStats.currentMonth.amount.toFixed(2)} zł`
-															: "0.00 zł"}
-													</span>
-												</div>
-												<div className={styles.contributionStatItem}>
-													<span className={styles.contributionStatLabel}>
-														Zaległości
-													</span>
-													<span
-														className={`${styles.contributionStatValue} ${
-															contributionStats.summary?.overdueMonths > 0
-																? styles.statusOverdue
-																: ""
-														}`}
-													>
-														{contributionStats.summary?.overdueMonths > 0
-															? ` ${contributionStats.summary.overdueMonths} mies.`
-															: "Brak zaległości"}
-													</span>
-												</div>
-												<div className={styles.contributionStatItem}>
-													<span className={styles.contributionStatLabel}>
-														Łącznie opłacone
-													</span>
-													<span className={styles.contributionStatValue}>
-														{contributionStats.summary?.totalPaid > 0
-															? `${contributionStats.summary.totalPaid.toFixed(2)} zł`
-															: "0.00 zł"}
-													</span>
-												</div>
-											</div>
-										) : (
-											<p className={styles.contributionEmpty}>
-												Brak danych o składkach
-											</p>
-										)}
+									<div className={styles.tags}>
+										{(formData.contacts?.salaContacts || []).map((item) => (
+											<span key={item} className={styles.tag}>
+												{item}
+												<button
+													type="button"
+													className={styles.tagRemove}
+													onClick={() =>
+														removeItem(
+															formData.contacts?.salaContacts || [],
+															(list) =>
+																setFormData({
+																	...formData,
+																	contacts: {
+																		...formData.contacts,
+																		salaContacts: list,
+																	},
+																}),
+															item,
+														)
+													}
+												>
+													<X size={12} />
+												</button>
+											</span>
+										))}
 									</div>
 								</>
-							);
-						})()}
+							) : (
+								<div className={styles.tags}>
+									{(currentMember.contacts?.salaContacts || []).map((item) => (
+										<span key={item} className={styles.tag}>
+											{item}
+										</span>
+									))}
+								</div>
+							)}
+						</div>
 
-					<div className={styles.modal__actions}>
+						<div className={styles.field}>
+							<label className={styles.fieldLabel}>Kontakty z posłami</label>
+							{canEdit ? (
+								<>
+									<div className={styles.tagInput}>
+										<input
+											type="text"
+											className={styles.input}
+											value={newMpContact}
+											onChange={(e) => setNewMpContact(e.target.value)}
+											placeholder="Dodaj kontakt"
+											onKeyDown={(e) => {
+												if (e.key === "Enter") {
+													e.preventDefault();
+													addItem(
+														formData.contacts?.mpContacts || [],
+														(list) =>
+															setFormData({
+																...formData,
+																contacts: {
+																	...formData.contacts,
+																	mpContacts: list,
+																},
+															}),
+														newMpContact,
+													);
+													setNewMpContact("");
+												}
+											}}
+										/>
+										<button
+											type="button"
+											className={styles.addBtn}
+											onClick={() => {
+												addItem(
+													formData.contacts?.mpContacts || [],
+													(list) =>
+														setFormData({
+															...formData,
+															contacts: {
+																...formData.contacts,
+																mpContacts: list,
+															},
+														}),
+													newMpContact,
+												);
+												setNewMpContact("");
+											}}
+										>
+											<Plus size={16} />
+										</button>
+									</div>
+									<div className={styles.tags}>
+										{(formData.contacts?.mpContacts || []).map((item) => (
+											<span key={item} className={styles.tag}>
+												{item}
+												<button
+													type="button"
+													className={styles.tagRemove}
+													onClick={() =>
+														removeItem(
+															formData.contacts?.mpContacts || [],
+															(list) =>
+																setFormData({
+																	...formData,
+																	contacts: {
+																		...formData.contacts,
+																		mpContacts: list,
+																	},
+																}),
+															item,
+														)
+													}
+												>
+													<X size={12} />
+												</button>
+											</span>
+										))}
+									</div>
+								</>
+							) : (
+								<div className={styles.tags}>
+									{(currentMember.contacts?.mpContacts || []).map((item) => (
+										<span key={item} className={styles.tag}>
+											{item}
+										</span>
+									))}
+								</div>
+							)}
+						</div>
+
+						<div className={styles.field}>
+							<label className={styles.fieldLabel}>
+								Inne przydatne kontakty
+							</label>
+							{canEdit ? (
+								<>
+									<div className={styles.tagInput}>
+										<input
+											type="text"
+											className={styles.input}
+											value={newOtherContact}
+											onChange={(e) => setNewOtherContact(e.target.value)}
+											placeholder="Dodaj kontakt"
+											onKeyDown={(e) => {
+												if (e.key === "Enter") {
+													e.preventDefault();
+													addItem(
+														formData.contacts?.otherContacts || [],
+														(list) =>
+															setFormData({
+																...formData,
+																contacts: {
+																	...formData.contacts,
+																	otherContacts: list,
+																},
+															}),
+														newOtherContact,
+													);
+													setNewOtherContact("");
+												}
+											}}
+										/>
+										<button
+											type="button"
+											className={styles.addBtn}
+											onClick={() => {
+												addItem(
+													formData.contacts?.otherContacts || [],
+													(list) =>
+														setFormData({
+															...formData,
+															contacts: {
+																...formData.contacts,
+																otherContacts: list,
+															},
+														}),
+													newOtherContact,
+												);
+												setNewOtherContact("");
+											}}
+										>
+											<Plus size={16} />
+										</button>
+									</div>
+									<div className={styles.tags}>
+										{(formData.contacts?.otherContacts || []).map((item) => (
+											<span key={item} className={styles.tag}>
+												{item}
+												<button
+													type="button"
+													className={styles.tagRemove}
+													onClick={() =>
+														removeItem(
+															formData.contacts?.otherContacts || [],
+															(list) =>
+																setFormData({
+																	...formData,
+																	contacts: {
+																		...formData.contacts,
+																		otherContacts: list,
+																	},
+																}),
+															item,
+														)
+													}
+												>
+													<X size={12} />
+												</button>
+											</span>
+										))}
+									</div>
+								</>
+							) : (
+								<div className={styles.tags}>
+									{(currentMember.contacts?.otherContacts || []).map(
+										(item) => (
+											<span key={item} className={styles.tag}>
+												{item}
+											</span>
+										),
+									)}
+								</div>
+							)}
+						</div>
+
+						<div className={styles.field}>
+							<label className={styles.fieldLabel}>
+								Obszary szkoleniowe
+							</label>
+							{canEdit ? (
+								<>
+									<div className={styles.tagInput}>
+										<input
+											type="text"
+											className={styles.input}
+											value={newTrainingArea}
+											onChange={(e) => setNewTrainingArea(e.target.value)}
+											placeholder="Dodaj obszar szkoleniowy"
+											onKeyDown={(e) => {
+												if (e.key === "Enter") {
+													e.preventDefault();
+													addItem(
+														formData.trainingAreas || [],
+														(list) =>
+															setFormData({
+																...formData,
+																trainingAreas: list,
+															}),
+														newTrainingArea,
+													);
+													setNewTrainingArea("");
+												}
+											}}
+										/>
+										<button
+											type="button"
+											className={styles.addBtn}
+											onClick={() => {
+												addItem(
+													formData.trainingAreas || [],
+													(list) =>
+														setFormData({
+															...formData,
+															trainingAreas: list,
+														}),
+													newTrainingArea,
+												);
+												setNewTrainingArea("");
+											}}
+										>
+											<Plus size={16} />
+										</button>
+									</div>
+									<div className={styles.tags}>
+										{(formData.trainingAreas || []).map((item) => (
+											<span key={item} className={styles.tag}>
+												{item}
+												<button
+													type="button"
+													className={styles.tagRemove}
+													onClick={() =>
+														removeItem(
+															formData.trainingAreas || [],
+															(list) =>
+																setFormData({
+																	...formData,
+																	trainingAreas: list,
+																}),
+															item,
+														)
+													}
+												>
+													<X size={12} />
+												</button>
+											</span>
+										))}
+									</div>
+								</>
+							) : (
+								<div className={styles.tags}>
+									{(currentMember.trainingAreas || []).map((item) => (
+										<span key={item} className={styles.tag}>
+											{item}
+										</span>
+									))}
+								</div>
+							)}
+						</div>
+					</div>
+				</section>
+			)}
+
+
+			{canViewContributions && (
+				<section className={styles.section}>
+					<h3 className={styles.sectionTitle}>
+						<CreditCard size={18} />
+						Statystyki składek
+					</h3>
+					<div className={styles.sectionBody}>
+						{loadingContributions ? (
+							<div className={styles.loadingSpinner} />
+						) : contributionStats ? (
+							<div className={styles.statsGrid}>
+								<div className={styles.statItem}>
+									<span className={styles.statLabel}>Bieżący miesiąc</span>
+									<span
+										className={`${styles.statValue} ${contributionStats.currentMonth?.status === "paid"
+											? styles.statPaid
+											: contributionStats.hasContributions === false
+												? styles.statNone
+												: styles.statPending
+											}`}
+									>
+										{contributionStats.currentMonth?.status === "paid"
+											? "Opłacona"
+											: contributionStats.hasContributions === false
+												? "Brak danych"
+												: "Nieopłacona"}
+									</span>
+								</div>
+								<div className={styles.statItem}>
+									<span className={styles.statLabel}>Kwota</span>
+									<span className={styles.statValue}>
+										{contributionStats.currentMonth?.amount > 0
+											? `${contributionStats.currentMonth.amount.toFixed(2)} zł`
+											: "0.00 zł"}
+									</span>
+								</div>
+								<div className={styles.statItem}>
+									<span className={styles.statLabel}>Zaległości</span>
+									<span
+										className={`${styles.statValue} ${contributionStats.summary?.overdueMonths > 0
+											? styles.statOverdue
+											: ""
+											}`}
+									>
+										{contributionStats.summary?.overdueMonths > 0
+											? `${contributionStats.summary.overdueMonths} mies.`
+											: "Brak zaległości"}
+									</span>
+								</div>
+								<div className={styles.statItem}>
+									<span className={styles.statLabel}>Łącznie opłacone</span>
+									<span className={styles.statValue}>
+										{contributionStats.summary?.totalPaid > 0
+											? `${contributionStats.summary.totalPaid.toFixed(2)} zł`
+											: "0.00 zł"}
+									</span>
+								</div>
+							</div>
+						) : (
+							<p className={styles.emptyText}>Brak danych o składkach</p>
+						)}
+					</div>
+				</section>
+			)}
+		</div>
+	);
+
+
+	const renderHistoryTab = () => {
+		const visibleHistory = showAllHistory
+			? changeHistory
+			: changeHistory.slice(0, 5);
+
+		return (
+			<div className={styles.tabContent}>
+				<section className={styles.section}>
+					<h3 className={styles.sectionTitle}>
+						<Calendar size={18} />
+						Historia zmian
+						{changeHistory.length > 0 && (
+							<span className={styles.sectionCount}>
+								{changeHistory.length}
+							</span>
+						)}
+					</h3>
+					<div className={styles.sectionBody}>
+						{loadingHistory ? (
+							<div className={styles.loadingSpinner} />
+						) : changeHistory.length === 0 ? (
+							<p className={styles.emptyText}>Brak historii zmian</p>
+						) : (
+							<>
+								<div className={styles.historyList}>
+									{visibleHistory.map((change) => (
+										<div key={change.id} className={styles.historyItem}>
+											<div className={styles.historyHeader}>
+												<strong className={styles.historyField}>
+													{FIELD_LABELS[change.field] || change.field}
+												</strong>
+												<span className={styles.historyDate}>
+													{formatHistoryDate(change.changed_at)}
+												</span>
+											</div>
+											<div className={styles.historyChange}>
+												<span className={styles.historyOld}>
+													{change.old_value || "—"}
+												</span>
+												<span className={styles.historyArrow}>→</span>
+												<strong className={styles.historyNew}>
+													{change.new_value || "—"}
+												</strong>
+											</div>
+											<div className={styles.historyMeta}>
+												przez: {change.changed_by_name}
+											</div>
+										</div>
+									))}
+								</div>
+
+								{changeHistory.length > 5 && (
+									<button
+										type="button"
+										className={styles.linkBtn}
+										onClick={() => setShowAllHistory(!showAllHistory)}
+									>
+										{showAllHistory
+											? "Pokaż mniej"
+											: `Pokaż wszystkie (${changeHistory.length})`}
+									</button>
+								)}
+							</>
+						)}
+					</div>
+				</section>
+			</div>
+		);
+	};
+
+	return (
+		<div className={styles.modalOverlay} onClick={onClose}>
+			<div
+				className={styles.modal}
+				onClick={(e) => e.stopPropagation()}
+			>
+				<div className={styles.modalHeader}>
+					<div>
+						<h2 className={styles.modalTitle}>
+							{!currentMember?.id
+								? "Dodaj nowego członka"
+								: isEdit
+									? "Edytuj profil"
+									: `${currentMember.firstName} ${currentMember.lastName}`}
+						</h2>
+						{!isEdit && currentMember?.id && (
+							<p className={styles.modalSubtitle}>
+								{currentMember.function} • {currentMember.email}
+							</p>
+						)}
+					</div>
+					<button className={styles.modalClose} onClick={onClose}>
+						<X size={20} />
+					</button>
+				</div>
+
+
+				{currentMember?.id && !isEdit && (
+					<div className={styles.tabs}>
+						<button
+							className={`${styles.tab} ${activeTab === "overview" ? styles.tabActive : ""}`}
+							onClick={() => setActiveTab("overview")}
+						>
+							Przegląd
+						</button>
+						<button
+							className={`${styles.tab} ${activeTab === "achievements" ? styles.tabActive : ""}`}
+							onClick={() => setActiveTab("achievements")}
+						>
+							Osiągnięcia
+						</button>
+						{canViewSensitive && (
+							<button
+								className={`${styles.tab} ${activeTab === "contacts" ? styles.tabActive : ""}`}
+								onClick={() => setActiveTab("contacts")}
+							>
+								Kontakty
+							</button>
+						)}
+						{canViewHistory && (
+							<button
+								className={`${styles.tab} ${activeTab === "history" ? styles.tabActive : ""}`}
+								onClick={() => setActiveTab("history")}
+							>
+								Historia
+							</button>
+						)}
+					</div>
+				)}
+
+				<form onSubmit={handleSubmit} className={styles.modalBody}>
+					{isEdit || !currentMember?.id ? (
+
+						<>
+							{renderOverviewTab()}
+							{renderAchievementsTab()}
+							{renderContactsTab()}
+						</>
+					) : (
+
+						<>
+							{activeTab === "overview" && renderOverviewTab()}
+							{activeTab === "achievements" && renderAchievementsTab()}
+							{activeTab === "contacts" && renderContactsTab()}
+							{activeTab === "history" && renderHistoryTab()}
+						</>
+					)}
+
+					<div className={styles.modalActions}>
 						<button
 							type="button"
-							className={styles.modal__btnCancel}
+							className={styles.btnCancel}
 							onClick={onClose}
 						>
 							{isEdit ? "Anuluj" : "Zamknij"}
@@ -2887,7 +2536,7 @@ function ProfileModal({
 						{isEdit && canEdit && (
 							<button
 								type="submit"
-								className={styles.modal__btnSave}
+								className={styles.btnSave}
 								disabled={!formData.status}
 							>
 								Zapisz zmiany
@@ -2900,6 +2549,10 @@ function ProfileModal({
 	);
 }
 
+/* ═══════════════════════════════════════════════════════════════
+   GŁÓWNY KOMPONENT
+   ═══════════════════════════════════════════════════════════════ */
+
 export default function Members({ title }: { title?: string }) {
 	const navigate = useNavigate();
 
@@ -2909,6 +2562,8 @@ export default function Members({ title }: { title?: string }) {
 	const [searchTerm, setSearchTerm] = useState("");
 	const [selectedProvince, setSelectedProvince] = useState<string>("all");
 	const [selectedTeam, setSelectedTeam] = useState<string>("all");
+	const [selectedStatus, setSelectedStatus] = useState<string>("all");
+	const [selectedPillar, setSelectedPillar] = useState<string>("all");
 	const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
 	const [isProfileOpen, setIsProfileOpen] = useState(false);
 	const [isEditOpen, setIsEditOpen] = useState(false);
@@ -2923,16 +2578,9 @@ export default function Members({ title }: { title?: string }) {
 	const [newMemberData, setNewMemberData] = useState<Partial<Member> | null>(
 		null,
 	);
-	const [showCustomTeam, setShowCustomTeam] = useState(false);
-	const [customTeamName, setCustomTeamName] = useState("");
 	const [teamsList, setTeamsList] = useState<
 		{ id: number; name: string; parent_id?: number | null }[]
 	>([]);
-	const [customTeamRole, setCustomTeamRole] = useState("Zespół");
-	const [customTeamDescription, setCustomTeamDescription] = useState("");
-	const [customTeamIcon, setCustomTeamIcon] = useState("Users");
-	const [customTeamParent, setCustomTeamParent] = useState("");
-	const [customTeamEmail, setCustomTeamEmail] = useState("");
 	const [contributionStats, setContributionStats] = useState<any>(null);
 	const [loadingContributions, setLoadingContributions] = useState(false);
 	const [badgesCounts, setBadgesCounts] = useState<Record<string, number>>({});
@@ -2959,9 +2607,7 @@ export default function Members({ title }: { title?: string }) {
 
 			if (response.ok) {
 				const data = await response.json();
-
 				setContributionStats(data);
-
 				setMembers((prev) => [...prev]);
 			} else {
 				console.error(" [fetch] Błąd:", response.status);
@@ -2972,6 +2618,7 @@ export default function Members({ title }: { title?: string }) {
 			setLoadingContributions(false);
 		}
 	};
+
 	const fetchAllContributions = async () => {
 		try {
 			setLoadingAllContributions(true);
@@ -3006,6 +2653,7 @@ export default function Members({ title }: { title?: string }) {
 			}
 		}
 	}, [isProfileOpen, isEditOpen, selectedMember?.id]);
+
 	const functions = useMemo(() => {
 		const unique = new Set(
 			members
@@ -3071,7 +2719,7 @@ export default function Members({ title }: { title?: string }) {
 				);
 				setMembers(mappedMembers);
 
-				// ─── Pobierz liczniki odznak JEDNYM zapytaniem ───
+
 				try {
 					const badgesRes = await fetch("/api/members/badges-counts", {
 						headers: { Authorization: `Bearer ${token}` },
@@ -3171,12 +2819,12 @@ export default function Members({ title }: { title?: string }) {
 
 					const teamData = {
 						name: teamName.trim(),
-						role: customTeamRole || "Zespół",
-						description: customTeamDescription || null,
-						icon: customTeamIcon || "Users",
+						role: "Zespół",
+						description: null,
+						icon: "Users",
 						status: "active",
-						parent_id: customTeamParent ? parseInt(customTeamParent) : null,
-						email: customTeamEmail || null,
+						parent_id: null,
+						email: null,
 					};
 
 					const createTeamResponse = await fetch("/api/teams", {
@@ -3198,13 +2846,6 @@ export default function Members({ title }: { title?: string }) {
 					const newTeam = await createTeamResponse.json();
 					setTeamsList([...teamsList, newTeam]);
 					toast.success(`Nowy zespół "${teamName}" został utworzony!`);
-
-					setCustomTeamName("");
-					setCustomTeamRole("Zespół");
-					setCustomTeamDescription("");
-					setCustomTeamIcon("Users");
-					setCustomTeamParent("");
-					setCustomTeamEmail("");
 				}
 
 				const response = await fetch("/api/members", {
@@ -3227,15 +2868,7 @@ export default function Members({ title }: { title?: string }) {
 					} catch (e) {
 						errorMessage = errorText || "Nie udało się dodać członka";
 					}
-
-					if (
-						errorMessage.includes("już istnieje") ||
-						errorMessage.includes("już jest przypisany")
-					) {
-						toast.error(errorMessage);
-					} else {
-						toast.error(errorMessage);
-					}
+					toast.error(errorMessage);
 					throw new Error(errorMessage);
 				}
 
@@ -3243,13 +2876,6 @@ export default function Members({ title }: { title?: string }) {
 				setMembers([savedMember, ...members]);
 				setIsAddMemberOpen(false);
 				setNewMemberData(null);
-				setShowCustomTeam(false);
-				setCustomTeamName("");
-				setCustomTeamRole("Zespół");
-				setCustomTeamDescription("");
-				setCustomTeamIcon("Users");
-				setCustomTeamParent("");
-				setCustomTeamEmail("");
 				toast.success(
 					`Członek ${member.firstName} ${member.lastName} został dodany!`,
 				);
@@ -3262,16 +2888,7 @@ export default function Members({ title }: { title?: string }) {
 				);
 			}
 		},
-		[
-			teamsList,
-			customTeamRole,
-			customTeamDescription,
-			customTeamIcon,
-			customTeamParent,
-			customTeamEmail,
-			members,
-			navigate,
-		],
+		[teamsList, members, navigate],
 	);
 
 	const provinces = useMemo(() => {
@@ -3283,15 +2900,6 @@ export default function Members({ title }: { title?: string }) {
 		return Array.from(unique).sort();
 	}, [members]);
 
-	const parentTeams = useMemo(() => {
-		const allowedParentIds = [1, 4, 7];
-		return teamsList
-			.filter((team) => allowedParentIds.includes(team.id))
-			.map((team) => ({
-				...team,
-				parent_id: team.parent_id || null,
-			}));
-	}, [teamsList]);
 	const teams = useMemo(() => {
 		const allTeams = new Set<string>();
 		members.forEach((member) => {
@@ -3362,6 +2970,7 @@ export default function Members({ title }: { title?: string }) {
 	const cancelDelete = useCallback(() => {
 		setConfirmDialog({ isOpen: false, member: null });
 	}, []);
+
 	const filteredMembers = useMemo(() => {
 		const result = members
 			.filter((member) => {
@@ -3392,6 +3001,7 @@ export default function Members({ title }: { title?: string }) {
 					member.skills.some((s) => s.toLowerCase().includes(searchLower)) ||
 					member.interests.some((i) => i.toLowerCase().includes(searchLower)) ||
 					member.smAreas.some((a) => a.toLowerCase().includes(searchLower));
+
 				const matchesProvince =
 					selectedProvince === "all" || member.province === selectedProvince;
 
@@ -3399,12 +3009,22 @@ export default function Members({ title }: { title?: string }) {
 					selectedTeam === "all" ||
 					member.team.split(", ").includes(selectedTeam);
 
-				const passed =
-					matchesSearch && matchesProvince && matchesTeam && matchesFunction;
+				const matchesStatus =
+					selectedStatus === "all" || member.status === selectedStatus;
 
-				return passed;
+				const matchesPillar =
+					selectedPillar === "all" ||
+					member.pillars.split(", ").includes(selectedPillar);
+
+				return (
+					matchesSearch &&
+					matchesProvince &&
+					matchesTeam &&
+					matchesFunction &&
+					matchesStatus &&
+					matchesPillar
+				);
 			})
-
 			.map((member) => {
 				let contributionBadge: "paid" | "pending" | "none" = "none";
 
@@ -3419,7 +3039,6 @@ export default function Members({ title }: { title?: string }) {
 					contributionBadge,
 				};
 			})
-
 			.sort((a, b) => {
 				let comparison = 0;
 				switch (sortBy) {
@@ -3449,12 +3068,26 @@ export default function Members({ title }: { title?: string }) {
 		selectedProvince,
 		selectedTeam,
 		selectedFunction,
+		selectedStatus,
+		selectedPillar,
 		sortBy,
 		sortOrder,
-		contributionStats,
-		selectedMember,
 		allContributions,
 	]);
+
+
+	const stats = useMemo(() => {
+		const total = members.length;
+		const active = members.filter((m) => m.status === "active").length;
+		const trial = members.filter((m) => m.status === "trial").length;
+		const mentors = members.filter((m) => m.status === "mentor").length;
+		const onVacation = members.filter((m) => m.status === "vacation").length;
+		const provincesCount = new Set(
+			members.map((m) => m.province).filter((p) => p && p !== "Brak"),
+		).size;
+
+		return { total, active, trial, mentors, onVacation, provincesCount };
+	}, [members]);
 
 	const handleViewMember = useCallback((member: Member) => {
 		setSelectedMember(member);
@@ -3465,6 +3098,7 @@ export default function Members({ title }: { title?: string }) {
 		setSelectedMember(member);
 		setIsEditOpen(true);
 	}, []);
+
 	const handleStatusChange = useCallback(
 		async (member: Member, newStatus: MemberStatus) => {
 			try {
@@ -3510,6 +3144,7 @@ export default function Members({ title }: { title?: string }) {
 		},
 		[navigate],
 	);
+
 	const handleSaveMember = useCallback(
 		async (updatedMember: Member) => {
 			const pillarsArray = updatedMember.pillars
@@ -3581,7 +3216,7 @@ export default function Members({ title }: { title?: string }) {
 				);
 			}
 		},
-		[members, navigate, handleStatusChange],
+		[navigate, handleStatusChange],
 	);
 
 	const clearFilters = useCallback(() => {
@@ -3589,19 +3224,18 @@ export default function Members({ title }: { title?: string }) {
 		setSelectedProvince("all");
 		setSelectedTeam("all");
 		setSelectedFunction("all");
+		setSelectedStatus("all");
+		setSelectedPillar("all");
 	}, []);
 
-	const toggleSort = useCallback(
-		(field: "name" | "function" | "province" | "status") => {
-			if (sortBy === field) {
-				setSortOrder(sortOrder === "asc" ? "desc" : "asc");
-			} else {
-				setSortBy(field);
-				setSortOrder("asc");
-			}
-		},
-		[sortBy, sortOrder],
-	);
+	const hasActiveFilters =
+		selectedProvince !== "all" ||
+		selectedTeam !== "all" ||
+		selectedFunction !== "all" ||
+		selectedStatus !== "all" ||
+		selectedPillar !== "all" ||
+		searchTerm !== "";
+
 	if (loading || !currentUser) {
 		return (
 			<div className={styles.members}>
@@ -3611,16 +3245,40 @@ export default function Members({ title }: { title?: string }) {
 			</div>
 		);
 	}
+
 	return (
 		<div className={styles.members}>
-			<div className={styles.header}>
+
+			<header className={styles.header}>
 				<div className={styles.header__left}>
 					<h1 className={styles.header__title}>
 						{title ?? "Członkowie Siły Młodych"}
 					</h1>
-					<p className={styles.header__subtitle}>
-						{members.length} członków w organizacji
-					</p>
+					<div className={styles.header__stats}>
+						<span className={styles.header__stat}>
+							<strong>{stats.total}</strong> członków
+						</span>
+						<span className={styles.header__statDivider}>·</span>
+						<span className={styles.header__stat}>
+							<strong>{stats.active}</strong> pełnoprawnych
+						</span>
+						<span className={styles.header__statDivider}>·</span>
+						<span className={styles.header__stat}>
+							<strong>{stats.mentors}</strong> mentorów
+						</span>
+						{stats.onVacation > 0 && (
+							<>
+								<span className={styles.header__statDivider}>·</span>
+								<span className={styles.header__stat}>
+									<strong>{stats.onVacation}</strong> na urlopie
+								</span>
+							</>
+						)}
+						<span className={styles.header__statDivider}>·</span>
+						<span className={styles.header__stat}>
+							<strong>{stats.provincesCount}</strong> okręgów
+						</span>
+					</div>
 				</div>
 
 				{hasPermission(currentUser?.role, "canEditUsers") && (
@@ -3629,7 +3287,8 @@ export default function Members({ title }: { title?: string }) {
 						Dodaj członka
 					</button>
 				)}
-			</div>
+			</header>
+
 
 			<div className={styles.filters}>
 				<div className={styles.filters__search}>
@@ -3667,6 +3326,31 @@ export default function Members({ title }: { title?: string }) {
 							</option>
 						))}
 					</select>
+
+					<select
+						className={styles.filters__select}
+						value={selectedStatus}
+						onChange={(e) => setSelectedStatus(e.target.value)}
+					>
+						<option value="all">Wszystkie statusy</option>
+						<option value="active">Pełnoprawni</option>
+						<option value="trial">Okres próbny</option>
+						<option value="mentor">Mentorzy</option>
+						<option value="vacation">Na urlopie</option>
+					</select>
+
+					<select
+						className={styles.filters__select}
+						value={selectedPillar}
+						onChange={(e) => setSelectedPillar(e.target.value)}
+					>
+						<option value="all">Wszystkie filary</option>
+						<option value="Konferencyjny">Filar Konferencyjny</option>
+						<option value="Projektowy">Filar Projektowy</option>
+						<option value="Rzeczniczy">Filar Rzeczniczy</option>
+						<option value="Symulacyjny">Filar Symulacyjny</option>
+					</select>
+
 					<select
 						className={styles.filters__select}
 						value={selectedProvince}
@@ -3693,11 +3377,33 @@ export default function Members({ title }: { title?: string }) {
 						))}
 					</select>
 
+					<select
+						className={styles.filters__select}
+						value={`${sortBy}-${sortOrder}`}
+						onChange={(e) => {
+							const [field, order] = e.target.value.split("-") as [
+								"name" | "function" | "province" | "status",
+								"asc" | "desc",
+							];
+							setSortBy(field);
+							setSortOrder(order);
+						}}
+					>
+						<option value="name-asc">Nazwa A–Z</option>
+						<option value="name-desc">Nazwa Z–A</option>
+						<option value="function-asc">Funkcja A–Z</option>
+						<option value="function-desc">Funkcja Z–A</option>
+						<option value="province-asc">Województwo A–Z</option>
+						<option value="province-desc">Województwo Z–A</option>
+						<option value="status-asc">Status A–Z</option>
+						<option value="status-desc">Status Z–A</option>
+					</select>
+
 					<div className={styles.filters__viewToggle}>
 						<button
 							className={`${styles.filters__viewBtn} ${viewMode === "grid" ? styles.filters__viewBtnActive : ""}`}
 							onClick={() => setViewMode("grid")}
-							title="Widok kafelków"
+							title="Widok kart"
 						>
 							<Grid size={18} />
 						</button>
@@ -3710,99 +3416,42 @@ export default function Members({ title }: { title?: string }) {
 						</button>
 					</div>
 
-					{(selectedProvince !== "all" ||
-						selectedTeam !== "all" ||
-						selectedFunction !== "all" ||
-						searchTerm) && (
+					{hasActiveFilters && (
 						<button className={styles.filters__reset} onClick={clearFilters}>
-							Wyczyść filtry
+							Wyczyść
 						</button>
 					)}
 				</div>
 			</div>
 
-			<div className={styles.sorting}>
-				<span className={styles.sorting__label}>Sortuj według:</span>
-				<button
-					className={`${styles.sorting__btn} ${sortBy === "name" ? styles.sorting__btnActive : ""}`}
-					onClick={() => toggleSort("name")}
-				>
-					Nazwy
-					{sortBy === "name" && (
-						<ArrowUpDown
-							size={14}
-							className={
-								sortOrder === "asc" ? styles.sorting__asc : styles.sorting__desc
-							}
-						/>
-					)}
-				</button>
-				<button
-					className={`${styles.sorting__btn} ${sortBy === "function" ? styles.sorting__btnActive : ""}`}
-					onClick={() => toggleSort("function")}
-				>
-					Funkcji
-					{sortBy === "function" && (
-						<ArrowUpDown
-							size={14}
-							className={
-								sortOrder === "asc" ? styles.sorting__asc : styles.sorting__desc
-							}
-						/>
-					)}
-				</button>
-				<button
-					className={`${styles.sorting__btn} ${sortBy === "province" ? styles.sorting__btnActive : ""}`}
-					onClick={() => toggleSort("province")}
-				>
-					Województwa
-					{sortBy === "province" && (
-						<ArrowUpDown
-							size={14}
-							className={
-								sortOrder === "asc" ? styles.sorting__asc : styles.sorting__desc
-							}
-						/>
-					)}
-				</button>
-				<button
-					className={`${styles.sorting__btn} ${sortBy === "status" ? styles.sorting__btnActive : ""}`}
-					onClick={() => toggleSort("status")}
-				>
-					Statusu
-					{sortBy === "status" && (
-						<ArrowUpDown
-							size={14}
-							className={
-								sortOrder === "asc" ? styles.sorting__asc : styles.sorting__desc
-							}
-						/>
-					)}
-				</button>
-			</div>
 
-			<div
-				className={`${styles.membersGrid} ${viewMode === "list" ? styles.membersGridList : ""}`}
-			>
-				{loading ? (
-					<div className={styles.loadingState}>
-						<div className={styles.loadingSpinner}></div>
-						<p>Ładowanie członków...</p>
+			{loading ? (
+				<div className={styles.loadingState}>
+					<div className={styles.loadingSpinner}></div>
+					<p>Ładowanie członków...</p>
+				</div>
+			) : filteredMembers.length === 0 ? (
+				<div className={styles.emptyState}>
+					<User size={48} className={styles.emptyState__icon} />
+					<h3 className={styles.emptyState__title}>Brak członków</h3>
+					<p className={styles.emptyState__description}>
+						{hasActiveFilters
+							? "Nie znaleziono członków spełniających kryteria wyszukiwania."
+							: "Nie ma jeszcze żadnych członków w organizacji."}
+					</p>
+				</div>
+			) : viewMode === "list" ? (
+				<div className={styles.membersList}>
+					<div className={styles.membersList__header}>
+						<div className={styles.membersList__headerCell}>Członek</div>
+						<div className={styles.membersList__headerCell}>Funkcja</div>
+						<div className={styles.membersList__headerCell}>Zespół</div>
+						<div className={styles.membersList__headerCell}>Województwo</div>
+						<div className={styles.membersList__headerCell}>Status</div>
+						<div className={styles.membersList__headerCell}></div>
+						<div className={styles.membersList__headerCell}></div>
 					</div>
-				) : filteredMembers.length === 0 ? (
-					<div className={styles.emptyState}>
-						<User size={48} className={styles.emptyState__icon} />
-						<h3 className={styles.emptyState__title}>Brak członków</h3>
-						<p className={styles.emptyState__description}>
-							{searchTerm ||
-							selectedProvince !== "all" ||
-							selectedTeam !== "all"
-								? "Nie znaleziono członków spełniających kryteria wyszukiwania."
-								: "Nie ma jeszcze żadnych członków w organizacji."}
-						</p>
-					</div>
-				) : (
-					filteredMembers.map((member) => (
+					{filteredMembers.map((member) => (
 						<MemberCard
 							key={member.id}
 							member={member}
@@ -3814,9 +3463,26 @@ export default function Members({ title }: { title?: string }) {
 							contributionBadge={member.contributionBadge}
 							badgesCount={badgesCounts[member.id]}
 						/>
-					))
-				)}
-			</div>
+					))}
+				</div>
+			) : (
+				<div className={styles.membersGrid}>
+					{filteredMembers.map((member) => (
+						<MemberCard
+							key={member.id}
+							member={member}
+							currentUser={currentUser}
+							onView={handleViewMember}
+							onEdit={handleEditMember}
+							onDelete={handleDeleteMember}
+							viewMode={viewMode}
+							contributionBadge={member.contributionBadge}
+							badgesCount={badgesCounts[member.id]}
+						/>
+					))}
+				</div>
+			)}
+
 
 			<ProfileModal
 				isOpen={isAddMemberOpen}
@@ -3826,26 +3492,8 @@ export default function Members({ title }: { title?: string }) {
 				onClose={() => {
 					setIsAddMemberOpen(false);
 					setNewMemberData(null);
-					setShowCustomTeam(false);
-					setCustomTeamName("");
 				}}
 				onSave={handleAddNewMember}
-				teamsList={teamsList}
-				parentTeamsList={parentTeams}
-				showCustomTeam={showCustomTeam}
-				setShowCustomTeam={setShowCustomTeam}
-				customTeamName={customTeamName}
-				setCustomTeamName={setCustomTeamName}
-				customTeamRole={customTeamRole}
-				setCustomTeamRole={setCustomTeamRole}
-				customTeamDescription={customTeamDescription}
-				setCustomTeamDescription={setCustomTeamDescription}
-				customTeamIcon={customTeamIcon}
-				setCustomTeamIcon={setCustomTeamIcon}
-				customTeamParent={customTeamParent}
-				setCustomTeamParent={setCustomTeamParent}
-				customTeamEmail={customTeamEmail}
-				setCustomTeamEmail={setCustomTeamEmail}
 			/>
 
 			<ProfileModal
@@ -3860,6 +3508,7 @@ export default function Members({ title }: { title?: string }) {
 				contributionStats={contributionStats}
 				loadingContributions={loadingContributions}
 			/>
+
 			<ProfileModal
 				isOpen={isEditOpen}
 				member={selectedMember}
@@ -3873,6 +3522,7 @@ export default function Members({ title }: { title?: string }) {
 				contributionStats={contributionStats}
 				loadingContributions={loadingContributions}
 			/>
+
 			<ConfirmDialog
 				isOpen={confirmDialog.isOpen}
 				title="Potwierdź usunięcie"

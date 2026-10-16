@@ -165,6 +165,7 @@
         font-size: 14px;
     }
 }
+
 .maintenance__loginLink {
     margin-top: 32px;
 }
@@ -179,6 +180,7 @@
 .maintenance__loginLink a:hover {
     opacity: 0.8;
 }
+
 /* ═══════════════════════════════════════════════════════════
    LINK „Zaloguj się jako administrator"
    ═══════════════════════════════════════════════════════════ */
@@ -222,7 +224,7 @@
     outline-offset: 2px;
 }
 
-/* Opcjonalnie: ikona przy linku */
+
 .maintenance__loginLink a svg {
     width: 16px;
     height: 16px;

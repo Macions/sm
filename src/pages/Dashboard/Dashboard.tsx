@@ -18,8 +18,8 @@ import {
 	Wallet,
 	CreditCard,
 	Gift,
-	Award, // ← DODAJ
-	Star, // ← DODAJ
+	Award,
+	Star,
 } from "lucide-react";
 import styles from "./Dashboard.module.css";
 function getMonthName(month: number): string {
@@ -416,7 +416,7 @@ export default function Dashboard() {
 			fetchContributions(),
 			fetchNotifs(),
 			fetchBirthdays(),
-			fetchRecentBadges(), // ← DODAJ
+			fetchRecentBadges(),
 		]);
 
 		return () => {
@@ -538,56 +538,56 @@ export default function Dashboard() {
 
 			...(contributionStats
 				? [
-						{
-							id: "contribution",
-							label: (() => {
-								const { month, monthName, year, monthsPaid } =
-									contributionStats.currentMonth;
-								if (monthsPaid > 1) {
-									const months = [];
-									for (let i = 0; i < monthsPaid; i++) {
-										const m = ((month - i + 11) % 12) + 1;
-										months.push(m);
-									}
-									const monthNames = months.map((m) => getMonthName(m));
-									return `Składka ${monthNames.reverse().join("-")} ${year}`;
+					{
+						id: "contribution",
+						label: (() => {
+							const { month, monthName, year, monthsPaid } =
+								contributionStats.currentMonth;
+							if (monthsPaid > 1) {
+								const months = [];
+								for (let i = 0; i < monthsPaid; i++) {
+									const m = ((month - i + 11) % 12) + 1;
+									months.push(m);
 								}
-								return `Składka ${monthName} ${year}`;
-							})(),
-							value:
-								contributionStats.hasContributions === false
-									? ""
-									: `${contributionStats.currentMonth.amount.toFixed(2)} zł`,
-							subtext:
-								contributionStats.hasContributions === false
-									? "Nie dotyczy"
-									: contributionStats.currentMonth.status === "paid"
-										? `Opłacona (${contributionStats.currentMonth.monthsPaid} mies.)`
-										: contributionStats.summary.overdueMonths > 0
-											? `${contributionStats.summary.overdueMonths} mies. zaległości`
-											: "Nieopłacona",
-							icon:
-								contributionStats.hasContributions === false ? (
-									<AlertCircle size={24} />
-								) : contributionStats.currentMonth.status === "paid" ? (
-									<CreditCard size={24} />
-								) : (
-									<Wallet size={24} />
-								),
-							color:
-								contributionStats.hasContributions === false
-									? "#6B7280"
-									: contributionStats.currentMonth.status === "paid"
-										? "#2ECC71"
-										: "#F5A623",
-							bgColor:
-								contributionStats.hasContributions === false
-									? "#F3F4F6"
-									: contributionStats.currentMonth.status === "paid"
-										? "#ECFDF5"
-										: "#FEF9E7",
-						},
-					]
+								const monthNames = months.map((m) => getMonthName(m));
+								return `Składka ${monthNames.reverse().join("-")} ${year}`;
+							}
+							return `Składka ${monthName} ${year}`;
+						})(),
+						value:
+							contributionStats.hasContributions === false
+								? ""
+								: `${contributionStats.currentMonth.amount.toFixed(2)} zł`,
+						subtext:
+							contributionStats.hasContributions === false
+								? "Nie dotyczy"
+								: contributionStats.currentMonth.status === "paid"
+									? `Opłacona (${contributionStats.currentMonth.monthsPaid} mies.)`
+									: contributionStats.summary.overdueMonths > 0
+										? `${contributionStats.summary.overdueMonths} mies. zaległości`
+										: "Nieopłacona",
+						icon:
+							contributionStats.hasContributions === false ? (
+								<AlertCircle size={24} />
+							) : contributionStats.currentMonth.status === "paid" ? (
+								<CreditCard size={24} />
+							) : (
+								<Wallet size={24} />
+							),
+						color:
+							contributionStats.hasContributions === false
+								? "#6B7280"
+								: contributionStats.currentMonth.status === "paid"
+									? "#2ECC71"
+									: "#F5A623",
+						bgColor:
+							contributionStats.hasContributions === false
+								? "#F3F4F6"
+								: contributionStats.currentMonth.status === "paid"
+									? "#ECFDF5"
+									: "#FEF9E7",
+					},
+				]
 				: []),
 			{
 				id: "projects",
@@ -884,7 +884,7 @@ export default function Dashboard() {
 						)}
 					</div>
 				</div>
-				{/* ─── OSOBY WYRÓŻNIONE ─── */}
+
 				{!loadingBadges && recentBadges.length > 0 && (
 					<div className={styles.badges}>
 						<h2 className={styles.sectionTitle}>

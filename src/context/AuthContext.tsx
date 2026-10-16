@@ -61,16 +61,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 		try {
 			const response = await api.get("/auth/me");
 			const userData = response.data;
-			console.log(
+			logger.debug(
 				"[AuthContext] /auth/me response:",
 				response.status,
 				userData,
 			);
-			console.log(
+			logger.debug(
 				"[AuthContext] accessToken:",
 				localStorage.getItem("accessToken")?.slice(0, 20),
 			);
-			console.log(
+			logger.debug(
 				"[AuthContext] localStorage user:",
 				localStorage.getItem("user")?.slice(0, 100),
 			);
@@ -153,8 +153,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
 	const logout = useCallback(() => {
 		try {
-			api.post("/auth/logout").catch(() => {});
-		} catch {}
+			api.post("/auth/logout").catch(() => { });
+		} catch { }
 		localStorage.removeItem("user");
 		setState({ user: null, loading: false, isAuthenticated: false });
 	}, []);

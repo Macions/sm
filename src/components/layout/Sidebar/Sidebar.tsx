@@ -31,7 +31,6 @@ export default function Sidebar({
 		userRole === "admin" || userRole === "board" || userRole === "zarząd";
 	const isCoordinator = userRole === "coordinator";
 
-	// Sprawdzenie czy to pełnomocnik ds. okresów próbnych (Maja Melerska, id=294)
 	const isTrialCoordinator = (() => {
 		try {
 			const u = JSON.parse(localStorage.getItem("user") || "{}");
@@ -54,7 +53,7 @@ export default function Sidebar({
 		if (item.key === "trial-periods") {
 			return isAdminOrBoard || isTrialCoordinator;
 		}
-		if (item.key === "attendance") {                    // ⬅️ DODAJ
+		if (item.key === "attendance") {
 			return isAdminOrBoard || isAttendanceCoordinator;
 		}
 		return true;

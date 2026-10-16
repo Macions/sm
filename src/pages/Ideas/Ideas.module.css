@@ -431,7 +431,7 @@
 	font-size: 13px;
 }
 
-/* ── Modal potwierdzenia ── */
+
 .confirmModal {
 	max-width: 420px;
 }
@@ -447,12 +447,12 @@
 
 .confirmIcon {
 	color: #f59e0b;
-	/* bursztynowy — akcje neutralne */
+
 }
 
 .confirmIconDanger {
 	color: #dc2626;
-	/* czerwony — destrukcyjne */
+
 }
 
 .confirmMessage {
@@ -462,7 +462,7 @@
 	font-size: 14px;
 }
 
-/* Przycisk danger w stopce (ten sam styl co saveBtn, tylko czerwony) */
+
 .saveBtn.danger {
 	background: #dc2626;
 	border-color: #dc2626;

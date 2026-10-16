@@ -4,13 +4,10 @@
 
 .container {
     width: 100%;
-    max-width: 1280px;
-    margin: 0 auto;
-    padding: 32px 24px 60px;
     box-sizing: border-box;
 }
 
-/* ═══ Nagłówek ═══ */
+
 .title {
     margin: 0 0 4px;
     font-size: 28px;
@@ -25,7 +22,7 @@
     color: #64748b;
 }
 
-/* ═══ Loading / Empty / Error ═══ */
+
 .loading {
     color: #64748b;
     font-size: 14px;
@@ -104,7 +101,7 @@
     }
 }
 
-/* ═══ Zakładki główne (Spotkania / Raporty) ═══ */
+
 .tabs {
     display: inline-flex;
     gap: 4px;
@@ -141,7 +138,7 @@
     font-weight: 600;
 }
 
-/* ═══ Pasek filarów ═══ */
+
 .pillarTabs {
     display: flex;
     gap: 10px;
@@ -203,7 +200,7 @@
     color: #4f46e5;
 }
 
-/* ═══ Lista spotkań ═══ */
+
 .meetingsList {
     display: flex;
     flex-direction: column;
@@ -302,7 +299,7 @@
     color: #4f46e5;
 }
 
-/* ═══ Szczegóły spotkania ═══ */
+
 .details {
     margin-top: 8px;
     animation: fadeIn 0.2s ease-out;
@@ -388,7 +385,7 @@
     font-variant-numeric: tabular-nums;
 }
 
-/* ═══ Tabela rekordów ═══ */
+
 .recordsHeader {
     display: grid;
     grid-template-columns: 220px 1fr 140px 1fr;
@@ -562,7 +559,7 @@
     box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12);
 }
 
-/* ═══ Akcje na dole ═══ */
+
 .actions {
     margin-top: 28px;
     display: flex;
@@ -612,7 +609,7 @@
     color: #ffffff;
 }
 
-/* ═══ Raporty ═══ */
+
 .reportControls {
     margin-bottom: 24px;
     font-size: 14px;
@@ -736,7 +733,7 @@
     letter-spacing: 0.02em;
 }
 
-/* ═══ Mobile ═══ */
+
 @media (max-width: 900px) {
     .detailsHeader {
         flex-direction: column;
@@ -817,7 +814,7 @@
     }
 }
 
-/* ═══ Nagłówek listy spotkań + przycisk dodawania ═══ */
+
 .meetingsHeader {
     display: flex;
     justify-content: space-between;
@@ -863,7 +860,7 @@
     box-shadow: none;
 }
 
-/* ═══ Modal ═══ */
+
 .modalOverlay {
     position: fixed;
     inset: 0;
@@ -1010,7 +1007,7 @@
     color: #f59e0b;
 }
 
-/* ═══ Badge statusu sprawdzenia ═══ */
+
 .statusBadgePending,
 .statusBadgeChecked {
     display: inline-flex;
@@ -1051,7 +1048,7 @@
     background: #22c55e;
 }
 
-/* ═══ Przyciski akcji w wierszu ═══ */
+
 .actionBtnPrimary,
 .actionBtnSecondary {
     padding: 7px 16px;
@@ -1143,7 +1140,7 @@
     border-color: #9ca3af;
 }
 
-/* ═══ Tabela rekordów ═══ */
+
 .recordsHeader {
     display: grid;
     grid-template-columns: 2fr 2fr 1fr 2fr;
@@ -1624,7 +1621,7 @@
     color: #6366f1;
 }
 
-/* Badge podzespołu w nagłówku szczegółów */
+
 .subteamBadge {
     display: inline-flex;
     align-items: center;
@@ -1637,7 +1634,7 @@
     letter-spacing: 0.02em;
 }
 
-/* Badge podzespołu w wierszu spotkania */
+
 .meetingSubteamBadge {
     display: inline-flex;
     align-items: center;
@@ -1652,7 +1649,7 @@
     vertical-align: middle;
 }
 
-/* Dropdown podzespołu w modalu */
+
 .modalField select {
     padding: 10px 14px;
     border: 1px solid #e2e8f0;
@@ -1675,7 +1672,7 @@
     box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12);
 }
 
-/* Mobile */
+
 @media (max-width: 768px) {
     .subteamTabs {
         padding: 8px 10px;
@@ -1693,197 +1690,199 @@
         padding: 1px 5px;
     }
 }
+
 /* ═══════════════════════════════════════════════════════════
    PODGLĄD vs EDYCJA — nowe
    ═══════════════════════════════════════════════════════════ */
 
 .previewActions {
-  display: flex;
-  justify-content: flex-end;
-  margin-bottom: 16px;
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 16px;
 }
 
-/* Badge statusu w podglądzie (read-only) */
+
 .statusBadgePresent,
 .statusBadgeAbsent,
 .statusBadgeExcused {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  padding: 5px 12px;
-  border-radius: 20px;
-  font-size: 12px;
-  font-weight: 600;
-  white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    white-space: nowrap;
 }
 
 .statusBadgePresent {
-  background: #dcfce7;
-  color: #166534;
+    background: #dcfce7;
+    color: #166534;
 }
 
 .statusBadgePresent::before {
-  content: "";
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: #22c55e;
+    content: "";
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #22c55e;
 }
 
 .statusBadgeAbsent {
-  background: #fee2e2;
-  color: #991b1b;
+    background: #fee2e2;
+    color: #991b1b;
 }
 
 .statusBadgeAbsent::before {
-  content: "";
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: #ef4444;
+    content: "";
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #ef4444;
 }
 
 .statusBadgeExcused {
-  background: #fef3c7;
-  color: #92400e;
+    background: #fef3c7;
+    color: #92400e;
 }
 
 .statusBadgeExcused::before {
-  content: "";
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: #f59e0b;
+    content: "";
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #f59e0b;
 }
 
-/* Spóźnienie w podglądzie */
+
 .recordRow .recordLate {
-  font-size: 13px;
-  color: #6b7280;
-  font-weight: 500;
+    font-size: 13px;
+    color: #6b7280;
+    font-weight: 500;
 }
 
-/* Notatka read-only */
+
 .recordNoteReadonly {
-  font-size: 13px;
-  color: #374151;
-  padding: 6px 10px;
-  background: #f9fafb;
-  border-radius: 6px;
-  border: 1px solid #f3f4f6;
-  min-height: 30px;
-  display: flex;
-  align-items: center;
-  font-style: italic;
+    font-size: 13px;
+    color: #374151;
+    padding: 6px 10px;
+    background: #f9fafb;
+    border-radius: 6px;
+    border: 1px solid #f3f4f6;
+    min-height: 30px;
+    display: flex;
+    align-items: center;
+    font-style: italic;
 }
 
-/* Przycisk anuluj w edycji */
+
 .cancelBtn {
-  padding: 10px 20px;
-  border-radius: 8px;
-  font-size: 13px;
-  font-weight: 600;
-  font-family: inherit;
-  cursor: pointer;
-  border: 1px solid #d1d5db;
-  background: #ffffff;
-  color: #374151;
-  transition: all 0.15s;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    border: 1px solid #d1d5db;
+    background: #ffffff;
+    color: #374151;
+    transition: all 0.15s;
 }
 
 .cancelBtn:hover:not(:disabled) {
-  background: #f9fafb;
-  border-color: #9ca3af;
+    background: #f9fafb;
+    border-color: #9ca3af;
 }
 
 .cancelBtn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
+    opacity: 0.5;
+    cursor: not-allowed;
 }
 
-/* Akcje masowe */
+
 .bulkActions {
-  display: flex;
-  gap: 0.5rem;
-  margin-bottom: 0.75rem;
-  flex-wrap: wrap;
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
+    flex-wrap: wrap;
 }
 
 .bulkBtn,
 .bulkBtnClear {
-  padding: 0.4rem 0.8rem;
-  border-radius: 6px;
-  border: 1px solid #d1d5db;
-  background: #fff;
-  cursor: pointer;
-  font-size: 0.85rem;
-  transition: background 0.15s;
+    padding: 0.4rem 0.8rem;
+    border-radius: 6px;
+    border: 1px solid #d1d5db;
+    background: #fff;
+    cursor: pointer;
+    font-size: 0.85rem;
+    transition: background 0.15s;
 }
 
 .bulkBtn:hover {
-  background: #f3f4f6;
+    background: #f3f4f6;
 }
 
 .bulkBtnClear {
-  border-color: #ef4444;
-  color: #ef4444;
+    border-color: #ef4444;
+    color: #ef4444;
 }
 
 .bulkBtnClear:hover {
-  background: #fef2f2;
+    background: #fef2f2;
 }
 
-/* Neutralny wskaźnik */
+
 .statusEmpty {
-  color: #9ca3af;
-  font-style: italic;
-  font-size: 0.8rem;
-  margin-left: 0.5rem;
+    color: #9ca3af;
+    font-style: italic;
+    font-size: 0.8rem;
+    margin-left: 0.5rem;
 }
 
-/* Info o wybranych */
+
 .actionsInfo {
-  flex: 1;
-  font-size: 0.85rem;
-  color: #4b5563;
+    flex: 1;
+    font-size: 0.85rem;
+    color: #4b5563;
 }
 
 .dirtyInfo {
-  color: #f59e0b;
+    color: #f59e0b;
 }
+
 /* ═══════════════════════════════════════════════════════════
    NEUTRALNE STANY (nowe spotkanie / nie wybrano)
    ═══════════════════════════════════════════════════════════ */
 
-/* W podglądzie, gdy spotkanie nie zostało jeszcze sprawdzone */
+
 .statusNotChecked {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  color: #9ca3af;
-  font-style: italic;
-  font-size: 0.85rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    color: #9ca3af;
+    font-style: italic;
+    font-size: 0.85rem;
 }
 
-/* W trybie edycji, gdy user jeszcze nie kliknął statusu */
+
 .statusEmpty {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  color: #9ca3af;
-  font-style: italic;
-  font-size: 0.8rem;
-  margin-left: 0.5rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    color: #9ca3af;
+    font-style: italic;
+    font-size: 0.8rem;
+    margin-left: 0.5rem;
 }
 
-/* Info w headerze, gdy attendance_checked = false */
+
 .statNotChecked {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  color: #9ca3af;
-  font-size: 0.85rem;
-  font-style: italic;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: #9ca3af;
+    font-size: 0.85rem;
+    font-style: italic;
 }
 
 /* ═══════════════════════════════════════════════════════════
@@ -1891,44 +1890,44 @@
    ═══════════════════════════════════════════════════════════ */
 
 .bulkActions {
-  display: flex;
-  gap: 0.5rem;
-  margin-bottom: 0.75rem;
-  flex-wrap: wrap;
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
+    flex-wrap: wrap;
 }
 
 .bulkBtn,
 .bulkBtnClear {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 0.4rem 0.8rem;
-  border-radius: 6px;
-  border: 1px solid #d1d5db;
-  background: #fff;
-  color: #374151;
-  cursor: pointer;
-  font-size: 0.85rem;
-  font-weight: 500;
-  transition: background 0.15s, border-color 0.15s;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 0.4rem 0.8rem;
+    border-radius: 6px;
+    border: 1px solid #d1d5db;
+    background: #fff;
+    color: #374151;
+    cursor: pointer;
+    font-size: 0.85rem;
+    font-weight: 500;
+    transition: background 0.15s, border-color 0.15s;
 }
 
 .bulkBtn:hover:not(:disabled) {
-  background: #f3f4f6;
+    background: #f3f4f6;
 }
 
 .bulkBtn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
+    opacity: 0.5;
+    cursor: not-allowed;
 }
 
 .bulkBtnClear {
-  border-color: #ef4444;
-  color: #ef4444;
+    border-color: #ef4444;
+    color: #ef4444;
 }
 
 .bulkBtnClear:hover:not(:disabled) {
-  background: #fef2f2;
+    background: #fef2f2;
 }
 
 /* ═══════════════════════════════════════════════════════════
@@ -1936,58 +1935,58 @@
    ═══════════════════════════════════════════════════════════ */
 
 .actionsInfo {
-  flex: 1;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 0.85rem;
-  color: #4b5563;
+    flex: 1;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.85rem;
+    color: #4b5563;
 }
 
 .dirtyInfo {
-  color: #f59e0b;
-  font-weight: 500;
+    color: #f59e0b;
+    font-weight: 500;
 }
 
 /* ═══════════════════════════════════════════════════════════
    IKONY LUCIDE — wyrównanie z tekstem wewnątrz istniejących klas
    ═══════════════════════════════════════════════════════════ */
 
-/* Przycisk "← Wróć do listy" */
+
 .backBtn {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
 }
 
-/* Główny przycisk akcji (Edytuj / Sprawdź frekwencję) */
+
 .actionBtnPrimary {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
 }
 
-/* Statystyki w headerze: ✓ ✗ ⊘ */
+
 .statPresent,
 .statAbsent,
 .statExcused {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
 }
 
-/* Badge'y statusu w podglądzie: Obecny / Nieobecny / Usprawiedliwiony */
+
 .statusBadgePresent,
 .statusBadgeAbsent,
 .statusBadgeExcused {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
 }
 
-/* Kolumna "Spóźnienie" w tabeli */
+
 .recordLate {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
 }

@@ -8,7 +8,7 @@ import { visualizer } from "rollup-plugin-visualizer";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// 🔒 LISTA PODEJRZANYCH WZORCÓW (blokowane zapytania)
+
 const SUSPICIOUS_PATTERNS = [
 	/\.\.\//,
 	/%2e%2e%2f/i,
@@ -31,36 +31,36 @@ const SUSPICIOUS_PATTERNS = [
 ];
 
 export default defineConfig(({ mode }) => {
-	// ✅ ŁADUJ ZMIENNE Z PLIKU .env
+
 	const env = loadEnv(mode, process.cwd(), '');
 
 	const isDevelopment = mode === 'development';
-	const isDocker = env.DOCKER_ENV === 'true' || mode === 'production';  // ✅ DODAJ isDocker
+	const isDocker = env.DOCKER_ENV === 'true' || mode === 'production';
 	const apiUrl = env.VITE_API_URL || (isDocker
-		? 'http://backend:3000'  // w Dockerze/Portainerze
-		: 'http://localhost:3000' // lokalnie
+		? 'http://backend:3000'
+		: 'http://localhost:3000'
 	);
 
-	// console.log('🚀 ===== KONFIGURACJA VITE =====');
-	// console.log('📌 Mode:', mode);
-	// console.log('📌 isDocker:', isDocker);
-	// console.log('📌 isDevelopment:', isDevelopment);
-	// console.log('📌 VITE_API_URL z env:', env.VITE_API_URL);
-	// console.log('📌 apiUrl:', apiUrl);
-	// console.log('📌 ================================');
 
-	// Host i port
+
+
+
+
+
+
+
+
 	const host = env.VITE_HOST || (isDocker ? '0.0.0.0' : 'localhost');
 	const port = parseInt(env.PORT || '5173');
 
-	// Dozwolone hosty
+
 	const allowedHosts = [
 		"turbine-protector-aluminum.ngrok-free.dev",
 		"localhost",
 		"127.0.0.1",
 	];
 
-	// Dodaj hosty z zmiennej środowiskowej
+
 	if (env.VITE_ALLOWED_HOSTS) {
 		allowedHosts.push(...env.VITE_ALLOWED_HOSTS.split(','));
 	}
@@ -72,14 +72,14 @@ export default defineConfig(({ mode }) => {
 				open: true,
 				filename: "stats.html",
 			}),
-			// 🔒 MIDDLEWARE BLOKUJĄCY FUZZING I ATAKI
+
 			{
 				name: "security-middleware",
 				configureServer(server) {
 					server.middlewares.use((req, res, next) => {
 						const url = req.url || "";
 
-						// Sprawdź czy zapytanie zawiera podejrzane wzorce
+
 						if (SUSPICIOUS_PATTERNS.some((pattern) => pattern.test(url))) {
 							console.warn(`🛡️ Zablokowano podejrzane zapytanie: ${url}`);
 							res.statusCode = 403;
@@ -88,7 +88,7 @@ export default defineConfig(({ mode }) => {
 							return;
 						}
 
-						// 🔥 WARUNKOWY CSP - inne dla lokalnego, inne dla produkcji
+
 						let csp = [
 							"default-src 'self'",
 							"script-src 'self' 'unsafe-inline' 'unsafe-eval'",
@@ -102,7 +102,7 @@ export default defineConfig(({ mode }) => {
 						];
 
 						if (isDevelopment) {
-							// 🔓 DEVELOPMENT - bardziej liberalny dla lokalnych testów
+
 							csp = [
 								"default-src 'self'",
 								"script-src 'self' 'unsafe-inline' 'unsafe-eval' http://localhost:* https://*.ngrok-free.dev https://accounts.google.com https://apis.google.com",
@@ -116,7 +116,7 @@ export default defineConfig(({ mode }) => {
 								"frame-ancestors 'none'",
 							];
 						} else {
-							// 🔒 PRODUKCJA - restrykcyjny CSP
+
 							csp = [
 								"default-src 'self'",
 								"script-src 'self' https://accounts.google.com https://apis.google.com",
@@ -166,14 +166,14 @@ export default defineConfig(({ mode }) => {
 					rewrite: (path) => path,
 				},
 			},
-			// 🔒 Ograniczenia dostępu do plików
+
 			fs: {
 				strict: true,
 				allow: [
 					path.resolve(__dirname, "src"),
 					path.resolve(__dirname, "public"),
 					path.resolve(__dirname, "index.html"),
-					path.resolve(__dirname, ".."), // Dla fontów z node_modules
+					path.resolve(__dirname, ".."),
 				],
 				deny: [
 					".env",
@@ -202,9 +202,9 @@ export default defineConfig(({ mode }) => {
 			},
 		},
 
-		// ============================================================
-		// 🔥 KONFIGURACJA TESTOW - POPRAWIONA
-		// ============================================================
+
+
+
 		test: {
 			globals: true,
 			environment: "jsdom",
@@ -226,7 +226,7 @@ export default defineConfig(({ mode }) => {
 		},
 
 		define: {
-			// ✅ WAŻNE - dla import.meta.env
+
 			'import.meta.env.VITE_API_URL': JSON.stringify(apiUrl),
 			'process.env.VITE_API_URL': JSON.stringify(apiUrl),
 		},

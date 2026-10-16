@@ -69,7 +69,7 @@ async function apiFetch<T>(url: string, init?: RequestInit): Promise<T> {
 			const json = JSON.parse(text);
 			if (json.error) message = json.error;
 		} catch {
-			// ignore
+
 		}
 		throw new Error(message);
 	}
@@ -115,19 +115,19 @@ export default function PillarChangeTab() {
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState<string | null>(null);
 
-	// formularz nowego wniosku
+
 	const [formOpen, setFormOpen] = useState(false);
 	const [toPillarId, setToPillarId] = useState<string>("");
 	const [reason, setReason] = useState("");
 	const [submitting, setSubmitting] = useState(false);
 	const [submitError, setSubmitError] = useState<string | null>(null);
 
-	// rozpatrywanie (admin/board)
+
 	const [reviewingId, setReviewingId] = useState<number | null>(null);
 	const [reviewComment, setReviewComment] = useState("");
 	const [reviewSubmitting, setReviewSubmitting] = useState(false);
 
-	// ── Ładowanie danych ──
+
 	const loadAll = async () => {
 		setLoading(true);
 		setError(null);
@@ -154,7 +154,7 @@ export default function PillarChangeTab() {
 		loadAll();
 	}, []);
 
-	// ── Złożenie wniosku ──
+
 	const handleSubmit = async () => {
 		if (!toPillarId) {
 			setSubmitError("Wybierz filar docelowy");
@@ -181,7 +181,7 @@ export default function PillarChangeTab() {
 		}
 	};
 
-	// ── Rozpatrzenie wniosku ──
+
 	const handleReview = async (id: number, status: "approved" | "rejected") => {
 		setReviewSubmitting(true);
 		try {
@@ -202,7 +202,7 @@ export default function PillarChangeTab() {
 		}
 	};
 
-	// ── Anulowanie własnego ──
+
 	const handleCancel = async (id: number) => {
 		if (!confirm("Czy na pewno chcesz anulować ten wniosek?")) return;
 		try {
@@ -216,7 +216,7 @@ export default function PillarChangeTab() {
 		}
 	};
 
-	// ── Stany brzegowe ──
+
 	if (loading) {
 		return <div className={styles.stateBox}>Ładowanie wniosków…</div>;
 	}
@@ -232,7 +232,7 @@ export default function PillarChangeTab() {
 
 	return (
 		<div className={styles.wrapper}>
-			{/* ---------- NAGŁÓWEK + PRZYCISK ---------- */}
+
 			<div className={styles.header}>
 				<div>
 					<h2 className={styles.title}>Zmiana filaru</h2>
@@ -253,7 +253,7 @@ export default function PillarChangeTab() {
 				)}
 			</div>
 
-			{/* ---------- INFO: MASZ JUŻ PENDING ---------- */}
+
 			{myPendingRequest && !formOpen && (
 				<div className={styles.infoBox}>
 					<Clock size={18} />
@@ -261,7 +261,7 @@ export default function PillarChangeTab() {
 				</div>
 			)}
 
-			{/* ---------- FORMULARZ ---------- */}
+
 			{formOpen && (
 				<div className={styles.formCard}>
 					<div className={styles.formHeader}>
@@ -333,7 +333,7 @@ export default function PillarChangeTab() {
 				</div>
 			)}
 
-			{/* ---------- LISTA WNIOSKÓW ---------- */}
+
 			<div className={styles.listSection}>
 				<h3 className={styles.listTitle}>
 					{isAdminOrBoard ? "Wszystkie wnioski" : "Moje wnioski"}{" "}
@@ -361,9 +361,8 @@ export default function PillarChangeTab() {
 									</div>
 
 									<span
-										className={`${styles.statusBadge} ${
-											styles[`status_${r.status}`] || ""
-										}`}
+										className={`${styles.statusBadge} ${styles[`status_${r.status}`] || ""
+											}`}
 									>
 										{STATUS_LABEL[r.status] || r.status}
 									</span>
@@ -400,7 +399,7 @@ export default function PillarChangeTab() {
 									</div>
 								)}
 
-								{/* Akcje */}
+
 								<div className={styles.requestActions}>
 									{isAdminOrBoard && r.status === "pending" && (
 										<>

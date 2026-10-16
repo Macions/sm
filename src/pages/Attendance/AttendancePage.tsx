@@ -13,7 +13,6 @@ export default function AttendancePage() {
   const [pillars, setPillars] = useState<Pillar[]>([]);
   const [selectedPillarId, setSelectedPillarId] = useState<number | null>(null);
 
-  // ⬅️ NOWE — podzespoły
   const [subteams, setSubteams] = useState<Subteam[]>([]);
   const [selectedSubteamId, setSelectedSubteamId] = useState<number | null>(null);
 
@@ -24,7 +23,7 @@ export default function AttendancePage() {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Ładuj filary raz przy montowaniu
+
   useEffect(() => {
     setLoading(true);
     attendanceApi
@@ -46,7 +45,7 @@ export default function AttendancePage() {
       .finally(() => setLoading(false));
   }, []);
 
-  // Ładuj podzespoły gdy zmienia się filar
+
   useEffect(() => {
     if (!selectedPillarId) {
       setSubteams([]);
@@ -58,7 +57,7 @@ export default function AttendancePage() {
       .getSubteams(selectedPillarId)
       .then((data) => {
         setSubteams(data.subteams || []);
-        setSelectedSubteamId(null); // reset filtra podzespołu
+        setSelectedSubteamId(null);
       })
       .catch(() => {
         setSubteams([]);
@@ -66,7 +65,7 @@ export default function AttendancePage() {
       });
   }, [selectedPillarId]);
 
-  // Ładuj spotkania gdy zmienia się filar, podzespół lub zakładka
+
   useEffect(() => {
     if (!selectedPillarId) return;
     if (selectedMeetingId) return;
@@ -76,7 +75,7 @@ export default function AttendancePage() {
     attendanceApi
       .getMeetings({
         pillarId: selectedPillarId,
-        subteamId: selectedSubteamId ?? undefined,   // ⬅️ NOWE
+        subteamId: selectedSubteamId ?? undefined,
         scope: tab === "current" ? "current" : "archive",
       })
       .then((data) => setMeetings(data.meetings || []))
@@ -118,7 +117,7 @@ export default function AttendancePage() {
     <div className={styles.container}>
       <h1 className={styles.title}>Frekwencja</h1>
 
-      {/* Zakładki Aktualne / Archiwum / Raporty */}
+
       <div className={styles.tabs}>
         <button
           className={tab === "current" ? styles.tabActive : styles.tab}
@@ -149,13 +148,13 @@ export default function AttendancePage() {
         </button>
       </div>
 
-      {/* Raporty */}
+
       {tab === "reports" && <Reports />}
 
-      {/* Aktualne / Archiwum */}
+
       {tab !== "reports" && (
         <>
-          {/* Pasek filarów */}
+
           <div className={styles.pillarTabs}>
             {pillars.map((p) => (
               <button
@@ -178,7 +177,7 @@ export default function AttendancePage() {
             ))}
           </div>
 
-          {/* ⬇️⬇️⬇️ NOWE — pasek podzespołów ⬇️⬇️⬇️ */}
+
           {subteams.length > 0 && (
             <div className={styles.subteamTabs}>
               <button
@@ -216,7 +215,7 @@ export default function AttendancePage() {
             </div>
           )}
 
-          {/* Szczegóły spotkania LUB lista spotkań */}
+
           {selectedMeetingId ? (
             <MeetingDetails
               meetingId={selectedMeetingId}
@@ -322,7 +321,7 @@ export default function AttendancePage() {
         </>
       )}
 
-      {/* Modal tworzenia */}
+
       {showCreateModal && selectedPillarId && (
         <CreateMeetingModal
           pillarId={selectedPillarId}

@@ -58,12 +58,8 @@ export default function MeetingDetails({ meetingId, onBack }: Props) {
 
   useEffect(() => {
     loadMeeting();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [meetingId]);
 
-  // Wejście w tryb edycji:
-  // - Nowe spotkanie (attendance_checked: false) → wszyscy neutralni
-  // - Sprawdzone  (attendance_checked: true)  → aktualne statusy z bazy
   const startEditing = () => {
     const alreadyChecked = meeting?.attendance_checked === true;
 
@@ -88,7 +84,7 @@ export default function MeetingDetails({ meetingId, onBack }: Props) {
     setSuccessMsg(null);
   };
 
-  // Akcje masowe
+
   const setAll = (status: EditStatus) => {
     setRecords((prev) =>
       prev.map((r) => ({ ...r, editStatus: status, dirty: true })),
@@ -131,8 +127,7 @@ export default function MeetingDetails({ meetingId, onBack }: Props) {
       );
 
       setSuccessMsg(
-        `Zapisano zmiany (${toSend.length} ${
-          toSend.length === 1 ? "osoba" : "osób"
+        `Zapisano zmiany (${toSend.length} ${toSend.length === 1 ? "osoba" : "osób"
         })`,
       );
       setTimeout(() => setSuccessMsg(null), 3000);
@@ -217,7 +212,7 @@ export default function MeetingDetails({ meetingId, onBack }: Props) {
         </div>
       </div>
 
-      {/* TRYB PODGLĄDU */}
+
       {!isEditing && (
         <>
           <div className={styles.previewActions}>
@@ -308,10 +303,10 @@ export default function MeetingDetails({ meetingId, onBack }: Props) {
         </>
       )}
 
-      {/* TRYB EDYCJI */}
+
       {isEditing && (
         <>
-          {/* Akcje masowe */}
+
           <div className={styles.bulkActions}>
             <button
               type="button"
@@ -354,9 +349,8 @@ export default function MeetingDetails({ meetingId, onBack }: Props) {
             {records.map((r) => (
               <div
                 key={r.id}
-                className={`${styles.recordRow} ${
-                  r.dirty ? styles.recordDirty : ""
-                }`}
+                className={`${styles.recordRow} ${r.dirty ? styles.recordDirty : ""
+                  }`}
               >
                 <div className={styles.recordName}>
                   {r.last_name} {r.first_name}

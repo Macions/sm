@@ -36,8 +36,8 @@ import {
 	TrendingUp,
 	IdCard,
 	Calendar,
-	Wrench,      // ⬅️ DODAJ
-	Power,       // ⬅️ DODAJ
+	Wrench,
+	Power,
 } from "lucide-react";
 import type { Permission } from "../../utils/permissions";
 import {
@@ -3556,7 +3556,7 @@ export default function Admin({ title }: { title?: string }) {
 			const { data } = await api.get("/status/maintenance");
 			setMaintenance(data.enabled === true);
 		} catch {
-			// fallback — jeśli endpoint nie istnieje, zostaw false
+
 		}
 	};
 
@@ -3576,7 +3576,7 @@ export default function Admin({ title }: { title?: string }) {
 			setMaintenanceLoading(true);
 			await api.put("/admin/maintenance", { enabled: next });
 			setMaintenance(next);
-			// poinformuj inne karty/komponenty
+
 			window.dispatchEvent(new Event("maintenance-change"));
 			toast.success(
 				next ? "Tryb serwisowy włączony" : "Tryb serwisowy wyłączony",
@@ -3599,12 +3599,12 @@ export default function Admin({ title }: { title?: string }) {
 			const element = sectionRef.current;
 			const headerOffset = 140;
 
-			// Znajdź kontener scrolla (main)
+
 			const mainElement = document.querySelector("main") as HTMLElement;
 			if (mainElement) {
 				const mainRect = mainElement.getBoundingClientRect();
 				const elementRect = element.getBoundingClientRect();
-				// Pozycja elementu względem kontenera main + aktualny scroll
+
 				const offsetPosition =
 					elementRect.top - mainRect.top + mainElement.scrollTop - headerOffset;
 
@@ -3613,7 +3613,7 @@ export default function Admin({ title }: { title?: string }) {
 					behavior: "smooth",
 				});
 			} else {
-				// Fallback na window, gdyby main nie istniał
+
 				const elementPosition = element.getBoundingClientRect().top;
 				const offsetPosition = elementPosition + window.scrollY - headerOffset;
 				window.scrollTo({
@@ -3766,7 +3766,7 @@ export default function Admin({ title }: { title?: string }) {
 			const scrollTop = mainElement.scrollTop;
 			setShowScrollTop(scrollTop > 20);
 
-			// Scroll spy — offset od góry (header + zakładki)
+
 			const offset = 140;
 			let activeSection = sections[0].id;
 
@@ -3776,7 +3776,7 @@ export default function Admin({ title }: { title?: string }) {
 				if (rect.top <= offset) {
 					activeSection = section.id;
 				} else {
-					// Sekcje są w kolejności DOM — można przerwać
+
 					break;
 				}
 			}
@@ -3790,7 +3790,7 @@ export default function Admin({ title }: { title?: string }) {
 		return () => {
 			mainElement.removeEventListener("scroll", handleScroll);
 		};
-	}, [teams]); // dodaj teams, żeby spy działał po załadowaniu sekcji
+	}, [teams]);
 
 	useEffect(() => {
 		if (scrollToTeamId) {
@@ -3812,7 +3812,7 @@ export default function Admin({ title }: { title?: string }) {
 		fetchData();
 		fetchMaintenance();
 
-		// odświeżaj co 30 s
+
 		const interval = setInterval(fetchMaintenance, 30_000);
 		return () => clearInterval(interval);
 	}, []);
@@ -3950,7 +3950,7 @@ export default function Admin({ title }: { title?: string }) {
 								) : (
 									<>
 										<Wrench size={16} />
-										<span>Włącz maintenance</span>
+										<span>Włącz tryb utrzymania</span>
 									</>
 								)}
 							</button>

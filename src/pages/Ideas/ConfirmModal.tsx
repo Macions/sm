@@ -1,4 +1,3 @@
-// frontend/src/pages/Ideas/ConfirmModal.tsx
 import { AlertTriangle, X } from "lucide-react";
 import styles from "./Ideas.module.css";
 

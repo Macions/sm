@@ -23,7 +23,7 @@
 	margin: 0;
 }
 
-/* Statystyki */
+
 .stats {
 	display: grid;
 	grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
@@ -71,7 +71,7 @@
 	color: #f59e0b;
 }
 
-/* Filtry */
+
 .filters {
 	display: flex;
 	gap: 12px;
@@ -145,7 +145,7 @@
 	border-color: #7c3aed;
 }
 
-/* Tabela */
+
 .tableWrapper {
 	background: #fff;
 	border-radius: 12px;
@@ -184,7 +184,7 @@
 	background: #fafafa;
 }
 
-/* Osoba */
+
 .personCell {
 	display: flex;
 	align-items: center;
@@ -215,7 +215,7 @@
 	color: #6b7280;
 }
 
-/* Zespoły */
+
 .teamsList {
 	display: flex;
 	flex-wrap: wrap;
@@ -236,7 +236,7 @@
 	color: #9ca3af;
 }
 
-/* Data papierów - edycja inline */
+
 .dateCell {
 	background: none;
 	border: 1px dashed transparent;
@@ -302,7 +302,7 @@
 	background: rgba(220, 38, 38, 0.1);
 }
 
-/* Checkbox */
+
 .checkboxLabel {
 	display: flex;
 	align-items: center;
@@ -323,7 +323,7 @@
 	color: #374151;
 }
 
-/* Przycisk zakończ */
+
 .finishBtn {
 	display: inline-flex;
 	align-items: center;
@@ -348,7 +348,7 @@
 	cursor: not-allowed;
 }
 
-/* Empty state */
+
 .emptyState {
 	text-align: center;
 	padding: 60px 20px;
@@ -375,7 +375,7 @@
 	margin: 0;
 }
 
-/* Loading */
+
 .loading {
 	display: flex;
 	flex-direction: column;

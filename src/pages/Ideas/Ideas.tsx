@@ -1,4 +1,3 @@
-// frontend/src/pages/Ideas/Ideas.tsx
 import { useEffect, useMemo, useState } from "react";
 import { Lightbulb, Plus, CheckCircle2, Clock3, XCircle } from "lucide-react";
 import toast from "react-hot-toast";
@@ -90,7 +89,7 @@ export default function Ideas() {
 		fetchIdeas();
 	}, []);
 
-	// Szybkie statystyki dla admina
+
 	const stats = useMemo(() => {
 		const s: Record<string, number> = {
 			pending: 0,
@@ -105,7 +104,7 @@ export default function Ideas() {
 		return s;
 	}, [ideas]);
 
-	// ── DELETE ─────────────────────────────────────────────
+
 	const runDelete = async (idea: SystemIdea) => {
 		try {
 			setConfirmBusy(true);
@@ -139,7 +138,7 @@ export default function Ideas() {
 		});
 	};
 
-	// ── QUICK STATUS ──────────────────────────────────────
+
 	const runQuickStatus = async (idea: SystemIdea, status: IdeaStatus) => {
 		try {
 			setBusyId(idea.id);
@@ -210,7 +209,7 @@ export default function Ideas() {
 				</button>
 			</div>
 
-			{/* Panel statystyk — tylko dla admina/board */}
+			
 			{canManage && ideas.length > 0 && (
 				<div className={styles.statsRow}>
 					<div className={styles.statChip}>
@@ -281,14 +280,14 @@ export default function Ideas() {
 				</div>
 			)}
 
-			{/* Modal: nowy pomysł */}
+			
 			<IdeaModal
 				isOpen={isCreateOpen}
 				onClose={() => setIsCreateOpen(false)}
 				onSaved={fetchIdeas}
 			/>
 
-			{/* Modal: edycja (autor) */}
+			
 			{editingIdea && (
 				<IdeaModal
 					isOpen={true}
@@ -298,7 +297,7 @@ export default function Ideas() {
 				/>
 			)}
 
-			{/* Modal: zarządzanie (admin/board) */}
+			
 			{managingIdea && (
 				<ManageIdeaModal
 					idea={managingIdea}
@@ -307,7 +306,7 @@ export default function Ideas() {
 				/>
 			)}
 
-			{/* Modal: potwierdzenie akcji */}
+			
 			<ConfirmModal
 				isOpen={!!confirmState}
 				title={confirmState?.title}

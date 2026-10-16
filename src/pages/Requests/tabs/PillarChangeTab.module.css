@@ -2,7 +2,7 @@
 	width: 100%;
 }
 
-/* ---------- HEADER ---------- */
+
 .header {
 	display: flex;
 	align-items: flex-start;
@@ -27,7 +27,7 @@
 	max-width: 560px;
 }
 
-/* ---------- PRZYCISKI ---------- */
+
 .primaryBtn {
 	display: inline-flex;
 	align-items: center;
@@ -138,7 +138,7 @@
 	color: #1f2937;
 }
 
-/* ---------- INFO BOX ---------- */
+
 .infoBox {
 	display: flex;
 	align-items: center;
@@ -153,7 +153,7 @@
 	margin-bottom: 20px;
 }
 
-/* ---------- FORMULARZ ---------- */
+
 .formCard {
 	background: #ffffff;
 	border: 1px solid #e5e7eb;
@@ -247,7 +247,7 @@
 	font-weight: 500;
 }
 
-/* ---------- LISTA ---------- */
+
 .listSection {
 	margin-top: 8px;
 }
@@ -417,7 +417,7 @@
 	width: 100%;
 }
 
-/* ---------- STANY ---------- */
+
 .stateBox {
 	padding: 24px;
 	background: #ffffff;

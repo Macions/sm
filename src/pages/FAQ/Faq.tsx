@@ -17,7 +17,7 @@ import api from "@/api/axios";
 import { logger } from "@/utils/logger";
 import styles from "./FAQ.module.css";
 
-/* ──────────────── Typy ──────────────── */
+
 interface FAQItem {
 	id: string;
 	question: string;
@@ -34,7 +34,7 @@ interface FAQCategory {
 
 type UserRole = "board" | "admin" | "member" | "guest";
 
-/* ──────────────── Helper: rola użytkownika ──────────────── */
+
 const getUserRole = (): UserRole => {
 	try {
 		const raw = localStorage.getItem("user");
@@ -46,7 +46,7 @@ const getUserRole = (): UserRole => {
 	}
 };
 
-/* ──────────────── Modal kategorii ──────────────── */
+
 interface CategoriesModalProps {
 	categories: FAQCategory[];
 	onClose: () => void;
@@ -220,7 +220,7 @@ const CategoriesModal = ({
 	);
 };
 
-/* ──────────────── Modal formularza ──────────────── */
+
 interface FormModalProps {
 	initial?: FAQItem | null;
 	categories: FAQCategory[];
@@ -304,7 +304,7 @@ const FormModal = ({
 			logger.error("[FAQ] Błąd zapisu", e);
 			setError(
 				e?.response?.data?.message ??
-					"Nie udało się zapisać. Spróbuj ponownie.",
+				"Nie udało się zapisać. Spróbuj ponownie.",
 			);
 		} finally {
 			setSaving(false);
@@ -443,7 +443,7 @@ const FormModal = ({
 	);
 };
 
-/* ──────────────── Główny komponent ──────────────── */
+
 interface FAQProps {
 	title?: string;
 	userRole?: UserRole;
@@ -466,7 +466,7 @@ const FAQ = ({ title = "Najczęstsze pytania", userRole }: FAQProps) => {
 	const role: UserRole = userRole ?? getUserRole();
 	const canManage = role === "board" || role === "admin";
 
-	/* ─── FETCH: kategorie ─── */
+
 	const fetchCategories = async () => {
 		try {
 			const res = await api.get<FAQCategory[]>("/faq/categories");
@@ -486,7 +486,7 @@ const FAQ = ({ title = "Najczęstsze pytania", userRole }: FAQProps) => {
 		fetchCategories();
 	}, []);
 
-	/* ─── FETCH: pytania ─── */
+
 	const fetchItems = async () => {
 		setLoading(true);
 		setError(null);
@@ -523,7 +523,7 @@ const FAQ = ({ title = "Najczęstsze pytania", userRole }: FAQProps) => {
 		fetchItems();
 	}, []);
 
-	/* ─── Filtrowanie ─── */
+
 	const filtered = useMemo(() => {
 		const q = search.trim().toLowerCase();
 		return items.filter((item) => {
@@ -537,7 +537,7 @@ const FAQ = ({ title = "Najczęstsze pytania", userRole }: FAQProps) => {
 		});
 	}, [items, search, activeCategory]);
 
-	/* ─── CRUD ─── */
+
 	const handleAdd = () => {
 		setEditing(null);
 		setModalOpen(true);
@@ -591,7 +591,7 @@ const FAQ = ({ title = "Najczęstsze pytania", userRole }: FAQProps) => {
 
 	return (
 		<div className={styles.page}>
-			{/* ─── Nagłówek ─── */}
+
 			<div className={styles.header}>
 				<div>
 					<h1 className={styles.title}>{title}</h1>
@@ -621,7 +621,7 @@ const FAQ = ({ title = "Najczęstsze pytania", userRole }: FAQProps) => {
 				)}
 			</div>
 
-			{/* ─── Wyszukiwarka ─── */}
+
 			<div className={styles.toolbar}>
 				<Search className={styles.searchIcon} size={18} strokeWidth={2.2} />
 				<input
@@ -632,13 +632,12 @@ const FAQ = ({ title = "Najczęstsze pytania", userRole }: FAQProps) => {
 				/>
 			</div>
 
-			{/* ─── Filtry kategorii ─── */}
+
 			{categories.length > 0 && (
 				<div className={styles.categoryFilters}>
 					<button
-						className={`${styles.categoryChip} ${
-							activeCategory === "all" ? styles.categoryChipActive : ""
-						}`}
+						className={`${styles.categoryChip} ${activeCategory === "all" ? styles.categoryChipActive : ""
+							}`}
 						onClick={() => setActiveCategory("all")}
 						type="button"
 					>
@@ -647,9 +646,8 @@ const FAQ = ({ title = "Najczęstsze pytania", userRole }: FAQProps) => {
 					{categories.map((c) => (
 						<button
 							key={c.id}
-							className={`${styles.categoryChip} ${
-								activeCategory === c.id ? styles.categoryChipActive : ""
-							}`}
+							className={`${styles.categoryChip} ${activeCategory === c.id ? styles.categoryChipActive : ""
+								}`}
 							onClick={() => setActiveCategory(c.id)}
 							type="button"
 						>
@@ -659,7 +657,7 @@ const FAQ = ({ title = "Najczęstsze pytania", userRole }: FAQProps) => {
 				</div>
 			)}
 
-			{/* ─── Lista ─── */}
+
 			{loading ? (
 				<div className={styles.empty}>
 					<HelpCircle size={40} strokeWidth={1.5} />
@@ -702,18 +700,16 @@ const FAQ = ({ title = "Najczęstsze pytania", userRole }: FAQProps) => {
 									</span>
 									<span className={styles.question}>{item.question}</span>
 									<span
-										className={`${styles.chevron} ${
-											isOpen ? styles.chevronOpen : ""
-										}`}
+										className={`${styles.chevron} ${isOpen ? styles.chevronOpen : ""
+											}`}
 									>
 										<ChevronDown size={18} strokeWidth={2.5} />
 									</span>
 								</button>
 
 								<div
-									className={`${styles.answerWrapper} ${
-										isOpen ? styles.answerWrapperOpen : ""
-									}`}
+									className={`${styles.answerWrapper} ${isOpen ? styles.answerWrapperOpen : ""
+										}`}
 								>
 									<div className={styles.answerInner}>
 										<div className={styles.answer}>{item.answer}</div>
@@ -746,7 +742,7 @@ const FAQ = ({ title = "Najczęstsze pytania", userRole }: FAQProps) => {
 				</div>
 			)}
 
-			{/* ─── Modal pytania ─── */}
+
 			{modalOpen && (
 				<FormModal
 					initial={editing}
@@ -760,7 +756,7 @@ const FAQ = ({ title = "Najczęstsze pytania", userRole }: FAQProps) => {
 				/>
 			)}
 
-			{/* ─── Modal kategorii ─── */}
+
 			{categoriesModalOpen && (
 				<CategoriesModal
 					categories={categories}

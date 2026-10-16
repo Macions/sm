@@ -5,7 +5,7 @@ export const attendanceApi = {
 
   getMeetings: (params?: {
     pillarId?: number;
-    subteamId?: number;                                        // ⬅️ NOWE
+    subteamId?: number;
     dateFrom?: string;
     dateTo?: string;
     scope?: "all" | "current" | "archive";
@@ -29,12 +29,12 @@ export const attendanceApi = {
 
   createMeeting: (data: {
     pillarId: number;
-    subteamId?: number | null;                                 // ⬅️ NOWE
+    subteamId?: number | null;
     title: string;
     meetingDate: string;
   }) => api.post("/attendance/meetings", data).then((r) => r.data),
 
-  updateMeetingSubteam: (meetingId: number, subteamId: number | null) => // ⬅️ NOWE
+  updateMeetingSubteam: (meetingId: number, subteamId: number | null) =>
     api
       .put(`/attendance/meetings/${meetingId}/subteam`, { subteamId })
       .then((r) => r.data),
@@ -42,7 +42,6 @@ export const attendanceApi = {
   getSummary: (params?: { months?: number }) =>
     api.get("/attendance/reports/summary", { params }).then((r) => r.data),
 
-  // ═══════════════ PODZESPOŁY (NOWE) ═══════════════
   getSubteams: (pillarId?: number) =>
     api
       .get("/attendance/subteams", { params: { pillarId } })
@@ -70,7 +69,7 @@ export interface Pillar {
   attendance_percentage: number;
 }
 
-export interface Subteam {                                       // ⬅️ NOWE
+export interface Subteam {
   id: number;
   name: string;
   description: string | null;
@@ -84,8 +83,8 @@ export interface Meeting {
   pillar_id: number;
   pillar_name: string;
   pillar_label: string;
-  subteam_id: number | null;                                     // ⬅️ NOWE
-  subteam_name: string | null;                                   // ⬅️ NOWE
+  subteam_id: number | null;
+  subteam_name: string | null;
   title: string;
   meeting_date: string;
   attendance_checked: boolean;
