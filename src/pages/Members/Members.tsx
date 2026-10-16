@@ -1382,7 +1382,60 @@ function ProfileModal({
 				</div>
 			</section>
 
+			{/* Zespoły */}
+			{(() => {
+				const visibleTeams = (currentMember.team || "")
+					.split(", ")
+					.filter(Boolean)
+					.filter((t) => t !== "Brak zespołu")
+					.filter((t) => t !== "Mentorzy")
+					.filter((t) => {
+						if (currentMember.pillars) {
+							const pillars = currentMember.pillars.split(", ");
+							return !pillars.some((p) => PILLAR_MAP[p] === t || p === t);
+						}
+						return true;
+					});
 
+				// Mentorzy pokazujemy osobno (jeśli są)
+				const isMentor = (currentMember.team || "")
+					.split(", ")
+					.includes("Mentorzy");
+
+				if (visibleTeams.length === 0 && !isMentor) return null;
+
+				return (
+					<section className={styles.section}>
+						<h3 className={styles.sectionTitle}>Zespoły i przynależność</h3>
+						<div className={styles.sectionBody}>
+							<div className={styles.field}>
+								<label className={styles.fieldLabel}>Zespoły</label>
+								<div className={styles.tags}>
+									{visibleTeams.length === 0 && !isMentor && (
+										<span className={styles.fieldValue}>—</span>
+									)}
+									{isMentor && (
+										<span className={styles.tag}>
+											<Star size={12} /> Mentorzy
+										</span>
+									)}
+									{visibleTeams.map((team) => (
+										<span key={team} className={styles.tag}>
+											{team}
+										</span>
+									))}
+								</div>
+								{canEdit && (
+									<small className={styles.hint}>
+										Zespoły są zarządzane przez strukturę organizacji.
+										Skontaktuj się z administratorem, aby zmienić przynależność.
+									</small>
+								)}
+							</div>
+						</div>
+					</section>
+				);
+			})()}
 			{(currentMember.interests?.length > 0 ||
 				currentMember.skills?.length > 0 ||
 				currentMember.smAreas?.length > 0 ||

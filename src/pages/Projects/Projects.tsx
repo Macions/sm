@@ -1466,11 +1466,11 @@ export default function Projects() {
 						setCurrentUser((prev) =>
 							prev
 								? {
-										...prev,
-										coordinatorPillars: data.leaderTeams.map(
-											(t: any) => t.name,
-										),
-									}
+									...prev,
+									coordinatorPillars: data.leaderTeams.map(
+										(t: any) => t.name,
+									),
+								}
 								: prev,
 						);
 
@@ -2204,7 +2204,7 @@ export default function Projects() {
 				{pillars.map((pillar) => (
 					<div key={pillar} className={styles.stats__item}>
 						<span className={styles.stats__number}>
-							{projects.filter((p) => p.pillar === pillar).length}
+							{projects.filter((p) => PILLAR_LABELS_FALLBACK[p.pillar] === pillar).length}
 						</span>
 						<span className={styles.stats__label}>{pillar}</span>
 					</div>
@@ -2336,10 +2336,10 @@ export default function Projects() {
 					{(selectedPillar !== "all" ||
 						selectedStatus !== "all" ||
 						searchTerm) && (
-						<button className={styles.filters__reset} onClick={clearFilters}>
-							Wyczyść filtry
-						</button>
-					)}
+							<button className={styles.filters__reset} onClick={clearFilters}>
+								Wyczyść filtry
+							</button>
+						)}
 				</div>
 			</div>
 
@@ -2355,8 +2355,8 @@ export default function Projects() {
 							<h3 className={styles.emptyState__title}>Brak projektów</h3>
 							<p className={styles.emptyState__description}>
 								{searchTerm ||
-								selectedPillar !== "all" ||
-								selectedStatus !== "all"
+									selectedPillar !== "all" ||
+									selectedStatus !== "all"
 									? "Nie znaleziono projektów spełniających kryteria wyszukiwania."
 									: canManageProjects
 										? 'Nie ma jeszcze żadnych projektów. Kliknij "Dodaj projekt", aby utworzyć pierwszy.'
