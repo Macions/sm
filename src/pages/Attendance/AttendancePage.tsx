@@ -23,6 +23,7 @@ export default function AttendancePage() {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const isPreview = true; // 🔒 Tryb poglądowy — zablokowane dodawanie
 
   useEffect(() => {
     setLoading(true);
@@ -45,7 +46,6 @@ export default function AttendancePage() {
       .finally(() => setLoading(false));
   }, []);
 
-
   useEffect(() => {
     if (!selectedPillarId) {
       setSubteams([]);
@@ -64,7 +64,6 @@ export default function AttendancePage() {
         setSelectedSubteamId(null);
       });
   }, [selectedPillarId]);
-
 
   useEffect(() => {
     if (!selectedPillarId) return;
@@ -117,6 +116,17 @@ export default function AttendancePage() {
     <div className={styles.container}>
       <h1 className={styles.title}>Frekwencja</h1>
 
+      <div className={styles.previewBanner}>
+        <div className={styles.previewBanner__content}>
+          <strong className={styles.previewBanner__title}>
+            Strona w trakcie budowy
+          </strong>
+          <span className={styles.previewBanner__text}>
+            Moduł frekwencji jest jeszcze w fazie rozwoju. Przeglądanie danych
+            działa, ale dodawanie i edycja spotkań są chwilowo zablokowane.
+          </span>
+        </div>
+      </div>
 
       <div className={styles.tabs}>
         <button
@@ -148,13 +158,10 @@ export default function AttendancePage() {
         </button>
       </div>
 
-
       {tab === "reports" && <Reports />}
-
 
       {tab !== "reports" && (
         <>
-
           <div className={styles.pillarTabs}>
             {pillars.map((p) => (
               <button
@@ -176,7 +183,6 @@ export default function AttendancePage() {
               </button>
             ))}
           </div>
-
 
           {subteams.length > 0 && (
             <div className={styles.subteamTabs}>
@@ -215,7 +221,6 @@ export default function AttendancePage() {
             </div>
           )}
 
-
           {selectedMeetingId ? (
             <MeetingDetails
               meetingId={selectedMeetingId}
@@ -237,7 +242,12 @@ export default function AttendancePage() {
                   <button
                     className={styles.addMeetingBtn}
                     onClick={() => setShowCreateModal(true)}
-                    disabled={!selectedPillarId}
+                    disabled={!selectedPillarId || isPreview}
+                    title={
+                      isPreview
+                        ? "Dodawanie spotkań jest chwilowo zablokowane (wersja poglądowa)"
+                        : "Dodaj nowe spotkanie"
+                    }
                   >
                     + Nowe spotkanie
                   </button>
@@ -321,8 +331,7 @@ export default function AttendancePage() {
         </>
       )}
 
-
-      {showCreateModal && selectedPillarId && (
+      {showCreateModal && selectedPillarId && !isPreview && (
         <CreateMeetingModal
           pillarId={selectedPillarId}
           subteams={subteams}

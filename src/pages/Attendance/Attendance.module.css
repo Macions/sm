@@ -1,7 +1,3 @@
-/* ═══════════════════════════════════════════════════════════
-   FREKWENCJA — nowoczesny design
-   ═══════════════════════════════════════════════════════════ */
-
 .container {
     width: 100%;
     box-sizing: border-box;
@@ -977,9 +973,6 @@
     cursor: not-allowed;
 }
 
-/* ═══════════════════════════════════════════════════════════
-   PRAWA STRONA WIERSZA SPOTKANIA (badge + stats + przycisk)
-   ═══════════════════════════════════════════════════════════ */
 .meetingRight {
     display: flex;
     align-items: center;
@@ -1086,9 +1079,6 @@
     transform: translateY(-1px);
 }
 
-/* ═══════════════════════════════════════════════════════════
-   SZCZEGÓŁY SPOTKANIA (MeetingDetails)
-   ═══════════════════════════════════════════════════════════ */
 .detailsHeader {
     display: flex;
     align-items: flex-start;
@@ -1313,9 +1303,6 @@
     margin-bottom: 14px;
 }
 
-/* ═══════════════════════════════════════════════════════════
-   MODAL (CreateMeetingModal)
-   ═══════════════════════════════════════════════════════════ */
 .modalOverlay {
     position: fixed;
     inset: 0;
@@ -1395,9 +1382,6 @@
     background: #f9fafb;
 }
 
-/* ═══════════════════════════════════════════════════════════
-   RAPORTY (Reports)
-   ═══════════════════════════════════════════════════════════ */
 .reportsContainer {
     padding: 8px 0;
 }
@@ -1482,9 +1466,6 @@
     font-weight: 700;
 }
 
-/* ═══════════════════════════════════════════════════════════
-   RESPONSYWNOŚĆ
-   ═══════════════════════════════════════════════════════════ */
 @media (max-width: 900px) {
     .meetingRight {
         gap: 8px;
@@ -1553,10 +1534,6 @@
         display: none;
     }
 }
-
-/* ═══════════════════════════════════════════════════════════
-   PODZESPOŁY (subteams) — NOWE
-   ═══════════════════════════════════════════════════════════ */
 
 .subteamTabs {
     display: flex;
@@ -1690,10 +1667,6 @@
         padding: 1px 5px;
     }
 }
-
-/* ═══════════════════════════════════════════════════════════
-   PODGLĄD vs EDYCJA — nowe
-   ═══════════════════════════════════════════════════════════ */
 
 .previewActions {
     display: flex;
@@ -1850,11 +1823,6 @@
     color: #f59e0b;
 }
 
-/* ═══════════════════════════════════════════════════════════
-   NEUTRALNE STANY (nowe spotkanie / nie wybrano)
-   ═══════════════════════════════════════════════════════════ */
-
-
 .statusNotChecked {
     display: inline-flex;
     align-items: center;
@@ -1884,10 +1852,6 @@
     font-size: 0.85rem;
     font-style: italic;
 }
-
-/* ═══════════════════════════════════════════════════════════
-   AKCJE MASOWE (tryb edycji — nad tabelą)
-   ═══════════════════════════════════════════════════════════ */
 
 .bulkActions {
     display: flex;
@@ -1930,10 +1894,6 @@
     background: #fef2f2;
 }
 
-/* ═══════════════════════════════════════════════════════════
-   STOPKA AKCJI (info + przyciski Anuluj/Zapisz)
-   ═══════════════════════════════════════════════════════════ */
-
 .actionsInfo {
     flex: 1;
     display: inline-flex;
@@ -1947,11 +1907,6 @@
     color: #f59e0b;
     font-weight: 500;
 }
-
-/* ═══════════════════════════════════════════════════════════
-   IKONY LUCIDE — wyrównanie z tekstem wewnątrz istniejących klas
-   ═══════════════════════════════════════════════════════════ */
-
 
 .backBtn {
     display: inline-flex;
@@ -1989,4 +1944,79 @@
     display: inline-flex;
     align-items: center;
     gap: 4px;
+}
+
+.previewBanner {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    padding: 14px 18px;
+    margin-bottom: 20px;
+    background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+    border: 1px solid #fcd34d;
+    border-radius: 10px;
+    box-shadow: 0 1px 3px rgba(245, 158, 11, 0.08);
+}
+
+.previewBanner__badge {
+    flex-shrink: 0;
+    background: #f59e0b;
+    color: #fff;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 4px 10px;
+    border-radius: 6px;
+    white-space: nowrap;
+    align-self: flex-start;
+    margin-top: 1px;
+}
+
+.previewBanner__content {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    min-width: 0;
+}
+
+.previewBanner__title {
+    font-size: 14px;
+    font-weight: 700;
+    color: #92400e;
+    line-height: 1.3;
+}
+
+.previewBanner__text {
+    font-size: 13px;
+    color: #a16207;
+    line-height: 1.5;
+}
+
+@media (max-width: 768px) {
+    .previewBanner {
+        flex-direction: column;
+        gap: 10px;
+        padding: 12px 14px;
+        margin-bottom: 16px;
+    }
+
+    .previewBanner__title {
+        font-size: 13px;
+    }
+
+    .previewBanner__text {
+        font-size: 12px;
+    }
+}
+
+.addMeetingBtn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    filter: grayscale(0.4);
+}
+
+.addMeetingBtn:disabled:hover {
+    background: inherit;
+    transform: none;
 }
