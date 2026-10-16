@@ -399,3 +399,274 @@
 		transform: rotate(360deg);
 	}
 }
+
+/* ═══════════════════════════════════════════════════════════
+   MOBILE — tablet (≤ 900px)
+   ═══════════════════════════════════════════════════════════ */
+
+@media (max-width: 900px) {
+	.header {
+		margin-bottom: 20px;
+	}
+
+	.header__title {
+		font-size: 22px;
+		gap: 10px;
+	}
+
+	.header__subtitle {
+		font-size: 13px;
+	}
+
+	.stats {
+		grid-template-columns: repeat(2, 1fr);
+		gap: 10px;
+		margin-bottom: 20px;
+	}
+
+	.statCard {
+		padding: 14px;
+		gap: 12px;
+	}
+
+	.statCard__value {
+		font-size: 20px;
+	}
+
+	.statCard__label {
+		font-size: 12px;
+	}
+
+	.filters {
+		gap: 8px;
+		margin-bottom: 16px;
+	}
+
+	.filters__search {
+		min-width: 100%;
+	}
+
+	.filters__group {
+		width: 100%;
+		gap: 6px;
+	}
+
+	.filters__select {
+		flex: 1;
+		min-width: 0;
+		padding: 9px 10px;
+		font-size: 13px;
+	}
+
+	/* ─── TABELA → KARTY ─── */
+	.tableWrapper {
+		background: transparent;
+		border: none;
+		border-radius: 0;
+		overflow: visible;
+	}
+
+	.table {
+		display: block;
+		font-size: 13px;
+	}
+
+	.table thead {
+		display: none;
+	}
+
+	.table tbody {
+		display: flex;
+		flex-direction: column;
+		gap: 10px;
+	}
+
+	.table tr {
+		display: flex;
+		flex-direction: column;
+		background: #fff;
+		border: 1px solid #e5e7eb;
+		border-radius: 12px;
+		padding: 14px;
+		gap: 12px;
+	}
+
+	.table td {
+		display: flex;
+		flex-direction: column;
+		padding: 0;
+		border: none;
+		gap: 4px;
+	}
+
+	/* Ukryj "puste" komórki na mobile */
+	.table td:empty {
+		display: none;
+	}
+
+	/* ─── Osoba ─── */
+	.personCell {
+		gap: 10px;
+		align-items: center;
+	}
+
+	.personAvatar {
+		width: 40px;
+		height: 40px;
+		font-size: 14px;
+	}
+
+	.personName {
+		font-size: 14px;
+	}
+
+	.personEmail {
+		font-size: 11px;
+	}
+
+	/* ─── Zespoły ─── */
+	.teamsList {
+		max-width: 100%;
+	}
+
+	.teamTag {
+		font-size: 10px;
+		padding: 3px 7px;
+	}
+
+	/* ─── Daty ─── */
+	.dateCell {
+		font-size: 12.5px;
+		padding: 6px 8px;
+		width: fit-content;
+	}
+
+	.dateInput {
+		font-size: 12.5px;
+		padding: 5px 6px;
+		width: 100%;
+	}
+
+	/* ─── Checkbox ─── */
+	.checkbox {
+		width: 16px;
+		height: 16px;
+	}
+
+	.checkboxText {
+		font-size: 12.5px;
+	}
+
+	/* ─── Przycisk ─── */
+	.finishBtn {
+		width: 100%;
+		justify-content: center;
+		padding: 10px 12px;
+		font-size: 13px;
+	}
+
+	/* ─── Empty / loading ─── */
+	.emptyState {
+		padding: 40px 16px;
+	}
+
+	.emptyState__icon {
+		width: 40px;
+		height: 40px;
+	}
+
+	.emptyState__title {
+		font-size: 16px;
+	}
+
+	.emptyState__description {
+		font-size: 13px;
+	}
+
+	.loading {
+		height: 50vh;
+	}
+
+	.loading__spinner {
+		width: 36px;
+		height: 36px;
+		border-width: 3px;
+	}
+}
+
+/* ═══════════════════════════════════════════════════════════
+   MOBILE — telefon (≤ 480px)
+   ═══════════════════════════════════════════════════════════ */
+
+@media (max-width: 480px) {
+	.header__title {
+		font-size: 20px;
+	}
+
+	.stats {
+		grid-template-columns: 1fr;
+	}
+
+	.statCard {
+		padding: 12px;
+	}
+
+	.statCard__value {
+		font-size: 18px;
+	}
+
+	.filters__select {
+		min-width: 100%;
+		flex: 1 1 100%;
+	}
+
+	/* ─── Tabela → jeden wiersz = jedna karta ─── */
+	.table tr {
+		padding: 12px;
+		gap: 10px;
+	}
+
+	.table td {
+		font-size: 12.5px;
+	}
+
+	.personAvatar {
+		width: 36px;
+		height: 36px;
+		font-size: 13px;
+	}
+
+	.personName {
+		font-size: 13px;
+	}
+
+	.personEmail {
+		font-size: 10.5px;
+	}
+
+	.dateCell {
+		font-size: 12px;
+		padding: 5px 7px;
+	}
+
+	.dateInput {
+		font-size: 12px;
+	}
+
+	.finishBtn {
+		padding: 9px 10px;
+		font-size: 12.5px;
+	}
+
+	.emptyState {
+		padding: 32px 12px;
+	}
+
+	.emptyState__title {
+		font-size: 15px;
+	}
+
+	.emptyState__description {
+		font-size: 12px;
+	}
+}
